@@ -142,6 +142,7 @@ Promotion safeguards:
 - `references/TERMINOLOGY.md`: wording, priority, and expectation rules.
 - `references/CHECKLIST.md`: review checklist.
 - `scripts/generate_it_cases.py`: project-specific generator.
+- `scripts/detect_ph2_features.py`: extracts Ph2 (phase-2) markers from the Excel design workbooks' drawing XML (`excel_to_html/input/*.xlsx`). Run it to keep `EXCLUDED_OUTPUT_STEMS` in sync with the source of truth when design docs change: `python3 .codex/skills/hareruya-integration-test-cases/scripts/detect_ph2_features.py --repo .`. A whole-function Ph2 note (e.g. `…はPh2で対応するため、Ph1では実装しない`) means the function's output stem must be excluded; a note scoped to one item inside an otherwise-Ph1 sheet is not a whole-function exclusion.
 - `scripts/export_unexpanded_it_candidates.py`: exports current unexpanded candidates and summary counts.
 - `scripts/promote_it_cases_by_rules.py`: promotes existing test case files by approved caps without creating new per-function files.
 - `scripts/promote_drift_it_cases.py`: promotes reviewed drift files while preserving existing emitted rows.
