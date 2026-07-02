@@ -119,6 +119,7 @@ Promotion safeguards:
 
 - Generate from the per-function HTML links in `functions/todo-list.md`; do not generate test cases from parent Excel HTML files under `excel_to_html/output/`.
 - Exclude B16-01, B16-02, B16-03, B16-04, B16-05, B16-07, B16-08, and B16-12 from integration test case generation and aggregation regardless of whether related function documents exist.
+- Exclude Ph2 (phase-2 and later) whole-function features from integration test case generation and aggregation. These are functions whose Excel design docs carry a shape/textbox note such as `…はPh2で対応するため、Ph1では実装しない` / `Ph2で対応` / `フェーズ2以降で設計予定`, meaning the entire function is out of Ph1 scope. Current set (also listed in `EXCLUDED_OUTPUT_STEMS`): M03-43, M04-06, M04-07, M06-13, M08-11, M08-15, M08-16, A06-14, B01-02, B01-03, F02-05. Detection source of truth is the Excel drawing XML (`xl/drawings/*.xml`), not the generated HTML/output, because some Ph2 shape notes never reach the function HTML (e.g. F02-05).
 - Do not keep fallback `case_*_it_cases.md` outputs. Those indicate a parent or non-function HTML input and must be deleted or regenerated from the matching `todo-list.md` function HTML.
 - `I/FID` must be the `IT-ID` from `integration-test-viewpoints.md`.
 - `テスト観点` should be the smallest meaningful category from the viewpoint row, usually `小項目`; when it is empty or `-`, use `中項目`.

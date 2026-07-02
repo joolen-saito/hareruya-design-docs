@@ -62,6 +62,20 @@ EXCLUDED_OUTPUT_STEMS = {
     "b16_07_batch_infra_redash_database_create",
     "b16_08_batch_infra_ec_cube_sync_directory",
     "b16_12_batch_infra_database_deadlock_detect",
+    # Ph2（フェーズ2以降で対応）機能。Excel基本設計書の図形注記
+    # 「…はPh2で対応するため、Ph1では実装しない」等を根拠に、機能全体が
+    # Ph2のものを結合テスト生成・集約から除外する。
+    "m03_43_admin_product_product_simple_low_price_csv_export",
+    "m04_06_admin_stock_stock_shortage_csv_export",
+    "m04_07_admin_stock_stock_warning_csv_export",
+    "m06_13_admin_store_purchase_purchase_store_product_cancel_csv_export",
+    "m08_11_admin_customer_customer_analysis_tag_master",
+    "m08_15_admin_customer_customer_analysis_tag_csv_export",
+    "m08_16_admin_customer_customer_analysis_tag_csv_import",
+    "a06_14_api_store_purchase_otc_buy_order_partial_cancel_sync",
+    "b01_02_batch_data_stock_shortage",
+    "b01_03_batch_data_stock_warning",
+    "f02_05_front_global_nav_global_nav_notification",
 }
 
 
