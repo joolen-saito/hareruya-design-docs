@@ -56,8 +56,8 @@
 |---|---|---|---|---|---|
 | 1 | E1 | トレードチーム | M04-17（在庫履歴検索/一覧）で 商品コード=ST-STOCK-ZAIKO-008 を対象に、条件「移動・出庫・引当の対象在庫が不足している」となるデータまたは操作を実行する | 商品コード=ST-STOCK-ZAIKO-008 | 処理を完了扱いにせず、在庫数と不足理由を確認できる状態にする。確認対象: 在庫数、在庫変更履歴、処理ステータス |
 | 2 | E2 | トレードチーム | M04-18（在庫履歴CSV出力）で 商品コード=ST-STOCK-ZAIKO-008 を対象に、条件「入出庫数量または棚卸数量に差異がある」となるデータまたは操作を実行する | 商品コード=ST-STOCK-ZAIKO-008 | 差異を表示し、承認または再確認なしに確定しない。確認対象: 差異一覧、承認状態、在庫変更履歴 |
-| 3 | E3 | トレードチーム | M04-06（在庫切れリストCSV出力）で 商品コード=ST-STOCK-ZAIKO-008 を対象に、条件「担当者に必要な権限がない」となるデータまたは操作を実行する | 商品コード=ST-STOCK-ZAIKO-008 | 処理を開始させず、権限エラーを表示して対象データを更新しない。確認対象: 権限エラー表示、対象データの更新有無 |
-| 4 | E4 | トレードチーム | M04-07（在庫警戒リストCSV出力）で 商品コード=ST-STOCK-ZAIKO-008 を対象に、条件「検索条件に一致する対象データが存在しない」となるデータまたは操作を実行する | 商品コード=ST-STOCK-ZAIKO-008 | 0件結果を表示し、後続の更新操作へ進ませない。確認対象: 検索結果、更新履歴 |
+| 3 | E3 | トレードチーム | M04-20（欠品履歴CSV出力）で 商品コード=ST-STOCK-ZAIKO-008 を対象に、条件「担当者に必要な権限がない」となるデータまたは操作を実行する | 商品コード=ST-STOCK-ZAIKO-008 | 処理を開始させず、権限エラーを表示して対象データを更新しない。確認対象: 権限エラー表示、対象データの更新有無 |
+| 4 | E4 | トレードチーム | M04-01（在庫検索/一覧）で 商品コード=ST-STOCK-ZAIKO-008 を対象に、条件「検索条件に一致する対象データが存在しない」となるデータまたは操作を実行する | 商品コード=ST-STOCK-ZAIKO-008 | 0件結果を表示し、後続の更新操作へ進ませない。確認対象: 検索結果、更新履歴 |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 欠品対応の対象データが、業務フロー上の次工程または完了状態として追跡できる。
@@ -81,15 +81,13 @@
 
 ## トレーサビリティ
 - **カバーする業務フロー番号**: 在庫管理 / パターン8
-- **期待する主要機能No**: M04-17, M04-18, M04-06, M04-07, M04-20, M04-01, M04-02, M04-03, M04-04, M04-08, M04-09, M04-10, M04-21, M04-22, M04-24, M04-25, M04-26, M04-27, M04-28, M04-29, M04-32, M04-33, M04-34
-- **シナリオに紐づく機能No**: M04-17, M04-18, M04-06, M04-07, M04-20, M04-01, M04-02, M04-03, M04-04, M04-08, M04-09, M04-10, M04-21, M04-22, M04-24, M04-25, M04-26, M04-27, M04-28, M04-29, M04-32, M04-33, M04-34
+- **期待する主要機能No**: M04-17, M04-18, M04-20, M04-01, M04-02, M04-03, M04-04, M04-08, M04-09, M04-10, M04-21, M04-22, M04-24, M04-25, M04-26, M04-27, M04-28, M04-29, M04-32, M04-33, M04-34
+- **シナリオに紐づく機能No**: M04-17, M04-18, M04-20, M04-01, M04-02, M04-03, M04-04, M04-08, M04-09, M04-10, M04-21, M04-22, M04-24, M04-25, M04-26, M04-27, M04-28, M04-29, M04-32, M04-33, M04-34
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
   | M04-17（在庫履歴検索/一覧） | M04-17 | `functions/pf-eccube3/m04-17_admin_stock_stock_history_search_list.md` | `integration_test/e2e/m04_17_admin_stock_stock_history_search_list_e2e_cases.md` |
   | M04-18（在庫履歴CSV出力） | M04-18 | `functions/pf-eccube3/m04-18_admin_stock_stock_history_csv_export.md` | `integration_test/e2e/m04_18_admin_stock_stock_history_csv_export_e2e_cases.md` |
-  | M04-06（在庫切れリストCSV出力） | M04-06 | `functions/ec-cube-enterprise/m04-06_admin_stock_stock_shortage_csv_export.md` | `integration_test/e2e/m04_06_admin_stock_stock_shortage_csv_export_e2e_cases.md` |
-  | M04-07（在庫警戒リストCSV出力） | M04-07 | `functions/ec-cube-enterprise/m04-07_admin_stock_stock_warning_csv_export.md` | `integration_test/e2e/m04_07_admin_stock_stock_warning_csv_export_e2e_cases.md` |
   | M04-20（欠品履歴CSV出力） | M04-20 | `functions/ec-cube-enterprise/m04-20_admin_stock_stock_shortage_history_csv_export.md` | `integration_test/e2e/m04_20_admin_stock_stock_shortage_history_csv_export_e2e_cases.md` |
   | M04-01（在庫検索/一覧） | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
   | M04-02（在庫編集機能） | M04-02 | `functions/ec-cube-enterprise/m04-02_admin_stock_stock_edit.md` | `integration_test/e2e/m04_02_admin_stock_stock_edit_e2e_cases.md` |

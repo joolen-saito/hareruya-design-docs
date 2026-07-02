@@ -95,8 +95,8 @@
 
 ## トレーサビリティ
 - **カバーする業務フロー番号**: 店頭買取 / パターン3
-- **期待する主要機能No**: M06-01, M06-12, M04-21, M04-01, M06-03, M06-04, M06-05, M06-06, M06-07, A06-02, A06-03, A06-05, A06-13, A06-14, A06-15, A06-16, B06-01, O01-01
-- **シナリオに紐づく機能No**: M06-01, M06-12, M04-21, M04-01, M06-03, M06-04, M06-05, M06-06, M06-07, A06-02, A06-03, A06-05, A06-13, A06-14, A06-15, A06-16, B06-01, O01-01
+- **期待する主要機能No**: M06-01, M06-12, M04-21, M04-01, M06-03, M06-04, M06-05, M06-06, M06-07, A06-02, A06-03, A06-05, A06-13, A06-15, A06-16, B06-01, O01-01
+- **シナリオに紐づく機能No**: M06-01, M06-12, M04-21, M04-01, M06-03, M06-04, M06-05, M06-06, M06-07, A06-02, A06-03, A06-05, A06-13, A06-15, A06-16, B06-01, O01-01
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
@@ -113,7 +113,6 @@
   | API 店頭買取管理 — 店頭買取受注詳細更新 | A06-03 | `functions/pf-api/a06-03_api_store_purchase_otc_buy_order_update.md` | `integration_test/e2e/a06_03_api_store_purchase_otc_buy_order_update_e2e_cases.md` |
   | API 店頭買取管理 — 店頭買取受注ステータス更新 | A06-05 | `functions/pf-api/a06-05_api_store_purchase_otc_buy_order_status.md` | `integration_test/e2e/a06_05_api_store_purchase_otc_buy_order_status_e2e_cases.md` |
   | API 店頭買取管理 — 本人確認更新 | A06-13 | `functions/pf-api/a06-13_api_store_purchase_otc_buy_order_identification.md` | `integration_test/e2e/a06_13_api_store_purchase_otc_buy_order_identification_e2e_cases.md` |
-  | A06-14（店頭買取情報一部キャンセル情報連携） | A06-14 | `functions/ec-cube-enterprise/a06-14_api_store_purchase_otc_buy_order_partial_cancel_sync.md` | `integration_test/e2e/a06_14_api_store_purchase_otc_buy_order_partial_cancel_sync_e2e_cases.md` |
   | A06-15（店頭買取情報同一所属店舗メンバー取得） | A06-15 | `functions/ec-cube-enterprise/a06-15_api_store_purchase_otc_buy_order_same_store_members.md` | `integration_test/e2e/a06_15_api_store_purchase_otc_buy_order_same_store_members_e2e_cases.md` |
   | A06-16（店頭買取情報ダブルチェック者更新） | A06-16 | `functions/ec-cube-enterprise/a06-16_api_store_purchase_otc_buy_order_double_check_member_update.md` | `integration_test/e2e/a06_16_api_store_purchase_otc_buy_order_double_check_member_update_e2e_cases.md` |
   | B06-01（買取自動入庫バッチ） | B06-01 | `functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md` | `integration_test/e2e/b06_01_batch_purchase_purchase_auto_stock_e2e_cases.md` |

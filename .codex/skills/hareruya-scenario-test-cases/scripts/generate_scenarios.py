@@ -26,6 +26,15 @@ IGNORE_FLOW_TITLES = {"表紙", "全体図", "業務一覧", "凡例", "資料�
 OBSOLETE_PHRASES = ("設計どおり", "設計書に記載のとおり", "UI標準")
 GENERATED_MARKER = "<!-- generated-by: hareruya-scenario-test-cases -->"
 
+# Ph2（フェーズ2以降で対応）機能。Excel基本設計書の図形注記
+# 「…はPh2で対応するため、Ph1では実装しない」等を根拠に、機能全体がPh2の
+# ものをシナリオの機能割当（ステップ・機能Noリスト・トレーサビリティ）から除外する。
+# シナリオはPh1業務にPh2機能が混在するため、機能ID単位で除外する（シナリオ自体は残す）。
+EXCLUDED_FEATURE_IDS = {
+    "M03-43", "M04-06", "M04-07", "M06-13", "M08-11",
+    "M08-15", "M08-16", "A06-14", "B01-02", "B01-03", "F02-05",
+}
+
 EXPECTED_FUNCTIONS: dict[str, list[tuple[str, tuple[str, ...]]]] = {
     "店頭受取受注管理": [
         ("", ("M05-01", "M05-08", "M05-11", "M05-14", "M05-27", "A05-03", "A05-04", "B05-05")),
@@ -236,6 +245,8 @@ def expected_features(business_title: str, pattern: Pattern) -> list[str]:
     deduped: list[str] = []
     for feature in selected:
         feature = feature.upper()
+        if feature in EXCLUDED_FEATURE_IDS:
+            continue
         if feature not in deduped:
             deduped.append(feature)
     return deduped
@@ -253,6 +264,9 @@ def related_docs_with_dictionary(
     ranked, html_selected = related_docs(flow_text, pattern, docs, max_docs)
     selected: list[DesignDoc] = []
     for doc in expected + ranked:
+        # Ph2機能はキーワードスコアで拾われた ranked 経由でも混入しないよう除外する。
+        if doc.feature_no.upper() in EXCLUDED_FEATURE_IDS:
+            continue
         if doc.path not in {d.path for d in selected}:
             selected.append(doc)
         if len(selected) >= max(len(expected), max_docs):
