@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-28（送り状CSV出力） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#1-送り状CSV出力">1. 送り状CSV出力</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
+<a class="lv3" href="#CSV出力仕様">CSV出力仕様</a>
+<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#例外処理">例外処理</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/m04-28_admin_stock_stock_invoice_csv_export.md</p>
+        <h1>M04-28（送り状CSV出力）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>送り状CSV出力</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockMoveInstructionController::exportLabelCsv</code>（ルート <code>admin_stock_move_instruction_labels_export</code>）／<code>StockMoveInstructionLabelCsvExporterService</code>／<code>DtbStockMoveInstructionRepository::findByIdsForLabelExport</code>／Entity <code>DtbStockMoveInstruction</code>・<code>BaseInfo</code>）</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Repository/Entity）と既存テストを読み込み、出力列・対象・整形・例外を実装確認値で具体化。</td></tr></tbody></table></div>
+<h2 id="1-送り状CSV出力">1. 送り状CSV出力</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>在庫移動指示一覧画面でチェックした在庫移動指示を対象に、配送業者（ゆうプリR）が取り込める送り状フォーマットのCSVを出力する機能。送り元（移動元店舗）・送り先（移動先店舗）の店舗情報を1指示=1行で出力する。項目名は受注管理の送り状CSVに合わせており「注文者」「配送先」と表記するが、**注文者＝移動元店舗、配送先＝移動先店舗**として扱う。</p>
+<p>本機能のカスタマイズ区分は新規実装であり、現行（pf-eccube3）に対応実装はない。画面・出力列・業務条件は基本設計仕様書（0202_基本設計仕様書(在庫管理機能)）を正とし、URLエンドポイント・出力列の値生成・ファイル名・文字コードは ec-cube-enterprise 実装（<code>StockMoveInstructionLabelCsvExporterService</code>）を正とする。</p>
+<h3 id="本書で扱うこと">本書で扱うこと</h3>
+<ul><li>送り状CSVの出力列（23列）・各列の値生成</li><li>出力対象（チェックした移動指示ID）の渡し方と取得クエリ</li><li>ファイル名・文字コード・出力契機</li><li>対象未選択時・対象なし時の扱い</li></ul>
+<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
+<ul><li>在庫移動実績入力用CSV雛形の出力（M04-27）、在庫移動実績CSV取込（M04-29）</li><li>在庫移動指示一覧の検索条件・表示・チェックボックス制御（在庫移動指示一覧側設計）</li><li>店舗管理（<code>BaseInfo</code>）側の住所・会社名等の登録・編集仕様（店舗管理設計を正とする）</li><li>管理画面ログイン認証・権限制御そのもの（共通設計を正とする）</li></ul>
+<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>HTTPメソッド</th><th>ふるまい</th></tr></thead><tbody><tr><td>送り状CSVダウンロード</td><td><code>/%admin%/product/stock/move-instruction/labels</code>（<code>admin_stock_move_instruction_labels_export</code>）</td><td>POST</td><td>CSRFトークン検証後、<code>ids[]</code>（チェックした移動指示ID）を対象に送り状CSVをストリーミング出力する。<code>ids</code> が空・未指定なら404。</td></tr></tbody></table></div>
+<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。管理画面ログインを要する。一覧画面のダウンロードラベルは <code>admin.stock.move_instruction.csv_download_invoice</code>（「送り状CSVダウンロード」）。チェック未選択時の画面側アラートは <code>admin.stock.move_instruction.csv_invoice_select_rows</code>（「送り状CSVを出力する在庫移動指示にチェックを入れてください。」）。</p>
+<h3 id="CSV出力仕様">CSV出力仕様</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>出力単位</td><td>在庫移動指示1件＝CSV1行。<code>ids[]</code> に複数指定すると複数行を出力する。</td></tr><tr><td>対象取得</td><td><code>findByIdsForLabelExport($ids)</code>。<code>s.id IN (:ids)</code> を移動元店舗（<code>MoveFromBaseInfo</code>）・移動先店舗（<code>MoveToBaseInfo</code>）と各 <code>Pref</code>（都道府県）を JOIN して取得し、<code>id ASC</code> で並べる。</td></tr><tr><td>文字コード</td><td><code>CsvExportService</code> 経由で <code>eccube_csv_export_encoding</code>（既定 <code>SJIS-win</code>）へ変換。区切り文字 <code>eccube_csv_export_separator</code>、囲み文字 <code>"</code>。</td></tr><tr><td>ファイル名</td><td><code>stock_move_instruction_labels_{YmdHis}.csv</code>（<code>{YmdHis}</code> は出力時刻）。</td></tr><tr><td>Content-Type</td><td><code>application/octet-stream</code>（ダウンロード）。</td></tr><tr><td>完了ログ</td><td><code>log_info</code> に「在庫移動指示 送り状CSV出力完了. ファイル名: …」を記録。</td></tr></tbody></table></div>
+<h4 id="出力列-23列・ヘッダー固定">出力列（23列・ヘッダー固定）</h4>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>ヘッダー</th><th>値（実装）</th></tr></thead><tbody><tr><td>1</td><td>注文番号</td><td>移動指示ID（<code>DtbStockMoveInstruction::getId()</code>）</td></tr><tr><td>2</td><td>注文金額合計</td><td>基準価格合計（<code>getStandardTotalPrice()</code>）</td></tr><tr><td>3</td><td>注文者氏名</td><td>移動元店舗の「会社名 + 半角空白 + 店名」（例: 株式会社 晴れる屋 大宮）</td></tr><tr><td>4</td><td>注文者カナ</td><td>移動元店舗の「会社名カナ + 半角空白 + 店名カナ」</td></tr><tr><td>5</td><td>注文者郵便番号</td><td>移動元店舗の郵便番号（<code>BaseInfo::getPostalCode()</code>）</td></tr><tr><td>6</td><td>注文者都道府県</td><td>移動元店舗の都道府県名（<code>Pref::getName()</code>、未設定は空）</td></tr><tr><td>7</td><td>注文者住所</td><td>移動元店舗の住所1（<code>getAddr01()</code>）</td></tr><tr><td>8</td><td>注文者住所2</td><td>移動元店舗の住所2（<code>getAddr02()</code>）</td></tr><tr><td>9</td><td>注文者電話番号</td><td>移動元店舗の電話番号（<code>getPhoneNumber()</code>）</td></tr><tr><td>10</td><td>商品金額合計</td><td>基準価格合計（2と同値）</td></tr><tr><td>11</td><td>送料</td><td><code>0</code> 固定</td></tr><tr><td>12</td><td>送料(税抜)</td><td><code>0</code> 固定</td></tr><tr><td>13</td><td>手数料</td><td><code>0</code> 固定</td></tr><tr><td>14</td><td>手数料(税抜)</td><td><code>0</code> 固定</td></tr><tr><td>15</td><td>配送先氏名</td><td>移動先店舗の「会社名 + 半角空白 + 店名」</td></tr><tr><td>16</td><td>配送先カナ</td><td>移動先店舗の「会社名カナ + 半角空白 + 店名カナ」</td></tr><tr><td>17</td><td>配送先郵便番号</td><td>移動先店舗の郵便番号</td></tr><tr><td>18</td><td>配送先都道府県</td><td>移動先店舗の都道府県名</td></tr><tr><td>19</td><td>配送先住所</td><td>移動先店舗の住所1</td></tr><tr><td>20</td><td>配送先住所2</td><td>移動先店舗の住所2</td></tr><tr><td>21</td><td>配送先電話番号</td><td>移動先店舗の電話番号</td></tr><tr><td>22</td><td>郵便種別</td><td><code>0</code> 固定（0：ゆうパック）</td></tr><tr><td>23</td><td>発送方法</td><td><code>ゆうパック</code>（固定文字列）</td></tr></tbody></table></div>
+<p>会社名と店名の連結（3・4・15・16列）は、両者をtrimのうえ双方とも空でなければ半角スペース1つで連結し、片方のみのときはその値、両方空のときは空文字列とする（<code>joinWithHalfWidthSpace</code>）。</p>
+<p>&gt; Excel設計書の識別ID（1〜23）と実装の列順は一致する。識別IDの呼称「オーダーID／注文者…／配送先…」に対し、実装ヘッダーは受注の送り状CSVに合わせた「注文番号／注文者…／配送先…」となっている。</p>
+<h3 id="プロセスフロー">プロセスフロー</h3>
+<ol><li>一覧画面でチェックした移動指示の <code>ids[]</code> をPOST送信する。</li><li><code>set_time_limit(0)</code> ののち <code>isTokenValid()</code> でCSRFトークンを検証。</li><li><code>ids</code> が空配列なら <code>NotFoundHttpException</code>（404）。</li><li><code>StockMoveInstructionLabelCsvExporterService::exportByInstructionIds($ids)</code> を呼ぶ。</li><li><code>StreamedResponse</code> のコールバックでヘッダー（23列）を出力後、<code>findByIdsForLabelExport</code> で対象を取得し、各指示について <code>buildRow()</code> で1行ずつ出力する。</li><li>ファイル名・Content-Type を設定し、完了ログを出力してダウンロードさせる。</li></ol>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>**参照のみ**。<code>dtb_stock_move_instruction</code> と移動元・移動先の店舗（<code>BaseInfo</code>、<code>Pref</code>）を参照してCSVを生成するだけで、業務データは更新しない。</td></tr><tr><td>履歴・ログ</td><td>出力完了時にアプリケーションログ（<code>log_info</code>）を記録。取込履歴・在庫履歴等は作成しない。</td></tr></tbody></table></div>
+<h3 id="例外処理">例外処理</h3>
+<ul><li>**対象未選択**: <code>ids</code> が未指定／空配列の場合は404（既存テスト <code>testExportLabelCsvWithoutIdsReturns404</code> で <code>ids</code> 無し・<code>ids=[]</code> の双方を確認）。画面側ではチェック0件のとき <code>csv_invoice_select_rows</code> のアラートを表示し送信させない。</li><li>**CSRF不正**: <code>isTokenValid()</code> 失敗時は共通の不正トークン処理。</li><li>**対象なし**: 指定IDが存在しない場合、ヘッダーのみのCSV（データ行なし）を出力する（<code>findByIdsForLabelExport</code> が空配列を返すため）。</li><li>**店舗情報の欠落**: 郵便番号・都道府県・住所・電話番号・会社名・店名が未設定の列は空文字列として出力する（<code>?? ''</code>／都道府県は <code>Pref</code> が null なら空）。</li></ul>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>送り元・送り先の会社名・カナ・郵便番号・都道府県・住所1/2・電話番号は店舗管理（<code>BaseInfo</code> および <code>Pref</code>）から取得する。各列の登録仕様は店舗管理設計を正とする。</li><li>出力対象の移動指示は <code>dtb_stock_move_instruction</code>、基準価格合計は同テーブルの <code>standard_total_price</code>。</li><li>在庫移動実績入力用CSV雛形（M04-27）・在庫移動実績CSV取込（M04-29）とは列構成・対象・契機が異なる別機能である。</li></ul>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<ul><li>本機能は新規実装であり、現行（pf-eccube3）に同等機能はない。移行後は ec-cube-enterprise 実装が初出となる。</li><li>DB関連はec-cube-enterpriseを正とする。出力元テーブルは在庫移動指示（<code>dtb_stock_move_instruction</code>）、店舗情報は <code>BaseInfo</code>（都道府県は <code>Pref</code>）を実在確認済みとする。</li><li>基本設計仕様書が描く「移動元・移動先の会社名・カナ・郵便番号・住所・電話番号」の取得元は、店舗管理の <code>BaseInfo</code>（会社名 <code>company_name</code>／会社名カナ <code>company_kana</code>／店名 <code>shop_name</code>／店名カナ <code>shop_kana</code>／郵便番号 <code>postal_code</code>／住所 <code>addr01</code>・<code>addr02</code>／電話番号 <code>phone_number</code>）と <code>Pref</code>（都道府県名）であることを実装確認済み。列名・型・制約の詳細はec-cube-enterpriseのEntity / Migrationを正とする。</li></ul>
+<details>
+<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+<pre><code class="language-text">送り状CSV出力
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+堀部
+作成日
+2025-08-25
+更新者
+石川
+更新日
+2026-02-12
+機能No
+M04-28
+機能名
+送り状CSV出力
+概要
+—
+処理概要
+CSV出力項目
+識別ID項目名備考
+1オーダーID移動指示ID
+2注文金額合計移動する商品の基準価格合計
+3注文者氏名店舗管理の移動元の会社名 + 半角空白 +移動元の店名（例: 株式会社 晴れる屋 大宮）
+4注文者カナ店舗管理の移動元の会社名(カナ) + 半角空白 +移動元の店名(カナ)（例: カブシキガイシャ ハレルヤ オオミヤ）
+5注文者郵便番号店舗管理の移動元の郵便番号
+6注文者都道府県店舗管理の移動元の都道府県
+7注文者住所店舗管理の移動元の住所1
+8注文者住所2店舗管理の移動元の住所2
+9注文者電話番号店舗管理の移動元の電話番号
+10商品金額合計移動する商品の基準価格合計
+11送料0固定
+12送料(税抜)0固定
+13手数料0固定
+14手数料(税抜)0固定
+15配送先氏名店舗管理の移動先の会社名 + 半角空白 +移動先の店名（例: 株式会社 晴れる屋 大宮）
+16配送先カナ店舗管理の移動先の会社名(カナ) + 半角空白 +移動先の店名(カナ)（例: カブシキガイシャ ハレルヤ オオミヤ）
+17配送先郵便番号店舗管理の移動先の郵便番号
+18配送先都道府県店舗管理の移動先の都道府県
+19配送先住所店舗管理の移動先の住所1
+20配送先住所2店舗管理の移動先の住所2
+21配送先電話番号店舗管理の移動先の電話番号
+22郵便種別0固定（0：ゆうパック）
+23発送方法ゆうパック
+カスタマイズ説明
+・カスタマイズ要件
+・送り元、送り先の店舗情報をCSVにて出力する
+・ゆうプリRが取り込めるフォーマットで出力する
+機能仕様処理概要
+・項目名は受注管理で出力する送り状の項目名と合わせてあるため注文者名、配送先となっているが
+注文者を移動元店舗、配送先を移動先店舗として出力する</code></pre>
+</details>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

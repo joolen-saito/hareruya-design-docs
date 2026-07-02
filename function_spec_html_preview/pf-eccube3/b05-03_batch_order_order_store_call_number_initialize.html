@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>バッチ 受注管理 — 店頭注文番号初期化 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#店頭注文番号初期化を実行する-order-batch-truncateWaitingNumber">店頭注文番号初期化を実行する（`order:batch truncateWaitingNumber`）</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv2" href="#API・バッチ結果">API・バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md</p>
+        <h1>バッチ 受注管理 — 店頭注文番号初期化</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>店頭注文番号テーブルの全レコードを削除し、採番カウンタを初期値に戻すバッチである。コマンドライン（コンソールコマンド）から実行する。店頭販売で利用者へ提示する整理番号（店頭注文番号）は、店頭注文番号テーブルへ採番のたびに追加され、テーブルの自動採番値で連番が決まる。本バッチはこのテーブルを空にし、自動採番値を1へ戻すことで、次回以降の店頭注文番号を最初の番号から再採番できる状態にする。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（店頭注文番号初期化処理）、店頭注文番号を扱うリポジトリを正とする。カスタマイズ区分はカスタマイズであり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
+<p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+<p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>バッチの起動方法（コンソールコマンド）</li><li>店頭注文番号テーブルの全削除と採番カウンタの初期化</li><li>初期化に伴うデータ消失と再採番の挙動</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能・運用の設計を正とする。</p>
+<ul><li>店頭注文番号の採番そのもの（店頭販売・受注処理を正とする）</li><li>店頭注文番号を表示する整理番号モニタ画面（画面側の設計を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>現行（pf-eccube3）の挙動と移行先（ec-cube-enterprise）の差を記録する。挙動は現行リポを正とし、DB関連はec-cube-enterpriseを正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>採番方式</td><td>店頭注文番号テーブル<code>dtb_waiting_number</code>の自動採番値（AUTO_INCREMENT）で連番を決める。</td><td>採番カウンタを専用テーブル<code>dtb_waiting_number_counter</code>（<code>base_info_id</code>・<code>current_value</code>）で保持する。<code>dtb_waiting_number</code>は<code>id</code>・<code>base_info_id</code>・<code>order_id</code>・<code>waiting_number</code>を持つ。</td></tr><tr><td>採番のリセット対象</td><td><code>ALTER TABLE dtb_waiting_number AUTO_INCREMENT = 1</code>でテーブルの自動採番値を1へ戻す。</td><td>カウンタ列<code>dtb_waiting_number_counter.current_value</code>を初期値へ戻す方式が想定される（バッチの存在・初期化手順はec-cube-enterprise実装で要確認）。</td></tr><tr><td>整理番号の受注側保持</td><td>受注サブテーブル<code>dtb_order_sub</code>の<code>waiting_number</code>に保持する。</td><td>補助表<code>dtb_order_sub</code>を持たず、受注<code>dtb_order</code>の<code>waiting_number</code>（店舗販売用整理番号）に統合している。</td></tr></tbody></table></div>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>店頭注文番号</td><td>店頭販売で利用者へ提示する整理番号。店頭注文番号テーブルの自動採番値で連番が決まる。</td></tr><tr><td>店頭注文番号テーブル</td><td>採番済みの店頭注文番号と紐づく受注IDを保持するテーブル（<code>dtb_waiting_number</code>）。</td></tr><tr><td>採番カウンタ</td><td>テーブルの自動採番値（AUTO_INCREMENT）。次に採番する番号を決める。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>order:batch truncateWaitingNumber</code></td><td>店頭注文番号テーブルの全レコードを削除し、採番カウンタを1へ戻す。</td></tr></tbody></table></div>
+<p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="店頭注文番号初期化を実行する-order-batch-truncateWaitingNumber">店頭注文番号初期化を実行する（<code>order:batch truncateWaitingNumber</code>）</h3>
+<ol><li>店頭注文番号テーブルの全レコードを削除する。</li><li>店頭注文番号テーブルの採番カウンタを1へ戻す。</li><li>処理を終了する。</li></ol>
+<p>抽出条件による絞り込みはなく、テーブル全体を対象とする。対象が0件の場合も削除文と採番カウンタ初期化を実行し、結果として空のテーブルと初期化済みのカウンタになる。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象</td><td>店頭注文番号テーブルの全レコード。日付や状態による絞り込みは行わない。</td></tr><tr><td>削除</td><td><code>DELETE FROM dtb_waiting_number</code>でテーブルの全レコードを削除する。</td></tr><tr><td>採番カウンタ初期化</td><td><code>ALTER TABLE dtb_waiting_number AUTO_INCREMENT = 1</code>で次回採番値を1に戻す。</td></tr><tr><td>計算</td><td>集計・金額計算は行わない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API・バッチ結果">API・バッチ結果</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。引数は使用しない。</td></tr><tr><td>実行条件</td><td>特になし。対象が0件でも実行できる。</td></tr><tr><td>成功結果</td><td>店頭注文番号テーブルが空になり、採番カウンタが1へ戻る。</td></tr><tr><td>失敗結果</td><td>削除またはカウンタ初期化の途中で例外が発生した場合は処理が中断する。本バッチは例外捕捉や通知を行わない。</td></tr><tr><td>再実行時</td><td>何度実行しても結果は同一（空テーブル・カウンタ1）になる。冪等である。</td></tr></tbody></table></div>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>店頭注文番号テーブルの全削除と採番カウンタの初期化。</td></tr><tr><td>失敗時出力</td><td>例外発生時はコンソールへ例外が伝播する。本バッチ独自のログ・通知は行わない。</td></tr><tr><td>副作用</td><td>店頭注文番号テーブルのレコード消失と採番カウンタのリセット。</td></tr></tbody></table></div>
+<p>このバッチは破壊的であり、テーブル内の店頭注文番号と紐づく受注IDの対応はすべて失われる。実行後は過去に提示済みの整理番号を本テーブルから参照できなくなり、採番は最初の番号から再開する。実行タイミングの妥当性は運用を正とする。</p>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>多重実行</td><td>ロックを持たない。複数同時実行でも結果は空テーブル・カウンタ1で同一になる。</td></tr><tr><td>途中失敗・再実行</td><td>削除と採番カウンタ初期化は別の文として順に実行する。削除のみ成功してカウンタ初期化前に中断した場合でも、再実行で空テーブル・カウンタ1に収束する。</td></tr><tr><td>参照時点</td><td>実行時点の店頭注文番号テーブルの全レコードを対象とする。</td></tr><tr><td>データ消失</td><td>削除した店頭注文番号と受注IDの対応は復元しない。整理番号モニタ等の参照先は実行後に空となる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+<p>テーブル・列名はec-cube-enterpriseを正とする。現行（pf-eccube3）と異なる場合は移行先名を主とし現行名を括弧で添える。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_waiting_number</code></td><td><code>waiting_number</code></td><td>店頭注文番号。現行は自動採番値で初期化時にAUTO_INCREMENTを1へ戻す。</td></tr><tr><td><code>dtb_waiting_number</code></td><td><code>order_id</code></td><td>紐づく受注ID。全レコード削除の対象。</td></tr><tr><td><code>dtb_waiting_number_counter</code></td><td><code>current_value</code></td><td>移行先の採番カウンタ（現行はテーブルのAUTO_INCREMENTで代替。初期化対象はこの列となる見込み、ec-cube-enterprise実装で要確認）。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_waiting_number / dtb_waiting_number_counter</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>対象が0件</td><td>削除文と採番カウンタ初期化を実行し、空テーブル・カウンタ1で完了する。</td></tr><tr><td>削除・初期化中の例外</td><td>例外を捕捉せず処理を中断し、コンソールへ伝播する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>起動</td><td>バッチコマンドの起動時に日時付きのコンソール出力を行う。</td></tr></tbody></table></div>
+<p>本バッチ独自の件数ログ・完了ログは出力しない。</p>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>トークン・接続秘密値</li><li>Cookie値・セッションIDの完全値</li></ul>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>ロックファイル等による多重起動防止は行わない。削除と採番カウンタ初期化は1トランザクションでまとめた更新ではなく、それぞれ独立した文として実行する。長時間処理向けの実行時間制限解除や逐次フラッシュは行わない。本バッチは楽観ロック・悲観ロックの対象を持たない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

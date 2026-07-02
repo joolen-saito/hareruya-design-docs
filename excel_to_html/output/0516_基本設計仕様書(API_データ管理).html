@@ -1,0 +1,1272 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0516_基本設計仕様書(API_データ管理)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* function-design-embed:start */
+    .function-design-embed {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-header {
+      margin-bottom: 18px;
+    }
+
+    .function-design-header h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .function-design-header h4 {
+      margin: 0;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-source {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .function-design-note {
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      border-left: 3px solid #f0ad4e;
+      background: rgba(240, 173, 78, 0.10);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .function-design-body h1,
+    .function-design-body h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+    }
+
+    .function-design-body h3 {
+      margin: 22px 0 10px;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-body h4 {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .function-design-body p {
+      margin: 9px 0;
+    }
+
+    .function-design-body ul,
+    .function-design-body ol {
+      margin: 9px 0;
+      padding-left: 26px;
+    }
+
+    .function-design-body li {
+      margin: 3px 0;
+    }
+
+    .function-design-body code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--band);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .function-design-body pre {
+      overflow-x: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      white-space: pre-wrap;
+    }
+
+    .function-design-body pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .function-design-body .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .function-design-body table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .function-design-body th,
+    .function-design-body td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .function-design-body th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .function-design-body tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* function-design-embed:end */
+</style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0516_基本設計仕様書(API_データ管理)</p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">トップバナー情報取得</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">言語コードに紐づいたトップバナーの情報一覧を取得</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">サイトリニューアル</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+            <p class="doc-p" style="--lv:0">データ管理API機能</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>高久</td><td>2025-08-12</td></tr>
+                <tr><td>0.2</td><td>表記ゆれ および フォーマット調整</td><td>高久</td><td>2025-09-17</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">API設計</h4>
+            <p class="doc-p" style="--lv:1">A16-01 トップバナー情報取得</p>
+            <p class="doc-p" style="--lv:1">A16-02 言語コードに紐づいたトップバナーの情報一覧を取得</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>トップバナー情報取得</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>データ管理API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-17</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A16-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>トップバナー情報取得</dd></div>
+            <div class="kv"><dt>概要</dt><dd>指定されたトップバナーIDの出力情報および言語情報をJSON形式で出力</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/topBanner/{バナーID}</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <p class="doc-p" style="--lv:0">トップバナーIDからトップバナー情報を取得</p>
+            <p class="doc-p" style="--lv:0">記事サイト各ページ下部のバナー部分を載せる際に呼び出される</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>指定されたトップバナーIDの出力情報および言語情報をJSON形式で出力される</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>バナーID</td><td>数字(整数)</td><td>〇</td><td>-</td><td>1</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">/topBanner/1</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200　正常</p>
+            <p class="doc-p" style="--lv:0">404　該当データがない場合(トップバナーIDが存在しない)</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>id</td><td>数字(整数)</td><td>バナーID</td></tr>
+                <tr><td>image_url</td><td>文字型</td><td>バナーURL</td></tr>
+                <tr><td>link</td><td>文字型</td><td>バナーリンク先</td></tr>
+                <tr><td>disp_type</td><td>数字(整数)</td><td>表示タイプ(0:非表示 1:表示)</td></tr>
+                <tr><td>languages.id</td><td>数字(整数)</td><td>言語ID</td></tr>
+                <tr><td>languages.name_jp</td><td>文字型</td><td>言語名(日本語)</td></tr>
+                <tr><td>languages.name_en</td><td>文字型</td><td>言語名(英語)</td></tr>
+                <tr><td>languages.code</td><td>文字型</td><td>言語コード</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"image_url": "https://files.hareruyamtg.com/banner/tc/689c4415eb6ab916.jpeg?d=800x450",</p>
+            <p class="doc-p" style="--lv:1">"link": "https://www.hareruyamtg.com/ja/products/search?tags=656&amp;saleFlg=1",</p>
+            <p class="doc-p" style="--lv:1">"disp_type": 0,</p>
+            <p class="doc-p" style="--lv:1">"languages": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "日本語",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code": "JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a16-01-a16-01_api_top_banner_get -->
+      <section class="function-design-embed" id="function-design-a16-01-a16-01_api_top_banner_get" data-source="functions/pf-api/a16-01_api_top_banner_get.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a16-01_api_top_banner_get.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A16-01 トップバナーIDのトップバナー情報を取得 / API データ管理 — トップバナーIDのトップバナー情報を取得</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-概要">概要</h2>
+          <p>トップバナーIDを指定してトップバナー情報を取得するAPIである。pf-apiが提供するJSON APIである。TODOリストの「コンテンツ管理」（A08-01）と「データ管理」（A16-01）の同一エンドポイントをまとめる。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのトップバナー取得処理、ルート定義、トップバナーマスタを扱うリポジトリを正とする。本機能のカスタマイズ区分は現行踏襲であり、挙動はpf-apiの実装を参照し、DB関連（テーブル・列）の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>トップバナーIDによるトップバナー情報の取得</li><li>該当が無い場合の応答</li></ul>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>指定言語のトップバナー一覧取得（一覧取得APIを正とする）</li><li>トップバナーの設定・管理（トップバナー管理を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>本機能は現行踏襲であり、挙動の参照は現行のpf-api、DB関連の正はec-cube-enterpriseとする。テーブル名・列名は現行と移行先で一致する。移行先ではトップバナーマスタに表示用の追加列があるが、本APIの応答項目（ID・画像URL・リンク・表示タイプ・関連言語）には影響しない。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th><th>扱い</th></tr></thead><tbody><tr><td>トップバナーマスタ</td><td><code>mtb_top_banner</code>（id・image_url・link・disp_type）</td><td><code>mtb_top_banner</code>（id・image_url・link・disp_typeに加え、image_alt・sort_no）</td><td>同名テーブル。移行先は alt属性（<code>image_alt</code>）と表示順（<code>sort_no</code>）の列を持つ。本APIの応答には含めない。</td></tr><tr><td>言語関連</td><td><code>dtb_top_banner_language</code>（top_banner_id・language_id）</td><td><code>dtb_top_banner_language</code>（top_banner_id・language_id）</td><td>同一スキーマ。トップバナーと言語の多対多関連。</td></tr><tr><td>言語マスタ</td><td><code>mtb_language</code>（id・name_jp・name_en・code）</td><td><code>mtb_language</code>（id・name_jp・name_en・code・sort_no）</td><td>同名テーブル。移行先は並び順（<code>sort_no</code>）の列を持つ。応答の言語名・言語コードに用いる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>トップバナーIDのトップバナー情報取得</td><td><code>GET /topBanner/{id}</code></td><td>トップバナーIDに対応するトップバナー情報をJSONで返す。該当が無い場合は404を返す。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。</p>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a16-01-a16-01_api_top_banner_get-トップバナー情報を取得する-GET-topBanner-id">トップバナー情報を取得する（GET <code>/topBanner/{id}</code>）</h3>
+          <ol><li>パスのトップバナーIDを受け取る。</li><li>トップバナーマスタのリポジトリから当該IDのトップバナーを取得する。</li><li>取得できない場合はコード404のJSONを返す。</li><li>取得できた場合はトップバナー情報をJSONで返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象データ</td><td>リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。DBまたはリポジトリから取得した値をJSON応答へ整形して返す。</td></tr><tr><td>応答値</td><td>応答フィールドは取得時点の値を返す。表示用の加工やフロントエンド側の表示制御は呼び出し元クライアントの設計を正とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-入出力">入出力</h2>
+          <h3 id="function-design-a16-01-a16-01_api_top_banner_get-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>取得対象のトップバナーID。</td></tr></tbody></table></div>
+          <h3 id="function-design-a16-01-a16-01_api_top_banner_get-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>integer</td><td>トップバナーID。</td></tr><tr><td><code>imageUrl</code></td><td>string</td><td>画像URL。</td></tr><tr><td><code>link</code></td><td>string</td><td>リンク先URL。</td></tr><tr><td><code>dispType</code></td><td>integer</td><td>表示タイプ。</td></tr><tr><td><code>languages</code></td><td>array</td><td>関連する言語の配列。要素はオブジェクトで、子フィールドは<code>id</code>（integer、言語ID）、<code>nameJp</code>（string、言語名・日本語）、<code>nameEn</code>（string、言語名・英語）、<code>code</code>（string、言語コード）。</td></tr></tbody></table></div>
+          <h3 id="function-design-a16-01-a16-01_api_top_banner_get-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>該当IDのトップバナーが存在しない</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
+          <h3 id="function-design-a16-01-a16-01_api_top_banner_get-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
+          <pre><code class="language-json">{
+            "id": 1,
+            "imageUrl": "https://example.com/banner/top_001.png",
+            "link": "https://example.com/campaign",
+            "dispType": 1,
+            "languages": [
+              { "id": 1, "nameJp": "日本語", "nameEn": "Japanese", "code": "ja" }
+            ]
+          }</code></pre>
+          <h3 id="function-design-a16-01-a16-01_api_top_banner_get-副作用">副作用</h3>
+          <p>無し（参照のみ）。</p>
+          <p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点のトップバナーマスタ情報を返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する範囲のみ記載する。テーブル名・列名はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>トップバナーマスタ（<code>mtb_top_banner</code>）</td><td>id・image_url・link・disp_type</td><td>トップバナーIDで取得し、応答の画像URL・リンク・表示タイプに用いる。</td></tr><tr><td>トップバナー言語関連（<code>dtb_top_banner_language</code>）</td><td>top_banner_id・language_id</td><td>トップバナーと言語の多対多関連。</td></tr><tr><td>言語マスタ（<code>mtb_language</code>）</td><td>id・name_jp・name_en・code</td><td>応答の関連言語（言語名・言語コード）に用いる。</td></tr></tbody></table></div>
+          <h3 id="function-design-a16-01-a16-01_api_top_banner_get-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_top_banner_language / mtb_language / mtb_top_banner</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>トップバナー情報取得</th></tr></thead><tbody><tr><td>クライアント</td><td>クライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当トップバナーなし</td><td>コード404のJSONを返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-01-a16-01_api_top_banner_get-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a16-01-a16-01_api_top_banner_get -->
+</section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>言語コードに紐づいたトップバナーの情報一覧を取得</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>データ管理API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-17</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A16-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>言語コードに紐づいたトップバナーの情報一覧を取得</dd></div>
+            <div class="kv"><dt>概要</dt><dd>指定された言語コードに紐づいたトップバナー情報一覧をJSON形式で出力</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-4-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/topBanners/{言語コード}.json</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <p class="doc-p" style="--lv:0">指定言語の設定済みトップバナー一覧を取得</p>
+            <p class="doc-p" style="--lv:0">記事サイト各ページ下部のバナー部分を載せる際に呼び出される</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>指定された言語コードに紐づいたトップバナー情報の一覧をJSON形式で出力する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>言語コード</td><td>文字型</td><td>〇</td><td>2</td><td>JP</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">/api/topBanners/JP.json</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200　正常</p>
+            <p class="doc-p" style="--lv:0">404　該当データがない場合(言語コード未設定・言語コードに紐づいたトップバナーIDがない場合)</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>id</td><td>数字(整数)</td><td>バナーID</td></tr>
+                <tr><td>image_url</td><td>文字型</td><td>バナーURL</td></tr>
+                <tr><td>link</td><td>文字型</td><td>バナーリンク先</td></tr>
+                <tr><td>disp_type</td><td>数字(整数)</td><td>表示タイプ(0:非表示 1:表示)</td></tr>
+                <tr><td>languages.id</td><td>数字(整数)</td><td>言語ID</td></tr>
+                <tr><td>languages.name_jp</td><td>文字型</td><td>言語名(日本語)</td></tr>
+                <tr><td>languages.name_en</td><td>文字型</td><td>言語名(英語)</td></tr>
+                <tr><td>languages.code</td><td>文字型</td><td>言語コード</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 2,</p>
+            <p class="doc-p" style="--lv:1">"image_url": "https://files.hareruyamtg.com/banner/tc/68a57910318c4190.jpeg?d=800x450",</p>
+            <p class="doc-p" style="--lv:1">"link": "https://www.hareruyamtg.com/ja/products/search?tags=657&amp;saleFlg=1",</p>
+            <p class="doc-p" style="--lv:1">"disp_type": 1,</p>
+            <p class="doc-p" style="--lv:1">"languages": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "日本語",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code": "JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 3,</p>
+            <p class="doc-p" style="--lv:1">"image_url": "https://files.hareruyamtg.com/banner/tc/6881cd0619b07940.jpeg?d=800x450",</p>
+            <p class="doc-p" style="--lv:1">"link": "https://www.hareruyamtg.com/ja/products/search?tags=743",</p>
+            <p class="doc-p" style="--lv:1">"disp_type": 1,</p>
+            <p class="doc-p" style="--lv:1">"languages": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "日本語",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code": "JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 5,</p>
+            <p class="doc-p" style="--lv:1">"image_url": "https://files.hareruyamtg.com/banner/tc/6878848a8714b725.jpeg?d=800x450",</p>
+            <p class="doc-p" style="--lv:1">"link": "https://www.hareruyamtg.com/ja/products/search?tags=774",</p>
+            <p class="doc-p" style="--lv:1">"disp_type": 1,</p>
+            <p class="doc-p" style="--lv:1">"languages": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "日本語",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code": "JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 6,</p>
+            <p class="doc-p" style="--lv:1">"image_url": "https://files.hareruyamtg.com/img/usr/new_product_portal/eoe/banner_2507_eoe.webp",</p>
+            <p class="doc-p" style="--lv:1">"link": "https://www.hareruyamtg.com/ja/user_data/lp_edge_of_eternities",</p>
+            <p class="doc-p" style="--lv:1">"disp_type": 1,</p>
+            <p class="doc-p" style="--lv:1">"languages": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "日本語",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code": "JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 7,</p>
+            <p class="doc-p" style="--lv:1">"image_url": "https://files.hareruyamtg.com/img/usr/new_product_portal/fin/banner_2507_mtg_x_FF_Nowonsale_JP.webp",</p>
+            <p class="doc-p" style="--lv:1">"link": "https://www.hareruyamtg.com/ja/products/search?tags=741",</p>
+            <p class="doc-p" style="--lv:1">"disp_type": 1,</p>
+            <p class="doc-p" style="--lv:1">"languages": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "日本語",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code": "JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 20,</p>
+            <p class="doc-p" style="--lv:1">"image_url": "https://files.hareruyamtg.com/img/usr/Campaign/startcampaign1000/banner.webp",</p>
+            <p class="doc-p" style="--lv:1">"link": "https://www.hareruyamtg.com/ja/user_data/mtg-startcampaign1000",</p>
+            <p class="doc-p" style="--lv:1">"disp_type": 1,</p>
+            <p class="doc-p" style="--lv:1">"languages": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "日本語",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code": "JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a16-02-a16-02_api_top_banner_list -->
+      <section class="function-design-embed" id="function-design-a16-02-a16-02_api_top_banner_list" data-source="functions/pf-api/a16-02_api_top_banner_list.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a16-02_api_top_banner_list.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A16-02 指定言語の設定済みトップバナー一覧を取得 / API データ管理 — 指定言語の設定済みトップバナー一覧を取得</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-概要">概要</h2>
+          <p>言語コードを指定して、設定済みのトップバナー一覧を取得するAPIである。pf-apiが提供するJSON APIである。TODOリストの「コンテンツ管理」（A08-02）と「データ管理」（A16-02）の同一エンドポイントをまとめる。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのトップバナー一覧取得処理、ルート定義、トップバナー・言語マスタを扱うリポジトリを正とする。本機能のカスタマイズ区分は現行踏襲であり、挙動はpf-apiの実装を参照し、DB関連（テーブル・列）の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>指定言語の設定済みトップバナー一覧の取得</li><li>言語が存在しない場合の応答</li></ul>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>トップバナーIDによる単一取得（単一取得APIを正とする）</li><li>トップバナーの設定・管理（トップバナー管理を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>本機能は現行踏襲であり、挙動の参照は現行のpf-api、DB関連の正はec-cube-enterpriseとする。テーブル名・列名は現行と移行先で一致する。移行先ではトップバナーマスタと言語マスタに表示用の追加列があるが、本APIの絞り込み条件・応答項目には影響しない。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th><th>扱い</th></tr></thead><tbody><tr><td>トップバナーマスタ</td><td><code>mtb_top_banner</code>（id・image_url・link・disp_type）</td><td><code>mtb_top_banner</code>（id・image_url・link・disp_typeに加え、image_alt・sort_no）</td><td>同名テーブル。移行先は alt属性（<code>image_alt</code>）と表示順（<code>sort_no</code>）の列を持つ。設定状態・言語で絞り込む。</td></tr><tr><td>言語関連</td><td><code>dtb_top_banner_language</code>（top_banner_id・language_id）</td><td><code>dtb_top_banner_language</code>（top_banner_id・language_id）</td><td>同一スキーマ。トップバナーと言語の多対多関連。</td></tr><tr><td>言語マスタ</td><td><code>mtb_language</code>（id・name_jp・name_en・code）</td><td><code>mtb_language</code>（id・name_jp・name_en・code・sort_no）</td><td>同名テーブル。移行先は並び順（<code>sort_no</code>）の列を持つ。言語コードの存在確認に用いる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>指定言語の設定済みトップバナー一覧取得</td><td><code>GET /topBanners/{languageCode}</code></td><td>指定言語の設定済みトップバナー一覧をJSONで返す。言語が存在しない場合は404を返す。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。</p>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a16-02-a16-02_api_top_banner_list-トップバナー一覧を取得する-GET-topBanners-languageCode">トップバナー一覧を取得する（GET <code>/topBanners/{languageCode}</code>）</h3>
+          <ol><li>パスの言語コードを受け取る。</li><li>指定言語の設定済みトップバナー一覧を取得する。</li><li>一覧が空、または当該言語コードが言語マスタに存在しない場合はコード404のJSONを返す。</li><li>取得できた場合はトップバナー一覧をJSONで返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>取得対象</td><td>指定言語の設定済みトップバナー。</td></tr><tr><td>言語確認</td><td>言語コードが言語マスタに存在することを確認する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-入出力">入出力</h2>
+          <h3 id="function-design-a16-02-a16-02_api_top_banner_list-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>languageCode</code></td><td>パス</td><td>string</td><td>必須</td><td>絞り込み対象の言語コード。</td></tr></tbody></table></div>
+          <h3 id="function-design-a16-02-a16-02_api_top_banner_list-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。本APIはトップバナーオブジェクトの配列をそのまま返す（ラップオブジェクトを持たない）。各要素のフィールドは次のとおり。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>integer</td><td>トップバナーID。</td></tr><tr><td><code>imageUrl</code></td><td>string</td><td>画像URL。</td></tr><tr><td><code>link</code></td><td>string</td><td>リンク先URL。</td></tr><tr><td><code>dispType</code></td><td>integer</td><td>表示タイプ。</td></tr><tr><td><code>languages</code></td><td>array</td><td>関連する言語の配列。要素はオブジェクトで、子フィールドは<code>id</code>（integer、言語ID）、<code>nameJp</code>（string、言語名・日本語）、<code>nameEn</code>（string、言語名・英語）、<code>code</code>（string、言語コード）。</td></tr></tbody></table></div>
+          <h3 id="function-design-a16-02-a16-02_api_top_banner_list-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>一覧が空かつ当該言語コードが言語マスタに存在しない</td><td><code>{code, message}</code>（"Language code is not found"）</td></tr></tbody></table></div>
+          <h3 id="function-design-a16-02-a16-02_api_top_banner_list-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
+          <pre><code class="language-json">[
+            {
+              "id": 1,
+              "imageUrl": "https://example.com/banner/top_001.png",
+              "link": "https://example.com/campaign",
+              "dispType": 1,
+              "languages": [
+                { "id": 1, "nameJp": "日本語", "nameEn": "Japanese", "code": "ja" }
+              ]
+            }
+          ]</code></pre>
+          <h3 id="function-design-a16-02-a16-02_api_top_banner_list-副作用">副作用</h3>
+          <p>無し（参照のみ）。</p>
+          <p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-業務ルール・計算">業務ルール・計算</h2>
+          <ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の設定済みトップバナーを返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する範囲のみ記載する。テーブル名・列名はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>トップバナーマスタ（<code>mtb_top_banner</code>）</td><td>id・image_url・link・disp_type</td><td>指定言語の設定済みトップバナーの取得・応答に用いる。</td></tr><tr><td>トップバナー言語関連（<code>dtb_top_banner_language</code>）</td><td>top_banner_id・language_id</td><td>言語による絞り込みに用いる多対多関連。</td></tr><tr><td>言語マスタ（<code>mtb_language</code>）</td><td>id・name_jp・name_en・code</td><td>言語コードの存在確認、応答の関連言語に用いる。</td></tr></tbody></table></div>
+          <h3 id="function-design-a16-02-a16-02_api_top_banner_list-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_top_banner_language / mtb_language / mtb_top_banner</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>トップバナー一覧取得</th></tr></thead><tbody><tr><td>クライアント</td><td>クライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>一覧が空・言語が存在しない</td><td>コード404のJSONを返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a16-02-a16-02_api_top_banner_list-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a16-02-a16-02_api_top_banner_list -->
+</section>
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

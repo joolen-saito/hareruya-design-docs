@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>デッキ管理 — アーキタイプ登録・編集・削除 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#新規登録画面を表示する-GET-admin-archetype-new">新規登録画面を表示する（`GET admin_archetype_new`）</a>
+<a class="lv3" href="#新規登録を送信する-POST-admin-archetype-create">新規登録を送信する（`POST admin_archetype_create`）</a>
+<a class="lv3" href="#編集画面を表示する-GET-admin-archetype-edit">編集画面を表示する（`GET admin_archetype_edit`）</a>
+<a class="lv3" href="#更新を送信する-POST-admin-archetype-update">更新を送信する（`POST admin_archetype_update`）</a>
+<a class="lv3" href="#削除する-DELETE-admin-archetype-delete">削除する（`DELETE admin_archetype_delete`）</a>
+<a class="lv3" href="#代表カードモーダルで検索する-XHR">代表カードモーダルで検索する（XHR）</a>
+<a class="lv3" href="#代表カードを-ID-で確定する-XHR">代表カードを ID で確定する（XHR）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
+<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m15-09_admin_deck_deck_archetype_crud.md</p>
+        <h1>デッキ管理 — アーキタイプ登録・編集・削除</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>HareruyaEc プラグインが管理画面の「デッキ管理」配下で提供する、アーキタイプ（デッキ分類のマスタ）の新規登録、既存行の編集、削除を行う機能である。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。本機能のカスタマイズ区分はカスタマイズであり、挙動は現行リポ pf-eccube3 に配置された HareruyaEc プラグイン実装を確認値とし、DB関連は ec-cube-enterprise を正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。</p>
+<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>サイドメニュー「アーキタイプ管理」から一覧へ入り、「新規登録」相当で新規画面へ進む</td><td><code>GET /{admin_route}/archetype/new</code></td><td>空のフォームが表示される。</td></tr><tr><td>新規画面で「登録」を押す</td><td><code>POST /{admin_route}/archetype</code></td><td>検証成功時は登録後、当該 ID の編集 URL へリダイレクトする。</td></tr><tr><td>一覧の名称リンクから編集へ</td><td><code>GET /{admin_route}/archetype/{id}</code></td><td>既存値が載ったフォームが表示される。ID 不存在時は 404。</td></tr><tr><td>編集画面で「更新」を押す</td><td><code>POST /{admin_route}/archetype/{id}</code></td><td>検証成功時は同じ編集 URL へリダイレクトする。</td></tr><tr><td>編集画面または一覧のドロップダウンから「削除」を選び、確認後に実行</td><td><code>DELETE /{admin_route}/archetype/{id}</code></td><td>関連デッキが無ければ論理削除のうえ一覧または検索へ戻る。関連があればエラー表示のうえ検索 1 ページ目へ戻る。</td></tr><tr><td>編集画面で「代表カード選択」→ 検索 → 一覧から 1 件確定</td><td><code>POST</code>／<code>GET</code> の代表カード検索 API、<code>POST</code> の ID 解決 API</td><td>モーダル内の一覧更新と、フォーム hidden・プレビュー画像・カード名の更新。</td></tr><tr><td>編集画面の「代表カード」モーダル用。カード画像の検索結果 HTML 片を返す（XHR）。</td><td><code>POST /{admin_route}/archetype/search/main_card/html</code></td><td>編集画面の「代表カード」モーダル用。カード画像の検索結果 HTML 片を返す（XHR）。</td></tr><tr><td>同上のページング（XHR）。</td><td><code>GET /{admin_route}/archetype/search/main_card/html/{page_no}</code></td><td>同上のページング（XHR）。</td></tr><tr><td>代表カード確定時にカード画像 ID から名称・URL を JSON で返す（XHR）。</td><td><code>POST /{admin_route}/archetype/search/main_card/id</code></td><td>代表カード確定時にカード画像 ID から名称・URL を JSON で返す（XHR）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>新規は見出しに「新規」、編集は「編集」。サイドに「登録」または「更新」「削除」「戻る」。フォームは横並びレイアウト用テーマを適用。代表カードは hidden、プレビュー画像、カード名、<code>代表カード選択</code> ボタン。</td></tr><tr><td>JS 挙動</td><td><code>deckTags</code> に select2 を適用。代表カードは共通の <code>card-image.js</code> により、モーダル検索・ページング AJAX・選択時の <code>search_main_card/id</code> 呼び出しで hidden と画像・名称を更新。検索ボタン初回クリック後、<code>searchMainCardModalButton</code> の click ハンドラを一度解除する実装がある。</td></tr><tr><td>CSS・レイアウト</td><td><code>entry.css</code>、select2 の CDN、管理者共通アセットを読み込む。</td></tr><tr><td>モーダル・ポップアップ</td><td>「代表カード検索」モーダル。閉じた後もフォームに選択結果が残る。削除はアンカーに <code>data-message</code> で確認ダイアログ文言を渡す（一覧と詳細でキーが異なる実装）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="新規登録画面を表示する-GET-admin-archetype-new">新規登録画面を表示する（<code>GET admin_archetype_new</code>）</h3>
+<ol><li>管理画面の認証・共通制約を通過する。</li><li>空のエンティティ向けにアーキタイプ用フォームと、カード検索用モーダル用フォームを生成する。</li><li><code>archetype_detail.twig</code> を描画する。代表カード画像・名称は空。</li></ol>
+<h3 id="新規登録を送信する-POST-admin-archetype-create">新規登録を送信する（<code>POST admin_archetype_create</code>）</h3>
+<ol><li>新規エンティティを生成し、フォームにバインドする。</li><li>CSRF をフォーム名 <code>admin_archetype</code> のトークンで検証し、問題なければトークンを更新する。</li><li>入力検証に失敗した場合、詳細テンプレートを再表示する（エラー表示）。代表カードの画像は、送信値の <code>card_image_id</code> が解決できれば表示用エンティティを表示する。</li><li>検証成功時、代表カード画像エンティティを紐付け、<code>persist</code> と <code>flush</code> で保存する。</li><li>成功フラッシュに登録完了メッセージ（キー <code>admin.register.complete</code>）を積み、<code>admin_archetype_edit</code> に新規 ID を付与してリダイレクトする。</li></ol>
+<h3 id="編集画面を表示する-GET-admin-archetype-edit">編集画面を表示する（<code>GET admin_archetype_edit</code>）</h3>
+<ol><li>ID でアーキタイプを取得できなければ 404。</li><li>フォームに既存エンティティを載せ、代表カードの画像 URL・名称をテンプレート用に渡す。</li></ol>
+<h3 id="更新を送信する-POST-admin-archetype-update">更新を送信する（<code>POST admin_archetype_update</code>）</h3>
+<ol><li>ID でアーキタイプを取得できなければ 404。</li><li>新規送信と同様に CSRF・検証・再表示の分岐・保存・フラッシュ・リダイレクト。リダイレクト先は保存した行の <code>admin_archetype_edit</code>（同一 ID）。</li></ol>
+<h3 id="削除する-DELETE-admin-archetype-delete">削除する（<code>DELETE admin_archetype_delete</code>）</h3>
+<ol><li>CSRF をコアの既定トークン名で検証する（フォーム名ではない側のトークン。アンカー削除の共通実装に合わせる）。</li><li>ID 不正または行不存在なら 404。</li><li>当該アーキタイプに紐づく <code>dtb_deck</code> の件数を数え、0 より大きければエラーフラッシュ（キー <code>admin.archetype.delete.failed</code>）を積み、<code>admin_archetype_search</code> のページ番号 1 へリダイレクトする。</li><li>件数が 0 なら ORM の除去操作を行い <code>flush</code> する。エンティティにソフトデリータブル設定があるため、通常は <code>dtb_archetype</code> 行の <code>deleted_at</code> が立つ論理削除として扱われる（物理削除の SQL ではない）。</li><li>成功フラッシュ（キー <code>admin.delete.complete</code>）を積む。</li><li>セッションキー <code>admin.archetype.search.page_no</code> があれば <code>admin_archetype_search</code> にそのページ番号で戻り、無ければ <code>admin_archetype_list</code> へ戻る。</li></ol>
+<h3 id="代表カードモーダルで検索する-XHR">代表カードモーダルで検索する（XHR）</h3>
+<ol><li>XHR 以外の呼び出しでは pagination 等が空のまま、主要な描画差は限定的。</li><li>POST 時は検索語をセッションキー <code>admin.archetype.main_card.search</code> と <code>admin.archetype.main_card.search.page_no</code> に保存する。</li><li>GET ページング時はセッションに保存した検索語を読み、<code>page_no</code> をセッションに更新する。</li><li>カード画像のクエリをページネーション付きで実行し、HTML 断片テンプレートを返す。</li></ol>
+<h3 id="代表カードを-ID-で確定する-XHR">代表カードを ID で確定する（XHR）</h3>
+<ol><li>XHR かつ画像 ID が存在する場合、カード和英混合名・画像 URL 等を JSON で返す。不存在は 404 の空 JSON。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<p>本機能の画面では売上集計等は行わない。削除可否に使うデッキ件数は、次のクエリに相当する。<code>dtb_deck</code> 全体を対象とし、デッキ種別による絞り込みはしない。</p>
+<p>一方、検索一覧に表示する「登録デッキ数」はイベント用デッキ種別に限定した件数であり、削除可否の件数と数値が一致するとは限らない。</p>
+<p>本機能では業務計算（料金・率）を行わない。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>削除可否</td><td><code>dtb_deck.archetype_id</code> が当該 ID の行が 1 件でもあれば削除しない。</td></tr><tr><td>一覧の登録デッキ数</td><td>検索一覧クエリではデッキ種別がイベントの行のみをカウントする。削除判定とは別ルール。</td></tr></tbody></table></div>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>アーキタイプ名(日)</td><td>必須</td><td>255 文字（フォームの <code>Length</code> 制約。上限値は <code>HareruyaEc.const.archetype.length.name</code>）</td><td>新規は空、編集は <code>dtb_archetype.name_jp</code></td><td>空白不可。<code>name_jp</code>。Doctrine の列長は 64 文字定義であり、フォーム上限とスキーマ上限が一致しないため、環境や DB 制約により長文保存時に拒否され得る（実装の二重定義を確認値とする）。</td></tr><tr><td>アーキタイプ名(英)</td><td>必須</td><td>同上</td><td>同上</td><td><code>name_en</code>。列長の扱いは日本語名と同様。</td></tr><tr><td>解説(日)</td><td>任意</td><td>1024 文字（同上 <code>length.text</code>）</td><td>新規は空、編集は <code>comment_jp</code></td><td><code>comment_jp</code>。Doctrine 上は 2048 文字列カラム。</td></tr><tr><td>解説(英)</td><td>任意</td><td>同上</td><td>同上</td><td><code>comment_en</code>。</td></tr><tr><td>代表カード</td><td>任意</td><td>number 型入力。フォームに桁の文字長制約は付けていない</td><td>hidden。新規は未設定、編集は <code>card_image_id</code></td><td><code>card_image_id</code>。モーダルで選択すると画像エンティティとの関連付けが更新される。未選択または無効 ID は画像を載せない表示になり得る（送信値は hidden）。</td></tr><tr><td>公開状態</td><td>必須</td><td>マスタ選択肢の範囲内</td><td>編集は現行 <code>disp_id</code></td><td><code>disp_id</code>。コアの公開／非公開マスタ。プレースホルダ <code>form.disp.empty_value</code>。</td></tr><tr><td>カラー</td><td>任意</td><td>複数チェック。各 ID はマスタ依存</td><td>編集は現行の中間テーブル <code>dtb_archetype_color</code> に相当する選択状態</td><td>多対多。未選択は空集合の反映。</td></tr><tr><td>フォーマット</td><td>必須</td><td>マスタ選択</td><td>編集は現行 <code>format_id</code></td><td><code>format_id</code>。<code>rank</code> 昇順のクエリで選択肢が並ぶ。</td></tr><tr><td>タグ</td><td>任意</td><td>複数 select(select2)。各 ID はマスタ依存</td><td>編集は <code>dtb_archetype_deck_tag</code> に相当する選択</td><td>多対多。</td></tr><tr><td>旧アーキタイプID</td><td>任意</td><td>16 文字（<code>length.old_archetype_id</code>）</td><td>新規は空、編集は <code>old_archetype_id</code></td><td>入力がある場合、正規表現 <code>^[\w\d]+$</code> に合致する必要がある。<code>old_archetype_id</code>。</td></tr></tbody></table></div>
+<p>補足: フォームの文字上限はプラグイン設定 <code>HareruyaEc.const.archetype.length</code> に従う。環境で上書きされている場合は当該設定を正とする。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>編集・更新・削除の ID が存在しない</td><td>HTTP 404。</td></tr><tr><td>削除時に関連デッキが 1 件以上</td><td>削除せずエラーフラッシュし、<code>admin_archetype_search</code> の 1 ページ目へ。</td></tr><tr><td>更新系で CSRF が不正</td><td>アクセス拒否（HTTP 403）として扱う例外に至る実装。</td></tr><tr><td>一覧からの削除確認文言と詳細からの削除確認文言</td><td>一覧は <code>admin.confirm.delete</code>（名称埋め込み）、詳細は <code>admin.confirm.archetype_delete</code> の翻訳を用いる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧の登録デッキ数と削除可否</td><td>一覧の件数はイベント用デッキのみ。削除可否は全デッキ種別を数える。一覧上 0 件でも他種別のデッキがあれば削除できない場合がある。</td></tr><tr><td>更新直後の再表示</td><td>成功時はリダイレクトにより編集画面が再読込され、保存済み値が表示される。</td></tr><tr><td>同時更新</td><td>楽観ロックは用いない。後勝ちの上書きとなる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能では業務 API 呼び出しやバッチ実行は行わない。代表カード検索は同一管理画面内の XHR 用エンドポイントのみである。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>管理者のブラウザからの GET／POST／DELETE と XHR。</td></tr><tr><td>成功時出力</td><td>HTML 画面（GET）、302 リダイレクトとフラッシュ（登録・更新・削除）、XHR 時は HTML 断片または JSON。</td></tr><tr><td>失敗時出力</td><td>同一フォームへの再描画とエラー表示、または 403／404、失敗時フラッシュ付きリダイレクト（削除不可）。</td></tr><tr><td>副作用</td><td>DB の INSERT／UPDATE、論理削除に相当する更新（<code>deleted_at</code>）、セッション（代表カード検索条件、削除後の戻り先ページ）、CSRF トークン更新。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_archetype</code></td><td><code>id</code>（現行 <code>archetype_id</code>）</td><td>自動採番主キー。</td></tr><tr><td><code>dtb_archetype</code></td><td><code>name_jp</code>, <code>name_en</code></td><td>名称。</td></tr><tr><td><code>dtb_archetype</code></td><td><code>comment_jp</code>, <code>comment_en</code></td><td>解説。</td></tr><tr><td><code>dtb_archetype</code></td><td><code>card_image_id</code></td><td>代表カード画像への外部キー。NULL 可。</td></tr><tr><td><code>dtb_archetype</code></td><td><code>disp_id</code></td><td>公開状態。</td></tr><tr><td><code>dtb_archetype</code></td><td><code>format_id</code></td><td>フォーマット。</td></tr><tr><td><code>dtb_archetype</code></td><td><code>old_archetype_id</code></td><td>旧サイト連携用。NULL 可。</td></tr><tr><td><code>dtb_archetype</code></td><td><code>create_date</code>, <code>update_date</code></td><td>作成・更新時刻。</td></tr><tr><td><code>dtb_archetype</code></td><td><code>deleted_at</code></td><td>ソフトデリータブル用。削除時は通常この列が更新される。</td></tr><tr><td><code>dtb_archetype_color</code></td><td><code>archetype_id</code>, <code>color_id</code></td><td>カラー複数選択。</td></tr><tr><td><code>dtb_archetype_deck_tag</code></td><td><code>archetype_id</code>, <code>deck_tag_id</code></td><td>タグ複数選択。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_archetype / dtb_archetype_color / dtb_archetype_deck_tag</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>アーキタイプ名(日・英)</td><td>必須（空白不可）、最大 255 文字（設定値）。</td></tr><tr><td>解説(日・英)</td><td>任意、最大 1024 文字（設定値）。</td></tr><tr><td>公開状態・フォーマット</td><td>必須（空白不可）。</td></tr><tr><td>旧アーキタイプID</td><td>任意。入力時は最大 16 文字かつ <code>^[\w\d]+$</code>。</td></tr><tr><td>代表カード hidden</td><td>数値ウィジェット。追加の文字長制約は付けていない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>本機能への到達</th></tr></thead><tbody><tr><td>未ログインの管理者画面利用者</td><td>管理画面の共通認証に従い、当ルートには到達しない想定。</td></tr><tr><td>ログイン済みで管理チャネル権限を満たす利用者</td><td>デッキ管理メニュー経由で新規・編集・削除の各操作に到達し得る。細目はファイアウォール設定を正とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>新規送信が成功</td><td><code>GET</code> の編集画面（付与された ID）。</td></tr><tr><td>更新送信が成功</td><td>同一 ID の <code>GET</code> 編集画面へリダイレクト。</td></tr><tr><td>新規・更新で検証失敗</td><td>同一 URL へ再表示（画面は詳細テンプレートのまま）。</td></tr><tr><td>削除成功</td><td>セッションに検索ページ番号があれば <code>admin_archetype_search</code>（当該ページ）、無ければ <code>admin_archetype_list</code>。</td></tr><tr><td>削除失敗（関連デッキあり）</td><td><code>admin_archetype_search</code> の 1 ページ目。</td></tr><tr><td>詳細・新規の「戻る」</td><td><code>admin_archetype_search</code>。ページ番号はセッション <code>admin.archetype.search.page_no</code> があればそれ、無ければ文字列 <code>'1'</code> を既定にトゥイグ側で渡す。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>削除成功（検索経由だった場合）</td><td>セッション <code>admin.archetype.search.page_no</code> を参照</td><td>当該ページの検索結果一覧</td></tr><tr><td>削除成功（ページ番号未保持）</td><td>特になし</td><td>一覧初期表示 <code>admin_archetype_list</code></td></tr><tr><td>代表カードモーダル内のページ移動</td><td>検索条件をセッション維持、<code>page_no</code> を更新</td><td>同モーダル内 HTML の差し替え</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSRF 不正（フォーム送信）</td><td>HTTP 403 に相当する例外。</td></tr><tr><td>CSRF 不正（アンカー削除）</td><td>同上トークン検証。</td></tr><tr><td>対象 ID 不存在（編集・更新・削除）</td><td>HTTP 404。</td></tr><tr><td>関連デッキありで削除</td><td>エラーフラッシュ、検索 1 ページ目へ。</td></tr><tr><td>代表カード ID 解決失敗（XHR）</td><td>HTTP 404 と空 JSON。</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>本機能では試行回数制限や CAPTCHA は扱わない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<p>本機能専用の追加ログ出力は仕様化しない。削除・更新の監査が別途どこへ出るかは共通基盤の範囲とする。</p>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>アーキタイプ検索のページ番号</td><td>キー <code>admin.archetype.search.page_no</code>。一覧・検索フローで更新される。削除後の戻り先や「戻る」リンクに利用。</td></tr><tr><td>代表カードモーダル</td><td><code>admin.archetype.main_card.search</code> と <code>admin.archetype.main_card.search.page_no</code>。モーダル内の検索・ページングで更新。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>パスワード類や決済情報は本フォームの対象外である。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>セッション ID の Cookie は管理画面の共通挙動に従う。本機能固有の Cookie は定義しない。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>楽観ロックは持たない。<code>flush</code> の単位はコントローラ内の通常の永続化処理に委ねる。</p>
+<hr>
+<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
+<p>実装の所在をコード検索で辿る際の手がかりとして、次を隔離する。</p>
+<ul><li><code>Plugin\HareruyaEc\Controller\Admin\ArchetypeController</code></li><li><code>Plugin\HareruyaEc\Form\Type\Admin\Archetype\ArchetypeType</code></li><li><code>Plugin\HareruyaEc\ServiceProvider\Admin\ArchetypeServiceProvider</code></li><li>テンプレート <code>Resource/template/admin/Archetype/archetype_detail.twig</code></li><li>メッセージ <code>Resource/locale/message.ja.yml</code> の <code>form.archetype</code> / <code>admin.archetype.delete.failed</code> 等</li></ul>
+<hr>
+<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
+<ul><li><code>admin_archetype_new</code> … <code>GET</code> … <code>/{admin_route}/archetype/new</code>（新規登録フォームの表示。）</li><li><code>admin_archetype_create</code> … <code>POST</code> … <code>/{admin_route}/archetype</code>（新規登録の送信処理。）</li><li><code>admin_archetype_edit</code> … <code>GET</code> … <code>/{admin_route}/archetype/{id}</code>（編集フォームの表示。<code>{id}</code> は 1 以上の整数。）</li><li><code>admin_archetype_update</code> … <code>POST</code> … <code>/{admin_route}/archetype/{id}</code>（更新の送信処理。）</li><li><code>admin_archetype_delete</code> … <code>DELETE</code> … <code>/{admin_route}/archetype/{id}</code>（削除の実行（アンカーからメソッド偽装で到達）。）</li><li><code>admin_archetype_main_card_html</code> … <code>POST</code> … <code>/{admin_route}/archetype/search/main_card/html</code>（編集画面の「代表カード」モーダル用。カード画像の検索結果 HTML 片を返す（XHR）。）</li><li><code>admin_archetype_main_card_html_page</code> … <code>GET</code> … <code>/{admin_route}/archetype/search/main_card/html/{page_no}</code>（同上のページング（XHR）。）</li><li><code>admin_archetype_search_main_card_by_id</code> … <code>POST</code> … <code>/{admin_route}/archetype/search/main_card/id</code>（代表カード確定時にカード画像 ID から名称・URL を JSON で返す（XHR）。）</li></ul>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>アーキタイプの各テーブルは移行先（ec-cube-enterprise）でもコア標準のエンティティとして取り込まれている。DB関連の記述は移行先を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>アーキタイプ本体</td><td><code>dtb_archetype</code>。主キー列は <code>archetype_id</code></td><td><code>dtb_archetype</code>。主キー列は <code>id</code></td></tr><tr><td>名称列</td><td><code>name_jp</code>・<code>name_en</code>（Doctrine 列長 64 文字）</td><td>同名・同桁。<code>name_jp</code>・<code>name_en</code>（各 64 文字）</td></tr><tr><td>解説列</td><td><code>comment_jp</code>・<code>comment_en</code>（Doctrine 列長 2048 文字）</td><td>同名・同桁。<code>comment_jp</code>・<code>comment_en</code>（各 2048 文字）</td></tr><tr><td>公開状態・フォーマット・代表画像・旧 ID・論理削除</td><td><code>disp_id</code>・<code>format_id</code>・<code>card_image_id</code>・<code>old_archetype_id</code>（16 文字）・<code>deleted_at</code></td><td>同名・同構成。論理削除は <code>deleted_at</code> 更新</td></tr><tr><td>色・タグ中間表</td><td><code>dtb_archetype_color</code>・<code>dtb_archetype_deck_tag</code></td><td>同名・同構成。<code>dtb_archetype_color</code>（<code>archetype_id</code>・<code>color_id</code>）、<code>dtb_archetype_deck_tag</code>（<code>archetype_id</code>・<code>deck_tag_id</code>）</td></tr><tr><td>削除可否判定の参照</td><td><code>dtb_deck.archetype_id</code> の件数</td><td>同名 <code>dtb_deck.archetype_id</code>。デッキ本体の主キー列は移行先では <code>id</code></td></tr></tbody></table></div>
+<p>新規登録・編集・削除・代表カードモーダルなどの挙動面とセッションキー名は現行 pf-eccube3 実装を正とする。セッションキー名の移行後互換の要否は本書では切り分けず、管理画面ログインやセッション基盤の移行方針は別設計を正とする。フォーム上限（名称 255 文字・解説 1024 文字）とスキーマ列長（名称 64・解説 2048）が一致しない二重定義は現行・移行先とも同様であり、移行先での実害有無は ec-cube-enterprise 実装で要確認とする。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

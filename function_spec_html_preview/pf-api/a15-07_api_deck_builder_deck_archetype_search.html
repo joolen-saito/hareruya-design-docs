@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API デッキビルダー — アーキタイプ検索 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#認証・認可">認証・認可</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#アーキタイプ一覧を取得する-GET-archetypes-formatId">アーキタイプ一覧を取得する（GET `/archetypes/{formatId}`）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv3" href="#リクエスト">リクエスト</a>
+<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
+<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
+<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
+<a class="lv3" href="#副作用">副作用</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-api/a15-07_api_deck_builder_deck_archetype_search.md</p>
+        <h1>API デッキビルダー — アーキタイプ検索</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>デッキビルダーアプリが、指定したフォーマットに属するアーキタイプ（デッキの型）の一覧を取得するためのAPIである。deck-api（デッキビルダー用のAPIアプリケーション）が提供するJSON APIで、URLのパスで指定したフォーマットIDに紐づくアーキタイプの識別子と日英の名称を返す。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はdeck-apiのアーキタイプ取得処理、ルート定義（<code>config/routes.yaml</code>）、フォーマットマスタおよびアーキタイプのリポジトリを正とする。本機能のカスタマイズ区分は現行踏襲であり、挙動はデッキビルダーAPI（deck-api）の実装を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>フォーマットIDからアーキタイプ一覧を取得するふるまい</li><li>指定フォーマットが存在しない場合のふるまい</li><li>応答に含めるアーキタイプの項目</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
+<ul><li>アーキタイプIDから単一アーキタイプを取得する処理（本APIの入口に含めない）</li><li>フォーマットマスタそのものの取得（マスタ検索の設計を正とする）</li><li>アーキタイプの登録・更新（管理側の設計を正とする）</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>DB関連の記述はec-cube-enterpriseを正とする。挙動の参照元であるデッキビルダーAPI（deck-api）は提供リポジトリに含まれないため、現行deck-apiと移行先ec-cube-enterpriseでスキーマが異なる場合はec-cube-enterpriseを正とし、確認できない差異はec-cube-enterprise実装で要確認とする。ec-cube-enterpriseでは、アーキタイプ（<code>dtb_archetype</code>）が識別子（<code>archetype_id</code>／<code>id</code>）・日本語名（<code>name_jp</code>）・英語名（<code>name_en</code>）・所属フォーマット（<code>format_id</code>）を持ち、フォーマット（<code>mtb_format</code>）でフォーマットの実在を判定する。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（deck-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>アーキタイプテーブル</td><td>deck-api実装で要確認</td><td>アーキタイプ（<code>dtb_archetype</code>）</td></tr><tr><td>日本語名・英語名列</td><td>応答<code>name_jp</code>・<code>name_en</code></td><td><code>name_jp</code>・<code>name_en</code></td></tr><tr><td>フォーマット紐づけ</td><td>フォーマットIDで絞り込み</td><td><code>format_id</code>（<code>mtb_format</code>を参照）</td></tr></tbody></table></div>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>フォーマット</td><td>使用可能なカード範囲を定めるルール区分。フォーマットマスタで識別子を持つ。</td></tr><tr><td>アーキタイプ</td><td>同一フォーマット内のデッキの型・分類。日本語名と英語名を持つ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>アーキタイプ検索</td><td><code>GET /archetypes/{formatId}</code></td><td>指定フォーマットに属するアーキタイプ一覧を、ラッパとともに返す。フォーマットが存在しない場合は該当なし（HTTP 404）とする。</td></tr></tbody></table></div>
+<p>応答形式はJSON。呼び出し元はデッキビルダーアプリ。</p>
+<hr>
+<h2 id="認証・認可">認証・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>認証を行わない。本APIは<code>jwt-token</code>ヘッダを参照せず、トークン検証もプレイヤーの照合も行わない。共通基底のプレイヤー認証処理を呼び出さない。</td></tr><tr><td>認証失敗時</td><td>認証処理を持たないため、認証起因の拒否（HTTP 401）を返さない。</td></tr><tr><td>認可</td><td>呼び出し可能なクライアントはデッキビルダーアプリ。利用者の状態によらず参照できる。</td></tr></tbody></table></div>
+<p>トークン原値・署名シークレットは本書に記載しない。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="アーキタイプ一覧を取得する-GET-archetypes-formatId">アーキタイプ一覧を取得する（GET <code>/archetypes/{formatId}</code>）</h3>
+<ol><li>パスのフォーマットIDを受領し、フォーマットマスタから該当フォーマットを取得する。</li><li>フォーマットが存在しない場合は、該当なし（HTTP 404）として<code>{code, message}</code>形式のJSONを返す。</li><li>該当フォーマットに紐づくアーキタイプを取得し、識別子・日本語名・英語名を選択する。</li><li>取得結果を<code>code</code>と<code>archetypes</code>のラッパに包んで返す（HTTP 200）。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<p>本APIは指定フォーマットに属するアーキタイプの全件取得であり、件数集計・ページングを行わない。対象範囲は次のとおり。</p>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>取得対象</td><td>パスのフォーマットに紐づくアーキタイプの全件。</td></tr><tr><td>抽出項目</td><td>アーキタイプ識別子・日本語名・英語名のみを選択する。</td></tr><tr><td>並び順</td><td>取得クエリに明示の並び替えは無く、既定順で返す。</td></tr><tr><td>ページング</td><td>行わない。全件を一括で返す。</td></tr></tbody></table></div>
+<hr>
+<h2 id="入出力">入出力</h2>
+<h3 id="リクエスト">リクエスト</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td>formatId</td><td>パス</td><td>integer</td><td>必須</td><td>フォーマットの識別子。フォーマットマスタに存在する識別子を指定する。</td></tr></tbody></table></div>
+<h3 id="レスポンス-成功">レスポンス（成功）</h3>
+<p>HTTP 200。応答はラッパオブジェクトを持つ。</p>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td>code</td><td>integer</td><td>処理結果コード。成功時は200。</td></tr><tr><td>archetypes</td><td>array</td><td>アーキタイプ行の配列。</td></tr><tr><td>archetypes[].id</td><td>integer</td><td>アーキタイプの識別子。</td></tr><tr><td>archetypes[].name_jp</td><td>string</td><td>アーキタイプの日本語名。</td></tr><tr><td>archetypes[].name_en</td><td>string</td><td>アーキタイプの英語名。</td></tr></tbody></table></div>
+<p>応答配列要素のキーは<code>id</code>・<code>name_jp</code>・<code>name_en</code>であり、取得クエリのエイリアスのままsnake_caseで返す。</p>
+<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
+<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>指定フォーマットIDに該当するフォーマットが存在しない</td><td><code>{code: 404, message: "The format does not exist"}</code></td></tr><tr><td>500</td><td>取得処理中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
+<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
+<p>成功時の応答例（実装確認値に基づく代表値）。</p>
+<pre><code class="language-json">{
+  "code": 200,
+  "archetypes": [
+    {
+      "id": 1,
+      "name_jp": "白単アグロ",
+      "name_en": "Mono White Aggro"
+    },
+    {
+      "id": 2,
+      "name_jp": "青黒コントロール",
+      "name_en": "Dimir Control"
+    }
+  ]
+}</code></pre>
+<h3 id="副作用">副作用</h3>
+<p>無し（参照のみ）。取得クエリにはフォーマット単位の結果キャッシュ（既定の保持時間つき）を用いるが、業務データの更新・履歴・通知は行わない。</p>
+<p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601、<code>serialize_null</code>は有効とする。本APIの配列要素キーは取得クエリのエイリアス（snake_case）に従う。</p>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>formatId</td><td>フォーマットマスタに該当が存在することを実在性で判定する。存在しない場合は該当なし（HTTP 404）とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点のアーキタイプを返す。結果キャッシュの保持時間内は同一内容を返すことがある。本APIはデータを更新しない。</td></tr><tr><td>一覧と詳細</td><td>本APIは一覧のみを返す。単一アーキタイプの詳細取得は本書で扱わない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+<p>テーブル名・列名はec-cube-enterpriseの定義を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>アーキタイプ（<code>dtb_archetype</code>）</td><td>アーキタイプ識別子（<code>archetype_id</code>／<code>id</code>）</td><td>応答<code>id</code>に対応。</td></tr><tr><td>アーキタイプ（<code>dtb_archetype</code>）</td><td>日本語名（<code>name_jp</code>）</td><td>応答<code>name_jp</code>に対応。</td></tr><tr><td>アーキタイプ（<code>dtb_archetype</code>）</td><td>英語名（<code>name_en</code>）</td><td>応答<code>name_en</code>に対応。</td></tr><tr><td>アーキタイプ（<code>dtb_archetype</code>）</td><td>フォーマット（<code>format_id</code>）</td><td>指定フォーマットでの絞り込みに用いる。</td></tr><tr><td>フォーマットマスタ（<code>mtb_format</code>）</td><td>識別子</td><td>パスのフォーマットIDで実在を判定する。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_archetype / mtb_format</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>アーキタイプ検索</th></tr></thead><tbody><tr><td>デッキビルダーアプリ（認証不要）</td><td>指定フォーマットのアーキタイプ一覧を取得できる。</td></tr><tr><td>存在しないフォーマットID</td><td>該当なし（HTTP 404）となり、取得できない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>指定フォーマットが存在しない</td><td>コード404・メッセージ「The format does not exist」のJSONを返す。</td></tr><tr><td>取得処理中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>Cookie値・セッションIDの完全値</li></ul>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

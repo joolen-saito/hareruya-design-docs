@@ -1,0 +1,2502 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0517_基本設計仕様書(API_その他)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* function-design-embed:start */
+    .function-design-embed {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-header {
+      margin-bottom: 18px;
+    }
+
+    .function-design-header h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .function-design-header h4 {
+      margin: 0;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-source {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .function-design-note {
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      border-left: 3px solid #f0ad4e;
+      background: rgba(240, 173, 78, 0.10);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .function-design-body h1,
+    .function-design-body h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+    }
+
+    .function-design-body h3 {
+      margin: 22px 0 10px;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-body h4 {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .function-design-body p {
+      margin: 9px 0;
+    }
+
+    .function-design-body ul,
+    .function-design-body ol {
+      margin: 9px 0;
+      padding-left: 26px;
+    }
+
+    .function-design-body li {
+      margin: 3px 0;
+    }
+
+    .function-design-body code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--band);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .function-design-body pre {
+      overflow-x: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      white-space: pre-wrap;
+    }
+
+    .function-design-body pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .function-design-body .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .function-design-body table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .function-design-body th,
+    .function-design-body td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .function-design-body th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .function-design-body tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* function-design-embed:end */
+/* endpoint-supplement-style:start */
+    .endpoint-supplement .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    .endpoint-supplement table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .endpoint-supplement th,
+    .endpoint-supplement td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .endpoint-supplement th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .endpoint-supplement tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* endpoint-supplement-style:end */
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0517_基本設計仕様書(API_その他)</p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">検索クエリに一致する記事情報1件を取得</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">記事IDに関連する記事情報を取得</a></li>
+                  <li><a href="#sheet-5" data-sheet="sheet-5">PointGranterAPI連携</a></li>
+                  <li><a href="#sheet-6" data-sheet="sheet-6">商品IDに紐づく商品詳細の情報を取得</a></li>
+                  <li><a href="#sheet-7" data-sheet="sheet-7">商品名から商品詳細の情報を取得</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">サイトリニューアル</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+            <p class="doc-p" style="--lv:0">その他API機能</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>緑川</td><td>2025-08-27</td></tr>
+                <tr><td>0.2</td><td>レビュー指摘箇所の修正</td><td>緑川</td><td>2025-09-18</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">API設計</h4>
+            <p class="doc-p" style="--lv:1">A17-01 検索クエリに一致する記事情報1件を取得</p>
+            <p class="doc-p" style="--lv:1">A17-02 記事IDに関連する記事情報を取得</p>
+            <p class="doc-p" style="--lv:1">A17-03 PointGranterAPI連携</p>
+            <p class="doc-p" style="--lv:1">A17-04 [任意門]商品IDに紐づく商品詳細の情報を取得</p>
+            <p class="doc-p" style="--lv:1">A17-05 [任意門]商品名から商品詳細の情報を取得</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>検索クエリに一致する記事情報1件を取得</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>その他API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-28</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-06</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A17-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>検索クエリに一致する記事情報1件を取得</dd></div>
+            <div class="kv"><dt>概要</dt><dd>記事情報1件を取得</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/article.json</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>WordPressから参照されるEC-CUBEのAPI</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>WPの投稿IDを元に記事情報1件検索しJSON出力する。</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>WPの投稿ID</td><td>数値（整数）</td><td>〇</td><td>-</td><td>14659.0</td><td>jaもしくはenのいずれか</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">/article.json?wpPostId=14659</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200.0　正常</p>
+            <p class="doc-p" style="--lv:0">404.0　該当データがない場合</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>article_id</td><td>数値（整数）</td><td>記事ID</td></tr>
+                <tr><td>wp_post_id</td><td>数値（整数）</td><td>WPの投稿ID</td></tr>
+                <tr><td>wp_type_id</td><td>数値（整数）</td><td>WP種別ID</td></tr>
+                <tr><td>url</td><td>文字型</td><td>URL</td></tr>
+                <tr><td>deleted_at</td><td>日時（YYYY/MM/DD HH:MM）</td><td>削除日時</td></tr>
+                <tr><td>update_date</td><td>日時（YYYY/MM/DD HH:MM）</td><td>更新日時</td></tr>
+                <tr><td>cards</td><td>オブジェクト</td><td>記事情報に紐づくカード情報</td></tr>
+                <tr><td>archetypes</td><td>オブジェクト</td><td>記事情報に紐づくアーキタイプ情報</td></tr>
+                <tr><td>decks</td><td>オブジェクト</td><td>記事情報に紐づくデッキ情報</td></tr>
+                <tr><td>event_details</td><td>オブジェクト</td><td>記事情報に紐づくイベント情報</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"article_id": 83,</p>
+            <p class="doc-p" style="--lv:1">"wp_post_id": 14659,</p>
+            <p class="doc-p" style="--lv:1">"wp_type_id": 1,</p>
+            <p class="doc-p" style="--lv:1">"url": "https://article.hareruyamtg.com/article/test__trashed/",</p>
+            <p class="doc-p" style="--lv:1">"update_date": "2018-11-02T15:29:49+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-11-02T15:29:49+09:00",</p>
+            <p class="doc-p" style="--lv:1">"cards": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 2165,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "クォムバッジの魔女",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Cuombajj Witches",</p>
+            <p class="doc-p" style="--lv:1">"arena_format_name_jp": "",</p>
+            <p class="doc-p" style="--lv:1">"arena_format_name_en": "",</p>
+            <p class="doc-p" style="--lv:1">"text_jp": "{Tap}：クリーチャー１体かプレインズウォーカー１体かプレイヤー１人と、対戦相手１人が選んだ、クリーチャー１体かプレインズウォーカー１体かプレイヤー１人を対象とする。クォムバッジの魔女はその前者に１点のダメージと、その後者に１点のダメージを与える。",</p>
+            <p class="doc-p" style="--lv:1">"text_en": "{Tap}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target of an opponent's choice.",</p>
+            <p class="doc-p" style="--lv:1">"mana_cost": "(B)(B)",</p>
+            <p class="doc-p" style="--lv:1">"cmc": 2.0,</p>
+            <p class="doc-p" style="--lv:1">"power": "1",</p>
+            <p class="doc-p" style="--lv:1">"toughness": "3",</p>
+            <p class="doc-p" style="--lv:1">"loyalty": "",</p>
+            <p class="doc-p" style="--lv:1">"old_product_id": "ATH000010EN",</p>
+            <p class="doc-p" style="--lv:1">"old_en_product_id": "ATH000010EN",</p>
+            <p class="doc-p" style="--lv:1">"update_date": "2025-07-25T18:54:44+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-06-06T20:07:58+09:00",</p>
+            <p class="doc-p" style="--lv:1">"cardtypes": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "クリーチャー",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Creature",</p>
+            <p class="doc-p" style="--lv:1">"product_search_flg": true</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"subtypes": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 89,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "人間",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Human"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 222,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "ウィザード",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Wizard"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"specialtypes": [</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"colors": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 3,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "黒",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Black"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"card_details": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 2364,</p>
+            <p class="doc-p" style="--lv:1">"card_id": null,</p>
+            <p class="doc-p" style="--lv:1">"back_card_detail_id": null,</p>
+            <p class="doc-p" style="--lv:1">"cardset_id": null,</p>
+            <p class="doc-p" style="--lv:1">"rarity_id": null,</p>
+            <p class="doc-p" style="--lv:1">"illustrator_id": null,</p>
+            <p class="doc-p" style="--lv:1">"flavor_jp": "",</p>
+            <p class="doc-p" style="--lv:1">"flavor_en": "",</p>
+            <p class="doc-p" style="--lv:1">"text_jp": "{Tap}：クリーチャー１体かプレインズウォーカー１体かプレイヤー１人と、対戦相手１人が選んだ、クリーチャー１体かプレインズウォーカー１体かプレイヤー１人を対象とする。クォムバッジの魔女はその前者に１点のダメージと、その後者に１点のダメージを与える。",</p>
+            <p class="doc-p" style="--lv:1">"text_en": "{Tap}: Cuombajj Witches deals 1 damage to any target and 1 damage to any target of an opponent's choice.",</p>
+            <p class="doc-p" style="--lv:1">"power": "1",</p>
+            <p class="doc-p" style="--lv:1">"toughness": "3",</p>
+            <p class="doc-p" style="--lv:1">"card_no": "23",</p>
+            <p class="doc-p" style="--lv:1">"foil_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"promotion_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"update_date": "2025-07-25T18:54:44+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-06-06T20:07:58+09:00",</p>
+            <p class="doc-p" style="--lv:1">"card_layout": {</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "通常",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Normal"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"rarity": {</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "コモン",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Common",</p>
+            <p class="doc-p" style="--lv:1">"code": "C"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"cardset": {</p>
+            <p class="doc-p" style="--lv:1">"id": 4,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "アラビアンナイト",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Arabian Nights",</p>
+            <p class="doc-p" style="--lv:1">"code": "ARN",</p>
+            <p class="doc-p" style="--lv:1">"symbol_image": "set/5cd130409e970872.png",</p>
+            <p class="doc-p" style="--lv:1">"cardsetblock_id": 27,</p>
+            <p class="doc-p" style="--lv:1">"release_date": "1993-12-17T00:00:00+09:00",</p>
+            <p class="doc-p" style="--lv:1">"special_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"branch_display_flg": true</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"illustrator": {</p>
+            <p class="doc-p" style="--lv:1">"id": 196,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Kaja Foglio"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"promotion": {</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "ノンプロモ",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Non Promotion",</p>
+            <p class="doc-p" style="--lv:1">"code": ""</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"card_images": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 4727,</p>
+            <p class="doc-p" style="--lv:1">"back_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"url": "img/goods/card/ARN/en/914.jpg",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-06-06T20:07:58+09:00",</p>
+            <p class="doc-p" style="--lv:1">"language": {</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "日本語",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code": "JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 4728,</p>
+            <p class="doc-p" style="--lv:1">"back_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"url": "img/goods/card/ARN/en/914.jpg",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-06-06T20:07:58+09:00",</p>
+            <p class="doc-p" style="--lv:1">"language": {</p>
+            <p class="doc-p" style="--lv:1">"id": 2,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "英語",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "English",</p>
+            <p class="doc-p" style="--lv:1">"code": "EN"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"card_formats": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 9940,</p>
+            <p class="doc-p" style="--lv:1">"format_id": 3,</p>
+            <p class="doc-p" style="--lv:1">"restriction_id": 1</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"color_sequence": {</p>
+            <p class="doc-p" style="--lv:1">"id": 4,</p>
+            <p class="doc-p" style="--lv:1">"name": "黒",</p>
+            <p class="doc-p" style="--lv:1">"rank": 4</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"archetypes": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"archetype_id": 4644,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u9ed2\u7dd1\u30d3\u30fc\u30c8\u30c0\u30a6\u30f3[XLN_GRN]",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "BG Aggro[XLN_GRN]",</p>
+            <p class="doc-p" style="--lv:1">"card_image_id": null,</p>
+            <p class="doc-p" style="--lv:1">"comment_jp": null,</p>
+            <p class="doc-p" style="--lv:1">"comment_en": null,</p>
+            <p class="doc-p" style="--lv:1">"disp_id": null,</p>
+            <p class="doc-p" style="--lv:1">"update_date": "2019-01-23T12:05:08+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-10-02T18:09:04+09:00",</p>
+            <p class="doc-p" style="--lv:1">"format_id": null,</p>
+            <p class="doc-p" style="--lv:1">"old_archetype_id": "A001544",</p>
+            <p class="doc-p" style="--lv:1">"format": {</p>
+            <p class="doc-p" style="--lv:1">"id": 15,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u65e7\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Past Standard",</p>
+            <p class="doc-p" style="--lv:1">"code": "PS",</p>
+            <p class="doc-p" style="--lv:1">"main_max_card_count": 999,</p>
+            <p class="doc-p" style="--lv:1">"main_min_card_count": 60,</p>
+            <p class="doc-p" style="--lv:1">"side_max_card_count": 15,</p>
+            <p class="doc-p" style="--lv:1">"side_min_card_count": 0,</p>
+            <p class="doc-p" style="--lv:1">"certification_id": 3,</p>
+            <p class="doc-p" style="--lv:1">"rule_jp": null,</p>
+            <p class="doc-p" style="--lv:1">"rule_en": null,</p>
+            <p class="doc-p" style="--lv:1">"use_command_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"highlander_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"search_flg": true,</p>
+            <p class="doc-p" style="--lv:1">"ranking_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"other_meta_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"product_search_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"arena_legal_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"include_basic_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"meta_range": 14,</p>
+            <p class="doc-p" style="--lv:1">"rank": 20</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"decks": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"deck_id": 208570,</p>
+            <p class="doc-p" style="--lv:1">"player_name": "Segou Kenji",</p>
+            <p class="doc-p" style="--lv:1">"dci_no": null,</p>
+            <p class="doc-p" style="--lv:1">"event_detail_id": null,</p>
+            <p class="doc-p" style="--lv:1">"event_name_jp": "\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9\u30fb\u30b7\u30e7\u30fc\u30c0\u30a6\u30f3",</p>
+            <p class="doc-p" style="--lv:1">"event_name_en": "Standard Showdown",</p>
+            <p class="doc-p" style="--lv:1">"event_date": "2018-10-31T20:00:00+09:00",</p>
+            <p class="doc-p" style="--lv:1">"deck_name": "\u30b4\u30eb\u30ac\u30ea\u30df\u30c3\u30c9\u30ec\u30f3\u30b8",</p>
+            <p class="doc-p" style="--lv:1">"ranking": null,</p>
+            <p class="doc-p" style="--lv:1">"result": "3-0",</p>
+            <p class="doc-p" style="--lv:1">"source_url": null,</p>
+            <p class="doc-p" style="--lv:1">"participants": 15,</p>
+            <p class="doc-p" style="--lv:1">"latest_flg": true,</p>
+            <p class="doc-p" style="--lv:1">"private_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"update_date": "2019-01-23T11:57:27+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-11-01T15:07:40+09:00",</p>
+            <p class="doc-p" style="--lv:1">"text_main": "4 Llanowar Elves\r\n4 Merfolk Branchwalker\r\n3 Seekers' Squire\r\n2 Wildgrowth Walker\r\n3 Jadelight Ranger\r\n2 Midnight Reaper\r\n2 Golgari Findbroker\r\n3 Ravenous Chupacabra\r\n2 Carnage Tyrant\r\n2 Assassin's Trophy\r\n2 Discovery//Dispersal\r\n1 Karn, Scion of Urza\r\n2 Vraska's Contempt\r\n1 Vraska, Golgari Queen\r\n2 Vivien Reid\r\n2 Vraska, Relic Seeker\r\n7 Forest\r\n2 Memorial to Folly\r\n4 Overgrown Tomb\r\n6 Swamp\r\n4 Woodland Cemetery",</p>
+            <p class="doc-p" style="--lv:1">"text_side": "1 Wildgrowth Walker\r\n3 Deathgorge Scavenger\r\n3 Duress\r\n1 Arguel's Blood Fast\r\n1 Discovery//Dispersal\r\n3 Golden Demise\r\n1 Vraska's Contempt\r\n2 The Eldest Reborn",</p>
+            <p class="doc-p" style="--lv:1">"text_command": null,</p>
+            <p class="doc-p" style="--lv:1">"member_id": 13,</p>
+            <p class="doc-p" style="--lv:1">"old_deck_id": null,</p>
+            <p class="doc-p" style="--lv:1">"format": {</p>
+            <p class="doc-p" style="--lv:1">"id": 15,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u65e7\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Past Standard",</p>
+            <p class="doc-p" style="--lv:1">"code": "PS",</p>
+            <p class="doc-p" style="--lv:1">"main_max_card_count": 999,</p>
+            <p class="doc-p" style="--lv:1">"main_min_card_count": 60,</p>
+            <p class="doc-p" style="--lv:1">"side_max_card_count": 15,</p>
+            <p class="doc-p" style="--lv:1">"side_min_card_count": 0,</p>
+            <p class="doc-p" style="--lv:1">"certification_id": 3,</p>
+            <p class="doc-p" style="--lv:1">"rule_jp": null,</p>
+            <p class="doc-p" style="--lv:1">"rule_en": null,</p>
+            <p class="doc-p" style="--lv:1">"use_command_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"highlander_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"search_flg": true,</p>
+            <p class="doc-p" style="--lv:1">"ranking_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"other_meta_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"product_search_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"arena_legal_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"include_basic_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"meta_range": 14,</p>
+            <p class="doc-p" style="--lv:1">"rank": 20</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"player": null,</p>
+            <p class="doc-p" style="--lv:1">"archetype": {</p>
+            <p class="doc-p" style="--lv:1">"archetype_id": 4644,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u9ed2\u7dd1\u30d3\u30fc\u30c8\u30c0\u30a6\u30f3[XLN_GRN]",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "BG Aggro[XLN_GRN]",</p>
+            <p class="doc-p" style="--lv:1">"card_image_id": null,</p>
+            <p class="doc-p" style="--lv:1">"comment_jp": null,</p>
+            <p class="doc-p" style="--lv:1">"comment_en": null,</p>
+            <p class="doc-p" style="--lv:1">"disp_id": null,</p>
+            <p class="doc-p" style="--lv:1">"update_date": "2019-01-23T12:05:08+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-10-02T18:09:04+09:00",</p>
+            <p class="doc-p" style="--lv:1">"format_id": null,</p>
+            <p class="doc-p" style="--lv:1">"old_archetype_id": "A001544",</p>
+            <p class="doc-p" style="--lv:1">"format": {</p>
+            <p class="doc-p" style="--lv:1">"id": 15,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u65e7\u30b9\u30bf\u30f3\u30c0\u30fc\u30c9",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Past Standard",</p>
+            <p class="doc-p" style="--lv:1">"code": "PS",</p>
+            <p class="doc-p" style="--lv:1">"main_max_card_count": 999,</p>
+            <p class="doc-p" style="--lv:1">"main_min_card_count": 60,</p>
+            <p class="doc-p" style="--lv:1">"side_max_card_count": 15,</p>
+            <p class="doc-p" style="--lv:1">"side_min_card_count": 0,</p>
+            <p class="doc-p" style="--lv:1">"certification_id": 3,</p>
+            <p class="doc-p" style="--lv:1">"rule_jp": null,</p>
+            <p class="doc-p" style="--lv:1">"rule_en": null,</p>
+            <p class="doc-p" style="--lv:1">"use_command_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"highlander_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"search_flg": true,</p>
+            <p class="doc-p" style="--lv:1">"ranking_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"other_meta_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"product_search_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"arena_legal_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"include_basic_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"meta_range": 14,</p>
+            <p class="doc-p" style="--lv:1">"rank": 20</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"deck_cards": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 5999991,</p>
+            <p class="doc-p" style="--lv:1">"deck_id": null,</p>
+            <p class="doc-p" style="--lv:1">"card_id": null,</p>
+            <p class="doc-p" style="--lv:1">"board_id": 1,</p>
+            <p class="doc-p" style="--lv:1">"count": 4,</p>
+            <p class="doc-p" style="--lv:1">"card": {</p>
+            <p class="doc-p" style="--lv:1">"id": 1546,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u30e9\u30ce\u30ef\u30fc\u30eb\u306e\u30a8\u30eb\u30d5",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Llanowar Elves",</p>
+            <p class="doc-p" style="--lv:1">"arena_format_name_jp": "",</p>
+            <p class="doc-p" style="--lv:1">"arena_format_name_en": "",</p>
+            <p class="doc-p" style="--lv:1">"text_jp": "{Tap}\uff1a{Green}\u3092\u52a0\u3048\u308b\u3002",</p>
+            <p class="doc-p" style="--lv:1">"text_en": "{Tap}: Add {Green}.",</p>
+            <p class="doc-p" style="--lv:1">"mana_cost": "(G)",</p>
+            <p class="doc-p" style="--lv:1">"cmc": 1.0,</p>
+            <p class="doc-p" style="--lv:1">"power": "1",</p>
+            <p class="doc-p" style="--lv:1">"toughness": "1",</p>
+            <p class="doc-p" style="--lv:1">"loyalty": "",</p>
+            <p class="doc-p" style="--lv:1">"old_product_id": "DOM000168JN",</p>
+            <p class="doc-p" style="--lv:1">"old_en_product_id": "DOM000168EN",</p>
+            <p class="doc-p" style="--lv:1">"update_date": "2025-07-25T18:40:27+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-06-06T19:38:02+09:00",</p>
+            <p class="doc-p" style="--lv:1">"cardtypes": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u30af\u30ea\u30fc\u30c1\u30e3\u30fc",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Creature",</p>
+            <p class="doc-p" style="--lv:1">"product_search_flg": true</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"subtypes": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 49,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u30c9\u30eb\u30a4\u30c9",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Druid"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 57,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u30a8\u30eb\u30d5",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Elf"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"specialtypes": [],</p>
+            <p class="doc-p" style="--lv:1">"colors": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 5,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u7dd1",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Green"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"card_details": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1643,</p>
+            <p class="doc-p" style="--lv:1">"card_id": null,</p>
+            <p class="doc-p" style="--lv:1">"back_card_detail_id": null,</p>
+            <p class="doc-p" style="--lv:1">"cardset_id": null,</p>
+            <p class="doc-p" style="--lv:1">"rarity_id": null,</p>
+            <p class="doc-p" style="--lv:1">"illustrator_id": null,</p>
+            <p class="doc-p" style="--lv:1">"flavor_jp": "",</p>
+            <p class="doc-p" style="--lv:1">"flavor_en": "As patient and generous as life, as harsh and merciless as nature.",</p>
+            <p class="doc-p" style="--lv:1">"text_jp": "{Tap}\uff1a{Green}\u3092\u52a0\u3048\u308b\u3002",</p>
+            <p class="doc-p" style="--lv:1">"text_en": "{Tap}: Add {Green}.",</p>
+            <p class="doc-p" style="--lv:1">"power": "1",</p>
+            <p class="doc-p" style="--lv:1">"toughness": "1",</p>
+            <p class="doc-p" style="--lv:1">"card_no": "168",</p>
+            <p class="doc-p" style="--lv:1">"foil_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"promotion_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"update_date": "2025-07-25T18:40:27+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-06-06T19:38:02+09:00",</p>
+            <p class="doc-p" style="--lv:1">"card_layout": {</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u901a\u5e38",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Normal"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"rarity": {</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u30b3\u30e2\u30f3",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Common",</p>
+            <p class="doc-p" style="--lv:1">"code": "C"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"cardset": {</p>
+            <p class="doc-p" style="--lv:1">"id": 179,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u30c9\u30df\u30ca\u30ea\u30a2",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Dominaria",</p>
+            <p class="doc-p" style="--lv:1">"code": "DOM",</p>
+            <p class="doc-p" style="--lv:1">"symbol_image": "set/5cd146d6393bc780.png",</p>
+            <p class="doc-p" style="--lv:1">"cardsetblock_id": null,</p>
+            <p class="doc-p" style="--lv:1">"release_date": "2018-04-28T00:00:00+09:00",</p>
+            <p class="doc-p" style="--lv:1">"special_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"branch_display_flg": true</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"illustrator": {</p>
+            <p class="doc-p" style="--lv:1">"id": 21,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Chris Rahn"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"promotion": {</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u30ce\u30f3\u30d7\u30ed\u30e2",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Non Promotion",</p>
+            <p class="doc-p" style="--lv:1">"code": ""</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"card_images": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 3285,</p>
+            <p class="doc-p" style="--lv:1">"back_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"url": "img/goods/card/DOM/jp/llanowar_elves.jpg",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2018-06-06T19:38:02+09:00",</p>
+            <p class="doc-p" style="--lv:1">"language": {</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "\u65e5\u672c\u8a9e",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code": "JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"card_formats": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 7719,</p>
+            <p class="doc-p" style="--lv:1">"format_id": 3,</p>
+            <p class="doc-p" style="--lv:1">"restriction_id": 1</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"color_sequence": {</p>
+            <p class="doc-p" style="--lv:1">"id": 6,</p>
+            <p class="doc-p" style="--lv:1">"name": "\u7dd1",</p>
+            <p class="doc-p" style="--lv:1">"rank": 6</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"event_details": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"event_detail_id": 438809,</p>
+            <p class="doc-p" style="--lv:1">"start_date": "2025-05-25T18:00:00+09:00",</p>
+            <p class="doc-p" style="--lv:1">"end_date": null,</p>
+            <p class="doc-p" style="--lv:1">"entry_start_date": "2025-05-25T17:30:00+09:00",</p>
+            <p class="doc-p" style="--lv:1">"entry_end_date": "2025-05-25T18:00:00+09:00",</p>
+            <p class="doc-p" style="--lv:1">"online_entry_start_date": "2025-04-09T21:27:00+09:00",</p>
+            <p class="doc-p" style="--lv:1">"online_entry_end_date": "2025-05-24T23:55:00+09:00",</p>
+            <p class="doc-p" style="--lv:1">"deck_regist_deadline": null,</p>
+            <p class="doc-p" style="--lv:1">"capacity": 16,</p>
+            <p class="doc-p" style="--lv:1">"entry_fee": 500,</p>
+            <p class="doc-p" style="--lv:1">"prize_jp": "プレインズウォーカー・シリーズ参加賞：&lt;BR&gt;\r\nプロモカード《失せろ》 アーティスト：Oka Yuka&lt;BR&gt;\r\n＋ プロモオリパ &lt;BR&gt;\r\n+シングルカード100円割引券&lt;BR&gt;&lt;BR&gt;\r\n\r\nじゃんけん大会優勝者プロモカード（2名様）：《復活した精霊信者、ニッサ》 アーティスト：ひと和&lt;br&gt;",</p>
+            <p class="doc-p" style="--lv:1">"prize_en": "プレインズウォーカー・シリーズ参加賞：&lt;BR&gt;\r\nプロモカード《失せろ》 アーティスト：Oka Yuka&lt;BR&gt;\r\n＋ プロモオリパ &lt;BR&gt;\r\n+シングルカード100円割引券&lt;BR&gt;&lt;BR&gt;\r\n\r\nじゃんけん大会優勝者プロモカード（2名様）：《復活した精霊信者、ニッサ》 アーティスト：ひと和&lt;br&gt;",</p>
+            <p class="doc-p" style="--lv:1">"deadline_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"deck_regist_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"entry_flg": true,</p>
+            <p class="doc-p" style="--lv:1">"holiday_flg": true,</p>
+            <p class="doc-p" style="--lv:1">"update_date": "2025-04-09T21:27:43+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2025-04-09T21:27:43+09:00",</p>
+            <p class="doc-p" style="--lv:1">"disp": {</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name": "公開",</p>
+            <p class="doc-p" style="--lv:1">"rank": 0</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"event": {</p>
+            <p class="doc-p" style="--lv:1">"event_id": 28487,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "プレインズウォーカー・シリーズ：カジュアル [3回戦][じゃんけん大会][フレンドリーイベント]",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Planeswalker Series: Casual [3Rounds][Jan-Ken-Championship]",</p>
+            <p class="doc-p" style="--lv:1">"short_name_jp": null,</p>
+            <p class="doc-p" style="--lv:1">"short_name_en": null,</p>
+            <p class="doc-p" style="--lv:1">"capacity": 16,</p>
+            <p class="doc-p" style="--lv:1">"entry_fee": 500,</p>
+            <p class="doc-p" style="--lv:1">"prize_jp": "プレインズウォーカー・シリーズ参加賞：&lt;BR&gt;\r\nプロモカード《失せろ》 アーティスト：Oka Yuka&lt;BR&gt;\r\n＋ プロモオリパ &lt;BR&gt;\r\n+シングルカード100円割引券&lt;BR&gt;&lt;BR&gt;\r\n\r\nじゃんけん大会優勝者プロモカード（2名様）：《復活した精霊信者、ニッサ》 アーティスト：ひと和&lt;br&gt;",</p>
+            <p class="doc-p" style="--lv:1">"prize_en": "プレインズウォーカー・シリーズ参加賞：&lt;BR&gt;\r\nプロモカード《失せろ》 アーティスト：Oka Yuka&lt;BR&gt;\r\n＋ プロモオリパ &lt;BR&gt;\r\n+シングルカード100円割引券&lt;BR&gt;&lt;BR&gt;\r\n\r\nじゃんけん大会優勝者プロモカード（2名様）：《復活した精霊信者、ニッサ》 アーティスト：ひと和&lt;br&gt;",</p>
+            <p class="doc-p" style="--lv:1">"detail_jp": "日本独自プレインズウォーカーイベントが「プレインズウォーカー・シリーズ」（PWS）として新生！&lt;br&gt;\r\n参加賞には日本オリジナルアート版《失せろ》が、そして参加者から各回2名の方に《復活した精霊信者、ニッサ》を進呈します。この機会にぜひゲットしてください！&lt;br&gt;\r\n&lt;br&gt;\r\n○イベント構成&lt;br&gt;\r\n参加者数に関わらずスイスドロー3回戦を行います。各ラウンドの制限時間は50分間です。&lt;br&gt;\r\n3回戦目終了時にじゃんけん大会を行います。&lt;br&gt;\r\nジャンケン大会は2回開催します。1回目は3回戦目に参加している方全員、2回目は1回目で勝った方以外で行います。&lt;br&gt;\r\n&lt;br&gt;\r\n ○事前予約&lt;br&gt;\r\n下記期間にて事前予約を行います。当ページ下部「申込」からお手続きください。&lt;BR&gt;\r\n（※手続き途中で中断した場合、「キャンセル申込」の表示はしばらくすると消えて、また予約できる状態になります。30分以上経過しても申込ボタンが表示されない場合はお問合せください。※期間外および売り切れの際は申込ボタンは表示されません。）&lt;BR&gt;\r\n当日は上記受付時間内にイベント受付カウンターへお越しになりチェックインをしてください。&lt;br&gt;\r\n&lt;br&gt;\r\n○当日受付&lt;br&gt; \r\n当日受付をされる方は上記受付時間にイベント受付カウンターへお越しください。&lt;br&gt;\r\n※事前予約で定員が埋まっている場合、当日受付の方はキャンセル待ちでの受付となります。確実に参加を希望される方は事前予約をご利用ください。&lt;br&gt;\r\n&lt;br&gt; \r\n○参加方法&lt;br&gt; \r\n上記受付時間にイベント受付カウンターへお越しください。&lt;br&gt;\r\n○デッキ登録&lt;br&gt; \r\n全勝された方には当日中にデッキ登録をお願いしています。そのほかの方からのデッキ登録も歓迎しています。事前に済ませて頂くことも可能です。当ページ下部「デッキ登録」またはマイページ「大会デッキ登録」よりご登録ください。&lt;br&gt;\r\n&lt;br&gt;\r\n○最少催行人数&lt;br&gt;\r\n本大会は、参加人数が4名以上の場合に開催されます。&lt;br&gt;&lt;br&gt;\r\n○途中参加&lt;br&gt;\r\n定員に余裕がある場合、第2回戦の開始時点まで途中参加を受け付けます。この場合参加費は300円となり第1回戦は不戦敗となります。途中参加の方も残りの対戦が不戦勝となる場合があります。&lt;br&gt;\r\n&lt;br&gt;\r\n〇女性半額割引&lt;br&gt;\r\n女性プレイヤーは、晴れる屋主催のすべてのイベントで参加費が半額になります。このイベントは300円でご参加になれます。イベント受付の際にスタッフへお申し付けください。&lt;br&gt;\r\n※他の割引と重複して適用することはできません。&lt;br&gt;\r\n&lt;br&gt;\r\n〇高校生以下無料&lt;br&gt;\r\n高校生以下のプレイヤーは、晴れる屋主催のすべてのイベントで参加費が無料になります。イベント受付の際にスタッフへ生徒手帳をご提示ください。&lt;br&gt;\r\n※他の割引と重複して適用することはできません。&lt;br&gt;\r\n&lt;br&gt;\r\n○途中退出&lt;br&gt;\r\nいつでも途中退出が可能です。マジックコンパニオンアプリから棄権の操作を行ってください。操作が行えない方はイベント受付カウンターへお越しください。再参加を承ることは出来かねます。途中退出した場合じゃんけん大会へのご参加もできなくなります。&lt;br&gt;&lt;br&gt;\r\n○キャンセル待ちと当日受付について&lt;br&gt;\r\n当日受付は原則先着順で行います。ただし受付開始時刻の時点で定員を上回る当日受付希望者が居る場合はその時点で抽選を行います。&lt;br&gt;\r\n事前予約、または受付時間中に定員に達した場合、以降の受付はキャンセル待ちとなります。&lt;br&gt;\r\n&lt;br&gt;\r\n○注意事項&lt;br&gt;\r\n本大会に参加される場合は写真・動画などのメディアに映る場合がございます。&lt;br&gt;",</p>
+            <p class="doc-p" style="--lv:1">"detail_en": "&lt;h2&gt;Planeswalker Series (PWS) - Japan Original Planeswalker Event Reborn!&lt;/h2&gt;\r\n\r\n&lt;h3&gt;Event Details&lt;/h3&gt;\r\n&lt;p&gt;The Japan-exclusive Planeswalker event has been reborn as the \"Planeswalker Series\" (PWS)! Participants receive a Japan-original art version of \"Go Away\" card, and two participants per event will be awarded 《復活した精霊信者、ニッサ/Nissa, Resurgent Animist》 Don't miss this opportunity!&lt;/p&gt;\r\n\r\n&lt;h3&gt;Event Structure&lt;/h3&gt;\r\n&lt;p&gt;3-round Swiss tournament regardless of participant numbers. Each round has a 50-minute time limit.&lt;/p&gt;\r\n&lt;p&gt;After the third round, we'll hold rock-paper-scissors tournaments. These will be conducted twice: first with all participants from the third round, then with everyone except those who won in the first tournament.&lt;/p&gt;\r\n\r\n&lt;h3&gt;Registration &amp; Participation&lt;/h3&gt;\r\n&lt;p&gt;Pre-register using the \"Register\" button below. (*If registration is interrupted, a \"Cancel\" button will appear but no action is needed - the system will reset automatically. If it doesn't reset after 30 minutes, please contact us. The Register button won't appear outside registration periods or when the event is full.)&lt;/p&gt;\r\n&lt;p&gt;On event day, check in at the reception counter during the hours listed above.&lt;/p&gt;\r\n&lt;p&gt;Same-day registration is available, but if capacity is reached through pre-registration, you'll be placed on a waiting list. For guaranteed participation, please pre-register.&lt;/p&gt;\r\n\r\n&lt;h3&gt;Deck Registration&lt;/h3&gt;\r\n&lt;p&gt;Players with perfect records must register their decks on the same day. We welcome deck registrations from all participants. You can register in advance through the \"Deck Registration\" button below or via \"Tournament Deck Registration\" in your My Page.&lt;/p&gt;\r\n\r\n&lt;h3&gt;Additional Information&lt;/h3&gt;\r\n&lt;p&gt;Minimum participants: The tournament will be held with 4 or more participants.&lt;/p&gt;\r\n&lt;p&gt;Late entry: Accepted until round 2 begins if space permits. Fee: 300 yen with a round 1 loss. Late entrants may receive byes for remaining matches.&lt;/p&gt;\r\n&lt;p&gt;Female players: 50% discount (pay 300 yen instead of 500 yen) at all Hareruya events. Please inform staff at reception.&lt;/p&gt;\r\n&lt;p&gt;High school students and younger: Free entry with student ID.&lt;/p&gt;\r\n&lt;p&gt;*Discounts cannot be combined.&lt;/p&gt;\r\n\r\n&lt;h3&gt;Dropping Out&lt;/h3&gt;\r\n&lt;p&gt;You may drop out anytime via the Magic Companion app or at reception. No re-entry allowed. If you drop out, you cannot participate in the rock-paper-scissors tournaments.&lt;/p&gt;\r\n\r\n&lt;h3&gt;Waiting List&lt;/h3&gt;\r\n&lt;p&gt;Same-day registration is first-come, first-served. If more people want to register than spaces available at opening time, a lottery will be conducted. Once capacity is reached, further registrations go to the waiting list.&lt;/p&gt;\r\n\r\n&lt;h3&gt;Important Notes&lt;/h3&gt;\r\n&lt;p&gt;By participating, you may appear in photos, videos, or other media.&lt;/p&gt;",</p>
+            <p class="doc-p" style="--lv:1">"banner_url": null,</p>
+            <p class="doc-p" style="--lv:1">"banner_en_url": null,</p>
+            <p class="doc-p" style="--lv:1">"team_member_count": 1,</p>
+            <p class="doc-p" style="--lv:1">"disp_id": 1,</p>
+            <p class="doc-p" style="--lv:1">"update_date": "2025-04-09T21:26:52+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date": "2025-04-09T21:26:52+09:00",</p>
+            <p class="doc-p" style="--lv:1">"formats": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id": 1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "スタンダード",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Standard",</p>
+            <p class="doc-p" style="--lv:1">"code": "St",</p>
+            <p class="doc-p" style="--lv:1">"main_max_card_count": 999,</p>
+            <p class="doc-p" style="--lv:1">"main_min_card_count": 60,</p>
+            <p class="doc-p" style="--lv:1">"side_max_card_count": 15,</p>
+            <p class="doc-p" style="--lv:1">"side_min_card_count": 0,</p>
+            <p class="doc-p" style="--lv:1">"certification_id": 2,</p>
+            <p class="doc-p" style="--lv:1">"rule_jp": null,</p>
+            <p class="doc-p" style="--lv:1">"rule_en": null,</p>
+            <p class="doc-p" style="--lv:1">"use_command_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"highlander_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"search_flg": true,</p>
+            <p class="doc-p" style="--lv:1">"ranking_flg": true,</p>
+            <p class="doc-p" style="--lv:1">"other_meta_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"product_search_flg": true,</p>
+            <p class="doc-p" style="--lv:1">"arena_legal_flg": true,</p>
+            <p class="doc-p" style="--lv:1">"include_basic_flg": false,</p>
+            <p class="doc-p" style="--lv:1">"meta_range": 14,</p>
+            <p class="doc-p" style="--lv:1">"rank": 1</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"venue": {</p>
+            <p class="doc-p" style="--lv:1">"id": 12,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "高松店",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "takamatsu shop",</p>
+            <p class="doc-p" style="--lv:1">"pref_id": 37,</p>
+            <p class="doc-p" style="--lv:1">"max_capacity": 0,</p>
+            <p class="doc-p" style="--lv:1">"address_jp": "",</p>
+            <p class="doc-p" style="--lv:1">"address_en": ""</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"rel": {</p>
+            <p class="doc-p" style="--lv:1">"id": 4,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "カジュアル",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Casual"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"articles": [</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a17-01-a17-01_api_other_article_search_single -->
+      <section class="function-design-embed" id="function-design-a17-01-a17-01_api_other_article_search_single" data-source="functions/pf-api/a17-01_api_other_article_search_single.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a17-01_api_other_article_search_single.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A17-01 検索クエリに一致する記事情報1件を取得 / API その他 — 検索クエリに一致する記事情報1件を取得</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-概要">概要</h2>
+          <p>検索クエリ（パラメータ）に一致する記事情報を1件取得するAPIである。pf-apiが提供するJSON APIである。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの記事検索取得処理、ルート定義、記事を扱うリポジトリを正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。記事本体は別途WordPress側で管理し、本APIは連携用の記事情報を返す。</p>
+          <p>本機能のカスタマイズ区分は現行踏襲であり、挙動は現行実装（pf-api）を参照し、DB関連はec-cube-enterpriseを正とする。</p>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>検索クエリ（パラメータ）に一致する記事1件の取得</li><li>該当が無い場合の応答</li></ul>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>記事IDに関連する記事の取得（関連記事取得を正とする）</li><li>記事本体（WordPress）の管理</li><li>記事登録（記事登録処理を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>記事連携テーブルは現行（pf-api）と移行先（ec-cube-enterprise）でスキーマが同一の構成である。DB関連の記述は移行先を正とし、確認できた対応を以下に記録する。応答のうち関連カード・アーキタイプ・デッキ・イベント詳細は記事との中間テーブル（<code>dtb_article_card</code>・<code>dtb_article_archetype</code>・<code>dtb_article_deck</code>・<code>dtb_article_event_detail</code>）を介して取得する。記事は <code>dtb_article.deleted_at</code> による論理削除であり、削除済みは応答対象外とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>応答フィールド</th><th>移行先の列（<code>dtb_article</code>）</th></tr></thead><tbody><tr><td><code>articleId</code></td><td><code>id</code></td></tr><tr><td><code>wpPostId</code></td><td><code>wp_post_id</code></td></tr><tr><td><code>wpTypeId</code></td><td><code>wp_type_id</code></td></tr><tr><td><code>url</code></td><td><code>url</code></td></tr><tr><td><code>updateDate</code></td><td><code>update_date</code></td></tr><tr><td><code>createDate</code></td><td><code>create_date</code></td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>検索クエリに一致する記事1件取得</td><td><code>GET /article</code>（クエリパラメータで条件指定）</td><td>条件に一致する記事を1件JSONで返す。該当が無い場合は404を返す。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。条件はクエリパラメータで渡す。</p>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a17-01-a17-01_api_other_article_search_single-記事を検索取得する-GET-article">記事を検索取得する（GET <code>/article</code>）</h3>
+          <ol><li>クエリパラメータの検索条件を受け取る。</li><li>記事のリポジトリから、条件に一致する記事を1件取得する。</li><li>取得できない場合はコード404のJSONを返す。</li><li>取得できた場合は記事情報をJSONで返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>取得対象</td><td>クエリパラメータの条件に一致する記事。</td></tr><tr><td>件数</td><td>1件を返す（一致がある場合）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-入出力">入出力</h2>
+          <h3 id="function-design-a17-01-a17-01_api_other_article_search_single-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>wpPostId</code></td><td>クエリ</td><td>integer</td><td>必須</td><td>WP投稿ID。これに一致する記事を1件取得する。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-01-a17-01_api_other_article_search_single-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。</p>
+          <p>条件に一致する記事情報を1件返す。シリアライズ対象は公開指定のプロパティのみで、以下を含む。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>articleId</code></td><td>integer</td><td>記事ID。</td></tr><tr><td><code>wpPostId</code></td><td>integer</td><td>WP投稿ID。</td></tr><tr><td><code>wpTypeId</code></td><td>integer</td><td>WP種別ID。</td></tr><tr><td><code>url</code></td><td>string</td><td>URL。</td></tr><tr><td><code>updateDate</code></td><td>string</td><td>更新日時。</td></tr><tr><td><code>createDate</code></td><td>string</td><td>作成日時。</td></tr><tr><td><code>cards</code></td><td>array</td><td>関連カードの一覧。</td></tr><tr><td><code>archetypes</code></td><td>array</td><td>関連アーキタイプの一覧。</td></tr><tr><td><code>decks</code></td><td>array</td><td>関連デッキの一覧。</td></tr><tr><td><code>eventDetails</code></td><td>array</td><td>関連イベント詳細の一覧。</td></tr></tbody></table></div>
+          <p>削除日時（<code>deletedAt</code>）は公開対象外であり、応答に含まれない。</p>
+          <h3 id="function-design-a17-01-a17-01_api_other_article_search_single-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>該当記事なし</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-01-a17-01_api_other_article_search_single-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
+          <pre><code class="language-json">{
+            "articleId": 1001,
+            "wpPostId": 2001,
+            "wpTypeId": 1,
+            "url": "https://example.com/article/2001",
+            "updateDate": "2026-06-01T12:00:00+09:00",
+            "createDate": "2020-01-01T00:00:00+09:00",
+            "cards": [],
+            "archetypes": [],
+            "decks": [],
+            "eventDetails": []
+          }</code></pre>
+          <h3 id="function-design-a17-01-a17-01_api_other_article_search_single-副作用">副作用</h3>
+          <p>無し（参照のみ）。</p>
+          <p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-業務ルール・計算">業務ルール・計算</h2>
+          <ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の記事情報を返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-DBカラム">DBカラム</h2>
+          <p>テーブル名・列名はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>記事（<code>dtb_article</code>）</td><td><code>id</code>・<code>wp_post_id</code>・<code>wp_type_id</code>・<code>url</code>・<code>update_date</code>・<code>create_date</code>・<code>deleted_at</code></td><td>取得条件・応答内容に使用する。<code>wp_post_id</code> を検索条件に用いる。<code>deleted_at</code> は論理削除で、応答対象外。</td></tr><tr><td>記事関連（<code>dtb_article_card</code>・<code>dtb_article_archetype</code>・<code>dtb_article_deck</code>・<code>dtb_article_event_detail</code>）</td><td>記事ID・関連先ID</td><td>応答の関連カード・アーキタイプ・デッキ・イベント詳細に用いる中間テーブル。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-01-a17-01_api_other_article_search_single-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_article / dtb_article_archetype / dtb_article_card / dtb_article_deck / dtb_article_event_detail</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>記事検索取得</th></tr></thead><tbody><tr><td>クライアント</td><td>クライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当記事なし</td><td>コード404のJSONを返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-01-a17-01_api_other_article_search_single-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a17-01-a17-01_api_other_article_search_single -->
+</section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>記事IDに関連する記事情報を取得</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>その他API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-28</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-06</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A17-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>記事IDに関連する記事情報を取得</dd></div>
+            <div class="kv"><dt>概要</dt><dd>関連する記事情報を取得</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-4-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/article/related/{記事ID}</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>WordPressから参照されるEC-CUBEのAPI</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>記事IDから関連する記事情報検索しJSON出力する。</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>取得件数</td><td>数値（整数）</td><td></td><td>-</td><td>2.0</td><td>設定しない場合は取得件数20件とする</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">/article/related/1043</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200.0　正常</p>
+            <p class="doc-p" style="--lv:0">404.0　該当データがない場合</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>wp_post_id</td><td>数字</td><td>WPの投稿ID</td></tr>
+                <tr><td>hasSameDeck</td><td>文字型</td><td>デッキフラグ</td></tr>
+                <tr><td>hasSameArchetype</td><td>文字型</td><td>アーキタイプフラグ</td></tr>
+                <tr><td>hasSameCard</td><td>文字型</td><td>カードフラグ</td></tr>
+                <tr><td>hasSameEventDetail</td><td>文字型</td><td>イベント詳細フラグ</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"wpPostId": 35811,</p>
+            <p class="doc-p" style="--lv:1">"hasSameDeck": "0",</p>
+            <p class="doc-p" style="--lv:1">"hasSameArchetype": "0",</p>
+            <p class="doc-p" style="--lv:1">"hasSameCard": "1",</p>
+            <p class="doc-p" style="--lv:1">"hasSameEventDetail": "0"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"wpPostId": 41267,</p>
+            <p class="doc-p" style="--lv:1">"hasSameDeck": "0",</p>
+            <p class="doc-p" style="--lv:1">"hasSameArchetype": "0",</p>
+            <p class="doc-p" style="--lv:1">"hasSameCard": "1",</p>
+            <p class="doc-p" style="--lv:1">"hasSameEventDetail": "0"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"wpPostId": 41283,</p>
+            <p class="doc-p" style="--lv:1">"hasSameDeck": "0",</p>
+            <p class="doc-p" style="--lv:1">"hasSameArchetype": "0",</p>
+            <p class="doc-p" style="--lv:1">"hasSameCard": "1",</p>
+            <p class="doc-p" style="--lv:1">"hasSameEventDetail": "0"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a17-02-a17-02_api_other_article_related -->
+      <section class="function-design-embed" id="function-design-a17-02-a17-02_api_other_article_related" data-source="functions/pf-api/a17-02_api_other_article_related.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a17-02_api_other_article_related.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A17-02 記事IDに関連する記事情報を取得 / API その他 — 記事IDに関連する記事情報を取得</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-概要">概要</h2>
+          <p>記事IDを指定して、その記事に関連する記事情報を取得するAPIである。pf-apiが提供するJSON APIである。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの関連記事取得処理、ルート定義、記事を扱うリポジトリを正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
+          <p>本機能のカスタマイズ区分は現行踏襲であり、挙動は現行実装（pf-api）を参照し、DB関連はec-cube-enterpriseを正とする。</p>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>記事IDに関連する記事情報の取得</li></ul>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>検索クエリに一致する記事の取得（記事検索取得を正とする）</li><li>記事本体（WordPress）の管理</li><li>関連の判定ロジックの詳細（実装を確認値とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>記事連携テーブルは現行（pf-api）と移行先（ec-cube-enterprise）でスキーマが同一の構成である。DB関連の記述は移行先を正とする。関連の判定に用いる共有（同一デッキ・アーキタイプ・カード・イベント詳細）は、記事との中間テーブル（<code>dtb_article_deck</code>・<code>dtb_article_archetype</code>・<code>dtb_article_card</code>・<code>dtb_article_event_detail</code>）の一致で評価する。基準記事の特定には <code>dtb_article.wp_post_id</code> を用い、記事は <code>dtb_article.deleted_at</code> による論理削除で削除済みは対象外とする。応答の <code>hasSameDeck</code>・<code>hasSameArchetype</code>・<code>hasSameCard</code>・<code>hasSameEventDetail</code> は各中間テーブルの共有有無に対応する。</p>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>記事IDに関連する記事情報取得</td><td><code>GET /article/related/{id}</code></td><td>当該記事IDに関連する記事情報をJSONで返す。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。</p>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a17-02-a17-02_api_other_article_related-関連記事を取得する-GET-article-related-id">関連記事を取得する（GET <code>/article/related/{id}</code>）</h3>
+          <ol><li>パスの記事IDを受け取る。</li><li>記事のリポジトリから、当該記事に関連する記事情報を取得する。</li><li>関連記事情報をJSONで返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>取得対象</td><td>指定記事IDに関連する記事。関連の判定は実装を確認値とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-入出力">入出力</h2>
+          <h3 id="function-design-a17-02-a17-02_api_other_article_related-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>基準となる記事のWP投稿ID。この記事に関連する記事を抽出する。</td></tr><tr><td><code>limit</code></td><td>クエリ</td><td>integer</td><td>任意</td><td>取得上限件数。未指定時は20件。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-02-a17-02_api_other_article_related-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。</p>
+          <p>関連記事の配列を返す。同一デッキ・アーキタイプ・カード・イベント詳細のいずれかを共有する記事を関連とみなし、共有度の高い順に並ぶ。各要素は以下のフィールドを持つ。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>wpPostId</code></td><td>integer</td><td>関連記事のWP投稿ID。</td></tr><tr><td><code>hasSameDeck</code></td><td>integer</td><td>基準記事と同一デッキを共有するか（1／0）。</td></tr><tr><td><code>hasSameArchetype</code></td><td>integer</td><td>基準記事と同一アーキタイプを共有するか（1／0）。</td></tr><tr><td><code>hasSameCard</code></td><td>integer</td><td>基準記事と同一カードを共有するか（1／0）。</td></tr><tr><td><code>hasSameEventDetail</code></td><td>integer</td><td>基準記事と同一イベント詳細を共有するか（1／0）。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-02-a17-02_api_other_article_related-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>関連記事なし（結果が空）</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-02-a17-02_api_other_article_related-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
+          <pre><code class="language-json">[
+            {
+              "wpPostId": 2002,
+              "hasSameDeck": 1,
+              "hasSameArchetype": 1,
+              "hasSameCard": 0,
+              "hasSameEventDetail": 0
+            },
+            {
+              "wpPostId": 2010,
+              "hasSameDeck": 0,
+              "hasSameArchetype": 0,
+              "hasSameCard": 1,
+              "hasSameEventDetail": 0
+            }
+          ]</code></pre>
+          <h3 id="function-design-a17-02-a17-02_api_other_article_related-副作用">副作用</h3>
+          <p>無し（参照のみ）。</p>
+          <p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-業務ルール・計算">業務ルール・計算</h2>
+          <ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の記事情報を返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-DBカラム">DBカラム</h2>
+          <p>テーブル名・列名はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>記事（<code>dtb_article</code>）</td><td><code>id</code>・<code>wp_post_id</code>・<code>deleted_at</code></td><td>基準記事の特定（<code>wp_post_id</code>）と論理削除判定に用いる。</td></tr><tr><td>記事関連（<code>dtb_article_deck</code>・<code>dtb_article_archetype</code>・<code>dtb_article_card</code>・<code>dtb_article_event_detail</code>）</td><td>記事ID・関連先ID</td><td>共有有無の判定に用いる中間テーブル。応答の <code>hasSameDeck</code> 等に対応する。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-02-a17-02_api_other_article_related-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_article / dtb_article_archetype / dtb_article_card / dtb_article_deck / dtb_article_event_detail</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>関連記事取得</th></tr></thead><tbody><tr><td>クライアント</td><td>クライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>関連記事なし</td><td>空相当の応答を返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-02-a17-02_api_other_article_related-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a17-02-a17-02_api_other_article_related -->
+</section>
+      <section class="sheet-panel" id="sheet-5">
+        <div class="sheet-heading">
+          <h2>PointGranterAPI連携</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>その他API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-28</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-06</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A17-03</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>PointGranterAPI連携</dd></div>
+            <div class="kv"><dt>概要</dt><dd>PointGranter連携で会員にポイントを付与する。</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-5-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/admin_api/point_granter</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　POST　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-5-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>PointGranterから送られてきた端末販売APIの内容をスマレジに連携する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>リクエスト内容を取得</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>HTTPリクエストヘッダ、POSTデータを取得する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>下記の項目がなければエラー404を返す</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>X_contract_id</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>X_access_token</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>proc_name</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>params</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジへデータを転送する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>PointGranterから送られてきた端末販売APIの内容をスマレジに連携する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>レスポンスにresultがあるか確認し、なければエラー400を返す</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイント付与処理</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>リクエストパラメータproc_nameがtransaction_updの場合のみポイント付与をする</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>customerIdからプレイヤー情報を取得する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>プレイヤー情報が取得できない場合は何も登録せずレスポンス200を返す</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>プレイヤー情報が取得できた場合は保有ポイントに付与ポイントを加算する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>ポイント履歴を登録する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>登録後にレスポンス200を返す</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>スマレジ契約ID</td><td>文字型</td><td>〇</td><td></td><td></td><td>HTTPリクエストヘッダ</td></tr>
+                <tr><td>スマレジアクセストークン</td><td>文字型</td><td>〇</td><td></td><td></td><td>HTTPリクエストヘッダ</td></tr>
+                <tr><td>処理名</td><td>文字型</td><td>〇</td><td></td><td>transaction_upd</td><td>POSTデータ</td></tr>
+                <tr><td>連携内容</td><td>配列</td><td>〇</td><td></td><td>"data": [<br>    {<br>        "rows": [<br>            {<br>                "customerId": 22304,<br>                "newPoint": 10,<br>                "memo": "メモ内容",<br>                "terminalTranDateTime": "2024-12-20T16:57:42+09:00",<br>                "pointAttr": 2<br>            }<br>        ]<br>    }<br>]</td><td>POSTデータ</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">admin_api/point_granter</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200.0　正常</p>
+            <p class="doc-p" style="--lv:0">400.0　スマレジへのデータ連携に失敗した場合</p>
+            <p class="doc-p" style="--lv:0">404.0　必須項目にデータがない場合</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">※ 右記URLを参照　https://www1.smaregi.dev/apidoc/#operation/postTransactions (リンク切れ）</p>
+            <p class="doc-p" style="--lv:4">https://developers.smaregi.dev/platform-api-reference/apis/pos/operations/posttransactions/</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a17-03-a17-03_api_other_point_granter -->
+      <section class="function-design-embed" id="function-design-a17-03-a17-03_api_other_point_granter" data-source="functions/pf-eccube3/a17-03_api_other_point_granter.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/a17-03_api_other_point_granter.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A17-03 PointGranterAPI連携 / API その他 — PointGranterAPI連携</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-概要">概要</h2>
+          <p>外部連携先（任意門・PointGranter）からの呼び出しを受けて、スマレジの取引APIへ中継し、取引更新時に会員のポイントを付与してポイント履歴を登録するAPIである。pf-eccube3（EC-CUBE3系）のHareruyaEcプラグインが買取アプリ用APIの一部として提供するJSON APIである。</p>
+          <p>本機能のカスタマイズ区分は現行踏襲であり、挙動は現行実装（pf-eccube3）を参照し、DB関連はec-cube-enterpriseを正とする。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3のPointGranter連携処理、ルート定義（買取アプリ用APIのルート登録）、スマレジ顧客連携サービス、会員ポイント・ポイント履歴を扱うリポジトリを正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>連携先からの取引要求のスマレジ取引APIへの中継</li><li>取引更新時の会員ポイント付与とポイント履歴の登録</li><li>ヘッダ・パラメータ不足時、連携結果が不正な場合の応答</li></ul>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>スマレジ取引APIそのものの仕様・応答構造（スマレジ連携の設計・連携先仕様を正とする）</li><li>任意門・PointGranter側の処理仕様</li><li>ポイントの利用・失効・他経路での付与（ポイント機能・各バッチの設計を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3、EC-CUBE3系）と移行先（ec-cube-enterprise、EC-CUBE4系）でポイント関連のスキーマが異なる。DB関連の記述は移行先を正とし、確認できた対応を以下に記録する。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>移行先（ec-cube-enterprise）</th><th>メモ</th></tr></thead><tbody><tr><td>会員ポイント残高</td><td><code>dtb_customer.point</code></td><td>取引更新時に付与ポイントを加算する。</td></tr><tr><td>スマレジ会員ID</td><td>プレイヤー <code>dtb_player.smaregi_id</code> 由来</td><td>会員（顧客）に紐づくプレイヤーのスマレジIDから特定する。会員の特定に用いる。</td></tr><tr><td>ポイント履歴</td><td><code>dtb_point_history</code></td><td>付与時に登録する。会員（<code>customer_id</code>）・増減ポイント（<code>point_change</code>）・備考（<code>note</code>）・発行日（<code>issue_date</code>）・作成日（<code>create_date</code>）・ポイント種別（<code>point_type_id</code>）・スマレジ取引ID（<code>transaction_id</code>）を持つ。</td></tr></tbody></table></div>
+          <p>現行のポイント残高列・ポイント履歴テーブルの呼称・型は現行（EC-CUBE3系）と移行先で異なる可能性があり、列名・型の最終確定はec-cube-enterprise実装を正とする。</p>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>PointGranter</td><td>ポイント付与連携の呼び出し元（任意門）。</td></tr><tr><td>取引更新</td><td>スマレジの取引を更新する処理区分（<code>transaction_upd</code>）。この区分のときにポイントを付与する。</td></tr><tr><td>会員ポイント</td><td>会員（プレイヤー）が保有するポイント残高。</td></tr><tr><td>ポイント履歴</td><td>ポイントの増減を記録する履歴。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>PointGranterからの取引連携</td><td><code>POST /admin_api/point_granter</code></td><td>受け取った処理名・パラメータをスマレジ取引APIへ中継し、取引更新時は会員へポイントを付与して履歴を登録する。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。呼び出し元は外部連携先（任意門・PointGranter）。<code>/admin_api</code>は買取アプリ用APIのマウントである。</p>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-認証・認可">認証・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証情報</td><td>契約ID（<code>X_contract_id</code>）とアクセストークン（<code>X_access_token</code>）をリクエストヘッダで受け取り、スマレジ連携のために中継する。いずれかが欠落する場合は入力不正（HTTP 400）とする。</td></tr><tr><td>認可</td><td>呼び出し元は外部連携先（任意門・PointGranter）。アクセス経路の制御はAPI外（ネットワーク・配置）の範囲とし、本書では仕様確定しない。</td></tr></tbody></table></div>
+          <p>契約ID・アクセストークンの原値は本書に記載しない。</p>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a17-03-a17-03_api_other_point_granter-PointGranter連携を行う-POST-admin-api-point-granter">PointGranter連携を行う（POST <code>/admin_api/point_granter</code>）</h3>
+          <ol><li>リクエストヘッダの契約ID・アクセストークンと、本文の処理名・パラメータを受け取る。いずれかが欠落する場合は入力不正（HTTP 400）とし、空の本文を返す。</li><li>契約ID・アクセストークンを付与して、スマレジ顧客連携サービスへ処理名とパラメータを渡し、取引APIへ中継する。</li><li>中継結果に結果キーが含まれない場合は入力不正（HTTP 400）とし、結果をそのまま返す。</li><li>処理名が取引更新（<code>transaction_upd</code>）の場合、パラメータの先頭行から会員（スマレジ会員IDで特定）を引く。会員が見つからない場合はポイント付与を行わず、コード200で結果を返す。</li><li>会員が見つかった場合、会員ポイントに付与ポイントを加算し、ポイント履歴（会員・増減ポイント・メモ・発生日時・ポイント種別）を登録して保存する。</li><li>中継結果をコード200で返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-入出力">入出力</h2>
+          <h3 id="function-design-a17-03-a17-03_api_other_point_granter-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>X_contract_id</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>スマレジ連携の契約ID。</td></tr><tr><td><code>X_access_token</code></td><td>ヘッダ</td><td>string</td><td>必須</td><td>スマレジ連携のアクセストークン。</td></tr><tr><td><code>proc_name</code></td><td>ボディ（フォーム値）</td><td>string</td><td>必須</td><td>処理名。取引更新は<code>transaction_upd</code>。</td></tr><tr><td><code>params</code></td><td>ボディ（フォーム値）</td><td>string</td><td>必須</td><td>処理パラメータ（JSON文字列）。取引更新時は会員・付与ポイント・メモ・発生日時・ポイント種別を含む。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-03-a17-03_api_other_point_granter-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。応答本体はスマレジ取引APIの中継結果であり、結果キー（<code>result</code>）を含む。詳細な構造は連携先仕様による。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>result</code></td><td>（連携先仕様による）</td><td>スマレジ取引APIの処理結果。本書では構造を仕様確定しない。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-03-a17-03_api_other_point_granter-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>400</td><td>契約ID・アクセストークン・処理名・パラメータのいずれかが欠落</td><td>空の本文</td></tr><tr><td>400</td><td>中継結果に結果キーが含まれない</td><td>中継結果をそのまま返す</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-03-a17-03_api_other_point_granter-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（応答本体は連携先の中継結果。構造は連携先仕様による代表値）。</p>
+          <pre><code class="language-json">{
+            "result": "ok"
+          }</code></pre>
+          <h3 id="function-design-a17-03-a17-03_api_other_point_granter-副作用">副作用</h3>
+          <p>処理名が取引更新（<code>transaction_upd</code>）で会員が特定できた場合、会員ポイントの加算とポイント履歴の登録を行う（DB更新）。それ以外は中継のみで業務データを更新しない。応答にはCORS許可ヘッダを付与する。</p>
+          <p>応答はJSON応答整形を経て返す。</p>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-バリデーション">バリデーション</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>X_contract_id</code>・<code>X_access_token</code></td><td>ヘッダに存在することを必須とする。欠落時は入力不正（HTTP 400）とする。</td></tr><tr><td><code>proc_name</code>・<code>params</code></td><td>本文に存在することを必須とする。欠落時は入力不正（HTTP 400）とする。値そのものの形式検証はスマレジ取引APIの判定に委ねる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>ポイント付与の条件</td><td>処理名が取引更新で、かつパラメータの会員がスマレジ会員IDで特定できた場合のみポイントを付与する。</td></tr><tr><td>会員未特定時</td><td>中継は行うが、ポイント付与・履歴登録は行わずコード200で返す。</td></tr><tr><td>連携先との整合</td><td>スマレジ取引APIの結果に依存する。連携先での処理結果との整合は連携先仕様を正とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>テーブル名・列名はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>会員（<code>dtb_customer</code>）</td><td>ポイント残高（<code>point</code>）</td><td>取引更新時にポイントを加算する。</td></tr><tr><td>プレイヤー（<code>dtb_player</code>）</td><td>スマレジID（<code>smaregi_id</code>）</td><td>会員に紐づくプレイヤーのスマレジIDで会員を特定する。</td></tr><tr><td>ポイント履歴（<code>dtb_point_history</code>）</td><td>会員（<code>customer_id</code>）・増減ポイント（<code>point_change</code>）・備考（<code>note</code>）・発行日（<code>issue_date</code>）・作成日（<code>create_date</code>）・ポイント種別（<code>point_type_id</code>）・スマレジ取引ID（<code>transaction_id</code>）</td><td>付与時に登録する。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-03-a17-03_api_other_point_granter-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_customer / dtb_player / dtb_point_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>PointGranter連携</th></tr></thead><tbody><tr><td>連携先クライアント</td><td>契約ID・アクセストークンを付与して呼び出す。これらが欠落する場合は入力不正（HTTP 400）となる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>ヘッダ・パラメータ欠落</td><td>入力不正（HTTP 400）とし、空の本文を返す。</td></tr><tr><td>中継結果が不正（結果キーなし）</td><td>入力不正（HTTP 400）とし、中継結果をそのまま返す。</td></tr><tr><td>取引更新で会員が未特定</td><td>ポイント付与を行わず、コード200で中継結果を返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-ログ・監査">ログ・監査</h2>
+          <h3 id="function-design-a17-03-a17-03_api_other_point_granter-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>契約ID・アクセストークンの原値</li><li>会員の個人情報の具体値</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-a17-03-a17-03_api_other_point_granter-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>取引更新時の会員ポイント加算とポイント履歴登録を行う。楽観ロック・悲観ロックの対象は持たず、同一会員への同時付与に対する排他制御は本APIでは持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a17-03-a17-03_api_other_point_granter -->
+</section>
+      <section class="sheet-panel" id="sheet-6">
+        <div class="sheet-heading">
+          <h2>商品IDに紐づく商品詳細の情報を取得</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>その他API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-28</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-06</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A17-04</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>商品IDに紐づく商品詳細の情報を取得</dd></div>
+            <div class="kv"><dt>概要</dt><dd>商品IDによる商品詳細取得API</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-6-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/api/product/detail/{productId}.json</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-6-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>外部ツールの任意門連携ために呼び出されるAPI</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>商品IDをもとに商品情報を検索しJSON出力する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>言語</td><td>文字列</td><td>〇</td><td>-</td><td>JP</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">api/product/detail/62566?lang=JP</p>
+            <p class="doc-p" style="--lv:1">または</p>
+            <p class="doc-p" style="--lv:1">api/product/detail/62566.json?lang=JP</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200.0　正常</p>
+            <p class="doc-p" style="--lv:0">404 or 500　異常</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>code</td><td>数値（整数）</td><td>レスポンス結果</td></tr>
+                <tr><td>weekly_sold</td><td>数値（整数）</td><td>週間販売数</td></tr>
+                <tr><td>product_id</td><td>数値（整数）</td><td>商品ID</td></tr>
+                <tr><td>product_name</td><td>数値（整数）</td><td>商品名</td></tr>
+                <tr><td>language_code</td><td>文字列</td><td>言語コード</td></tr>
+                <tr><td>description_detail</td><td>文字列</td><td>商品説明</td></tr>
+                <tr><td>categories</td><td>文字列</td><td>カテゴリ</td></tr>
+                <tr><td>region_restriction</td><td>オブジェクト</td><td>言語別販売分けフラグ</td></tr>
+                <tr><td>product_classes</td><td>文字列</td><td>商品クラス</td></tr>
+                <tr><td>product_classes.product_class_id</td><td>数値（整数）</td><td>商品クラスID</td></tr>
+                <tr><td>product_classes.product_code</td><td>文字列</td><td>商品コード</td></tr>
+                <tr><td>product_classes.high_price_code</td><td>数値（整数）</td><td>高額商品用番号</td></tr>
+                <tr><td>product_classes.card_condition_code</td><td>文字列</td><td>状態コード</td></tr>
+                <tr><td>product_classes.price</td><td>数値（整数）</td><td>販売価格</td></tr>
+                <tr><td>product_classes.sale_limit</td><td>数値（整数）</td><td>販売制限数</td></tr>
+                <tr><td>product_classes.stock</td><td>数値（整数）</td><td>在庫数</td></tr>
+                <tr><td>product_classes.product_class_images.image</td><td>文字列</td><td>画像</td></tr>
+                <tr><td>card_detail</td><td>オブジェクト</td><td>カード詳細情報</td></tr>
+                <tr><td>card_detail.card_name</td><td>文字列</td><td>カード名</td></tr>
+                <tr><td>card_detail.colors</td><td>文字列</td><td>色</td></tr>
+                <tr><td>card_detail.mana_cost</td><td>文字列</td><td>マナ・コスト</td></tr>
+                <tr><td>card_detail.rarity</td><td>文字列</td><td>レアリティ</td></tr>
+                <tr><td>card_detail.card_type</td><td>文字列</td><td>カードタイプ</td></tr>
+                <tr><td>card_detail.card_text</td><td>文字列</td><td>ルールテキスト（日）</td></tr>
+                <tr><td>card_detail.flavor</td><td>文字列</td><td>フレーバーテキスト(日)</td></tr>
+                <tr><td>card_detail.power_toughness</td><td>文字列</td><td>パワーとタフネス、パワー/タフネスの形式で出力</td></tr>
+                <tr><td>card_detail.loyalty</td><td>文字列</td><td>忠誠度</td></tr>
+                <tr><td>card_detail.cardset</td><td>文字列</td><td>カードセット</td></tr>
+                <tr><td>card_detail.cardsetblock</td><td>文字列</td><td>カードセットブロック</td></tr>
+                <tr><td>card_detail.illustrator</td><td>文字列</td><td>イラストレーター</td></tr>
+                <tr><td>card_detail.formats</td><td>文字列</td><td>リーガリティ</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"code": 200,</p>
+            <p class="doc-p" style="--lv:1">"weekly_sold": 0,</p>
+            <p class="doc-p" style="--lv:1">"product_id": 62566,</p>
+            <p class="doc-p" style="--lv:1">"product_name": "【JP】《鍛冶の神、パーフォロス/Purphoros, God of the Forge》[THS] 赤R",</p>
+            <p class="doc-p" style="--lv:1">"language_code": "JP",</p>
+            <p class="doc-p" style="--lv:1">"description_detail": "",</p>
+            <p class="doc-p" style="--lv:1">"categories": [</p>
+            <p class="doc-p" style="--lv:1">"シングルカード",</p>
+            <p class="doc-p" style="--lv:1">"商品カテゴリ"</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"region_restriction": "制限なし",</p>
+            <p class="doc-p" style="--lv:1">"product_classes": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_class_id": 419756,</p>
+            <p class="doc-p" style="--lv:1">"product_code": "THS00135JPNM",</p>
+            <p class="doc-p" style="--lv:1">"high_price_code": null,</p>
+            <p class="doc-p" style="--lv:1">"card_condition_code": "NM",</p>
+            <p class="doc-p" style="--lv:1">"price": 1800,</p>
+            <p class="doc-p" style="--lv:1">"sale_limit": null,</p>
+            <p class="doc-p" style="--lv:1">"stock": 9,</p>
+            <p class="doc-p" style="--lv:1">"product_class_images": [</p>
+            <p class="doc-p" style="--lv:1">"https://stg-files.hareruyamtg.com/img/goods/L/373556_jp.jpg"</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_class_id": 419757,</p>
+            <p class="doc-p" style="--lv:1">"product_code": "THS00135JPSP",</p>
+            <p class="doc-p" style="--lv:1">"high_price_code": null,</p>
+            <p class="doc-p" style="--lv:1">"card_condition_code": "SP",</p>
+            <p class="doc-p" style="--lv:1">"price": 1440,</p>
+            <p class="doc-p" style="--lv:1">"sale_limit": null,</p>
+            <p class="doc-p" style="--lv:1">"stock": 0,</p>
+            <p class="doc-p" style="--lv:1">"product_class_images": [</p>
+            <p class="doc-p" style="--lv:1">"https://stg-files.hareruyamtg.com/img/goods/L/373556_jp.jpg"</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_class_id": 419758,</p>
+            <p class="doc-p" style="--lv:1">"product_code": "THS00135JPMP",</p>
+            <p class="doc-p" style="--lv:1">"high_price_code": null,</p>
+            <p class="doc-p" style="--lv:1">"card_condition_code": "MP",</p>
+            <p class="doc-p" style="--lv:1">"price": 1260,</p>
+            <p class="doc-p" style="--lv:1">"sale_limit": null,</p>
+            <p class="doc-p" style="--lv:1">"stock": 0,</p>
+            <p class="doc-p" style="--lv:1">"product_class_images": [</p>
+            <p class="doc-p" style="--lv:1">"https://stg-files.hareruyamtg.com/img/goods/L/373556_jp.jpg"</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_class_id": 419759,</p>
+            <p class="doc-p" style="--lv:1">"product_code": "THS00135JPHP",</p>
+            <p class="doc-p" style="--lv:1">"high_price_code": null,</p>
+            <p class="doc-p" style="--lv:1">"card_condition_code": "HP",</p>
+            <p class="doc-p" style="--lv:1">"price": 1080,</p>
+            <p class="doc-p" style="--lv:1">"sale_limit": null,</p>
+            <p class="doc-p" style="--lv:1">"stock": 0,</p>
+            <p class="doc-p" style="--lv:1">"product_class_images": [</p>
+            <p class="doc-p" style="--lv:1">"https://stg-files.hareruyamtg.com/img/goods/L/373556_jp.jpg"</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"card_detail": {</p>
+            <p class="doc-p" style="--lv:1">"card_name": "鍛冶の神、パーフォロス",</p>
+            <p class="doc-p" style="--lv:1">"colors": "赤",</p>
+            <p class="doc-p" style="--lv:1">"mana_cost": "(3)(R)",</p>
+            <p class="doc-p" style="--lv:1">"rarity": "神話レア",</p>
+            <p class="doc-p" style="--lv:1">"card_type": "エンチャント,クリーチャー",</p>
+            <p class="doc-p" style="--lv:1">"card_text": "破壊不能\nあなたの赤への信心が５未満であるかぎり、鍛冶の神、パーフォロスはクリーチャーではない。\nこれでないクリーチャー１体があなたのコントロール下で戦場に出るたび、鍛冶の神、パーフォロスは各対戦相手にそれぞれ２点のダメージを与える。\n{2}{Red}：ターン終了時まで、あなたがコントロールしているすべてのクリーチャーは＋１/＋０の修整を受ける。",</p>
+            <p class="doc-p" style="--lv:1">"flavor": "",</p>
+            <p class="doc-p" style="--lv:1">"power_toughness": "6/5",</p>
+            <p class="doc-p" style="--lv:1">"loyalty": null,</p>
+            <p class="doc-p" style="--lv:1">"cardset": "テーロス",</p>
+            <p class="doc-p" style="--lv:1">"cardsetblock": "テーロス",</p>
+            <p class="doc-p" style="--lv:1">"illustrator": "Eric Deschamps",</p>
+            <p class="doc-p" style="--lv:1">"formats": "Commander,Legacy,Modern,Pioneer,Vintage"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">}</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a17-04-a17-04_api_other_product_detail -->
+      <section class="function-design-embed" id="function-design-a17-04-a17-04_api_other_product_detail" data-source="functions/pf-api/a17-04_api_other_product_detail.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a17-04_api_other_product_detail.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A17-04 [任意門]商品IDに紐づく商品詳細の情報を取得 / API その他 — 商品IDに紐づく商品詳細の情報を取得</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-概要">概要</h2>
+          <p>外部連携先（任意門）が商品IDを指定して、商品の詳細情報（商品本体・カード情報・コンディション別の商品規格・画像）を取得するためのAPIである。pf-api（買取・連携用のAPIアプリケーション）が提供するJSON APIで、商品IDと言語に対応する商品詳細を返す。</p>
+          <p>本機能のカスタマイズ区分は現行踏襲であり、挙動は現行実装（pf-api）を参照し、DB関連はec-cube-enterpriseを正とする。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの商品詳細取得処理、ルート定義（<code>config/routes.yaml</code>）、商品を扱うリポジトリを正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>商品IDと言語による商品詳細情報・商品規格・カード情報・画像の取得</li><li>表示するコンディションの絞り込み</li><li>該当が無い場合の応答</li></ul>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
+          <ul><li>商品名による商品詳細取得（商品名から商品詳細取得APIの設計を正とする）</li><li>買取用商品情報の取得（買取用商品情報取得APIの設計を正とする）</li><li>商品の登録・編集（商品管理を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>商品・商品規格は標準のEC-CUBE構成にカード関連の拡張列を加えた構成であり、現行（pf-api）と移行先（ec-cube-enterprise）でDB関連の記述は移行先を正とする。確認できた対応を以下に記録する。</p>
+          <div class="table-wrap"><table><thead><tr><th>応答フィールド</th><th>移行先の列</th></tr></thead><tbody><tr><td><code>product_name</code></td><td><code>dtb_product.name</code></td></tr><tr><td><code>description_detail</code></td><td><code>dtb_product.description_detail</code>（日本語は <code>description_detail_jp</code>）</td></tr><tr><td><code>region_restriction</code></td><td><code>dtb_product</code> の地域制限参照（<code>mtb_region_restriction</code>）</td></tr><tr><td><code>product_code</code></td><td><code>dtb_product_class.product_code</code></td></tr><tr><td><code>high_price_code</code></td><td><code>dtb_product_class.high_price_code</code></td></tr><tr><td><code>card_condition_code</code></td><td><code>dtb_product_class.card_condition_id</code>／<code>card_condition_name</code>（コンディション）</td></tr><tr><td><code>price</code></td><td><code>dtb_product_class.price02</code>（販売価格）</td></tr><tr><td><code>sale_limit</code></td><td><code>dtb_product_class.sale_limit</code></td></tr><tr><td><code>stock</code></td><td><code>dtb_product_class.stock</code></td></tr><tr><td><code>product_class_images</code></td><td><code>dtb_product_class_image</code>（<code>product_image_id</code>、並び順 <code>rank</code>）</td></tr></tbody></table></div>
+          <p>カード情報（色・マナコスト・レアリティ等）はカードマスタ（<code>mtb_card</code>・<code>mtb_card_detail</code>）から取得する。</p>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>商品規格</td><td>商品のコンディション等の規格単位。価格・在庫・画像を持つ。</td></tr><tr><td>カード情報</td><td>カード商品に紐づく詳細情報（色・マナコスト・レアリティ等）。</td></tr><tr><td>週間販売数</td><td>直近の販売数の集計値。商品規格ごとの数量を合算する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>商品IDによる商品詳細の取得</td><td><code>GET /product/detail/{productId}</code></td><td>商品IDと言語に対応する商品詳細をJSONで返す。該当が無い場合は404を返す。</td></tr><tr><td>同上（拡張子あり別名）</td><td><code>GET /product/detail/{productId}.json</code></td><td>上と同一処理。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。呼び出し元は外部連携先（任意門）。</p>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-認証・認可">認証・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本APIは<code>jwt-token</code>等による認証を行わない。商品詳細の参照に限定する。</td></tr><tr><td>認可</td><td>呼び出し元は外部連携先（任意門）。アクセス経路の制御はAPI外（ネットワーク・配置）の範囲とし、本書では仕様確定しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a17-04-a17-04_api_other_product_detail-商品IDで商品詳細を取得する-GET-product-detail-productId">商品IDで商品詳細を取得する（GET <code>/product/detail/{productId}</code>）</h3>
+          <ol><li>パスの商品IDと、クエリの言語を受け取る。言語が未指定の場合は日本語を既定とする。</li><li>商品IDと言語で商品詳細を取得する。該当が無い場合は該当なし（HTTP 404）とする。</li><li>先頭の明細から商品本体の情報（商品名・言語・説明・カテゴリ・地域制限）を設定する。カード商品の場合は商品名の先頭に言語コードを付し、カード情報を組み立てる。</li><li>各明細について週間販売数を合算する。</li><li>各明細のうち、良品（NM）または価格が表示下限以上のものだけを商品規格として加え、画像はファイル名からURLへ変換して並べる。</li><li>コード200・週間販売数・商品情報・カード情報・商品規格をJSONで返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象データ</td><td>リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。DBまたはリポジトリから取得した値をJSON応答へ整形して返す。</td></tr><tr><td>応答値</td><td>応答フィールドは取得時点の値を返す。表示用の加工やフロントエンド側の表示制御は呼び出し元クライアントの設計を正とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-入出力">入出力</h2>
+          <h3 id="function-design-a17-04-a17-04_api_other_product_detail-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>productId</code></td><td>パス</td><td>integer</td><td>必須</td><td>取得対象の商品ID。</td></tr><tr><td><code>lang</code></td><td>クエリ</td><td>string</td><td>任意</td><td>言語区分。未指定の場合は日本語（<code>JP</code>）を既定とする。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-04-a17-04_api_other_product_detail-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200。</td></tr><tr><td><code>weekly_sold</code></td><td>integer</td><td>週間販売数。商品規格ごとの数量を合算した値。</td></tr><tr><td><code>product_id</code></td><td>integer</td><td>商品ID。</td></tr><tr><td><code>product_name</code></td><td>string</td><td>商品名。カード商品は先頭に言語コードを付す。</td></tr><tr><td><code>language_code</code></td><td>string</td><td>言語コード。</td></tr><tr><td><code>description_detail</code></td><td>string</td><td>商品説明。</td></tr><tr><td><code>categories</code></td><td>array</td><td>カテゴリ名の配列。</td></tr><tr><td><code>region_restriction</code></td><td>string</td><td>地域制限の名称。</td></tr><tr><td><code>card_detail</code></td><td>object</td><td>カード情報。カード商品でない場合はnull。</td></tr><tr><td><code>card_detail.card_name</code></td><td>string</td><td>カード名。</td></tr><tr><td><code>card_detail.colors</code></td><td>string</td><td>色。</td></tr><tr><td><code>card_detail.mana_cost</code></td><td>string</td><td>マナコスト。</td></tr><tr><td><code>card_detail.rarity</code></td><td>string</td><td>レアリティ名。</td></tr><tr><td><code>card_detail.card_type</code></td><td>string</td><td>カードタイプ。</td></tr><tr><td><code>card_detail.card_text</code></td><td>string</td><td>カードテキスト。</td></tr><tr><td><code>card_detail.flavor</code></td><td>string</td><td>フレーバーテキスト。</td></tr><tr><td><code>card_detail.power_toughness</code></td><td>string</td><td>パワー／タフネス。該当が無い場合はnull。</td></tr><tr><td><code>card_detail.loyalty</code></td><td>string</td><td>忠誠度。該当が無い場合はnull。</td></tr><tr><td><code>card_detail.cardset</code></td><td>string</td><td>カードセット名。</td></tr><tr><td><code>card_detail.cardsetblock</code></td><td>string</td><td>カードセットブロック名。</td></tr><tr><td><code>card_detail.illustrator</code></td><td>string</td><td>イラストレーター名。</td></tr><tr><td><code>card_detail.formats</code></td><td>array</td><td>フォーマット情報。</td></tr><tr><td><code>product_classes</code></td><td>array</td><td>商品規格の配列。</td></tr><tr><td><code>product_classes[].product_class_id</code></td><td>integer</td><td>商品規格ID。</td></tr><tr><td><code>product_classes[].product_code</code></td><td>string</td><td>商品コード。</td></tr><tr><td><code>product_classes[].high_price_code</code></td><td>string</td><td>高額商品コード。</td></tr><tr><td><code>product_classes[].card_condition_code</code></td><td>string</td><td>カードコンディションコード。</td></tr><tr><td><code>product_classes[].price</code></td><td>integer</td><td>販売価格。</td></tr><tr><td><code>product_classes[].sale_limit</code></td><td>integer</td><td>販売上限数。該当が無い場合はnull。</td></tr><tr><td><code>product_classes[].stock</code></td><td>integer</td><td>在庫数。</td></tr><tr><td><code>product_classes[].product_class_images</code></td><td>array</td><td>商品規格画像のURLの配列。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-04-a17-04_api_other_product_detail-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>商品IDに該当する商品詳細が無い</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-04-a17-04_api_other_product_detail-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
+          <pre><code class="language-json">{
+            "code": 200,
+            "weekly_sold": 5,
+            "product_id": 100001,
+            "product_name": "【JP】サンプルカード",
+            "language_code": "JP",
+            "description_detail": "サンプルの商品説明。",
+            "categories": ["シングルカード", "サンプルセット"],
+            "region_restriction": "制限なし",
+            "card_detail": {
+              "card_name": "サンプルカード",
+              "colors": "白",
+              "mana_cost": "{1}{W}",
+              "rarity": "レア",
+              "card_type": "クリーチャー",
+              "card_text": "サンプルの効果文。",
+              "flavor": "サンプルのフレーバー。",
+              "power_toughness": "2/2",
+              "loyalty": null,
+              "cardset": "サンプルセット",
+              "cardsetblock": "サンプルブロック",
+              "illustrator": "Sample Illustrator",
+              "formats": ["スタンダード"]
+            },
+            "product_classes": [
+              {
+                "product_class_id": 200001,
+                "product_code": "CARD-0001",
+                "high_price_code": "H001",
+                "card_condition_code": "NM",
+                "price": 480,
+                "sale_limit": null,
+                "stock": 12,
+                "product_class_images": [
+                  "https://example.com/s3/sample_1.jpg"
+                ]
+              }
+            ]
+          }</code></pre>
+          <h3 id="function-design-a17-04-a17-04_api_other_product_detail-副作用">副作用</h3>
+          <p>無し（参照のみ）。</p>
+          <p>応答はJSON応答整形を経て返す。本APIのフィールド名はコントローラで組み立てたsnake_caseのキーである。</p>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-バリデーション">バリデーション</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>productId</code></td><td>パスの商品ID。該当する商品詳細が無い場合は該当なし（HTTP 404）とする。</td></tr><tr><td><code>lang</code></td><td>任意。未指定の場合は日本語（<code>JP</code>）を既定とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の商品・商品規格・在庫・価格を返す。本APIはデータを更新しない。</td></tr><tr><td>言語</td><td>指定言語に対応する商品詳細を返す。未指定時は日本語を返す。</td></tr><tr><td>表示条件</td><td>表示下限価格や良品（NM）判定により、応答に含まれる商品規格は実在の規格の一部となることがある。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する範囲のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>テーブル名・列名はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>商品（<code>dtb_product</code>）</td><td>識別子（<code>id</code>）・商品名（<code>name</code>）・説明（<code>description_detail</code>／<code>description_detail_jp</code>）・地域制限（<code>region_restriction_id</code>）</td><td>取得条件・応答の商品情報に用いる。カテゴリは商品カテゴリ参照で取得する。</td></tr><tr><td>商品規格（<code>dtb_product_class</code>）</td><td>識別子（<code>id</code>）・商品コード（<code>product_code</code>）・高額商品コード（<code>high_price_code</code>）・コンディション（<code>card_condition_id</code>／<code>card_condition_name</code>）・販売価格（<code>price02</code>）・販売上限（<code>sale_limit</code>）・在庫（<code>stock</code>）</td><td>応答の商品規格に用いる。</td></tr><tr><td>商品規格画像（<code>dtb_product_class_image</code>）</td><td>商品規格（<code>product_class_id</code>）・商品画像（<code>product_image_id</code>）・並び順（<code>rank</code>）</td><td>応答の商品規格画像に用いる。</td></tr><tr><td>カードマスタ（<code>mtb_card</code>・<code>mtb_card_detail</code>）</td><td>色・マナコスト・レアリティ・カードタイプ・テキスト・セット等</td><td>カード商品の応答に用いる。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-04-a17-04_api_other_product_detail-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product / dtb_product_class / dtb_product_class_image / mtb_card / mtb_card_detail</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>商品詳細取得</th></tr></thead><tbody><tr><td>クライアント</td><td>外部連携先（任意門）から呼び出す。本APIは認証を行わない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>商品IDに該当する商品詳細が無い</td><td>該当なし（HTTP 404）・「Not Found」のJSONを返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-ログ・監査">ログ・監査</h2>
+          <h3 id="function-design-a17-04-a17-04_api_other_product_detail-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>API接続の認証情報</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-a17-04-a17-04_api_other_product_detail-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a17-04-a17-04_api_other_product_detail -->
+</section>
+      <section class="sheet-panel" id="sheet-7">
+        <div class="sheet-heading">
+          <h2>商品名から商品詳細の情報を取得</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>その他API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-28</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-06</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A17-05</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>商品名から商品詳細の情報を取得</dd></div>
+            <div class="kv"><dt>概要</dt><dd>商品名による商品詳細取得API</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-7-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/product/search.json</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-7-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>外部ツールの任意門連携ために呼び出されるAPI</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>商品名に該当する商品情報検索しJSON出力する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>該当した商品全てを出力する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>商品名</td><td>文字列</td><td>〇</td><td></td><td>(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">https://stg-api.hareruyamtg.com/api/product/search?product=(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R</p>
+            <p class="doc-p" style="--lv:1">または</p>
+            <p class="doc-p" style="--lv:1">https://stg-api.hareruyamtg.com/api/product/search.json?product=(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">HTTPコード　説明</h3>
+            <p class="doc-p" style="--lv:0">200.0　正常</p>
+            <p class="doc-p" style="--lv:0">404 or 500　異常</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>count</td><td>数値（整数）</td><td>商品数</td></tr>
+                <tr><td>products</td><td>配列</td><td>商品ID</td></tr>
+                <tr><td>products.product_id</td><td>数値（整数）</td><td>商品ID</td></tr>
+                <tr><td>products.product_name</td><td>文字列</td><td>商品名</td></tr>
+                <tr><td>products.language_code</td><td>文字列</td><td>商品コード</td></tr>
+                <tr><td>products.high_price_code</td><td>文字列</td><td>高額商品コード</td></tr>
+                <tr><td>products.categories</td><td>配列</td><td>カテゴリ</td></tr>
+                <tr><td>products.region_restriction</td><td>文字列</td><td>言語別販売分けフラグ</td></tr>
+                <tr><td>products.product_classes</td><td>配列</td><td>商品クラス</td></tr>
+                <tr><td>products.product_classes.product_class_id</td><td>数値（整数）</td><td>商品クラスID</td></tr>
+                <tr><td>products.product_classes.product_code</td><td>文字列</td><td>商品クラスコード</td></tr>
+                <tr><td>products.product_classes.card_condition_code</td><td>文字列</td><td>カードコード</td></tr>
+                <tr><td>products.product_classes.price</td><td>数値（整数）</td><td>販売価格</td></tr>
+                <tr><td>products.product_classes.stock</td><td>数値（整数）</td><td>在庫数</td></tr>
+                <tr><td>products.product_classes.product_class_images.image</td><td>文字列</td><td>画像</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"code": 200,</p>
+            <p class="doc-p" style="--lv:1">"products": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_id": 86426,</p>
+            <p class="doc-p" style="--lv:1">"product_name": "【JP】(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R",</p>
+            <p class="doc-p" style="--lv:1">"language_code": "JP",</p>
+            <p class="doc-p" style="--lv:1">"high_price_code": null,</p>
+            <p class="doc-p" style="--lv:1">"categories": [</p>
+            <p class="doc-p" style="--lv:1">"シングルカード",</p>
+            <p class="doc-p" style="--lv:1">"商品カテゴリ"</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"region_restriction": "制限なし",</p>
+            <p class="doc-p" style="--lv:1">"product_classes": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_class_id": 558924,</p>
+            <p class="doc-p" style="--lv:1">"product_code": "M2100204JPNM",</p>
+            <p class="doc-p" style="--lv:1">"card_condition_code": "NM",</p>
+            <p class="doc-p" style="--lv:1">"price": 100,</p>
+            <p class="doc-p" style="--lv:1">"stock": 33,</p>
+            <p class="doc-p" style="--lv:1">"product_class_images": [</p>
+            <p class="doc-p" style="--lv:1">"https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204.jpg"</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_id": 86426,</p>
+            <p class="doc-p" style="--lv:1">"product_name": "【EN】(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R",</p>
+            <p class="doc-p" style="--lv:1">"language_code": "EN",</p>
+            <p class="doc-p" style="--lv:1">"high_price_code": null,</p>
+            <p class="doc-p" style="--lv:1">"categories": [</p>
+            <p class="doc-p" style="--lv:1">"シングルカード",</p>
+            <p class="doc-p" style="--lv:1">"商品カテゴリ"</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"region_restriction": "制限なし",</p>
+            <p class="doc-p" style="--lv:1">"product_classes": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_class_id": 560020,</p>
+            <p class="doc-p" style="--lv:1">"product_code": "M2100204ENNM",</p>
+            <p class="doc-p" style="--lv:1">"card_condition_code": "NM",</p>
+            <p class="doc-p" style="--lv:1">"price": 50,</p>
+            <p class="doc-p" style="--lv:1">"stock": 14,</p>
+            <p class="doc-p" style="--lv:1">"product_class_images": [</p>
+            <p class="doc-p" style="--lv:1">"https://stg-files.hareruyamtg.com/img/goods/L/M21/EN/0204.jpg"</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_id": 86823,</p>
+            <p class="doc-p" style="--lv:1">"product_name": "【EN】【Foil】(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R",</p>
+            <p class="doc-p" style="--lv:1">"language_code": "EN",</p>
+            <p class="doc-p" style="--lv:1">"high_price_code": null,</p>
+            <p class="doc-p" style="--lv:1">"categories": [</p>
+            <p class="doc-p" style="--lv:1">"シングルカード",</p>
+            <p class="doc-p" style="--lv:1">"商品カテゴリ"</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"region_restriction": "制限なし",</p>
+            <p class="doc-p" style="--lv:1">"product_classes": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_class_id": 562100,</p>
+            <p class="doc-p" style="--lv:1">"product_code": "M21F00204ENNM",</p>
+            <p class="doc-p" style="--lv:1">"card_condition_code": "NM",</p>
+            <p class="doc-p" style="--lv:1">"price": 100,</p>
+            <p class="doc-p" style="--lv:1">"stock": 0,</p>
+            <p class="doc-p" style="--lv:1">"product_class_images": [</p>
+            <p class="doc-p" style="--lv:1">"https://stg-files.hareruyamtg.com/img/goods/L/M21/EN/0204.jpg"</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_id": 86823,</p>
+            <p class="doc-p" style="--lv:1">"product_name": "【JP】【Foil】(204)《漁る軟泥/Scavenging Ooze》[M21] 緑R",</p>
+            <p class="doc-p" style="--lv:1">"language_code": "JP",</p>
+            <p class="doc-p" style="--lv:1">"high_price_code": null,</p>
+            <p class="doc-p" style="--lv:1">"categories": [</p>
+            <p class="doc-p" style="--lv:1">"シングルカード",</p>
+            <p class="doc-p" style="--lv:1">"商品カテゴリ"</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"region_restriction": "制限なし",</p>
+            <p class="doc-p" style="--lv:1">"product_classes": [</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"product_class_id": 563624,</p>
+            <p class="doc-p" style="--lv:1">"product_code": "M21F00204JPNM",</p>
+            <p class="doc-p" style="--lv:1">"card_condition_code": "NM",</p>
+            <p class="doc-p" style="--lv:1">"price": 50,</p>
+            <p class="doc-p" style="--lv:1">"stock": 0,</p>
+            <p class="doc-p" style="--lv:1">"product_class_images": [</p>
+            <p class="doc-p" style="--lv:1">"https://stg-files.hareruyamtg.com/img/goods/L/M21/JP/0204.jpg"</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+          </div>
+        </div>
+</section>
+
+
+<!-- endpoint-supplement:start -->
+<section class="endpoint-supplement">
+  <div class="sheet-doc">
+    <hr>
+    <h1>実装差分追補</h1>
+    <p>この節は Controller の本番利用 route と既存の「利用者視点の入口」を突合し、利用者が画面操作・ファイル出力・外部API呼び出しとして到達する入口を追補したものである。Block内部描画や CORS 用 OPTIONS は含めない。</p>
+    <h2 id="endpoint-supplement-user-entry">利用者視点の入口</h2>
+    <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>article by paramsを取得する</td><td>`GET /article.json`</td><td>指定条件に応じたデータをJSON等のレスポンスで返す。</td></tr></tbody></table></div>
+  </div>
+      <!-- function-design-embed:start a17-05-a17-05_api_product_search_by_name -->
+      <section class="function-design-embed" id="function-design-a17-05-a17-05_api_product_search_by_name" data-source="functions/pf-api/a17-05_api_product_search_by_name.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a17-05_api_product_search_by_name.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A17-05 [任意門]商品名から商品詳細の情報を取得 / API 店頭買取管理 — 商品名から商品詳細の情報を取得</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-概要">概要</h2>
+          <p>買取アプリ（MTGバイヤー）が商品名で商品を検索し、該当する商品の詳細情報（カテゴリ・コンディション別の商品規格・画像）を取得するためのAPIである。pf-api（買取連携用のAPIアプリケーション）が提供するJSON APIで、商品名に該当する商品を最大100件まで返す。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの商品名検索処理、ルート定義（<code>config/routes.yaml</code>）、商品サブクラスを扱うリポジトリを正とする。カスタマイズ区分は現行踏襲で、挙動の参照リポはpf-api、DB関連はec-cube-enterpriseを正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>商品名による商品の検索と、商品詳細情報・商品規格・画像の取得</li><li>表示するコンディションの絞り込みと最大件数</li><li>該当が無い場合の応答</li></ul>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
+          <ul><li>商品IDによる商品詳細取得（商品詳細取得APIの設計を正とする）</li><li>買取用商品情報の取得（買取用商品情報取得APIの設計を正とする）</li><li>商品の登録・編集（商品管理を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>DB関連はec-cube-enterpriseを正とする。商品（<code>dtb_product</code>）・商品規格（<code>dtb_product_class</code>）・商品規格画像（<code>dtb_product_class_image</code>）・カード（<code>mtb_card</code>）・カード詳細（<code>mtb_card_detail</code>）はec-cube-enterpriseに同名で実在する。一方、本APIが現行（pf-api）で参照する商品サブクラス（<code>dtb_product_sub_class</code>）のビューと商品サブクラス画像（<code>dtb_product_sub_class_image</code>）は、ec-cube-enterpriseでは商品規格・商品規格画像（<code>dtb_product_class_image</code>）系へ再編されており同名ビューを確認できない。商品名検索・一意化・画像URL生成に用いる該当テーブル・列はec-cube-enterprise実装で要確認とする。挙動（検索条件・コンディション絞り込み・最大100件・該当なし時の応答）は現行（pf-api）を正とする。</p>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>商品規格</td><td>商品のコンディション等の規格単位。価格・在庫・画像を持つ。</td></tr><tr><td>高額商品コード</td><td>高額商品の区分コード。商品名・言語とあわせて商品の出し分けに用いる。</td></tr><tr><td>その他コンディション</td><td>良品（NM）以外のコンディション。表示条件により出し分ける。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>商品名による商品詳細の取得</td><td><code>GET /product/search</code></td><td>クエリの商品名に該当する商品を検索し、商品詳細情報と商品規格をJSONで返す。該当が無い場合は404を返す。</td></tr><tr><td>同上（拡張子あり別名）</td><td><code>GET /product/search.json</code></td><td>上と同一処理。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。呼び出し元は買取アプリ（MTGバイヤー）。</p>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-認証・認可">認証・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本APIは<code>jwt-token</code>等による認証を行わない。商品検索の参照に限定する。</td></tr><tr><td>認可</td><td>呼び出し元は買取アプリ。アクセス経路の制御はAPI外（ネットワーク・配置）の範囲とし、本書では仕様確定しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a17-05-a17-05_api_product_search_by_name-商品名で商品詳細を取得する-GET-product-search">商品名で商品詳細を取得する（GET <code>/product/search</code>）</h3>
+          <ol><li>クエリの商品名を受け取る。未指定の場合は該当なし（HTTP 404）とする。</li><li>商品名から対象の商品ID群を取得する。該当が無い場合は該当なし（HTTP 404）とする。</li><li>対象の商品サブクラス情報を取得する。該当が無い場合は該当なし（HTTP 404）とする。</li><li>商品ID・言語・高額商品コードの組み合わせを単位に商品をまとめ、商品ごとにカテゴリ・地域制限・商品名を設定する。カード詳細を持つ商品は商品名の先頭に言語コードを付す。</li><li>各商品規格について、良品（NM）または価格が表示下限以上のものだけを商品規格として加え、画像はファイル名からURLへ変換して並べる。商品の件数が100件に達した時点で打ち切る。</li><li>商品ごとに、その他コンディションの表示可否を判定し、表示しない場合は良品（NM）の規格のみに絞る。</li><li>コード200と商品配列をJSONで返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象商品</td><td>商品名に該当する商品サブクラスから、商品ID・言語・高額商品コードの組み合わせで一意化する。</td></tr><tr><td>表示する商品規格</td><td>コンディションが良品（NM）の規格、または価格が表示下限（設定値）以上の規格のみを含める。</td></tr><tr><td>その他コンディションの抑制</td><td>商品ごとの表示可否判定で「表示しない」と判定された場合、良品（NM）の規格のみに絞る。</td></tr><tr><td>最大件数</td><td>商品は最大100件で打ち切る。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-入出力">入出力</h2>
+          <h3 id="function-design-a17-05-a17-05_api_product_search_by_name-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>product</code></td><td>クエリ</td><td>string</td><td>必須</td><td>検索する商品名。未指定（空）の場合は該当なし（HTTP 404）となる。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-05-a17-05_api_product_search_by_name-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200。</td></tr><tr><td><code>products</code></td><td>array</td><td>該当した商品の配列。最大100件。</td></tr><tr><td><code>products[].product_id</code></td><td>integer</td><td>商品ID。</td></tr><tr><td><code>products[].product_name</code></td><td>string</td><td>商品名。カード詳細を持つ商品は先頭に言語コードを付す。</td></tr><tr><td><code>products[].language_code</code></td><td>string</td><td>言語コード。</td></tr><tr><td><code>products[].high_price_code</code></td><td>string</td><td>高額商品コード。</td></tr><tr><td><code>products[].categories</code></td><td>array</td><td>カテゴリ名の配列。</td></tr><tr><td><code>products[].region_restriction</code></td><td>string</td><td>地域制限の名称。</td></tr><tr><td><code>products[].product_classes</code></td><td>array</td><td>商品規格の配列。</td></tr><tr><td><code>products[].product_classes[].product_class_id</code></td><td>integer</td><td>商品規格ID。</td></tr><tr><td><code>products[].product_classes[].product_code</code></td><td>string</td><td>商品コード。</td></tr><tr><td><code>products[].product_classes[].card_condition_code</code></td><td>string</td><td>カードコンディションコード。</td></tr><tr><td><code>products[].product_classes[].price</code></td><td>integer</td><td>販売価格。</td></tr><tr><td><code>products[].product_classes[].stock</code></td><td>integer</td><td>在庫数。</td></tr><tr><td><code>products[].product_classes[].product_class_images</code></td><td>array</td><td>商品規格画像のURLの配列。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-05-a17-05_api_product_search_by_name-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>商品名が未指定、または該当する商品・商品サブクラスが無い</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-05-a17-05_api_product_search_by_name-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
+          <pre><code class="language-json">{
+            "code": 200,
+            "products": [
+              {
+                "product_id": 100001,
+                "product_name": "【JP】サンプルカード",
+                "language_code": "JP",
+                "high_price_code": "H001",
+                "categories": ["シングルカード", "サンプルセット"],
+                "region_restriction": "制限なし",
+                "product_classes": [
+                  {
+                    "product_class_id": 200001,
+                    "product_code": "CARD-0001",
+                    "card_condition_code": "NM",
+                    "price": 480,
+                    "stock": 12,
+                    "product_class_images": [
+                      "https://example.com/s3/sample_1.jpg"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }</code></pre>
+          <h3 id="function-design-a17-05-a17-05_api_product_search_by_name-副作用">副作用</h3>
+          <p>無し（参照のみ）。</p>
+          <p>応答はJSON応答整形を経て返す。本APIのフィールド名はコントローラで組み立てたsnake_caseのキーである。</p>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-バリデーション">バリデーション</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>product</code></td><td>必須。未指定（空）の場合は該当なし（HTTP 404）とする。文字数上限・前後方一致の指定はpf-api側のクエリパラメータでは受け付けない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-業務ルール・計算">業務ルール・計算</h2>
+          <ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の商品・商品規格・在庫・価格を返す。本APIはデータを更新しない。</td></tr><tr><td>件数の打ち切り</td><td>商品が100件に達した時点で打ち切るため、該当商品が多い場合は一部のみを返す。</td></tr><tr><td>表示条件</td><td>表示下限価格や良品（NM）判定により、応答に含まれる商品規格は実在の規格の一部となることがある。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する範囲のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>テーブル名・列名はec-cube-enterpriseを正とする。現行（pf-api）は商品サブクラス（<code>dtb_product_sub_class</code>）ビューに集約された列を参照する。ec-cube-enterpriseでは商品規格系へ再編済みのため、買取・カード固有の出し分け列はec-cube-enterprise実装で要確認とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>商品（<code>dtb_product</code>）</td><td>商品ID・商品名</td><td>検索・一意化・応答の商品情報に用いる。</td></tr><tr><td>商品規格（<code>dtb_product_class</code>）</td><td>商品規格ID・商品コード・コンディション・価格・在庫</td><td>応答の商品規格に用いる。</td></tr><tr><td>商品規格画像（<code>dtb_product_class_image</code>）</td><td>画像ファイル名</td><td>応答の商品規格画像URLに用いる。現行はビュー <code>dtb_product_sub_class_image</code> を参照。</td></tr><tr><td>カード（<code>mtb_card</code>）・カード詳細（<code>mtb_card_detail</code>）</td><td>言語コード・高額商品コード等</td><td>商品名先頭の言語コード付与・一意化に用いる。</td></tr><tr><td>商品サブクラス（<code>dtb_product_sub_class</code>）</td><td>言語コード・高額商品コード・カテゴリ・地域制限の集約列</td><td>現行はビューを参照。ec-cube-enterpriseでは商品規格系へ再編済みのため要確認。</td></tr></tbody></table></div>
+          <h3 id="function-design-a17-05-a17-05_api_product_search_by_name-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product / dtb_product_class / dtb_product_class_image / dtb_product_sub_class / dtb_product_sub_class_image / mtb_card 等</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>商品名による商品詳細取得</th></tr></thead><tbody><tr><td>クライアント</td><td>買取アプリから呼び出す。本APIは認証を行わない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>商品名が未指定</td><td>該当なし（HTTP 404）・「Not Found」のJSONを返す。</td></tr><tr><td>該当する商品・商品サブクラスが無い</td><td>該当なし（HTTP 404）・「Not Found」のJSONを返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-ログ・監査">ログ・監査</h2>
+          <h3 id="function-design-a17-05-a17-05_api_product_search_by_name-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>API接続の認証情報</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-a17-05-a17-05_api_product_search_by_name-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a17-05-a17-05_api_product_search_by_name -->
+</section>
+<!-- endpoint-supplement:end -->
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

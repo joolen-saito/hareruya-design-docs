@@ -1,0 +1,326 @@
+# 店頭買取管理 — 買取詳細（買取情報の確認と保存）
+
+## 概要
+
+管理画面「店頭買取管理」配下で、一件の店頭買取注文を俯瞰し、管理者用フリーコメントの保存・実在庫数量の調整・個別入力商品への商品規格紐付け・一部ステータス操作を行う画面である。画面サブタイトルは Twig 上「買取詳細」と表示され、「買取情報」カードに査定明細と個別入力商品が集約される。テンプレート先頭コメントは pf-eccube3 時代の元ファイルパスを示すが、本書の確認値は ec-cube-enterprise のルート定義とテンプレート・サービス実装とする。
+
+本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。既存実装のふるまい、参照するデータ、判定境界、副作用を確認し、仕様の確からしさを把握することを目的とする。
+
+カスタマイズ区分はカスタマイズである。挙動はec-cube-enterpriseの実装を確認値とし、DB関連もec-cube-enterpriseを正とする。現行（pf-eccube3のHareruyaEcプラグイン）との差は「リニューアル移行時の扱い」に記録する。
+
+対象はブラウザ経由の管理画面に限定する。コントローラのメソッド名の解剖は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。
+
+---
+
+## リニューアル移行時の扱い
+
+買取詳細が更新する店頭買取系テーブルは、現行（pf-eccube3のHareruyaEcプラグイン）と移行先（ec-cube-enterprise）でテーブル名・主要列名が一致し、概ね同一スキーマである。`dtb_otc_buy_order`の`free_comment`・`update_date`、`dtb_otc_buy_order_stock`、`dtb_otc_buy_order_stock_history`、`dtb_otc_buy_order_indivisual_input_product`はいずれも同名である。確認できた差分は次のとおりで、DB関連はec-cube-enterpriseを正とする。
+
+| 観点 | 現行（pf-eccube3のHareruyaEcプラグイン） | 移行先（ec-cube-enterprise） |
+|------|------|------|
+| 在庫・履歴・個別入力テーブル | 同名（同一スキーマ） | 同名（同一スキーマ） |
+| 棚戻し列 | `dtb_otc_buy_order`に`restocked_flg`・`restocked_date`を持たない | `restocked_flg`（棚戻し済みフラグ）・`restocked_date`（入庫日時）を追加。入庫済み遷移に関わる入庫日時の保持先となる |
+
+---
+
+## 利用者視点の入口
+
+| 入口 | URLエンドポイント | 期待されるふるまい |
+|------|--------------------|--------------------|
+| 店頭買取一覧の行から詳細へ | `GET /%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}` | 買取詳細が表示される。 |
+| フッタの「保存」 | `POST /%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/update` | フォームが妥当ならフリーコメントや在庫増減を保存し、成功フラッシュの後に同詳細へリダイレクトする。 |
+| 個別入力の「実在庫情報登録」からモーダルで規格決定 | `POST /%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/register-individual-stock/{individualProductId}` | 条件を満たせば実在庫が作成または加算され、成功フラッシュの後に同詳細へリダイレクトする。 |
+| 「経理払出し済」 | `POST /%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/account_team_paid` | 確認ダイアログの後、条件を満たせばステータスが買取完了へ遷移する。 |
+| 「入庫済みにする」 | `POST /%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/restocked` | 条件を満たせば入庫済みへ遷移する。 |
+| 「ステータス変更」リンク | `GET /%eccube_admin_route%/otcbuyorder/status/{otcBuyOrderId}` | ステータス変更専用画面へ遷移する。 |
+| モーダル内「検索」 | `POST /%eccube_admin_route%/search/product`（Ajax） | モーダル内に検索結果 HTML が差し込まれる。 |
+| 存在しない `otcBuyOrderId` | `GET …/otcbuyorder/{id}` | 404。 |
+| 存在しない `otcBuyOrderId` への保存 | `POST …/otcbuyorder/{id}/update` | 404。 |
+| 同上のページ送り。 | `GET, POST /%eccube_admin_route%/search/product/page/{page_no}` | 同上のページ送り。 |
+
+---
+
+## フロント挙動
+
+| 観点 | 内容 |
+|------|------|
+| 表示要素 | メニューキーは `purchase_store` と `list`。タイトルは店頭買取管理の翻訳キー。操作履歴に査定番号、申込者氏名、会員 ID、ステータス、適格請求書関連の表示、各種日時、ダブルチェック者、端末取引 ID、棚戻し済み（ラジオ風の無効表示）。ステータス変更履歴は表形式。買取情報に査定合計金額、明細表（数量 0 の行は出さない）、個別入力表（数量 0 の行は出さない、未登録なら実在庫登録ボタン）。実在庫は表示用表と編集用表の二段構え。査定申込者情報に氏名・住所等とフリーコメント textarea。フッタに一覧戻り、経理、入庫済み、ステータス変更、保存。 |
+| JS 挙動 | jQuery と Bootstrap 5 のモーダルを利用。実在庫「編集」で表示／編集ブロックを切替え、編集解除時は確認後に動的追加行を削除し増減入力をクリア。「経理払出し済」送信前に `confirm`。モーダルは個別登録モードと商品追加モードで data を切替。検索は Ajax で `admin_search_product` へ POST（`skip_stock_check: true` 等）。規格決定は個別登録時は hidden フォームを生成して POST、商品追加時は編集表に行を DOM 追加。 |
+| CSS・レイアウト | 管理画面共通フレーム。増減数 input は幅 80px。編集モード中は切替ボタンが警告色クラスに切替。 |
+| モーダル・ポップアップ | `registModal` で商品キーワード・カテゴリと検索結果一覧。閉じた後も編集表への追加や個別 POST が続く。 |
+
+---
+
+## 処理フロー
+
+### 詳細を表示する（GET `admin_otcbuyorder_detail`）
+
+1. 管理画面の認証を通過する。
+2. `otcBuyOrderId` に該当する行が無ければ 404 とする。
+3. 明細はリポジトリの選択メソッドで取得し、価格降順、次に明細 ID 昇順でコレクションを差し替える。
+4. ステータス変更履歴は当該注文に紐づけ、作成日時降順で取得する。
+5. マスタから店頭買取ステータス ID と名称の対応表を組み立てる。
+6. 店頭買取注文をデータとして `OtcBuyOrderDetailType` のフォームを生成し、フリーコメント欄をバインドする。
+7. 実在庫の表示行は、カード状態 ID 昇順、次に買取金額降順、次に商品規格 ID 昇順のクエリで得る。
+8. 実在庫の編集行は、高額商品の規格一覧と、通常商品を全カード状態（NM, SP, MP, HP）に展開した規格一覧を結合した配列とする。
+9. 商品検索モーダル用に `SearchProductType` の空フォームを生成する。
+10. Twig を描画する。
+
+### 保存する（POST `admin_otcbuyorder_update_details`）
+
+1. 管理画面の認証を通過する。利用者が管理者アカウントでなければ認証例外とする。
+2. 該当する店頭買取注文が無ければ 404 とする。
+3. 同一エンティティに対して `OtcBuyOrderDetailType` で `handleRequest` する。
+4. リクエストの `stock_diff` から整数に変換し、値 0 のキーを除いた配列を得る。
+5. フォームが送信済みかつ妥当な場合のみ、次を試みる。妥当でない場合は保存処理を行わない。
+6. `stock_diff` が空でない場合、在庫更新アクションに注文・ログイン中メンバー・差分配列を渡す。アクション内で編集可能店舗の検証、許可ステータス検証、数量負不可検証、原価小計の再計算、在庫と履歴の更新、注文の `update_date` 更新、トランザクションコミットが行われる。
+7. `stock_diff` が空の場合はコントローラが `flush` のみ行う（フリーコメントなどフォームで変わったフィールドの永続化）。
+8. 手順 6 または 7 が例外なく終われば、成功フラッシュ鍵 `admin.common.save_complete` を積む（日本語ロケールの確認値は「保存しました」）。
+9. 手順 6 で例外が出た場合はメッセージをエラーフラッシュに積む。手順 5 でフォームが不当な場合はフラッシュを積まない。
+10. 成否にかかわらず、同じ `otcBuyOrderId` の GET 詳細へ HTTP リダイレクトする。
+
+### 個別入力に規格を登録する（POST `admin_otcbuyorder_register_individual_stock`）
+
+1. CSRF 名 `register_individual_stock` のトークンを検証する。無効なら CSRF エラーメッセージを積み、詳細へリダイレクトする。
+2. 注文と個別入力商品が存在し、かつ個別入力商品が当該注文に属さなければ 404 とする。
+3. リクエストの `product_class_id` で商品規格を取得し、無ければエラーメッセージを積んでリダイレクトする。
+4. 個別登録アクションを実行する。編集可能店舗、「未登録在庫あり」ステータス、未登録の二重防止を検証し、実在庫の作成または加算、個別行への規格セット、全行登録済みならステータスを入庫待ちへ遷移する処理が含まれる。
+5. 成功時は「実在庫登録が完了しました。」を成功フラッシュに積む。失敗時は例外メッセージをエラーに積む。
+6. 詳細へリダイレクトする。
+
+### 経理払出し済にする（POST `admin_otcbuyorder_update_status_account_team_paid`）
+
+1. CSRF 名 `account_team_paid` を検証する。失敗時は CSRF エラーで詳細へ戻る。
+2. 注文が無ければ 404。利用者が管理者アカウントでなければ認証例外。
+3. 注文の店舗に対し、ログイン中メンバーの編集可能店舗が一致しなければ例外（画面では HTTP 500 になり得る実装である）。
+4. 現在ステータスが経理払出し待ちでなければエラーフラッシュで詳細へ戻る。
+5. ステータス更新アクションで買取完了へ遷移を試みる。成功時は `admin.common.save_complete`、失敗時は例外メッセージをエラーに積む。
+6. 詳細へリダイレクトする。
+
+### 入庫済みにする（POST `admin_otcbuyorder_update_status_restocked`）
+
+1. CSRF 名 `restocked` を検証する。失敗時は CSRF エラーで詳細へ戻る。
+2. 注文が無ければ 404。利用者が管理者アカウントでなければ認証例外。
+3. 編集可能店舗が一致しなければ例外（HTTP 500 になり得る）。
+4. ステータス更新アクションで入庫済みへ遷移を試みる。成功時は `admin.common.save_complete`、失敗時は例外メッセージをエラーに積む。
+5. 詳細へリダイレクトする。
+
+---
+
+## 保存処理の判定順序（POST `admin_otcbuyorder_update_details`）
+
+| 順序 | 判定 | 結果 |
+|------|------|------|
+| 1 | 店頭買取注文 ID が存在するか | 無ければ 404。 |
+| 2 | 送信された Symfony フォームが妥当か | 否なら保存処理を行わず、成功・失敗フラッシュを積まずリダイレクトする。 |
+| 3 | `stock_diff` に 0 以外が残っているか | 残っていれば在庫更新アクション。空ならコントローラが `flush` のみ。 |
+| 4 | 在庫更新アクション内の店舗一致・ステータス・数量下限 | 違反時は例外。メッセージ例:「編集可能な店舗と買取情報の買取店舗が一致しません。」「未登録在庫ありまたは入庫待ちステータスの場合のみ実在庫の更新が可能です。」「商品規格ID … の数量が負になります …」 |
+
+---
+
+## 集計条件
+
+| 指標 | 集計の要点 |
+|------|------------|
+| 査定合計金額 | 画面上は注文の `total_price` を価格フォーマットで表示する。再計算は本画面では行わない。 |
+| 明細小計 | 行ごとに `original_quantity * price` を表示。数量 0 の明細行は表に出さない。 |
+| 個別入力小計 | `quantity * price`。数量 0 の行は表に出さない。 |
+| 実在庫表示行 | 数量 0 の在庫行は表に出さない。並びはリポジトリ実装に従う。 |
+
+本画面は月次集計バッチや売上集計を直接実行しない。
+
+---
+
+## 業務ルール・計算
+
+| 項目 | 内容 |
+|------|------|
+| 在庫の原価小計 | 増減後数量に応じて `StockCostCalculator` が小計を再配分する。既存在庫と新規行が混在し得る。 |
+| 在庫履歴 | `stock_diff` に明示された商品規格だけ、履歴行を残す。変更前数量を履歴に記録する。 |
+| フリーコメントのみ更新 | `stock_diff` がすべて 0 または未送信のとき `flush` のみ。`update_date` を自動更新するライフサイクルは本エンティティに無く、当経路では `update_date` は変わらない。 |
+
+### 入力項目
+
+| 項目名 | 必須／任意 | 最大長 | 初期値 | 保存先・扱い |
+|--------|------------|--------|--------|----------------|
+| フリーコメント | 任意 | フォームに文字数上限は無い。DB は `dtb_otc_buy_order.free_comment` の TEXT 型依存。 | 当該注文の現行値 | キー `freeComment`。Symfony フォーム名のプレフィックスは `otc_buy_order_detail`（型のデフォルト）。POST `update_details` で `handleRequest` 後に `flush` または在庫処理内コミットに含まれる。 |
+| 増減数 | 任意 | HTML の number 入力。サーバ側は整数化。桁の上限はフォーム・バリデータで定めず、業務上は在庫数量の非負制約に従う。 | 空 | パラメータ `stock_diff[商品規格ID]`。0 は保存ロジックに渡さない。正の差分で新規 `dtb_otc_buy_order_stock` 行を作成し得る。既存行は数量と小計を更新。 |
+
+### エッジケース
+
+| ケース | 扱い |
+|--------|------|
+| フォーム不正（CSRF 含む） | 保存しない。成功フラッシュも付けない。詳細へリダイレクトするため Symfony のフィールドエラーは画面に残らない。 |
+| 在庫更新は許可ステータス外 | 例外メッセージをエラーフラッシュしリダイレクト。500 にはならないことをテストで期待。 |
+| 編集可能店舗と不一致での在庫更新 | 同上。フリーコメントのみの POST はこの検証を通らない。 |
+| 個別登録が重複 | 「既に実在庫登録済みです。」等で拒否。 |
+| 実在庫 0 件 | 編集ボタンと編集表は出さない。「実在庫情報はありません。」 |
+
+---
+
+## データ整合性
+
+| 観点 | 内容 |
+|------|------|
+| 明細の並び | GET のたびにリポジトリの並びで差し替える。一覧と同一順序である保証は本書では扱わない。 |
+| フリーコメントと `update_date` | 在庫更新アクションは `update_date` を現在時刻で更新する。フリーコメントのみの保存では `update_date` は更新されない実装である。 |
+| 同時更新 | 楽観ロック列は持たない。最終書込み優先。 |
+
+---
+
+## API/バッチ結果
+
+本機能では業務 API の呼出しやバッチ実行を扱わない。商品検索は管理画面内の `admin_search_product` への HTTP である。
+
+---
+
+## 入出力
+
+| 種類 | 内容 |
+|------|------|
+| 入力 | パス `otcBuyOrderId`、POST 時はフォームフィールドと `stock_diff`、個別 POST 時は `product_class_id` と CSRF。 |
+| 成功時出力 | 詳細ページへの 302。成功フラッシュ（保存・経理・入庫・個別登録で鍵が異なる）。 |
+| 失敗時出力 | 詳細への 302 とエラーフラッシュ、または 404。CSRF 失敗はエラーフラッシュ。 |
+| 副作用 | `dtb_otc_buy_order` のコメント列、在庫・履歴、注文の更新日時（在庫経路）、ステータス履歴（別アクション経由）、個別行の商品規格 FK。 |
+
+---
+
+## DBカラム
+
+| テーブル | 列 | メモ |
+|---------|-----|------|
+| `dtb_otc_buy_order` | `free_comment` | 本画面の Symfony フォームが直接更新し得る。 |
+| `dtb_otc_buy_order` | `update_date` | 在庫更新アクション成功時に更新され得る。 |
+| `dtb_otc_buy_order_stock` | 数量・小計・商品規格 FK 等 | 増減数 POST で更新または新規。 |
+| `dtb_otc_buy_order_stock_history` | 履歴列 | 在庫差分があった規格に限定して追加。 |
+| `dtb_otc_buy_order_indivisual_input_product` | 商品規格 FK | 個別登録でセット。 |
+
+### DB操作
+
+永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。
+
+| 操作種別 | 対象テーブル | 契機・条件 |
+|---------|--------------|------------|
+| 登録/更新 | dtb_otc_buy_order / dtb_otc_buy_order_indivisual_input_product / dtb_otc_buy_order_stock / dtb_otc_buy_order_stock_history | 当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。 |
+
+---
+
+## バリデーション
+
+| 項目 | 内容 |
+|------|------|
+| フリーコメント | 必須ではない。Symfony の `TextareaType` に追加制約は無い。 |
+| 在庫増減 | フォーム外パラメータ。整数化後 0 を捨てる。負の数量結果は例外。 |
+| 個別登録 | CSRF、アクション内で店舗・ステータス・二重登録。 |
+| 経理・入庫ボタン | 各 CSRF、店舗、現在ステータス。 |
+
+---
+
+## 権限・認可
+
+| 利用者状態 | 詳細表示 | フリーコメント保存 | 在庫増減保存 | 個別実在庫登録 | 経理払出し済 | 入庫済み |
+|------------|----------|-------------------|--------------|----------------|--------------|----------|
+| 未認証 | 管理画面に入れない | 同左 | 同左 | 同左 | 同左 | 同左 |
+| 管理画面に入れる管理者 | 一覧から到達する前提。GET に編集可能店舗のチェックは無い（実装確認値）。 | POST にも編集可能店舗のチェックは無い（実装確認値）。 | ログイン中メンバーが注文店舗を編集可能であること、かつステータスが未登録在庫ありまたは入庫待ちであること。 | 個別アクションと同様の店舗・ステータス制約。 | 編集可能店舗一致が必須。現在が経理払出し待ちであること。 | 編集可能店舗一致が必須。 |
+| 店舗不一致 | 同上 | 現状チェック無し | 拒否 | 拒否 | 例外 | 例外 |
+
+ステータス変更リンク先の IT 限定などのコメントはコントローラに TODO として残る。本書では仕様確定しない。
+
+---
+
+## 画面遷移
+
+| 条件 | 遷移先 |
+|------|--------|
+| 一覧から詳細 | `GET …/otcbuyorder/{id}` |
+| 保存・個別登録・経理・入庫の POST 完了後 | `GET …/otcbuyorder/{id}` |
+| フッタ「店頭買取一覧」 | `GET …/otcbuyorder/page/{page_no}`。`page_no` はセッション `eccube.admin.otcbuyorder.search.page_no` が無ければ 1。 |
+| ステータス変更 | `GET …/otcbuyorder/status/{id}` |
+
+### 遷移時に引き継ぐ状態
+
+| 起点 | 遷移前の処理 | 遷移後の初期状態 |
+|------|--------------|------------------|
+| 一覧から詳細 | 一覧側で検索ページをセッションに保持していれば、その値がフッタリンクに使われる。 | 詳細の表示データを DB から組み立て直す。 |
+| POST 後のリダイレクト | フラッシュメッセージを積む。 | 詳細を再表示し、メッセージを一度表示する。 |
+
+---
+
+## エラー処理
+
+| エラー内容 | 処理 |
+|------------|------|
+| 存在しない注文 ID | 404。 |
+| CSRF 無効（経理・入庫・個別登録） | エラーフラッシュして詳細へ。 |
+| 在庫更新・個別登録・ステータス POST の業務例外 | メッセージをエラーフラッシュし詳細へ。 |
+| 商品検索 Ajax 失敗 | `alert()` で検索失敗を表示。 |
+
+---
+
+## 試行制限
+
+本機能では試行回数制限を扱わない。
+
+---
+
+## ログ・監査
+
+本機能専用の監査ログ鍵は設けない。フレームワークや汎用ロガーの出力は別ドキュメントを正とする。
+
+### ログに出してはいけないもの
+
+- パスワード
+- なりすまし対策トークン
+- Cookie 値
+- セッション ID の完全値
+- Remember Me トークンの原値
+
+---
+
+## セッション
+
+### 本機能におけるセッション
+
+| 観点 | 内容 |
+|------|------|
+| 一覧ページ番号 | キー `eccube.admin.otcbuyorder.search.page_no`。詳細フッタの一覧リンクが参照する。詳細画面の POST ではこのキーを更新しない。 |
+
+### セッションへ保存しない情報
+
+- フリーコメント下書き
+- 増減数の途中入力
+
+---
+
+## Cookie
+
+本機能単体では新しい Cookie を設定しない。セッション Cookie は管理画面ログイン機能の実装に従う。
+
+---
+
+## 排他制御・トランザクション
+
+在庫更新アクションは ORM トランザクションでまとめ、失敗時はロールバックする。店頭買取注文単位のバージョン列による楽観ロックは無い。
+
+---
+
+## 調査補助（grep 用）
+
+実装の所在を追うときの手がかりとして、次を参照する。
+
+- `ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php`
+- `ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/detail.twig`
+- `ec-cube-enterprise/src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderDetailType.php`
+- `ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/UpdateOtcBuyOrderStockAction.php`
+- `ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/RegisterIndividualStockAction.php`
+- `ec-cube-enterprise/tests/Eccube/Tests/Web/Admin/OtcBuyOrder/OtcBuyOrderControllerTest.php`
+
+### HTTPルート名とパス（コード探索用・旧入口節より退避）
+
+- `admin_otcbuyorder_detail` … `GET` … `/%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}`（買取詳細画面を表示する。`otcBuyOrderId` は 10 進整数。）
+- `admin_otcbuyorder_update_details` … `POST` … `/%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/update`（フリーコメントおよび実在庫の増減（該当時）を保存する。）
+- `admin_otcbuyorder_register_individual_stock` … `POST` … `/%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/register-individual-stock/{individualProductId}`（個別入力商品に商品規格を紐付け、実在庫行を作成または加算する。）
+- `admin_otcbuyorder_update_status_account_team_paid` … `POST` … `/%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/account_team_paid`（ステータスが経理払出し待ちのとき、買取完了へ遷移する（別フォーム・別 CSRF 名）。）
+- `admin_otcbuyorder_update_status_restocked` … `POST` … `/%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/restocked`（入庫済みステータスへ遷移する（別フォーム・別 CSRF 名）。）
+- `admin_search_product` … `GET, POST` … `/%eccube_admin_route%/search/product`（実在庫登録モーダルから Ajax で商品検索結果の HTML を取得する。）
+- `admin_search_product_page` … `GET, POST` … `/%eccube_admin_route%/search/product/page/{page_no}`（同上のページ送り。）

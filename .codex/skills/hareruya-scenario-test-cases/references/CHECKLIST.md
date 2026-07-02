@@ -1,0 +1,28 @@
+# Scenario Generation Checklist
+
+- Every generated `SCN-*.md` has all required sections from `TEMPLATE.md`.
+- Every generated `SCN-*.md` has `## システムテストカバレッジ`.
+- Every generated `SCN-*.md` has `## エッジケース要約`.
+- Every generated `SCN-*.md` has `## 実行用テストデータ` with fixed seed IDs.
+- Every generated `SCN-*.md` has `## 実行手順（正常系）` with operation, input/target, and expected result.
+- Every generated `SCN-*.md` has `## 実行手順（代替系・異常系）` with operation, input/target, and expected result for each branch.
+- Every generated `SCN-*.md` has `確認対象` in the alternative/error branch table.
+- Every generated `SCN-*.md` has at least one business or common edge case.
+- The trace source under `scenario_test/markdown` exists.
+- Related function specs and HTML design docs exist. `UNRESOLVED_FUNCTION_SPEC` and `UNRESOLVED_HTML_DESIGN_DOC` are validation failures.
+- `03_カバレッジ表.md` exists and covers every generated scenario.
+- `03_カバレッジ表.md` has `エッジケース数`, `主なエッジケース`, and `確認対象`.
+- Main-flow steps come from source business-flow rows, not from imagined UI details.
+- Main-flow steps are written from a business perspective: `担当者`, `業務行動`, `利用画面・機能`, and `確認する業務結果`.
+- Main-flow actions do not expose raw business-flow row IDs such as `R336:` as the primary operation text.
+- Test data must be concrete enough for a human tester: use fixed IDs such as `ST-ORDER-*`, `ST-STOCK-*`, `ST-CARD-*`, `ST-EVENT-*`, or equivalent.
+- Execution steps must not say only `対象業務が次の担当者へ引き渡せる状態`; they must identify a status, history, amount, count, file, or external result to check.
+- Expected results are observable on screen, in exported files, in mail, or in external-system state.
+- Cross-system scenarios include the external system in `関連システム`.
+- High-risk business scenarios include observable edge-case checks for data inconsistency, failed external integration, duplicate processing, or missing authorization/data.
+- Alternative/error flows are allowed only when the source business flow contains a branch, exception, cancellation, refund, shortage, mismatch, rejection, or similar condition. They must not be mixed into the normal execution route.
+- Traceability must include expected function numbers and linked function numbers. Missing expected function numbers must be visible in the coverage table.
+- Coverage table must use a source-qualified business-flow key, not only a numeric pattern number, because different source files can reuse the same number.
+- No output contains `設計どおり`, `設計書に記載のとおり`, or `UI標準`.
+- Existing scenario files are not overwritten unless `--overwrite` was used.
+- `01_シナリオ一覧.md` and `02_トレーサビリティ.md` contain every generated scenario ID.

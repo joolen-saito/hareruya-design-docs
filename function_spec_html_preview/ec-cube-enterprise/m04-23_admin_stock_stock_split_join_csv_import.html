@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-23（在庫分割結合CSV登録） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#1-在庫分割結合CSV登録">1. 在庫分割結合CSV登録</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
+<a class="lv3" href="#アップロードフォーム項目">アップロードフォーム項目</a>
+<a class="lv3" href="#CSV必須ヘッダ-雛形・取込">CSV必須ヘッダ（雛形・取込）</a>
+<a class="lv3" href="#コントローラ前段の検証順序-分割-結合-共通">コントローラ前段の検証順序（分割／結合 共通）</a>
+<a class="lv3" href="#取込処理-ハンドラ-の挙動">取込処理（ハンドラ）の挙動</a>
+<a class="lv3" href="#エラー行・不正行・エラー時の挙動">エラー行・不正行・エラー時の挙動</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/m04-23_admin_stock_stock_split_join_csv_import.md</p>
+        <h1>M04-23（在庫分割結合CSV登録）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫分割結合CSV登録</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockSplitJoinController::listSplitCsvImport</code> / <code>::listJoinCsvImport</code> / <code>StockSplitListCsvImportHandler</code> / <code>StockJoinListCsvImportHandler</code> / <code>CsvImporter</code> / <code>StockSplitCsvUploadType</code> / <code>StockJoinCsvUploadType</code> / <code>StockSplitRegisterAction</code>・<code>StockSplitApplyApprovalAction</code>・<code>StockJoinRegisterAction</code>・<code>StockJoinMoveToShortageEntryAction</code>）</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Importハンドラ/Form/Action）と既存テストを読み込み、必須ヘッダ・バリデーション・エラー行扱い・トランザクションを実装確認値で具体化。</td></tr></tbody></table></div>
+<h2 id="1-在庫分割結合CSV登録">1. 在庫分割結合CSV登録</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>在庫分割結合一覧画面（M04-12）のモーダルからCSVをアップロードし、在庫分割または在庫結合をファイル単位で一括登録する管理画面機能。分割は登録後に承認申請まで行い分割承認待ちへ、結合は登録後に欠品入力遷移を行い結合元登録へ進める。</p>
+<p>本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。挙動・CSV列の業務要件は基本設計仕様書を正とし、URLエンドポイント・必須ヘッダ・バリデーション・処理順序はリニューアル先 ec-cube-enterprise 実装を正とする。</p>
+<h3 id="本書で扱うこと">本書で扱うこと</h3>
+<ul><li>分割CSV登録／結合CSV登録の入口（エンドポイント）とCSV雛形ダウンロード</li><li>アップロードフォーム項目とコントローラの前段検証</li><li>CSV必須ヘッダ・列数・行バリデーション、エラー行/不正行の扱い、登録上限</li><li>取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）</li><li>登録後のステータス遷移・承認通知メール</li></ul>
+<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
+<ul><li>在庫分割・結合の登録/承認ロジックそのもの（M04-13。各Actionの内部仕様）</li><li>一覧・検索（M04-12）、CSV出力（M04-14/M04-15）</li><li>権限制御の詳細（システム設定 M11-03 を正とする）</li></ul>
+<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
+<p>すべて <code>StockSplitJoinController</code>。<code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）で、管理画面ログインを要する。</p>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>分割CSV登録</td><td><code>POST /%admin%/product/stock/split-join/list-split-csv-import</code>（<code>admin_stock_split_join_list_split_csv_import</code>）</td><td>分割CSVを取り込み、登録＋承認申請。完了後に一覧へリダイレクト（PRGパターン）。</td></tr><tr><td>結合CSV登録</td><td><code>POST /%admin%/product/stock/split-join/list-join-csv-import</code>（<code>admin_stock_split_join_list_join_csv_import</code>）</td><td>結合CSVを取り込み、登録＋欠品入力遷移。完了後に一覧へリダイレクト。</td></tr><tr><td>分割CSV雛形</td><td><code>GET /%admin%/product/stock/split-join/split-csv-template</code>（<code>admin_stock_split_csv_template</code>）</td><td>ヘッダのみのCSV雛形（UTF-8 BOM付き）をダウンロード。</td></tr><tr><td>結合CSV雛形</td><td><code>GET /%admin%/product/stock/split-join/join-csv-template</code>（<code>admin_stock_join_csv_template</code>）</td><td>ヘッダのみのCSV雛形（UTF-8 BOM付き）をダウンロード。</td></tr><tr><td>承認通知先メンバー取得</td><td><code>GET /%admin%/product/stock/split-join/approval-members</code>（<code>admin_stock_split_join_approval_members</code>）</td><td>分割CSV登録モーダル用に店舗の承認権限メンバーをJSONで返す。</td></tr></tbody></table></div>
+<h3 id="アップロードフォーム項目">アップロードフォーム項目</h3>
+<div class="table-wrap"><table><thead><tr><th>フォーム</th><th>block prefix / CSRFトークンID</th><th>項目（フォームキー）</th></tr></thead><tbody><tr><td>分割</td><td><code>admin_stock_split_csv_upload</code></td><td>店舗 <code>store</code>（必須セレクト）／在庫区分 <code>inventory_category</code>（必須ラジオ：EC-CUBE在庫=1／スマレジ在庫=2）／承認通知先所属 <code>approval_department</code>（任意・unmapped）／承認通知先メンバー <code>approval_notification_target_members</code>（複数。<code>approval_notification_required=true</code> 時は必須）／アップロードファイル <code>import_file</code>（必須。MIME <code>text/csv</code>・<code>text/plain</code>・<code>application/csv</code>）</td></tr><tr><td>結合</td><td><code>admin_stock_join_csv_upload</code></td><td>店舗 <code>store</code>／在庫区分 <code>inventory_category</code>（EC-CUBE在庫=1／スマレジ在庫=2）／アップロードファイル <code>import_file</code>（必須）。承認通知先メンバー項目は持たない。</td></tr></tbody></table></div>
+<h3 id="CSV必須ヘッダ-雛形・取込">CSV必須ヘッダ（雛形・取込）</h3>
+<div class="table-wrap"><table><thead><tr><th>種別</th><th>必須ヘッダ（実装値・順序）</th><th>列数</th></tr></thead><tbody><tr><td>分割</td><td><code>分割元商品コード</code>／<code>分割数</code>／<code>分割先商品コード</code>／<code>分割先在庫数</code></td><td>4列</td></tr><tr><td>結合</td><td><code>結合先商品コード</code>／<code>結合数量</code>／<code>結合元商品コード</code>／<code>結合元在庫区分</code>／<code>結合元数量</code></td><td>5列</td></tr></tbody></table></div>
+<p>&gt; CSVヘッダ表記はExcel設計の「結合数」「結合元在庫数」を正とする。現状の実装（雛形 <code>admin_stock_*_csv_template</code> と取込ハンドラ）は <code>結合数量</code>・<code>結合元数量</code> を用いており表記がExcelと異なるため、**実装側の是正対象**（Excel表記に合わせたCSVが取り込めるようヘッダ定義の修正が必要。テスト／取込CSVはExcel表記を期待値とする）。</p>
+<h3 id="コントローラ前段の検証順序-分割-結合-共通">コントローラ前段の検証順序（分割／結合 共通）</h3>
+<ol><li>CSRFトークン検証（分割 <code>admin_stock_split_csv_upload</code> ／結合 <code>admin_stock_join_csv_upload</code>）。不正は <code>admin.common.csrf_invalid</code> を表示し一覧へリダイレクト。</li><li>アップロードファイルの存在・妥当性（<code>UploadedFile::isValid</code>）。不正は <code>admin.common.csv_upload_error</code> を表示しリダイレクト。</li><li>店舗の解決（<code>store</code> が正なら <code>BaseInfo</code> を <code>find</code>、未指定は既定 <code>BaseInfo</code> を取得）。解決不可は <code>admin.common.csv_upload_error</code>。</li><li>在庫区分の検証。分割は <code>inventory_category ∈ {1,2}</code> のみ許可。結合は <code>inventory_category ≥ 1</code> を要求（CSV行内の <code>結合元在庫区分</code> から結合元ロケーションを別途解決）。不正は <code>admin.common.csv_upload_error</code>。</li><li>ログインメンバーの確認。未ログインは <code>admin.stock.split.login_required</code>。</li><li>ハンドラ＋<code>CsvImporter</code> を構築して <code>import()</code> を実行。例外時は <code>log_error</code>＋<code>admin.common.csv_import_error</code> を表示しリダイレクト。</li><li>取込結果のエラー（行エラー・業務エラー）を <code>addError</code>、成功メッセージを <code>addSuccess</code> で表示。</li><li>取込成功時のみ、選択された承認通知先メンバーに承認アラートメール（<code>MailService::sendStockApprovalAlertMail</code>）を送信。</li><li>完了イベント（分割 <code>ADMIN_STOCK_SPLIT_JOIN_LIST_SPLIT_CSV_IMPORT_COMPLETE</code>／結合 <code>ADMIN_STOCK_SPLIT_JOIN_LIST_JOIN_CSV_IMPORT_COMPLETE</code>）を発火し、一覧へリダイレクト。</li></ol>
+<h3 id="取込処理-ハンドラ-の挙動">取込処理（ハンドラ）の挙動</h3>
+<p><code>StockSplitListCsvImportHandler</code> / <code>StockJoinListCsvImportHandler</code> が <code>CsvImporter</code> のライフサイクルで動作する。**ファイル全体を1トランザクションで処理し、1件でもエラーがあれば全件ロールバックする。**</p>
+<div class="table-wrap"><table><thead><tr><th>フェーズ</th><th>内容</th></tr></thead><tbody><tr><td>onBeforeImport</td><td>トランザクション開始・状態初期化。</td></tr><tr><td>onValidateRow（形式検証）</td><td>行ごとに検証。登録上限 <code>MAX_ROWS=2000</code> を超えたら以降を中断（<code>breakAll</code>）。列数不一致（分割4列／結合5列でない）はその行をスキップしエラー。必須ヘッダ欠落は中断しエラー。各フィールドの空・数値・正数チェック（分割：分割数&gt;0、分割先在庫数≥1。結合：結合数量&gt;0、結合元数量≥1）。不正行は <code>skipRow</code> してエラー記録。</td></tr><tr><td>onReadRow</td><td>有効行をバッファに蓄積。</td></tr><tr><td>onAfterImport（業務登録）</td><td>エラー有り・空・未成功なら即ロールバック。正常時はグループ化して登録。</td></tr></tbody></table></div>
+<h4 id="分割の登録単位・業務検証-onAfterImport">分割の登録単位・業務検証（onAfterImport）</h4>
+<ul><li>分割元商品コード＋分割数でグループ化。</li><li>分割元 <code>ProductStock</code> を「商品コード×店舗×在庫区分（<code>inventory_category</code>）」で解決。見つからなければエラー。</li><li>各分割先 <code>ProductStock</code> を同条件で解決。見つからない／分割元と同一在庫はエラー。同一分割先は数量を合算。</li><li><code>StockSplitRegisterInput</code> →<code>StockSplitRegisterAction::handle()</code> で分割登録（<code>errorMessage</code> 返却時はエラー）。</li><li>続けて <code>StockSplitApplyApprovalInput</code>→<code>StockSplitApplyApprovalAction::handle()</code> で承認申請（ステータス＝分割承認待ち）。</li><li>全グループ成功時のみ commit し、<code>admin.stock.split_join.list_csv_split_import_done</code>（成功件数）を成功表示。</li></ul>
+<h4 id="結合の登録単位・業務検証-onAfterImport">結合の登録単位・業務検証（onAfterImport）</h4>
+<ul><li>結合先商品コード＋結合数量でグループ化。</li><li>結合先 <code>ProductStock</code> を「商品コード×店舗×在庫区分（<code>inventory_category</code>）」で解決。見つからなければエラー。</li><li>結合元 <code>ProductStock</code> を、CSV行の <code>結合元在庫区分</code>（<code>1</code>/<code>EC-CUBE</code>/<code>自社</code> ほか→EC-CUBE、<code>2</code>/<code>スマレジ</code> ほか→スマレジに正規化）から解決。区分不正・不存在・結合先と同一はエラー。</li><li><code>StockJoinRegisterInput</code>→<code>StockJoinRegisterAction::handle()</code> で結合登録（ステータス＝結合元登録）。</li><li>続けて <code>StockJoinMoveToShortageEntryAction::handle()</code> で欠品入力へ遷移（<code>StockJoinMoveToShortageValidationException</code> はエラー）。</li><li>全グループ成功時のみ commit し、<code>admin.stock.split_join.list_csv_join_import_done</code>（成功件数）を成功表示。</li></ul>
+<h3 id="エラー行・不正行・エラー時の挙動">エラー行・不正行・エラー時の挙動</h3>
+<ul><li>行単位の形式エラー（列数・空・数値不正）と業務エラー（コード未解決・在庫不足・同一在庫等）は、いずれも一覧画面上部のエラー表示エリアに <code>addError</code> で表示する。</li><li>**部分コミットはしない**: 形式エラー・業務エラーのどちらか1件でもあれば全件ロールバックし、登録は一切確定しない。</li><li>エラー発生時、モーダルの選択内容はリセットされ、一覧の検索条件・状態は維持される（基本設計の要件。リダイレクト後の一覧で再描画）。</li><li>登録上限 <code>2,000件</code> 超過は中断しエラー（基本設計の上限。最終値は性能試験で確定）。</li></ul>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>在庫分割結合 <code>dtb_stock_split_join</code>（タイプ・基準価格・原価単価・総原価・在庫数・分割結合数・ステータス等）と明細 <code>dtb_stock_split_join_detail</code>（基準価格・原価単価・在庫数・欠品点数等）を登録する。</td></tr><tr><td>ステータス</td><td>分割＝分割承認待ち（<code>SPLIT_APPROVAL_WAITING=3</code>）、結合＝結合元登録（<code>JOIN_SOURCE_REGISTERED=2</code>）へ。ステータス履歴は <code>dtb_stock_split_join_status_history</code>。</td></tr><tr><td>在庫</td><td>各Actionにより分割元/結合元の在庫が分割数/結合元数量分の確保・更新を受ける（M04-13の登録ロジック）。</td></tr><tr><td>取込履歴</td><td>本取込ルートの <code>CsvImporter</code> は <code>dtb_csv_import_history</code> への記録処理を持たない（実装確認値。取込履歴を残す場合は要追加・実装要確認）。</td></tr><tr><td>通知</td><td>取込成功時、承認通知先メンバーへ承認アラートメールを送信。</td></tr></tbody></table></div>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>CSV列・モーダル項目・権限制御の業務定義は参照元Excel設計書（在庫分割CSV登録／在庫結合CSV登録シート）および M11-03（権限制御）を正とする。</li><li>必須ヘッダ・バリデーション・処理順序・トランザクションは <code>../ec-cube-enterprise</code> の各取込ハンドラ・Action実装を正とする。</li><li>登録/承認ロジックはM04-13、一覧はM04-12を参照。</li></ul>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>本機能は新規実装であり、現行（pf-eccube3）に対応する在庫分割・結合CSV登録機能は無い。挙動・画面・CSV列は基本設計仕様書（在庫管理機能 M04-23シート）を正とし、DBスキーマ・取込処理は ec-cube-enterprise の実装を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>分割・結合の親データ</td><td><code>dtb_stock_split_join</code>（移行先で実在）。タイプ・基準価格・原価単価・総原価・在庫数・分割結合数などを保持。</td></tr><tr><td>分割・結合の明細</td><td><code>dtb_stock_split_join_detail</code>（移行先で実在）。基準価格・原価単価・在庫数・欠品点数などを保持。</td></tr><tr><td>ステータス</td><td><code>mtb_stock_split_join_status</code>（1新規登録/2結合元登録/3分割承認待ち/4結合承認待ち/5入庫済み/6却下）、履歴 <code>dtb_stock_split_join_status_history</code>。</td></tr><tr><td>取込履歴</td><td>現状の取込ルートでは <code>dtb_csv_import_history</code> への記録は確認できない（実装要確認）。</td></tr><tr><td>CSV列</td><td>分割は <code>分割元商品コード</code>・<code>分割数</code>・<code>分割先商品コード</code>・<code>分割先在庫数</code>（4列）、結合は <code>結合先商品コード</code>・<code>結合数量</code>・<code>結合元商品コード</code>・<code>結合元在庫区分</code>・<code>結合元数量</code>（5列）。1ファイルの上限はいずれも2,000件（基本設計記載。最終値は性能試験で確定）。</td></tr></tbody></table></div>
+<details>
+<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+<pre><code class="language-text">在庫分割CSV登録
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+佐藤
+作成日
+2025-08-25
+更新者
+本田
+更新日
+2026-01-21
+機能No
+M04-23
+機能名
+在庫分割CSV登録
+概要
+—
+処理概要 在庫分割CSV登録モーダル
+図形・テキストボックス内テキスト（11件）
+レイアウト図 在庫分割CSV登録モーダル
+1-1
+1-2
+1-4
+1-3
+1-5
+1-6
+2-1
+2-2
+2-3
+2-4
+2-5
+在庫分割CSV登録 / C7 / image 1
+機能仕様処理概要 在庫分割CSV登録モーダル
+在庫分割CSV登録画面概要
+・在庫分割結合一覧画面から在庫分割CSV出力ボタンを押下し、このモーダル（在庫分割CSV登録モーダル）を表示する
+・選択した条件に対して、CSVの分割元商品コード、分割数、分割先商品コード、分割先在庫数をもとに在庫分割の登録および承認申請を行う
+・登録処理完了後、ステータスは分割承認待ちとなり、分割対象の店舗の対象の商品の在庫が分割数分減る
+権限制御
+・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
+登録処理実行時のエラー
+・アップロードされたファイルがcsv以外のファイルの場合
+・CSVファイルが下記のカラム以外の場合（フォーマット不一致エラー）
+・分割元商品コード、分割数、分割先商品コード、分割先在庫数
+・分割元商品または分割先商品が存在するコードであることをチェック
+・分割元商品コードが１つであることをチェック
+・分割元商品の在庫数が分割数以上であることをチェック
+・１ファイルあたりに登録できる商品点数の上限を2,000件に設定 上限数は性能試験により確定
+エラー発生時の挙動
+・モーダルを表示する元画面でエラーを扱う
+・本モーダルの選択内容はリセットされる
+在庫分割CSV登録処理
+・機能ID: M04-13の「新規登録」および「分割先登録」に応じた在庫分割登録処理が行われる
+識別IDラベル書式・制限必須最大値初期値画面部品の説明
+1-1店舗単一選択(セレクトボックス)○--在庫分割・結合登録 編集（分割）の "識別ID1-3" と同様に
+「店舗」を選択
+1-2在庫区分単一選択(ラジオボタン)○--在庫分割・結合登録 編集（分割）の "識別ID1-4" と同様に
+「在庫区分」を選択
+1-3承認通知先（所属選択）単一選択(セレクトボックス)---共通処理識別ID1-1参照
+表示内容については下記条件を追加とする
+編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする
+1-4承認通知先（メンバー選択）複数選択(セレクトボックス)○--承認を行う担当者にメール通知を送るために、対象メンバーを選択するためのフォーム
+共通処理識別ID1-2参照
+1-5ファイルを選択ボタン○--ボタンを押下すると、アップロードするためのディレクトリフォームが開き、
+csvファイルをアップロードすることが出来る
+1-6登録ボタン---在庫分割CSV登録処理を実行
+2-1雛形をダウンロードボタン---ボタン押下時に下記のカラムが記入されているCSVファイルを出力する
+CSVのカラムは下記の通り
+分割元商品コード、分割数、分割先商品コード、分割先在庫数
+登録CSV
+識別ID項目名主キー書式・制限必須最大文字数入力例説明
+2-1分割元商品コード○文字列○255ABCD1234在庫分割元の商品コードを記入
+2-2分割数○数値○0~999999999100在庫分割元の分割数を記入
+2-3分割先商品コード○数値○255ABCD1234在庫分割先の商品コードを記入
+2-4分割在庫数○数値○0~999999999100在庫分割先の商品の点数を記入
+図形・テキストボックス内テキスト（11件）
+画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
+位置テキスト
+C11(1-1)
+N11(1-2)
+C15(1-3)
+N15(1-4)
+C18(1-5)
+C20(1-6)
+S22(2-1)
+C25(2-2)
+C26(2-3)
+C28(2-4)
+C29(2-5)
+在庫結合CSV登録
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+佐藤
+作成日
+2025-08-25
+更新者
+本田
+更新日
+2026-01-21
+機能No
+M04-23
+機能名
+在庫結合CSV登録
+概要
+—
+処理概要 在庫結合CSV登録モーダル
+図形・テキストボックス内テキスト（12件）
+レイアウト図 在庫結合CSV登録モーダル
+1-1
+1-2
+1-3
+1-4
+2-1
+2-2
+2-3
+2-4
+2-5
+2-6
+2
+4
+在庫結合CSV登録 / C8 / image 1
+機能仕様処理概要 在庫結合CSV登録モーダル
+在庫結合CSV登録画面概要
+・在庫分割結合一覧画面から在庫結合CSV出力ボタンを押下し、このモーダル（在庫結合CSV登録モーダル）を表示する
+・選択した条件に対して、CSVの結合先商品コード、結合数、結合元商品コード、結合元在庫区分、結合元在庫数をもとに在庫結合の登録および承認申請を行う
+・登録処理完了後、ステータスは結合元登録となり、結合対象の店舗の対象の商品の在庫が結合元在庫数分減る
+権限制御
+・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
+登録処理実行時のエラー
+・アップロードされたファイルがcsv以外のファイルの場合
+・CSVファイルが下記のカラム以外の場合（フォーマット不一致エラー）
+・結合先商品コード、結合数、結合元商品コード、結合元区分、結合元在庫数
+・結合先商品または結合元商品が存在するコードであることをチェック
+・結合先商品コードが１つであることをチェック
+・結合元在庫区分が正しい値かをチェック
+・結合元商品の在庫数が結合元在庫数以上であることをそれぞれチェック
+・１ファイルあたりに登録できる商品点数の上限を2,000件に設定 上限数は性能試験により確定
+エラー発生時の挙動
+・モーダルを表示する元画面でエラーを扱う
+・本モーダルの選択内容はリセットされる
+在庫分割CSV登録処理
+・機能ID: M04-13の「新規登録」および「結合元登録」に応じた在庫結合登録処理が行われる
+識別IDラベル書式・制限必須最大値初期値画面部品の説明
+1-1店舗単一選択(セレクトボックス)○--在庫分割・結合登録 編集（結合）の "識別ID1-3" と同様に
+「店舗」を選択
+1-2在庫区分単一選択(ラジオボタン)○--在庫分割・結合登録 編集（結合）の "識別ID1-4" と同様に
+「在庫区分」を選択
+1-3ファイルを選択ボタン○--ボタンを押下すると、アップロードするためのディレクトリフォームが開き、
+csvファイルをアップロードすることが出来る
+1-4登録ボタン---在庫結合CSV登録処理を実行
+2-1雛形をダウンロードボタン---ボタン押下時に下記のカラムが記入されているCSVファイルを出力する
+CSVのカラムは下記の通り
+結合先商品コード、結合数、結合元商品コード、結合元在庫数
+登録CSV
+識別ID項目名主キー書式・制限必須最大文字数入力例説明
+2-1結合先商品コード○文字列○255ABCD1234在庫結合先の商品コードを記入
+2-2結合数○数値○1~999999999100在庫結合先の結合数を記入
+2-3結合元商品コード○数値○255ABCD1234在庫結合元の商品コードを記入
+2-4結合元在庫区分○数値○11在庫結合元の在庫区分を記入（1: EC-CUBE, 2: スマレジ）
+2-5結合元在庫数○数値○1~999999999100在庫結合元の商品の点数を記入
+図形・テキストボックス内テキスト（12件）
+画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
+位置テキスト
+O1(2)
+Z1(4)
+C11(1-1)
+Q11(1-2)
+C15(1-3)
+C16(1-4)
+W19(2-1)
+C22(2-2)
+C23(2-3)
+C25(2-4)
+C27(2-5)
+C28(2-6)</code></pre>
+</details>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

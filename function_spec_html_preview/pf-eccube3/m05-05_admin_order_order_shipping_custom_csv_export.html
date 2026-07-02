@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>受注管理 — 配送カスタムCSV出力 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#受注一覧でフォーマットを選んでダウンロードする-admin-custom-export">受注一覧でフォーマットを選んでダウンロードする（`admin_custom_export`）</a>
+<a class="lv3" href="#配送Csv種別における1受注・複数配送の行の組み立て">配送Csv種別における1受注・複数配送の行の組み立て</a>
+<a class="lv3" href="#検索条件が一覧の最新検索と一致しない場合">検索条件が一覧の最新検索と一致しない場合</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#出力方式における判定順序-列ごとの値の帰属">出力方式における判定順序（列ごとの値の帰属）</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#文字コード・区切り・ファイル名-確認値">文字コード・区切り・ファイル名（確認値）</a>
+<a class="lv2" href="#調査補助-grep用">調査補助（grep用）</a>
+<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m05-05_admin_order_order_shipping_custom_csv_export.md</p>
+        <h1>受注管理 — 配送カスタムCSV出力</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>管理画面の受注一覧から、あらかじめ店舗設定で定義した「配送」用カスタムCSVフォーマットを選び、現在の受注検索条件に合致する受注データを配送単位で行に分割し、ストリーミングでCSVファイルを返す機能である。標準の配送CSV（店舗設定の固定列セット）とは別系統であり、フォーマットごとの拡張定義と任意列構成を用いる。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。実装の確認値は ec-cube-enterprise の管理画面コア（Symfony 属性ルート）を正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。</p>
+<p>本機能のカスタマイズ区分はカスタマイズである。現行挙動は pf-eccube3 のHareruyaEcプラグイン実装を参照し、リニューアル移行後の挙動とDBは ec-cube-enterprise を確認値とする。DB関連の記述は ec-cube-enterprise を正とする。</p>
+<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>現行 pf-eccube3 は HareruyaEc プラグインで配送カスタムCSV（CSV拡張定義と中間テーブル）を実装し、移行先 ec-cube-enterprise はこれをコア機能として持つ。DB関連は ec-cube-enterprise を正とし、本書のテーブル・列名は移行先名で記す。現行と移行先で列名が異なる箇所は次のとおり。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行 pf-eccube3（HareruyaEc）</th><th>移行先 ec-cube-enterprise</th></tr></thead><tbody><tr><td>出力列の有効フラグ</td><td><code>dtb_csv.enable_flg</code></td><td><code>dtb_csv.enabled</code></td></tr><tr><td>出力列の並び順キー</td><td><code>dtb_csv.rank</code></td><td><code>dtb_csv.sort_no</code></td></tr><tr><td>CSV種別の参照列</td><td><code>dtb_csv.csv_type</code></td><td><code>dtb_csv.csv_type_id</code></td></tr><tr><td>中間テーブルの並び順キー</td><td><code>dtb_csv_csv_extension.rank</code></td><td><code>dtb_csv_csv_extension.rank</code>（同一）</td></tr><tr><td>拡張定義の論理削除</td><td><code>dtb_csv_extension.deleted_at</code></td><td><code>dtb_csv_extension.deleted_at</code>（同一）</td></tr></tbody></table></div>
+<p>本書のDBカラム節・出力方式・データ整合性のDB部分は移行先 ec-cube-enterprise の名称に合わせている。現行名は上表で対応づける。</p>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>受注一覧の「カスタム配送CSVダウンロード」ドロップダウンから、登録済みフォーマット名を選ぶ</td><td><code>GET /{admin_route}/custom_csv/export/{csvExtensionId}</code>（<code>csvExtensionId</code>は選択肢ごとに異なる）</td><td><code>Content-Disposition: attachment</code> のCSVがダウンロードされる。ファイル名は接頭辞<code>shipping_</code>と日時と<code>.csv</code>。</td></tr><tr><td>同ドロップダウンの「出力項目設定」</td><td><code>GET /{admin_route}/setting/shop/custom_csv/{csvTypeId}/…</code>（<code>csvTypeId</code>は配送Csv種別の整数）</td><td>配送向けカスタムCSVの設定画面へ遷移する。</td></tr><tr><td>登録フォーマットが1件も無い</td><td>（ドロップダウン内にフォーマット名リンクは出ない）</td><td>設定画面への導線のみが残る。</td></tr><tr><td>受注一覧の表示と検索。配送カスタムCSVの抽出条件は本一覧と同一のセッション検索条件を読む。</td><td><code>GET, POST /{admin_route}/order</code></td><td>受注一覧の表示と検索。配送カスタムCSVの抽出条件は本一覧と同一のセッション検索条件を読む。</td></tr><tr><td>カスタムCSVのフォーマットおよび列定義の設定画面。<code>csvTypeId</code> に配送CSV種別の数値を渡して開く。</td><td><code>GET /{admin_route}/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId}</code></td><td>カスタムCSVのフォーマットおよび列定義の設定画面。<code>csvTypeId</code> に配送CSV種別の数値を渡して開く。</td></tr></tbody></table></div>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>受注一覧のCSV系ボタン群のうち、「カスタム配送CSVダウンロード」はBootstrapのドロップダウン。フォーマットは <code>ShippingCsvExtensions</code> の件数分、<code>admin_custom_export</code> へのGETリンクとして並ぶ。</td></tr><tr><td>JS挙動</td><td>本機能専用の出力前確認や非同期取得はない。通常のリンク遷移としてGETする。</td></tr><tr><td>CSS・レイアウト</td><td>他のCSV系ドロップダウンと同じボタンスタイル。</td></tr><tr><td>モーダル・ポップアップ</td><td>なし。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="受注一覧でフォーマットを選んでダウンロードする-admin-custom-export">受注一覧でフォーマットを選んでダウンロードする（<code>admin_custom_export</code>）</h3>
+<ol><li>管理画面の認証・共通制約を通過する。</li><li>パスパラメータの <code>csvExtensionId</code> でCSV拡張行を取得する。存在しなければアクセス拒否（HTTP404相当）の例外となる。</li><li>中間テーブル経由で、紐づくCSV列定義を rank 昇順、同順位は列定義側の <code>sort_no</code> 昇順で読み込み、拡張にセットする。</li><li>PHPの実行時間制限を無効にする。</li><li>ORMのSQLロガーを無効にする。</li><li><code>StreamedResponse</code> のコールバック内で、次を順に実行する。</li></ol>
+<ul><li>拡張定義とCsv種別をCsvエクスポート処理へ渡す。</li><li>ヘッダ行を出力する。各列の見出しはCSV列定義の表示名。</li><li>リクエストから受注検索用のクエリビルダを組み立てる。入力はセッションキー <code>eccube.admin.order.search</code> に保持された配列を受注検索フォーム型へ流し込んだ結果である。</li><li>クエリビルダをページング出力用に登録する。1ページあたり100件で走査する。</li><li>各ページで得られる各行は受注エンティティである。Csv種別が配送の場合、受注に対し「配送カスタムCSV用」の行出力処理を適用する（後述）。</li><li>各ページの走査後、ORMのユニットオブエンティティをクリアし、次ページへ進む。</li></ul>
+<ol><li>応答の <code>Content-Type</code> は <code>application/octet-stream</code>、ファイル名は接頭辞 <code>shipping_</code> と現在日時（<code>YmdHis</code>）と拡張子 <code>.csv</code>。</li><li>情報ログに、出力ファイル名を記録する。</li></ol>
+<h3 id="配送Csv種別における1受注・複数配送の行の組み立て">配送Csv種別における1受注・複数配送の行の組み立て</h3>
+<ol><li>対象受注に紐づく配送コレクションを列挙する。</li><li>配送の件数だけ、以下を繰り返す。</li><li>各CSV列定義について、まず受注エンティティに対してフィールド解決を試みる。エンティティ種別またはフィールドが一致せず値が得られない場合はヌルとなり、その列について配送エンティティへ再度解決を試みる。</li><li>ヌル以外の文字列が得られた場合、配送への二重ルックアップは行わない。空文字が得られた場合もヌルではないため、配送へフォールバックしない。</li><li>論理値は <code>1</code> または <code>0</code>、日付は設定の日付書式、参照コレクションは設定の複数値区切り文字で連結、といった共通の整形が、列定義と実体の型の組み合わせに従い適用される。</li><li>列の並びは、手順「受注一覧でフォーマットを選んでダウンロードする」のステップ3で確定した順である。</li></ol>
+<h3 id="検索条件が一覧の最新検索と一致しない場合">検索条件が一覧の最新検索と一致しない場合</h3>
+<ol><li>カスタムCSVのリクエストは一覧の「検索」ボタンを再度押さなくても、セッションに残った最後の検索条件を読む。</li><li>セッションにキーが無い場合は空配列を検索フォームへ渡した正規化結果が使われ、受注リポジトリの検索データ経路は受注一覧初期表示と整合する。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<p>本機能は売上集計や件数サマリを出さない。抽出対象は、受注一覧と同じ検索データに基づく受注クエリの結果集合である。データ行数は、抽出された各受注の配送件数の合計になる。</p>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>行の単位</td><td>配送。同一受注で配送がN件なら最大N行。</td></tr><tr><td>検索条件</td><td>セッション <code>eccube.admin.order.search</code> 由来の受注管理向け検索データ。</td></tr><tr><td>除外</td><td>標準CSVと異なる追加除外は行わない。検索側の制約に従う。</td></tr></tbody></table></div>
+<hr>
+<h2 id="出力方式における判定順序-列ごとの値の帰属">出力方式における判定順序（列ごとの値の帰属）</h2>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>列定義のエンティティ種別とフィールドで、受注から値が取れるか</td><td>取れたらその値（整形後）を列に採用し、配送は見ない。</td></tr><tr><td>2</td><td>受注側がヌル（種別不一致・フィールド欠落・関連未解決など）</td><td>配送から同じ列定義で解決を試みる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>行分割</td><td>受注カスタムCSVが「明細ごと」に行を分けるのに対し、配送カスタムCSVは「配送ごと」に行を分ける。</td></tr><tr><td>列の由来</td><td>設定した列が受注エンティティを指せば受注値、配送エンティティを指せば通常は手順2のフォールバックで配送値。いずれも該当しなければ空欄相当の出力になる。</td></tr></tbody></table></div>
+<p>本機能では受注金額の再計算や税の再割り当てといった業務計算は行わない。表示するのは当該時点で永続化された属性の参照結果である。</p>
+<hr>
+<h3 id="入力項目">入力項目</h3>
+<p>本機能は画面フォームの入力を伴う処理ではない。項目設定は店舗設定のカスタムCSV画面に委ねる。</p>
+<hr>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>存在しない <code>csvExtensionId</code></td><td>コントローラはアクセス拒否（HTTP404相当）。</td></tr><tr><td>検索ヒット0件</td><td>ヘッダ行のみのファイルとなる。</td></tr><tr><td>配送が1件の受注</td><td>その受注についてデータ行は1行。</td></tr><tr><td>列定義が受注フィールドのみで、配送固有の列が無い</td><td>各行とも受注由来の値が重複して出力されうる（配送件数ぶんの繰り返し行）。</td></tr><tr><td>UTF-8以外のエンコーディング設定</td><td>BOMは付かない。文字変換は設定のエンコーディングへ向けて行う。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との一致</td><td>抽出条件は受注一覧の検索セッションに依存する。一覧を開かずにブックマークからCSVだけ実行した場合、セッション未初期化時は一覧初期表示と同じ正規化がかかる。</td></tr><tr><td>同時更新</td><td>ストリーム中に他操作で受注が更新されても、ページングとクリアの都合により、途中ページのスナップショットに一貫性があるとは限らない。</td></tr><tr><td>設定変更</td><td>ダウンロード直前に列定義が変われば、その定義がそのリクエストに適用される。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能では外部HTTP APIの呼び出しやバッチジョブの成否を扱わない。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>GETまたはPOSTの <code>csvExtensionId</code>。本文の有無はストリーミング本体の成否に影響しない実装である。認証は管理画面のセッションCookieに依存する。</td></tr><tr><td>成功時出力</td><td>CSV本文。1行目はヘッダ。</td></tr><tr><td>失敗時出力</td><td>拡張行が無い場合は404。それ以外の失敗は管理画面共通のエラーハンドリングに従う。</td></tr><tr><td>副作用</td><td>受注データの更新は行わない。読取とログ出力のみ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>本機能は参照のみで、当機能が新規に書き込む列はない。間接的に関係する保存領域の例として、拡張・列定義・中間の紐づけ・Csv種別マスタがある。列の詳細はスキーマ定義を参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_csv_extension</code></td><td><code>id</code>, <code>csv_type_id</code> 等</td><td>ルートパラメータで指定する行。Csv種別が配送であることが配送カスタムCSVの前提。</td></tr><tr><td><code>dtb_csv_csv_extension</code></td><td><code>rank</code> 等</td><td>列の並びに使う。</td></tr><tr><td><code>dtb_csv</code></td><td>表示名、エンティティ種別、フィールド名等</td><td>ヘッダとデータ解決の鍵。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_csv / dtb_csv_csv_extension / dtb_csv_extension</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>csvExtensionId</code></td><td>数値としてパスに含まれる。該当行が無ければ404。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>配送カスタムCSVのダウンロード</th></tr></thead><tbody><tr><td>管理画面にログインせず</td><td>管理画面共通のゲートにより到達できない。</td></tr><tr><td>管理画面にログイン済みで受注一覧へ到達できる</td><td>本ルートへアクセスしストリーミング応答を得られる。細分化ロールは実装の管理画面共通ルールに従う。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>フォーマット名をクリック</td><td>同一タブでファイルダウンロードが開始され、受注一覧ページはそのまま残る。</td></tr><tr><td>出力項目設定をクリック</td><td>店舗設定のカスタムCSV（配送種別）画面へGET遷移。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>カスタムCSVダウンロードリンク</td><td>セッションの受注検索は変更しない（読むのみ）。</td><td>ブラウザがファイル保存ダイアログまたは既定ダウンロードフォルダへ保存。一覧の表示状態は変わらない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>拡張行が存在しないID</td><td>アクセス拒否（HTTP404相当）。</td></tr><tr><td>ORMの前提不整合（Csv種別と関数対応表の不整合など）</td><td>実行時例外に委ねる。本機能の正常系では、ルートに到達した拡張のCsv種別は保存済み値に従う。</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>本機能ではダウンロード回数のレート制限を別途設けない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>応答生成時</td><td>情報ログに、出力したファイル名（接頭辞と日時を含む文字列）。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li><li>Remember Meトークンの原値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>読取</td><td>キー <code>eccube.admin.order.search</code> の配列を、受注検索フォームの正規化経路に渡す。</td></tr><tr><td>更新</td><td>本ルートの処理ではセッション値を書き換えない。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>カスタムCSV実行の成否やファイル名をセッションに覚えない。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>本機能単体で特別なCookieを扱わない。管理画面セッション維持に用いるセッションCookieが前提になる。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>ストリーミング読取であり、本機能内で悲観ロックや明示トランザクション境界を張らない。ページ単位のエンティティクリアはメモリと同一永続コンテキスト再利用のための実装詳細である。</p>
+<hr>
+<h2 id="文字コード・区切り・ファイル名-確認値">文字コード・区切り・ファイル名（確認値）</h2>
+<p>アプリケーション設定 <code>eccube.yaml</code> 展開に、次の既定がある（環境で上書きされうる）。</p>
+<div class="table-wrap"><table><thead><tr><th>設定キー</th><th>既定の確認例</th></tr></thead><tbody><tr><td><code>eccube_csv_export_separator</code></td><td>カンマ</td></tr><tr><td><code>eccube_csv_export_encoding</code></td><td>UTF-8</td></tr><tr><td><code>eccube_csv_export_date_format</code></td><td><code>Y-m-d H:i:s</code></td></tr><tr><td><code>eccube_csv_export_multidata_separator</code></td><td>カンマ</td></tr></tbody></table></div>
+<p>エンコーディングが UTF-8 のとき、先頭にBOMを付与する。ファイル名は <code>shipping_</code> + <code>YmdHis</code> + <code>.csv</code> である。</p>
+<hr>
+<h2 id="調査補助-grep用">調査補助（grep用）</h2>
+<p>実装照合のため、ソースツリー上では次の識別子が手がかりになる。</p>
+<div class="table-wrap"><table><thead><tr><th>識別子</th><th>備考</th></tr></thead><tbody><tr><td><code>admin_custom_export</code></td><td>カスタムCSV出力ルート名。</td></tr><tr><td><code>exportShipping</code></td><td>配送Csv種別向けの行生成。</td></tr><tr><td><code>getOrderQueryBuilder</code></td><td>受注検索クエリ。</td></tr><tr><td><code>eccube.admin.order.search</code></td><td>検索条件セッション。</td></tr></tbody></table></div>
+<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
+<ul><li><code>admin_custom_export</code> … <code>GET, POST</code> … <code>/{admin_route}/custom_csv/export/{csvExtensionId}</code>（指定したCSV拡張定義に従い、種別に応じたストリーミングCSVを返す。配送カスタムCSVでは拡張行のCsv種別が配送であることが前提となる。）</li><li><code>admin_order</code> … <code>GET, POST</code> … <code>/{admin_route}/order</code>（受注一覧の表示と検索。配送カスタムCSVの抽出条件は本一覧と同一のセッション検索条件を読む。）</li><li><code>m10-13_admin_base_setting_setting_shop_csv_custom</code> … <code>GET</code> … <code>/{admin_route}/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId}</code>（カスタムCSVのフォーマットおよび列定義の設定画面。<code>csvTypeId</code> に配送CSV種別の数値を渡して開く。）</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

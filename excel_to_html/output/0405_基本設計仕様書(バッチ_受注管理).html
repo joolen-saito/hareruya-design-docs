@@ -1,0 +1,2151 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0405_基本設計仕様書(バッチ_受注管理)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* function-design-embed:start */
+    .function-design-embed {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-header {
+      margin-bottom: 18px;
+    }
+
+    .function-design-header h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .function-design-header h4 {
+      margin: 0;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-source {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .function-design-note {
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      border-left: 3px solid #f0ad4e;
+      background: rgba(240, 173, 78, 0.10);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .function-design-body h1,
+    .function-design-body h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+    }
+
+    .function-design-body h3 {
+      margin: 22px 0 10px;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-body h4 {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .function-design-body p {
+      margin: 9px 0;
+    }
+
+    .function-design-body ul,
+    .function-design-body ol {
+      margin: 9px 0;
+      padding-left: 26px;
+    }
+
+    .function-design-body li {
+      margin: 3px 0;
+    }
+
+    .function-design-body code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--band);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .function-design-body pre {
+      overflow-x: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      white-space: pre-wrap;
+    }
+
+    .function-design-body pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .function-design-body .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .function-design-body table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .function-design-body th,
+    .function-design-body td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .function-design-body th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .function-design-body tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* function-design-embed:end */
+</style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0405_基本設計仕様書(バッチ_受注管理)</p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">注文番号登録</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">購入完了手続き再処理</a></li>
+                  <li><a href="#sheet-5" data-sheet="sheet-5">店頭注文番号初期化</a></li>
+                  <li><a href="#sheet-6" data-sheet="sheet-6">スマレジ商品再連携</a></li>
+                  <li><a href="#sheet-7" data-sheet="sheet-7">スマレジ商品削除</a></li>
+                  <li><a href="#sheet-8" data-sheet="sheet-8">ポイント二重登録チェック</a></li>
+                  <li><a href="#sheet-9" data-sheet="sheet-9">ポイント利用未反映チェック</a></li>
+                  <li><a href="#sheet-10" data-sheet="sheet-10">スマレジEC受注連携エラー再連携</a></li>
+                  <li><a href="#sheet-11" data-sheet="sheet-11">スマレジ取引連携エラー再連携</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">受注管理機能</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>緑川</td><td>2025-05-16</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">バッチ設計書</h4>
+            <p class="doc-p" style="--lv:1">B05-01 注文番号登録</p>
+            <p class="doc-p" style="--lv:1">B05-02 購入完了手続き再処理</p>
+            <p class="doc-p" style="--lv:1">B05-03 店頭注文番号初期化</p>
+            <p class="doc-p" style="--lv:1">B05-04 スマレジ商品再連携</p>
+            <p class="doc-p" style="--lv:1">B05-05 スマレジ商品削除</p>
+            <p class="doc-p" style="--lv:1">B05-06 ポイント二重登録チェック</p>
+            <p class="doc-p" style="--lv:1">B05-07 ポイント利用未反映チェック</p>
+            <p class="doc-p" style="--lv:1">B05-08 スマレジEC受注連携エラー再連携</p>
+            <p class="doc-p" style="--lv:1">B05-09 スマレジ取引連携エラー再連携</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>注文番号登録</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-13</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-29</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B05-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>注文番号登録<br>→店頭受取注文商品スマレジ連携（名称変更）</dd></div>
+            <div class="kv"><dt>概要</dt><dd>スマレジ用商品コードの登録と連携を行う</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-3-shapes">図形・テキストボックス内テキスト（16件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>注文番号のコピー処理をバッチから除外する</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>注文番号の採番処理を新たなデータベースに合わせて変更する（MySQL→PostgreSQL）</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>現行でこのバッチは以下の2つの処理を行っている</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>採番された注文番号を注文情報へコピーする処理</span></div>
+            <p class="doc-p" style="--lv:2">（注文ステータスが変更されたときに実行されるMySQLのトリガーで注文番号が注文番号採番専用テーブルにて採番されるため、コピーを行う）</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>店頭受取注文の場合、スマレジ側に注文した商品の情報を連携する</span></div>
+            <p class="doc-p" style="--lv:1">現行</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">DB　Mysql</h4>
+          </div>
+          <div class="diagram-block">
+            <figure class="diagram-frame" data-diagram-layout="excel" data-diagram-connectors="3" data-diagram-nodes="4" data-transition-edges="3">
+              <div class="diagram-viewport">
+                <div class="diagram-stage diagram-stage-excel" style="width:773px;height:949px">
+                  <svg class="diagram-lines" viewBox="0 0 773 949" preserveAspectRatio="none" aria-hidden="true">
+                    <defs>
+                      <marker id="diagram-arrow-sheet-3-1" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#5F7048"></path>
+                      </marker>
+                    </defs>
+                    <path d="M 446.9 910.0 L 586.3 910.0" fill="none" stroke="#5F7048" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#diagram-arrow-sheet-3-1)"></path>
+                    <path d="M 172.4 38.4 L 259.3 910.0" fill="none" stroke="#5F7048" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#diagram-arrow-sheet-3-1)"></path>
+                    <path d="M 178.0 567.5 L 382.9 567.5" fill="none" stroke="#5F7048" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#diagram-arrow-sheet-3-1)"></path>
+                  </svg>
+                  <div class="diagram-node" style="left:18.0px;top:18.0px;width:154.4px;height:40.7px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">注文完了</div>
+                  <div class="diagram-node" style="left:586.3px;top:889.3px;width:168.6px;height:41.4px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">注文番号登録バッチ</div>
+                  <div class="diagram-node" style="left:259.3px;top:889.3px;width:187.7px;height:41.4px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">トリガー: 注文番号採番</div>
+                  <div class="diagram-node" style="left:23.6px;top:547.1px;width:154.4px;height:40.7px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">注文完了</div>
+                  <div class="diagram-node" style="left:382.9px;top:547.1px;width:159.3px;height:40.7px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">注文番号採番</div>
+                  <div class="diagram-node" style="left:166.9px;top:819.3px;width:194.0px;height:60.0px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.0px">受注データが更新されるとトリガーの処理が実行される</div>
+                  <div class="diagram-node" style="left:170.9px;top:358.3px;width:294.0px;height:229.0px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.0px">[条件]<br>ステータスが<br>    決済処理中 または 購入処理中<br>から<br>    注文受領 または 入金待ち<br>に変更された場合に注文番号を採番する<br><br>つまり注文が確定したタイミングで採番を行う<br>＝注文が完了した順の採番となる</div>
+                </div>
+              </div>
+              <figcaption>画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）</figcaption>
+              <details class="transition-list">
+                <summary>遷移一覧（3件）</summary>
+                <div class="item-table-wrap">
+                  <table class="item-table">
+                    <thead><tr><th>遷移元</th><th>遷移先</th></tr></thead>
+                    <tbody>
+                      <tr><td>トリガー: 注文番号採番</td><td>注文番号登録バッチ</td></tr>
+                      <tr><td>注文完了</td><td>トリガー: 注文番号採番</td></tr>
+                      <tr><td>注文完了</td><td>注文番号採番</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            </figure>
+          </div>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:1">【開発申し送り】現在のトリガーSQL（MySQLに設定されている）</p>
+            <p class="doc-p" style="--lv:1">IF OLD.status IN (7, 8) AND NEW.status IN (1, 2) THEN</p>
+            <p class="doc-p" style="--lv:1">INSERT IGNORE INTO dtb_order_number(order_id) VALUES(OLD.order_id);</p>
+            <p class="doc-p" style="--lv:1">END IF;</p>
+            <p class="doc-p" style="--lv:1">上記の処理の理由とカスタマイズ理由</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文が完了した順番で注文番号を付けたいため、注文IDとは別に注文番号を採番している</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文番号を連番で採番する際、MySQLのPKを連番で採番する機能を使っているため、</span></div>
+            <p class="doc-p" style="--lv:2">新たなテーブル(dtb_order_number)を作成し採番を行っている</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>採番用のテーブル(dtb_order_number)にデータ登録をする処理でデッドロックが起こる可能性はあるため、</span></div>
+            <p class="doc-p" style="--lv:2">データ登録の処理をなくした形にしたい</p>
+            <p class="doc-p" style="--lv:1">リニューアル後</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">DB　PostgreSQL</h4>
+            <p class="doc-p" style="--lv:1">【開発申し送り】リニューアル後のトリガーSQL</p>
+            <p class="doc-p" style="--lv:1">IF OLD.status IN (7, 8) AND NEW.status IN (1, 2) THEN</p>
+            <p class="doc-p" style="--lv:1">NEW.order_number := nextval('order_number_seq');</p>
+            <p class="doc-p" style="--lv:1">END IF;</p>
+            <p class="doc-p" style="--lv:1">以上のカスタマイズにより、注文番号登録バッチから注文番号登録の処理を削除する</p>
+            <p class="doc-p" style="--lv:1">元々、注文番号登録バッチという名称であるがリニューアル後は注文番号登録を行わないため、</p>
+            <p class="doc-p" style="--lv:1">バッチ名称は「店頭受取注文商品スマレジ連携バッチ」に変更する。</p>
+            <p class="doc-p" style="--lv:1">支店側の「スマレジ商品登録バッチ」が同じ役割を持っており、今回本店で実装されるため不要になるので、実装を引き継ぐ形とする。</p>
+            <p class="doc-p" style="--lv:2">【開発申し送り】支店と本店のバッチを見比べながら作成する</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>注文番号のコピー処理をバッチから除外する</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>注文番号の採番処理（トリガー）を新たなデータベースに合わせて変更する（MySQL→PostgreSQL）</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>以下の注文を対象にスマレジ商品コードの採番とスマレジ連携を行う</span></div>
+            <p class="doc-p" style="--lv:1">※現行の支店のスマレジ商品連携バッチと同仕様にする</p>
+            <p class="doc-p" style="--lv:1">※本店側のバッチは注文番号採番を行った注文に対してスマレジ連携を行っていたが、</p>
+            <p class="doc-p" style="--lv:2">注文番号採番の処理を除外するため、以下の条件でスマレジ商品を連携することにより、スマレジ商品再連携バッチが不要となる</p>
+            <p class="doc-p" style="--lv:2">（連携が成功しないとスマレジ連携済みフラグが立たないため。支店側はもともとスマレジ商品再連携バッチはない）</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>バッチ起動から30分前以降の注文</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ店舗IDとスマレジ店舗コードが指定済みの店舗の注文</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ連携済みフラグが立っていない</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ在庫連携済みフラグが立っていない</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文ステータスが「注文受領」「入金待ち」「入金済み」「ピック中」「ピック済み」</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>スマレジ用商品コード（バーコード）の採番を行う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>採番ルールは以下の通り（インストアコードの採番ルールに従う）</span></div>
+            <p class="doc-p" style="--lv:3">20(固定) + 1(固定) + スマレジ店舗ID(3桁0埋め、スマレジ店舗IDの指定がない場合は000となる) + 注文番号(8桁0埋め後、末尾から6桁取得）</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:3">+ チェックディジット</h4>
+            <p class="doc-p" style="--lv:4">※チェックディジット = 「奇数桁をそのまま足したもの」と「偶数桁を3倍して足したもの」を合計し、</p>
+            <p class="doc-p" style="--lv:5">その結果の一の位を求め、10から引いた数（ただし、結果が10の場合は0）</p>
+            <p class="doc-p" style="--lv:2">例: 本店で店頭受取注文を行い、注文番号が12345だった場合</p>
+            <p class="doc-p" style="--lv:4">2010010123451　これがスマレジ商品コードとなる</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>注文データに採番したスマレジ用商品コードを保存する</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>呼び出しの詳細についてはスマレジプラットフォームAPIのドキュメントを参照</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>スマレジ商品登録APIを使用し、スマレジに注文商品を登録する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>以下のデータを送信する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ用商品コード</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>部門ID</span></div>
+            <p class="doc-p" style="--lv:4">6: 店頭受取（固定）</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>商品名</span></div>
+            <p class="doc-p" style="--lv:4">店頭PCアカウントの場合: 「店頭注文: 店頭注文番号 のご注文」</p>
+            <p class="doc-p" style="--lv:4">通常会員の場合: 「注文者姓カナ 注文者名カナ 様のご注文」</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>金額</span></div>
+            <p class="doc-p" style="--lv:4">スムーズ店頭受取の場合: 0円（固定）</p>
+            <p class="doc-p" style="--lv:4">店頭受取の場合: 注文合計金額（注文内の明細を1つにまとめて1商品とするため、合計金額を指定する）</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ連携が成功した場合スマレジ連携済みフラグを立てる、失敗した場合エラーメールを送信する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>メールの送信先は追加設定のスマレジ通信エラー送信メールアドレス</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>商品連携が成功した場合、スマレジ在庫登録APIを使用し、連携した商品に在庫を登録する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>以下のデータを送信する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ用商品コード</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>在庫数（1固定）</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ連携が成功した場合スマレジ在庫連携済みフラグを立てる、失敗した場合エラーメールを送信する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>メールの送信先は追加設定のスマレジ通信エラー送信メールアドレス</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　10分おき</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB、スマレジ</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">DBから以下のデータを取得</h4>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>バッチ起動から30分前以降の注文</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ店舗IDとスマレジ店舗コードが指定済みの店舗の注文</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ連携済みフラグが立っていない</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ在庫連携済みフラグが立っていない</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>注文ステータスが「注文受領」「入金待ち」「入金済み」「ピック中」「ピック済み」</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">注文データ.注文日時　バッチ駆動時間からバッチ駆動時間より30分前</p>
+            <p class="doc-p" style="--lv:0">注文データ.注文店舗.スマレジ店舗ID　スマレジ店舗IDが登録済み</p>
+            <p class="doc-p" style="--lv:0">注文データ.注文店舗.スマレジ店舗コード　スマレジ店舗コードが登録済み</p>
+            <p class="doc-p" style="--lv:0">注文データ.スマレジ連携済みフラグ　スマレジ連携済みフラグが立っていない</p>
+            <p class="doc-p" style="--lv:0">注文データ.スマレジ在庫連携済みフラグ　スマレジ在庫連携済みフラグが立っていない</p>
+            <p class="doc-p" style="--lv:0">注文データ.注文ステータス　「注文受領」「入金待ち」「入金済み」「ピック中」「ピック済み」</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">ECCUBE</h4>
+            <p class="doc-p" style="--lv:2">スマレジ連携済みフラグ、スマレジ在庫連携済みフラグ、スマレジ商品コードを登録</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">スマレジ</h4>
+            <p class="doc-p" style="--lv:2">注文商品をスマレジに登録（在庫含む）</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <p class="doc-p" style="--lv:1">APIの実行に失敗した場合は、エラーメールを送信する</p>
+            <p class="doc-p" style="--lv:1">処理に失敗した注文は、スマレジ商品再連携バッチで再度連携の対象となる</p>
+          </div>
+          <section class="shape-block" id="sheet-3-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（16件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="M20"><td class="shape-ref">M20</td><td>受注データが更新されるとトリガーの処理が実行される</td></tr>
+                  <tr data-shape-index="2" data-shape-ref="AJ20"><td class="shape-ref">AJ20</td><td>10分おきにバッチ実行</td></tr>
+                  <tr data-shape-index="3" data-shape-ref="C23"><td class="shape-ref">C23</td><td>注文完了</td></tr>
+                  <tr data-shape-index="4" data-shape-ref="C24"><td class="shape-ref">C24</td><td>注文完了</td></tr>
+                  <tr data-shape-index="5" data-shape-ref="R24"><td class="shape-ref">R24</td><td>トリガー: 注文番号採番</td></tr>
+                  <tr data-shape-index="6" data-shape-ref="AL24"><td class="shape-ref">AL24</td><td>注文番号登録バッチ</td></tr>
+                  <tr data-shape-index="7" data-shape-ref="M26"><td class="shape-ref">M26</td><td>[条件]<br>ステータスが<br>    決済処理中 または 購入処理中<br>から<br>    注文受領 または 入金待ち<br>に変更された場合に注文番号を採番する<br><br>つまり注文が確定したタイミングで採番を行う<br>＝注文が完了した順の採番となる</td></tr>
+                  <tr data-shape-index="8" data-shape-ref="AF26"><td class="shape-ref">AF26</td><td>・受注データに注文番号の値をコピーする<br>（注文番号は専用テーブルに採番されるため）<br>・スマレジ用商品コード（バーコード）生成＆登録<br>・スマレジ連携</td></tr>
+                  <tr data-shape-index="9" data-shape-ref="P50"><td class="shape-ref">P50</td><td>受注データが更新されるとトリガーの処理が実行される</td></tr>
+                  <tr data-shape-index="10" data-shape-ref="AJ50"><td class="shape-ref">AJ50</td><td>10分おきにバッチ実行</td></tr>
+                  <tr data-shape-index="11" data-shape-ref="AL53"><td class="shape-ref">AL53</td><td>店頭受取注文商品スマレジ連携バッチ</td></tr>
+                  <tr data-shape-index="12" data-shape-ref="D54"><td class="shape-ref">D54</td><td>注文完了</td></tr>
+                  <tr data-shape-index="13" data-shape-ref="U54"><td class="shape-ref">U54</td><td>注文番号採番</td></tr>
+                  <tr data-shape-index="14" data-shape-ref="N56"><td class="shape-ref">N56</td><td>[条件]<br>ステータスが<br>    決済処理中 または 購入処理中<br>から<br>    注文受領 または 入金待ち<br>に変更された場合に注文番号を採番する<br><br>条件は現行と同じだが、PostgresSQLを使うことにより採番テーブルが不要となり、注文データのそのまま採番可能<br>（PostgresSQLのシーケンスの機能を使う）</td></tr>
+                  <tr data-shape-index="15" data-shape-ref="AF57"><td class="shape-ref">AF57</td><td>・これまで行っていた注文番号のコピーの処理は行わず、以下の処理のみ行う<br>・スマレジ用商品コード（バーコード）生成＆登録<br>・スマレジ連携</td></tr>
+                  <tr data-shape-index="16" data-shape-ref="AB72"><td class="shape-ref">AB72</td><td>DBがPostgreSQLになるためシーケンス機能を利用して注文番号を採番する<br>（よってdtb_order_numberテーブルが不要となる）</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      <!-- function-design-embed:start b05-01-b05-01_batch_order_order_copy_order_number -->
+      <section class="function-design-embed" id="function-design-b05-01-b05-01_batch_order_order_copy_order_number" data-source="functions/pf-eccube3/b05-01_batch_order_order_copy_order_number.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-01_batch_order_order_copy_order_number.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-01 注文番号登録 / バッチ 受注管理 — 注文番号登録</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-概要">概要</h2>
+          <p>注文番号テーブルに採番された注文番号を、受注サブテーブルへコピーするバッチである。コマンドライン（コンソールコマンド）から実行する。コピー対象の受注のうち店頭受取の注文については、スマレジ用の商品コード（バーコード）を生成して登録し、スマレジへ商品・在庫を連携する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（注文番号コピー処理）、注文番号・受注サブを扱うリポジトリ、スマレジ連携処理を正とする。カスタマイズ区分は現行踏襲であり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>注文番号テーブルから受注サブテーブルへのコピー</li><li>店頭受取注文に対するスマレジ商品コード生成とスマレジ連携</li><li>コピー対象が無い場合の挙動</li></ul>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>注文番号の採番そのもの（受注処理を正とする）</li><li>スマレジ連携サービスの内部仕様</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3）の挙動と移行先（ec-cube-enterprise）の差を記録する。挙動は現行リポを正とし、DB関連はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>受注の拡張情報の持ち方</td><td>受注サブテーブル<code>dtb_order_sub</code>が注文番号・スマレジ用コード等を保持する補助表として存在する。</td><td>補助表<code>dtb_order_sub</code>を持たず、注文番号（<code>order_number</code>）・スマレジ用商品コード（<code>smaregi_code</code>）・スマレジ各連携フラグを受注<code>dtb_order</code>の列へ統合している。</td></tr><tr><td>コピー先の列</td><td><code>dtb_order_sub.order_number</code>へ注文番号をコピーする。</td><td><code>dtb_order.order_number</code>（文字列・桁11）へ反映する。</td></tr><tr><td>スマレジ用商品コードの列</td><td><code>dtb_order_sub.smaregi_code</code>へ生成・登録する。</td><td><code>dtb_order.smaregi_code</code>（桁20）へ登録する。</td></tr><tr><td>コピー元の注文番号テーブル</td><td><code>dtb_order_number</code>が注文番号（<code>order_number</code>、自動採番）と<code>order_id</code>を持つ。</td><td><code>dtb_order_number</code>が<code>id</code>・<code>base_info_id</code>・<code>value</code>・<code>update_date</code>を持つ構造で、現行のコピー機構と差がある（ec-cube-enterprise実装で要確認）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>注文番号</td><td>受注に採番される番号。注文番号テーブルに保持する。</td></tr><tr><td>受注サブ</td><td>受注の拡張情報。注文番号・スマレジ用コード等を保持する。</td></tr><tr><td>店頭受取</td><td>店頭で受け取る配送区分の注文。</td></tr><tr><td>スマレジ用商品コード</td><td>スマレジ連携用に生成するバーコード。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>order:batch copyOrderNumber</code></td><td>注文番号テーブルから受注サブテーブルへ注文番号をコピーし、店頭受取注文はスマレジへ連携する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-注文番号登録を実行する-order-batch-copyOrderNumber">注文番号登録を実行する（<code>order:batch copyOrderNumber</code>）</h3>
+          <ol><li>注文番号テーブルから受注サブテーブルへ注文番号をコピーし、対象の受注IDの一覧を得る。</li><li>対象が無い場合は処理を終了する。</li><li>メール送信用の経路を準備する。</li><li>対象の受注ごとに受注サブを取得する。</li><li>当該注文が店頭受取の配送区分に該当する場合、スマレジ用商品コード（バーコード）を生成して受注サブへ登録し保存する。</li><li>店頭受取の注文についてスマレジへ商品・在庫を連携する。</li></ol>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>コピー対象</td><td>注文番号テーブルに採番済みで受注サブへ未反映の受注。</td></tr><tr><td>店頭受取の判定</td><td>配送区分が店頭受取グループに含まれる注文を対象にスマレジ連携を行う。</td></tr><tr><td>スマレジ用コード生成</td><td>注文番号をもとにスマレジ用バーコードを生成する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は注文番号をコピーし、店頭受取はスマレジへ商品・在庫を連携する。コピー対象が無ければ何もせず完了する。</td></tr><tr><td>API</td><td>店頭受取注文についてスマレジへ商品・在庫を連携する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>受注サブへの注文番号反映、店頭受取注文のスマレジ用コード登録とスマレジ連携。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>受注（移行先<code>dtb_order</code>、現行<code>dtb_order_sub</code>）の注文番号・スマレジ用コード更新、スマレジ連携。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>テーブル・列名はec-cube-enterpriseを正とする。現行（pf-eccube3）と異なる場合は移行先名を主とし現行名を括弧で添える。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order_number</code></td><td>コピー元の注文番号</td><td>コピー元（移行先は<code>id</code>・<code>base_info_id</code>・<code>value</code>構造のためコピー機構は要確認）。</td></tr><tr><td><code>dtb_order</code>（現行は<code>dtb_order_sub</code>）</td><td><code>order_number</code></td><td>コピー先の注文番号。</td></tr><tr><td><code>dtb_order</code>（現行は<code>dtb_order_sub</code>）</td><td><code>smaregi_code</code></td><td>店頭受取注文に生成・登録するスマレジ用商品コード。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order / dtb_order_number / dtb_order_sub</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>注文番号</td><td>注文番号テーブルと受注（移行先<code>dtb_order</code>、現行<code>dtb_order_sub</code>）の注文番号を一致させる。</td></tr><tr><td>スマレジ</td><td>店頭受取注文のスマレジ用コードを登録し、スマレジへ連携する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>コピー対象なし</td><td>何もせず完了する。</td></tr><tr><td>連携時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>スマレジ連携の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b05-01-b05-01_batch_order_order_copy_order_number-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>受注サブへの注文番号反映とスマレジ用コード登録を保存する。本バッチは楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-01-b05-01_batch_order_order_copy_order_number -->
+</section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>購入完了手続き再処理</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-13</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-29</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B05-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>購入完了手続き再処理</dd></div>
+            <div class="kv"><dt>概要</dt><dd>購入完了メールの再送信と完了画面処理の再実施</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-4-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>DBがMySQLからPostgreSQLに変わることによるテーブルのロック取得方法の変更</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>購入完了メールの再送信と完了画面処理の再実施を行うバッチ</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイント利用のクレカ決済で、購入完了画面へ遷移する前にブラウザバックするとポイント減算されない不具合のため</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>MySQLの名前付きロック機能で注文テーブルにロック（同一バッチで同時に処理しないようにする）をかける</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>毎分起動されるため、前の処理が終わっていない場合（ロックを取得できない場合）は処理を終了する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>PostgreSQLではアドバイザリロック（勧告的ロック）で実現する</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>処理対象として注文完了メールが送られていない注文を取得</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文ステータスが「新規」「入金待ち」「ピック中」</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文に紐づく注文完了メールの送信履歴が存在しない</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文日時がバッチ起動時間の5分前から1分前まで</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>取得した処理対象の注文について、ポイント使用が注文に記録されているのにポイントの履歴がない場合はポイント処理を行う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイント履歴を作成し、ポイント残高を減らす</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイント使用後のポイント残高をスマレジに連携する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">★</span><span>スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>取得した処理対象の注文について、在庫履歴の登録を行う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>在庫履歴の登録は注文時に登録する内容と同様とする</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>在庫自体は注文確認の時点で減らされているため、ここでは履歴の登録のみ行う</span></div>
+            <p class="doc-p" style="--lv:2">※在庫を減らす処理は本体とGMOプラグインに入っているが、履歴の登録は晴れる屋様のカスタマイズなので、本体やプラグインに手を入れないよう</p>
+            <p class="doc-p" style="--lv:3">注文完了画面で行っている</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>取得した処理対象の注文について、注文完了メールを送信する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信後、メール送信履歴を登録する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎分</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　スマレジプラットフォームAPI　出力先(フォーマット)　DB、スマレジ、メール</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">注文完了メールが送られていない注文を取得</h4>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>注文ステータスが「新規」「入金待ち」「ピック中」</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>注文に紐づく注文完了メールの送信履歴が存在しない</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>注文日時がバッチ起動時間の5分前から1分前まで</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">注文.ステータス　「新規」「入金待ち」「ピック中」</p>
+            <p class="doc-p" style="--lv:0">ユーザーメール送信履歴　注文番号に紐づく送信履歴がない</p>
+            <p class="doc-p" style="--lv:0">注文.注文日時　バッチ起動時間の5分前から1分前まで</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">処理対象の注文に対して、以下の処理を行う</h4>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ポイント使用があった場合ポイント残高を減らす</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ポイント使用があった場合ポイント履歴を登録する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ポイントをスマレジに同期する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>在庫を減らす</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>在庫履歴を登録する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>注文完了メールを再送する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文テーブルの名前付きロックが取得できない場合、処理を終了する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文の更新時にエラーが発生した場合はロールバックを行う</span></div>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-02-b05-02_batch_order_order_resend_mail -->
+      <section class="function-design-embed" id="function-design-b05-02-b05-02_batch_order_order_resend_mail" data-source="functions/pf-eccube3/b05-02_batch_order_order_resend_mail.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-02_batch_order_order_resend_mail.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-02 購入完了手続き再処理 / バッチ 受注管理 — 購入完了手続き再処理</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-概要">概要</h2>
+          <p>購入完了処理が完了しきらず注文完了メールが未送信となった受注について、ポイント処理・在庫更新・注文完了メールの再送信をやり直すバッチである。コマンドライン（コンソールコマンド）から実行する。二重実行を避けるためロックを取得し、受注ごとにトランザクションで処理する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（購入完了手続き再処理）、受注・受注サブ・ポイント履歴・受注番号を扱うリポジトリ、在庫更新・メール再送信・スマレジポイント連携処理を正とする。カスタマイズ区分は現行踏襲であり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>二重実行を避けるロックの取得</li><li>メール未送信受注の抽出と再処理（ポイント・在庫・メール再送）</li><li>スマレジポイント連携の別プロセス実行</li><li>受注ごとのトランザクションと失敗時の扱い</li></ul>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>通常の購入完了処理（決済〜購入完了機能を正とする）</li><li>スマレジポイント連携の内部仕様</li><li>注文完了メールの本文・件名（メールテンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3）の挙動と移行先（ec-cube-enterprise）の差を記録する。挙動は現行リポを正とし、DB関連はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>消費ポイントの列</td><td>受注サブテーブル<code>dtb_order_sub</code>の消費ポイント列で判定する。</td><td>補助表<code>dtb_order_sub</code>を持たず、消費ポイントを受注<code>dtb_order</code>の<code>spended_points</code>列へ統合している。</td></tr><tr><td>ポイント履歴テーブル</td><td>プラグインのポイント履歴で冪等判定する。</td><td><code>dtb_point_history</code>（<code>customer_id</code>・<code>order_id</code>・<code>point_change</code>・<code>point_type_id</code>等）が正。<code>order_id</code>で受注に紐づく。</td></tr><tr><td>在庫履歴テーブル</td><td>在庫履歴と販売数を更新する。</td><td>在庫履歴は<code>dtb_stock_history</code>（<code>product_stock_id</code>で関連）、販売数は<code>dtb_product_class</code>が正。</td></tr><tr><td>注文番号</td><td>受注番号（8桁）を取得して使用する。</td><td>受注<code>dtb_order</code>の<code>order_number</code>（文字列・桁11）が正。桁・型が現行と異なる（要確認）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>メール未送信受注</td><td>購入完了処理でメール送信まで至らなかった受注。</td></tr><tr><td>受注サブ</td><td>受注の拡張情報。消費ポイント等を保持する。</td></tr><tr><td>ロック</td><td>同一バッチの二重実行を避けるための排他制御。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>order:batch resendMail</code></td><td>メール未送信の受注について、ポイント・在庫を整え、注文完了メールを再送信する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-購入完了手続き再処理を実行する-order-batch-resendMail">購入完了手続き再処理を実行する（<code>order:batch resendMail</code>）</h3>
+          <ol><li>同名バッチが実行中の場合は、未完了の旨を出力して終了する。</li><li>メール送信用の経路を準備する。</li><li>ロックを取得する。取得に失敗した場合は異常として終了する。</li><li>メール未送信の受注を取得する。</li><li>受注ごとにトランザクションを開始し、次を行う。</li></ol>
+          <ul><li>受注サブに消費ポイントがあり、かつポイント履歴が無い場合はポイント処理を行う。</li><li>消費ポイントがある場合はスマレジポイント連携を別プロセスで実行する。</li><li>受注番号（8桁）を取得する。</li><li>在庫履歴と販売数を更新する。</li><li>トランザクションを確定する。</li><li>注文完了メールを再送信する（宛先言語は会員の都道府県が海外なら英語、それ以外は日本語）。</li></ul>
+          <ol><li>受注の処理で例外が発生した場合は、当該受注のトランザクションを巻き戻し、エラーメッセージを出力して次の受注へ進む。</li></ol>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>二重実行防止</td><td>実行中なら未完了の旨を出力して終了し、開始時にロックを取得する。</td></tr><tr><td>ポイントの冪等性</td><td>消費ポイントがあってもポイント履歴が既にある場合はポイント処理を重複して行わない。</td></tr><tr><td>言語判定</td><td>会員の都道府県が海外の場合は英語、それ以外は日本語でメールを再送する。</td></tr><tr><td>受注単位の独立性</td><td>受注ごとにトランザクションを分け、1件の失敗を他に波及させない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時はメール未送信受注のポイント・在庫を整え、注文完了メールを再送信する。対象が無ければ何もせず完了する。実行中は二重実行しない。</td></tr><tr><td>API</td><td>消費ポイントがある場合、スマレジポイント連携を別プロセスのコマンドで実行する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>ポイント処理・在庫更新・注文完了メールの再送信。</td></tr><tr><td>失敗時出力</td><td>受注ごとのエラーメッセージのコンソール出力（当該受注は巻き戻し）。</td></tr><tr><td>副作用</td><td>ポイント処理、在庫更新、メール再送信、スマレジポイント連携。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>テーブル・列名はec-cube-enterpriseを正とする。現行（pf-eccube3）と異なる場合は移行先名を主とし現行名を括弧で添える。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order</code></td><td>メール送信状態</td><td>メール未送信受注の抽出に使用する。</td></tr><tr><td><code>dtb_order</code>（現行は<code>dtb_order_sub</code>）</td><td><code>spended_points</code></td><td>ポイント処理・スマレジ連携の判定に使用する消費ポイント。</td></tr><tr><td><code>dtb_point_history</code></td><td><code>order_id</code>・<code>point_change</code>・<code>point_type_id</code>・<code>customer_id</code></td><td>ポイント処理の冪等判定と登録に使用する。</td></tr><tr><td><code>dtb_order</code>（現行は<code>dtb_order_sub</code>）</td><td><code>order_number</code></td><td>在庫更新・メールに使用する注文番号（移行先は文字列・桁11）。</td></tr><tr><td><code>dtb_stock_history</code></td><td><code>product_stock_id</code>・<code>stock</code></td><td>在庫履歴を更新する。</td></tr><tr><td><code>dtb_product_class</code></td><td>在庫・販売数</td><td>販売数を更新する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order / dtb_order_sub / dtb_point_history / dtb_product_class / dtb_stock_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>ポイント</td><td>ポイント履歴の有無で二重処理を避ける。</td></tr><tr><td>在庫</td><td>在庫履歴と販売数を受注単位で更新する。</td></tr><tr><td>トランザクション</td><td>受注ごとに確定し、失敗時は当該受注のみ巻き戻す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>実行中（ロック未取得相当）</td><td>未完了の旨を出力して終了する。</td></tr><tr><td>ロック取得失敗</td><td>異常として終了する。</td></tr><tr><td>受注処理での例外</td><td>当該受注を巻き戻し、エラーメッセージを出力して次の受注へ進む。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>実行中検知</td><td>未完了の旨のコンソール出力。</td></tr><tr><td>受注処理失敗</td><td>エラーメッセージのコンソール出力。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>会員のメールアドレス等の機微値</li><li>スマレジ・メールの認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b05-02-b05-02_batch_order_order_resend_mail-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>開始時にロックを取得して二重実行を避ける。受注ごとにトランザクションを開始・確定し、失敗時は当該受注のみ巻き戻す。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-02-b05-02_batch_order_order_resend_mail -->
+</section>
+      <section class="sheet-panel" id="sheet-5">
+        <div class="sheet-heading">
+          <h2>店頭注文番号初期化</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-13</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-10-02</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B05-03</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>店頭注文番号初期化</dd></div>
+            <div class="kv"><dt>概要</dt><dd>店頭注文番号テーブルを初期化する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-5-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>カスタマイズ要件</span></div>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">注文番号初期化処理について</h4>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>本店だけではなく支店の店頭注文番号も初期化する</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-5-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>店頭受取番号を初期化</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>本店＋支店の店頭受取番号を削除する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>店頭注文番号テーブルで店頭注文場号が発番される時に自動生成されるID (本店・支店共用)をリセットして、1からスタートし直すようにする</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日0時</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <p class="doc-p" style="--lv:1">DBに保存されている店頭注文番号に登録されている全件データ</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>条件</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>-</td><td>-</td><td>-</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>DBに保存されている店頭注文番号の全件を物理削除</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>店頭注文番号を発番した際に自動採番される店頭注文番号のID (本店・支店共用)をリセットして、1からスタートするようにする</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>エラーが発生した場合、メールで管理者に通知</span></div>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-03-b05-03_batch_order_order_store_call_number_initialize -->
+      <section class="function-design-embed" id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize" data-source="functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-03 店頭注文番号初期化 / バッチ 受注管理 — 店頭注文番号初期化</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-概要">概要</h2>
+          <p>店頭注文番号テーブルの全レコードを削除し、採番カウンタを初期値に戻すバッチである。コマンドライン（コンソールコマンド）から実行する。店頭販売で利用者へ提示する整理番号（店頭注文番号）は、店頭注文番号テーブルへ採番のたびに追加され、テーブルの自動採番値で連番が決まる。本バッチはこのテーブルを空にし、自動採番値を1へ戻すことで、次回以降の店頭注文番号を最初の番号から再採番できる状態にする。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（店頭注文番号初期化処理）、店頭注文番号を扱うリポジトリを正とする。カスタマイズ区分はカスタマイズであり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>店頭注文番号テーブルの全削除と採番カウンタの初期化</li><li>初期化に伴うデータ消失と再採番の挙動</li></ul>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能・運用の設計を正とする。</p>
+          <ul><li>店頭注文番号の採番そのもの（店頭販売・受注処理を正とする）</li><li>店頭注文番号を表示する整理番号モニタ画面（画面側の設計を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3）の挙動と移行先（ec-cube-enterprise）の差を記録する。挙動は現行リポを正とし、DB関連はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>採番方式</td><td>店頭注文番号テーブル<code>dtb_waiting_number</code>の自動採番値（AUTO_INCREMENT）で連番を決める。</td><td>採番カウンタを専用テーブル<code>dtb_waiting_number_counter</code>（<code>base_info_id</code>・<code>current_value</code>）で保持する。<code>dtb_waiting_number</code>は<code>id</code>・<code>base_info_id</code>・<code>order_id</code>・<code>waiting_number</code>を持つ。</td></tr><tr><td>採番のリセット対象</td><td><code>ALTER TABLE dtb_waiting_number AUTO_INCREMENT = 1</code>でテーブルの自動採番値を1へ戻す。</td><td>カウンタ列<code>dtb_waiting_number_counter.current_value</code>を初期値へ戻す方式が想定される（バッチの存在・初期化手順はec-cube-enterprise実装で要確認）。</td></tr><tr><td>整理番号の受注側保持</td><td>受注サブテーブル<code>dtb_order_sub</code>の<code>waiting_number</code>に保持する。</td><td>補助表<code>dtb_order_sub</code>を持たず、受注<code>dtb_order</code>の<code>waiting_number</code>（店舗販売用整理番号）に統合している。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>店頭注文番号</td><td>店頭販売で利用者へ提示する整理番号。店頭注文番号テーブルの自動採番値で連番が決まる。</td></tr><tr><td>店頭注文番号テーブル</td><td>採番済みの店頭注文番号と紐づく受注IDを保持するテーブル（<code>dtb_waiting_number</code>）。</td></tr><tr><td>採番カウンタ</td><td>テーブルの自動採番値（AUTO_INCREMENT）。次に採番する番号を決める。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>order:batch truncateWaitingNumber</code></td><td>店頭注文番号テーブルの全レコードを削除し、採番カウンタを1へ戻す。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-店頭注文番号初期化を実行する-order-batch-truncateWaitingNumber">店頭注文番号初期化を実行する（<code>order:batch truncateWaitingNumber</code>）</h3>
+          <ol><li>店頭注文番号テーブルの全レコードを削除する。</li><li>店頭注文番号テーブルの採番カウンタを1へ戻す。</li><li>処理を終了する。</li></ol>
+          <p>抽出条件による絞り込みはなく、テーブル全体を対象とする。対象が0件の場合も削除文と採番カウンタ初期化を実行し、結果として空のテーブルと初期化済みのカウンタになる。</p>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象</td><td>店頭注文番号テーブルの全レコード。日付や状態による絞り込みは行わない。</td></tr><tr><td>削除</td><td><code>DELETE FROM dtb_waiting_number</code>でテーブルの全レコードを削除する。</td></tr><tr><td>採番カウンタ初期化</td><td><code>ALTER TABLE dtb_waiting_number AUTO_INCREMENT = 1</code>で次回採番値を1に戻す。</td></tr><tr><td>計算</td><td>集計・金額計算は行わない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-API・バッチ結果">API・バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。引数は使用しない。</td></tr><tr><td>実行条件</td><td>特になし。対象が0件でも実行できる。</td></tr><tr><td>成功結果</td><td>店頭注文番号テーブルが空になり、採番カウンタが1へ戻る。</td></tr><tr><td>失敗結果</td><td>削除またはカウンタ初期化の途中で例外が発生した場合は処理が中断する。本バッチは例外捕捉や通知を行わない。</td></tr><tr><td>再実行時</td><td>何度実行しても結果は同一（空テーブル・カウンタ1）になる。冪等である。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>店頭注文番号テーブルの全削除と採番カウンタの初期化。</td></tr><tr><td>失敗時出力</td><td>例外発生時はコンソールへ例外が伝播する。本バッチ独自のログ・通知は行わない。</td></tr><tr><td>副作用</td><td>店頭注文番号テーブルのレコード消失と採番カウンタのリセット。</td></tr></tbody></table></div>
+          <p>このバッチは破壊的であり、テーブル内の店頭注文番号と紐づく受注IDの対応はすべて失われる。実行後は過去に提示済みの整理番号を本テーブルから参照できなくなり、採番は最初の番号から再開する。実行タイミングの妥当性は運用を正とする。</p>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>多重実行</td><td>ロックを持たない。複数同時実行でも結果は空テーブル・カウンタ1で同一になる。</td></tr><tr><td>途中失敗・再実行</td><td>削除と採番カウンタ初期化は別の文として順に実行する。削除のみ成功してカウンタ初期化前に中断した場合でも、再実行で空テーブル・カウンタ1に収束する。</td></tr><tr><td>参照時点</td><td>実行時点の店頭注文番号テーブルの全レコードを対象とする。</td></tr><tr><td>データ消失</td><td>削除した店頭注文番号と受注IDの対応は復元しない。整理番号モニタ等の参照先は実行後に空となる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>テーブル・列名はec-cube-enterpriseを正とする。現行（pf-eccube3）と異なる場合は移行先名を主とし現行名を括弧で添える。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_waiting_number</code></td><td><code>waiting_number</code></td><td>店頭注文番号。現行は自動採番値で初期化時にAUTO_INCREMENTを1へ戻す。</td></tr><tr><td><code>dtb_waiting_number</code></td><td><code>order_id</code></td><td>紐づく受注ID。全レコード削除の対象。</td></tr><tr><td><code>dtb_waiting_number_counter</code></td><td><code>current_value</code></td><td>移行先の採番カウンタ（現行はテーブルのAUTO_INCREMENTで代替。初期化対象はこの列となる見込み、ec-cube-enterprise実装で要確認）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_waiting_number / dtb_waiting_number_counter</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>対象が0件</td><td>削除文と採番カウンタ初期化を実行し、空テーブル・カウンタ1で完了する。</td></tr><tr><td>削除・初期化中の例外</td><td>例外を捕捉せず処理を中断し、コンソールへ伝播する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>起動</td><td>バッチコマンドの起動時に日時付きのコンソール出力を行う。</td></tr></tbody></table></div>
+          <p>本バッチ独自の件数ログ・完了ログは出力しない。</p>
+          <h3 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>パスワード</li><li>トークン・接続秘密値</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-b05-03-b05-03_batch_order_order_store_call_number_initialize-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>ロックファイル等による多重起動防止は行わない。削除と採番カウンタ初期化は1トランザクションでまとめた更新ではなく、それぞれ独立した文として実行する。長時間処理向けの実行時間制限解除や逐次フラッシュは行わない。本バッチは楽観ロック・悲観ロックの対象を持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-03-b05-03_batch_order_order_store_call_number_initialize -->
+</section>
+      <section class="sheet-panel" id="sheet-6">
+        <div class="sheet-heading">
+          <h2>スマレジ商品再連携</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-13</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-10-02</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B05-04</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>スマレジ商品再連携</dd></div>
+            <div class="kv"><dt>概要</dt><dd>店頭注文受注でスマレジ未連携のものを再連携する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-6-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-6-shapes">図形・テキストボックス内テキスト（1件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-6-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>DBから下記に当てはまる注文データを取得する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ商品コードが登録されている</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ削除していない</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ商品未連携もしくは、スマレジ在庫連携未連携</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>取得した注文データを未連携部分に応じて必要なスマレジ連携をする</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>商品情報の更新</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>スマレジ商品情報未連携の場合は、商品情報の更新をする</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>連携に失敗した場合はスマレジ通信エラーメール送信</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>在庫情報の更新</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>スマレジ在庫情報未連携の場合は、在庫情報の更新をする</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>連携に失敗した場合はスマレジ通信エラーメール送信</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　10分ごと</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB, スマレジ</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>DBから下記条件を満たすスマレジ未連携の注文データを取得</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ商品コードが登録されている</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ削除フラグが立っていない</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ商品連携が未連携 もしくはスマレジ在庫連携が未連携</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">注文データ.スマレジ商品コード　スマレジ商品コードが登録されている</p>
+            <p class="doc-p" style="--lv:0">注文データ.スマレジ削除フラグ　スマレジ削除フラグが立っていない</p>
+            <p class="doc-p" style="--lv:0">注文データ.スマレジ商品連携フラグ or <br>注文データ.スマレジ在庫連携フラグ　スマレジ商品連携が未連携<br>もしくはスマレジ在庫連携が未連携</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">スマレジ商品連携が未連携の場合</h4>
+            <p class="doc-p" style="--lv:2">スマレジプラットフォームAPIでスマレジに商品を登録する</p>
+            <p class="doc-p" style="--lv:2">スマレジ登録が成功したら、当該注文データのスマレジ商品連携フラグを立てる</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">スマレジ在庫連携が未連携の場合</h4>
+            <p class="doc-p" style="--lv:2">スマレジプラットフォームAPIでスマレジに在庫を登録する</p>
+            <p class="doc-p" style="--lv:2">スマレジ登録が成功したら、当該注文データのスマレジ在庫連携フラグを立てる</p>
+            <p class="doc-p" style="--lv:1">※ 一つの注文データで、スマジレ商品連携、スマレジ在庫連携どちらも未連携になっている状態も想定されるので注意</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知</span></div>
+          </div>
+          <section class="shape-block" id="sheet-6-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（1件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="B9"><td class="shape-ref">B9</td><td>注文番号登録バッチの仕様変更により、こちらのバッチは不要となる</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      <!-- function-design-embed:start b05-04-b05-04_batch_order_order_resend_smaregi_product -->
+      <section class="function-design-embed" id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product" data-source="functions/pf-eccube3/b05-04_batch_order_order_resend_smaregi_product.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-04_batch_order_order_resend_smaregi_product.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-04 スマレジ商品再連携 / バッチ 受注管理 — スマレジ商品再連携</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-概要">概要</h2>
+          <p>店頭注文受注のうちスマレジへの商品・在庫連携が完了していないものを抽出し、未連携の区分（商品・在庫）についてスマレジへ再連携するバッチである。コマンドライン（コンソールコマンド）から実行する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（スマレジ商品再連携処理）、受注サブを扱うリポジトリ、スマレジ連携処理を正とする。カスタマイズ区分は現行踏襲であり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>未連携の受注の抽出</li><li>未連携区分（商品・在庫）の判定と再連携</li></ul>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>スマレジ連携サービスの内部仕様</li><li>初回連携（受注処理側）の仕様</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3）の挙動と移行先（ec-cube-enterprise）の差を記録する。挙動は現行リポを正とし、DB関連はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>連携状態フラグの持ち方</td><td>受注サブテーブル<code>dtb_order_sub</code>の<code>smaregi_product_flg</code>・<code>smaregi_stock_flg</code>で判定する。</td><td>補助表<code>dtb_order_sub</code>を持たず、<code>smaregi_product_flg</code>（商品連携）・<code>smaregi_stock_flg</code>（在庫連携）を受注<code>dtb_order</code>の列へ統合している。</td></tr><tr><td>スマレジ連携の構成</td><td>HareruyaEcプラグインのスマレジ連携処理で連携する。</td><td>スマレジ連携が標準側へ取り込まれ、<code>SmaregiWebhookEvent</code>・<code>SmaregiPlatformApiCallLog</code>等で構成される（連携処理の詳細はec-cube-enterprise実装で要確認）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>受注サブ</td><td>受注の拡張情報。スマレジ商品・在庫の連携状態フラグを持つ。</td></tr><tr><td>商品連携</td><td>スマレジへ商品情報を連携すること。</td></tr><tr><td>在庫連携</td><td>スマレジへ在庫情報を連携すること。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>order:batch resendSmaregiProduct</code></td><td>スマレジ未連携の店頭注文受注について、未連携の商品・在庫をスマレジへ再連携する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-スマレジ商品再連携を実行する-order-batch-resendSmaregiProduct">スマレジ商品再連携を実行する（<code>order:batch resendSmaregiProduct</code>）</h3>
+          <ol><li>メール送信用の経路を準備する。</li><li>スマレジ再連携対象の受注サブを取得する。</li><li>受注サブごとに、商品連携が未完了なら商品、在庫連携が未完了なら在庫を再連携の対象区分に加える。</li><li>当該区分についてスマレジへ再連携する。</li></ol>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>再連携対象</td><td>スマレジ連携が未完了の店頭注文受注。</td></tr><tr><td>区分の選別</td><td>商品・在庫それぞれの連携状態フラグを見て、未完了の区分のみ再連携する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は未連携区分をスマレジへ再連携する。対象が無ければ何もせず完了する。</td></tr><tr><td>API</td><td>スマレジへ未連携の商品・在庫を連携する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>スマレジへの商品・在庫再連携。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>スマレジ連携、連携状態の更新。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>テーブル・列名はec-cube-enterpriseを正とする。現行（pf-eccube3）と異なる場合は移行先名を主とし現行名を括弧で添える。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order</code>（現行は<code>dtb_order_sub</code>）</td><td><code>smaregi_product_flg</code></td><td>商品連携の要否判定に使用する。</td></tr><tr><td><code>dtb_order</code>（現行は<code>dtb_order_sub</code>）</td><td><code>smaregi_stock_flg</code></td><td>在庫連携の要否判定に使用する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order / dtb_order_sub</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>スマレジ連携</td><td>未連携区分のみ再連携し、連携状態を整合させる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>連携時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>スマレジ連携の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b05-04-b05-04_batch_order_order_resend_smaregi_product-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは未連携区分の再連携が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-04-b05-04_batch_order_order_resend_smaregi_product -->
+</section>
+      <section class="sheet-panel" id="sheet-7">
+        <div class="sheet-heading">
+          <h2>スマレジ商品削除</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-13</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-10-03</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B05-05</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>スマレジ商品削除</dd></div>
+            <div class="kv"><dt>概要</dt><dd>手続きが完了した店頭注文をスマレジ商品から削除する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-7-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-7-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>DBから下記に当てはまる注文データを取得する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ商品コードが存在する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ削除フラグが立っていない</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">★</span><span>注文ステータスが「キャンセル」もしくは「引き渡し済み」</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>取得した注文データをスマレジ連携をし、注文データの商品をスマレジから論理削除する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>当該の注文データの商品をスマレジ上で論理削除</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>連携に失敗した場合はスマレジ通信エラーメール送信</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日4時</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB, スマレジ</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <p class="doc-p" style="--lv:1">DBから手続きが完了した店舗注文データを取得</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ商品コードが登録されている</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ削除フラグが立っていない</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文ステータスが「キャンセル」もしくは「引き渡し済み」</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">スマレジ商品コード　スマレジ商品コードが登録されている</p>
+            <p class="doc-p" style="--lv:0">スマレジ削除フラグ　スマレジ削除フラグが立っていない</p>
+            <p class="doc-p" style="--lv:0">注文ステータス　「キャンセル」もしくは「出荷完了」</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:1">スマレジプラットフォームAPIでスマレジから取得した注文データの商品情報を論理削除する</p>
+            <p class="doc-p" style="--lv:1">スマレジ登録が成功したら、当該注文データのスマレジ削除フラグを立てる</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知</span></div>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-05-b05-05_batch_order_order_delete_smaregi_product -->
+      <section class="function-design-embed" id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product" data-source="functions/pf-eccube3/b05-05_batch_order_order_delete_smaregi_product.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-05_batch_order_order_delete_smaregi_product.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-05 スマレジ商品削除 / バッチ 受注管理 — スマレジ商品削除</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-概要">概要</h2>
+          <p>手続きが完了した店頭注文を対象に、スマレジ側の商品を削除する連携を行うバッチである。コマンドライン（コンソールコマンド）から実行する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（スマレジ商品削除処理）、受注サブを扱うリポジトリ、スマレジ連携処理を正とする。カスタマイズ区分は現行踏襲であり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>削除対象の店頭注文の抽出</li><li>スマレジ商品削除の連携</li></ul>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>スマレジ連携サービスの内部仕様</li><li>店頭注文の手続き完了判定そのもの（受注処理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3）の挙動と移行先（ec-cube-enterprise）の差を記録する。挙動は現行リポを正とし、DB関連はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>連携状態の持ち方</td><td>受注サブテーブル<code>dtb_order_sub</code>のスマレジ連携状態（<code>smaregi_del_flg</code>等）で削除対象を抽出する。</td><td>補助表<code>dtb_order_sub</code>を持たず、スマレジ削除フラグ<code>smaregi_del_flg</code>等を受注<code>dtb_order</code>の列へ統合している。</td></tr><tr><td>スマレジ連携の構成</td><td>HareruyaEcプラグインのスマレジ連携処理で削除区分を連携する。</td><td>スマレジ連携が標準側へ取り込まれ、<code>SmaregiWebhookEvent</code>・<code>SmaregiPlatformApiCallLog</code>等で構成される（連携処理の詳細はec-cube-enterprise実装で要確認）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>受注サブ</td><td>受注の拡張情報。スマレジ連携状態を保持する。</td></tr><tr><td>店頭注文</td><td>店頭で受け取る注文。</td></tr><tr><td>削除連携</td><td>スマレジ側の商品を削除する連携区分。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>order:batch deleteSmaregiProduct</code></td><td>手続きが完了した店頭注文をスマレジ商品から削除する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-スマレジ商品削除を実行する-order-batch-deleteSmaregiProduct">スマレジ商品削除を実行する（<code>order:batch deleteSmaregiProduct</code>）</h3>
+          <ol><li>メール送信用の経路を準備する。</li><li>スマレジ削除対象の受注サブを取得する。</li><li>受注サブごとに、スマレジへ商品削除の連携を行う。</li></ol>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>削除対象</td><td>手続きが完了した店頭注文の受注。</td></tr><tr><td>連携区分</td><td>スマレジへ削除区分で連携する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は削除対象をスマレジから削除する。対象が無ければ何もせず完了する。</td></tr><tr><td>API</td><td>スマレジへ商品削除を連携する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>スマレジ商品の削除連携。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>スマレジ連携（削除）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>テーブル・列名はec-cube-enterpriseを正とする。現行（pf-eccube3）と異なる場合は移行先名を主とし現行名を括弧で添える。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order</code>（現行は<code>dtb_order_sub</code>）</td><td><code>smaregi_del_flg</code></td><td>スマレジ削除対象の抽出に使用する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order / dtb_order_sub</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>スマレジ連携</td><td>手続き完了済みの店頭注文についてスマレジ側商品を削除し整合させる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>連携時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>スマレジ連携の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b05-05-b05-05_batch_order_order_delete_smaregi_product-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは削除連携が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-05-b05-05_batch_order_order_delete_smaregi_product -->
+</section>
+      <section class="sheet-panel" id="sheet-8">
+        <div class="sheet-heading">
+          <h2>ポイント二重登録チェック</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-13</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-10-03</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B05-06</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>ポイント二重登録チェック</dd></div>
+            <div class="kv"><dt>概要</dt><dd>ポイント二重登録を検知して管理者にメール通知する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-8-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <p class="doc-p" style="--lv:1">なし</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-8-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <p class="doc-p" style="--lv:1">ポイント履歴から注文データIDとポイント増減量で検索し、重複している履歴を検索する</p>
+            <p class="doc-p" style="--lv:1">重複している履歴があれば、注文IDから注文番号を取得し、管理者にメールを送信する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日4時</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　メール</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <p class="doc-p" style="--lv:1">以下の条件のもと、ポイント履歴を取得する</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>バッチが動作している現在日時から1日分遡った期間のポイント履歴</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイントが付与された履歴(ポイント増減量がマイナスの履歴)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文データIDとポイント増減量の組み合わせで検索し、複数個重複している</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">ポイント履歴.ポイント発行日　バッチが動作している現在日時から1日前までの期間</p>
+            <p class="doc-p" style="--lv:0">ポイント履歴.ポイント増減量　0より小さい</p>
+            <p class="doc-p" style="--lv:0">ポイント履歴.注文ID, ポイント履歴.ポイント増減量　注文IDとポイント増減量の組合せで同じ組合せがあるかどうか検索し、複数個存在している</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:1">検索結果があれば、ポイント履歴にある注文IDから注文番号を取得し、管理者にメールで通知する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <p class="doc-p" style="--lv:1">外部システムとの連携もなく、外部から引数等も受け取っていないため、特になし</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-06-b05-06_batch_order_order_check_duplicate_point -->
+      <section class="function-design-embed" id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point" data-source="functions/pf-eccube3/b05-06_batch_order_order_check_duplicate_point.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-06_batch_order_order_check_duplicate_point.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-06 ポイント二重登録チェック / バッチ 受注管理 — ポイント二重登録チェック</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-概要">概要</h2>
+          <p>ポイント履歴の中から二重登録されているものを検知し、該当があれば対象の注文番号を添えて管理者へ通知メールを送信するバッチである。コマンドライン（コンソールコマンド）から実行する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（ポイント二重登録チェック処理）、ポイント履歴を扱うリポジトリ、注文番号取得処理、通知メール送信処理を正とする。</p>
+          <p>カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>二重登録ポイント履歴の検知</li><li>該当注文番号の特定と管理者への通知メール</li></ul>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>ポイント付与・利用そのものの仕様（ポイント処理を正とする）</li><li>通知メールの本文・宛先設定（メール設定・テンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>検知・通知の挙動は現行pf-eccube3を踏襲し、DB関連の永続化先はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>検知・通知の挙動</td><td>HareruyaEcプラグインの受注バッチで二重登録を検知し、該当時に注文番号を添えて通知する。</td><td>同等の挙動を踏襲する（挙動はpf-eccube3を正とする）。</td></tr><tr><td>ポイント履歴の永続化先</td><td><code>dtb_point_history</code>（<code>order_id</code>・<code>point_type_id</code>・<code>point_change</code>・<code>transaction_id</code> 等）。</td><td><code>dtb_point_history</code>（<code>order_id</code>・<code>point_type_id</code>・<code>point_change</code>・<code>transaction_id</code>・<code>issue_date</code> 等）。ほぼ同一スキーマ。</td></tr><tr><td>通知に用いる注文番号</td><td>受注から注文番号を取得する。</td><td><code>dtb_order.order_no</code> から取得する。</td></tr></tbody></table></div>
+          <p>現行と移行先で <code>dtb_point_history</code> の列構成に差が生じる場合はec-cube-enterprise実装を正とする。</p>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>ポイント履歴</td><td>ポイントの付与・利用の記録。</td></tr><tr><td>二重登録</td><td>同一の付与・利用が重複して記録された状態。</td></tr><tr><td>注文番号</td><td>受注に採番される番号。通知に用いる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>order:batch checkDuplicatePoint</code></td><td>二重登録されたポイント履歴を検知し、該当があれば注文番号を添えて管理者へ通知メールを送信する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-ポイント二重登録チェックを実行する-order-batch-checkDuplicatePoint">ポイント二重登録チェックを実行する（<code>order:batch checkDuplicatePoint</code>）</h3>
+          <ol><li>メール送信用の経路を準備する。</li><li>二重登録されたポイント履歴を取得する。</li><li>該当が無い場合は処理を終了する。</li><li>該当履歴の受注から注文番号を取得する。</li><li>管理者へ注文番号を添えた通知メールを送信する。</li></ol>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>二重登録されているポイント履歴。</td></tr><tr><td>通知判定</td><td>該当が1件以上あるときに管理者へ通知する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-業務ルール・計算">業務ルール・計算</h2>
+          <ul><li>ポイント重複は、受注・会員・ポイント履歴の組み合わせで同一目的の付与または利用が複数成立している状態として検出する。</li><li>判定はDBに記録済みの受注状態、ポイント履歴区分、対象期間を基準に行い、ポイント残高の再計算や補正登録は行わない。</li><li>検出結果は通知・ログ出力の対象であり、対象受注や会員ポイントを直接更新しない。</li></ul>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>対象抽出時点</td><td>バッチ実行時点で抽出条件に一致するデータを対象にする。実行後に変更されたデータは次回実行の対象判定に従う。</td></tr><tr><td>途中失敗・再実行</td><td>途中失敗時に確定済みの副作用が残るかはAPI・バッチ結果およびエラー処理の節を正とする。未処理条件に残るデータは再実行時に再抽出される。</td></tr><tr><td>同時実行</td><td>ロックファイルや行ロックの有無は排他制御・トランザクションの節を正とする。明示ロックが無い場合、多重実行時の重複検知・通知抑止は保証しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は二重登録があれば管理者へ通知メールを送信し、無ければメールを送らず完了する。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>該当時の管理者通知メール送信。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>通知メール送信。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_point_history</code>（ポイント履歴）</td><td><code>order_id</code>・<code>point_type_id</code>・<code>point_change</code></td><td>二重登録の検知に使用する。</td></tr><tr><td><code>dtb_order</code>（受注）</td><td><code>order_no</code></td><td>通知に添える注文番号。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_point_history</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>該当なし</td><td>何もせず完了する。</td></tr><tr><td>取得・送信時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>メール送信の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b05-06-b05-06_batch_order_order_check_duplicate_point-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは検知と通知が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-06-b05-06_batch_order_order_check_duplicate_point -->
+</section>
+      <section class="sheet-panel" id="sheet-9">
+        <div class="sheet-heading">
+          <h2>ポイント利用未反映チェック</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-13</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-10-03</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B05-07</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>ポイント利用未反映チェック</dd></div>
+            <div class="kv"><dt>概要</dt><dd>過去1時間以内のGMO決済の受注でポイント利用が反映されていない決済をチェックする</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-9-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <p class="doc-p" style="--lv:1">決済会社のソニーペイメントへの変更に伴い、決済会社が出力する決済結果情報の参照方法を変更</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-9-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <p class="doc-p" style="--lv:1">注文データで、ポイント利用されているが、ポイント利用が正しく反映されていない注文を抽出</p>
+            <p class="doc-p" style="--lv:1">抽出したデータの注文IDを管理者にメールで送信する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎時10分</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　メール</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <p class="doc-p" style="--lv:1">以下の条件を満たす注文データを取得する</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>バッチ動作時点の現在日時から直近1時間以内に支払われた</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文の購入金額合計と支払合計が異なる</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文番号がNULLでない</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>備考がNULL</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>購入金額割引(ポイント利用)が存在する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>紐づく欠品履歴がない</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>購入金額合計と支払合計の大きい方と購入金額合計と支払合計の小さい方に割引分を加えたものが一致しない</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>注文が論理削除されていない</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span><span class="cell-strike">GMO決済メモに購入金額合計または支払合計のテキストが含まれる</span></span></div>
+            <p class="doc-p" style="--lv:2">決済会社をソニーペイメントに変更するため、この部分の参照方法を変更する(現時点では詳細は未定)</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">注文データ.支払日時　バッチ動作時点の現在日時から1時間前までの注文</p>
+            <p class="doc-p" style="--lv:0">注文データ.注文番号　注文番号が登録されている</p>
+            <p class="doc-p" style="--lv:0">注文データ.備考　備考に何も登録されていない</p>
+            <p class="doc-p" style="--lv:0">注文データ.購入金額割引　購入金額割引がある</p>
+            <p class="doc-p" style="--lv:0">欠品履歴　注文データに紐づく欠品履歴が存在しない</p>
+            <p class="doc-p" style="--lv:0">注文データ.削除フラグ　削除フラグが立っていない</p>
+            <p class="doc-p" style="--lv:0">注文データ.購入金額合計と注文データ.支払合計の大きい方　[注文データ.購入金額合計と注文データ.支払合計の小さい方] + 講習金額割引 の値と一致しない</p>
+            <p class="doc-p" style="--lv:0">決済会社出力情報　決済会社出力情報の中に、購入金額合計もしくは支払合計のテキストが含まれている</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:1">条件を満たす注文データがあれば、それらを注文IDのリストにして管理者に送信する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <p class="doc-p" style="--lv:1">外部システムとの連携もなく、外部から引数等も受け取っていないため、特になし</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-07-b05-07_batch_order_order_check_not_reflected_point -->
+      <section class="function-design-embed" id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point" data-source="functions/pf-eccube3/b05-07_batch_order_order_check_not_reflected_point.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-07_batch_order_order_check_not_reflected_point.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-07 ポイント利用未反映チェック / バッチ 受注管理 — ポイント利用未反映チェック</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-概要">概要</h2>
+          <p>直近1時間以内のGMO決済の受注で、ポイント利用が反映されていない決済を検知し、該当があれば管理者へアラートメールを送信するバッチである。コマンドライン（コンソールコマンド）から実行する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（ポイント利用未反映チェック処理）、未反映決済を抽出するリポジトリ、アラートメール送信処理を正とする。</p>
+          <p>カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>ポイント利用未反映の決済の抽出</li><li>該当時の管理者へのアラートメール</li></ul>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>GMO決済そのものの仕様</li><li>ポイント利用処理の仕様（ポイント処理を正とする）</li><li>通知メールの本文・宛先設定（メール設定・テンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>抽出・通知の挙動は現行pf-eccube3を踏襲し、DB関連の参照先はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>抽出・通知の挙動</td><td>直近1時間のGMO決済でポイント利用未反映の決済を抽出し、該当時にアラートメールを送る。</td><td>同等の挙動を踏襲する（挙動はpf-eccube3を正とする）。</td></tr><tr><td>抽出元の永続化先</td><td>受注（<code>dtb_order</code>）の決済・受注日時・利用ポイントを参照する。</td><td><code>dtb_order</code>（<code>payment_id</code>・<code>payment_method</code>・<code>order_date</code>・<code>spended_points</code>・<code>point_error_message</code>）。</td></tr></tbody></table></div>
+          <p>ポイント利用反映状態の判定に用いる列はec-cube-enterprise実装で要確認とする。</p>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>GMO決済</td><td>外部決済サービスによる決済。</td></tr><tr><td>ポイント利用未反映</td><td>決済にポイント利用が反映されていない状態。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>order:batch checkNotReflectedPointUsage</code></td><td>直近のGMO決済でポイント利用が未反映の決済を検知し、該当があれば管理者へアラートメールを送信する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-ポイント利用未反映チェックを実行する-order-batch-checkNotReflectedPointUsage">ポイント利用未反映チェックを実行する（<code>order:batch checkNotReflectedPointUsage</code>）</h3>
+          <ol><li>メール送信用の経路を準備する。</li><li>ポイント利用が反映されていない決済の一覧を取得する。</li><li>該当がある場合は、その一覧で管理者へアラートメールを送信する。</li></ol>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>直近1時間以内のGMO決済の受注で、ポイント利用が反映されていない決済。</td></tr><tr><td>通知判定</td><td>該当が1件以上あるときに管理者へ通知する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-業務ルール・計算">業務ルール・計算</h2>
+          <ul><li>未反映ポイントは、受注状態・ポイント利用/付与予定・ポイント履歴の突合で、本来存在すべき履歴または反映結果が不足している状態として検出する。</li><li>判定は永続化済みの受注金額、利用ポイント、付与ポイント、会員情報を基準に行い、バッチ内で金額やポイントを再計算して補正保存しない。</li><li>検出結果は通知・ログ出力の対象であり、受注・会員・ポイント履歴の更新は行わない。</li></ul>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>対象抽出時点</td><td>バッチ実行時点で抽出条件に一致するデータを対象にする。実行後に変更されたデータは次回実行の対象判定に従う。</td></tr><tr><td>途中失敗・再実行</td><td>途中失敗時に確定済みの副作用が残るかはAPI・バッチ結果およびエラー処理の節を正とする。未処理条件に残るデータは再実行時に再抽出される。</td></tr><tr><td>同時実行</td><td>ロックファイルや行ロックの有無は排他制御・トランザクションの節を正とする。明示ロックが無い場合、多重実行時の重複検知・通知抑止は保証しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は未反映の決済があれば管理者へアラートメールを送信し、無ければメールを送らず完了する。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>該当時の管理者アラートメール送信。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>アラートメール送信。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order</code>（受注）</td><td><code>payment_id</code>・<code>payment_method</code>・<code>order_date</code>・<code>spended_points</code>・<code>point_error_message</code></td><td>直近GMO決済かつポイント利用未反映の抽出に使用する。反映状態の判定列はec-cube-enterprise実装で要確認とする。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>該当なし</td><td>何もせず完了する。</td></tr><tr><td>取得・送信時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>決済の機微情報</li><li>メール送信の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b05-07-b05-07_batch_order_order_check_not_reflected_point-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは検知と通知が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-07-b05-07_batch_order_order_check_not_reflected_point -->
+</section>
+      <section class="sheet-panel" id="sheet-10">
+        <div class="sheet-heading">
+          <h2>スマレジEC受注連携エラー再連携</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>緑川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-13</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-10-03</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B05-08</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>スマレジEC受注連携エラー再連携</dd></div>
+            <div class="kv"><dt>概要</dt><dd>スマレジ連携エラーが起きているEC受注のスマレジ連携をリトライする</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-10-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-10-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <p class="doc-p" style="--lv:1">スマレジ連携エラーフラグが立っている注文データとそのデータに紐づくスマレジ連携に必要なユーザー情報を取得する</p>
+            <p class="doc-p" style="--lv:1">取得した注文データのスマレジ連携をリトライする</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　5分ごと</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB, スマレジ</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <p class="doc-p" style="--lv:1">スマレジ連携エラーフラグが立っている注文データとそのデータに紐づくスマレジ連携に必要なユーザー情報を取得する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">注文データ.スマレジ連携エラーフラグ　スマレジ連携エラーフラグが立っている</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:1">取得したスマレジ連携エラーフラグが立っている注文データに紐づくユーザーのスマレジIDとポイント残高を取得</p>
+            <p class="doc-p" style="--lv:1">取得したデータを使ってスマレジ連携を行い、ユーザーのポイント情報の更新を行う</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ユーザーのポイント数は絶対値で更新を行う</span></div>
+            <p class="doc-p" style="--lv:1">リトライに成功したら、当該の注文データのスマレジ連携エラーフラグをオフにする</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <p class="doc-p" style="--lv:1">スマレジ連携に失敗した場合、注文データのポイント連携エラーメッセージに、スマレジからのレスポンスデータを登録する</p>
+            <p class="doc-p" style="--lv:2">※開発申し送り レスポンスでーたをJSON形式に変換して登録</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-08-b05-08_batch_order_smaregi_check_error_order -->
+      <section class="function-design-embed" id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order" data-source="functions/pf-eccube3/b05-08_batch_order_smaregi_check_error_order.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-08_batch_order_smaregi_check_error_order.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-08 スマレジEC受注連携エラー再連携 / バッチ 受注管理 — スマレジEC受注連携エラー再連携</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-概要">概要</h2>
+          <p>スマレジ連携でエラーになっているEC受注を対象に、会員のポイントをスマレジへ再連携（リトライ）するバッチである。コマンドライン（コンソールコマンド）から実行する。リクエスト数の上限に配慮し、受注ごとに短いインターバルを挟む。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのスマレジバッチ（連携エラー受注の再連携処理）、受注サブ・選手情報を扱うリポジトリ、スマレジポイント連携処理を正とする。</p>
+          <p>カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>連携エラー受注の抽出とポイント再連携</li><li>成否によるエラーフラグ・エラーメッセージの更新</li><li>リクエスト上限への配慮（インターバル）</li></ul>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>スマレジポイント連携サービスの内部仕様・API仕様</li><li>初回連携（受注処理側）の仕様</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>再連携の挙動は現行pf-eccube3を踏襲し、DB関連の永続化先はec-cube-enterpriseを正とする。現行で受注サブの補助表に持つスマレジ連携状態は、移行先では受注本体へ統合される。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>再連携の挙動</td><td>連携エラー受注を抽出し会員ポイントを再連携し、成否でフラグ・エラーメッセージを更新する。</td><td>同等の挙動を踏襲する（挙動はpf-eccube3を正とする）。</td></tr><tr><td>スマレジ連携エラーフラグ・エラーメッセージの保持</td><td>受注サブ（<code>dtb_order_sub</code> の <code>smaregi_error_flg</code>・<code>point_error_message</code>）。</td><td>受注本体（<code>dtb_order</code> の <code>smaregi_error_flg</code>・<code>point_error_message</code>）。補助表 <code>dtb_order_sub</code> は移行先に存在せず <code>dtb_order</code> へ統合される。</td></tr><tr><td>会員のスマレジID・ポイント</td><td>選手情報（<code>dtb_player</code> の <code>smaregi_id</code>・<code>point</code>）。</td><td>同一スキーマ（<code>dtb_player</code> の <code>smaregi_id</code>・<code>point</code>）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>受注サブ</td><td>受注の拡張情報。スマレジ連携エラーフラグ・エラーメッセージを保持する。</td></tr><tr><td>選手情報</td><td>会員に紐づく拡張情報。スマレジID・ポイントを保持する。</td></tr><tr><td>再連携</td><td>エラーになった連携をやり直すこと。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>smaregi:batch checkSmaregiErrorOrder</code></td><td>スマレジ連携エラーのEC受注について、会員ポイントの連携をリトライし、成否で状態を更新する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-スマレジEC受注連携エラー再連携を実行する-smaregi-batch-checkSmaregiErrorOrder">スマレジEC受注連携エラー再連携を実行する（<code>smaregi:batch checkSmaregiErrorOrder</code>）</h3>
+          <ol><li>スマレジ連携エラーのEC受注（受注サブと会員）を取得する。</li><li>受注ごとに、会員のスマレジIDとポイントでスマレジポイント連携をリトライする。</li><li>連携が成功した場合は受注サブの連携エラーフラグを解除する。</li><li>連携が失敗した場合は受注サブにエラーメッセージを記録する。</li><li>リクエスト上限に配慮し、受注ごとに短いインターバルを挟む。</li><li>すべての更新を確定する。</li></ol>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象</td><td>スマレジ連携エラーフラグが立っているEC受注。</td></tr><tr><td>成否の反映</td><td>成功でエラーフラグ解除、失敗でエラーメッセージ記録。</td></tr><tr><td>流量制御</td><td>1秒あたりのリクエスト上限を超えないよう受注ごとにインターバルを挟む。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は連携エラー受注のポイント連携をリトライし、結果で状態を更新する。対象が無ければ何もせず完了する。</td></tr><tr><td>API</td><td>スマレジへ会員ポイントを再連携する。成功で連携完了、失敗でエラー内容を保持する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>連携成功受注のエラーフラグ解除。</td></tr><tr><td>失敗時出力</td><td>連携失敗受注へのエラーメッセージ記録。</td></tr><tr><td>副作用</td><td>スマレジポイント連携、受注サブの連携状態更新。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order</code>（受注。現行は受注サブ <code>dtb_order_sub</code>）</td><td><code>smaregi_error_flg</code></td><td>対象抽出と成功時の解除に使用する。</td></tr><tr><td><code>dtb_order</code>（受注。現行は受注サブ <code>dtb_order_sub</code>）</td><td><code>point_error_message</code></td><td>失敗時に記録する。</td></tr><tr><td><code>dtb_player</code>（選手情報）</td><td><code>smaregi_id</code>・<code>point</code></td><td>連携の入力に使用する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_sub / dtb_player</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>連携状態</td><td>連携成功でエラーフラグを解除し、失敗でエラー内容を保持する。次回実行で再試行できる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>連携失敗</td><td>受注サブへエラーメッセージを記録し、エラーフラグを残す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr><tr><td>連携失敗</td><td>エラーメッセージを受注サブに記録する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>スマレジ連携の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b05-08-b05-08_batch_order_smaregi_check_error_order-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>受注ごとに連携結果を反映し、最後に更新を確定する。本バッチは楽観ロック・悲観ロックの対象は持たない。流量制御のため受注ごとにインターバルを挟む。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-08-b05-08_batch_order_smaregi_check_error_order -->
+</section>
+      <section class="sheet-panel" id="sheet-11">
+        <div class="sheet-heading">
+          <h2>スマレジ取引連携エラー再連携</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-06-11</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-10-30</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B05-09</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>スマレジ取引連携エラー再連携</dd></div>
+            <div class="kv"><dt>概要</dt><dd>スマレジ連携でwebhookで連携エラーになったものを再連携する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-11-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">本店・支店の処理を統合</h4>
+            <p class="doc-p" style="--lv:2">全店舗のデータをともに処理対象とする</p>
+            <p class="doc-p" style="--lv:1">スマレジ受信処理(A05-04)で追加した連携項目も連携するようにする</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">※</span><span>項目の詳細についてはスマレジ受信処理(A05-04)を参照のこと</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-11-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <p class="doc-p" style="--lv:2">1. APIでバッチ駆動時間から5時間前までの間の取引データを取得する</p>
+            <p class="doc-p" style="--lv:3">※手動でのバッチ実行時に期間指定されている場合はその期間内の取引データを取得する</p>
+            <p class="doc-p" style="--lv:2">2. 取引連携されていないデータを再連携処理する</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">★</span><span>処理内容は、スマレジ受信処理(A05-04)と処理概要2から手順と同様の処理を実行する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎時1分</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　スマレジプラットフォームAPI　出力先(フォーマット)　DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <p class="doc-p" style="--lv:1">期間指定したい場合はバッチ実行時に日時を指定し実行する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">Webhookが何らかの理由で失敗したスマレジ取引情報</h4>
+            <p class="doc-p" style="--lv:2">スマレジ側のwebhookにはリトライ処理が実装されていないので、取引が連携済みか確認が必要</p>
+            <p class="doc-p" style="--lv:3">以下の条件下でwebhookに失敗している場合、再連携処理を実行</p>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>ポイント処理に不整合がある場合</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>スマレジ取引IDがECCUBE側に登録されていない場合</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>スマレジ取引IDがECCUBE側に登録されている状態で返品(キャンセル)等、スマレジ側に更新があった場合(取引の更新日時に差異がある場合)</span></div>
+            <p class="doc-p" style="--lv:4">※ キャンセルの場合は、対象の受注データをキャンセルにする</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">スマレジ取引データ.取引更新時間　バッチ駆動時間(X)からバッチ駆動時間よりY時間前(X-Y hours)の間</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:1">Webhookに失敗した処理が、スマレジ受信処理(A05-04)と同等の処理が完了した状態になる</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <p class="doc-p" style="--lv:1">際連携時にエラーがあった場合、スマレジから返ってきているエラー内容をログに出力する</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start b05-09-b05-09_batch_order_smaregi_check_transaction -->
+      <section class="function-design-embed" id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction" data-source="functions/pf-eccube3/b05-09_batch_order_smaregi_check_transaction.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b05-09_batch_order_smaregi_check_transaction.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B05-09 スマレジ取引連携エラー再連携 / バッチ 受注管理 — スマレジ取引連携エラー再連携</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-概要">概要</h2>
+          <p>スマレジの取引情報を取得し、連携エラーが起きているスマレジ取引の連携をやり直すバッチである。コマンドライン（コンソールコマンド）から実行する。スマレジの取引参照APIを呼び出し、取得した取引情報をもとに連携状態を更新する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのスマレジバッチ（取引連携エラー再連携処理）、スマレジ接続設定のオプションマスタ、取引参照APIの呼び出し処理を正とする。</p>
+          <p>カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>スマレジ取引参照APIの呼び出し</li><li>取得結果による取引連携の更新</li><li>取得失敗・結果なしの扱い</li></ul>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>スマレジ取引参照APIの仕様</li><li>スマレジ接続設定値の運用（オプションマスタの管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>取引取得・更新の挙動は現行pf-eccube3を踏襲し、DB関連の永続化先はec-cube-enterpriseを正とする。取得した取引情報はポイント履歴と会員ポイントへ反映する。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>取引取得・更新の挙動</td><td>スマレジ取引参照APIで取得し、取引IDに対応するポイント履歴・会員ポイントを登録・取消する。</td><td>同等の挙動を踏襲する（挙動はpf-eccube3を正とする）。</td></tr><tr><td>スマレジ接続設定の保持</td><td>オプションマスタ（<code>mtb_option</code> の <code>option_key</code>・<code>option_value</code>）。</td><td>同一スキーマ（<code>mtb_option</code> の <code>option_key</code>・<code>option_value</code>）。</td></tr><tr><td>ポイント履歴・会員ポイントの永続化先</td><td><code>dtb_point_history</code>（<code>transaction_id</code>・<code>point_change</code> 等）・<code>dtb_player</code>（<code>point</code>）。</td><td>同一スキーマ。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>スマレジ取引</td><td>スマレジ側の取引データ。</td></tr><tr><td>取引参照</td><td>スマレジの取引情報を取得するAPI区分。</td></tr><tr><td>オプションマスタ</td><td>スマレジ接続設定（接続先URL等）を保持するマスタ。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>smaregi:batch checkSmaregiTransaction</code></td><td>スマレジの取引情報を取得し、連携エラーの取引の連携を更新する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-スマレジ取引連携エラー再連携を実行する-smaregi-batch-checkSmaregiTransaction">スマレジ取引連携エラー再連携を実行する（<code>smaregi:batch checkSmaregiTransaction</code>）</h3>
+          <ol><li>スマレジ接続設定（接続先URL等）をオプションマスタから取得する。</li><li>現在時刻を基準に取引参照のパラメータを組み立て、スマレジの取引参照APIを呼び出す。</li><li>取得に失敗した場合は、失敗内容をログとコンソールに出力して異常終了する。</li><li>取得結果が空の場合は正常終了する。</li><li>取得結果がある場合は、取引情報をもとにスマレジ取引の連携を更新する。</li></ol>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>取得条件</td><td>現在時刻を基準にした取引参照パラメータで取得する。</td></tr><tr><td>更新対象</td><td>取得した取引情報に対応する連携を更新する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は取得した取引で連携を更新する。結果が空なら何もせず完了する。取得失敗時は異常終了（戻り値1）する。</td></tr><tr><td>API</td><td>スマレジの取引参照APIを呼び出し、取引情報を取得する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名、スマレジ接続設定。</td></tr><tr><td>成功時出力</td><td>取引連携の更新。結果が空のときは更新なし。</td></tr><tr><td>失敗時出力</td><td>取得失敗内容のログ・コンソール出力（異常終了）。</td></tr><tr><td>副作用</td><td>スマレジ取引連携の更新。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_option</code>（オプションマスタ）</td><td><code>option_key</code>・<code>option_value</code></td><td>スマレジ接続設定（接続先URL・契約ID・アクセストークン等）を保持し、API呼び出しに使用する。</td></tr><tr><td><code>dtb_point_history</code>（ポイント履歴）</td><td><code>transaction_id</code>・<code>point_change</code>・<code>point_type_id</code></td><td>取得した取引でポイント履歴を登録・取消する。</td></tr><tr><td><code>dtb_player</code>（選手情報）</td><td><code>point</code></td><td>取引に応じて会員ポイント残高を更新する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_player / dtb_point_history / mtb_option</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>取引連携</td><td>スマレジから取得した取引情報で連携を更新し整合させる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>取引情報取得失敗</td><td>失敗内容をログ・コンソールに出力し異常終了する。</td></tr><tr><td>取得結果が空</td><td>何もせず正常終了する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>取得失敗</td><td>失敗内容の情報ログ・コンソール出力。</td></tr></tbody></table></div>
+          <h3 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>スマレジ接続の認証情報・接続秘密値</li></ul>
+          <hr>
+          <h2 id="function-design-b05-09-b05-09_batch_order_smaregi_check_transaction-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは取引取得と連携更新が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b05-09-b05-09_batch_order_smaregi_check_transaction -->
+</section>
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

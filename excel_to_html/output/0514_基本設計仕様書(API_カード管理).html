@@ -1,0 +1,1798 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0514_基本設計仕様書(API_カード管理)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* function-design-embed:start */
+    .function-design-embed {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-header {
+      margin-bottom: 18px;
+    }
+
+    .function-design-header h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .function-design-header h4 {
+      margin: 0;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-source {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .function-design-note {
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      border-left: 3px solid #f0ad4e;
+      background: rgba(240, 173, 78, 0.10);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .function-design-body h1,
+    .function-design-body h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+    }
+
+    .function-design-body h3 {
+      margin: 22px 0 10px;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-body h4 {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .function-design-body p {
+      margin: 9px 0;
+    }
+
+    .function-design-body ul,
+    .function-design-body ol {
+      margin: 9px 0;
+      padding-left: 26px;
+    }
+
+    .function-design-body li {
+      margin: 3px 0;
+    }
+
+    .function-design-body code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--band);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .function-design-body pre {
+      overflow-x: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      white-space: pre-wrap;
+    }
+
+    .function-design-body pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .function-design-body .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .function-design-body table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .function-design-body th,
+    .function-design-body td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .function-design-body th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .function-design-body tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* function-design-embed:end */
+/* endpoint-supplement-style:start */
+    .endpoint-supplement .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    .endpoint-supplement table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .endpoint-supplement th,
+    .endpoint-supplement td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .endpoint-supplement th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .endpoint-supplement tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* endpoint-supplement-style:end */
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0514_基本設計仕様書(API_カード管理)</p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">カードIDからカード情報を取得</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">カード詳細IDからカード詳細情報を取得</a></li>
+                  <li><a href="#sheet-5" data-sheet="sheet-5">検索クエリに一致するカード情報1件を取得</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">カード管理API機能</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>加島</td><td>2025-09-12</td></tr>
+                <tr><td>0.2</td><td>レビュー指摘箇所の修正</td><td>加島</td><td>2025-09-18</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">API設計</h4>
+            <p class="doc-p" style="--lv:1">A14-01 カードIDからカード情報を取得</p>
+            <p class="doc-p" style="--lv:1">A14-02 カード詳細IDからカード詳細情報を取得</p>
+            <p class="doc-p" style="--lv:1">A14-03 検索クエリに一致するカード情報1件を取得</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>カードIDからカード情報を取得</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>カード管理API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>加島</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>加島</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-18</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A14-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>カードIDからカード情報を取得</dd></div>
+            <div class="kv"><dt>概要</dt><dd>カードIDからカード情報を取得できる</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/cards/{id}</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>カスタマイズ要件</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>MTGマスターデータの各テーブルで使用する「rank」列を「sort_no」に名称変更し、レスポンスデータ内の該当列も同様に変更する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>カード情報「固有色」が追加されるため、レスポンスデータ内に「color_identities」を追加する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>カード詳細情報「Foil」の設定値が増えるため、レスポンスデータ内の「foil_flg」を「foil」に変更する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>カード詳細情報「フレーム」が追加されるため、レスポンスデータ内に「frame」を追加する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>カード詳細情報「プロモフラグ」は「プロモ種別」に包含されるため、レスポンスデータ内の「promotion_flg」を除去する</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>カスタマイズ要件に記載の内容以外は現行踏襲とする</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>指定されたカードIDでカード情報を返す</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>カード情報「固有色」が追加されるため、レスポンスデータ内に以下1~4を追加する</span></div>
+            <p class="doc-p" style="--lv:1">1.0　color_identities</p>
+            <p class="doc-p" style="--lv:1">2.0　color_identities.id</p>
+            <p class="doc-p" style="--lv:1">3.0　color_identities.name_jp</p>
+            <p class="doc-p" style="--lv:1">4.0　color_identities.name_en</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>以下のように、カード情報「Foil」の設定値に新しく 「2: 特殊」 が追加されるため、レスポンスデータの 「card_details.foil_flg」 を「card_details.foil」へ変更</span></div>
+            <p class="doc-p" style="--lv:2">現行　リニューアル後</p>
+            <p class="doc-p" style="--lv:3">0: なし　0: なし</p>
+            <p class="doc-p" style="--lv:3">1: あり　1: あり</p>
+            <p class="doc-p" style="--lv:4">2: 特殊</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>カード詳細情報「フレーム」が追加されるため、レスポンスデータ内に「card_details.frame」を追加する</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>レスポンスデータの「プロモフラグ」を除去する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">※</span><span>別紙「0208_基本設計仕様書(カード管理)」のシート「カード詳細（登録・編集・削除）」の設計によって、</span></div>
+            <p class="doc-p" style="--lv:2">「プロモフラグ」は「プロモ種別」に包含されるため</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>MTGマスターデータの各テーブルで使用されている「rank」列は「sort_no」に変更されるため、レスポンスデータの「color_sequence.rank」は「color_sequence.sort_no」に変更する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">※</span><span>MTGマスターデータの要件については、別紙「0213_基本設計仕様書(データ管理)」のシート「MTGマスターデータ」を参照</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>id</td><td>数値(整数)</td><td>〇</td><td>-</td><td>300.0</td><td>カードID</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">/cards/300</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200.0　正常終了</p>
+            <p class="doc-p" style="--lv:0">404.0　リクエストパラメータ「id」が未指定の場合<br><br>リクエストパラメータで指定された「id」に対応するカード情報が存在しない場合</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>id</td><td>数値(整数)</td><td>カードID</td></tr>
+                <tr><td>name_jp</td><td>文字型</td><td>カード名(日)</td></tr>
+                <tr><td>name_en</td><td>文字型</td><td>カード名(英)</td></tr>
+                <tr><td>arena_format_name_jp</td><td>文字型</td><td>アリーナフォーマットカード名(日)</td></tr>
+                <tr><td>arena_format_name_en</td><td>文字型</td><td>アリーナフォーマットカード名(英)</td></tr>
+                <tr><td>text_jp</td><td>文字型</td><td>カードテキスト(日)</td></tr>
+                <tr><td>text_en</td><td>文字型</td><td>カードテキスト(英)</td></tr>
+                <tr><td>mana_cost</td><td>文字型</td><td>マナコスト</td></tr>
+                <tr><td>cmc</td><td>数値(整数)</td><td>点数で見たマナコスト</td></tr>
+                <tr><td>power</td><td>文字型</td><td>パワー</td></tr>
+                <tr><td>toughness</td><td>文字型</td><td>タフネス</td></tr>
+                <tr><td>loyalty</td><td>文字型</td><td>忠誠度</td></tr>
+                <tr><td>old_en_product_id</td><td>文字型</td><td>旧商品ID(日)</td></tr>
+                <tr><td>old_en_product_id</td><td>文字型</td><td>旧商品ID(英)</td></tr>
+                <tr><td>update_date</td><td>日時（YYYY/MM/DD HH:MM）</td><td>更新日時</td></tr>
+                <tr><td>create_date</td><td>日時（YYYY/MM/DD HH:MM）</td><td>作成日時</td></tr>
+                <tr><td>cardtypes</td><td>オブジェクト</td><td>カードタイプ</td></tr>
+                <tr><td>cardtypes.id</td><td>数値(整数)</td><td>カードタイプ&gt;カードタイプID</td></tr>
+                <tr><td>cardtypes.name_jp</td><td>文字型</td><td>カードタイプ&gt;カードタイプ名(日)</td></tr>
+                <tr><td>cardtypes.name_en</td><td>文字型</td><td>カードタイプ&gt;カードタイプ名(英)</td></tr>
+                <tr><td>cardtypes.product_search_flg</td><td>数値(整数)</td><td>フロント＞詳細検索画面で「カードタイプ」の項目に表示/非表示するためのフラグ</td></tr>
+                <tr><td>subtypes</td><td>オブジェクト</td><td>サブタイプ</td></tr>
+                <tr><td>subtypes.id</td><td>数値(整数)</td><td>サブタイプ&gt;サブタイプID</td></tr>
+                <tr><td>subtypes.name_jp</td><td>文字型</td><td>サブタイプ&gt;サブタイプ名(日)</td></tr>
+                <tr><td>subtypes.name_en</td><td>文字型</td><td>サブタイプ&gt;サブタイプ名(英)</td></tr>
+                <tr><td>specialtypes</td><td>オブジェクト</td><td>特殊タイプ</td></tr>
+                <tr><td>specialtypes.id</td><td>数値(整数)</td><td>特殊タイプ&gt;特殊タイプID</td></tr>
+                <tr><td>specialtypes.name_jp</td><td>文字型</td><td>特殊タイプ&gt;特殊タイプ名(日)</td></tr>
+                <tr><td>specialtypes.name_en</td><td>文字型</td><td>特殊タイプ&gt;特殊タイプ名(英)</td></tr>
+                <tr><td>colors</td><td>オブジェクト</td><td>カラー</td></tr>
+                <tr><td>colors.id</td><td>数値(整数)</td><td>カラー&gt;カラーID</td></tr>
+                <tr><td>colors.name_jp</td><td>文字型</td><td>カラー&gt;カラー名(日)</td></tr>
+                <tr><td>colors.name_en</td><td>文字型</td><td>カラー&gt;カラー名(英)</td></tr>
+                <tr><td>color_identities</td><td>オブジェクト</td><td>※カスタマイズ対応、新規追加<br><br>固有色</td></tr>
+                <tr><td>color_identities.id</td><td>数値(整数)</td><td>※カスタマイズ対応、新規追加<br><br>固有色&gt;固有色ID</td></tr>
+                <tr><td>color_identities.name_jp</td><td>文字型</td><td>※カスタマイズ対応、新規追加<br><br>固有色&gt;固有色名(日)</td></tr>
+                <tr><td>color_identities.name_en</td><td>文字型</td><td>※カスタマイズ対応、新規追加<br><br>固有色&gt;固有色名(英)</td></tr>
+                <tr><td>card_details</td><td>オブジェクト</td><td>カード詳細</td></tr>
+                <tr><td>card_details.id</td><td>数値(整数)</td><td>カード詳細&gt;カード詳細ID</td></tr>
+                <tr><td>card_details.card_id</td><td>数値(整数)</td><td>カード詳細&gt;カードID</td></tr>
+                <tr><td>card_details.back_card_detail_id</td><td>数値(整数)</td><td>カード詳細&gt;裏面カードID</td></tr>
+                <tr><td>card_details.cardset_id</td><td>数値(整数)</td><td>カード詳細&gt;カードセットID</td></tr>
+                <tr><td>card_details.rarity_id</td><td>数値(整数)</td><td>カード詳細&gt;レアリティID</td></tr>
+                <tr><td>card_details.illustrator_id</td><td>数値(整数)</td><td>カード詳細&gt;イラストレーターID</td></tr>
+                <tr><td>card_details.flavor_jp</td><td>文字型</td><td>カード詳細＞フレーバーテキスト（日本語）</td></tr>
+                <tr><td>card_details.flavor_en</td><td>文字型</td><td>カード詳細＞フレーバーテキスト（英語）</td></tr>
+                <tr><td>card_details.text_jp</td><td>文字型</td><td>カード詳細＞効果テキスト（日本語）</td></tr>
+                <tr><td>card_details.text_en</td><td>文字型</td><td>カード詳細＞効果テキスト（英語）</td></tr>
+                <tr><td>card_details.power</td><td>数値(整数)</td><td>カード詳細＞パワー</td></tr>
+                <tr><td>card_details.toughness</td><td>数値(整数)</td><td>カード詳細＞タフネス</td></tr>
+                <tr><td>card_details.card_no</td><td>文字型</td><td>カード詳細＞カード番号</td></tr>
+                <tr><td>card_details.foil_flg</td><td>数値(整数)</td><td>※カスタマイズ対応、カード情報「Foil」の選択肢が増えるため、レスポンスデータ内の「foil_flg」を「foil」に変更<br><br>Foilフラグ<br><br>設定値の意味は以下のとおり<br>0: なし<br>1: あり</td></tr>
+                <tr><td>card_details.foil</td><td>数値(整数)</td><td>※カスタマイズ対応、カード情報「Foil」の選択肢が増えるため、レスポンスデータ内の「foil_flg」を「foil」に変更<br><br>Foil<br><br>設定値の意味は以下のとおり<br>0: なし<br>1: あり<br>2: 特需</td></tr>
+                <tr><td>card_details.frame</td><td>文字型</td><td>※カスタマイズ対応、新規追加<br><br>フレーム</td></tr>
+                <tr><td>card_details.promotion_flg</td><td>数値(整数)</td><td>※カスタマイズ対応、項目を除去<br><br>カード詳細＞プロモフラグ</td></tr>
+                <tr><td>card_details.update_date</td><td>日時（YYYY/MM/DD HH:MM）</td><td>カード詳細＞更新日時</td></tr>
+                <tr><td>card_details.create_date</td><td>日時（YYYY/MM/DD HH:MM）</td><td>カード詳細＞作成日時</td></tr>
+                <tr><td>card_details.card_layout</td><td>オブジェクト</td><td>カード詳細＞レイアウト</td></tr>
+                <tr><td>card_details.card_layout.id</td><td>数値(整数)</td><td>カード詳細＞レイアウト＞レイアウトID</td></tr>
+                <tr><td>card_details.card_layout.name_jp</td><td>文字型</td><td>カード詳細＞レイアウト＞名称（日本語）</td></tr>
+                <tr><td>card_details.card_layout.name_en</td><td>文字型</td><td>カード詳細＞レイアウト＞名称（英語）</td></tr>
+                <tr><td>card_details.rarity</td><td>オブジェクト</td><td>カード詳細＞レアリティ</td></tr>
+                <tr><td>card_details.rarity.id</td><td>数値(整数)</td><td>カード詳細＞レアリティ＞レアリティID</td></tr>
+                <tr><td>card_details.rarity.name_jp</td><td>文字型</td><td>カード詳細＞レアリティ＞名称（日本語）</td></tr>
+                <tr><td>card_details.rarity.name_en</td><td>文字型</td><td>カード詳細＞レアリティ＞名称（英語）</td></tr>
+                <tr><td>card_details.rarity.code</td><td>文字型</td><td>カード詳細＞レアリティ＞コード</td></tr>
+                <tr><td>card_details.cardset</td><td>オブジェクト</td><td>カード詳細＞カードセット</td></tr>
+                <tr><td>card_details.cardset.id</td><td>数値(整数)</td><td>カード詳細＞カードセット＞カードセットID</td></tr>
+                <tr><td>card_details.cardset.name_jp</td><td>文字型</td><td>カード詳細＞カードセット＞名称（日本語）</td></tr>
+                <tr><td>card_details.cardset.name_en</td><td>文字型</td><td>カード詳細＞カードセット＞名称（英語）</td></tr>
+                <tr><td>card_details.cardset.code</td><td>文字型</td><td>カード詳細＞カードセット＞コード</td></tr>
+                <tr><td>card_details.cardset.symbol_image</td><td>文字型</td><td>カード詳細＞カードセット＞シンボル画像</td></tr>
+                <tr><td>card_details.cardset.cardsetblock_id</td><td>数値(整数)</td><td>カード詳細＞カードセット＞カードセットブロックID</td></tr>
+                <tr><td>card_details.cardset.release_date</td><td>文字型</td><td>カード詳細＞カードセット＞発売日</td></tr>
+                <tr><td>card_details.cardset.special_flg</td><td>数値(整数)</td><td>カード詳細＞カードセット＞特別版フラグ</td></tr>
+                <tr><td>card_details.cardset.branch_display_flg</td><td>数値(整数)</td><td>カード詳細＞カードセット＞枝番表示フラグ</td></tr>
+                <tr><td>card_details.illustrator</td><td>オブジェクト</td><td>カード詳細＞イラストレーター</td></tr>
+                <tr><td>card_details.illustrator.id</td><td>数値(整数)</td><td>カード詳細＞イラストレーター＞イラストレーターID</td></tr>
+                <tr><td>card_details.illustrator.name_jp</td><td>文字型</td><td>カード詳細＞イラストレーター＞名称（日本語）</td></tr>
+                <tr><td>card_details.illustrator.name_en</td><td>文字型</td><td>カード詳細＞イラストレーター＞名称（英語）</td></tr>
+                <tr><td>card_details.promotion</td><td>オブジェクト</td><td>カード詳細＞プロモ種別</td></tr>
+                <tr><td>card_details.promotion.id</td><td>数値(整数)</td><td>カード詳細＞プロモ種別＞プロモ種別ID</td></tr>
+                <tr><td>card_details.promotion.name_jp</td><td>文字型</td><td>カード詳細＞プロモ種別＞名称（日本語）</td></tr>
+                <tr><td>card_details.promotion.name_en</td><td>文字型</td><td>カード詳細＞プロモ種別＞名称（英語）</td></tr>
+                <tr><td>card_details.promotion.code</td><td>文字型</td><td>カード詳細＞プロモ種別＞コード</td></tr>
+                <tr><td>card_details.card_images</td><td>オブジェクト</td><td>カード詳細＞カード画像</td></tr>
+                <tr><td>card_details.card_images.id</td><td>数値(整数)</td><td>カード詳細＞カード画像＞カード画像ID</td></tr>
+                <tr><td>card_details.card_images.back_flg</td><td>数値(整数)</td><td>カード詳細＞カード画像＞裏面フラグ</td></tr>
+                <tr><td>card_details.card_images.url</td><td>文字型</td><td>カード詳細＞カード画像＞URL</td></tr>
+                <tr><td>card_details.card_images.create_date</td><td>日時（YYYY/MM/DD HH:MM）</td><td>カード詳細＞カード画像＞作成日時</td></tr>
+                <tr><td>card_details.card_images.language.id</td><td>数値(整数)</td><td>カード詳細＞カード画像＞言語＞言語ID</td></tr>
+                <tr><td>card_details.card_images.language.name_jp</td><td>文字型</td><td>カード詳細＞カード画像＞言語＞名称（日本語）</td></tr>
+                <tr><td>card_details.card_images.language.name_en</td><td>文字型</td><td>カード詳細＞カード画像＞言語＞名称（英語）</td></tr>
+                <tr><td>card_details.card_images.language.code</td><td>文字型</td><td>カード詳細＞カード画像＞言語＞言語コード</td></tr>
+                <tr><td>card_formats</td><td>オブジェクト</td><td>フォーマット</td></tr>
+                <tr><td>card_formats.id</td><td>文字型</td><td>フォーマット&gt;フォーマットID</td></tr>
+                <tr><td>card_formats.restriction_id</td><td>数値(整数)</td><td>フォーマット&gt;制限ID<br><br>設定値の意味は以下のとおり<br>1: 使用可<br>2: 制限<br>3: 禁止</td></tr>
+                <tr><td>color_sequence</td><td>オブジェクト</td><td>色順</td></tr>
+                <tr><td>color_sequence.id</td><td>数値(整数)</td><td>色順＞色順ID</td></tr>
+                <tr><td>color_sequence.name</td><td>文字型</td><td>色順＞名前</td></tr>
+                <tr><td>color_sequence.rank</td><td>文字型</td><td>※カスタマイズ対応、レスポンスデータの「rank」を「sort_no」に変更する<br><br>色順＞並び順</td></tr>
+                <tr><td>color_sequence.sort_no</td><td>文字型</td><td>※カスタマイズ対応、レスポンスデータの「rank」を「sort_no」に変更する<br><br>色順＞並び順</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":300,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"スカラベの饗宴",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Scarab Feast",</p>
+            <p class="doc-p" style="--lv:1">"arena_format_name_jp":"スカラベの饗宴",</p>
+            <p class="doc-p" style="--lv:1">"arena_format_name_en":"Scarab Feast",</p>
+            <p class="doc-p" style="--lv:1">"text_jp":"１つの墓地からカード最大３枚を対象とし、それらを追放する。サイクリング(黒)（(黒),このカードを捨てる：カードを１枚引く。）",</p>
+            <p class="doc-p" style="--lv:1">"text_en":"Exile up to three target cards from a single graveyard.\nCycling {Black} ({Black}, Discard this card: Draw a card.)",</p>
+            <p class="doc-p" style="--lv:1">"mana_cost":"(B)",</p>
+            <p class="doc-p" style="--lv:1">"cmc":1.0,</p>
+            <p class="doc-p" style="--lv:1">"power":"",</p>
+            <p class="doc-p" style="--lv:1">"toughness":"",</p>
+            <p class="doc-p" style="--lv:1">"loyalty":"",</p>
+            <p class="doc-p" style="--lv:1">"old_product_id":"AKH000106JN",</p>
+            <p class="doc-p" style="--lv:1">"old_en_product_id":"AKH000106EN",</p>
+            <p class="doc-p" style="--lv:1">"update_date":"2020-08-14T16:36:03+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date":"2018-06-06T18:44:43+09:00",</p>
+            <p class="doc-p" style="--lv:1">"cardtypes":</p>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":4,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"インスタント",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Instant",</p>
+            <p class="doc-p" style="--lv:1">"product_search_flg":true</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"subtypes":</p>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp": "アンテロープ",</p>
+            <p class="doc-p" style="--lv:1">"name_en": "Antelope",</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"specialtypes":</p>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":3,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"基本",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Basic"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"colors":</p>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":3,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"黒",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Black"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"color_identities":</p>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":3,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"黒",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Black"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"card_details":</p>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":300,</p>
+            <p class="doc-p" style="--lv:1">"card_id":null,</p>
+            <p class="doc-p" style="--lv:1">"back_card_detail_id":null,</p>
+            <p class="doc-p" style="--lv:1">"cardset_id":null,</p>
+            <p class="doc-p" style="--lv:1">"rarity_id":null,</p>
+            <p class="doc-p" style="--lv:1">"illustrator_id":null,</p>
+            <p class="doc-p" style="--lv:1">"flavor_jp":"",</p>
+            <p class="doc-p" style="--lv:1">"flavor_en":"The face of mediocrity is wrapped in anointed linen. Aspire to a better end.\n?Epnokep, vizier of Bontu",</p>
+            <p class="doc-p" style="--lv:1">"text_jp":"１つの墓地からカード最大３枚を対象とし、それらを追放する。サイクリング(黒)（(黒),このカードを捨てる：カードを１枚引く。）",</p>
+            <p class="doc-p" style="--lv:1">"text_en":"Exile up to three target cards from a single graveyard.\nCycling {Black} ({Black}, Discard this card: Draw a card.)",</p>
+            <p class="doc-p" style="--lv:1">"power":"",</p>
+            <p class="doc-p" style="--lv:1">"toughness":"",</p>
+            <p class="doc-p" style="--lv:1">"card_no":"106",</p>
+            <p class="doc-p" style="--lv:1">"foil":false,</p>
+            <p class="doc-p" style="--lv:1">"frame":"Usually",</p>
+            <p class="doc-p" style="--lv:1">"update_date":"2020-08-14T16:36:03+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date":"2018-06-06T18:44:43+09:00",</p>
+            <p class="doc-p" style="--lv:1">"card_layout":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"通常",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Normal"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"rarity":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"コモン",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Common",</p>
+            <p class="doc-p" style="--lv:1">"code":"C"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"cardset":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":167,"</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"アモンケット",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Amonkhet",</p>
+            <p class="doc-p" style="--lv:1">"code":"AKH",</p>
+            <p class="doc-p" style="--lv:1">"symbol_image":"set/5cd1460b9862d364.png",</p>
+            <p class="doc-p" style="--lv:1">"cardsetblock_id":25,</p>
+            <p class="doc-p" style="--lv:1">"release_date":"2017-04-28T00:00:00+09:00",</p>
+            <p class="doc-p" style="--lv:1">"special_flg":false,</p>
+            <p class="doc-p" style="--lv:1">"branch_display_flg":true</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"illustrator":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":26,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":null,</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Tony Foti"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"promotion":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"ノンプロモ",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Non Promotion",</p>
+            <p class="doc-p" style="--lv:1">"code":""</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"card_images":</p>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":599,</p>
+            <p class="doc-p" style="--lv:1">"back_flg":false,</p>
+            <p class="doc-p" style="--lv:1">"url":"img/goods/card/AKH/jp/scarab_feast.jpg",</p>
+            <p class="doc-p" style="--lv:1">"create_date":"2018-06-06T18:44:43+09:00",</p>
+            <p class="doc-p" style="--lv:1">"language":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"日本語",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code":"JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"card_formats":</p>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":1494,</p>
+            <p class="doc-p" style="--lv:1">"format_id":3,</p>
+            <p class="doc-p" style="--lv:1">"restriction_id":1</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">],</p>
+            <p class="doc-p" style="--lv:1">"color_sequence":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":4,</p>
+            <p class="doc-p" style="--lv:1">"name":"黒",</p>
+            <p class="doc-p" style="--lv:1">"sort_no":12</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">}</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a14-01-a14-01_api_card_card_get -->
+      <section class="function-design-embed" id="function-design-a14-01-a14-01_api_card_card_get" data-source="functions/pf-api/a14-01_api_card_card_get.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a14-01_api_card_card_get.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A14-01 カードIDからカード情報を取得 / API カード管理 — カードIDからカード情報を取得</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-概要">概要</h2>
+          <p>カードIDを指定してカードマスタの情報を取得するAPIである。pf-apiが提供するJSON APIである。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのカード取得処理、ルート定義、カードマスタを扱うリポジトリを正とする。本機能のカスタマイズ区分は現行踏襲であり、挙動はpf-apiの実装を参照し、DB関連（テーブル・列）の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>カードIDによるカード情報の取得</li><li>該当が無い場合の応答</li></ul>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>カード詳細IDによる取得（カード詳細情報取得を正とする）</li><li>検索クエリによる取得（検索クエリに一致するカード情報取得を正とする）</li><li>カードマスタの管理（カード管理を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>本機能は現行踏襲であり、挙動の参照は現行のpf-api、DB関連の正はec-cube-enterpriseとする。本APIが参照するテーブルは現行と移行先で同一スキーマである。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th><th>扱い</th></tr></thead><tbody><tr><td>カードマスタ</td><td><code>mtb_card</code></td><td><code>mtb_card</code></td><td>同一スキーマ。カードIDで取得する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>カードIDからカード情報を取得</td><td><code>GET /cards/{id}</code></td><td>カードIDに対応するカードマスタ情報をJSONで返す。該当が無い場合は404を返す。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。</p>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a14-01-a14-01_api_card_card_get-カード情報を取得する-GET-cards-id">カード情報を取得する（GET <code>/cards/{id}</code>）</h3>
+          <ol><li>パスのカードIDを受け取る。</li><li>カードマスタのリポジトリから当該IDのカードを取得する。</li><li>取得できない場合はコード404・「Not Found」のJSONを返す。</li><li>取得できた場合はカード情報をJSONで返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象データ</td><td>リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。DBまたはリポジトリから取得した値をJSON応答へ整形して返す。</td></tr><tr><td>応答値</td><td>応答フィールドは取得時点の値を返す。表示用の加工やフロントエンド側の表示制御は呼び出し元クライアントの設計を正とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-入出力">入出力</h2>
+          <h3 id="function-design-a14-01-a14-01_api_card_card_get-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>カードID。カードマスタの主キーで該当カードを取得する。</td></tr></tbody></table></div>
+          <h3 id="function-design-a14-01-a14-01_api_card_card_get-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。</p>
+          <p>カード情報を返す。シリアライズ対象は公開指定のプロパティのみで、以下を含む。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>integer</td><td>カードID。</td></tr><tr><td><code>nameJp</code></td><td>string</td><td>カード名（日）。</td></tr><tr><td><code>nameEn</code></td><td>string</td><td>カード名（英）。</td></tr><tr><td><code>arenaFormatNameJp</code></td><td>string</td><td>アリーナフォーマットカード名（日）。</td></tr><tr><td><code>arenaFormatNameEn</code></td><td>string</td><td>アリーナフォーマットカード名（英）。</td></tr><tr><td><code>textJp</code></td><td>string</td><td>カードテキスト（日）。</td></tr><tr><td><code>textEn</code></td><td>string</td><td>カードテキスト（英）。</td></tr><tr><td><code>manaCost</code></td><td>string</td><td>マナコスト。</td></tr><tr><td><code>cmc</code></td><td>number</td><td>マナコスト（数値変換）。</td></tr><tr><td><code>power</code></td><td>string</td><td>パワー。</td></tr><tr><td><code>toughness</code></td><td>string</td><td>タフネス。</td></tr><tr><td><code>loyalty</code></td><td>string</td><td>忠誠度。</td></tr><tr><td><code>oldProductId</code></td><td>string</td><td>現行の日本語商品ID。</td></tr><tr><td><code>oldEnProductId</code></td><td>string</td><td>現行の英語商品ID。</td></tr><tr><td><code>updateDate</code></td><td>string</td><td>更新日時。</td></tr><tr><td><code>createDate</code></td><td>string</td><td>作成日時。</td></tr><tr><td><code>cardtypes</code></td><td>array</td><td>カードタイプの一覧。</td></tr><tr><td><code>subtypes</code></td><td>array</td><td>サブタイプの一覧。</td></tr><tr><td><code>specialtypes</code></td><td>array</td><td>特殊タイプの一覧。</td></tr><tr><td><code>colors</code></td><td>array</td><td>色の一覧。</td></tr><tr><td><code>cardDetails</code></td><td>array</td><td>カード詳細の一覧。</td></tr><tr><td><code>cardFormats</code></td><td>array</td><td>カードフォーマットの一覧。</td></tr><tr><td><code>colorSequence</code></td><td>object</td><td>色順序情報。</td></tr></tbody></table></div>
+          <p><code>cardtags</code>・<code>keywordAbilities</code>・<code>articles</code>・<code>deckCards</code>は公開対象外であり、応答に含まれない。</p>
+          <h3 id="function-design-a14-01-a14-01_api_card_card_get-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>該当カードなし</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
+          <h3 id="function-design-a14-01-a14-01_api_card_card_get-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
+          <pre><code class="language-json">{
+            "id": 12345,
+            "nameJp": "稲妻",
+            "nameEn": "Lightning Bolt",
+            "arenaFormatNameJp": "",
+            "arenaFormatNameEn": "",
+            "textJp": "稲妻は、任意の対象に3点のダメージを与える。",
+            "textEn": "Lightning Bolt deals 3 damage to any target.",
+            "manaCost": "{R}",
+            "cmc": 1,
+            "power": null,
+            "toughness": null,
+            "loyalty": null,
+            "oldProductId": "100001",
+            "oldEnProductId": "200001",
+            "updateDate": "2026-06-01T12:00:00+09:00",
+            "createDate": "2020-01-01T00:00:00+09:00",
+            "cardtypes": [],
+            "subtypes": [],
+            "specialtypes": [],
+            "colors": [],
+            "cardDetails": [],
+            "cardFormats": [],
+            "colorSequence": null
+          }</code></pre>
+          <h3 id="function-design-a14-01-a14-01_api_card_card_get-副作用">副作用</h3>
+          <p>無し（参照のみ）。</p>
+          <p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点のカードマスタ情報を返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-DBカラム">DBカラム</h2>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>カードマスタ</td><td>カードID・カード情報の各列</td><td>取得条件・応答内容に使用する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>カード情報取得</th></tr></thead><tbody><tr><td>クライアント</td><td>クライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当カードなし</td><td>コード404・「Not Found」のJSONを返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-01-a14-01_api_card_card_get-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a14-01-a14-01_api_card_card_get -->
+</section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>カード詳細IDからカード詳細情報を取得</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>カード管理API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>加島</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>加島</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-18</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A14-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>カード詳細IDからカード情報を取得</dd></div>
+            <div class="kv"><dt>概要</dt><dd>カード詳細IDからカード情報を取得できる</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-4-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/cardDetails/{id}</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>カスタマイズ要件</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>カード詳細情報「Foil」の設定値が増えるため、レスポンスデータ内の「foil_flg」を「foil」に変更する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>カード詳細情報「フレーム」が追加されるため、レスポンスデータ内に「frame」を追加する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>カード詳細情報「プロモフラグ」は「プロモ種別」に包含されるため、レスポンスデータ内の「promotion_flg」を除去する</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>カスタマイズ要件に記載の内容以外は現行踏襲とする</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>指定されたカード詳細IDでカード詳細情報を返す</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>以下のように、カード情報「Foil」の設定値に新しく 「2: 特殊」 が追加されるため、レスポンスデータの 「foil_flg」 を「foil」へ変更</span></div>
+            <p class="doc-p" style="--lv:2">現行　リニューアル後</p>
+            <p class="doc-p" style="--lv:3">0: なし　0: なし</p>
+            <p class="doc-p" style="--lv:3">1: あり　1: あり</p>
+            <p class="doc-p" style="--lv:4">2: 特殊</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>カード詳細情報「フレーム」が追加されるため、レスポンスデータ内に「frame」を追加する</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>レスポンスデータの「プロモフラグ」を除去する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">※</span><span>別紙「0208_基本設計仕様書(カード管理)」のシート「カード詳細（登録・編集・削除）」の設計によって、</span></div>
+            <p class="doc-p" style="--lv:2">「プロモフラグ」は「プロモ種別」に包含されるため</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>id</td><td>数値(整数)</td><td>〇</td><td>-</td><td>300.0</td><td>カード詳細ID</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">/cardDetails/123</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200.0　正常終了</p>
+            <p class="doc-p" style="--lv:0">404.0　リクエストパラメータ「id」が未指定の場合<br><br>リクエストパラメータで指定された「id」に対応するカード詳細情報が存在しない場合</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>id</td><td>数値(整数)</td><td>カード詳細ID</td></tr>
+                <tr><td>card_id</td><td>数値(整数)</td><td>カードID</td></tr>
+                <tr><td>back_card_detail_id</td><td>数値(整数)</td><td>裏面カードID</td></tr>
+                <tr><td>cardset_id</td><td>数値(整数)</td><td>カードセットID</td></tr>
+                <tr><td>rarity_id</td><td>数値(整数)</td><td>レアリティID</td></tr>
+                <tr><td>illustrator_id</td><td>数値(整数)</td><td>イラストレーターID</td></tr>
+                <tr><td>flavor_jp</td><td>文字型</td><td>フレーバーテキスト（日本語）</td></tr>
+                <tr><td>flavor_en</td><td>文字型</td><td>フレーバーテキスト（英語）</td></tr>
+                <tr><td>text_jp</td><td>文字型</td><td>効果テキスト（日本語）</td></tr>
+                <tr><td>text_en</td><td>文字型</td><td>効果テキスト（英語）</td></tr>
+                <tr><td>power</td><td>数値(整数)</td><td>パワー</td></tr>
+                <tr><td>toughness</td><td>数値(整数)</td><td>タフネス</td></tr>
+                <tr><td>card_no</td><td>文字型</td><td>カード番号</td></tr>
+                <tr><td>foil_flg</td><td>数値(整数)</td><td>※カスタマイズ対応、カード情報「Foil」の選択肢が増えるため、レスポンスデータ内の「foil_flg」を「foil」に変更<br><br>Foilフラグ<br><br>設定値の意味は以下のとおり<br>0: なし<br>1: あり</td></tr>
+                <tr><td>foil</td><td>数値(整数)</td><td>※カスタマイズ対応、カード情報「Foil」の選択肢が増えるため、レスポンスデータ内の「foil_flg」を「foil」に変更<br><br>Foil<br><br>設定値の意味は以下のとおり<br>0: なし<br>1: あり<br>2: 特需</td></tr>
+                <tr><td>frame</td><td>文字型</td><td>※カスタマイズ対応、新規追加<br><br>フレーム</td></tr>
+                <tr><td>promotion_flg</td><td>数値(整数)</td><td>※カスタマイズ対応、項目を除去<br><br>カード詳細＞プロモフラグ</td></tr>
+                <tr><td>update_date</td><td>日時（YYYY/MM/DD HH:MM）</td><td>更新日時</td></tr>
+                <tr><td>create_date</td><td>日時（YYYY/MM/DD HH:MM）</td><td>作成日時</td></tr>
+                <tr><td>card_layout</td><td>オブジェクト</td><td>レイアウト</td></tr>
+                <tr><td>card_layout.id</td><td>数値(整数)</td><td>レイアウト＞レイアウトID</td></tr>
+                <tr><td>card_layout.name_jp</td><td>文字型</td><td>レイアウト＞名称（日本語）</td></tr>
+                <tr><td>card_layout.name_en</td><td>文字型</td><td>レイアウト＞名称（英語）</td></tr>
+                <tr><td>rarity</td><td>オブジェクト</td><td>レアリティ</td></tr>
+                <tr><td>rarity.id</td><td>数値(整数)</td><td>レアリティ＞レアリティID</td></tr>
+                <tr><td>rarity.name_jp</td><td>文字型</td><td>レアリティ＞名称（日本語）</td></tr>
+                <tr><td>rarity.name_en</td><td>文字型</td><td>レアリティ＞名称（英語）</td></tr>
+                <tr><td>rarity.code</td><td>文字型</td><td>レアリティ＞コード</td></tr>
+                <tr><td>cardset</td><td>オブジェクト</td><td>カードセット</td></tr>
+                <tr><td>cardset.id</td><td>数値(整数)</td><td>カードセット＞カードセットID</td></tr>
+                <tr><td>cardset.name_jp</td><td>文字型</td><td>カードセット＞名称（日本語）</td></tr>
+                <tr><td>cardset.name_en</td><td>文字型</td><td>カードセット＞名称（英語）</td></tr>
+                <tr><td>cardset.code</td><td>文字型</td><td>カードセット＞コード</td></tr>
+                <tr><td>cardset.symbol_image</td><td>文字型</td><td>カードセット＞シンボル画像</td></tr>
+                <tr><td>cardset.cardsetblock_id</td><td>数値(整数)</td><td>カードセット＞カードセットブロックID</td></tr>
+                <tr><td>cardset.release_date</td><td>文字型</td><td>カードセット＞発売日</td></tr>
+                <tr><td>cardset.special_flg</td><td>数値(整数)</td><td>カードセット＞特別版フラグ</td></tr>
+                <tr><td>cardset.branch_display_flg</td><td>数値(整数)</td><td>カードセット＞枝番表示フラグ</td></tr>
+                <tr><td>illustrator</td><td>オブジェクト</td><td>イラストレーター</td></tr>
+                <tr><td>illustrator.id</td><td>数値(整数)</td><td>イラストレーター＞イラストレーターID</td></tr>
+                <tr><td>illustrator.name_jp</td><td>文字型</td><td>イラストレーター＞名称（日本語）</td></tr>
+                <tr><td>illustrator.name_en</td><td>文字型</td><td>イラストレーター＞名称（英語）</td></tr>
+                <tr><td>promotion</td><td>オブジェクト</td><td>プロモ種別</td></tr>
+                <tr><td>promotion.id</td><td>数値(整数)</td><td>プロモ種別＞プロモ種別ID</td></tr>
+                <tr><td>promotion.name_jp</td><td>文字型</td><td>プロモ種別＞名称（日本語）</td></tr>
+                <tr><td>promotion.name_en</td><td>文字型</td><td>プロモ種別＞名称（英語）</td></tr>
+                <tr><td>promotion.code</td><td>文字型</td><td>プロモ種別＞コード</td></tr>
+                <tr><td>card_images</td><td>オブジェクト</td><td>カード画像</td></tr>
+                <tr><td>card_images.id</td><td>数値(整数)</td><td>カード画像＞カード画像ID</td></tr>
+                <tr><td>card_images.back_flg</td><td>数値(整数)</td><td>カード画像＞裏面フラグ</td></tr>
+                <tr><td>card_images.url</td><td>文字型</td><td>カード画像＞URL</td></tr>
+                <tr><td>card_images.create_date</td><td>日時（YYYY/MM/DD HH:MM）</td><td>カード画像＞作成日時</td></tr>
+                <tr><td>card_images.language.id</td><td>数値(整数)</td><td>カード画像＞言語＞言語ID</td></tr>
+                <tr><td>card_images.language.name_jp</td><td>文字型</td><td>カード画像＞言語＞名称（日本語）</td></tr>
+                <tr><td>card_images.language.name_en</td><td>文字型</td><td>カード画像＞言語＞名称（英語）</td></tr>
+                <tr><td>card_images.language.code</td><td>文字型</td><td>カード画像＞言語＞言語コード</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":300,</p>
+            <p class="doc-p" style="--lv:1">"card_id":null,</p>
+            <p class="doc-p" style="--lv:1">"back_card_detail_id":null,</p>
+            <p class="doc-p" style="--lv:1">"cardset_id":null,</p>
+            <p class="doc-p" style="--lv:1">"rarity_id":null,</p>
+            <p class="doc-p" style="--lv:1">"illustrator_id":null,</p>
+            <p class="doc-p" style="--lv:1">"flavor_jp":"",</p>
+            <p class="doc-p" style="--lv:1">"flavor_en":"The face of mediocrity is wrapped in anointed linen. Aspire to a better end.\n?Epnokep, vizier of Bontu",</p>
+            <p class="doc-p" style="--lv:1">"text_jp":"１つの墓地からカード最大３枚を対象とし、それらを追放する。サイクリング(黒)（(黒),このカードを捨てる：カードを１枚引く。）",</p>
+            <p class="doc-p" style="--lv:1">"text_en":"Exile up to three target cards from a single graveyard.\nCycling {Black} ({Black}, Discard this card: Draw a card.)",</p>
+            <p class="doc-p" style="--lv:1">"power":"",</p>
+            <p class="doc-p" style="--lv:1">"toughness":"",</p>
+            <p class="doc-p" style="--lv:1">"card_no":"106",</p>
+            <p class="doc-p" style="--lv:1">"foil":false,</p>
+            <p class="doc-p" style="--lv:1">"frame":"Usually",</p>
+            <p class="doc-p" style="--lv:1">"update_date":"2020-08-14T16:36:03+09:00",</p>
+            <p class="doc-p" style="--lv:1">"create_date":"2018-06-06T18:44:43+09:00",</p>
+            <p class="doc-p" style="--lv:1">"card_layout":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"通常",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Normal"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"rarity":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"コモン",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Common",</p>
+            <p class="doc-p" style="--lv:1">"code":"C"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"cardset":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":167,"</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"アモンケット",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Amonkhet",</p>
+            <p class="doc-p" style="--lv:1">"code":"AKH",</p>
+            <p class="doc-p" style="--lv:1">"symbol_image":"set/5cd1460b9862d364.png",</p>
+            <p class="doc-p" style="--lv:1">"cardsetblock_id":25,</p>
+            <p class="doc-p" style="--lv:1">"release_date":"2017-04-28T00:00:00+09:00",</p>
+            <p class="doc-p" style="--lv:1">"special_flg":false,</p>
+            <p class="doc-p" style="--lv:1">"branch_display_flg":true</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"illustrator":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":26,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":null,</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Tony Foti"</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"promotion":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"ノンプロモ",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Non Promotion",</p>
+            <p class="doc-p" style="--lv:1">"code":""</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">"card_images":</p>
+            <p class="doc-p" style="--lv:1">[</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":599,</p>
+            <p class="doc-p" style="--lv:1">"back_flg":false,</p>
+            <p class="doc-p" style="--lv:1">"url":"img/goods/card/AKH/jp/scarab_feast.jpg",</p>
+            <p class="doc-p" style="--lv:1">"create_date":"2018-06-06T18:44:43+09:00",</p>
+            <p class="doc-p" style="--lv:1">"language":</p>
+            <p class="doc-p" style="--lv:1">{</p>
+            <p class="doc-p" style="--lv:1">"id":1,</p>
+            <p class="doc-p" style="--lv:1">"name_jp":"日本語",</p>
+            <p class="doc-p" style="--lv:1">"name_en":"Japanease",</p>
+            <p class="doc-p" style="--lv:1">"code":"JP"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+            <p class="doc-p" style="--lv:1">},</p>
+            <p class="doc-p" style="--lv:1">]</p>
+            <p class="doc-p" style="--lv:1">}</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a14-02-a14-02_api_card_card_detail_get -->
+      <section class="function-design-embed" id="function-design-a14-02-a14-02_api_card_card_detail_get" data-source="functions/pf-api/a14-02_api_card_card_detail_get.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a14-02_api_card_card_detail_get.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A14-02 カード詳細IDからカード詳細情報を取得 / API カード管理 — カード詳細IDからカード詳細情報を取得</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-概要">概要</h2>
+          <p>カード詳細IDを指定してカード詳細マスタの情報を取得するAPIである。pf-apiが提供するJSON APIである。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのカード詳細取得処理、ルート定義、カード詳細マスタを扱うリポジトリを正とする。</p>
+          <p>本機能のカスタマイズ区分は現行踏襲であり、挙動はpf-apiの現行実装を、DB関連はec-cube-enterpriseの実装を正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>カード詳細IDによるカード詳細情報の取得</li><li>該当が無い場合の応答</li></ul>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>カードIDによる取得（カード情報取得を正とする）</li><li>検索クエリによる取得（検索クエリに一致するカード情報取得を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>DB関連の記述はec-cube-enterpriseの実装を正とする。挙動は現行のpf-api実装を正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>カード詳細マスタのテーブル</td><td><code>mtb_card_detail</code></td><td><code>mtb_card_detail</code>（同一スキーマ）</td></tr><tr><td>主な列</td><td><code>card_id</code>・<code>back_card_detail_id</code>・<code>cardset_id</code>・<code>rarity_id</code>・<code>illustrator_id</code>・<code>flavor_jp</code>・<code>flavor_en</code>・<code>text_jp</code>・<code>text_en</code>・<code>power</code>・<code>toughness</code>・<code>card_no</code>・<code>foil_flg</code>・<code>promotion_flg</code>・<code>create_date</code>・<code>update_date</code></td><td>同一の列名（差分なし）</td></tr></tbody></table></div>
+          <p>カード詳細マスタは現行と移行先でテーブル名・主な列名が同一であり、永続化スキーマの差はない。移行に伴うAPIの応答仕様の変更は本書では確定しない。</p>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>カード詳細IDからカード詳細情報を取得</td><td><code>GET /cardDetails/{id}</code></td><td>カード詳細IDに対応するカード詳細情報をJSONで返す。該当が無い場合は404を返す。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。</p>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a14-02-a14-02_api_card_card_detail_get-カード詳細情報を取得する-GET-cardDetails-id">カード詳細情報を取得する（GET <code>/cardDetails/{id}</code>）</h3>
+          <ol><li>パスのカード詳細IDを受け取る。</li><li>カード詳細マスタのリポジトリから当該IDのカード詳細を取得する。</li><li>取得できない場合はコード404・「Not Found」のJSONを返す。</li><li>取得できた場合はカード詳細情報をJSONで返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象データ</td><td>リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。DBまたはリポジトリから取得した値をJSON応答へ整形して返す。</td></tr><tr><td>応答値</td><td>応答フィールドは取得時点の値を返す。表示用の加工やフロントエンド側の表示制御は呼び出し元クライアントの設計を正とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-入出力">入出力</h2>
+          <h3 id="function-design-a14-02-a14-02_api_card_card_detail_get-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>パス</td><td>integer</td><td>必須</td><td>カード詳細ID。カード詳細マスタの主キーで該当カード詳細を取得する。</td></tr></tbody></table></div>
+          <h3 id="function-design-a14-02-a14-02_api_card_card_detail_get-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。</p>
+          <p>カード詳細情報を返す。除外指定のプロパティを除く全プロパティをシリアライズし、以下を含む。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>integer</td><td>カード詳細ID。</td></tr><tr><td><code>cardId</code></td><td>integer</td><td>紐づくカードID。</td></tr><tr><td><code>backCardDetailId</code></td><td>integer</td><td>裏面カードID。</td></tr><tr><td><code>cardsetId</code></td><td>integer</td><td>カードセットID。</td></tr><tr><td><code>rarityId</code></td><td>integer</td><td>レアリティID。</td></tr><tr><td><code>illustratorId</code></td><td>integer</td><td>イラストレーターID。</td></tr><tr><td><code>flavorJp</code></td><td>string</td><td>フレーバーテキスト（日）。</td></tr><tr><td><code>flavorEn</code></td><td>string</td><td>フレーバーテキスト（英）。</td></tr><tr><td><code>textJp</code></td><td>string</td><td>カードテキスト（日）。</td></tr><tr><td><code>textEn</code></td><td>string</td><td>カードテキスト（英）。</td></tr><tr><td><code>power</code></td><td>string</td><td>パワー。</td></tr><tr><td><code>toughness</code></td><td>string</td><td>タフネス。</td></tr><tr><td><code>cardNo</code></td><td>string</td><td>カードNo。</td></tr><tr><td><code>foilFlg</code></td><td>boolean</td><td>Foilフラグ。</td></tr><tr><td><code>promotionFlg</code></td><td>boolean</td><td>プロモフラグ。</td></tr><tr><td><code>updateDate</code></td><td>string</td><td>更新日時。</td></tr><tr><td><code>createDate</code></td><td>string</td><td>作成日時。</td></tr><tr><td><code>cardLayout</code></td><td>object</td><td>カードレイアウト情報。</td></tr><tr><td><code>rarity</code></td><td>object</td><td>レアリティ情報。</td></tr><tr><td><code>cardset</code></td><td>object</td><td>カードセット情報。</td></tr><tr><td><code>illustrator</code></td><td>object</td><td>イラストレーター情報。</td></tr><tr><td><code>promotion</code></td><td>object</td><td>プロモーション情報。</td></tr><tr><td><code>cardImages</code></td><td>array</td><td>カード画像の一覧。</td></tr></tbody></table></div>
+          <p><code>cardLayoutId</code>・<code>promotionId</code>・親カード（<code>card</code>）・商品サブ（<code>productSubs</code>）は除外指定であり、応答に含まれない。</p>
+          <h3 id="function-design-a14-02-a14-02_api_card_card_detail_get-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>該当カード詳細なし</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
+          <h3 id="function-design-a14-02-a14-02_api_card_card_detail_get-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
+          <pre><code class="language-json">{
+            "id": 54321,
+            "cardId": 12345,
+            "backCardDetailId": null,
+            "cardsetId": 10,
+            "rarityId": 3,
+            "illustratorId": 7,
+            "flavorJp": "",
+            "flavorEn": "",
+            "textJp": "稲妻は、任意の対象に3点のダメージを与える。",
+            "textEn": "Lightning Bolt deals 3 damage to any target.",
+            "power": null,
+            "toughness": null,
+            "cardNo": "001",
+            "foilFlg": false,
+            "promotionFlg": false,
+            "updateDate": "2026-06-01T12:00:00+09:00",
+            "createDate": "2020-01-01T00:00:00+09:00",
+            "cardLayout": null,
+            "rarity": null,
+            "cardset": null,
+            "illustrator": null,
+            "promotion": null,
+            "cardImages": []
+          }</code></pre>
+          <h3 id="function-design-a14-02-a14-02_api_card_card_detail_get-副作用">副作用</h3>
+          <p>無し（参照のみ）。</p>
+          <p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点のカード詳細マスタ情報を返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-DBカラム">DBカラム</h2>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>カード詳細マスタ（<code>mtb_card_detail</code>）</td><td>カード詳細ID（<code>id</code>）・詳細情報の各列</td><td>取得条件・応答内容に使用する。テーブル名・列名はec-cube-enterpriseを正とする。</td></tr></tbody></table></div>
+          <h3 id="function-design-a14-02-a14-02_api_card_card_detail_get-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>mtb_card_detail</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>カード詳細情報取得</th></tr></thead><tbody><tr><td>クライアント</td><td>クライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当カード詳細なし</td><td>コード404・「Not Found」のJSONを返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-02-a14-02_api_card_card_detail_get-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a14-02-a14-02_api_card_card_detail_get -->
+</section>
+      <section class="sheet-panel" id="sheet-5">
+        <div class="sheet-heading">
+          <h2>検索クエリに一致するカード情報1件を取得</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>カード管理API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>加島</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>加島</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-18</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A14-03</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>検索クエリに一致するカード情報1件を取得</dd></div>
+            <div class="kv"><dt>概要</dt><dd>検索クエリに一致するカード情報1件を取得できる</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-5-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/card?name={name}&amp;lang={lang}</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　無　認証方式　無　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>現行踏襲のためカスタマイズ要件はなし</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-5-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>リクエストパラメータで指定された条件に基づき、データベースから検索したカード情報を1件を返す</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>リクエストパラメータ「lang」が未指定の場合は、英語版(en)のカード情報を優先して返す</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>name</td><td>文字型</td><td>〇</td><td>-</td><td>ゲイラキャット / Gaelicat</td><td>日本語、英語のカード名を「 / 」で区切り入力できる<br><br>半角英数の場合は英語、それ以外を日本語のカード名とする</td></tr>
+                <tr><td>lang</td><td>文字型</td><td>-</td><td>-</td><td>ja</td><td>優先して取得するカード情報の言語を入力できる<br><br>未指定の場合、英語版(en)のカード情報を優先して返す</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">/card?name=ゲイラキャット / Gaelicat&amp;lang=en</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200.0　正常終了</p>
+            <p class="doc-p" style="--lv:0">404.0　リクエストパラメータ「name」が未指定の場合<br><br>リクエストパラメータで指定された条件に該当するカード情報が存在しない場合</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>id</td><td>数値(整数)</td><td>カードID</td></tr>
+                <tr><td>name_jp</td><td>文字型</td><td>カード名(日)</td></tr>
+                <tr><td>name_en</td><td>文字型</td><td>カード名(英)</td></tr>
+                <tr><td>image_url</td><td>文字型</td><td>画像URL</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">{</h4>
+            <p class="doc-p" style="--lv:2">"id": 43961</p>
+            <p class="doc-p" style="--lv:2">"nameJp": ゲイラキャット</p>
+            <p class="doc-p" style="--lv:2">"nameEn": Gaelicat</p>
+            <p class="doc-p" style="--lv:2">"image_url": "https://stg-files.hareruyamtg.com/img/goods/L/FIN/_jp_0c91eb74ed._jpg"</p>
+            <p class="doc-p" style="--lv:1">}</p>
+          </div>
+        </div>
+</section>
+
+
+<!-- endpoint-supplement:start -->
+<section class="endpoint-supplement">
+  <div class="sheet-doc">
+    <hr>
+    <h1>実装差分追補</h1>
+    <p>この節は Controller の本番利用 route と既存の「利用者視点の入口」を突合し、利用者が画面操作・ファイル出力・外部API呼び出しとして到達する入口を追補したものである。Block内部描画や CORS 用 OPTIONS は含めない。</p>
+    <h2 id="endpoint-supplement-user-entry">利用者視点の入口</h2>
+    <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>検索クエリに一致するカード情報を1件取得するを取得する</td><td>`GET /card.json`</td><td>指定条件に応じたデータをJSON等のレスポンスで返す。</td></tr></tbody></table></div>
+  </div>
+      <!-- function-design-embed:start a14-03-a14-03_api_card_card_search_single -->
+      <section class="function-design-embed" id="function-design-a14-03-a14-03_api_card_card_search_single" data-source="functions/pf-api/a14-03_api_card_card_search_single.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a14-03_api_card_card_search_single.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A14-03 検索クエリに一致するカード情報1件を取得 / API カード管理 — 検索クエリに一致するカード情報1件を取得</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-概要">概要</h2>
+          <p>検索クエリ（パラメータ）に一致するカード情報を1件取得するAPIである。pf-apiが提供するJSON APIで、指定した条件に合致するカードを1件返す。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのカード検索取得処理、ルート定義、カードマスタを扱うリポジトリを正とする。</p>
+          <p>本機能のカスタマイズ区分は現行踏襲であり、挙動はpf-apiの現行実装を、DB関連はec-cube-enterpriseの実装を正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。</p>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>検索クエリ（パラメータ）に一致するカード1件の取得</li><li>該当が無い場合の応答</li></ul>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>カードID・カード詳細IDによる取得（各APIを正とする）</li><li>検索条件の項目仕様（実装を確認値とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>DB関連の記述はec-cube-enterpriseの実装を正とする。挙動は現行のpf-api実装を正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>カードマスタのテーブル</td><td><code>mtb_card</code></td><td><code>mtb_card</code>（同一スキーマ）</td></tr><tr><td>検索・応答に用いる列</td><td>カード名（<code>name_jp</code>・<code>name_en</code>）</td><td>同一の列名（差分なし）</td></tr><tr><td>カード画像URL</td><td>画像情報から組み立てる導出値（永続化列ではない）</td><td>同一の扱い</td></tr></tbody></table></div>
+          <p>カードマスタは現行と移行先でテーブル名・主な列名が同一であり、永続化スキーマの差はない。移行に伴うAPIの応答仕様の変更は本書では確定しない。</p>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>検索クエリに一致するカード1件取得</td><td><code>GET /card</code>（クエリパラメータで条件指定）</td><td>条件に一致するカードを1件JSONで返す。該当が無い場合は404を返す。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。条件はクエリパラメータで渡す。</p>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a14-03-a14-03_api_card_card_search_single-カードを検索取得する-GET-card">カードを検索取得する（GET <code>/card</code>）</h3>
+          <ol><li>クエリパラメータの検索条件を受け取る。</li><li>カードマスタのリポジトリから、条件に一致するカードを1件取得する。</li><li>取得できない場合はコード404・「Not Found」のJSONを返す。</li><li>取得できた場合はカード情報をJSONで返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>取得対象</td><td>クエリパラメータの条件に一致するカード。</td></tr><tr><td>件数</td><td>1件を返す（一致がある場合）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-入出力">入出力</h2>
+          <h3 id="function-design-a14-03-a14-03_api_card_card_search_single-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>name</code></td><td>クエリ</td><td>string</td><td>必須</td><td>カード名。日名・英名・日名/英名・英名/日名の形を受け取る。分割カードは<code>+</code>で繋ぐ入力を想定し、内部で<code>/</code>に置換する。本パラメータが空のときは該当なしとして扱う。</td></tr><tr><td><code>lang</code></td><td>クエリ</td><td>string</td><td>任意</td><td>カード言語。<code>ja</code>のとき日本語、それ以外は英語として並び順の優先言語に用いる。</td></tr></tbody></table></div>
+          <h3 id="function-design-a14-03-a14-03_api_card_card_search_single-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。</p>
+          <p>条件に一致するカードを1件返す。リポジトリのネイティブクエリが返すスカラ結果で、以下のフィールドを持つ。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>integer</td><td>カードID。</td></tr><tr><td><code>nameJp</code></td><td>string</td><td>カード名（日）。</td></tr><tr><td><code>nameEn</code></td><td>string</td><td>カード名（英）。</td></tr><tr><td><code>image_url</code></td><td>string</td><td>カード画像のURL。</td></tr></tbody></table></div>
+          <h3 id="function-design-a14-03-a14-03_api_card_card_search_single-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>404</td><td>該当カードなし（一致が無い、または<code>name</code>が空相当）</td><td><code>{code, message}</code>（"Not Found"）</td></tr></tbody></table></div>
+          <h3 id="function-design-a14-03-a14-03_api_card_card_search_single-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（実装確認値に基づく代表値）。</p>
+          <pre><code class="language-json">{
+            "id": 12345,
+            "nameJp": "稲妻",
+            "nameEn": "Lightning Bolt",
+            "image_url": "https://example.com/images/card/12345.jpg"
+          }</code></pre>
+          <h3 id="function-design-a14-03-a14-03_api_card_card_search_single-副作用">副作用</h3>
+          <p>無し（参照のみ）。</p>
+          <p>応答はJSON応答整形を経て返す。プロパティはcamelCase、日時はISO8601とする。</p>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-業務ルール・計算">業務ルール・計算</h2>
+          <ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点のカードマスタ情報を返す。本APIはデータを更新しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-DBカラム">DBカラム</h2>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>カードマスタ（<code>mtb_card</code>）</td><td>カードID（<code>id</code>）・カード名（<code>name_jp</code>・<code>name_en</code>）等の検索条件に用いる各列</td><td>取得条件・応答内容に使用する。テーブル名・列名はec-cube-enterpriseを正とする。</td></tr></tbody></table></div>
+          <h3 id="function-design-a14-03-a14-03_api_card_card_search_single-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>mtb_card</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>カード検索取得</th></tr></thead><tbody><tr><td>クライアント</td><td>クライアントから呼び出す。認可方式はpf-apiの方針に従う。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当カードなし</td><td>コード404・「Not Found」のJSONを返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a14-03-a14-03_api_card_card_search_single-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a14-03-a14-03_api_card_card_search_single -->
+</section>
+<!-- endpoint-supplement:end -->
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

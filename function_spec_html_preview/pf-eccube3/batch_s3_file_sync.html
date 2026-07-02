@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>バッチ インフラ — S3のファイルを自サーバに転送 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#S3から自サーバへ同期する-usr-local-bin-file-sync-command">S3から自サーバへ同期する（`/usr/local/bin/file_sync_command`）</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv2" href="#API・バッチ結果">API・バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/batch_s3_file_sync.md</p>
+        <h1>バッチ インフラ — S3のファイルを自サーバに転送</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>S3バケットの所定プレフィックスのファイルを、稼働中のアプリケーションサーバ（コンテナ）のローカルディレクトリへ同期するインフラバッチである。cronで定期実行し、テンプレートとユーザーデータのファイルをS3から取得して反映する。変更があった場合はファイルの所有者・権限を設定し、アプリケーションのキャッシュをクリアする。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。カスタマイズ区分は「現行踏襲」。本機能はインフラバッチであり、確認値は ec-cube-enterprise のコンテナ用cron定義（<code>dockerbuild/eccube/crontab</code>）と同期スクリプト（<code>dockerbuild/eccube/file_sync_command.sh</code>）を正とする。挙動・DBともリポジトリは ec-cube-enterprise を参照する。</p>
+<p>対象はコンソール（シェルスクリプト）であり、ブラウザ経由の画面を持たない。本文ではスクリプト内部のコマンド列を逐次転載せず、ふるまいを記述する。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<ul><li>本機能はオブジェクトストレージ（S3）とアプリケーションサーバ間のファイル同期を行うインフラバッチであり、業務データのテーブル（DBスキーマ）を持たない。したがってDBスキーマ上の現行↔移行先の差分は無い。</li><li>挙動・確認値は移行先 ec-cube-enterprise のコンテナ定義（cron・同期スクリプト）を正とする。現行（pf-eccube3）側に固有の別実装がある場合の差分のみ、判明時に本節へ追記する。</li><li>同期対象（テンプレート・ユーザーデータのプレフィックス）、所有者・権限設定、キャッシュクリアの挙動は ec-cube-enterprise のスクリプト実装を正とする。</li></ul>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>バッチの起動方法（cronによる定期実行）</li><li>S3から自サーバへの同期対象と同期方式</li><li>変更検知時の権限設定とキャッシュクリア</li><li>多重起動の防止</li><li>ログ出力</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別構成の設計を正とする。</p>
+<ul><li>WordPressの最新ファイルをS3へ転送する処理（本リポジトリに成果物が無く、インフラ構成・WordPress側を正とする）</li><li>S3バケット名・エンドポイント・認証情報・CDKプレフィックス等の値（インフラ構成・環境変数を正とする）</li><li>CloudWatchロググループ・ログストリームの設計（インフラ構成を正とする）</li><li>アプリケーションのキャッシュクリア処理の内部仕様（コア機能を正とする）</li></ul>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>同期</td><td>S3の内容を基準に、ローカルディレクトリを一致させる処理。ローカル側の余分なファイルは削除する。</td></tr><tr><td>ロックファイル</td><td>バッチの多重起動を防ぐためのファイル。</td></tr><tr><td>同期対象</td><td>S3からローカルへ取得するディレクトリ。テンプレートとユーザーデータの3経路。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>cronによる定期実行</td><td>毎分（<code>* * * * * /usr/local/bin/file_sync_command</code>）</td><td>S3の所定プレフィックスをローカルディレクトリへ同期し、変更時は権限設定とキャッシュクリアを行う。</td></tr></tbody></table></div>
+<p>本機能はHTTPで届く画面を持たない。実行スケジュール自体はcron定義・運用設定を正とする。実装上は毎分起動である。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="S3から自サーバへ同期する-usr-local-bin-file-sync-command">S3から自サーバへ同期する（<code>/usr/local/bin/file_sync_command</code>）</h3>
+<ol><li>実行開始をログに記録する。</li><li>ロックファイルの作成を試みる。既に存在する場合は、保持中のプロセスを記録して処理を終了する（多重起動防止）。</li><li>ロックを取得できた場合、次の3経路をS3からローカルへ同期する。各同期はS3を基準とし、ローカル側の余分なファイルを削除する（タイムスタンプ厳密一致で差分判定）。</li></ol>
+<ul><li>テンプレートの既定データ</li><li>テンプレートのユーザーデータ</li><li>HTMLのユーザーデータ</li></ul>
+<ol><li>いずれかの経路で変更があった場合、変更ファイルをログに出力し、対象ディレクトリの所有者・権限を設定する。</li><li>アプリケーションのキャッシュをクリアする。</li><li>同期結果の一時ログファイルを削除する。</li><li>ロックファイルを削除し、終了をログに記録する。</li><li>変更が無かった場合は、変更なしを記録して権限設定・キャッシュクリアを行わずに終了する。</li></ol>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>同期方式</td><td>S3を基準にローカルを一致させる。ローカルの余分なファイルは削除する。差分判定はタイムスタンプの厳密一致による。</td></tr><tr><td>変更検知</td><td>同期結果の一時ログが空でなければ「変更あり」とみなし、権限設定とキャッシュクリアを行う。</td></tr><tr><td>権限設定</td><td>変更があった経路についてのみ、所有者をWebサーバ実行ユーザーに設定し、ディレクトリにグループ継承を付与する。</td></tr><tr><td>エンドポイント切替</td><td>S3エンドポイントの指定有無により、署名なし・エンドポイント指定の同期に切り替える（ローカル検証環境向け）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API・バッチ結果">API・バッチ結果</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>なし（cron起動。対象プレフィックス・バケットは環境変数）。</td></tr><tr><td>実行条件</td><td>ロックファイルを取得できること。取得できない場合は実行しない。</td></tr><tr><td>成功結果</td><td>S3の内容がローカルへ反映される。変更時は権限設定とキャッシュクリアが行われる。</td></tr><tr><td>失敗結果</td><td>ロック取得失敗時は同期せず終了する。各同期・権限設定・キャッシュクリアの結果はログに記録する。</td></tr><tr><td>再実行時</td><td>毎分起動で繰り返し実行される。同期は冪等であり、変更が無ければファイルは更新されない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>S3バケットの3プレフィックス（テンプレート既定・テンプレートユーザーデータ・HTMLユーザーデータ）。バケット名・エンドポイントは環境変数。</td></tr><tr><td>成功時出力</td><td>ローカルディレクトリ（テンプレート既定・テンプレートユーザーデータ・HTMLユーザーデータ）の更新。変更時は権限設定とキャッシュクリア。</td></tr><tr><td>失敗時出力</td><td>ロック取得失敗・各処理の結果をログに記録する。</td></tr><tr><td>副作用</td><td>ローカルファイルの更新・削除、所有者・権限の変更、アプリケーションキャッシュのクリア、ロックファイルの作成と削除、CloudWatchおよびローカルログへの出力。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>同期の基準</td><td>S3を正とし、ローカルをS3に一致させる。ローカルでの直接変更は次回同期で上書き・削除され得る対象となる。</td></tr><tr><td>多重実行</td><td>ロックファイルにより同時実行を防ぐ。ロックを取得できない実行は同期を行わない。</td></tr><tr><td>反映タイミング</td><td>毎分の同期で反映する。S3更新から最大で次回起動までの遅延が生じる。</td></tr><tr><td>キャッシュ</td><td>変更検知時にキャッシュクリアを行い、反映後の表示に同期内容を反映する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>本バッチはファイル同期であり、データベースの更新を行わない。直接関係するテーブル列は持たない。</p>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>ロックファイルを取得できない（多重起動）</td><td>同期を行わず、失敗理由と保持中プロセスをログに記録して終了する。</td></tr><tr><td>同期・権限設定・キャッシュクリアの結果</td><td>ログに記録する。各処理の詳細な失敗時挙動はコマンド・インフラの動作に委ねる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>実行開始・終了</td><td>開始・終了・ロック取得・解放を記録する。</td></tr><tr><td>変更検知時</td><td>変更ファイル数・変更ファイル一覧・権限設定・キャッシュクリアの実行を記録する。</td></tr><tr><td>多重起動時</td><td>失敗理由と保持中プロセスを記録する。</td></tr></tbody></table></div>
+<p>ログはローカルログとCloudWatchの双方へ出力する。</p>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>S3の認証情報・アクセスキー</li><li>環境変数に含まれる秘密値</li><li>Cookie値・セッションIDの完全値</li></ul>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>ロックファイルにより多重起動を防ぐ。データベーストランザクションは扱わず、楽観ロック・悲観ロックの対象は持たない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

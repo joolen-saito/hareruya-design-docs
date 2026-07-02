@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>カート — 決済〜購入完了 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#注文を確定する-POST-shopping">注文を確定する（POST `/shopping`）</a>
+<a class="lv3" href="#購入を完了する-GET-shopping-complete">購入を完了する（GET `/shopping/complete`）</a>
+<a class="lv2" href="#購入完了-時の判定順序">`購入完了` 時の判定順序</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
+<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
+<a class="lv3" href="#エラー・警告-画面全体">エラー・警告（画面全体）</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/f04-04_front_cart_shopping_complete.md</p>
+        <h1>カート — 決済〜購入完了</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>注文方法の最終送信から購入完了画面までの、注文確定と完了処理を扱う機能である。注文確定で受注データを作成し（管理画面に注文として現れる）、購入完了処理で受注ステータスと決済結果を確認したうえで、注文完了メールの送信・在庫の更新・ポイントや外部連携・購入完了画面の表示を行う。受注ステータスが想定外の場合や決済記録が不整合の場合は、購入完了を確定せずエラー画面を表示する。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの購入処理（注文確定・購入完了）、テンプレート（<code>Shopping/complete.twig</code>）、受注・受注番号・呼び出し番号・在庫・メール・ポイントの各処理を正とする。</p>
+<p>カスタマイズ区分は現行踏襲とする。挙動の参照リポはpf-eccube3（現行）とし、DB関連（テーブル名・列名・型・制約・関連、DBカラム節、保存先・扱い、データ整合性のDB部分、副作用のDB更新）は ec-cube-enterprise を正とする。</p>
+<p>対象はブラウザ経由のフロント（カート・購入手続き）に限定する。</p>
+<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>注文確定から購入完了画面までの流れと入口</li><li>購入完了を確定するための受注ステータス・決済記録の判定順序</li><li>購入完了時の副作用（注文完了メール、在庫更新、ポイント・外部連携、タグログ）</li><li>購入完了画面の表示内容と、再アクセス・異常時の扱い</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>ご注文方法指定・注文情報の入力・確認画面の詳細（カートのご注文方法指定機能を正とする）</li><li>各決済手段（SPLINKS決済等）の内部仕様</li><li>スマレジ連携・外部タグログの内部仕様</li><li>注文完了メールの本文・件名（メールテンプレート管理機能を正とする）</li><li>受注の管理画面側の編集・対応状況変更</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）のDBスキーマ差分を記録する。挙動は現行の確認値を正とし、永続化先の名称は移行先（ec-cube-enterprise）を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th><th>備考</th></tr></thead><tbody><tr><td>受注</td><td><code>dtb_order</code></td><td><code>dtb_order</code></td><td>同一スキーマ。受注ステータスは受注ステータスマスタ参照。</td></tr><tr><td>受注番号</td><td>受注番号（8桁）</td><td><code>dtb_order.order_no</code></td><td>注文番号として表示する。</td></tr><tr><td>呼び出し番号（TC注文番号）</td><td>店頭受取の注文に付く呼び出し番号</td><td>ec-cube-enterprise 実装で要確認</td><td>単一列としての保持有無は移行先で要確認。</td></tr><tr><td>在庫</td><td><code>dtb_product_class.stock</code></td><td><code>dtb_product_class.stock</code></td><td>同一スキーマ。</td></tr><tr><td>売上分析タグ・SPLINKS決済記録・スマレジ連携</td><td>HareruyaEcプラグインの補助テーブル群</td><td>ec-cube-enterprise 実装で要確認</td><td>補助テーブルの有無・名称は移行先で要確認。</td></tr></tbody></table></div>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>受注</td><td>確定した注文1件。管理画面の受注として現れる。</td></tr><tr><td>受注ステータス</td><td>注文受領・入金待ち・処理中などの状態。</td></tr><tr><td>注文番号</td><td>受注に付く番号（8桁）。</td></tr><tr><td>呼び出し番号</td><td>店頭受取の注文に付くTC注文番号。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ご注文方法指定の最終送信（注文確定）</td><td><code>POST /shopping</code>（確認・確定処理）</td><td>受注データを作成し、受注IDをセッションに保存し、ポイントを使用して購入完了へ遷移する。</td></tr><tr><td>購入完了画面</td><td><code>GET /shopping/complete</code></td><td>セッションの受注を確認し、完了処理を行って購入完了画面を表示する。</td></tr></tbody></table></div>
+<p>フロントのページであり管理画面プレフィックスは付かない。購入完了画面は注文確定からのリダイレクトで到達する。セッションに受注IDが無い場合はトップページへ戻す。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>購入完了画面は見出し「ご注文完了」、御礼メッセージ、注文番号（店頭受取はTC注文番号＝呼び出し番号、それ以外はご注文番号）、合計・送料・購入商品の情報。</td></tr><tr><td>JS挙動</td><td>購入完了画面で購入完了タグログを送信する。</td></tr><tr><td>CSS・レイアウト</td><td>店頭受取の場合は完了表示を店頭向けに切り替える。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面専用のモーダルは無い。</td></tr></tbody></table></div>
+<p>呼び出し番号がある場合はTC注文番号を、無い場合はご注文番号を表示する。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="注文を確定する-POST-shopping">注文を確定する（POST <code>/shopping</code>）</h3>
+<ol><li>注文内容を確定して受注データを作成する。</li><li>受注IDをセッションに保存する。</li><li>ポイントを使用する。</li><li>購入完了画面へリダイレクトする。</li></ol>
+<h3 id="購入を完了する-GET-shopping-complete">購入を完了する（GET <code>/shopping/complete</code>）</h3>
+<ol><li>セッションから受注IDを取得する。無い場合はトップページへ戻す。</li><li>受注を取得する。受注ステータスが注文受領・入金待ちのいずれでもない場合は、購入処理異常のアラートメールを送信し、セッションの受注情報を初期化して、購入処理エラー画面を表示する。</li><li>SPLINKS決済の場合、SPLINKSの受注情報が無いときは受注ステータスを処理中へ戻し、決済記録不整合のエラー画面を表示する。</li><li>表示ロケールの調整が必要な場合は、ロケールを合わせたURLへ遷移する。</li><li>受注番号（8桁）・呼び出し番号を取得する。</li><li>受注明細ごとに、商品の売上分析タグを受注明細に登録し、完了画面用の商品情報を組み立てる。</li><li>購入完了の初期化イベントを発行する。イベントが応答を返した場合はそれを返す。</li><li>SPLINKS決済の場合はポイントを使用する。</li><li>注文完了メールを送信する。</li><li>在庫数を更新する。</li><li>消費ポイントがある場合はスマレジポイント連携を別プロセスで実行する。</li><li>購入完了タグログを送信する。</li><li>セッションの受注情報を初期化し、購入処理完了を記録して購入完了画面を表示する。</li></ol>
+<hr>
+<h2 id="購入完了-時の判定順序"><code>購入完了</code> 時の判定順序</h2>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>セッションに受注IDがあるか</td><td>無ければトップページへ戻す</td></tr><tr><td>2</td><td>受注ステータスが注文受領または入金待ちか</td><td>いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面</td></tr><tr><td>3</td><td>SPLINKS決済で対応する決済記録があるか</td><td>SPLINKS支払いだが記録が無ければステータスを処理中へ戻し決済記録不整合エラー画面</td></tr><tr><td>4</td><td>上記を通過</td><td>完了処理（メール・在庫・ポイント・タグログ）を行い購入完了画面を表示</td></tr></tbody></table></div>
+<hr>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
+<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>条件</th></tr></thead><tbody><tr><td>完了見出し</td><td>ご注文完了</td><td>購入完了画面の表示時</td></tr><tr><td>御礼</td><td>ご注文ありがとうございました。</td><td>購入完了画面の表示時</td></tr><tr><td>注文番号</td><td>ご注文番号／TC注文番号（呼び出し番号がある場合）</td><td>購入完了画面の表示時</td></tr></tbody></table></div>
+<h3 id="エラー・警告-画面全体">エラー・警告（画面全体）</h3>
+<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>購入処理エラー（<code>front.error.shopping_process</code>の文言）</td><td>受注ステータスが注文受領・入金待ち以外のとき</td><td>共通エラー画面</td><td>アラートメールを送信し、セッションを初期化する</td></tr><tr><td>決済記録不整合エラー（<code>front.error.no_sln_payment_record</code>の文言）</td><td>SPLINKS支払いだが決済記録が無いとき</td><td>共通エラー画面</td><td>受注ステータスを処理中へ戻す</td></tr></tbody></table></div>
+<p>エラー文言はロケールメッセージを正とする。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>購入完了の確定条件</td><td>受注ステータスが注文受領または入金待ちであることを前提とする。</td></tr><tr><td>決済整合</td><td>SPLINKS決済では対応する決済記録の存在を前提とする。無い場合は受注を処理中へ戻す。</td></tr><tr><td>二重通知の回避</td><td>異常時はセッションの受注情報を初期化し、更新による再通知を避ける。</td></tr><tr><td>注文番号表示</td><td>店頭受取（呼び出し番号あり）はTC注文番号、それ以外はご注文番号（8桁）を表示する。</td></tr><tr><td>売上分析タグ</td><td>受注明細ごとに商品の売上分析タグを受注明細へ登録する。</td></tr></tbody></table></div>
+<p>本機能は購入完了画面に入力フォームを持たないため入力項目は無い。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>セッションに受注IDが無い（直接アクセス・完了後再訪）</td><td>トップページへ戻す。</td></tr><tr><td>受注ステータスが想定外</td><td>アラートメールを送り、セッションを初期化し、エラー画面を表示する。</td></tr><tr><td>SPLINKS支払いだが決済記録なし</td><td>受注を処理中へ戻し、エラー画面を表示する。</td></tr><tr><td>ロケール不一致</td><td>ロケールを合わせたURLへ遷移する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>受注と管理画面</td><td>注文確定で作成した受注は管理画面の受注として現れる。購入完了処理は当該受注を参照する。</td></tr><tr><td>在庫</td><td>購入完了時に在庫数を更新する。</td></tr><tr><td>ポイント</td><td>注文確定時および決済種別に応じて購入完了時にポイントを使用する。スマレジポイント連携は別プロセスで反映する。</td></tr><tr><td>メール</td><td>注文完了メールは購入完了処理で送信する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>SPLINKS決済の決済記録の有無を確認し、整合しない場合は購入完了を確定しない。購入完了タグログを外部へ送信する。</td></tr><tr><td>バッチ</td><td>消費ポイントがある場合、スマレジポイント連携を別プロセスのコマンドとして実行する。</td></tr></tbody></table></div>
+<p>注文完了メール送信・在庫更新・タグログ送信は購入完了処理で行う。これらの個別失敗時の再実行は本書では仕様確定せず実装を確認値とする。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>セッションの受注ID、注文確定時の注文内容。</td></tr><tr><td>成功時出力</td><td>購入完了画面、注文完了メール送信、在庫更新、ポイント・タグログ連携。</td></tr><tr><td>失敗時出力</td><td>受注ステータス異常・決済記録不整合のエラー画面、または受注IDなしでトップページへ。</td></tr><tr><td>副作用</td><td>受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+<p>テーブル・列名は ec-cube-enterprise を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order</code></td><td>受注ステータス（受注ステータスマスタ参照）</td><td>注文受領・入金待ちで購入完了を確定する。異常時は処理中へ戻す場合がある。</td></tr><tr><td><code>dtb_order</code></td><td><code>order_no</code></td><td>受注番号（注文番号）。8桁で表示する。</td></tr><tr><td><code>dtb_order</code></td><td>呼び出し番号（TC注文番号、ec-cube-enterprise 実装で要確認）</td><td>店頭受取の注文に付く。移行先での保持列は要確認。</td></tr><tr><td><code>dtb_product_class</code></td><td><code>stock</code></td><td>購入完了時に在庫を更新する。</td></tr><tr><td>受注明細・売上分析タグ（ec-cube-enterprise 実装で要確認）</td><td>受注明細／タグ参照</td><td>受注明細へ売上分析タグを登録する。補助テーブル名は移行先で要確認。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order / dtb_product_class</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<p>本機能は購入完了画面で利用者入力を受け付けない。購入完了の可否は受注ステータスと決済記録の整合で判定する。</p>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>購入完了</th></tr></thead><tbody><tr><td>会員・非会員</td><td>セッションに保持した自分の受注についてのみ購入完了処理を行う。</td></tr><tr><td>受注IDなし</td><td>トップページへ戻す。</td></tr></tbody></table></div>
+<p>注文確定までの会員・非会員の扱いはご注文方法指定機能を正とする。</p>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>注文確定（POST <code>/shopping</code>）成功</td><td>購入完了画面（<code>/shopping/complete</code>へリダイレクト）</td></tr><tr><td>受注IDなし</td><td>トップページ</td></tr><tr><td>受注ステータス異常</td><td>共通エラー画面（購入処理エラー）</td></tr><tr><td>SPLINKS決済記録なし</td><td>共通エラー画面（決済記録不整合）</td></tr><tr><td>ロケール不一致</td><td>ロケールを合わせたURL</td></tr><tr><td>購入完了</td><td>購入完了画面（<code>Shopping/complete.twig</code>）</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>注文確定</td><td>受注IDをセッションに保存し、ポイントを使用する</td><td>購入完了画面で受注IDを参照し完了処理を行う</td></tr><tr><td>購入完了</td><td>セッションの受注情報を初期化する</td><td>完了画面の再訪時は受注IDが無くトップページへ戻る</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>受注IDなし</td><td>トップページへ戻す。</td></tr><tr><td>受注ステータス異常</td><td>アラートメールを送信し、セッションを初期化して購入処理エラー画面を表示する。</td></tr><tr><td>SPLINKS決済記録なし</td><td>受注を処理中へ戻し、決済記録不整合のエラー画面を表示する。</td></tr></tbody></table></div>
+<p>表示文言は表示メッセージ節を正とする。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>購入処理完了</td><td>受注IDを伴う完了の情報ログ。</td></tr><tr><td>イベント応答返却</td><td>受注IDを伴う情報ログ。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>決済の機微情報</li><li>Cookie値</li><li>セッションIDの完全値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>受注ID</td><td>注文確定時に保存し、購入完了処理で参照する。完了・異常時に初期化する。</td></tr><tr><td>表示ロケール</td><td>完了処理中のロケール調整に用い、処理後に除去する。</td></tr><tr><td>配送先指定</td><td>完了時の宛先参照にセッションまたはCookieの配送先IDを用いる。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>決済の機微情報はセッションへ保存しない。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>注文確定で受注を作成し、購入完了処理で在庫・ポイント・メール等を反映する。受注ステータスの確認により、想定外ステータスでの完了確定を避ける。本機能では楽観ロック・悲観ロックの対象は持たないが、受注ステータスを完了確定の前提条件として用いる。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

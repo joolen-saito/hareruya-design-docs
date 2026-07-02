@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>カード管理 — カード検索（一覧・条件抽出） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#カード一覧を初期表示する-GET-admin-card-list">カード一覧を初期表示する（GET `admin_card_list`）</a>
+<a class="lv3" href="#検索・一覧を表示する-GET-または-POST-m14-01-admin-card-card-search">検索・一覧を表示する（GET または POST `m14-01_admin_card_card_search`）</a>
+<a class="lv3" href="#不正な並び順パラメータを渡した場合">不正な並び順パラメータを渡した場合</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#検索条件適用時の判定順序-リポジトリ内">検索条件適用時の判定順序（リポジトリ内）</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-grep・参照用">調査補助（grep・参照用）</a>
+<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m14-01_admin_card_card_search.md</p>
+        <h1>カード管理 — カード検索（一覧・条件抽出）</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>HareruyaEc プラグインが管理画面に提供する「カード管理」において、<code>mtb_card</code> を対象にキーワード・属性・マナコスト・フォーマット合法性などの条件で絞り込み、一覧表示・ページ送り・並び替えを行う機能である。検索条件・ページ番号・表示件数・ソートはセッションに保持し、同一セッション内の再表示やページ遷移後の復元に使う。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とする。コア単体では当ルートは存在しない。本機能のカスタマイズ区分はカスタマイズであり、挙動の確認はpf-eccube3を参照し、永続化先のテーブル・列名などDB関連の記述はec-cube-enterpriseを正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。カード詳細の編集・削除・CSV 一括処理の業務定義の全部は別範囲とし、本書は検索・一覧表示・ソート・セッション回りを中心に記す。</p>
+<p>本書の本文では Symfony のコントローラ型名やメソッド名は主説明としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>本機能は現行（pf-eccube3のHareruyaEcプラグイン）の挙動を踏襲する。DB関連の記述は移行先（ec-cube-enterprise）を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>カード本体</td><td>カード（<code>mtb_card</code>。<code>id</code>・<code>name_jp</code>・<code>name_en</code>・<code>text_jp</code>・<code>text_en</code>・<code>cmc</code>）</td><td>同名の<code>mtb_card</code>が存在し、同名の列を持つ。</td></tr><tr><td>カード詳細</td><td>カード詳細（<code>mtb_card_detail</code>。<code>cardset_id</code>・<code>rarity_id</code>・<code>card_layout_id</code>・<code>illustrator_id</code>・<code>promotion_id</code>等）</td><td>同一スキーマ。同名の<code>mtb_card_detail</code>が存在する。</td></tr><tr><td>区分の関連表</td><td>タイプ・サブタイプ・特殊等（<code>dtb_card_cardtype</code>等）、フォーマット（<code>dtb_card_format</code>。<code>format_id</code>・<code>restriction_id</code>）</td><td>同名の関連表が存在する。</td></tr><tr><td>並び順</td><td>既定は<code>mtb_card</code>の<code>id</code>順。フォーマットはランク昇順で選択肢を構成。</td><td>同一（DB列名に差は無い）。</td></tr></tbody></table></div>
+<p>現行と移行先でカード関連のスキーマは同一であり、移行に伴うテーブル名・列名の読み替えは生じない。本機能は参照専用で画面入力を永続化しない。</p>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビからカード一覧を開く</td><td><code>GET /{admin_route}/card</code></td><td>検索フォームのみ表示。結果エリアは件数ゼロ相当。セッション上のカード検索状態はクリアされる。</td></tr><tr><td>条件を入力して「検索」送信</td><td><code>POST /{admin_route}/card/search/1</code>（フォームの action は常に <code>page_no=1</code>）</td><td>条件がセッションに保存され、同一条件でクエリが組み立てられ、1 ページ目の一覧が返る。</td></tr><tr><td>ソート項目と昇順・降順を選ぶ</td><td><code>GET /{admin_route}/card/search/1?sort=…&amp;order=…</code></td><td>ソート条件がセッションに保存され、1 ページ目から該当順で一覧表示される。</td></tr><tr><td>ページリンクから N ページ目へ</td><td><code>GET /{admin_route}/card/search/{page_no}</code></td><td>直前の検索条件とソートをセッションから復元し、N ページ目を表示する。</td></tr><tr><td>表示件数を変える</td><td><code>GET /{admin_route}/card/search/1?page_count=…</code></td><td>マスタ <code>mtb_page_max</code> に存在する件数ならセッションに保存し、その件数でページ分割される。</td></tr><tr><td>一覧のカード名リンク</td><td><code>GET /{admin_route}/card/{id}</code></td><td>カード詳細（編集）画面へ遷移する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ページタイトルは「カード管理」。サブタイトル行に新規・CSV 取込・カード名リスト作成バッチのボタンがある。メインは単一の <code>search_form</code> で、上部に複合キーワード用の一行テキスト、その下にアコーディオンで詳細条件（色、マナコスト上下限、レアリティ、レイアウト、タイプ、サブタイプ、特殊、セット、フォーマットとチェック、イラスト、プロモ）。フッタに「検索」ボタン。結果部は件数見出し、CSV 出力・一括削除、表示件数ドロップダウン、ソートドロップダウン、表（チェックボックス・カード ID・カード名リンク・行メニュー）、ページネーション。</td></tr><tr><td>JS 挙動</td><td>共通 <code>function.js</code> の <code>formPropStateSubscriber</code> により、<code>.search-box-inner</code> 内に入力やチェックがあるときだけアコーディオンを開いた状態にする。複合キーワードだけではアコーディオン開閉状態に影響しない。<code>card-search.js</code> でカードタイプ・サブタイプ・特殊・セット・フォーマット・イラスト・プロモの select に select2 を付与。「すべてクリア」で上記 select を空にし change を発火。表頭チェックで全行のチェックを同期。CSV 出力ボタンは短時間ボタン無効化の後に解除。カード名リスト作成は確認後に別 URL へ AJAX POST し、応答メッセージを alert してから全体リロード。<code>sort-method-display.js</code> でソートの二段ドロップダウン表示を切り替え。</td></tr><tr><td>CSS・レイアウト</td><td>select2 の CDN CSS、<code>eventlist.css</code> を読み込み。Bootstrap 横型フォームテーマで検索フォームを描画。</td></tr><tr><td>モーダル・ポップアップ</td><td>本検索画面専用のモーダルはない。削除・一括削除は確認ダイアログはブラウザの <code>confirm</code> に依存する実装がある。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="カード一覧を初期表示する-GET-admin-card-list">カード一覧を初期表示する（GET <code>admin_card_list</code>）</h3>
+<ol><li>管理画面の認証・共通制約を通過する。</li><li>セッションから <code>admin.card.search</code>、<code>admin.card.search.page_no</code>、<code>admin.card.search.page_count</code> を削除する。</li><li>検索用フォーム名 <code>admin_search_card</code> で空データのフォームを生成し、Twig を描画する。ページマスタ・一覧結果・ソートキー一覧は空または既定に近い状態である。</li></ol>
+<h3 id="検索・一覧を表示する-GET-または-POST-m14-01-admin-card-card-search">検索・一覧を表示する（GET または POST <code>m14-01_admin_card_card_search</code>）</h3>
+<ol><li>管理画面の認証・共通制約を通過する。</li><li>カード用レポジトリ参照をセットする。</li><li>フォーム <code>admin_search_card</code> を生成する。送信前に「有効」とみなされると空の一覧で返す分岐がトレイト先頭にあるが、未送信の通常表示ではこの分岐は通らない想定である。</li><li>リクエストをフォームに取り込む。</li><li>クエリパラメータまたはセッションから sort を決める。リクエスト優先、なければセッション、なければ既定値 <code>default</code>。</li><li>同様に order を決める。既定は <code>DESC</code>。</li><li>order が正規表現 <code>^(ASC|DESC|asc|desc)$</code> に一致しない場合、管理画面エラー文言 <code>admin.error.sort</code> を積み、<code>admin_card_list</code> と同様の初期化処理へ進む（セッション初期表示）。</li><li>ページマスタを全件取得し、許容される表示件数の一覧を得る。</li><li>表示件数はセッションの <code>admin.card.search.page_count</code> があればそれを使い、なければ設定 <code>default_page_count</code>。リクエストに <code>page_count</code> があり、かつページマスタの値と一致すればセッションへ上書き保存する。</li><li>フォームの送信データが取れない場合、セッション <code>admin.card.search</code> に保存したビューデータから復元する。ビューと検索データの両方が欠ける場合は <code>admin_card_list</code> と同等の初期表示へフォールバックする。</li><li>検索データに sort・order を合成する。</li><li>レポジトリが検索データからクエリビルダを構築する。別途同条件の件数を数え、最終ページ削除直後などで現在ページが空になる場合はページ番号を 1 減らす。</li><li>セッションへ <code>admin.card.search.page_no</code>、<code>admin.card.search</code>、<code>admin.card.sort</code>、<code>admin.card.order</code>、<code>admin.card.search.page_count</code> を書き込む。</li><li>アプリケーションのページネータでクエリビルダをページ分割し、Twig へ渡して描画する。</li></ol>
+<h3 id="不正な並び順パラメータを渡した場合">不正な並び順パラメータを渡した場合</h3>
+<ol><li>手順 7 で検出し、エラーメッセージを積んだうえで一覧初期表示へ遷移し、関連セッションは初期表示側の処理でクリアされる。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>一覧の総件数</td><td>一覧と同じ検索データで組み立てたクエリに対し、<code>count</code> 集約で取得する。件数と一覧は同一レポジトリ経路を使う。</td></tr><tr><td>ページ内の行</td><td>ページネータがクエリビルダと現在ページ・表示件数から切り出す。</td></tr></tbody></table></div>
+<hr>
+<h2 id="検索条件適用時の判定順序-リポジトリ内">検索条件適用時の判定順序（リポジトリ内）</h2>
+<p>リポジトリ実装における条件の足し込み順は概ね次のとおりである。いずれも「値が空・未選択ならその条件は付けない」形式である。</p>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>複合キーワードが非空か</td><td>トークンごとに、和文名・英文名・和文ルールテキスト・英文ルールテキストのいずれかへ部分一致する行を要求し、トークン間は AND となる。</td></tr><tr><td>2</td><td>タイプ・サブタイプ・特殊・セット・レアリティ・レイアウト・フォーマット・イラスト・プロモの各複数選択</td><td>選択されたマスタ ID ごとに <code>IN</code> 条件として結合する。複数カテゴリ間は AND。</td></tr><tr><td>3</td><td>色の複数選択</td><td>選んだ色ごとに別結合として要求し、複数色は AND。</td></tr><tr><td>4</td><td>マナコスト下限</td><td>設定されていれば <code>cmc</code> が下限以上。</td></tr><tr><td>5</td><td>マナコスト上限</td><td>設定されていれば <code>cmc</code> が上限以下。</td></tr><tr><td>6</td><td>フォーマットが 1 件以上選択されているか</td><td>選ばれたフォーマット紐付けのうち、制限区分がレガルまたはレストリクションの行に限定する。オプションの合法性チェック用チェックボックスがオンのときはバンの行も許容リストに加える。</td></tr></tbody></table></div>
+<p>並び順は、ソートキーに応じて <code>mtb_card</code> の主エイリアス <code>c</code> に対する列（既定は <code>c.id</code>）へ <code>order</code> を適用する。ソートキー <code>default</code> は <code>c.id</code> ソートに対応する。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<p>本機能は参照専用の検索であり、画面入力をそのまま永続化テーブルへ書き込まない。検索条件はセッションのシリアライズ可能な構造として保持される。</p>
+<h3 id="入力項目">入力項目</h3>
+<p>表の「保存先・扱い」は、当画面でのみの扱いを示す。項目名は管理画面メッセージの翻訳に依存するため、厳密な文言は環境のメッセージリソースを正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>複合キーワード</td><td>任意</td><td>50 文字（Length。設定キー <code>stext_len</code> の確認値。環境で上書きされうる）</td><td>空</td><td>リクエストで送信され、正規化後にセッション <code>admin.card.search</code> 経由で再表示に使われる。リポジトリでは半角・全角スペースおよびカンマで分割した各トークンについて、和英カード名と和英ルールテキスト列への部分一致（LIKE）を OR でつなぎ、トークン間を AND でつなぐ。フォームキー <code>multi</code>。</td></tr><tr><td>色</td><td>任意</td><td>マスタ選択（複数チェック）</td><td>選択なし</td><td>選んだ色 ID ごとに AND 条件。フォームキー <code>color</code>。</td></tr><tr><td>マナコスト下限</td><td>任意</td><td>数値一覧（DB に存在する <code>cmc</code> 値の集合から構築）</td><td>未選択</td><td>選択時は <code>cmc</code> 以上。フォームキー <code>cmc_start</code>。</td></tr><tr><td>マナコスト上限</td><td>任意</td><td>同上</td><td>未選択</td><td>選択時は <code>cmc</code> 以下。フォームキー <code>cmc_end</code>。</td></tr><tr><td>レアリティ</td><td>任意</td><td>マスタ選択（複数チェック）</td><td>選択なし</td><td><code>IN</code> 条件。フォームキー <code>rarity</code>。</td></tr><tr><td>レイアウト</td><td>任意</td><td>マスタ選択（複数チェック）</td><td>選択なし</td><td><code>IN</code> 条件。フォームキー <code>layout</code>。</td></tr><tr><td>カードタイプ</td><td>任意</td><td>マスタ選択（複数、select2）</td><td>選択なし</td><td><code>IN</code> 条件。フォームキー <code>cardtype</code>。</td></tr><tr><td>サブタイプ</td><td>任意</td><td>マスタ選択（複数、select2、英名昇順）</td><td>選択なし</td><td><code>IN</code> 条件。フォームキー <code>subtype</code>。</td></tr><tr><td>特殊タイプ</td><td>任意</td><td>マスタ選択（複数、select2）</td><td>選択なし</td><td><code>IN</code> 条件。フォームキー <code>specialtype</code>。</td></tr><tr><td>セット</td><td>任意</td><td>マスタ選択（複数、select2。発売日降順）</td><td>選択なし</td><td><code>IN</code> 条件。フォームキー <code>cardset</code>。</td></tr><tr><td>フォーマット</td><td>任意</td><td>マスタ選択（複数、select2。ランク昇順）</td><td>選択なし</td><td>選択がある場合、紐付けの制限区分で絞り込む（後述）。フォームキー <code>format</code>。</td></tr><tr><td>レガル表示チェック</td><td>任意</td><td>チェックボックス</td><td>オフ</td><td>フォーマット条件があるとき、オンなら制限区分「バン」も検索対象に含める。オフならレガルとレストリクションのみ。フォームキー <code>legalFlg</code>。ラベルは翻訳キー <code>form.legal.label</code> 系。</td></tr><tr><td>イラストレーター</td><td>任意</td><td>マスタ選択（複数、select2。英名昇順）</td><td>選択なし</td><td><code>IN</code> 条件。フォームキー <code>illustrator</code>。</td></tr><tr><td>プロモーション</td><td>任意</td><td>マスタ選択（複数、select2。日本語名昇順）</td><td>選択なし</td><td><code>IN</code> 条件。フォームキー <code>promotion</code>。</td></tr></tbody></table></div>
+<p>補足。フォーム型には「カード名」「ルールテキスト」「完全一致」項目も定義されているが、<code>card.twig</code> ではウィジェットを描画しておらず、当画面の POST にも含まれない。検索クエリでも参照しない。別画面で同じフォーム型を生成している場合のみ意味を持ちうる。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>複合キーワードのみ入力し、アコーディオン内は空</td><td>一覧はキーワード条件のみ。アコーディオンは閉じた見た目のままになりうる（inner 監視のため）。</td></tr><tr><td>ソート用クエリパラメータが許容パターン外</td><td>エラーメッセージを積み、セッションを初期化した一覧へ戻る。</td></tr><tr><td>GET でブックマークした検索 URL にセッションがない</td><td>検索データが復元できなければ空フォームの一覧へフォールバックする。</td></tr><tr><td>フォーマット未選択</td><td>制限区分による追加フィルタは付かない。合法性チェックの有無も参照されない。</td></tr></tbody></table></div>
+<p>本機能では税額・価格・在庫などの業務計算を行わない。</p>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧と件数</td><td>同一検索データで件数取得と一覧クエリを組み立てるため、件数とページング前提の総件数は同じ条件式に整合する。</td></tr><tr><td>一覧と詳細</td><td>一覧の行はマスタ上の ID と名称表示に過ぎず、詳細画面の同時編集との整合は保証しない。</td></tr><tr><td>検索条件の再現</td><td>セッションに保存されたビューデータが失効すると、GET だけでは直前の条件を再現できない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能では外部 HTTP API の呼び出しやサーバ側バッチの成否画面は扱わない。タイトル横の「カード名リスト作成」は別エンドポイントへの AJAX となるが、検索条件の保存とは独立する。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>HTTP クエリおよびフォーム。検索フォームは CSRF 保護を明示的に無効にした型定義である。</td></tr><tr><td>成功時出力</td><td>HTML 一覧。件数が 0 のときは該当なし見出し。</td></tr><tr><td>失敗時出力</td><td>ソート不正時はフラッシュエラー付きで一覧初期状態。その他の例外系はフレームワークのハンドラに従う。</td></tr><tr><td>副作用</td><td>セッション更新（検索条件、ページ、件数、ソート）。ブラウザへの Set-Cookie は管理画面のセッション機構に従う。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>検索条件が直接参照する主な列は次のとおりである。型や網羅的な定義はマッピングファイルを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_card</code></td><td><code>id</code>, <code>name_jp</code>, <code>name_en</code>, <code>text_jp</code>, <code>text_en</code>, <code>cmc</code></td><td>キーワード・ソート・マナコスト帯。</td></tr><tr><td><code>mtb_card_detail</code>（結合）</td><td><code>cardset_id</code>, <code>rarity_id</code>, <code>card_layout_id</code>, <code>illustrator_id</code>, <code>promotion_id</code> 等</td><td>セットやレア等の絞り込み。</td></tr><tr><td><code>dtb_card_cardtype</code> 等</td><td>各種 ID</td><td>タイプ・サブタイプ・特殊の IN 条件。</td></tr><tr><td><code>dtb_card_format</code>（結合）</td><td><code>format_id</code>, <code>restriction_id</code></td><td>フォーマット選択時の合法性区分フィルタ。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_card_cardtype / dtb_card_format / mtb_card / mtb_card_detail</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>複合キーワード</td><td>最大長 50 文字（設定値の確認値）。</td></tr><tr><td>ソート順</td><td>クエリの <code>order</code> は ASC または DESC のみ許容。それ以外はエラー扱いで一覧初期化。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>カード検索・一覧</th></tr></thead><tbody><tr><td>管理画面に入れる通常の管理者</td><td>ルート定義上は個別のアノテーションを持たず、管理画面共通の認証・認可が適用される実装である。</td></tr><tr><td>未ログインまたは共通ルールで遮断される利用者</td><td>当パスへ到達できない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>ナビから「カード」一覧を開く</td><td>同一機能の初期状態（<code>admin_card_list</code>）。</td></tr><tr><td>検索・ページ送り・ソート取得成功</td><td>同一テンプレートの再描画（<code>m14-01_admin_card_card_search</code>）。</td></tr><tr><td>ソートパラメータ不正</td><td>エラー表示のうえ初期一覧（<code>admin_card_list</code>）。</td></tr><tr><td>行のカード名または ID</td><td>カード編集（<code>admin_card_edit</code>）。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>一覧からカード編集へ</td><td>直前の検索・ページ情報がセッションに残る</td><td>詳細画面は別テンプレート。戻る操作の有無はブラウザ依存。</td></tr><tr><td>編集や削除から戻る</td><td>個別実装が <code>referer</code> や <code>admin.card.search.page_no</code> を使う場合がある</td><td>セッションにページ番号等があれば検索 URL へ戻る経路が存在する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>ソートの昇降が不正</td><td>フラッシュに <code>admin.error.sort</code>。セッション初期化と同一の一覧表示へ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>本機能ではログイン試行制限やレートリミットは扱わない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<p>本機能は検索表示のみでは専用のログ出力を定義していない。失敗時の例外メッセージの記録は共通のログ設定に従う。</p>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>CSRF トークン原値</li><li>セッション ID の完全値</li><li>クッキー値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>キー接頭辞</td><td>実装では <code>admin.card</code> を用いる。</td></tr><tr><td>保存タイミング</td><td>検索処理が完了したとき、ページ番号・検索ビュー・ソートキー・ソート順・表示件数を保存する。</td></tr><tr><td>初期表示</td><td><code>admin_card_list</code> では検索関連キーを削除する。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>クレジットカード番号や個人を特定する利用者の機微情報は本フォームに含まれない。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>管理画面のセッション Cookie へ依存するにとどまり、本機能専用の Cookie を新設しない。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>検索表示のみでは読み取りクエリ主体であり、本機能単体では楽観・悲観ロックを扱わない。</p>
+<hr>
+<h2 id="調査補助-grep・参照用">調査補助（grep・参照用）</h2>
+<p>ルート定義は <code>app/Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php</code>。検索の共通処理は <code>app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php</code>。カードの条件組み立ては <code>app/Plugin/HareruyaEc/Repository/MtbCardRepository.php</code> の <code>getQueryBuilderBySearchData</code> と <code>getCountBySearchData</code>。画面は <code>app/Plugin/HareruyaEc/Resource/template/admin/Card/card.twig</code> と <code>card-search.js</code>。</p>
+<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
+<ul><li><code>admin_card_list</code> … <code>GET</code> … <code>/{admin_route}/card</code>（検索フォームの初期表示。当機能向けセッションキー <code>admin.card.*</code> を削除し、一覧結果は空のまま表示する。）</li><li><code>m14-01_admin_card_card_search</code> … <code>GET, POST</code> … <code>/{admin_route}/card/search/{page_no}</code>（<code>page_no</code> は 1 以上の整数（ルートの assert）。検索実行結果の一覧表示、ソート・ページ送り・表示件数変更、GET による再開時のセッション復元。）</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

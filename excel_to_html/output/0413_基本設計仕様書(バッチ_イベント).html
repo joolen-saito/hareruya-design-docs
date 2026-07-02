@@ -1,0 +1,1106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0413_基本設計仕様書(バッチ_イベント)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* function-design-embed:start */
+    .function-design-embed {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-header {
+      margin-bottom: 18px;
+    }
+
+    .function-design-header h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .function-design-header h4 {
+      margin: 0;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-source {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .function-design-note {
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      border-left: 3px solid #f0ad4e;
+      background: rgba(240, 173, 78, 0.10);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .function-design-body h1,
+    .function-design-body h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+    }
+
+    .function-design-body h3 {
+      margin: 22px 0 10px;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-body h4 {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .function-design-body p {
+      margin: 9px 0;
+    }
+
+    .function-design-body ul,
+    .function-design-body ol {
+      margin: 9px 0;
+      padding-left: 26px;
+    }
+
+    .function-design-body li {
+      margin: 3px 0;
+    }
+
+    .function-design-body code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--band);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .function-design-body pre {
+      overflow-x: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      white-space: pre-wrap;
+    }
+
+    .function-design-body pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .function-design-body .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .function-design-body table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .function-design-body th,
+    .function-design-body td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .function-design-body th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .function-design-body tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* function-design-embed:end */
+</style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0413_基本設計仕様書(バッチ_イベント)</p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">決済処理中チェックバッチ</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">コンビニ支払チェックバッチ</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">サイトリニューアル</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+            <p class="doc-p" style="--lv:0">イベント バッチ機能</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>佐藤</td><td>2025/5/29</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">バッチ設計</h4>
+            <p class="doc-p" style="--lv:1">B13-01 決済処理中チェックバッチ</p>
+            <p class="doc-p" style="--lv:1">B13-02 コンビニ支払チェックバッチ</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>決済処理中チェックバッチ</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>イベント管理　基本設計仕様書</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>イベント管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>畠山</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-11-07</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B13-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>決済処理中チェックバッチ</dd></div>
+            <div class="kv"><dt>概要</dt><dd>イベント申込の決済状況を照会し、状況に応じた処理を行う</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>イベント申込の決済状況を照会し、状況に応じた処理を行うバッチ</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>イベント申込のリンク型決済で、通信障害や決済画面からの離脱で申込完了画面へ遷移しなかった申込について</span></div>
+            <p class="doc-p" style="--lv:2">SP.LINKSに取引照会を行い、照会結果に応じた処理を行う</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>実行トリガー</th><th>スケジュール起動(Step Functions)</th><th>実行タイミング</th><th>毎時 0/10/20/30/40/50 分</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>入力データ元</td><td>DB、SP.LINKS取引照会API</td><td>出力先(フォーマット)</td><td>DB、メール</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>処理対象として決済中のイベント申込を取得</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>申込ステータスが「決済中」</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>支払番号が登録済み</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>申込日時がバッチ起動時間の30分以上前</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">イベント申込.ステータス　「決済中」</p>
+            <p class="doc-p" style="--lv:0">イベント申込.支払番号　登録済み</p>
+            <p class="doc-p" style="--lv:0">イベント申込.作成日時　バッチ起動時間の30分以上前</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>取引照会結果に応じた処理を行う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>取引が成功している場合(=取引参照のResponseCdがOKの場合）</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>イベント申込の申込ステータスを「申込済み」にする</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>イベント申込履歴を「申込ステータス＝申込済み」として追加する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>会員に対して「クレジット決済完了メール」を送信する</span></div>
+            <p class="doc-p" style="--lv:1">・取引参照自体のエラーのレスポンスコードが返ってくる場合</p>
+            <p class="doc-p" style="--lv:2">・取引参照自体のレスポンスコードが以下の場合は参照に失敗しているため決済結果はわからないため、イベント申し込みは保留とする</p>
+            <p class="doc-p" style="--lv:3">K02     MerchantId精査エラー</p>
+            <p class="doc-p" style="--lv:3">K03     MerchantPass精査エラー</p>
+            <p class="doc-p" style="--lv:3">K04     TenantId精査エラー</p>
+            <p class="doc-p" style="--lv:3">K05     TransactionTate精査エラー</p>
+            <p class="doc-p" style="--lv:3">K06     OperateId精査エラー</p>
+            <p class="doc-p" style="--lv:3">K86     ProcNo精査エラー</p>
+            <p class="doc-p" style="--lv:3">K88     元取引重複エラー</p>
+            <p class="doc-p" style="--lv:3">K99     その他例外エラー</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>取引が存在しない・失敗している場合（決済画面での離脱やキャンセルを含む）（＝上記以外のレスポンスの場合）</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>イベント申込を削除（論理削除）する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>取引照会の処理自体でエラーが発生した場合</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>エラーメッセージを記載した「イベント決済確認エラー通知メール」　を、イベント決済確認エラー通知メールアドレスに対して送信する</span></div>
+          </div>
+        </div>
+      <!-- function-design-embed:start b13-01-b13-01_batch_event_event_check_processing_payment -->
+      <section class="function-design-embed" id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment" data-source="functions/pf-eccube3/b13-01_batch_event_event_check_processing_payment.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b13-01_batch_event_event_check_processing_payment.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B13-01 決済処理中チェックバッチ / バッチ イベント管理 — 決済処理中チェックバッチ</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-概要">概要</h2>
+          <p>イベント申込データのうち、申込みステータスが一定時間以上「決済中」のままになっているものを抽出し、決済サービスへ取引状況を照会して申込みステータスを整合させるバッチである。コマンドライン（コンソールコマンド）から実行する。照会結果に応じてステータスを更新または申込みを取り除き、想定外のエラーは管理者へまとめて通知する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの決済チェックバッチ（決済処理中チェック処理）、イベント申込を扱うリポジトリ、決済照会・申込履歴処理、エラー通知メール送信処理を正とする。</p>
+          <p>本機能のカスタマイズ区分は現行踏襲であり、挙動の確認はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>一定時間以上「決済中」のイベント申込の抽出</li><li>決済サービスへの取引照会とステータス整合</li><li>想定外エラーの管理者通知と申込履歴の記録</li></ul>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>決済サービスの照会API仕様</li><li>イベント申込そのものの入力・確定（イベント申込機能を正とする）</li><li>エラー通知メールの本文・宛先設定（メール設定・テンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3のHareruyaEcプラグイン）と移行先（ec-cube-enterprise）の差を記録する。永続化先の正典はec-cube-enterpriseとする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>イベント申込テーブル</td><td>dtb_event_entry</td><td>dtb_event_entry（同名・概ね同一スキーマ）</td></tr><tr><td>イベント申込の主キー列</td><td>event_entry_id</td><td>id</td></tr><tr><td>申込履歴テーブル</td><td>dtb_entry_history</td><td>dtb_entry_history（同名・概ね同一スキーマ）</td></tr><tr><td>申込ステータス列</td><td>entry_status_id（ステータスマスタ参照）</td><td>entry_status_id（同一）</td></tr><tr><td>決済番号列</td><td>payment_no</td><td>payment_no（同一）</td></tr><tr><td>論理削除</td><td>deleted_at</td><td>deleted_at（同一）</td></tr><tr><td>バッチ起動方式</td><td>コンソールコマンド <code>entry:batch checkProssesingPayment</code></td><td>ec-cube-enterprise実装で要確認</td></tr></tbody></table></div>
+          <p>イベント申込・申込履歴のテーブルは現行と移行先で同名・概ね同一スキーマであり、主キー列名のみ差がある。バッチの起動方式（コマンド名・実行基盤）は移行先で異なる可能性があり、ec-cube-enterprise実装で要確認とする。</p>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>イベント申込</td><td>イベントへの参加申込データ。申込みステータスを持つ。</td></tr><tr><td>決済中</td><td>決済処理が完了していない申込みステータス。</td></tr><tr><td>取引照会</td><td>決済サービスへ取引の状況を問い合わせること。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>entry:batch checkProssesingPayment</code></td><td>一定時間以上「決済中」のイベント申込を決済サービスへ照会し、ステータスを整合させる。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-決済処理中チェックを実行する-entry-batch-checkProssesingPayment">決済処理中チェックを実行する（<code>entry:batch checkProssesingPayment</code>）</h3>
+          <ol><li>申込みステータスが設定時間（処理中とみなす分数）以上「決済中」のイベント申込を抽出する。</li><li>対象が0件の場合は、対象が無い旨を返して終了する。</li><li>申込みごとに決済サービスへ取引を照会し、結果のメッセージと新ステータスを得る。</li><li>取引が存在しない場合は当該申込みの記録を取り除く。取引が成立している場合は新ステータスへ更新する。</li><li>直前と同じ決済番号の申込みは、前回の照会結果に従って同様の処理を行う。</li><li>取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する。</li><li>申込履歴を記録し、更新を確定する。</li></ol>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>申込みステータスが設定時間以上「決済中」のイベント申込。</td></tr><tr><td>照会単位</td><td>申込みごと。同一決済番号は前回結果を流用する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ステータス整合</td><td>照会結果に応じて、更新・記録除去・エラー通知のいずれかを行う。</td></tr><tr><td>エラー集約</td><td>取引不在・未完了以外のエラーは重複を除いてまとめ、管理者へ通知する。</td></tr><tr><td>履歴記録</td><td>処理した申込みについて申込履歴を記録する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は対象申込みのステータスを整合させる。対象が0件なら何もせず完了する。</td></tr><tr><td>API</td><td>決済サービスへ取引を照会し、結果でステータスを判定する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>申込みステータスの更新・記録除去、申込履歴の記録、想定外エラーの管理者通知。</td></tr><tr><td>失敗時出力</td><td>取引不在・未完了等のメッセージ収集、想定外エラーの通知。</td></tr><tr><td>副作用</td><td>申込みステータス更新、記録除去、申込履歴記録、エラー通知メール。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は括弧で添える。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_event_entry（イベント申込）</td><td>entry_status_id（申込ステータス）・payment_no（決済番号）</td><td>抽出・照会・更新に使用する。</td></tr><tr><td>dtb_entry_history（申込履歴）</td><td>event_entry_id（申込み参照）・entry_status_id</td><td>処理結果を記録する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_entry_history / dtb_event_entry</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>申込みと決済</td><td>決済サービスの取引状況に合わせて申込みステータスを整合させる。</td></tr><tr><td>履歴</td><td>処理した申込みの履歴を記録する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>対象0件</td><td>対象が無い旨を返して終了する。</td></tr><tr><td>取引不在・未完了</td><td>記録の除去等の所定処理を行い、メッセージを収集する。</td></tr><tr><td>想定外エラー</td><td>重複を除いてまとめ、管理者へ通知する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>処理</td><td>申込履歴の記録。</td></tr><tr><td>想定外エラー</td><td>管理者へのエラー通知メール。</td></tr></tbody></table></div>
+          <h3 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>決済の機微情報</li><li>メール送信の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b13-01-b13-01_batch_event_event_check_processing_payment-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>照会・更新を積み、最後に確定する。本バッチは楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b13-01-b13-01_batch_event_event_check_processing_payment -->
+</section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>コンビニ支払チェックバッチ</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>イベント管理　基本設計仕様書</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>イベント管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>畠山</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-11-07</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B13-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>コンビニ支払チェックバッチ</dd></div>
+            <div class="kv"><dt>概要</dt><dd>—</dd></div>
+          </dl>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <p class="doc-p" style="--lv:1">イベントう申込で利用されたコンビニ決済の支払い状況をチェックするバッチだが、</p>
+            <p class="doc-p" style="--lv:1">イベント申込の決済方法はクレジットカードのみになったため、当バッチは廃止する</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start b13-02-b13-02_batch_event_event_check_cvs_payment -->
+      <section class="function-design-embed" id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment" data-source="functions/pf-eccube3/b13-02_batch_event_event_check_cvs_payment.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b13-02_batch_event_event_check_cvs_payment.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B13-02 コンビニ支払チェックバッチ / バッチ イベント管理 — コンビニ支払チェックバッチ</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-概要">概要</h2>
+          <p>コンビニ決済で入金待ちのイベント申込を対象に、決済サービスへ取引状況を照会して申込みステータスを整合させるバッチである。コマンドライン（コンソールコマンド）から実行する。照会結果に応じてステータスを更新または申込みを取り除き、想定外のエラーは管理者へまとめて通知する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの決済チェックバッチ（コンビニ支払チェック処理）、イベント申込を扱うリポジトリ、決済照会・申込履歴処理、エラー通知メール送信処理を正とする。</p>
+          <p>本機能のカスタマイズ区分は現行踏襲であり、挙動の確認はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>コンビニ決済の入金待ちイベント申込の抽出</li><li>決済サービスへの取引照会とステータス整合</li><li>想定外エラーの管理者通知と申込履歴の記録</li></ul>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>決済サービスの照会API仕様</li><li>イベント申込そのものの入力・確定（イベント申込機能を正とする）</li><li>エラー通知メールの本文・宛先設定（メール設定・テンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3のHareruyaEcプラグイン）と移行先（ec-cube-enterprise）の差を記録する。永続化先の正典はec-cube-enterpriseとする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>イベント申込テーブル</td><td>dtb_event_entry</td><td>dtb_event_entry（同名・概ね同一スキーマ）</td></tr><tr><td>イベント申込の主キー列</td><td>event_entry_id</td><td>id</td></tr><tr><td>申込履歴テーブル</td><td>dtb_entry_history</td><td>dtb_entry_history（同名・概ね同一スキーマ）</td></tr><tr><td>申込ステータス列</td><td>entry_status_id（ステータスマスタ参照）</td><td>entry_status_id（同一）</td></tr><tr><td>決済番号列</td><td>payment_no</td><td>payment_no（同一）</td></tr><tr><td>決済種別</td><td>payment_id（決済参照）</td><td>payment_id（同一）</td></tr><tr><td>論理削除</td><td>deleted_at</td><td>deleted_at（同一）</td></tr><tr><td>バッチ起動方式</td><td>コンソールコマンド <code>entry:batch checkCvsPayment</code></td><td>ec-cube-enterprise実装で要確認</td></tr></tbody></table></div>
+          <p>イベント申込・申込履歴のテーブルは現行と移行先で同名・概ね同一スキーマであり、主キー列名のみ差がある。バッチの起動方式（コマンド名・実行基盤）は移行先で異なる可能性があり、ec-cube-enterprise実装で要確認とする。</p>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>コンビニ決済</td><td>コンビニ店頭での支払い決済。</td></tr><tr><td>入金待ち</td><td>入金が確認できていない申込みステータス。</td></tr><tr><td>取引照会</td><td>決済サービスへ取引の状況を問い合わせること。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>entry:batch checkCvsPayment</code></td><td>コンビニ決済で入金待ちのイベント申込を決済サービスへ照会し、ステータスを整合させる。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-コンビニ支払チェックを実行する-entry-batch-checkCvsPayment">コンビニ支払チェックを実行する（<code>entry:batch checkCvsPayment</code>）</h3>
+          <ol><li>コンビニ決済で入金待ちのイベント申込を抽出する。</li><li>対象が0件の場合は、対象が無い旨を返して終了する。</li><li>申込みごとに決済サービスへ取引を照会し、結果のメッセージと新ステータスを得る。</li><li>取引が存在しない場合は当該申込みの記録を取り除く。入金が確認できた場合は新ステータスへ更新する。</li><li>直前と同じ決済番号の申込みは、前回の照会結果に従って同様の処理を行う。</li><li>取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する。</li><li>申込履歴を記録し、更新を確定する。</li></ol>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>コンビニ決済で入金待ちのイベント申込。</td></tr><tr><td>照会単位</td><td>申込みごと。同一決済番号は前回結果を流用する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>ステータス整合</td><td>照会結果に応じて、更新・記録除去・エラー通知のいずれかを行う。</td></tr><tr><td>エラー集約</td><td>取引不在・未完了以外のエラーは重複を除いてまとめ、管理者へ通知する。</td></tr><tr><td>履歴記録</td><td>処理した申込みについて申込履歴を記録する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は対象申込みのステータスを整合させる。対象が0件なら何もせず完了する。</td></tr><tr><td>API</td><td>決済サービスへ取引を照会し、結果でステータスを判定する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>申込みステータスの更新・記録除去、申込履歴の記録、想定外エラーの管理者通知。</td></tr><tr><td>失敗時出力</td><td>取引不在・未完了等のメッセージ収集、想定外エラーの通知。</td></tr><tr><td>副作用</td><td>申込みステータス更新、記録除去、申込履歴記録、エラー通知メール。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は括弧で添える。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_event_entry（イベント申込）</td><td>entry_status_id（申込ステータス）・payment_no（決済番号）・payment_id（決済種別）</td><td>抽出・照会・更新に使用する。</td></tr><tr><td>dtb_entry_history（申込履歴）</td><td>event_entry_id（申込み参照）・entry_status_id</td><td>処理結果を記録する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_entry_history / dtb_event_entry</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>申込みと決済</td><td>決済サービスの取引状況に合わせて申込みステータスを整合させる。</td></tr><tr><td>履歴</td><td>処理した申込みの履歴を記録する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>対象0件</td><td>対象が無い旨を返して終了する。</td></tr><tr><td>取引不在・未完了</td><td>記録の除去等の所定処理を行い、メッセージを収集する。</td></tr><tr><td>想定外エラー</td><td>重複を除いてまとめ、管理者へ通知する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>処理</td><td>申込履歴の記録。</td></tr><tr><td>想定外エラー</td><td>管理者へのエラー通知メール。</td></tr></tbody></table></div>
+          <h3 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>決済の機微情報</li><li>メール送信の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b13-02-b13-02_batch_event_event_check_cvs_payment-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>照会・更新を積み、最後に確定する。本バッチは楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b13-02-b13-02_batch_event_event_check_cvs_payment -->
+</section>
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+import { Locator, Page, expect } from "@playwright/test";
+import { ECCUBE_ADMIN_ROUTE } from "../../../config/default.config";
+
+/**
+ * 管理画面 店舗設定 > 店舗基本設定（SHOPマスター／旧ショップマスター）Page Object（独立クラス形）。
+ * 納品ケース表 integration_test/e2e/m10_01_admin_shop_setting_setting_shop_e2e_cases.md に対応。
+ * 期待結果は仕様（正本 functions/pf-eccube3/m10-01_admin_shop_setting_setting_shop.md / 観点表）由来（オラクル独立性）。
+ * 設計源は pf-eccube3（リバース）。刷新先 ec-cube-enterprise との乖離は付帯表4（不具合候補）で管理。
+ * セレクタは Twig＋Symfony Form の getBlockPrefix=`shop_master`（ShopMasterType.php:339-342）由来の位置情報のみ。
+ * 本リポジトリでは Playwright を実行しない（構造参考のもとの未実行雛形）。
+ *
+ * ルート: admin_setting_shop = GET|POST /%eccube_admin_route%/setting/shop（ShopController.php:45）。
+ *
+ * DOM id 根拠（getBlockPrefix=shop_master）:
+ *  - company_name → #shop_master_company_name（shop_master.twig:42 / FormType:57-65）
+ *  - company_kana → #shop_master_company_kana（shop_master.twig:52 / FormType:291-305 カタカナRegex）
+ *  - shop_name → #shop_master_shop_name（shop_master.twig:62 / FormType:66-74）
+ *  - shop_name_eng → #shop_master_shop_name_eng（shop_master.twig:82 / FormType:75-87）
+ *  - email01(送信元From) → #shop_master_email01（shop_master.twig:156 / FormType:129-135）
+ *  - email02(問い合わせ受付) → #shop_master_email02（shop_master.twig:186 / FormType:136-142）
+ *  - email03(返信ReplyTo) → #shop_master_email03（shop_master.twig:166 / FormType:143-149）
+ *  - email04(エラー受付ReturnPath) → #shop_master_email04（shop_master.twig:176 / FormType:150-156）
+ *  - delivery_free_amount(送料無料条件 金額) → #shop_master_delivery_free_amount（shop_master.twig:310 / FormType:246-248 PriceType=MoneyType由来 Range(min:0)）
+ *  - delivery_free_quantity → #shop_master_delivery_free_quantity（shop_master.twig:320 / FormType:249-257 Regex \d+）
+ *  - option_nostock_hidden(在庫切れ非表示トグル) → #shop_master_option_nostock_hidden（shop_master.twig:392 / FormType:269）
+ *  - 登録ボタン type=submit trans admin.common.registration=「登録」（shop_master.twig:439 / messages.ja.yaml:1436）
+ *  - フィールドエラー .invalid-feedback（bootstrap_4_horizontal_layout.html.twig:53-63 form_errors）。
+ *    オラクル独立性のため、エラーは対象フィールド近傍（同一入力グループ列 div.col）内の .invalid-feedback に限定する（fieldError()）。
+ *  - 成功フラッシュ .alert-success（共通 alert / addSuccess admin.common.save_complete ShopController.php:87 / messages.ja.yaml:1398=「保存しました」）
+ *  - カード見出し .card-header span（基本情報「店舗情報」shop_master.twig:34 / messages.ja.yaml:2802）
+ *
+ * 刷新先未存在（付帯表4）: 緯度・経度欄／FAX欄は ShopMasterType に存在しないため Locator を定義しない。
+ */
+export class AdminShopSettingSettingShopPage {
+  readonly page: Page;
+  readonly url: string;
+
+  readonly companyName: Locator; // 会社名
+  readonly companyKana: Locator; // 会社名フリガナ（カタカナRegex）
+  readonly shopName: Locator; // 店名（必須・Length stext_len）
+  readonly shopNameEng: Locator; // 店名英語表記
+  readonly email01: Locator; // 送信元メール（From）
+  readonly email02: Locator; // 問い合わせ受付メール
+  readonly email03: Locator; // 返信受付メール（ReplyTo）
+  readonly email04: Locator; // 送信エラー受付メール（ReturnPath）
+  readonly deliveryFreeAmount: Locator; // 送料無料条件（金額）PriceType=MoneyType由来 Range(min:0)
+  readonly deliveryFreeQuantity: Locator; // 送料無料条件（数量）Regex \d+
+  readonly optionNostockHidden: Locator; // 在庫切れ非表示トグル
+  readonly registerButton: Locator; // 登録ボタン
+  readonly fieldErrors: Locator; // .invalid-feedback（フィールドエラー）
+  readonly successAlert: Locator; // .alert-success（成功フラッシュ）
+  readonly baseInfoCardHeader: Locator; // 基本情報カード見出し「店舗情報」
+
+  constructor(page: Page) {
+    this.page = page;
+    this.url = `/${ECCUBE_ADMIN_ROUTE}/setting/shop`;
+
+    this.companyName = page.locator("#shop_master_company_name");
+    this.companyKana = page.locator("#shop_master_company_kana");
+    this.shopName = page.locator("#shop_master_shop_name");
+    this.shopNameEng = page.locator("#shop_master_shop_name_eng");
+    this.email01 = page.locator("#shop_master_email01");
+    this.email02 = page.locator("#shop_master_email02");
+    this.email03 = page.locator("#shop_master_email03");
+    this.email04 = page.locator("#shop_master_email04");
+    this.deliveryFreeAmount = page.locator("#shop_master_delivery_free_amount");
+    this.deliveryFreeQuantity = page.locator("#shop_master_delivery_free_quantity");
+    this.optionNostockHidden = page.locator("#shop_master_option_nostock_hidden");
+    this.registerButton = page.getByRole("button", { name: "登録" });
+    this.fieldErrors = page.locator(".invalid-feedback");
+    this.successAlert = page.locator(".alert-success");
+    this.baseInfoCardHeader = page.locator(".card-header span");
+  }
+
+  async goto() {
+    await this.page.goto(this.url);
+  }
+
+  /** 何も変更せず登録（冪等な正常系保存）。 */
+  async submit() {
+    await this.registerButton.click();
+  }
+
+  /**
+   * 指定フィールド近傍（同一入力グループ列 div.col）内のフィールドエラーに限定した Locator を返す。
+   * オラクル独立性のため、別項目のエラーや seed 不備による誤検知を避ける（codex指摘M1）。
+   * shop_master.twig は各 form_widget(form.x)/form_errors(form.x) を同一の col 列内に描画する。
+   */
+  fieldError(field: Locator): Locator {
+    return field.locator("xpath=ancestor::div[contains(@class,'col')][1]").locator(".invalid-feedback");
+  }
+
+  /** 店舗基本設定画面の基本要素が表示されること（仕様: 利用者視点の入口・フロント挙動）。 */
+  async seeForm() {
+    await expect(this.baseInfoCardHeader.first()).toContainText("店舗情報");
+    await expect(this.registerButton).toBeVisible();
+  }
+}

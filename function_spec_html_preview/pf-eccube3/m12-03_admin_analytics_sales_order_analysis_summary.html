@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M12-03（受注/売上分析 集計一覧表示） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#検索画面初期表示-admin-route-analysis-sales">検索画面初期表示（`/{admin_route}/analysis/sales`）</a>
+<a class="lv3" href="#集計実行・一覧表示-admin-route-analysis-sales-result">集計実行・一覧表示（`/{admin_route}/analysis/sales/result`）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m12-03_admin_analytics_sales_order_analysis_summary.md</p>
+        <h1>M12-03（受注/売上分析 集計一覧表示）</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>分析・集計メニューの受注/売上分析は、管理者が指定した集計日・使用日付・集計単位・各種絞り込みに従い、注文明細を集計単位ごとに集計し、平均単価・数量・合計・件数とその割合を一覧表で提示する機能である。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注/売上分析処理、注文明細の集計用リポジトリ、検索フォーム種別、一覧テンプレートを正とする。本機能のカスタマイズ区分はカスタマイズであり、挙動は現行リポpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。現行と移行先でテーブル名・列の所在が異なる箇所は「リニューアル移行時の扱い」に集約する。</p>
+<p>対象はブラウザ経由の管理画面に限定する。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスは環境により変わる（<code>admin_route</code>）。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
+<p>CSVダウンロードはM12-04で扱う。本書は集計一覧の表示までを扱う。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>受注/売上分析の初期表示時に設定される検索条件の既定値</li><li>検索条件（集計日・使用日付・集計単位・各種絞り込み）の指定による集計結果一覧の表示</li><li>集計の対象データ・結合・除外条件・集計単位・期間の取り扱い</li><li>一覧に表示する列と割合・合計行の算出</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>集計結果のCSVダウンロード（M12-04を正とする）</li><li>日次/月次集計、入荷通知依頼、フォーマット売上分析の各集計（M12-01・M12-02・M12-05〜M12-08を正とする）</li><li>管理画面へのアクセス制御・ログイン・権限設定の詳細</li><li>受注・会員・商品の各台帳の更新業務（各機能を正とする）</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>挙動は現行リポpf-eccube3を正とし、DB関連はec-cube-enterpriseを正とする。現行（pf-eccube3）と移行先（ec-cube-enterprise）でスキーマが異なる箇所を記録する。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>注文明細テーブル</td><td><code>dtb_order_detail</code></td><td><code>dtb_order_item</code>（列 <code>price</code>・<code>quantity</code>・<code>product_code</code>・<code>product_name</code> は同名）</td></tr><tr><td>使用日付の日付列</td><td>注文日・入金日は <code>dtb_order</code>（<code>order_date</code>・<code>payment_date</code>）、注文確定日・出荷日・売上確定日・キャンセル日は補助表 <code>dtb_order_sub</code> の各日付列</td><td><code>dtb_order</code> に集約。<code>order_date</code>・<code>payment_date</code> に加え <code>confirm_date</code>・<code>shipping_date</code>・<code>commit_date</code>・<code>cancel_date</code> 等の日付列を直接保持する。補助表 <code>dtb_order_sub</code> は移行先に存在しない。各使用日付と移行先列の正確な対応は ec-cube-enterprise 実装で要確認。</td></tr><tr><td>誕生日の絞り込み</td><td><code>dtb_order.birth</code></td><td><code>dtb_order.birth</code>（同名）</td></tr><tr><td>都道府県・性別</td><td>会員の都道府県・性別</td><td><code>dtb_order.pref_id</code>・<code>dtb_order.sex_id</code> 等。集計時の参照元の正確な対応は ec-cube-enterprise 実装で要確認。</td></tr></tbody></table></div>
+<p>DB列に言及する箇所は移行先（ec-cube-enterprise）の名称を主とし、現行名を括弧で添える。移行先に該当が見当たらない箇所は推測でスキーマ化せず「ec-cube-enterprise 実装で要確認」と残す。</p>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>集計日</td><td>集計対象の期間（開始・終了）。どの日付列で絞り込むかは使用日付による。</td></tr><tr><td>使用日付</td><td>集計日の絞り込みに使う日付列。注文日・注文確定日・入金日・出荷日・売上確定日・キャンセル日から選ぶ。</td></tr><tr><td>集計単位</td><td>集計の軸。商品・カテゴリ・支払方法・購入グループ・都道府県・性別・利用端末・年代（会員）から選ぶ。指定なしも可。</td></tr><tr><td>検索条件セッション</td><td>集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>サイドメニュー「受注・売上分析」</td><td><code>GET/POST /{admin_route}/analysis/sales</code></td><td>集計日を当月初日〜当月末日、使用日付を注文日、集計単位を商品、並び順を昇順とした検索画面を表示する。</td></tr><tr><td>検索ボタン押下</td><td><code>POST /{admin_route}/analysis/sales/result</code></td><td>入力された検索条件で集計し、同一画面に集計結果一覧を表示する。</td></tr></tbody></table></div>
+<p>管理画面プレフィックスは環境により変わるためプレースホルダで示す。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>検索条件のアコーディオン、検索ボタン、集計結果テーブル。集計単位が商品のときは商品コード列を加える。各行に平均単価・数量・合計・件数とそれぞれの割合を表示する。最終行に数量・合計・件数の合計を表示する。0件のときは該当データが無い旨の見出しを表示する。</td></tr><tr><td>入力項目</td><td>汎用ワードのテキスト欄、集計日From・To、使用日付のラジオ、集計単位のセレクト、並べ替えのセレクト、昇順/降順のラジオ、表示件数のセレクト、カテゴリ、都道府県、性別、誕生日From・To、利用端末、売上分析タグ、カードセット、平均単価From・To、数量From・To、状態。</td></tr><tr><td>JS挙動</td><td>日付入力にデートタイムピッカーを適用する。売上分析タグ・カードセットはサジェスト選択UIを適用する。「検索条件をクリア」でタグ・カードセットの選択を解除する。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルは無い。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="検索画面初期表示-admin-route-analysis-sales">検索画面初期表示（<code>/{admin_route}/analysis/sales</code>）</h3>
+<ol><li>管理画面の認証・権限を通過する。</li><li>検索条件セッションを破棄する。</li><li>集計日Fromに当月初日、集計日Toに当月末日、使用日付に注文日、集計単位に商品、並び順に昇順を設定する。</li><li>検索フォームを表示する。集計結果は無しとする。</li></ol>
+<h3 id="集計実行・一覧表示-admin-route-analysis-sales-result">集計実行・一覧表示（<code>/{admin_route}/analysis/sales/result</code>）</h3>
+<ol><li>検索フォームへ送信値を取り込む。</li><li>検索条件を検索条件セッションへ保存する。</li><li>注文明細の集計用リポジトリへ検索条件を渡し、集計結果と合計を取得する。</li><li>集計結果一覧と合計行、割合を同一画面に表示する。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象データ</td><td>注文明細を注文・商品と結合し集計する。注文日が未設定の注文は対象外とする。</td></tr><tr><td>除外条件</td><td>使用日付がキャンセル日以外のときは、受注ステータスがキャンセルの注文を結合条件で除外する。</td></tr><tr><td>集計単位</td><td>集計単位の指定に応じてグループ化キーを切り替える。商品なら商品コード、カテゴリならカテゴリ名、支払方法なら支払方法、購入グループなら購入グループ、都道府県・性別・利用端末はそれぞれのマスタ、年代（会員）は誕生年。</td></tr><tr><td>期間</td><td>集計日Fromから集計日To未満まで、使用日付で選んだ日付列で絞り込む。注文日・入金日は注文の日付列、それ以外は注文サブの対応する日付列で絞り込む。</td></tr><tr><td>集計値</td><td>集計単位ごとに、金額（単価×数量の合計）、数量（数量の合計）、平均単価（金額合計÷数量合計）、件数（注文の重複なし件数）を算出する。</td></tr><tr><td>絞り込み</td><td>汎用ワード（商品名日/英・カード名・商品コード・備考）、カテゴリ、都道府県、性別、誕生日、利用端末、売上分析タグ、カードセット、状態を指定すると、対応する結合・条件を追加する。</td></tr><tr><td>平均単価・数量の範囲</td><td>平均単価From・To、数量From・Toは集計後の値（HAVING）に対する絞り込みとして適用する。</td></tr></tbody></table></div>
+<p>割合（数量割合・合計割合・件数割合）は合計に対する各行の比率を100倍し小数点以下を切り捨てて算出する。平均単価は表示時に小数点以下を切り捨てる。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>平均単価</td><td>金額合計を数量合計で割る。表示時に切り捨てる。</td></tr><tr><td>数量割合・合計割合・件数割合</td><td>各行の値を全体合計で割り100倍し、小数点以下を切り捨てる。合計が0の場合は0とする。</td></tr><tr><td>件数</td><td>注文の重複なし件数を数える。</td></tr><tr><td>合計行</td><td>表示中の集計結果について、数量・合計・件数を合算する。</td></tr><tr><td>並べ替え</td><td>並べ替えで集計単位を選んだ場合は集計単位キーで、注文数・金額・販売数を選んだ場合はその列で、昇順/降順に並べる。</td></tr><tr><td>表示件数</td><td>一覧は表示件数の上限で打ち切る。</td></tr></tbody></table></div>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>汎用ワード</td><td>任意</td><td>フォーム上限なし</td><td>空</td><td>フォームキー <code>multi</code>。商品名日/英・カード名・商品コード等の部分一致絞り込み。検索条件セッションへ保存。</td></tr><tr><td>集計日From</td><td>任意</td><td>日時</td><td>当月初日</td><td>フォームキー <code>date_from</code>。使用日付で選んだ列の下限。</td></tr><tr><td>集計日To</td><td>任意</td><td>日時</td><td>当月末日（初期値は翌月初日相当）</td><td>フォームキー <code>date_to</code>。使用日付で選んだ列の上限（未満）。</td></tr><tr><td>使用日付</td><td>必須</td><td>—</td><td>注文日</td><td>フォームキー <code>date_type</code>。注文日/注文確定日/入金日/出荷日/売上確定日/キャンセル日。</td></tr><tr><td>集計単位</td><td>任意</td><td>—</td><td>商品</td><td>フォームキー <code>summary_type</code>。商品/カテゴリ/支払方法/購入グループ/都道府県/性別/利用端末/年代（会員）。指定なし可。</td></tr><tr><td>並べ替え</td><td>必須</td><td>—</td><td>集計単位</td><td>フォームキー <code>sort</code>。集計単位/注文数/金額/販売数。</td></tr><tr><td>昇順/降順</td><td>必須</td><td>—</td><td>昇順</td><td>フォームキー <code>asc_desc</code>。<code>asc</code>/<code>desc</code>。</td></tr><tr><td>表示件数</td><td>必須</td><td>—</td><td>ページ表示件数マスタの値</td><td>フォームキー <code>limit</code>。一覧の最大件数。</td></tr><tr><td>カテゴリ</td><td>任意</td><td>—</td><td>未選択</td><td>商品検索フォーム配下の<code>category_id</code>。自身と子孫カテゴリで絞り込む。</td></tr><tr><td>都道府県</td><td>任意</td><td>—</td><td>未選択</td><td>会員検索フォーム配下の<code>pref</code>。</td></tr><tr><td>性別</td><td>任意</td><td>—</td><td>未選択</td><td>会員検索フォーム配下の<code>sex</code>。複数選択。</td></tr><tr><td>誕生日From・To</td><td>任意</td><td>日付</td><td>空</td><td>フォームキー <code>birth_from</code>・<code>birth_to</code>。注文の誕生日で絞り込む。</td></tr><tr><td>利用端末</td><td>任意</td><td>—</td><td>未選択</td><td>フォームキー <code>device_type</code>。複数選択。</td></tr><tr><td>売上分析タグ</td><td>任意</td><td>—</td><td>未選択</td><td>フォームキー <code>tagSalesAnalyses</code>。複数選択。明細のタグで絞り込む。</td></tr><tr><td>カードセット</td><td>任意</td><td>—</td><td>未選択</td><td>フォームキー <code>cardsets</code>。複数選択。</td></tr><tr><td>平均単価From・To</td><td>任意</td><td>数値</td><td>空</td><td>フォームキー <code>price_from</code>・<code>price_to</code>。集計後の平均単価（HAVING）で絞り込む。</td></tr><tr><td>数量From・To</td><td>任意</td><td>数値</td><td>空</td><td>フォームキー <code>sales_from</code>・<code>sales_to</code>。集計後の数量（HAVING）で絞り込む。</td></tr><tr><td>状態</td><td>任意</td><td>—</td><td>未選択</td><td>フォームキー <code>card_condition</code>。複数選択。規格の状態で絞り込む。</td></tr></tbody></table></div>
+<p>本フォームはなりすまし対策トークンを使わない（<code>csrf_protection</code>を無効化）。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>集計対象が0件</td><td>該当データが無い旨の見出しを表示する。</td></tr><tr><td>集計単位が指定なし</td><td>グループ化を行わず、集計単位の見出し・キーを設定しない。</td></tr><tr><td>合計が0</td><td>各割合を0とする。</td></tr><tr><td>使用日付がキャンセル日</td><td>キャンセル注文を除外する結合を行わない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>集計結果は検索実行時にデータベースから読み取った値である。表示後の更新は自動反映しない。</td></tr><tr><td>CSVとの整合性</td><td>集計実行で検索条件をセッションへ保存する。CSVダウンロードは同じセッションの検索条件で再集計する。ただしCSVは表示件数の上限を適用しない点が異なる。</td></tr><tr><td>一覧と合計の整合性</td><td>合計行は表示中（表示件数上限内）の集計結果を合算した値である。</td></tr><tr><td>更新との整合性</td><td>本機能は参照のみで台帳を更新しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能ではAPI呼び出し・バッチ実行を扱わない。集計はデータベースへの問い合わせで行う。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索条件（集計日・使用日付・集計単位・各種絞り込み）。</td></tr><tr><td>成功時出力</td><td>集計結果一覧・割合・合計行を含む画面。</td></tr><tr><td>失敗時出力</td><td>データ取得失敗時はアプリケーションの共通例外処理に委ねる。</td></tr><tr><td>副作用</td><td>検索条件セッションへの保存。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。テーブル名・列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は現行名を括弧で添える。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_order_item（現行 dtb_order_detail）</td><td>price, quantity</td><td>金額・数量・平均単価の算出。</td></tr><tr><td>dtb_order_item（現行 dtb_order_detail）</td><td>product_code, product_name</td><td>商品単位の集計・絞り込み。</td></tr><tr><td>dtb_order</td><td>order_date, payment_date</td><td>使用日付による期間絞り込み。</td></tr><tr><td>dtb_order</td><td>birth</td><td>誕生日の絞り込み。</td></tr><tr><td>dtb_order</td><td>confirm_date, shipping_date, commit_date, cancel_date 等</td><td>注文確定日・出荷日・売上確定日・キャンセル日による期間絞り込み。現行は補助表 dtb_order_sub の各日付列で保持する。各使用日付と移行先列の対応は ec-cube-enterprise 実装で要確認。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_detail / dtb_order_item / dtb_order_sub</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>使用日付・並べ替え・昇順降順・表示件数</td><td>必須の選択。</td></tr><tr><td>集計日From・To・誕生日From・To</td><td>任意。日時または日付形式。</td></tr><tr><td>平均単価・数量のFrom・To</td><td>任意。数値。0以上を入力補助で促す。集計後の値に対する絞り込み。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>受注/売上分析一覧</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可。</td></tr><tr><td>ログイン済み管理者</td><td>検索・集計結果の閲覧が可能。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>「受注・売上分析」を開く</td><td>集計検索画面（初期状態）。</td></tr><tr><td>検索ボタン押下</td><td>同一画面に集計結果一覧を表示。</td></tr><tr><td>「CSVダウンロード」押下</td><td>集計結果CSVを出力（M12-04）。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>検索ボタン押下</td><td>検索条件を検索条件セッションへ保存する。</td><td>CSVダウンロードが同条件で再集計するための条件が保存される。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>データベース読み取りの障害</td><td>アプリケーションの共通例外処理に委ねる。</td></tr><tr><td>認証・権限不足</td><td>集計を表示しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>集計表示</td><td>本機能単体で業務監査ログを追加で書く処理は持たない。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>Cookie値</li><li>セッションIDの完全値</li><li>会員の個人情報の詳細本文</li></ul>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>本機能は参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

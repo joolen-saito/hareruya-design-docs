@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-29（在庫移動実績 インポート） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#1-在庫移動実績-インポート">1. 在庫移動実績 インポート</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
+<a class="lv3" href="#取込CSV仕様-必須ヘッダ・列定義">取込CSV仕様（必須ヘッダ・列定義）</a>
+<a class="lv3" href="#取込手順-プロセスフロー">取込手順（プロセスフロー）</a>
+<a class="lv3" href="#結果メッセージ・エラー行-不正行の扱い">結果メッセージ・エラー行／不正行の扱い</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#例外処理">例外処理</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/m04-29_admin_stock_stock_move_result_csv_import.md</p>
+        <h1>M04-29（在庫移動実績 インポート）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫移動実績 インポート</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockMoveInstructionController::csvTrackingUpload</code>（ルート <code>admin_stock_move_instruction_csv_tracking</code>）／<code>StockMoveInstructionCsvUploadAction</code>／<code>StockMoveInstructionCsvImporter</code>／<code>StockMoveInstructionCsvImportService</code>／<code>StockMoveInstructionCsvImportHandler</code>／Entity <code>DtbStockMoveInstruction</code>・<code>DtbStockMoveTransfer</code>）</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Action/Importer/Handler/Entity）と既存テストを読み込み、必須ヘッダ・取込手順・バリデーション・エラー行扱い・反映先を実装確認値で具体化。</td></tr></tbody></table></div>
+<h2 id="1-在庫移動実績-インポート">1. 在庫移動実績 インポート</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>在庫移動実績入力用CSV（M04-27の雛形に記入したもの）をアップロードし、移動指示ごとに送り状No.を一括登録する機能。取り込んだ送り状No.は在庫移動指示（<code>DtbStockMoveInstruction</code>）と、それに紐づく在庫移動・振替（<code>DtbStockMoveTransfer</code>）の双方に反映する。1行＝1移動指示で処理し、行単位でバリデーションして不正行はスキップしつつ処理を継続する。</p>
+<p>&gt; 実装上の重要点: 本取込が更新するのは「送り状No.（<code>tracking_no</code>）」であり、在庫数（<code>ProductStock</code> 等）の増減や移動ステータスの遷移はこの取込では行わない。基本設計の表題は「在庫移動実績」だが、ec-cube-enterprise 実装では送り状No.の一括登録として実現されている。</p>
+<p>本機能のカスタマイズ区分は新規実装であり、現行（pf-eccube3）に対応実装はない。画面・業務条件は基本設計仕様書（0202_基本設計仕様書(在庫管理機能)）を正とし、URLエンドポイント・必須ヘッダ・取込手順・反映先列は ec-cube-enterprise 実装を正とする。</p>
+<h3 id="本書で扱うこと">本書で扱うこと</h3>
+<ul><li>在庫移動実績CSVのアップロード入口（エンドポイント）</li><li>必須ヘッダ・列定義・取込手順</li><li>行バリデーションとエラー行／不正行の扱い、結果メッセージ</li><li>送り状No.の反映先（指示／振替）</li></ul>
+<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
+<ul><li>在庫移動実績入力用CSV雛形の出力（M04-27）、送り状CSV出力（M04-28）</li><li>在庫数（<code>ProductStock</code>）の増減・移動ステータス遷移（在庫移動・振替の登録／承認系設計を正とする。本取込では行わない）</li><li>CSV取込履歴テーブルへの記録仕様（後述「状態・データ更新」参照。本取込は <code>CsvImporter</code> 共通基盤を利用するが、本機能固有の履歴記録は実装要確認）</li><li>管理画面ログイン認証・権限制御そのもの（共通設計を正とする）</li></ul>
+<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>HTTPメソッド</th><th>ふるまい</th></tr></thead><tbody><tr><td>在庫移動実績CSV登録</td><td><code>/%admin%/product/stock/move-instruction/csv-tracking</code>（<code>admin_stock_move_instruction_csv_tracking</code>）</td><td>POST</td><td>CSRF検証後、<code>csv_file</code> を取込み送り状No.を一括登録。処理後は一覧へ <code>resume=1</code> 付きでリダイレクト（成功／エラーはフラッシュメッセージ）。</td></tr></tbody></table></div>
+<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。管理画面ログインを要する。一覧画面のモーダル（<code>admin.stock.move_instruction.csv_registration_*</code>）でCSVファイルを選択し、「在庫移動実績CSV登録」ボタンで送信する。モーダルには「既に在庫移動実績を登録している場合、上書きされます」「1ファイルの登録上限は10,000件です」の注記がある。</p>
+<h3 id="取込CSV仕様-必須ヘッダ・列定義">取込CSV仕様（必須ヘッダ・列定義）</h3>
+<p>ヘッダーは0行目（1行目）に必須。BOM付きUTF-8の先頭BOMは除去し、列数がヘッダーと不一致の行はパディング／切り詰めしてヘッダー順に整列する（<code>StockMoveInstructionCsvImportService</code>）。</p>
+<div class="table-wrap"><table><thead><tr><th>列ヘッダー</th><th>必須</th><th>変換／検証</th><th>用途</th></tr></thead><tbody><tr><td><code>移動指示ID</code></td><td>○</td><td>整数変換（<code>IntConverter</code>）＋数値チェック（<code>NumericValidator</code>）</td><td>取込先の在庫移動指示を特定する照合キー</td></tr><tr><td><code>出庫元店舗(名称)</code></td><td>−</td><td>−</td><td>値があれば指示の出庫元店舗名と照合（不一致はエラー）</td></tr><tr><td><code>入庫先店舗(名称)</code></td><td>−</td><td>−</td><td>値があれば指示の入庫先店舗名と照合（不一致はエラー）</td></tr><tr><td><code>送り状No.</code></td><td>○</td><td>必須チェック（<code>RequiredValidator</code>）</td><td>登録する送り状No.（空はエラー）</td></tr></tbody></table></div>
+<p>区切り文字は <code>eccube_csv_import_delimiter</code>（拡張子 <code>tsv</code> のときはタブ）、囲み文字は <code>eccube_csv_import_enclosure</code>。データ行0件（ヘッダーのみ）はヘッダー検証上はエラーとしない（後述のとおり結果として「有効な行がありません」となる）。</p>
+<h3 id="取込手順-プロセスフロー">取込手順（プロセスフロー）</h3>
+<ol><li>Controller でCSRFトークン（<code>isTokenValid()</code>）を検証し、<code>csv_file</code>（<code>UploadedFile</code>）の存在・<code>isValid()</code> を確認する。不正なら <code>csv_tracking_file_invalid</code>（「ファイルが不正です。」）を表示して一覧へリダイレクト。</li><li><code>StockMoveInstructionCsvUploadAction::handle()</code> が <code>StockMoveInstructionCsvImporter</code>（＋<code>StockMoveInstructionCsvImportHandler</code>）を生成し <code>import()</code> を実行。</li><li>ヘッダー行（0行目）を読み取り。ヘッダーが取得できなければヘッダーフォーマットエラーを返す。</li><li>各データ行について <code>onValidateRow</code> で検証 → <code>onReadRow</code> で取込。</li></ol>
+<ul><li>行の列数が定義列数と不一致なら列数不正エラーで当該行スキップ。</li><li>各列の存在・個別バリデーション（移動指示ID＝数値必須、送り状No.＝必須）を満たさなければ当該行スキップ。</li></ul>
+<ol><li><code>onReadRow</code>（取込本体）:</li><li>移動指示ID ≤ 0、または該当指示が存在しない → <code>…csv_tracking_error_instruction_not_found</code>（「移動指示が見つかりません」）を当該行番号付きで記録し、この行は失敗。</li><li><code>出庫元店舗(名称)</code> に値があり指示の出庫元店舗名と不一致 → <code>…csv_tracking_error_shop_mismatch_from</code>（「出庫元店舗が一致しません」）で失敗。</li><li><code>入庫先店舗(名称)</code> に値があり指示の入庫先店舗名と不一致 → <code>…csv_tracking_error_shop_mismatch_to</code>（「入庫先店舗が一致しません」）で失敗。</li><li>送り状No.がtrim後に空 → <code>…csv_tracking_error_tracking_no_empty</code>（「送り状Noが空欄です」）で失敗。</li><li>すべて通過したら、指示に送り状No.・更新日時・更新者を設定し、紐づく全 <code>DtbStockMoveTransfer</code>（<code>moveInstructionId</code> 一致、<code>id ASC</code>）の <code>tracking_no</code> にも同値を設定する（上書き）。</li><li>取込結果（成功件数・エラーメッセージ一覧）を Controller へ返す。</li></ol>
+<h3 id="結果メッセージ・エラー行-不正行の扱い">結果メッセージ・エラー行／不正行の扱い</h3>
+<ul><li>行単位の個別エラーは収集して継続する（<code>breakAll()</code> ではなく <code>skipRow()</code>／失敗行は行番号付きメッセージを蓄積）。1ファイル内で正常行のみ反映し、不正行はスキップする。</li><li>Controller での集約:</li><li>取込結果のエラーは各行ごとに <code>addError()</code> で表示。</li><li>成功件数 &gt; 0 のとき <code>csv_tracking_success</code>（「送り状No.を一括登録しました。」）を表示。</li><li>成功件数 = 0 かつエラー0件（ヘッダーのみ等）のとき <code>csv_tracking_no_valid_rows</code>（「有効な行がありません。」）を表示。</li><li>例外（<code>import()</code> が <code>\Throwable</code> をスロー）時はログ出力（<code>log_error</code>）のうえ、メッセージ別に振り分け:</li><li><code>RuntimeException</code> でメッセージが <code>…csv_tracking_header_invalid</code> → 「CSVのヘッダーが不正です。」</li><li>同 <code>…csv_tracking_file_invalid</code> → 「ファイルが不正です。」</li><li>同 <code>…csv_tracking_temp_dir_invalid</code> → 一時ディレクトリ設定（<code>eccube_csv_temp_realdir</code>）確認を促すメッセージ</li><li>それ以外（空メッセージ含む）／<code>RuntimeException</code> 以外の <code>Throwable</code> → <code>csv_tracking_upload_error_detail</code>（「アップロードに失敗しました。詳細：%detail%」）に例外メッセージ（無ければクラス名）を埋め込み表示。</li><li>いずれの場合も最後に一覧へリダイレクト（POSTのクエリを引き継ぎ <code>resume=1</code> を付与）。</li></ul>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>**更新系**。正常行ごとに在庫移動指示（<code>dtb_stock_move_instruction</code>）の <code>tracking_no</code>・<code>update_date</code>・更新者（<code>update_member</code>）を更新し、紐づく在庫移動・振替（<code>dtb_stock_move_transfer</code>）の <code>tracking_no</code> を上書きする。既登録の送り状No.も上書きされる。</td></tr><tr><td>更新しないもの</td><td>在庫数（<code>ProductStock</code> 等）・移動ステータス（<code>MtbStockMoveTransferStatus</code>）はこの取込では更新しない。</td></tr><tr><td>履歴・ログ</td><td>取込実行者は <code>CsvImporter</code> 基盤にログインメンバーとして渡る。出力ログは <code>log_error</code>（例外時）。CSV取込履歴テーブル（<code>dtb_csv_import_history</code>。取込実行者列 <code>member_id</code>）への本機能固有の記録有無は実装要確認。</td></tr></tbody></table></div>
+<h3 id="例外処理">例外処理</h3>
+<ul><li>**ファイル未送信／不正**: <code>csv_file</code> が <code>UploadedFile</code> でない・<code>isValid()</code> false → <code>csv_tracking_file_invalid</code> を表示してリダイレクト（既存テスト <code>testCsvTrackingUploadNoFile</code> / <code>testCsvTrackingUploadInvalidFile</code>）。</li><li>**存在しない移動指示**: 行の移動指示IDが0以下／DB未存在 → 当該行を「移動指示が見つかりません」で失敗（既存テスト <code>testCsvTrackingUploadWithResultErrors</code> で ID=999999 行のエラー＆リダイレクトを確認）。</li><li>**店舗名不一致**: 出庫元／入庫先の店舗名が指示と不一致なら当該行失敗。</li><li>**送り状No.空**: trim後空なら当該行失敗。</li><li>**有効行0件**: ヘッダーのみ等で成功0・エラー0なら <code>csv_tracking_no_valid_rows</code>（既存テスト <code>testCsvTrackingUploadEmptyCsvNoValidRows</code>）。</li><li>**取込基盤の例外**: ヘッダー不正・一時ディレクトリ不正・その他例外を Controller で振り分け表示（既存テスト <code>testCsvTrackingUploadThrowsRuntimeException*</code> 各種・<code>testCsvTrackingUploadThrowsOtherThrowable</code>）。</li><li>正常取込は既存テスト <code>testCsvTrackingUploadSuccess</code> で、移動指示の <code>tracking_no</code> がCSV値に更新されることを確認。</li></ul>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>取込対象CSVの列は、在庫移動実績入力用CSV雛形（M04-27、<code>admin_stock_move_instruction_csv_download_record</code>）の出力列と一致する。雛形に記入して本機能で取り込む運用。</li><li>送り状No.は在庫移動指示詳細（M04-25）画面・送り状No.単体登録（<code>admin_stock_move_instruction_register_tracking</code>）でも登録でき、本取込はその一括版。送り状No.登録後の移動指示は削除不可（<code>StockMoveInstructionDeleteException</code>）。</li><li>反映先は在庫移動指示（<code>dtb_stock_move_instruction</code>）と在庫移動・振替（<code>dtb_stock_move_transfer</code>）の <code>tracking_no</code>。</li></ul>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<ul><li>本機能は新規実装であり、現行（pf-eccube3）に同等機能はない。移行後は ec-cube-enterprise 実装が初出となる。</li><li>DB関連はec-cube-enterpriseを正とする。反映先テーブルは在庫移動指示（<code>dtb_stock_move_instruction</code>。送り状No列 <code>tracking_no</code>・更新者 <code>update_member</code>）と在庫移動・振替（<code>dtb_stock_move_transfer</code>。送り状No列 <code>tracking_no</code>・指示紐付け列 <code>move_instruction_id</code>）を実在確認済み。CSV取込履歴（<code>dtb_csv_import_history</code>、取込実行者列 <code>member_id</code>）は共通基盤側に存在する。</li><li>基本設計仕様書が描く「実績」の取込は、実装上は送り状No.の一括登録であり、在庫数や移動ステータスの反映は本取込では行わない点に留意する。在庫数・ステータス反映を伴う設計が別途必要かは、在庫移動・振替の登録／承認系設計と合わせて実装要確認。列名・型・制約の詳細はec-cube-enterpriseのEntity / Migrationを正とする。</li></ul>
+<details>
+<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+<pre><code class="language-text">在庫移動指示詳細
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+堀部
+作成日
+2025/8/25
+更新者
+石川
+更新日
+2026-01-28
+機能No
+M04-25
+機能名
+在庫移動指示詳細
+概要
+—
+処理概要 在庫移動指示詳細画面
+図形・テキストボックス内テキスト（26件）
+レイアウト図 在庫移動指示詳細画面
+1-1
+1-2
+1-3
+1-4
+1-5
+1-6
+1-7
+1-14
+1-8
+1-11
+1-10
+1-12
+1-13
+1-15
+1-16
+1-9
+2-1
+2-2
+2-3
+2-4
+2-5
+2-6
+2-7
+2-8
+2-9
+2-10
+画像レイヤー（2枚）: 在庫移動指示詳細 / D7 / image 1 + 在庫移動指示詳細 / D7 / image 2
+機能仕様処理概要 在庫移動指示詳細画面
+在庫移動指示詳細画面概要
+・在庫移動指示の一覧から任意の移動指示IDを押下することでこの画面（在庫移動指示詳細画面）へ遷移する
+権限制御
+・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
+送状No.
+・在庫移動指示検索画面で送状No.を登録することで、この画面で送状No.を表示できる
+・送状No.の変更はこの画面からのみ可能
+・送状No.が登録されている場合、送り状No.の値がフォームに表示される
+・フォーム内の値を変更し、登録ボタンを押下すると値が保存される
+・変更時の未入力（空白のみ）での更新は許可しない
+（送り状番号を空に戻してステータス変更発送状況を「未」に戻す、移動ステータスを「出庫承認済み」に戻す）ことはできないため）
+備考情報
+・備考情報の内容の登録は、まとめられている移動のステータスが出庫承認済みまたは移動中の時のみ可能
+・備考情報のフォームの値を変更後、登録ボタンを押下すると値が保存される
+登録
+・送り状No.および備考の内容が変更された場合にのみ活性化する
+・登録ボタンを押下すると値が保存される
+・入力チェック
+在庫移動指示詳細 / AG69 / image 3
+・送り状No.が空文字のみの場合フォームにその旨のエラーを表示
+削除
+・発送済みでないかつ送り状No.が登録されていない在庫移動指示のみ削除可能
+・削除ボタンを押下すると削除確認モーダルが表示される
+・削除確認モーダル内の削除ボタンを押下すると移動指示リストが削除され、移動指示リスト作成検索画面へ遷移する
+識別IDラベル書式・制限必須最大値初期値画面部品の説明
+在庫移動指示情報
+1-1在庫移動指示IDラベル---在庫移動指示リスト作成検索 "識別ID3-5" と同様
+登録後自動採番された値を表示
+1-2出庫元店舗ラベル---在庫移動指示リスト作成検索 "識別ID3-6" と同様
+移動指示リストにまとめられている在庫移動の出庫元店舗
+1-3入庫先店舗ラベル---在庫移動指示リスト作成検索 "識別ID3-6" と同様
+移動指示リストにまとめられている在庫移動の入庫先店舗
+1-4在庫移動数ラベル---移動指示リスト含まれる在庫移動の件数
+1-5移動点数ラベル---移動指示リストに含まれる移動する商品の点数
+1-6登録日ラベル---移動指示リストの登録日
+1-7更新日ラベル---移動指示リストの更新日
+1-8最終更新者ラベル---移動指示リストの最終更新者
+1-9送状No.全角・半角-65535byte-送状No.がある場合に値を表示
+数値だけでなく全角・半角を許容する
+1-10総販売価格の合計ラベル---各在庫移動の持つ全ての商品の販売価格の合計金額
+1-11総移動原価の合計ラベル---各在庫移動の持つ総移動原価の合計金額
+1-12●●円以上の商品の合計ラベル---出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
+項目名も閾値の値を使って、●●円以上の商品と表記する
+商品の基準価格が●●円以上の商品の合計金額
+1-13●●円未満の商品の合計ラベル---出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
+項目名も閾値の値を使って、●●円未満の商品と表記する
+商品の基準価格が●●円未満の商品の合計金額
+1-14備考全角・半角-65535byte-メモの入力は入庫完了以外で入力可能
+1-15登録ボタン---備考の変更内容を登録する処理を実行
+1-16削除ボタン---表示中の指示書リストを削除する処理を実行
+出庫待ち状態の場合のみ削除可能
+在庫移動情報
+2-1在庫移動振替IDリンク---機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-3" の値を利用する
+押下することで対象の在庫移動情報へ遷移
+2-2出庫元店舗ラベル---機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-1" の値を利用する
+2-3入庫先店舗ラベル---機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-2" の値を利用する
+2-4在庫区分ラベル---機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID2-3" の値を利用する
+2-5基準価格合計ラベル---対象の在庫移動が持つ全ての商品の基準価格の合計金額
+2-6移動原価合計ラベル---対象の在庫移動が持つ移動原価の合計金額
+2-7●●円以上の商品の合計ラベル---出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
+項目名も閾値の値を使って、●●円以上の商品と表記する
+商品の基準価格が●●円以上の商品の合計金額
+2-8●●円未満の商品の合計ラベル---出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
+項目名も閾値の値を使って、●●円未満の商品と表記する
+商品の基準価格が●●円未満の商品の合計金額
+2-9移動点数ラベル---対象の在庫移動に含まれる商品点数の合計
+2-10登録日ラベル---機能No.: M04-09 在庫移動・振替登録 編集（移動）の "識別ID1-4" の値を利用する
+図形・テキストボックス内テキスト（26件）</code></pre>
+</details>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

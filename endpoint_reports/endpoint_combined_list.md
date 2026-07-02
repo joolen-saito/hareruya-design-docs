@@ -1,0 +1,1667 @@
+# HTML設計「利用者視点の入口」 + 実装未記載候補 エンドポイント統合一覧
+
+## サマリ
+- html_design_entries: 1095
+- implementation_missing_entries: 876
+- combined_unique_method_path: 1654
+- by_status: {'HTML設計のみ': 781, '実装未記載候補のみ': 873}
+- by_method: {'DELETE': 88, 'GET': 847, 'OPTIONS': 2, 'POST': 668, 'PUT': 46, 'ANY': 3}
+
+## 統合一覧
+
+| 状態 | HTTPメソッド | エンドポイント | 区分 | route名 | HTML入口 | 実装機能 | HTML根拠 | 実装根拠 |
+|---|---|---|---|---|---|---|---|---|
+| HTML設計のみ | DELETE | /%admin_route%/event/{id}/delete | Design/Admin |  | 行の削除リンク / 削除リンク（一覧・編集画面） |  | 0214_基本設計仕様書(イベント管理).html:1007; 0214_基本設計仕様書(イベント管理).html:1556 |  |
+| HTML設計のみ | DELETE | /%admin_route%/setting/system/member/{id}/delete | Design/Admin |  | 他行の削除を実行する / 存在しないIDで削除を実行する |  | 0201_基本設計仕様書(システム設定).html:969 |  |
+| HTML設計のみ | DELETE | /%eccube_admin_route%/banner/event/delete | Design/Admin |  | 画像削除 |  | 0214_基本設計仕様書(イベント管理).html:5051 |  |
+| HTML設計のみ | DELETE | /%eccube_admin_route%/banner/event/delete/{html_class} | Design/Admin |  | 画像削除（店舗絞り込み） |  | 0214_基本設計仕様書(イベント管理).html:5051 |  |
+| HTML設計のみ | DELETE | /%eccube_admin_route%/content/file_delete | Design/Admin |  | ファイル・フォルダを削除 |  | 0210_基本設計仕様書(コンテンツ管理).html:1107 |  |
+| HTML設計のみ | DELETE | /%eccube_admin_route%/content/layout/{id}/delete | Design/Admin |  | 削除を押下（確認後） |  | 0210_基本設計仕様書(コンテンツ管理).html:1227 |  |
+| HTML設計のみ | DELETE | /%eccube_admin_route%/content/news/{id}/delete | Design/Admin |  | 削除確認モーダルで削除を実行する |  | 0210_基本設計仕様書(コンテンツ管理).html:985 |  |
+| HTML設計のみ | DELETE | /%eccube_admin_route%/mall/tenant/{識別子}/delete | Design/Admin |  | 「削除」を実行するモーダルで確定して一括処理する |  | 0209_基本設計仕様書(基本情報設定).html:1604 |  |
+| HTML設計のみ | DELETE | /%eccube_admin_route%/setting/shop/calendar/{id}/delete | Design/Admin |  | 削除アイコンからモーダルを開き削除を実行 |  | 0209_基本設計仕様書(基本情報設定).html:1492 |  |
+| HTML設計のみ | DELETE | /deck/{id} | Design/API |  | デッキ情報の削除 |  | 0515_基本設計仕様書(API_デッキビルダー).html:1111 |  |
+| HTML設計のみ | DELETE | /products/favorite/remove | Design/Front |  | お気に入り解除ボタン |  | 0303_基本設計仕様書(フロント_商品).html:3642 |  |
+| HTML設計のみ | DELETE | /{admin_route}/archetype/{id} | Design/Admin |  | 編集画面または一覧のドロップダウンから「削除」を選び、確認後に実行 |  | 0212_基本設計仕様書(デッキ管理).html:3021 |  |
+| HTML設計のみ | DELETE | /{admin_route}/banner/event/delete | Design/Admin |  | バナーの「削除」 |  | 0214_基本設計仕様書(イベント管理).html:4872 |  |
+| HTML設計のみ | DELETE | /{admin_route}/banner/top/delete?select_file=… | Design/Admin |  | 一覧の「削除」リンク |  | 0213_基本設計仕様書(データ管理).html:949; 0213_基本設計仕様書(データ管理).html:1143 |  |
+| HTML設計のみ | DELETE | /{admin_route}/banner/top/delete/{html_class} | Design/Admin |  | 店舗絞り込み時の削除。`select_file` に加えパスに `{html_class}` が含まれる。 / 同上（店舗サブディレクトリ文脈）。 |  | 0213_基本設計仕様書(データ管理).html:949; 0213_基本設計仕様書(データ管理).html:1143 |  |
+| HTML設計のみ | DELETE | /{admin_route}/card/{id} | Design/Admin |  | 詳細サイドバーで削除を確定（確認ダイアログ後） |  | 0208_基本設計仕様書(カード管理).html:1902 |  |
+| HTML設計のみ | DELETE | /{admin_route}/cardset/{id}/delete | Design/Admin |  | 表メニューの「削除」 / 編集画面の「削除」（確認後） / 一覧表メニュー「削除」（確認後） |  | 0208_基本設計仕様書(カード管理).html:2447; 0208_基本設計仕様書(カード管理).html:3142 |  |
+| HTML設計のみ | DELETE | /{admin_route}/content/block/{id}/delete | Design/Admin |  | 行の削除を押下 |  | 0210_基本設計仕様書(コンテンツ管理).html:2183 |  |
+| HTML設計のみ | DELETE | /{admin_route}/content/page/{id}/delete | Design/Admin |  | 行の削除を押下 |  | 0210_基本設計仕様書(コンテンツ管理).html:1341 |  |
+| HTML設計のみ | DELETE | /{admin_route}/customer/delete/pattern/{patternId} | Design/Admin |  | 検索パターンを削除 |  | 0207_基本設計仕様書(会員管理機能).html:1076 |  |
+| HTML設計のみ | DELETE | /{admin_route}/customer/delivery/{id}/delete | Design/Admin |  | 配送先の「削除」 |  | 0207_基本設計仕様書(会員管理機能).html:3387 |  |
+| HTML設計のみ | DELETE | /{admin_route}/customer_group/{id}/delete | Design/Admin |  | 「削除」ボタン |  | 0207_基本設計仕様書(会員管理機能).html:4023 |  |
+| HTML設計のみ | DELETE | /{admin_route}/deck/{id} | Design/Admin |  | 一覧から削除リンク（アンカーで DELETE 送信） |  | 0212_基本設計仕様書(デッキ管理).html:2116 |  |
+| HTML設計のみ | DELETE | /{admin_route}/deckTag/{id} | Design/Admin |  | 一覧の削除ボタン |  | 0212_基本設計仕様書(デッキ管理).html:2507 |  |
+| HTML設計のみ | DELETE | /{admin_route}/format/{formatId}/delete | Design/Admin |  | 行末メニュー「削除」 |  | 0208_基本設計仕様書(カード管理).html:3302 |  |
+| HTML設計のみ | DELETE | /{_locale}/mypage/delivery/{id}/delete | Design/Front |  | 配送先の「削除」 |  | 0306_基本設計仕様書(フロント_会員).html:5747 |  |
+| HTML設計のみ | DELETE | /{admin_route}/order/waiting_tag/{id}/delete | Design/Admin |  | 一覧行の「削除」からモーダル確定 |  | 0203_基本設計仕様書(受注管理機能).html:7547 |  |
+| HTML設計のみ | DELETE | /{admin_route}/product/category/{id}/delete | Design/Admin |  | 削除モーダル完了 |  | 0204_基本設計仕様書(商品管理).html:5231 |  |
+| HTML設計のみ | DELETE | /{admin_route}/product/product/{id}/class/{classId}/edit/delete | Design/Admin |  | 規格の削除 |  | 0204_基本設計仕様書(商品管理).html:4785 |  |
+| HTML設計のみ | DELETE | /{admin_route}/product/section/{id}/delete | Design/Admin |  | 一覧の「削除」 |  | 0204_基本設計仕様書(商品管理).html:6717 |  |
+| HTML設計のみ | DELETE | /{admin_route}/product/sell_group/{id}/delete | Design/Admin |  | 一覧の削除ボタン〜モーダル確定 |  | 0204_基本設計仕様書(商品管理).html:7589 |  |
+| HTML設計のみ | DELETE | /{admin_route}/product/shelf_number/{id}/delete | Design/Admin |  | 一覧の「削除」 |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | DELETE | /{admin_route}/product/storage_code/{id}/delete | Design/Admin |  | 行の削除（確認モーダル経由） |  | 0204_基本設計仕様書(商品管理).html:6166 |  |
+| HTML設計のみ | DELETE | /{admin_route}/product/tag/{id}/delete | Design/Admin |  | タグマスタの削除（商品との紐付けがある場合は拒否）。 |  | 0204_基本設計仕様書(商品管理).html:5942 |  |
+| HTML設計のみ | DELETE | /{admin_route}/product/tag_sales_analysis/{id}/delete | Design/Admin |  | 「削除」（確認モーダル経由の DELETE） |  | 0204_基本設計仕様書(商品管理).html:3680 |  |
+| HTML設計のみ | DELETE | /{admin_route}/setting/shop/custom_csv/delete/{csvExtensionId} | Design/Admin |  | 拡張と中間テーブル行を削除する。 / 既存定義で「削除」相当の導線を実行する |  | 0204_基本設計仕様書(商品管理).html:2089; 0209_基本設計仕様書(基本情報設定).html:3340 |  |
+| HTML設計のみ | DELETE | /{admin_route}/setting/shop/delivery/{id}/delete | Design/Admin |  | 一覧から削除を実行する |  | 0209_基本設計仕様書(基本情報設定).html:1258 |  |
+| HTML設計のみ | DELETE | /{admin_route}/setting/shop/payment/{id}/delete | Design/Admin |  | 一覧で削除を実行する |  | 0209_基本設計仕様書(基本情報設定).html:2231 |  |
+| HTML設計のみ | DELETE | /{admin_route}/setting/shop/tax/{id}/delete | Design/Admin |  | 一覧から「削除」（論理削除）を実行する |  | 0209_基本設計仕様書(基本情報設定).html:2572 |  |
+| HTML設計のみ | DELETE | /{admin_route}/standby/{id}/delete | Design/Admin |  | 詳細または一覧のドロップダウンから「リスト削除」相当のリンクを辿る（アンカーに METHOD 上書きと CSRF 属性が付く） |  | 0203_基本設計仕様書(受注管理機能).html:6419 |  |
+| HTML設計のみ | GET | /%admin_route%/entry/deckList | Design/Admin |  | デッキ表示ボタン / デッキ表示ボタン（申込一覧） |  | 0214_基本設計仕様書(イベント管理).html:2761; 0214_基本設計仕様書(イベント管理).html:3363 |  |
+| HTML設計のみ | GET | /%admin_route%/entry/export | Design/Admin |  | CSV出力 |  | 0214_基本設計仕様書(イベント管理).html:2761 |  |
+| HTML設計のみ | GET | /%admin_route%/entry/list | Design/Admin |  | 申込一覧を開く |  | 0214_基本設計仕様書(イベント管理).html:2761 |  |
+| HTML設計のみ | GET | /%admin_route%/entry/page/{page_no} | Design/Admin |  | ページ送り・表示件数変更・ソート変更 |  | 0214_基本設計仕様書(イベント管理).html:2761 |  |
+| HTML設計のみ | GET | /%admin_route%/entry/{eventDetailId}/detail/{page_no} | Design/Admin |  | イベント詳細指定表示 |  | 0214_基本設計仕様書(イベント管理).html:2761 |  |
+| HTML設計のみ | GET | /%admin_route%/entry/{eventEntryId}/edit | Design/Admin |  | 申込の編集 |  | 0214_基本設計仕様書(イベント管理).html:2761 |  |
+| HTML設計のみ | GET | /%admin_route%/event/list | Design/Admin |  | イベント一覧を開く |  | 0214_基本設計仕様書(イベント管理).html:1007 |  |
+| HTML設計のみ | GET | /%admin_route%/event/new | Design/Admin |  | 新規登録ボタン / 新規登録画面を開く |  | 0214_基本設計仕様書(イベント管理).html:1007; 0214_基本設計仕様書(イベント管理).html:1556 |  |
+| HTML設計のみ | GET | /%admin_route%/event/page/{page_no} | Design/Admin |  | ページ送り・表示件数変更・ソート変更 |  | 0214_基本設計仕様書(イベント管理).html:1007 |  |
+| HTML設計のみ | GET | /%admin_route%/event/{duplicateId}/duplicate | Design/Admin |  | 複製新規ボタン（編集画面） |  | 0214_基本設計仕様書(イベント管理).html:2495 |  |
+| HTML設計のみ | GET | /%admin_route%/event/{id}/edit | Design/Admin |  | 行の編集リンク / 編集画面を開く |  | 0214_基本設計仕様書(イベント管理).html:1007; 0214_基本設計仕様書(イベント管理).html:1556 |  |
+| HTML設計のみ | GET | /%admin_route%/setting/system/member | Design/Admin |  | ナビからメンバー一覧を開く |  | 0201_基本設計仕様書(システム設定).html:969 |  |
+| HTML設計のみ | GET | /%admin_route%/setting/system/member/new | Design/Admin |  | 操作メニューから新規登録を開く / 新規登録を開く |  | 0201_基本設計仕様書(システム設定).html:969; 0201_基本設計仕様書(システム設定).html:1557 |  |
+| HTML設計のみ | GET | /%admin_route%/setting/system/member/{id}/edit | Design/Admin |  | 操作メニューから編集を開く / 既存メンバーの編集を開く / 存在しないIDで編集を開く |  | 0201_基本設計仕様書(システム設定).html:969; 0201_基本設計仕様書(システム設定).html:1557 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/... | Design/Admin |  | 保護された管理画面 / ホーム画面を開く / 非管理者・未認証 他3件 |  | 0215_基本設計仕様書(管理画面ログイン).html:207; 0216_基本設計仕様書(管理画面TOPページ).html:209; 0216_基本設計仕様書(管理画面TOPページ).html:312; 0216_基本設計仕様書(管理画面TOPページ).html:420; 他3件 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/banner/event | Design/Admin |  | イベントバナー管理（全店舗） |  | 0214_基本設計仕様書(イベント管理).html:5051 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/banner/event/{html_class} | Design/Admin |  | イベントバナー管理（店舗絞り込み） |  | 0214_基本設計仕様書(イベント管理).html:5051 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/cache | Design/Admin |  | メニューからキャッシュ管理を開く / 未認証・非管理者 |  | 0210_基本設計仕様書(コンテンツ管理).html:1684 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/css | Design/Admin |  | コンテンツ管理からCSS管理を開く |  | 0210_基本設計仕様書(コンテンツ管理).html:1465 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/file_download?select_file=... | Design/Admin |  | ファイルをダウンロード |  | 0210_基本設計仕様書(コンテンツ管理).html:1107 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/file_manager | Design/Admin |  | ファイル管理画面を開く |  | 0210_基本設計仕様書(コンテンツ管理).html:1107 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/file_view?file=... | Design/Admin |  | ファイルを表示 |  | 0210_基本設計仕様書(コンテンツ管理).html:1107 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/js | Design/Admin |  | ナビからJavaScript管理を開く |  | 0210_基本設計仕様書(コンテンツ管理).html:1582 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/layout | Design/Admin |  | レイアウト一覧を開く |  | 0210_基本設計仕様書(コンテンツ管理).html:1227 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/layout/new | Design/Admin |  | 新規作成を押下 |  | 0210_基本設計仕様書(コンテンツ管理).html:1227 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/layout/view_block | Design/Admin |  | ブロックのコードプレビューを開く |  | 0210_基本設計仕様書(コンテンツ管理).html:1227 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/layout/{id}/edit | Design/Admin |  | レイアウト名を押下（編集） |  | 0210_基本設計仕様書(コンテンツ管理).html:1227 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/maintenance | Design/Admin |  | メンテナンス管理画面を開く / メンテナンス許可フラグが偽の環境 |  | 0210_基本設計仕様書(コンテンツ管理).html:1791 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/news | Design/Admin |  | ナビから新着情報一覧を開く |  | 0210_基本設計仕様書(コンテンツ管理).html:985 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/news/new | Design/Admin |  | 「新規作成」ボタンを押す |  | 0210_基本設計仕様書(コンテンツ管理).html:985 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/news/page/{page_no} | Design/Admin |  | 一覧の2ページ目以降を開く |  | 0210_基本設計仕様書(コンテンツ管理).html:985 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/news/{id}/edit | Design/Admin |  | 一覧からタイトルまたは編集アイコンを押す |  | 0210_基本設計仕様書(コンテンツ管理).html:985 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/content/page | Design/Admin |  | 「CSS管理」リンク（戻る導線） / 「JavaScript管理」リンク（フッタの戻る導線） |  | 0210_基本設計仕様書(コンテンツ管理).html:1465; 0210_基本設計仕様書(コンテンツ管理).html:1582 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/entry/bulkentry | Design/Admin |  | 一括登録のアップロード画面 |  | 0214_基本設計仕様書(イベント管理).html:4672 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/entry/entry_csv_template | Design/Admin |  | 雛形ファイルダウンロード |  | 0214_基本設計仕様書(イベント管理).html:3561; 0214_基本設計仕様書(イベント管理).html:4672 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/entry/export | Design/Admin |  | イベント申込一覧のCSVダウンロード |  | 0214_基本設計仕様書(イベント管理).html:3561 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/entry/search/player/html/{page_no} | Design/Admin |  | プレイヤー検索ページ送り |  | 0214_基本設計仕様書(イベント管理).html:3873 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/entry/select | Design/Admin |  | 登録先選択画面 |  | 0214_基本設計仕様書(イベント管理).html:4431 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/entry/{eventEntryId}/edit | Design/Admin |  | 申込一覧から編集 |  | 0214_基本設計仕様書(イベント管理).html:3873 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/entry/{eventDetailId}/export | Design/Admin |  | イベント詳細指定のCSVダウンロード |  | 0214_基本設計仕様書(イベント管理).html:3561 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/entry/{eventDetailId}/new | Design/Admin |  | 新規申込の入力表示 |  | 0214_基本設計仕様書(イベント管理).html:4431 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/login | Design/Admin |  | 管理ログイン画面 / Remember Me 再開 |  | 0215_基本設計仕様書(管理画面ログイン).html:207 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/logout | Design/Admin |  | ログアウト |  | 0215_基本設計仕様書(管理画面ログイン).html:207 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/mall/tenant | Design/Admin |  | メニューから店舗一覧を開く / 未認証ユーザー |  | 0209_基本設計仕様書(基本情報設定).html:1604 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/mall/tenant/detail/{id} | Design/Admin |  | 店舗名リンクを押下する |  | 0209_基本設計仕様書(基本情報設定).html:1604 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/mall/tenant/page/{page_no} | Design/Admin |  | ページリンクや「表示件数」プルダウンで一覧をページ送りする |  | 0209_基本設計仕様書(基本情報設定).html:1604 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/order | Design/Admin |  | 受注一覧画面を開く / 変更完了後に閉じるボタンを押す / 非管理者・未認証 他3件 |  | 0203_基本設計仕様書(受注管理機能).html:1320; 0203_基本設計仕様書(受注管理機能).html:1425; 0216_基本設計仕様書(管理画面TOPページ).html:209 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/order/new | Design/Admin |  | 新規受注登録画面を開く / 新規受注の登録画面を開く / 受注新規登録画面を開く |  | 0203_基本設計仕様書(受注管理機能).html:1521; 0203_基本設計仕様書(受注管理機能).html:1624; 0203_基本設計仕様書(受注管理機能).html:1727 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/order/{id}/edit | Design/Admin |  | 受注編集を開く / 受注編集（詳細）画面を開く / 未認証・管理画面へ到達できない利用者 他3件 |  | 0203_基本設計仕様書(受注管理機能).html:1425; 0203_基本設計仕様書(受注管理機能).html:1521; 0203_基本設計仕様書(受注管理機能).html:1624; 0203_基本設計仕様書(受注管理機能).html:1727; 他1件 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/order/{id}/mail | Design/Admin |  | 受注編集画面のメール送信履歴ブロックで「メールを作成」を押す |  | 0203_基本設計仕様書(受注管理機能).html:3137 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/otcbuyorder/status/{otcBuyOrderId} | Design/Admin |  | 「ステータス変更」リンク |  | 0205_基本設計仕様書(店頭買取管理).html:2862 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/otcbuyorder/{otcBuyOrderId} | Design/Admin |  | 店頭買取一覧の行から詳細へ |  | 0205_基本設計仕様書(店頭買取管理).html:2862 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product | Design/Admin |  | 取扱商品数の行を押下 |  | 0216_基本設計仕様書(管理画面TOPページ).html:519 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/history | Design/Admin |  | 価格・在庫一覧を開く |  | 0202_基本設計仕様書(在庫管理機能).html:8977 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/history/price/export | Design/Admin |  | 価格一覧のCSVダウンロード |  | 0202_基本設計仕様書(在庫管理機能).html:8977 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/history/search/1?page_count=… | Design/Admin |  | 表示件数プルダウン変更 |  | 0202_基本設計仕様書(在庫管理機能).html:8977 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/history/search/{page_no} | Design/Admin |  | ページネーションでNページへ |  | 0202_基本設計仕様書(在庫管理機能).html:8977 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/history/stock/export | Design/Admin |  | 在庫一覧のCSVダウンロード / 在庫一覧でCSVダウンロードを押下 |  | 0202_基本設計仕様書(在庫管理機能).html:8977; 0202_基本設計仕様書(在庫管理機能).html:9392 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/inventory_plan/new | Design/Admin |  | 新規登録画面を開く |  | 0202_基本設計仕様書(在庫管理機能).html:13238 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/inventory_plan/search/{page_no} | Design/Admin |  | 棚卸計画一覧を開く |  | 0202_基本設計仕様書(在庫管理機能).html:13238 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/inventory_plan/{id} | Design/Admin |  | 編集画面を開く |  | 0202_基本設計仕様書(在庫管理機能).html:13238 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/product/{id}/class/{classId}/edit | Design/Admin |  | 一覧の商品名リンク |  | 0202_基本設計仕様書(在庫管理機能).html:9635 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/product_csv_template/stock | Design/Admin |  | 雛形ファイルダウンロード |  | 0202_基本設計仕様書(在庫管理機能).html:10292 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/product_stock_csv_upload | Design/Admin |  | 在庫変更CSVアップロード画面を開く |  | 0202_基本設計仕様書(在庫管理機能).html:10292 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/search/{page_no} | Design/Admin |  | 「商品検索に戻る」を押下 |  | 0202_基本設計仕様書(在庫管理機能).html:2606 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/stockout/history | Design/Admin |  | 欠品履歴一覧を開く |  | 0202_基本設計仕様書(在庫管理機能).html:9635 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/stockout/history/search/1?page_count=… | Design/Admin |  | 表示件数プルダウン変更 |  | 0202_基本設計仕様書(在庫管理機能).html:9635 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/product/stockout/history/search/{page_no} | Design/Admin |  | ページネーションでNページへ |  | 0202_基本設計仕様書(在庫管理機能).html:9635 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/sale_chart | Design/Admin |  | 売上グラフ用データの非同期取得 |  | 0216_基本設計仕様書(管理画面TOPページ).html:312; 0216_基本設計仕様書(管理画面TOPページ).html:420 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/search_customer | Design/Admin |  | 会員数の行を押下 |  | 0216_基本設計仕様書(管理画面TOPページ).html:519 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/search_nonstock | Design/Admin |  | 在庫切れ商品数の行を押下 |  | 0216_基本設計仕様書(管理画面TOPページ).html:519 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/shop/calendar | Design/Admin |  | 定休日カレンダー設定画面を開く / 既存行の鉛筆を押す / 未認証または管理画面に入れない権限 |  | 0209_基本設計仕様書(基本情報設定).html:1492 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/shop/order_status | Design/Admin |  | 受注対応状況設定画面へ遷移（GET） / 権限評価で拒否となる利用者でGET |  | 0209_基本設計仕様書(基本情報設定).html:1375 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/system/login_history | Design/Admin |  | ログイン履歴一覧を開く / 前回条件で再表示 / 未認証・権限なし |  | 0201_基本設計仕様書(システム設定).html:1089 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/system/login_history/1?page_count=<件数> | Design/Admin |  | 表示件数を変更 |  | 0201_基本設計仕様書(システム設定).html:1089 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/system/login_history/{page_no} | Design/Admin |  | ページ送り |  | 0201_基本設計仕様書(システム設定).html:1089 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/system/masterdata | Design/Admin |  | マスタデータ管理を開く（マスタ未選択） / 非管理者・未認証 / 店舗側権種で許可されたログイン状態（確認テスト） |  | 0201_基本設計仕様書(システム設定).html:1202 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/system/masterdata/edit | Design/Admin |  | 編集のみの入口へ GET |  | 0201_基本設計仕様書(システム設定).html:1202 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/system/masterdata/{entity}/edit | Design/Admin |  | 既にマスタが選ばれた状態の入口へ遷移 |  | 0201_基本設計仕様書(システム設定).html:1202 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/system/member/{id}/edit | Design/Admin |  | メンバー編集 |  | 0215_基本設計仕様書(管理画面ログイン).html:372 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/system/system | Design/Admin |  | システム設定メニューからシステム情報を開く / 店舗オーナーまたは店舗オペレーターでログイン / 未認証 |  | 0201_基本設計仕様書(システム設定).html:1309 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/system/system/phpinfo | Design/Admin |  | PHP情報が有効な環境で画面を開く |  | 0201_基本設計仕様書(システム設定).html:1309 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/setting/system/two_factor_auth/edit | Design/Admin |  | 本人の再設定画面 |  | 0215_基本設計仕様書(管理画面ログイン).html:372 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/shipping/{id}/edit | Design/Admin |  | 出荷編集画面を開く（お届け先を編集） |  | 0203_基本設計仕様書(受注管理機能).html:1727 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/store/plugin | Design/Admin |  | カード下部の「オーナーズストア」を押下 |  | 0216_基本設計仕様書(管理画面TOPページ).html:710 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/store/plugin/install | Design/Admin |  | 詳細モーダルで「入手する」または「アップデート」を押下 |  | 0216_基本設計仕様書(管理画面TOPページ).html:710 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/two_factor_auth/auth | Design/Admin |  | 追加認証画面 |  | 0215_基本設計仕様書(管理画面ログイン).html:372 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/two_factor_auth/set | Design/Admin |  | 初回設定画面 |  | 0215_基本設計仕様書(管理画面ログイン).html:372 |  |
+| HTML設計のみ | GET | /%eccube_admin_route%/… | Design/Admin |  | 保護された管理画面 |  | 0215_基本設計仕様書(管理画面ログイン).html:372 |  |
+| HTML設計のみ | GET | /admin/buyOrders.json | Design/Admin / Design/Other |  | ネット買取受注一覧の取得 / 査定対象のネット買取受注を取得する |  | 0507_基本設計仕様書(API_ネット買取管理).html:1118; 0601_基本設計仕様書(その他_MTGBuyer).html:1084 |  |
+| HTML設計のみ | GET | /admin/optionBulkPurchaseId.json | Design/Admin |  | まとめ買取商品IDの取得 |  | 0507_基本設計仕様書(API_ネット買取管理).html:946 |  |
+| HTML設計のみ | GET | /admin/otcBuyOrders | Design/Admin / Design/Other |  | 同上（拡張子なし別名） / MTGバイヤーで査定対象を取得する |  | 0506_基本設計仕様書(API_店頭買取管理).html:1172; 0601_基本設計仕様書(その他_MTGBuyer).html:985 |  |
+| HTML設計のみ | GET | /admin/otcBuyOrders.json | Design/Admin / Design/Other |  | 店頭買取受注一覧の取得 / MTGバイヤーで査定対象を取得する |  | 0506_基本設計仕様書(API_店頭買取管理).html:1172; 0601_基本設計仕様書(その他_MTGBuyer).html:985 |  |
+| HTML設計のみ | GET | /archetypes/{formatId} | Design/API |  | アーキタイプ検索 |  | 0515_基本設計仕様書(API_デッキビルダー).html:745 |  |
+| HTML設計のみ | GET | /article | Design/API |  | 検索クエリに一致する記事1件取得 |  | 0517_基本設計仕様書(API_その他).html:1429 |  |
+| HTML設計のみ | GET | /article/related/{id} | Design/API |  | 記事IDに関連する記事情報取得 |  | 0517_基本設計仕様書(API_その他).html:1604 |  |
+| HTML設計のみ | GET | /buying/{detailId} | Design/Admin |  | カード詳細IDから買取用商品情報取得 |  | 0506_基本設計仕様書(API_店頭買取管理).html:2064; 0506_基本設計仕様書(API_店頭買取管理).html:2771 |  |
+| HTML設計のみ | GET | /card | Design/Admin |  | 検索クエリに一致するカード1件取得 |  | 0514_基本設計仕様書(API_カード管理).html:1664 |  |
+| HTML設計のみ | GET | /cardDetails/{id} | Design/Admin |  | カード詳細IDからカード詳細情報を取得 |  | 0514_基本設計仕様書(API_カード管理).html:1493 |  |
+| HTML設計のみ | GET | /cards | Design/API |  | カード検索 |  | 0515_基本設計仕様書(API_デッキビルダー).html:841 |  |
+| HTML設計のみ | GET | /cards/{id} | Design/Admin |  | カードIDからカード情報を取得 |  | 0514_基本設計仕様書(API_カード管理).html:1192 |  |
+| HTML設計のみ | GET | /contact/history | Design/Front |  | マイページトップの「お問い合わせ履歴」ブロック |  | 0306_基本設計仕様書(フロント_会員).html:6681; 0306_基本設計仕様書(フロント_会員).html:6860 |  |
+| HTML設計のみ | GET | /contact/history/{id}/detail | Design/Front |  | 一覧の件名リンク |  | 0306_基本設計仕様書(フロント_会員).html:6681; 0306_基本設計仕様書(フロント_会員).html:6860 |  |
+| HTML設計のみ | GET | /deck/usage_card/{formatId} | Design/API |  | 採用枚数情報参照 |  | 0515_基本設計仕様書(API_デッキビルダー).html:1518 |  |
+| HTML設計のみ | GET | /deck/{id} | Design/API |  | デッキ情報の参照 |  | 0515_基本設計仕様書(API_デッキビルダー).html:1192 |  |
+| HTML設計のみ | GET | /decks | Design/API |  | デッキ情報の検索 |  | 0515_基本設計仕様書(API_デッキビルダー).html:1301 |  |
+| HTML設計のみ | GET | /entry/activate/{secret_key} | Design/Front |  | 仮会員登録完了メール内のアクティベートURL |  | 0306_基本設計仕様書(フロント_会員).html:1805 |  |
+| HTML設計のみ | GET | /fixedPriceSection.json | Design/Admin |  | 固定価格部門を取得 |  | 0506_基本設計仕様書(API_店頭買取管理).html:3226 |  |
+| HTML設計のみ | GET | /forgot | Design/Front |  | ログイン画面等の「パスワードをお忘れの方」 |  | 0306_基本設計仕様書(フロント_会員).html:2451 |  |
+| HTML設計のみ | GET | /forgot/complete | Design/Front |  | 再発行完了画面 |  | 0306_基本設計仕様書(フロント_会員).html:2451 |  |
+| HTML設計のみ | GET | /forgot/reset/{resetKey} | Design/Front |  | 再設定メール内のURL |  | 0306_基本設計仕様書(フロント_会員).html:2451 |  |
+| HTML設計のみ | GET | /help/tradelaw | Design/Admin |  | ショップ側「特定商取引法に基づく表記」の参照表示（同一データを読む別経路） |  | 0209_基本設計仕様書(基本情報設定).html:1819 |  |
+| HTML設計のみ | GET | /master/{name} | Design/API |  | マスタ検索 |  | 0515_基本設計仕様書(API_デッキビルダー).html:647 |  |
+| HTML設計のみ | GET | /metagame | Design/API |  | メタゲーム情報参照 |  | 0515_基本設計仕様書(API_デッキビルダー).html:1410 |  |
+| HTML設計のみ | GET | /mypage | Design/Front |  | 退会確認・退会前画面の「戻る」リンク / 一覧の「マイページ」ボタン |  | 0306_基本設計仕様書(フロント_会員).html:6051; 0306_基本設計仕様書(フロント_会員).html:6681; 0306_基本設計仕様書(フロント_会員).html:6860 |  |
+| HTML設計のみ | GET | /mypage/favorite/list | Design/Front |  | マイページの「お気に入り登録商品一覧」ブロック / 一覧の「セール対象商品のみ表示する」切替 |  | 0303_基本設計仕様書(フロント_商品).html:3642 |  |
+| HTML設計のみ | GET | /mypage/identification | Design/Front |  | マイページの「オンライン本人確認」ブロック |  | 0306_基本設計仕様書(フロント_会員).html:3841 |  |
+| HTML設計のみ | GET | /mypage/purchase_history/list/{id} | Design/Front |  | 買取履歴詳細の「こちら（すべての査定結果）」リンク |  | 0305_基本設計仕様書(フロント_ネット買取).html:3880 |  |
+| HTML設計のみ | GET | /mypage/withdraw | Design/Front |  | マイページトップの「退会」ブロック |  | 0306_基本設計仕様書(フロント_会員).html:6051 |  |
+| HTML設計のみ | GET | /mypage/withdraw_complete | Design/Front |  | 退会完了後の表示 |  | 0306_基本設計仕様書(フロント_会員).html:6051 |  |
+| HTML設計のみ | GET | /order/print/direct | Design/Admin |  | 印刷情報をプリンタへ送信（A05-01） |  | 0505_基本設計仕様書(API_受注管理).html:1034; 0505_基本設計仕様書(API_受注管理).html:1265 |  |
+| HTML設計のみ | GET | /otcbuy/{name} | Design/Front |  | 「アカウントをお持ちでない方はこちら」 |  | 0308_基本設計仕様書(フロント_店頭買取).html:951 |  |
+| HTML設計のみ | GET | /otcbuy/{name}/entry | Design/Front |  | 店頭買取の査定申込前ログイン |  | 0308_基本設計仕様書(フロント_店頭買取).html:951 |  |
+| HTML設計のみ | GET | /popup/card/{lang}/{cardId} | Design/Admin |  | 記事内ポップアップ用のカード情報取得 |  | 0502_基本設計仕様書(API_商品管理).html:1162 |  |
+| HTML設計のみ | GET | /popup/old/{oldProductId} | Design/Admin |  | 旧商品IDによるポップアップ用商品情報取得 |  | 0502_基本設計仕様書(API_商品管理).html:1357 |  |
+| HTML設計のみ | GET | /popup/old/{lang}/{oldProductId} | Design/Admin |  | 旧商品IDと言語によるポップアップ用商品情報取得 |  | 0502_基本設計仕様書(API_商品管理).html:1541 |  |
+| HTML設計のみ | GET | /popup/product/{lang}/{productId} | Design/Admin |  | 記事内ポップアップ用の商品情報取得 |  | 0502_基本設計仕様書(API_商品管理).html:970 |  |
+| HTML設計のみ | GET | /product/detail/{productId} | Design/API |  | 商品IDによる商品詳細の取得 |  | 0517_基本設計仕様書(API_その他).html:2031 |  |
+| HTML設計のみ | GET | /product/detail/{productId}.json | Design/API |  | 同上（拡張子あり別名） |  | 0517_基本設計仕様書(API_その他).html:2031 |  |
+| HTML設計のみ | GET | /product/search | Design/Admin / Design/API |  | 商品名による商品詳細の取得 |  | 0506_基本設計仕様書(API_店頭買取管理).html:2362; 0517_基本設計仕様書(API_その他).html:2329 |  |
+| HTML設計のみ | GET | /product/search.json | Design/Admin / Design/API |  | 同上（拡張子あり別名） |  | 0506_基本設計仕様書(API_店頭買取管理).html:2362; 0517_基本設計仕様書(API_その他).html:2329 |  |
+| HTML設計のみ | GET | /recent_event | Design/API |  | 直近大会情報取得 |  | 0515_基本設計仕様書(API_デッキビルダー).html:1618 |  |
+| HTML設計のみ | GET | /search | Design/Admin |  | カード名から買取用商品情報取得 |  | 0506_基本設計仕様書(API_店頭買取管理).html:2662 |  |
+| HTML設計のみ | GET | /section.json | Design/Admin |  | 部門一覧を取得 |  | 0506_基本設計仕様書(API_店頭買取管理).html:3067 |  |
+| HTML設計のみ | GET | /shopping/complete | Design/Front |  | 購入完了画面 |  | 0304_基本設計仕様書(フロント_注文).html:2406 |  |
+| HTML設計のみ | GET | /topBanner/{id} | Design/API / Design/Admin |  | トップバナーIDのトップバナー情報取得 |  | 0508_基本設計仕様書(API_コンテンツ).html:199; 0516_基本設計仕様書(API_データ管理).html:941 |  |
+| HTML設計のみ | GET | /topBanners/{languageCode} | Design/API / Design/Admin |  | 指定言語の設定済みトップバナー一覧取得 |  | 0508_基本設計仕様書(API_コンテンツ).html:270; 0516_基本設計仕様書(API_データ管理).html:1176 |  |
+| HTML設計のみ | GET | /updateProducts/{strFromDate}/{strToDate} | Design/Admin |  | 更新商品規格の取得 |  | 0502_基本設計仕様書(API_商品管理).html:1780 |  |
+| HTML設計のみ | GET | /user | Design/API |  | 自分のユーザー情報参照 / 他ユーザー情報参照 |  | 0515_基本設計仕様書(API_デッキビルダー).html:397; 0515_基本設計仕様書(API_デッキビルダー).html:482 |  |
+| HTML設計のみ | GET | /{_locale}/ | Design/Front |  | サイトルート直下を開く / ロゴ・ショップ導線からの遷移 / 本店の各画面を開く（ヘッダ・ナビは画面の一部として描画） 他2件 |  | 0301_基本設計仕様書(フロント_トップ).html:2136; 0302_基本設計仕様書(フロント_グローバルナビ).html:1555; 0302_基本設計仕様書(フロント_グローバルナビ).html:2258; 0302_基本設計仕様書(フロント_グローバルナビ).html:3526 |  |
+| HTML設計のみ | GET | /{admin_route}/analysis/format_sales | Design/Admin |  | サイドメニュー「フォーマット売上分析」 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2874 |  |
+| HTML設計のみ | GET | /{admin_route}/analysis/request | Design/Admin |  | サイドメニュー「入荷通知依頼」 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2448 |  |
+| HTML設計のみ | GET | /{admin_route}/analysis/request/export | Design/Admin |  | 検索結果一覧の「CSVダウンロード」 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2706 |  |
+| HTML設計のみ | GET | /{admin_route}/analysis/sales/export | Design/Admin |  | 集計結果一覧の「CSVダウンロード」 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2198 |  |
+| HTML設計のみ | GET | /{admin_route}/analysis/summary/export | Design/Admin |  | 集計結果一覧の「CSVダウンロード」 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1599 |  |
+| HTML設計のみ | GET | /{admin_route}/analysis/used_card | Design/Admin |  | ナビ「デッキ採用枚数集計」 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3300; 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3445 |  |
+| HTML設計のみ | GET | /{admin_route}/analysis/used_card/export/{mode} | Design/Admin |  | CSVダウンロード（形式指定） |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3300; 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3445 |  |
+| HTML設計のみ | GET | /{admin_route}/archetype/csvimport | Design/Admin |  | サイドバー「デッキ管理」「アーキタイプ一覧」で一覧を開き、画面上部の CSV インポートボタンを押す |  | 0212_基本設計仕様書(デッキ管理).html:3225 |  |
+| HTML設計のみ | GET | /{admin_route}/archetype/new | Design/Admin |  | サイドメニュー「アーキタイプ管理」から一覧へ入り、「新規登録」相当で新規画面へ進む |  | 0212_基本設計仕様書(デッキ管理).html:3021 |  |
+| HTML設計のみ | GET | /{admin_route}/archetype/search/main_card/html/{page_no} | Design/Admin |  | 同上のページング（XHR）。 |  | 0212_基本設計仕様書(デッキ管理).html:3021 |  |
+| HTML設計のみ | GET | /{admin_route}/archetype/{id} | Design/Admin |  | 一覧の名称リンクから編集へ |  | 0212_基本設計仕様書(デッキ管理).html:3021 |  |
+| HTML設計のみ | GET | /{admin_route}/banner/event | Design/Admin |  | ナビ「バナー設定（イベント）」 |  | 0214_基本設計仕様書(イベント管理).html:4872 |  |
+| HTML設計のみ | GET | /{admin_route}/banner/event/{html_class} | Design/Admin |  | 店舗で絞り込み |  | 0214_基本設計仕様書(イベント管理).html:4872 |  |
+| HTML設計のみ | GET | /{admin_route}/banner/top | Design/Admin |  | ナビからトップバナー管理を開く / ナビ「データ管理」→「トップバナー管理」 |  | 0213_基本設計仕様書(データ管理).html:949; 0213_基本設計仕様書(データ管理).html:1143 |  |
+| HTML設計のみ | GET | /{admin_route}/banner/top/{html_class}#upload_wrap | Design/Admin |  | 店舗ドロップダウンで店舗を選ぶ / 画像一覧のドロップダウンで店舗を選ぶ |  | 0213_基本設計仕様書(データ管理).html:949; 0213_基本設計仕様書(データ管理).html:1143 |  |
+| HTML設計のみ | GET | /{_locale}/block/history | Design/Front |  | 最近見た商品ブロックの読み込み |  | 0303_基本設計仕様書(フロント_商品).html:2941 |  |
+| HTML設計のみ | GET | /{admin_route}/buy_discount | Design/Admin |  | ナビ「データ管理」→「買取減額率一覧」 / ブラウザで `/{admin_route}/buy_discount` に直接 GET |  | 0213_基本設計仕様書(データ管理).html:2292 |  |
+| HTML設計のみ | GET | /{admin_route}/buy_price_list | Design/Admin |  | ナビ「データ管理」→「買取価格対応表」 / 「戻る」を押す |  | 0213_基本設計仕様書(データ管理).html:1950; 0213_基本設計仕様書(データ管理).html:2117 |  |
+| HTML設計のみ | GET | /{admin_route}/buy_price_list/{id} | Design/Admin |  | 一覧の金額セル / 一覧の金額セルを押す |  | 0213_基本設計仕様書(データ管理).html:1950; 0213_基本設計仕様書(データ管理).html:2117 |  |
+| HTML設計のみ | GET | /{admin_route}/card | Design/Admin |  | ナビからカード一覧を開く |  | 0208_基本設計仕様書(カード管理).html:1045 |  |
+| HTML設計のみ | GET | /{admin_route}/card/csvimport | Design/Admin |  | カード一覧上部の「CSV,TSV取り込み」リンク |  | 0208_基本設計仕様書(カード管理).html:2104 |  |
+| HTML設計のみ | GET | /{admin_route}/card/new | Design/Admin |  | 一覧ヘッダの「新規」等から新規画面へ |  | 0208_基本設計仕様書(カード管理).html:1902 |  |
+| HTML設計のみ | GET | /{admin_route}/card/search/1?sort=…&order=… | Design/Admin |  | ソート項目と昇順・降順を選ぶ / 表示件数を変える |  | 0208_基本設計仕様書(カード管理).html:1045 |  |
+| HTML設計のみ | GET | /{admin_route}/card/search/{page_no} | Design/Admin |  | ページリンクから N ページ目へ / サイドバー「戻る」 |  | 0208_基本設計仕様書(カード管理).html:1045; 0208_基本設計仕様書(カード管理).html:1902 |  |
+| HTML設計のみ | GET | /{admin_route}/card/{id} | Design/Admin |  | 一覧のカード名リンク / 一覧のカード名リンクから詳細へ |  | 0208_基本設計仕様書(カード管理).html:1045; 0208_基本設計仕様書(カード管理).html:1902 |  |
+| HTML設計のみ | GET | /{admin_route}/cardset | Design/Admin |  | サイドメニュー「カードセット管理」 / 同じ入口で検索中断からの再開を想定したアクセス |  | 0208_基本設計仕様書(カード管理).html:2447 |  |
+| HTML設計のみ | GET | /{admin_route}/cardset/1?…&pageCount=…&sortSelect=… | Design/Admin |  | 表示件数ドロップダウンで別件数を選ぶ / 並び順ドロップダウンで別順を選ぶ |  | 0208_基本設計仕様書(カード管理).html:2447 |  |
+| HTML設計のみ | GET | /{admin_route}/cardset/new | Design/Admin |  | 「新規登録」 / 一覧見出し「新規登録」 |  | 0208_基本設計仕様書(カード管理).html:2447; 0208_基本設計仕様書(カード管理).html:3142 |  |
+| HTML設計のみ | GET | /{admin_route}/cardset/{page_no} | Design/Admin |  | ページャのリンク / フッタ「検索画面に戻る」 |  | 0208_基本設計仕様書(カード管理).html:2447; 0208_基本設計仕様書(カード管理).html:3142 |  |
+| HTML設計のみ | GET | /{admin_route}/cardset/{id}/edit | Design/Admin |  | 表の「編集」 / 一覧表メニュー「編集」 |  | 0208_基本設計仕様書(カード管理).html:2447; 0208_基本設計仕様書(カード管理).html:3142 |  |
+| HTML設計のみ | GET | /{_locale}/cart | Design/Front |  | 買い物かごを開く |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | GET | /{_locale}/cart/clear | Design/Front |  | カート一括削除 |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | GET | /{_locale}/cart/get | Design/Front |  | カート個数の非同期取得 / カート内容取得（XHR） |  | 0302_基本設計仕様書(フロント_グローバルナビ).html:3526; 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | GET | /{_locale}/contact | Design/Front |  | ヘッダー等の「お問い合わせ」 / キャンセル申込ボタンを押下 |  | 0306_基本設計仕様書(フロント_会員).html:6480; 0307_基本設計仕様書(フロント_イベント).html:2394 |  |
+| HTML設計のみ | GET | /{_locale}/contact/complete | Design/Front |  | 送信後の表示 |  | 0306_基本設計仕様書(フロント_会員).html:6480 |  |
+| HTML設計のみ | GET | /{admin_route}/content/block | Design/Admin |  | ブロック一覧を開く |  | 0210_基本設計仕様書(コンテンツ管理).html:2183 |  |
+| HTML設計のみ | GET | /{admin_route}/content/block/new | Design/Admin |  | 新規入力を押下 |  | 0210_基本設計仕様書(コンテンツ管理).html:2183 |  |
+| HTML設計のみ | GET | /{admin_route}/content/block/{id}/edit | Design/Admin |  | 行の編集を押下 |  | 0210_基本設計仕様書(コンテンツ管理).html:2183 |  |
+| HTML設計のみ | GET | /{admin_route}/content/page | Design/Admin |  | ページ一覧を開く |  | 0210_基本設計仕様書(コンテンツ管理).html:1341 |  |
+| HTML設計のみ | GET | /{admin_route}/content/page/new | Design/Admin |  | 新規入力を押下 |  | 0210_基本設計仕様書(コンテンツ管理).html:1341 |  |
+| HTML設計のみ | GET | /{admin_route}/content/page/{id}/edit | Design/Admin |  | 行のページ編集を押下 |  | 0210_基本設計仕様書(コンテンツ管理).html:1341 |  |
+| HTML設計のみ | GET | /{admin_route}/custom_csv/export/{csvExtensionId} | Design/Admin |  | 検索結果が1件以上あり一覧ブロックが描画された状態で、拡張名のリンクをクリック / 受注一覧の「カスタム配送CSVダウンロード」ドロップダウンから、登録済みフォーマット名を選ぶ |  | 0203_基本設計仕様書(受注管理機能).html:2340; 0203_基本設計仕様書(受注管理機能).html:2834 |  |
+| HTML設計のみ | GET | /{admin_route}/customer | Design/Admin |  | 会員マスターを開く |  | 0207_基本設計仕様書(会員管理機能).html:1076 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/blacklist | Design/Admin |  | ナビ「ブラックリスト」 |  | 0207_基本設計仕様書(会員管理機能).html:4195 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/export | Design/Admin |  | 会員一覧の「CSVダウンロード」 |  | 0207_基本設計仕様書(会員管理機能).html:1205 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/mail_complete | Design/Admin |  | 送信完了画面 |  | 0207_基本設計仕様書(会員管理機能).html:1608 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/manual_mail | Design/Admin |  | 会員を指定して手動メールを開く |  | 0207_基本設計仕様書(会員管理機能).html:3104 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/manual_mail/{customerId}/{templateId} | Design/Admin |  | テンプレートを選んで開く |  | 0207_基本設計仕様書(会員管理機能).html:3104 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/new | Design/Admin |  | 新規会員登録を開く |  | 0207_基本設計仕様書(会員管理機能).html:2263 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/page/{page_no} | Design/Admin |  | ページを送る |  | 0207_基本設計仕様書(会員管理機能).html:1076 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/point/{id}/select | Design/Admin |  | 会員のポイント操作で種別選択 |  | 0207_基本設計仕様書(会員管理機能).html:2438; 0207_基本設計仕様書(会員管理機能).html:2794 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/point/{id}/{type} | Design/Admin |  | ポイント履歴を開く |  | 0207_基本設計仕様書(会員管理機能).html:2438; 0207_基本設計仕様書(会員管理機能).html:2794 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/search/pattern/{patternId} | Design/Admin |  | 保存した検索パターンを適用 |  | 0207_基本設計仕様書(会員管理機能).html:1076 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/{id}/delivery | Design/Admin |  | 会員詳細等の「配送先一覧」 |  | 0207_基本設計仕様書(会員管理機能).html:3387 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/{id}/edit | Design/Admin |  | 会員編集を開く / 会員編集画面のオンライン本人確認ボタン |  | 0207_基本設計仕様書(会員管理機能).html:2263; 0207_基本設計仕様書(会員管理機能).html:3571 |  |
+| HTML設計のみ | GET | /{admin_route}/customer/{id}/mail_history | Design/Admin |  | 会員詳細等の「メール送信履歴」 |  | 0207_基本設計仕様書(会員管理機能).html:2953 |  |
+| HTML設計のみ | GET | /{admin_route}/customer_group/{id} | Design/Admin |  | ナビ「顧客グループ管理」 |  | 0207_基本設計仕様書(会員管理機能).html:4023 |  |
+| HTML設計のみ | GET | /{admin_route}/deck | Design/Admin |  | ナビからデッキ一覧を開く / ナビなどからデッキ一覧の初期画面を開く（検索結果ゼロ） / ナビでデッキ一覧を開いたあと一覧から詳細リンクや新規 |  | 0212_基本設計仕様書(デッキ管理).html:1059; 0212_基本設計仕様書(デッキ管理).html:1267; 0212_基本設計仕様書(デッキ管理).html:2116; 0212_基本設計仕様書(デッキ管理).html:2706 |  |
+| HTML設計のみ | GET | /{admin_route}/deck/csvimport | Design/Admin |  | デッキ検索画面（テンプレート `deck.twig`）の「CSV,TSV取り込み」リンク |  | 0212_基本設計仕様書(デッキ管理).html:2325 |  |
+| HTML設計のみ | GET | /{admin_route}/deck/search/1?sort=…&order=… | Design/Admin |  | ソート項目と昇順・降順を選ぶ / 表示件数を変える / ソートまたは表示件数を変える |  | 0212_基本設計仕様書(デッキ管理).html:1059; 0212_基本設計仕様書(デッキ管理).html:2706 |  |
+| HTML設計のみ | GET | /{admin_route}/deck/search/{page_no} | Design/Admin |  | ページリンクから N ページ目へ / 検索結果からページリンクで N ページ目へ |  | 0212_基本設計仕様書(デッキ管理).html:1059; 0212_基本設計仕様書(デッキ管理).html:2706 |  |
+| HTML設計のみ | GET | /{admin_route}/deck/{id} | Design/Admin |  | 行のデッキ詳細リンク／編集 / ナビでデッキ一覧を開いたあと一覧から詳細リンクや新規 |  | 0212_基本設計仕様書(デッキ管理).html:1059; 0212_基本設計仕様書(デッキ管理).html:2116 |  |
+| HTML設計のみ | GET | /{admin_route}/deck/{duplicateId}/duplicate | Design/Admin |  | 同一モーダルで作り直し |  | 0212_基本設計仕様書(デッキ管理).html:2116 |  |
+| HTML設計のみ | GET | /{admin_route}/deckTag | Design/Admin |  | カスタム一覧を既定件数・既定ページ・既定並びで開く（ルート名前付きリンクや直接入力を含む） |  | 0212_基本設計仕様書(デッキ管理).html:2507 |  |
+| HTML設計のみ | GET | /{admin_route}/deckTag/{pageCount}/{pageNo}/{sortKey} | Design/Admin |  | 表示件数（10〜100 の 10 段階）、ページ、`sortKey` を変えて再度開く |  | 0212_基本設計仕様書(デッキ管理).html:2507 |  |
+| HTML設計のみ | GET | /{_locale}/deckentry/edit?eventDetailId={eventDetailId} | Design/Front |  | デッキ登録・編集ボタンを押下 |  | 0307_基本設計仕様書(フロント_イベント).html:2394 |  |
+| HTML設計のみ | GET | /{_locale}/deckentry/{deckId}/check | Design/Front |  | 登録確定後の自動遷移 |  | 0306_基本設計仕様書(フロント_会員).html:4816 |  |
+| HTML設計のみ | GET | /{_locale}/deckentry/{eventDetailId}/edit | Design/Front |  | デッキ登録一覧などの「デッキ登録」「編集」リンク / 編集画面の「マイデッキを取得」（フォーマット選択） |  | 0306_基本設計仕様書(フロント_会員).html:4536 |  |
+| HTML設計のみ | GET | /{admin_route}/discount | Design/Admin |  | ナビ「データ管理」→「販売割引率一覧」 / ブラウザで `/{admin_route}/discount` に直接 GET |  | 0213_基本設計仕様書(データ管理).html:1757 |  |
+| HTML設計のみ | GET | /{_locale}/entry | Design/Front |  | 会員登録画面 |  | 0306_基本設計仕様書(フロント_会員).html:1384 |  |
+| HTML設計のみ | GET | /{_locale}/entry/complete | Design/Front |  | 仮会員登録完了画面 |  | 0306_基本設計仕様書(フロント_会員).html:1384 |  |
+| HTML設計のみ | GET | /{_locale}/entry/regist_error | Design/Front |  | ブラックリスト登録エラー画面 |  | 0306_基本設計仕様書(フロント_会員).html:1384 |  |
+| HTML設計のみ | GET | /{admin_route}/entry/search/event/html/{page_no} | Design/Admin |  | 検索結果のページ送り |  | 0214_基本設計仕様書(イベント管理).html:4042 |  |
+| HTML設計のみ | GET | /{admin_route}/event/repeatschedule/{eventId}/new | Design/Admin |  | イベントの「繰り返し日程登録」 |  | 0214_基本設計仕様書(イベント管理).html:2157 |  |
+| HTML設計のみ | GET | /{admin_route}/event/{eventId}/schedule/new | Design/Admin |  | イベントの「日程追加」 |  | 0214_基本設計仕様書(イベント管理).html:1900 |  |
+| HTML設計のみ | GET | /{_locale}/events?shop={店舗ID} | Design/Front |  | イベント店舗文脈の店舗選択 / イベント店舗文脈の店舗切替セレクト操作 / 編集画面の「キャンセル」リンク 他5件 |  | 0302_基本設計仕様書(フロント_グローバルナビ).html:2804; 0302_基本設計仕様書(フロント_グローバルナビ).html:3338; 0306_基本設計仕様書(フロント_会員).html:4536; 0307_基本設計仕様書(フロント_イベント).html:1587; 他2件 |  |
+| HTML設計のみ | GET | /{_locale}/events/list?term=…&from=…&to=…&formats[]=…&venues[]=…&isWeekday=…&isHoliday=…&isPast=… | Design/Front |  | 検索を実行する / 結果一覧のページ送り |  | 0307_基本設計仕様書(フロント_イベント).html:1879 |  |
+| HTML設計のみ | GET | /{_locale}/events/payment_complete?detail={eventDetailId} | Design/Front |  | 申込完了を表示する |  | 0307_基本設計仕様書(フロント_イベント).html:2880 |  |
+| HTML設計のみ | GET | /{_locale}/events/payment_finish | Design/Front |  | 決済後に戻る |  | 0307_基本設計仕様書(フロント_イベント).html:2880 |  |
+| HTML設計のみ | GET | /{_locale}/events/search | Design/Front |  | 検索フォームを開く |  | 0307_基本設計仕様書(フロント_イベント).html:1879 |  |
+| HTML設計のみ | GET | /{_locale}/events/{id} | Design/Front |  | 一覧のイベント名リンク |  | 0306_基本設計仕様書(フロント_会員).html:4071 |  |
+| HTML設計のみ | GET | /{_locale}/events/{eventDetailId}/detail | Design/Front |  | 単一日程イベントを押下 / イベント詳細を開く |  | 0307_基本設計仕様書(フロント_イベント).html:1587; 0307_基本設計仕様書(フロント_イベント).html:2394 |  |
+| HTML設計のみ | GET | /{_locale}/events/{eventDetailId}/entry | Design/Front |  | 申込ボタンを押下 / 申込対象を選ぶ |  | 0307_基本設計仕様書(フロント_イベント).html:2394; 0307_基本設計仕様書(フロント_イベント).html:2880 |  |
+| HTML設計のみ | GET | /{_locale}/events/{eventDetailId}/select_payment?details[]=… | Design/Front |  | 支払方法選択を開く |  | 0307_基本設計仕様書(フロント_イベント).html:2880 |  |
+| HTML設計のみ | GET | /{_locale}/events/{eventId}/{eventDate}/ | Design/Front |  | 複数日程イベントを押下 |  | 0307_基本設計仕様書(フロント_イベント).html:1587 |  |
+| HTML設計のみ | GET | /{admin_route}/format | Design/Admin |  | ナビ「カード管理」→「フォーマット管理」 |  | 0208_基本設計仕様書(カード管理).html:3302 |  |
+| HTML設計のみ | GET | /{admin_route}/format/new | Design/Admin |  | サブタイトル右の「新規登録」 |  | 0208_基本設計仕様書(カード管理).html:3302 |  |
+| HTML設計のみ | GET | /{admin_route}/format/{formatId}/edit | Design/Admin |  | 表のフォーマット名（和／英）リンク / 行末メニュー「編集」 |  | 0208_基本設計仕様書(カード管理).html:3302 |  |
+| HTML設計のみ | GET | /{_locale}/forward/{oldCode} | Design/Front |  | 旧商品コードから開く |  | 0303_基本設計仕様書(フロント_商品).html:2081 |  |
+| HTML設計のみ | GET | /{admin_route}/holiday | Design/Admin |  | ナビ「データ管理」→「祝日管理」 |  | 0213_基本設計仕様書(データ管理).html:1354 |  |
+| HTML設計のみ | GET | /{admin_route}/integration/toppage_management/{id} | Design/Admin |  | 支店トップページ管理を開く / 支店選択を変更する |  | 0210_基本設計仕様書(コンテンツ管理).html:2599 |  |
+| HTML設計のみ | GET | /{admin_route}/latest_event_deck | Design/Admin |  | デッキ管理メニューから「直近の大会管理」を開く |  | 0212_基本設計仕様書(デッキ管理).html:1365 |  |
+| HTML設計のみ | GET | /{_locale}/logout | Design/Front |  | ログアウト |  | 0306_基本設計仕様書(フロント_会員).html:2022 |  |
+| HTML設計のみ | GET | /{admin_route}/mall/auto_mail | Design/Admin |  | 管理ナビの「店舗設定」配下から「自動送信メール」を開く |  | 0209_基本設計仕様書(基本情報設定).html:2769 |  |
+| HTML設計のみ | GET | /{admin_route}/mall/auto_mail/{Mail} | Design/Admin |  | テンプレ選択を変更する / 自動送信対象外の識別子をURL等で直接指定する |  | 0209_基本設計仕様書(基本情報設定).html:2769 |  |
+| HTML設計のみ | GET | /{admin_route}/masterdata | Design/Admin |  | 側メニュー「データ管理」内「MTGマスターデータ」から開く（ナビでは `GET` のリンク） |  | 0213_基本設計仕様書(データ管理).html:1574 |  |
+| HTML設計のみ | GET | /{admin_route}/masterdata/{entity}/edit | Design/Admin |  | ブックマークや名前付き URL で一覧を開く |  | 0213_基本設計仕様書(データ管理).html:1574 |  |
+| HTML設計のみ | GET | /{_locale}/mypage | Design/Front |  | 「マイページ」ボタン / 会員ログインが必要な画面 / マイページトップ 他1件 |  | 0305_基本設計仕様書(フロント_ネット買取).html:3290; 0305_基本設計仕様書(フロント_ネット買取).html:3685; 0306_基本設計仕様書(フロント_会員).html:2022; 0306_基本設計仕様書(フロント_会員).html:2758; 他3件 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/change | Design/Front |  | マイページの「会員情報変更」 |  | 0306_基本設計仕様書(フロント_会員).html:5221 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/deckentry_list | Design/Front |  | 「デッキ登録」ボタン |  | 0306_基本設計仕様書(フロント_会員).html:4071 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/delivery | Design/Front |  | マイページの「配送先」一覧 |  | 0306_基本設計仕様書(フロント_会員).html:5747 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/delivery/new/edit | Design/Front |  | 「新規登録」 |  | 0306_基本設計仕様書(フロント_会員).html:5747 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/delivery/{id}/edit | Design/Front |  | 既存配送先の「編集」 |  | 0306_基本設計仕様書(フロント_会員).html:5747 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/events | Design/Front |  | マイページの「予約済み大会一覧」ブロック |  | 0306_基本設計仕様書(フロント_会員).html:4071 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/favorite/list | Design/Front |  | マイページの「お気に入り登録商品一覧」ブロック / 「セール対象商品のみ表示する」切替 / 表示順の切替（登録順・価格高い順・価格安い順） |  | 0306_基本設計仕様書(フロント_会員).html:3279 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/login | Design/Front |  | 会員ログイン画面 |  | 0306_基本設計仕様書(フロント_会員).html:2022 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/notifylist | Design/Front |  | 入荷通知依頼一覧を開く / マイページの「入荷待ち商品一覧」ブロック |  | 0303_基本設計仕様書(フロント_商品).html:3306; 0306_基本設計仕様書(フロント_会員).html:3018 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/point_history | Design/Front |  | マイページの「ポイント履歴」ブロック / ページ送りリンク（最初・数字・最後） / 表示件数の選択 |  | 0306_基本設計仕様書(フロント_会員).html:3502 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/point_in_header | Design/Front |  | ヘッダー用保有ポイント |  | 0306_基本設計仕様書(フロント_会員).html:2758 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/purchase_history | Design/Front |  | マイページの「買取履歴」ブロック / ページ送りリンク（最初・数字・最後） / 表示件数の選択 |  | 0305_基本設計仕様書(フロント_ネット買取).html:3290 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/purchase_history/detail/{id} | Design/Front |  | オーダーID・処理状態画像 / 買取履歴一覧のオーダーID・処理状態画像 |  | 0305_基本設計仕様書(フロント_ネット買取).html:3290; 0305_基本設計仕様書(フロント_ネット買取).html:3685 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/shopping_history | Design/Front |  | マイページの「購入履歴」ブロック / ページ送り |  | 0304_基本設計仕様書(フロント_注文).html:2665 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/shopping_history/detail/{id} | Design/Front |  | 注文番号リンク / 購入履歴一覧の注文番号リンク |  | 0304_基本設計仕様書(フロント_注文).html:2665; 0304_基本設計仕様書(フロント_注文).html:3163 |  |
+| HTML設計のみ | GET | /{_locale}/mypage/shopping_history/printOrderReceipt/{id} | Design/Front |  | 領収書発行 |  | 0304_基本設計仕様書(フロント_注文).html:2665; 0304_基本設計仕様書(フロント_注文).html:3163 |  |
+| HTML設計のみ | GET | /{_locale}{_shop}/mypage/sln_edit_card | Design/Front |  | カード編集画面を開く / 未ログイン・簡易認証のみ / 会員登録機能が無効な店舗 |  | 0306_基本設計仕様書(フロント_会員).html:1496 |  |
+| HTML設計のみ | GET | /{admin_route}/order | Design/Admin |  | 管理画面ナビから受注一覧を開く / ダッシュボード等からステータス件数リンクを踏む / 他画面から一覧へ戻る（検索状態維持） |  | 0203_基本設計仕様書(受注管理機能).html:1230 |  |
+| HTML設計のみ | GET | /{admin_route}/order/count/pattern/{pattern_id} | Design/Admin |  | パターンに保存された条件での件数をJSONで返す（一覧ヘッダからXHRで利用） |  | 0203_基本設計仕様書(受注管理機能).html:1230 |  |
+| HTML設計のみ | GET | /{admin_route}/order/export/order | Design/Admin |  | 受注一覧で検索条件を確定したあと、上部「CSVダウンロード」から「受注CSVダウンロード」を開く |  | 0203_基本設計仕様書(受注管理機能).html:2113 |  |
+| HTML設計のみ | GET | /{admin_route}/order/export/shipping | Design/Admin |  | 受注一覧で「CSVダウンロード」から「出荷CSVダウンロード」を選ぶ / ブラウザのアドレスバーやブックマークから同一パスを開く |  | 0203_基本設計仕様書(受注管理機能).html:2593 |  |
+| HTML設計のみ | GET | /{admin_route}/order/manual_mail/mail_all?ids[]=… | Design/Admin |  | 受注一覧で1件以上の配送行にチェックを入れ、「その他」→「メール一括通知」を押す |  | 0203_基本設計仕様書(受注管理機能).html:3048 |  |
+| HTML設計のみ | GET | /{admin_route}/order/manual_mail/mail_all/{templateId}?ids[]=… | Design/Admin |  | 入力画面でテンプレートプルダウンを変更する / 確認画面で「手動メール通知画面に戻る」 |  | 0203_基本設計仕様書(受注管理機能).html:3048 |  |
+| HTML設計のみ | GET | /{admin_route}/order/page/1?page_count=… | Design/Admin |  | 表示件数プルダウン変更 |  | 0203_基本設計仕様書(受注管理機能).html:1230 |  |
+| HTML設計のみ | GET | /{admin_route}/order/page/{page_no} | Design/Admin |  | ページリンクで移動 / 入力画面で「受注一覧に戻る」 |  | 0203_基本設計仕様書(受注管理機能).html:1230; 0203_基本設計仕様書(受注管理機能).html:3048 |  |
+| HTML設計のみ | GET | /{admin_route}/order/search/customer/html/page/{page_no} | Design/Admin |  | 会員検索結果の次ページ |  | 0203_基本設計仕様書(受注管理機能).html:5184 |  |
+| HTML設計のみ | GET | /{admin_route}/order/search/pattern/{pattern_id} | Design/Admin |  | 保存済み検索パターン名をクリック |  | 0203_基本設計仕様書(受注管理機能).html:1230 |  |
+| HTML設計のみ | GET | /{admin_route}/order/shipping_result_csv/import | Design/Admin |  | 側メニュー「受注管理」配下などから当画面へ遷移 |  | 0203_基本設計仕様書(受注管理機能).html:7265 |  |
+| HTML設計のみ | GET | /{admin_route}/order/waiting_tag | Design/Admin |  | 管理画面ナビ「受注管理」配下の「店頭注文番号札管理」 |  | 0203_基本設計仕様書(受注管理機能).html:7547 |  |
+| HTML設計のみ | GET | /{admin_route}/order/{id}/edit | Design/Admin |  | 一覧から受注日または注文番号のリンク / 受注一覧などから既存受注の編集へ遷移 |  | 0203_基本設計仕様書(受注管理機能).html:1230; 0203_基本設計仕様書(受注管理機能).html:5184 |  |
+| HTML設計のみ | GET | /{admin_route}/order/{id}/print/delivery | Design/Admin |  | 納品書印刷ボタン |  | 0203_基本設計仕様書(受注管理機能).html:5184 |  |
+| HTML設計のみ | GET | /{_locale}/otcbuy/{name} | Design/Front |  | 申込フォーム |  | 0308_基本設計仕様書(フロント_店頭買取).html:1258 |  |
+| HTML設計のみ | GET | /{_locale}/otcbuy/{name}/complete | Design/Front |  | 完了 |  | 0308_基本設計仕様書(フロント_店頭買取).html:1461 |  |
+| HTML設計のみ | GET | /{_locale}/otcbuy/{name}/confirm | Design/Front |  | 確認・登録 |  | 0308_基本設計仕様書(フロント_店頭買取).html:1461 |  |
+| HTML設計のみ | GET | /{_locale}/otcbuy/{name}/entry | Design/Front |  | エントリー（開始画面） |  | 0308_基本設計仕様書(フロント_店頭買取).html:1258 |  |
+| HTML設計のみ | GET | /{_locale}/otcbuy/{name}/register_customer | Design/Front |  | 会員登録フォーム |  | 0308_基本設計仕様書(フロント_店頭買取).html:1258 |  |
+| HTML設計のみ | GET | /{admin_route}/otcbuyorder | Design/Admin |  | 管理画面ナビ「店頭買取管理」→「買取一覧」 / ページャのリンク / 表示件数ドロップダウン |  | 0205_基本設計仕様書(店頭買取管理).html:1007 |  |
+| HTML設計のみ | GET | /{admin_route}/otcbuyorder/history | Design/Admin |  | ナビ「店頭買取管理」→「買取商品履歴」 |  | 0205_基本設計仕様書(店頭買取管理).html:3366 |  |
+| HTML設計のみ | GET | /{admin_route}/otcbuyorder/history/page/{page_no} | Design/Admin |  | ページャの各種リンク / セッションに保存した検索条件で指定ページを再表示する（ページ番号はパスまたはクエリのいずれか）。 |  | 0205_基本設計仕様書(店頭買取管理).html:3366; 0205_基本設計仕様書(店頭買取管理).html:3750 |  |
+| HTML設計のみ | GET | /{admin_route}/otcbuyorder/page/{page_no} | Design/Admin |  | パス形式のページング |  | 0205_基本設計仕様書(店頭買取管理).html:1007 |  |
+| HTML設計のみ | GET | /{admin_route}/otcbuyorder/status/{otcBuyOrderId} | Design/Admin |  | 店頭買取詳細の「ステータス変更」リンク |  | 0205_基本設計仕様書(店頭買取管理).html:3118 |  |
+| HTML設計のみ | GET | /{admin_route}/otcbuyorder/summary | Design/Admin |  | サイドメニュー「店頭買取管理」→「買取集計データ」 |  | 0205_基本設計仕様書(店頭買取管理).html:4191 |  |
+| HTML設計のみ | GET | /{admin_route}/product | Design/Admin |  | ナビから商品一覧を開く / 他画面から一覧へ戻る |  | 0204_基本設計仕様書(商品管理).html:1169 |  |
+| HTML設計のみ | GET | /{admin_route}/product/buy_sale_price_history | Design/Admin |  | ナビ・商品管理・買取/販売価格履歴 |  | 0204_基本設計仕様書(商品管理).html:7868 |  |
+| HTML設計のみ | GET | /{admin_route}/product/buy_sale_price_history/export | Design/Admin |  | 「CSVダウンロード」リンク / 一覧で 1 件以上ヒットしたあと「CSVダウンロード」をクリック / 検索結果 0 件で CSV リンクが描画されていない状態から、手動で同じ URL にアクセス |  | 0204_基本設計仕様書(商品管理).html:7868; 0204_基本設計仕様書(商品管理).html:8039 |  |
+| HTML設計のみ | GET | /{admin_route}/product/buy_sale_price_history/search/{page_no}?page_count=… | Design/Admin |  | ページネーションまたは表示件数 |  | 0204_基本設計仕様書(商品管理).html:7868 |  |
+| HTML設計のみ | GET | /{admin_route}/product/category | Design/Admin |  | ナビから「カテゴリ登録/編集」 |  | 0204_基本設計仕様書(商品管理).html:5231 |  |
+| HTML設計のみ | GET | /{admin_route}/product/category/export | Design/Admin |  | 「CSVダウンロード」 / ナビ「商品管理」→「カテゴリ管理」でカテゴリ一覧を開き、右上の「CSVダウンロード」（クラウドアイコン付き）を押す |  | 0204_基本設計仕様書(商品管理).html:5231; 0204_基本設計仕様書(商品管理).html:5702 |  |
+| HTML設計のみ | GET | /{admin_route}/product/category/{parent_id} | Design/Admin |  | リストまたはツリーで親を開く / 親を選んだ子一覧 |  | 0204_基本設計仕様書(商品管理).html:5231; 0204_基本設計仕様書(商品管理).html:5530 |  |
+| HTML設計のみ | GET | /{admin_route}/product/category/{id}/edit | Design/Admin |  | リストの編集アイコン / 行の編集アイコン |  | 0204_基本設計仕様書(商品管理).html:5231; 0204_基本設計仕様書(商品管理).html:5530 |  |
+| HTML設計のみ | GET | /{admin_route}/product/category_csv_upload | Design/Admin |  | ルート URLを直接開く・ブックマークから開く |  | 0204_基本設計仕様書(商品管理).html:11218 |  |
+| HTML設計のみ | GET | /{admin_route}/product/csv_template/category | Design/Admin |  | 雛形ダウンロード |  | 0204_基本設計仕様書(商品管理).html:11218 |  |
+| HTML設計のみ | GET | /{admin_route}/product/csv_template/department | Design/Admin |  | 雛形ダウンロード（部門マスタCSV登録） |  | 0204_基本設計仕様書(商品管理).html:7060 |  |
+| HTML設計のみ | GET | /{admin_route}/product/department_csv_upload | Design/Admin |  | 部門CSV登録画面の表示 |  | 0204_基本設計仕様書(商品管理).html:7060 |  |
+| HTML設計のみ | GET | /{admin_route}/product/doubling_check | Design/Admin |  | 前ページの「重複確認する」ボタン |  | 0204_基本設計仕様書(商品管理).html:8222 |  |
+| HTML設計のみ | GET | /{admin_route}/product/edit_bulk_update_buy_price?ids[]=… | Design/Admin |  | 編集画面をブックマーク相当で開く / `ids` を付けずに編集 URL へ入る |  | 0204_基本設計仕様書(商品管理).html:5033 |  |
+| HTML設計のみ | GET | /{admin_route}/product/page/1?page_count=… | Design/Admin |  | 表示件数プルダウン変更 / ホームの在庫切れ件数から遷移 |  | 0204_基本設計仕様書(商品管理).html:1169 |  |
+| HTML設計のみ | GET | /{admin_route}/product/page/N | Design/Admin |  | ページネーションで N ページへ |  | 0204_基本設計仕様書(商品管理).html:1169 |  |
+| HTML設計のみ | GET | /{admin_route}/product/page/{page_no}?mode=… | Design/Admin |  | 一覧表示データプルダウン変更 / 「商品一覧」リンク |  | 0204_基本設計仕様書(商品管理).html:1169; 0204_基本設計仕様書(商品管理).html:5033 |  |
+| HTML設計のみ | GET | /{admin_route}/product/pre_doubling_check | Design/Admin |  | サイドナビ「商品管理」配下の「重複コード確認」（ロケール依存） |  | 0204_基本設計仕様書(商品管理).html:8222 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product/class/{id} | Design/Admin |  | 商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など） / `return_product_list` を付与して開く |  | 0204_基本設計仕様書(商品管理).html:4460 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product/class/{id}/edit/{productClassId} | Design/Admin |  | 行「編集」 / 結果ページの各セルのリンク（別タブ） |  | 0204_基本設計仕様書(商品管理).html:4460; 0204_基本設計仕様書(商品管理).html:8222 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product/class/{id}/new | Design/Admin |  | 「新規登録」ボタン |  | 0204_基本設計仕様書(商品管理).html:4460 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product/class/{不正または未登録 | Design/Admin |  | 存在しない商品 ID |  | 0204_基本設計仕様書(商品管理).html:4460 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product/new | Design/Admin |  | 新規登録画面 |  | 0204_基本設計仕様書(商品管理).html:1696 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product/{id}/class/list | Design/Admin |  | 規格設定へ遷移 / 規格一覧を開く |  | 0204_基本設計仕様書(商品管理).html:1696; 0204_基本設計仕様書(商品管理).html:4785 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product/{id}/class/new | Design/Admin |  | 規格の新規登録画面 |  | 0204_基本設計仕様書(商品管理).html:4785 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product/{id}/class/{classId}/edit | Design/Admin |  | 規格の編集画面 |  | 0204_基本設計仕様書(商品管理).html:4785 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product/{id}/edit | Design/Admin |  | 商品名リンク / 商品編集画面を開く |  | 0204_基本設計仕様書(商品管理).html:1169; 0204_基本設計仕様書(商品管理).html:1696 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_all_csv_custom_export/{csvExtensionId} | Design/Admin |  | 商品一覧右上のプルダウンで、空白以外の拡張名を選ぶ |  | 0204_基本設計仕様書(商品管理).html:2089 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_buy_discount_csv_upload | Design/Admin |  | 管理画面メニュー「商品管理」→「CSV管理」内「買取減額率変更CSV登録」 |  | 0204_基本設計仕様書(商品管理).html:8672 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_card/csv_template | Design/Admin |  | 雛形ダウンロード |  | 0204_基本設計仕様書(商品管理).html:2343 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_card_csv_upload | Design/Admin |  | ナビ「商品管理」→「商品CSV管理」→「カード商品CSV登録」 / 履歴の表示件数変更 |  | 0204_基本設計仕様書(商品管理).html:2343 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_csv_template/buyDiscount | Design/Admin |  | 雛形ファイルダウンロード |  | 0204_基本設計仕様書(商品管理).html:8672 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_csv_template/discount | Design/Admin |  | フォーマット欄の「雛形ファイルダウンロード」 |  | 0204_基本設計仕様書(商品管理).html:8556 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_csv_template/price | Design/Admin |  | 雛形ファイルダウンロード |  | 0204_基本設計仕様書(商品管理).html:9001 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_csv_template/{type} | Design/Admin |  | `type` が `discount` のとき、割引率変更用のヘッダのみを持つ UTF-8（BOM 付き）… |  | 0204_基本設計仕様書(商品管理).html:8556 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_discount_csv_upload | Design/Admin |  | 商品管理メニューから「CSVダウンロード・アップロード」系の配下にある「割引率変更CSV登録」 |  | 0204_基本設計仕様書(商品管理).html:8556 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_goods/csv_template | Design/Admin |  | 雛形ダウンロード |  | 0204_基本設計仕様書(商品管理).html:2901 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_goods_csv_upload | Design/Admin |  | ナビ「商品管理」→「商品CSV管理」→「グッズ商品CSV登録」 |  | 0204_基本設計仕様書(商品管理).html:2901 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_price/csv_template | Design/Admin |  | フォーマット説明カードの「CSVファイルのダウンロード」 |  | 0204_基本設計仕様書(商品管理).html:8451 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_price/product_price_csv_upload | Design/Admin |  | ナビ「商品管理」→「CSV管理」→「セール用価格変更CSVアップロード」 |  | 0204_基本設計仕様書(商品管理).html:8451 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_price_csv_upload | Design/Admin |  | アップロード画面を開く |  | 0204_基本設計仕様書(商品管理).html:9001 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_shelf_number_csv_import | Design/Admin |  | ナビ「商品管理」→「商品CSV管理」→「棚番号更新CSV登録」 / 履歴の表示件数変更 |  | 0204_基本設計仕様書(商品管理).html:10973 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_tag/csv_template | Design/Admin |  | 雛形ダウンロード |  | 0204_基本設計仕様書(商品管理).html:3434 |  |
+| HTML設計のみ | GET | /{admin_route}/product/product_tag_csv_upload | Design/Admin |  | ナビ「商品管理」→「商品CSV管理」→「商品タグ更新CSVアップロード」 / 履歴の表示件数変更 |  | 0204_基本設計仕様書(商品管理).html:3434 |  |
+| HTML設計のみ | GET | /{admin_route}/product/sale_high_price/csv_template | Design/Admin |  | 雛形ダウンロード |  | 0204_基本設計仕様書(商品管理).html:10201 |  |
+| HTML設計のみ | GET | /{admin_route}/product/sale_high_price/csv_upload | Design/Admin |  | ナビ「商品管理」→「商品CSV管理」→「セール用高額商品価格変更CSVアップロード」 / 履歴の表示件数プルダウン変更 |  | 0204_基本設計仕様書(商品管理).html:10201 |  |
+| HTML設計のみ | GET | /{admin_route}/product/section | Design/Admin |  | ナビ「部門登録／編集」 |  | 0204_基本設計仕様書(商品管理).html:6717 |  |
+| HTML設計のみ | GET | /{admin_route}/product/section/csv_template | Design/Admin |  | 雛形ダウンロード（部門更新） / 雛形ダウンロード |  | 0204_基本設計仕様書(商品管理).html:7060; 0204_基本設計仕様書(商品管理).html:10501 |  |
+| HTML設計のみ | GET | /{admin_route}/product/section/csv_upload | Design/Admin |  | ナビ「商品管理」→「商品CSV管理」→「部門更新CSV登録」 / 履歴の表示件数変更 |  | 0204_基本設計仕様書(商品管理).html:7060; 0204_基本設計仕様書(商品管理).html:10501 |  |
+| HTML設計のみ | GET | /{admin_route}/product/section/export | Design/Admin |  | 部門一覧の CSV ダウンロード（本書の主題外だが同一画面からリンクされる）。 / ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（`admin.product.csv.export` の文言）を押す |  | 0204_基本設計仕様書(商品管理).html:6717; 0204_基本設計仕様書(商品管理).html:6873 |  |
+| HTML設計のみ | GET | /{admin_route}/product/section/master_csv_template | Design/Admin |  | 部門マスタ用 CSV 雛形のダウンロード（本書の主題外）。 |  | 0204_基本設計仕様書(商品管理).html:6717 |  |
+| HTML設計のみ | GET | /{admin_route}/product/section/master_csv_upload | Design/Admin |  | 部門マスタ CSV アップロード画面の表示（本書の主題外）。 |  | 0204_基本設計仕様書(商品管理).html:6717 |  |
+| HTML設計のみ | GET | /{admin_route}/product/section/{id} | Design/Admin |  | 一覧の ID・部門名・「編集」 / 存在しない `{id}` で編集を開く |  | 0204_基本設計仕様書(商品管理).html:6717 |  |
+| HTML設計のみ | GET | /{admin_route}/product/sell_group | Design/Admin |  | ナビ「購入グループ登録/編集」を開く / 「新規登録」リンク（カードヘッダ右） |  | 0204_基本設計仕様書(商品管理).html:7589 |  |
+| HTML設計のみ | GET | /{admin_route}/product/sell_group/{id} | Design/Admin |  | 一覧の名称リンク |  | 0204_基本設計仕様書(商品管理).html:7589 |  |
+| HTML設計のみ | GET | /{admin_route}/product/shelf_number | Design/Admin |  | ナビ「棚番号登録/編集」 / 編集時「新規登録へ戻る」 |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | GET | /{admin_route}/product/shelf_number/csv | Design/Admin |  | 上記と同一画面だが別 URL（後方互換用）。アップロード画面を表示する。 |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | GET | /{admin_route}/product/shelf_number/csv_template | Design/Admin |  | 雛形ダウンロード |  | 0204_基本設計仕様書(商品管理).html:10973 |  |
+| HTML設計のみ | GET | /{admin_route}/product/shelf_number/export | Design/Admin |  | 「CSV出力」 |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | GET | /{admin_route}/product/shelf_number/master_csv_template | Design/Admin |  | マスタ CSV 用のヘッダー雛形をダウンロードする。 |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | GET | /{admin_route}/product/shelf_number/master_csv_upload | Design/Admin |  | 「CSV取込」 |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | GET | /{admin_route}/product/shelf_number/page/{page_no} | Design/Admin |  | 一覧ページリンク（新規時） |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | GET | /{admin_route}/product/shelf_number/{id} | Design/Admin |  | 一覧の ID・名称・編集ボタン |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | GET | /{admin_route}/product/shelf_number/{id}/page/{page_no} | Design/Admin |  | 一覧ページリンク（編集時） |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | GET | /{admin_route}/product/simple_high_price/csv_template | Design/Admin |  | フォーマット枠右上の「雛形ファイルダウンロード」（訳語キー `admin.common.csv_skeleton_download`） |  | 0204_基本設計仕様書(商品管理).html:9960 |  |
+| HTML設計のみ | GET | /{admin_route}/product/simple_high_price/csv_upload | Design/Admin |  | ナビ「商品管理」→「商品CSV管理」→「高額商品価格変更CSVアップロード」 / 履歴表示件数のプルダウン変更 |  | 0204_基本設計仕様書(商品管理).html:9960 |  |
+| HTML設計のみ | GET | /{admin_route}/product/status/csv_template | Design/Admin |  | 雛形ダウンロード |  | 0204_基本設計仕様書(商品管理).html:4139 |  |
+| HTML設計のみ | GET | /{admin_route}/product/status/csv_upload | Design/Admin |  | ナビ「商品管理」→「商品CSV管理」→「商品公開CSV登録」 / 履歴の表示件数変更 |  | 0204_基本設計仕様書(商品管理).html:4139 |  |
+| HTML設計のみ | GET | /{admin_route}/product/storage | Design/Admin |  | ナビから略称タグ登録／編集 / 取込画面の「一覧へ戻る」 |  | 0204_基本設計仕様書(商品管理).html:6166; 0204_基本設計仕様書(商品管理).html:10738 |  |
+| HTML設計のみ | GET | /{admin_route}/product/storage/page/{page_no} | Design/Admin |  | 一覧ページ送りのみ |  | 0204_基本設計仕様書(商品管理).html:6166 |  |
+| HTML設計のみ | GET | /{admin_route}/product/storage/{id} | Design/Admin |  | 行の id または名称または「変更」 |  | 0204_基本設計仕様書(商品管理).html:6166 |  |
+| HTML設計のみ | GET | /{admin_route}/product/storage/{id}/page/{page_no} | Design/Admin |  | 編集中のページ送り |  | 0204_基本設計仕様書(商品管理).html:6166 |  |
+| HTML設計のみ | GET | /{admin_route}/product/storage_code/csv | Design/Admin |  | 略称タグ登録／編集画面ヘッダの「CSV取込」 |  | 0204_基本設計仕様書(商品管理).html:10738 |  |
+| HTML設計のみ | GET | /{admin_route}/product/storage_code/csv_template | Design/Admin |  | 雛形ダウンロード |  | 0204_基本設計仕様書(商品管理).html:10738 |  |
+| HTML設計のみ | GET | /{admin_route}/product/storage_code/export | Design/Admin |  | 略称タグ管理の「CSV出力」 / フッタの案内リンク（既存データの CSV 出力） |  | 0204_基本設計仕様書(商品管理).html:6319; 0204_基本設計仕様書(商品管理).html:10738 |  |
+| HTML設計のみ | GET | /{admin_route}/product/storage_code/import | Design/Admin |  | 略称タグ管理の「CSV入力」 |  | 0204_基本設計仕様書(商品管理).html:6473 |  |
+| HTML設計のみ | GET | /{admin_route}/product/tag | Design/Admin |  | ナビ「タグ登録/編集」 |  | 0204_基本設計仕様書(商品管理).html:5942 |  |
+| HTML設計のみ | GET | /{admin_route}/product/tag/page/{page_no} | Design/Admin |  | 一覧のページリンク（新規時） |  | 0204_基本設計仕様書(商品管理).html:5942 |  |
+| HTML設計のみ | GET | /{admin_route}/product/tag/{id} | Design/Admin |  | 一覧の ID・名称・並び順・編集ボタン |  | 0204_基本設計仕様書(商品管理).html:5942 |  |
+| HTML設計のみ | GET | /{admin_route}/product/tag/{id}/page/{page_no} | Design/Admin |  | 一覧のページリンク（編集時） |  | 0204_基本設計仕様書(商品管理).html:5942 |  |
+| HTML設計のみ | GET | /{admin_route}/product/tag_sales_analysis | Design/Admin |  | ナビ「売上分析登録/編集」 |  | 0204_基本設計仕様書(商品管理).html:3680 |  |
+| HTML設計のみ | GET | /{admin_route}/product/tag_sales_analysis/csv_template | Design/Admin |  | 雛形ダウンロード |  | 0204_基本設計仕様書(商品管理).html:3893 |  |
+| HTML設計のみ | GET | /{admin_route}/product/tag_sales_analysis/csv_upload | Design/Admin |  | ナビ「商品管理」→「商品CSV管理」→「売上分析タグ更新CSVアップロード」 / 履歴の表示件数変更 |  | 0204_基本設計仕様書(商品管理).html:3893 |  |
+| HTML設計のみ | GET | /{admin_route}/product/tag_sales_analysis/page/{page_no} | Design/Admin |  | 一覧のページリンク（新規時） |  | 0204_基本設計仕様書(商品管理).html:3680 |  |
+| HTML設計のみ | GET | /{admin_route}/product/tag_sales_analysis/{id} | Design/Admin |  | 一覧の ID・名称または「編集」 |  | 0204_基本設計仕様書(商品管理).html:3680 |  |
+| HTML設計のみ | GET | /{admin_route}/product/tag_sales_analysis/{id}/page/{page_no} | Design/Admin |  | 一覧のページリンク（編集時） |  | 0204_基本設計仕様書(商品管理).html:3680 |  |
+| HTML設計のみ | GET | /{_locale}/products/category | Design/Front |  | カテゴリ一覧を開く |  | 0303_基本設計仕様書(フロント_商品).html:2582 |  |
+| HTML設計のみ | GET | /{_locale}/products/detail/{id} | Design/Front |  | 商品詳細を開く / 言語・規格を指定して開く / 一覧の商品リンク |  | 0303_基本設計仕様書(フロント_商品).html:2081; 0306_基本設計仕様書(フロント_会員).html:3018 |  |
+| HTML設計のみ | GET | /{_locale}/products/search | Design/Front |  | 検索条件なしで商品一覧を開く / 検索条件付きで商品一覧を開く / 並び順を切り替える 他5件 |  | 0303_基本設計仕様書(フロント_商品).html:1427; 0303_基本設計仕様書(フロント_商品).html:2347; 0303_基本設計仕様書(フロント_商品).html:2582; 0306_基本設計仕様書(フロント_会員).html:3018 |  |
+| HTML設計のみ | GET | /{_locale}/products/search/lazy | Design/Front |  | 一覧の商品サムネイルの遅延読み込み |  | 0303_基本設計仕様書(フロント_商品).html:1427 |  |
+| HTML設計のみ | GET | /{_locale}/products/search/unisearch/lazy | Design/Front |  | 一覧の商品サムネイルの遅延読み込み |  | 0303_基本設計仕様書(フロント_商品).html:1427 |  |
+| HTML設計のみ | GET | /{_locale}/purchase/ | Design/Front |  | ネット買取トップへの遷移 |  | 0305_基本設計仕様書(フロント_ネット買取).html:1298 |  |
+| HTML設計のみ | GET | /{_locale}/purchase/cart | Design/Front |  | 買取希望品カートへの導線 / 買取希望品カートの表示 |  | 0305_基本設計仕様書(フロント_ネット買取).html:1298; 0305_基本設計仕様書(フロント_ネット買取).html:2638 |  |
+| HTML設計のみ | GET | /{_locale}/purchase/category | Design/Front |  | 商品カテゴリ一覧（主にスマートフォン用）からの導線 |  | 0305_基本設計仕様書(フロント_ネット買取).html:1548 |  |
+| HTML設計のみ | GET | /{_locale}/purchase/detail/{id} | Design/Front |  | 買取商品詳細の表示 |  | 0305_基本設計仕様書(フロント_ネット買取).html:2413 |  |
+| HTML設計のみ | GET | /{_locale}/purchase/forward/{oldCode} | Design/Front |  | 旧商品コードからの転送 |  | 0305_基本設計仕様書(フロント_ネット買取).html:2413 |  |
+| HTML設計のみ | GET | /{admin_route}/purchase/list | Design/Admin |  | ナビから「ネット買取管理」→「買取一覧」 |  | 0206_基本設計仕様書(ネット買取管理機能).html:1063 |  |
+| HTML設計のみ | GET | /{admin_route}/purchase/page/1?page_count=… | Design/Admin |  | 表示件数プルダウン / 並び順ドロップダウン |  | 0206_基本設計仕様書(ネット買取管理機能).html:1063 |  |
+| HTML設計のみ | GET | /{admin_route}/purchase/page/{page_no} | Design/Admin |  | 一覧のページ送り / 「ネット買取一覧」戻り |  | 0206_基本設計仕様書(ネット買取管理機能).html:1063; 0206_基本設計仕様書(ネット買取管理機能).html:2857 |  |
+| HTML設計のみ | GET | /{_locale}/purchase/search | Design/Front |  | 買取詳細検索への導線 / 買取詳細検索フォームの表示 / 買取詳細検索の送信 他3件 |  | 0305_基本設計仕様書(フロント_ネット買取).html:1298; 0305_基本設計仕様書(フロント_ネット買取).html:1548; 0305_基本設計仕様書(フロント_ネット買取).html:1985 |  |
+| HTML設計のみ | GET | /{admin_route}/purchase/{id}/bulkpurchaseload | Design/Admin |  | 「まとめて買取」アコーディオンを初めて開く |  | 0206_基本設計仕様書(ネット買取管理機能).html:2857 |  |
+| HTML設計のみ | GET | /{admin_route}/purchase/{id}/edit | Design/Admin |  | ネット買取一覧の編集リンク・行リンク |  | 0206_基本設計仕様書(ネット買取管理機能).html:2857 |  |
+| HTML設計のみ | GET | /{admin_route}/purchase/{buyOrderId}/mail | Design/Admin |  | ネット買取一覧の行メニュー「メール通知」 / ネット買取詳細フッター「手動メール通知」（買取IDが無い状態ではリンク自体が描画されない） / 存在しない買取IDで開く |  | 0206_基本設計仕様書(ネット買取管理機能).html:3038 |  |
+| HTML設計のみ | GET | /{admin_route}/search/product/page/{page_no} | Design/Admin |  | 商品検索結果の次ページ |  | 0203_基本設計仕様書(受注管理機能).html:5184 |  |
+| HTML設計のみ | GET | /{admin_route}/search_customer | Design/Admin |  | 会員ホームからの導線 |  | 0207_基本設計仕様書(会員管理機能).html:1076 |  |
+| HTML設計のみ | GET | /{admin_route}/search_nonstock | Design/Admin |  | ホームの在庫切れ件数から遷移 |  | 0204_基本設計仕様書(商品管理).html:1169 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop | Design/Admin |  | ナビから当画面を開く / 未ログインで当画面にアクセスする / 権限マスタで当画面のパスが拒否されている 他4件 |  | 0209_基本設計仕様書(基本情報設定).html:1037; 0209_基本設計仕様書(基本情報設定).html:1144; 0209_基本設計仕様書(基本情報設定).html:2959; 0209_基本設計仕様書(基本情報設定).html:3707 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/additional_system | Design/Admin |  | 管理画面ナビから当機能を開く |  | 0209_基本設計仕様書(基本情報設定).html:3967 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/csv/{CsvType定数値} | Design/Admin |  | 「CSV出力項目設定」 / 同じ画面の「CSV出力項目設定」 / ナビの店舗設定から当画面を開く 他3件 |  | 0204_基本設計仕様書(商品管理).html:5231; 0204_基本設計仕様書(商品管理).html:5702; 0209_基本設計仕様書(基本情報設定).html:3137 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/custom_csv/1 | Design/Admin |  | 同プルダウンで「カスタム CSV 出力項目設定」を選ぶ |  | 0204_基本設計仕様書(商品管理).html:2089 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/custom_csv/3 | Design/Admin |  | 同ドロップダウンで「出力項目設定」を選ぶ |  | 0203_基本設計仕様書(受注管理機能).html:2340 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId} | Design/Admin |  | 受注用カスタムCSVの列や拡張名を編集する画面を開く。受注種別の実装値は数値3（`CsvType::CSV… / カスタムCSVのフォーマットおよび列定義の設定画面。`csvTypeId` に配送CSV種別の数値を渡して開く。 / 商品用 CSV 拡張の新規・編集フォームを表示する。既定の `csvTypeId` は商品 CSV 種別（… 他3件 |  | 0203_基本設計仕様書(受注管理機能).html:2340; 0203_基本設計仕様書(受注管理機能).html:2834; 0204_基本設計仕様書(商品管理).html:2089; 0209_基本設計仕様書(基本情報設定).html:3340 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/custom_csv/{csvTypeId}/… | Design/Admin |  | 同ドロップダウンの「出力項目設定」 |  | 0203_基本設計仕様書(受注管理機能).html:2834 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/customer_agreement | Design/Admin |  | 管理ナビから当画面を開く |  | 0209_基本設計仕様書(基本情報設定).html:2003 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/delivery | Design/Admin |  | ナビから配送方法一覧を開く |  | 0209_基本設計仕様書(基本情報設定).html:1258 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/delivery/new | Design/Admin |  | 「配送方法・配送料を新規入力」ボタン（文言は設定により前半のみの場合あり） |  | 0209_基本設計仕様書(基本情報設定).html:1258 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/delivery/{id}/edit | Design/Admin |  | 一覧から編集へ進む |  | 0209_基本設計仕様書(基本情報設定).html:1258 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/payment | Design/Admin |  | ナビから支払方法一覧を開く |  | 0209_基本設計仕様書(基本情報設定).html:2231 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/payment/new | Design/Admin |  | 「支払方法を新規入力」 |  | 0209_基本設計仕様書(基本情報設定).html:2231 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/payment/{id}/edit | Design/Admin |  | 一覧から編集へ進む（固定フラグが編集可） |  | 0209_基本設計仕様書(基本情報設定).html:2231 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/tax | Design/Admin |  | ナビから税率設定を開く（一覧の既定入口） |  | 0209_基本設計仕様書(基本情報設定).html:2572 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/tax/{id}/edit | Design/Admin |  | 一覧から「編集」を選ぶ / 編集対象IDが存在しない |  | 0209_基本設計仕様書(基本情報設定).html:2572 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/shop/tradelaw | Design/Admin |  | 管理ナビから当画面を開く / 未ログイン・権限拒否・管理画面 IP 制限外 |  | 0209_基本設計仕様書(基本情報設定).html:1819 |  |
+| HTML設計のみ | GET | /{admin_route}/setting/system/authority | Design/Admin |  | ナビから当画面を開く / 未ログインで当画面にアクセスする |  | 0201_基本設計仕様書(システム設定).html:1835 |  |
+| HTML設計のみ | GET | /{_locale}/shoppage/{name} | Design/Front |  | 店舗紹介ページを開く / 店舗一覧（左カラム・SP）内のリンク / 店舗未存在・当該言語のページ要素なし 他4件 |  | 0301_基本設計仕様書(フロント_トップ).html:2864; 0302_基本設計仕様書(フロント_グローバルナビ).html:2804; 0302_基本設計仕様書(フロント_グローバルナビ).html:3338 |  |
+| HTML設計のみ | GET | /{_locale}/shopping | Design/Front |  | ご注文方法指定を開く |  | 0304_基本設計仕様書(フロント_注文).html:1792 |  |
+| HTML設計のみ | GET | /{_locale}/shopping/delivery/new/edit | Design/Front |  | お届け先を新規登録（編集画面） |  | 0304_基本設計仕様書(フロント_注文).html:2056 |  |
+| HTML設計のみ | GET | /{_locale}/shopping/delivery/{id}/edit | Design/Front |  | 既存お届け先を編集 |  | 0304_基本設計仕様書(フロント_注文).html:2056 |  |
+| HTML設計のみ | GET | /{_locale}/shopping/shopping_error | Design/Front |  | 注文エラー画面 |  | 0304_基本設計仕様書(フロント_注文).html:1792 |  |
+| HTML設計のみ | GET | /{admin_route}/standby/（リスト主キー | Design/Admin |  | メソッドがGETのみでリクエストにオン受注キー一覧が載らない |  | 0203_基本設計仕様書(受注管理機能).html:6772 |  |
+| HTML設計のみ | GET | /{admin_route}/standby/page/{page_no} | Design/Admin |  | パスパラメータ `page_no`（1 以上の数字）でページ指定。内部では `index` の `$pag… |  | 0203_基本設計仕様書(受注管理機能).html:6320 |  |
+| HTML設計のみ | GET | /{admin_route}/standby/search | Design/Admin |  | ナビ「出荷指示」 / ページネーションのリンク / 表示件数プルダウン |  | 0203_基本設計仕様書(受注管理機能).html:6320 |  |
+| HTML設計のみ | GET | /{admin_route}/standby/{id}/edit | Design/Admin |  | 出荷指示番号のリンクまたは行メニューの編集 / 出荷指示一覧で番号リンクまたは「編集」から詳細を開く / ナビから受注管理に相当するメニューを開き、「出荷指示リスト」一覧からスタンバイを選んで編集を開く 他1件 |  | 0203_基本設計仕様書(受注管理機能).html:6320; 0203_基本設計仕様書(受注管理機能).html:6419; 0203_基本設計仕様書(受注管理機能).html:6650; 0203_基本設計仕様書(受注管理機能).html:6894 |  |
+| HTML設計のみ | GET | /{admin_route}/standby/{id}/print/delivery/en | Design/Admin |  | アドレス直打ちで存在しない`{id}`またはGETのみで本文にオン項目が無い |  | 0203_基本設計仕様書(受注管理機能).html:6894 |  |
+| HTML設計のみ | GET | /{admin_route}/standby/{id}/print/picking | Design/Admin |  | アドレスへ直接 `/print/picking` を叩く（GET） |  | 0203_基本設計仕様書(受注管理機能).html:6650 |  |
+| HTML設計のみ | GET | /{_locale}/waiting_api/get_waiting | Design/Front / Design/Admin |  | 注文番号取得API / 店頭注文番号リストの取得 |  | 0306_基本設計仕様書(フロント_会員).html:7063; 0505_基本設計仕様書(API_受注管理).html:1454 |  |
+| HTML設計のみ | GET | /{_locale}/waiting_number_1 | Design/Front |  | 店内モニター画面（第1） |  | 0306_基本設計仕様書(フロント_会員).html:7063 |  |
+| HTML設計のみ | GET | /{_locale}/waiting_number_2 | Design/Front |  | 店内モニター画面（第2） |  | 0306_基本設計仕様書(フロント_会員).html:7063 |  |
+| HTML設計のみ | GET | /{admin_route}/… | Design/Admin |  | 「ブロックの追加」 |  | 0208_基本設計仕様書(カード管理).html:2447 |  |
+| HTML設計のみ | OPTIONS | /{_locale}/cart/add | Design/Front |  | プリフライト |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | OPTIONS | /{_locale}/cart/get | Design/Front |  | プリフライト |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | POST | /%admin_route%/entry/search | Design/Admin |  | 検索フォームを送信 |  | 0214_基本設計仕様書(イベント管理).html:2761 |  |
+| HTML設計のみ | POST | /%admin_route%/event/create | Design/Admin |  | イベント登録の送信 / 複製新規画面の保存 |  | 0214_基本設計仕様書(イベント管理).html:1556; 0214_基本設計仕様書(イベント管理).html:2495 |  |
+| HTML設計のみ | POST | /%admin_route%/event/search/{page_no} | Design/Admin |  | 検索フォームを送信 |  | 0214_基本設計仕様書(イベント管理).html:1007 |  |
+| HTML設計のみ | POST | /%admin_route%/event/{id}/create | Design/Admin |  | イベント更新の送信 |  | 0214_基本設計仕様書(イベント管理).html:1556 |  |
+| HTML設計のみ | POST | /%admin_route%/event/{id}/detaildelete | Design/Admin |  | チェックした日程削除 |  | 0214_基本設計仕様書(イベント管理).html:1556 |  |
+| HTML設計のみ | POST | /%admin_route%/setting/system/member/new | Design/Admin |  | 登録ボタンで新規登録を送信する |  | 0201_基本設計仕様書(システム設定).html:1557 |  |
+| HTML設計のみ | POST | /%admin_route%/setting/system/member/{id}/edit | Design/Admin |  | 登録ボタンで編集を送信する |  | 0201_基本設計仕様書(システム設定).html:1557 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/banner/event | Design/Admin |  | 画像アップロード・バナー設定の送信 |  | 0214_基本設計仕様書(イベント管理).html:5051 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/banner/event/{html_class} | Design/Admin |  | 画像アップロード・バナー設定の送信（店舗絞り込み） |  | 0214_基本設計仕様書(イベント管理).html:5051 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/content/cache | Design/Admin |  | キャッシュ削除ボタンを押下 |  | 0210_基本設計仕様書(コンテンツ管理).html:1684 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/content/css | Design/Admin |  | 「登録」を押す |  | 0210_基本設計仕様書(コンテンツ管理).html:1465 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/content/file_manager | Design/Admin |  | フォルダへ移動 / ファイルをアップロード / フォルダを作成 |  | 0210_基本設計仕様書(コンテンツ管理).html:1107 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/content/js | Design/Admin |  | 登録ボタンを押す |  | 0210_基本設計仕様書(コンテンツ管理).html:1582 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/content/layout/new | Design/Admin |  | 新規作成を保存 |  | 0210_基本設計仕様書(コンテンツ管理).html:1227 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/content/layout/{id}/edit | Design/Admin |  | 編集を保存 |  | 0210_基本設計仕様書(コンテンツ管理).html:1227 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/content/layout/{id}/preview | Design/Admin |  | プレビューを押下 |  | 0210_基本設計仕様書(コンテンツ管理).html:1227 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/content/maintenance | Design/Admin |  | 切り替えボタンを押下 |  | 0210_基本設計仕様書(コンテンツ管理).html:1791 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/content/news/new | Design/Admin |  | 「登録」を押す（編集画面） |  | 0210_基本設計仕様書(コンテンツ管理).html:985 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/content/news/{id}/edit | Design/Admin |  | 「登録」を押す（編集画面） |  | 0210_基本設計仕様書(コンテンツ管理).html:985 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/disable_maintenance/auto_maintenance | Design/Admin |  | メンテナンス解除の非同期要求 |  | 0210_基本設計仕様書(コンテンツ管理).html:1684 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/entry/bulkentry/upload | Design/Admin |  | CSVのアップロード送信 |  | 0214_基本設計仕様書(イベント管理).html:4672 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/entry/search/player/html | Design/Admin |  | プレイヤー検索（モーダル） |  | 0214_基本設計仕様書(イベント管理).html:3873; 0214_基本設計仕様書(イベント管理).html:4431 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/entry/{eventDetailId}/create | Design/Admin |  | 新規申込の登録送信 |  | 0214_基本設計仕様書(イベント管理).html:4431 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/entry/{eventEntryId}/update | Design/Admin |  | 申込更新の送信 |  | 0214_基本設計仕様書(イベント管理).html:3873 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/login | Design/Admin |  | ログイン送信 |  | 0215_基本設計仕様書(管理画面ログイン).html:207 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/mall/tenant | Design/Admin |  | 「検索」ボタンを押下してPOST送信する |  | 0209_基本設計仕様書(基本情報設定).html:1604 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/order/new | Design/Admin |  | ショップ用メモを入力して「登録」を押す / 受注編集画面で登録する |  | 0203_基本設計仕様書(受注管理機能).html:1624; 0203_基本設計仕様書(受注管理機能).html:1727 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/order/{id}/edit | Design/Admin |  | 受注編集で受注を保存 / 対応状況変更操作を送信 / ショップ用メモを入力して「登録」を押す 他1件 |  | 0203_基本設計仕様書(受注管理機能).html:1425; 0203_基本設計仕様書(受注管理機能).html:1521; 0203_基本設計仕様書(受注管理機能).html:1624; 0203_基本設計仕様書(受注管理機能).html:1727 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/order/{id}/mail | Design/Admin |  | テンプレート選択を変更する / 「送信内容を確認」を押す / 確認画面で「送信」を押す 他1件 |  | 0203_基本設計仕様書(受注管理機能).html:3137 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/otcbuyorder/export | Design/Admin |  | 検索結果が1件以上あり、一覧で注文をチェックし、「CSVダウンロード」→「古物台帳入力用CSV」を選ぶ / 一覧はあるがチェックを1つも付けずに「古物台帳入力用CSV」を選ぶ |  | 0205_基本設計仕様書(店頭買取管理).html:1338 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/account_team_paid | Design/Admin |  | 「経理払出し済」 |  | 0205_基本設計仕様書(店頭買取管理).html:2862 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/register-individual-stock/{individualProductId} | Design/Admin |  | 個別入力の「実在庫情報登録」からモーダルで規格決定 |  | 0205_基本設計仕様書(店頭買取管理).html:2862 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/restocked | Design/Admin |  | 「入庫済みにする」 |  | 0205_基本設計仕様書(店頭買取管理).html:2862 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/otcbuyorder/{otcBuyOrderId}/update | Design/Admin |  | フッタの「保存」 |  | 0205_基本設計仕様書(店頭買取管理).html:2862 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/product/bulk_update_stock | Design/Admin |  | 在庫一括編集画面で「登録」を押下 |  | 0202_基本設計仕様書(在庫管理機能).html:2606 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/product/edit_bulk_update_stock | Design/Admin |  | 商品検索一覧で商品を選び「在庫一括編集」を押下 |  | 0202_基本設計仕様書(在庫管理機能).html:2606 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/product/history/search/1 | Design/Admin |  | 「検索する」で送信 |  | 0202_基本設計仕様書(在庫管理機能).html:8977 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/product/inventory_plan | Design/Admin |  | 新規登録を送信 |  | 0202_基本設計仕様書(在庫管理機能).html:13238 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/product/inventory_plan/{id} | Design/Admin |  | 更新を送信 |  | 0202_基本設計仕様書(在庫管理機能).html:13238 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/product/product_stock_csv_upload | Design/Admin |  | CSVファイルと変更理由を送信 |  | 0202_基本設計仕様書(在庫管理機能).html:10292 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/product/stockout/history/search/1 | Design/Admin |  | 「検索する」で送信 |  | 0202_基本設計仕様書(在庫管理機能).html:9635 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/search/product | Design/Admin |  | モーダル内「検索」 |  | 0205_基本設計仕様書(店頭買取管理).html:2862 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/search/product/page/{page_no} | Design/Admin |  | 同上のページ送り。 |  | 0205_基本設計仕様書(店頭買取管理).html:2862 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/setting/shop/calendar | Design/Admin |  | 編集内容を「決定」で送信 |  | 0209_基本設計仕様書(基本情報設定).html:1492 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/setting/shop/calendar/new | Design/Admin |  | 新規行でタイトルと日付を入れ送信 |  | 0209_基本設計仕様書(基本情報設定).html:1492 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/setting/shop/order_status | Design/Admin |  | 「登録」で送信（POST、フォームのCSRFフィールドが有効値で同梱される） |  | 0209_基本設計仕様書(基本情報設定).html:1375 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/setting/system/login_history | Design/Admin |  | 検索を実行 |  | 0201_基本設計仕様書(システム設定).html:1089 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/setting/system/masterdata | Design/Admin |  | プルダウンでマスタを選び「選択」を送信 |  | 0201_基本設計仕様書(システム設定).html:1202 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/setting/system/masterdata/edit | Design/Admin |  | 編集テーブルで「登録」（保存）を送信 |  | 0201_基本設計仕様書(システム設定).html:1202 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/setting/system/masterdata/{entity}/edit | Design/Admin |  | 編集テーブルで「登録」（保存）を送信 |  | 0201_基本設計仕様書(システム設定).html:1202 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/setting/system/two_factor_auth/edit | Design/Admin |  | 本人の再設定画面 |  | 0215_基本設計仕様書(管理画面ログイン).html:372 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/shipping/{id}/edit | Design/Admin |  | 出荷編集画面で登録する |  | 0203_基本設計仕様書(受注管理機能).html:1727 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/two_factor_auth/auth | Design/Admin |  | 追加認証画面 |  | 0215_基本設計仕様書(管理画面ログイン).html:372 |  |
+| HTML設計のみ | POST | /%eccube_admin_route%/two_factor_auth/set | Design/Admin |  | 初回設定画面 |  | 0215_基本設計仕様書(管理画面ログイン).html:372 |  |
+| HTML設計のみ | POST | /admin/buyMainCard.json | Design/Admin / Design/Other |  | 複数ネット買取IDから買取代表カード一覧取得 / メインカードを登録する |  | 0507_基本設計仕様書(API_ネット買取管理).html:2064; 0601_基本設計仕様書(その他_MTGBuyer).html:1084 |  |
+| HTML設計のみ | POST | /admin/buyOrderIndivisualInputProduct.json | Design/Admin / Design/Other |  | 複数ネット買取IDから個別入力商品一覧取得 / 個別入力商品を登録する |  | 0507_基本設計仕様書(API_ネット買取管理).html:1874; 0601_基本設計仕様書(その他_MTGBuyer).html:1084 |  |
+| HTML設計のみ | POST | /admin/login | Design/Admin |  | 同上（拡張子なし別名） |  | 0506_基本設計仕様書(API_店頭買取管理).html:983 |  |
+| HTML設計のみ | POST | /admin/login.json | Design/Admin / Design/Other |  | 買取アプリからのログイン / MTGバイヤーでログインする |  | 0506_基本設計仕様書(API_店頭買取管理).html:983; 0601_基本設計仕様書(その他_MTGBuyer).html:985; 0601_基本設計仕様書(その他_MTGBuyer).html:1084 |  |
+| HTML設計のみ | POST | /admin_api/point_granter | Design/API |  | PointGranterからの取引連携 |  | 0517_基本設計仕様書(API_その他).html:1769 |  |
+| HTML設計のみ | POST | /buying/products | Design/Admin |  | 商品IDリストから買取用商品情報取得 |  | 0506_基本設計仕様書(API_店頭買取管理).html:2251; 0506_基本設計仕様書(API_店頭買取管理).html:2467; 0506_基本設計仕様書(API_店頭買取管理).html:2876 |  |
+| HTML設計のみ | POST | /deck | Design/API |  | デッキ情報の新規登録 |  | 0515_基本設計仕様書(API_デッキビルダー).html:944 |  |
+| HTML設計のみ | POST | /deck/import | Design/API |  | デッキ登録インポート |  | 0515_基本設計仕様書(API_デッキビルダー).html:1712 |  |
+| HTML設計のみ | POST | /forgot | Design/Front |  | 「次のページへ」ボタン |  | 0306_基本設計仕様書(フロント_会員).html:2451 |  |
+| HTML設計のみ | POST | /forgot/resetcomplete/{resetKey} | Design/Front |  | 「変更する」ボタン |  | 0306_基本設計仕様書(フロント_会員).html:2451 |  |
+| HTML設計のみ | POST | /mypage/identification/complete | Design/Front |  | 「申請」操作（撮影画像の送信） |  | 0306_基本設計仕様書(フロント_会員).html:3841 |  |
+| HTML設計のみ | POST | /mypage/identification/photograph | Design/Front |  | 「撮影画面へ」ボタン |  | 0306_基本設計仕様書(フロント_会員).html:3841 |  |
+| HTML設計のみ | POST | /mypage/withdraw | Design/Front |  | 「退会手続きへ」ボタン / 「退会する」ボタン |  | 0306_基本設計仕様書(フロント_会員).html:6051 |  |
+| HTML設計のみ | POST | /order/print/direct | Design/Admin |  | 該当受注のステータスを印刷済みに変更（A05-02） |  | 0505_基本設計仕様書(API_受注管理).html:1034; 0505_基本設計仕様書(API_受注管理).html:1265 |  |
+| HTML設計のみ | POST | /products/favorite/add | Design/Front |  | 商品詳細などのお気に入り登録ボタン |  | 0303_基本設計仕様書(フロント_商品).html:3642 |  |
+| HTML設計のみ | POST | /shopping | Design/Front |  | ご注文方法指定の最終送信（注文確定） |  | 0304_基本設計仕様書(フロント_注文).html:2406 |  |
+| HTML設計のみ | POST | /user/login | Design/API |  | デッキビルダーアプリからのログイン |  | 0515_基本設計仕様書(API_デッキビルダー).html:221 |  |
+| HTML設計のみ | POST | /user/logout | Design/API |  | デッキビルダーアプリからのログアウト |  | 0515_基本設計仕様書(API_デッキビルダー).html:311 |  |
+| HTML設計のみ | POST | /{ログイン検証エンドポイント} | Design/Front |  | 「査定申込み開始」ボタン |  | 0308_基本設計仕様書(フロント_店頭買取).html:951 |  |
+| HTML設計のみ | POST | /{admin_route}/analysis/format_sales/export | Design/Admin |  | 集計結果の「CSVダウンロード」 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3134 |  |
+| HTML設計のみ | POST | /{admin_route}/analysis/format_sales/result | Design/Admin |  | 検索ボタン押下 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2874 |  |
+| HTML設計のみ | POST | /{admin_route}/analysis/request/result | Design/Admin |  | 検索ボタン押下 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2448 |  |
+| HTML設計のみ | POST | /{admin_route}/analysis/sales | Design/Admin |  | サイドメニュー「受注・売上分析」 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1836 |  |
+| HTML設計のみ | POST | /{admin_route}/analysis/sales/result | Design/Admin |  | 検索ボタン押下 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1836 |  |
+| HTML設計のみ | POST | /{admin_route}/analysis/summary/daily | Design/Admin |  | サイドメニュー「日別集計」 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1022 |  |
+| HTML設計のみ | POST | /{admin_route}/analysis/summary/monthly | Design/Admin |  | サイドメニュー「月別集計」 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1022 |  |
+| HTML設計のみ | POST | /{admin_route}/analysis/summary/result | Design/Admin |  | 検索ボタン押下 |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1022 |  |
+| HTML設計のみ | POST | /{admin_route}/analysis/used_card | Design/Admin |  | 「検索」ボタン |  | 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3300; 0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:3445 |  |
+| HTML設計のみ | POST | /{admin_route}/archetype | Design/Admin |  | 新規画面で「登録」を押す |  | 0212_基本設計仕様書(デッキ管理).html:3021 |  |
+| HTML設計のみ | POST | /{admin_route}/archetype/csvexport | Design/Admin |  | ソース上バインドのみ存在する。確認したリビジョンでは取込サービスとコンストラクタシグネチャおよび出力メソッ… |  | 0212_基本設計仕様書(デッキ管理).html:3225 |  |
+| HTML設計のみ | POST | /{admin_route}/archetype/csvimport | Design/Admin |  | 「CSV, TSVファイルのアップロード」を押す（ファイルを選んだ状態） |  | 0212_基本設計仕様書(デッキ管理).html:3225 |  |
+| HTML設計のみ | POST | /{admin_route}/archetype/search/main_card/html | Design/Admin |  | 編集画面の「代表カード」モーダル用。カード画像の検索結果 HTML 片を返す（XHR）。 |  | 0212_基本設計仕様書(デッキ管理).html:3021 |  |
+| HTML設計のみ | POST | /{admin_route}/archetype/search/main_card/id | Design/Admin |  | 代表カード確定時にカード画像 ID から名称・URL を JSON で返す（XHR）。 |  | 0212_基本設計仕様書(デッキ管理).html:3021 |  |
+| HTML設計のみ | POST | /{admin_route}/archetype/{id} | Design/Admin |  | 編集画面で「更新」を押す |  | 0212_基本設計仕様書(デッキ管理).html:3021 |  |
+| HTML設計のみ | POST | /{admin_route}/banner/event | Design/Admin |  | 「バナー設定」ボタン |  | 0214_基本設計仕様書(イベント管理).html:4872 |  |
+| HTML設計のみ | POST | /{admin_route}/banner/event/{html_class} | Design/Admin |  | 「バナー設定」ボタン |  | 0214_基本設計仕様書(イベント管理).html:4872 |  |
+| HTML設計のみ | POST | /{admin_route}/banner/top | Design/Admin |  | 各枠の「バナー設定」ボタン / 「バナー設定」ボタン |  | 0213_基本設計仕様書(データ管理).html:949; 0213_基本設計仕様書(データ管理).html:1143 |  |
+| HTML設計のみ | POST | /{admin_route}/banner/top/{html_class} | Design/Admin |  | 各枠の「バナー設定」ボタン / 「バナー設定」ボタン |  | 0213_基本設計仕様書(データ管理).html:949; 0213_基本設計仕様書(データ管理).html:1143 |  |
+| HTML設計のみ | POST | /{admin_route}/buy_price_list/{id} | Design/Admin |  | 「更新」を押す |  | 0213_基本設計仕様書(データ管理).html:2117 |  |
+| HTML設計のみ | POST | /{admin_route}/card | Design/Admin |  | 新規で入力し保存 |  | 0208_基本設計仕様書(カード管理).html:1902 |  |
+| HTML設計のみ | POST | /{admin_route}/card/csvexport | Design/Admin |  | 検索結果が 1 件以上あり、一覧でカードをチェックして「CSV出力」を押す |  | 0208_基本設計仕様書(カード管理).html:1152 |  |
+| HTML設計のみ | POST | /{admin_route}/card/csvimport | Design/Admin |  | フォーマット説明を読み、ファイルを選んで「CSV, TSVファイルのアップロード」押下 |  | 0208_基本設計仕様書(カード管理).html:2104 |  |
+| HTML設計のみ | POST | /{admin_route}/card/delete | Design/Admin |  | 検索結果が 1 件以上あり、一覧でカードにチェックを入れ、「一括削除」を押して確認で OK / 検索結果はあるがチェックを付けずに「一括削除」を押す |  | 0208_基本設計仕様書(カード管理).html:1258 |  |
+| HTML設計のみ | POST | /{admin_route}/card/search/1 | Design/Admin |  | 条件を入力して「検索」送信 |  | 0208_基本設計仕様書(カード管理).html:1045 |  |
+| HTML設計のみ | POST | /{admin_route}/card/{id} | Design/Admin |  | 編集で入力し保存 |  | 0208_基本設計仕様書(カード管理).html:1902 |  |
+| HTML設計のみ | POST | /{admin_route}/cardset/download | Design/Admin |  | 「画像ダウンロード(セット別)」 / カードセット一覧で 1 件以上チェックし、「画像ダウンロード(セット別)」を押す |  | 0208_基本設計仕様書(カード管理).html:2447; 0208_基本設計仕様書(カード管理).html:2681 |  |
+| HTML設計のみ | POST | /{admin_route}/cardset/download_lang | Design/Admin |  | 「画像ダウンロード(言語別)」 / カードセット一覧で 1 件以上チェックし、「画像ダウンロード(言語別)」を押す |  | 0208_基本設計仕様書(カード管理).html:2447; 0208_基本設計仕様書(カード管理).html:2681 |  |
+| HTML設計のみ | POST | /{admin_route}/cardset/edit | Design/Admin |  | 新規で入力し「登録」を押す / 編集で入力し「更新」を押す |  | 0208_基本設計仕様書(カード管理).html:3142 |  |
+| HTML設計のみ | POST | /{_locale}/cart/add | Design/Front |  | カートに商品を追加（XHR） |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | POST | /{_locale}/cart/add_bulk | Design/Front |  | カートに商品を一括追加（XHR） |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | POST | /{_locale}/cart/add_show | Design/Front |  | カートに追加して表示 |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | POST | /{_locale}/cart/buystep | Design/Front |  | 購入手続きへ進む |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | POST | /{_locale}/cart/pushReceive | Design/Front |  | 入荷通知ボタン（商品詳細・商品一覧） / 入荷通知依頼（XHR） |  | 0303_基本設計仕様書(フロント_商品).html:3306; 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | POST | /{_locale}/cart/update | Design/Front |  | 再計算（数量更新） |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | POST | /{_locale}/contact | Design/Front |  | 「確認画面へ」送信 / 確認画面の「送信をする」 |  | 0306_基本設計仕様書(フロント_会員).html:6480 |  |
+| HTML設計のみ | POST | /{admin_route}/content/block/new | Design/Admin |  | 新規入力の送信 |  | 0210_基本設計仕様書(コンテンツ管理).html:2183 |  |
+| HTML設計のみ | POST | /{admin_route}/content/block/{id}/edit | Design/Admin |  | 編集の送信 |  | 0210_基本設計仕様書(コンテンツ管理).html:2183 |  |
+| HTML設計のみ | POST | /{admin_route}/content/page/new | Design/Admin |  | 新規入力の送信 |  | 0210_基本設計仕様書(コンテンツ管理).html:1341 |  |
+| HTML設計のみ | POST | /{admin_route}/content/page/{id}/edit | Design/Admin |  | 編集の送信 |  | 0210_基本設計仕様書(コンテンツ管理).html:1341 |  |
+| HTML設計のみ | POST | /{admin_route}/custom_csv/export/{csvExtensionId} | Design/Admin |  | カスタムCSVの「在庫情報CSV出力」 |  | 0202_基本設計仕様書(在庫管理機能).html:2999 |  |
+| HTML設計のみ | POST | /{admin_route}/customer | Design/Admin |  | 検索を実行する |  | 0207_基本設計仕様書(会員管理機能).html:1076 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/blacklist/update | Design/Admin |  | 「登録」「更新」「削除」ボタン |  | 0207_基本設計仕様書(会員管理機能).html:4195 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/delivery/{id}/update | Design/Admin |  | 配送先の「編集」 |  | 0207_基本設計仕様書(会員管理機能).html:3387 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/mail | Design/Admin |  | 会員一覧で会員を選び「メール送信」 |  | 0207_基本設計仕様書(会員管理機能).html:1608 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/mail_complete | Design/Admin |  | 「送信」ボタン |  | 0207_基本設計仕様書(会員管理機能).html:1608 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/mail_confirm | Design/Admin |  | 「確認」ボタン |  | 0207_基本設計仕様書(会員管理機能).html:1608 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/manual_mail/{customerId}/{templateId} | Design/Admin |  | 手動メールを送信する |  | 0207_基本設計仕様書(会員管理機能).html:3104 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/new | Design/Admin |  | 新規登録を送信 |  | 0207_基本設計仕様書(会員管理機能).html:2263 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/point/{id}/update/{type} | Design/Admin |  | 「登録」ボタン（付与） |  | 0207_基本設計仕様書(会員管理機能).html:2438; 0207_基本設計仕様書(会員管理機能).html:2794 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/save/pattern | Design/Admin |  | 検索条件を保存 |  | 0207_基本設計仕様書(会員管理機能).html:1076 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/{id}/edit | Design/Admin |  | 編集を送信 |  | 0207_基本設計仕様書(会員管理機能).html:2263 |  |
+| HTML設計のみ | POST | /{admin_route}/customer/{id}/identification/complete | Design/Admin |  | 確認済に変更する |  | 0207_基本設計仕様書(会員管理機能).html:3571 |  |
+| HTML設計のみ | POST | /{admin_route}/customer_group/new | Design/Admin |  | 「登録」ボタン（新規） |  | 0207_基本設計仕様書(会員管理機能).html:4023 |  |
+| HTML設計のみ | POST | /{admin_route}/customer_group/{id}/update | Design/Admin |  | 「更新」ボタン（既存） |  | 0207_基本設計仕様書(会員管理機能).html:4023 |  |
+| HTML設計のみ | POST | /{admin_route}/deck/bulk_update | Design/Admin |  | 「一括編集」ボタンでパネルを開き、項目チェック・入力後「一括編集実行」 |  | 0212_基本設計仕様書(デッキ管理).html:1267 |  |
+| HTML設計のみ | POST | /{admin_route}/deck/csvexport | Design/Admin |  | 検索結果が 1 件以上あり、デッキにチェックを付けて「CSV出力」（標準）を押す |  | 0212_基本設計仕様書(デッキ管理).html:2022 |  |
+| HTML設計のみ | POST | /{admin_route}/deck/csvexport_old | Design/Admin |  | 同一覧で「CSV出力（旧サイト）」相当のボタンを押す（翻訳キーは `admin.btn.csvexport_old`） |  | 0212_基本設計仕様書(デッキ管理).html:2022 |  |
+| HTML設計のみ | POST | /{admin_route}/deck/csvimport | Design/Admin |  | 同画面でファイルを選び送信ボタンを押す |  | 0212_基本設計仕様書(デッキ管理).html:2325 |  |
+| HTML設計のみ | POST | /{admin_route}/deck/delete | Design/Admin |  | 検索結果が 1 件以上あり、一覧でデッキにチェックを入れ、「一括削除」を押して確認で OK / 検索結果はあるがチェックを付けずに「一括削除」を押す / リクエストボディに含ま複数のデッキ ID を順に削除する（単体削除と同じ検証適用）。本書では「一覧側からの… |  | 0212_基本設計仕様書(デッキ管理).html:1167; 0212_基本設計仕様書(デッキ管理).html:2116 |  |
+| HTML設計のみ | POST | /{admin_route}/deck/new | Design/Admin |  | 編集画面上部の送信 |  | 0212_基本設計仕様書(デッキ管理).html:2116 |  |
+| HTML設計のみ | POST | /{admin_route}/deck/search/1 | Design/Admin |  | 条件を入力して「検索」送信 / フォーマット・色を変えてからアーキタイプを選び、「検索」を押す |  | 0212_基本設計仕様書(デッキ管理).html:1059; 0212_基本設計仕様書(デッキ管理).html:2706 |  |
+| HTML設計のみ | POST | /{admin_route}/deck/search/{page_no} | Design/Admin |  | 検索を実行し結果が 1 件以上ある |  | 0212_基本設計仕様書(デッキ管理).html:1267 |  |
+| HTML設計のみ | POST | /{admin_route}/deck/{id} | Design/Admin |  | 編集画面上部の送信 |  | 0212_基本設計仕様書(デッキ管理).html:2116 |  |
+| HTML設計のみ | POST | /{admin_route}/deck/{id}/copy | Design/Admin |  | 編集画面の複製ボタンを開いたモーダルで回数入力・複製送信 |  | 0212_基本設計仕様書(デッキ管理).html:2116 |  |
+| HTML設計のみ | POST | /{admin_route}/deckTag/{pageCount}/{pageNo}/{sortKey} | Design/Admin |  | 一覧の編集または新規をモーダルで編集して登録 |  | 0212_基本設計仕様書(デッキ管理).html:2507 |  |
+| HTML設計のみ | POST | /{_locale}/deckentry/{eventDetailId}/update | Design/Front |  | 編集画面の「デッキリストを提出する」ボタン / デッキ編集画面の「登録する」送信 |  | 0306_基本設計仕様書(フロント_会員).html:4536; 0306_基本設計仕様書(フロント_会員).html:4816 |  |
+| HTML設計のみ | POST | /{_locale}/entry | Design/Front |  | 「同意する」ボタン（確認へ） / 「登録する」ボタン（仮登録実行） / 確認画面の「戻る」ボタン |  | 0306_基本設計仕様書(フロント_会員).html:1384 |  |
+| HTML設計のみ | POST | /{admin_route}/entry/bulkupdate | Design/Admin |  | 申込一覧で複数選択し「一括編集」 |  | 0214_基本設計仕様書(イベント管理).html:3172 |  |
+| HTML設計のみ | POST | /{admin_route}/entry/search/event/html | Design/Admin |  | 申込登録のイベント検索（キーワード・日付） |  | 0214_基本設計仕様書(イベント管理).html:4042 |  |
+| HTML設計のみ | POST | /{admin_route}/entry/search/event/id | Design/Admin |  | イベントIDによる直接検索 |  | 0214_基本設計仕様書(イベント管理).html:4042 |  |
+| HTML設計のみ | POST | /{admin_route}/event/repeatschedule/{eventId}/create | Design/Admin |  | 「登録」ボタン |  | 0214_基本設計仕様書(イベント管理).html:2157 |  |
+| HTML設計のみ | POST | /{admin_route}/event/{eventId}/schedule/create | Design/Admin |  | 「登録」ボタン |  | 0214_基本設計仕様書(イベント管理).html:1900 |  |
+| HTML設計のみ | POST | /{_locale}/events/confirm | Design/Front |  | 申込内容を確認する |  | 0307_基本設計仕様書(フロント_イベント).html:2880 |  |
+| HTML設計のみ | POST | /{_locale}/events/payment_cancel?paymentNo=… | Design/Front |  | 決済キャンセルを表示する |  | 0307_基本設計仕様書(フロント_イベント).html:2880 |  |
+| HTML設計のみ | POST | /{_locale}/events/payment_url | Design/Front |  | 決済URLを取得する |  | 0307_基本設計仕様書(フロント_イベント).html:2880 |  |
+| HTML設計のみ | POST | /{_locale}/events/registration | Design/Front |  | 申込を登録する |  | 0307_基本設計仕様書(フロント_イベント).html:2880 |  |
+| HTML設計のみ | POST | /{admin_route}/holiday/add | Design/Admin |  | 追加フォームで「追加」を押す / CSRF が無効な追加送信 |  | 0213_基本設計仕様書(データ管理).html:1354 |  |
+| HTML設計のみ | POST | /{admin_route}/holiday/load | Design/Admin |  | 期間内の公的祝日を一括登録する（本書では詳細を扱わない）。 |  | 0213_基本設計仕様書(データ管理).html:1354 |  |
+| HTML設計のみ | POST | /{admin_route}/holiday/{id}/delete | Design/Admin |  | 一覧の「削除」リンク / CSRF が無効な削除送信 |  | 0213_基本設計仕様書(データ管理).html:1354 |  |
+| HTML設計のみ | POST | /{admin_route}/integration/toppage_management/register/{id} | Design/Admin |  | 登録を押下する |  | 0210_基本設計仕様書(コンテンツ管理).html:2599 |  |
+| HTML設計のみ | POST | /{admin_route}/latest_event_deck/update | Design/Admin |  | 「直近の大会設定」ボタンで送信 |  | 0212_基本設計仕様書(デッキ管理).html:1365 |  |
+| HTML設計のみ | POST | /{_locale}/login_check | Design/Front |  | ログイン送信 |  | 0306_基本設計仕様書(フロント_会員).html:2022 |  |
+| HTML設計のみ | POST | /{admin_route}/mall/auto_mail/{Mail} | Design/Admin |  | 値を入力して「登録」を押す |  | 0209_基本設計仕様書(基本情報設定).html:2769 |  |
+| HTML設計のみ | POST | /{admin_route}/masterdata | Design/Admin |  | プルダウンで種別を選び「選択」を押す |  | 0213_基本設計仕様書(データ管理).html:1574 |  |
+| HTML設計のみ | POST | /{admin_route}/masterdata/Plugin-HareruyaEc-Entity-MtbDeckTag/edit | Design/Admin |  | 一覧表示コントローラと同一処理に振り向けられる POST のみのルート。側メニュー「デッキタグ一覧」がこの… |  | 0213_基本設計仕様書(データ管理).html:1574 |  |
+| HTML設計のみ | POST | /{admin_route}/masterdata/edit | Design/Admin |  | 一覧表を編集後「登録」 |  | 0213_基本設計仕様書(データ管理).html:1574 |  |
+| HTML設計のみ | POST | /{_locale}/mypage/change | Design/Front |  | 「変更する」送信 / 国・本人確認状態の再描画 |  | 0306_基本設計仕様書(フロント_会員).html:5221 |  |
+| HTML設計のみ | POST | /{_locale}/mypage/delivery/new/confirm | Design/Front |  | 確認画面の「登録する」送信 |  | 0306_基本設計仕様書(フロント_会員).html:5747 |  |
+| HTML設計のみ | POST | /{_locale}/mypage/delivery/new/edit | Design/Front |  | 編集画面の「確認画面へ」送信 |  | 0306_基本設計仕様書(フロント_会員).html:5747 |  |
+| HTML設計のみ | POST | /{_locale}/mypage/delivery/{id}/confirm | Design/Front |  | 確認画面の「登録する」送信 |  | 0306_基本設計仕様書(フロント_会員).html:5747 |  |
+| HTML設計のみ | POST | /{_locale}/mypage/delivery/{id}/edit | Design/Front |  | 編集画面の「確認画面へ」送信 |  | 0306_基本設計仕様書(フロント_会員).html:5747 |  |
+| HTML設計のみ | POST | /{_locale}/mypage/purchase_history/update/{id} | Design/Front |  | 詳細画面の「承諾確定」ボタン |  | 0305_基本設計仕様書(フロント_ネット買取).html:3685 |  |
+| HTML設計のみ | POST | /{_locale}/mypage/shopping_history/repurchase | Design/Front |  | 「この注文内容で再度購入する」 / 「この注文商品をもう一度購入する」 |  | 0304_基本設計仕様書(フロント_注文).html:2665; 0304_基本設計仕様書(フロント_注文).html:3163 |  |
+| HTML設計のみ | POST | /{_locale}{_shop}/mypage/sln_edit_card | Design/Front |  | カード登録・差し替えを送信 / カード削除を送信 |  | 0306_基本設計仕様書(フロント_会員).html:1496 |  |
+| HTML設計のみ | POST | /{admin_route}/order | Design/Admin |  | 「検索」ボタンで送信 / 一覧ヘッダの並びアイコンをクリック / 受注一覧の表示と検索。配送カスタムCSVの抽出条件は本一覧と同一のセッション検索条件を読む。 |  | 0203_基本設計仕様書(受注管理機能).html:1230; 0203_基本設計仕様書(受注管理機能).html:2834 |  |
+| HTML設計のみ | POST | /{admin_route}/order/delete/pattern/{pattern_id} | Design/Admin |  | 検索パターン削除ボタン |  | 0203_基本設計仕様書(受注管理機能).html:1230 |  |
+| HTML設計のみ | POST | /{admin_route}/order/export/order | Design/Admin |  | 受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実績入力用CSVダウンロード」ボタンを押す |  | 0203_基本設計仕様書(受注管理機能).html:7093 |  |
+| HTML設計のみ | POST | /{admin_route}/order/generate/standby | Design/Admin |  | ナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条件を入れ送信 / 同上だが抽出0件 / 同上だがフォーム検証失敗 |  | 0203_基本設計仕様書(受注管理機能).html:5968 |  |
+| HTML設計のみ | POST | /{admin_route}/order/manual_mail/mail_all/{templateId}?ids[]=… | Design/Admin |  | 入力画面で「確認」を押す |  | 0203_基本設計仕様書(受注管理機能).html:3048 |  |
+| HTML設計のみ | POST | /{admin_route}/order/page/{page_no} | Design/Admin |  | 「検索」ボタンで送信 |  | 0203_基本設計仕様書(受注管理機能).html:1230 |  |
+| HTML設計のみ | POST | /{admin_route}/order/print/delivery_slips/en | Design/Admin |  | 受注一覧で複数行のチェックボックスを付け、「納品書印刷（英語）」を押す |  | 0203_基本設計仕様書(受注管理機能).html:4143 |  |
+| HTML設計のみ | POST | /{admin_route}/order/print/delivery_slips/ja | Design/Admin |  | 受注一覧の「納品書印刷（日本語）」ボタン（一覧に配送行があること、かつチェックが1つ以上） |  | 0203_基本設計仕様書(受注管理機能).html:3859 |  |
+| HTML設計のみ | POST | /{admin_route}/order/print/delivery_slips/{lang} | Design/Admin |  | PHPのタイム上限解除のあと、`ids[]` と内部結合用の配送マスタ海外フラグにより納品書データを構築し… / `lang`が`ja`または`en`。本書では`en`のとき英語納品書HTMLを返す。リクエストボディまた… |  | 0203_基本設計仕様書(受注管理機能).html:3859; 0203_基本設計仕様書(受注管理機能).html:4143 |  |
+| HTML設計のみ | POST | /{admin_route}/order/print/stack | Design/Admin |  | 子ウィンドウ内の自動AJAX |  | 0203_基本設計仕様書(受注管理機能).html:3578 |  |
+| HTML設計のみ | POST | /{admin_route}/order/print/stack/window | Design/Admin |  | 受注一覧で配送行のチェックを付けて「スタック用紙印刷」を押す |  | 0203_基本設計仕様書(受注管理機能).html:3578 |  |
+| HTML設計のみ | POST | /{admin_route}/order/save/pattern | Design/Admin |  | 検索パターン保存ボタン |  | 0203_基本設計仕様書(受注管理機能).html:1230 |  |
+| HTML設計のみ | POST | /{admin_route}/order/search/customer/html | Design/Admin |  | 会員検索モーダルで検索実行 |  | 0203_基本設計仕様書(受注管理機能).html:5184 |  |
+| HTML設計のみ | POST | /{admin_route}/order/search/customer/id | Design/Admin |  | 会員 ID 指定の会員情報 JSON。XMLHttpRequest かつ CSRF 検証に成功しないと H… |  | 0203_基本設計仕様書(受注管理機能).html:5184 |  |
+| HTML設計のみ | POST | /{admin_route}/order/search/order_item_type | Design/Admin |  | 「その他明細」モーダル用の手数料・送料・値引きの組み合わせ一覧 HTML。XMLHttpRequest か… |  | 0203_基本設計仕様書(受注管理機能).html:5184 |  |
+| HTML設計のみ | POST | /{admin_route}/order/shipping_result_csv/upload | Design/Admin |  | 「CSV，TSVファイルのアップロード」を押してファイル送信 |  | 0203_基本設計仕様書(受注管理機能).html:7265 |  |
+| HTML設計のみ | POST | /{admin_route}/order/waiting_tag | Design/Admin |  | 画面上の店名プルダウンを変更する（JavaScript がフォーム送信） |  | 0203_基本設計仕様書(受注管理機能).html:7547 |  |
+| HTML設計のみ | POST | /{admin_route}/order/waiting_tag/new | Design/Admin |  | 「登録」ボタン（ログイン店舗が選択されているときのみ表示） |  | 0203_基本設計仕様書(受注管理機能).html:7547 |  |
+| HTML設計のみ | POST | /{admin_route}/order/{id}/edit | Design/Admin |  | 送信・再計算・登録（フォームの `action` は `?` で現 URL に POST） |  | 0203_基本設計仕様書(受注管理機能).html:5184 |  |
+| HTML設計のみ | POST | /{_locale}/otcbuy/{name} | Design/Front |  | 申込フォーム |  | 0308_基本設計仕様書(フロント_店頭買取).html:1258 |  |
+| HTML設計のみ | POST | /{_locale}/otcbuy/{name}/complete | Design/Front |  | 完了 |  | 0308_基本設計仕様書(フロント_店頭買取).html:1461 |  |
+| HTML設計のみ | POST | /{_locale}/otcbuy/{name}/confirm | Design/Front |  | 確認・登録 |  | 0308_基本設計仕様書(フロント_店頭買取).html:1461 |  |
+| HTML設計のみ | POST | /{_locale}/otcbuy/{name}/entry | Design/Front |  | エントリー（開始画面） |  | 0308_基本設計仕様書(フロント_店頭買取).html:1258 |  |
+| HTML設計のみ | POST | /{_locale}/otcbuy/{name}/register_customer | Design/Front |  | 会員登録フォーム |  | 0308_基本設計仕様書(フロント_店頭買取).html:1258 |  |
+| HTML設計のみ | POST | /{admin_route}/otcbuyorder | Design/Admin |  | 検索ボタン押下 |  | 0205_基本設計仕様書(店頭買取管理).html:1007 |  |
+| HTML設計のみ | POST | /{admin_route}/otcbuyorder/history | Design/Admin |  | 検索フォームの「検索する」 / 買取商品履歴で条件を入力し「検索する」を押して検索成功 |  | 0205_基本設計仕様書(店頭買取管理).html:3366; 0205_基本設計仕様書(店頭買取管理).html:3750 |  |
+| HTML設計のみ | POST | /{admin_route}/otcbuyorder/history/export | Design/Admin |  | CSV メニュー「選択した商品履歴取得」 / CSV メニュー「検索結果全件取得」 / 買取商品履歴で検索し、結果件数が正で一覧と「CSVダウンロード」が表示された状態で、行をチェックして「選択した商品履歴取得」を押す 他2件 |  | 0205_基本設計仕様書(店頭買取管理).html:3366; 0205_基本設計仕様書(店頭買取管理).html:3603; 0205_基本設計仕様書(店頭買取管理).html:3750 |  |
+| HTML設計のみ | POST | /{admin_route}/otcbuyorder/status/{otcBuyOrderId}/update | Design/Admin |  | ステータス変更画面の「保存」 |  | 0205_基本設計仕様書(店頭買取管理).html:3118 |  |
+| HTML設計のみ | POST | /{admin_route}/otcbuyorder/summary/export | Design/Admin |  | 日別ブロックにデータがあり「CSVダウンロード」を押す / 検索前や日別0件でボタンが無い状態からエンドポイントだけ叩く |  | 0205_基本設計仕様書(店頭買取管理).html:4191 |  |
+| HTML設計のみ | POST | /{admin_route}/otcbuyorder/summary/search | Design/Admin |  | 検索フォームで期間等を指定して「検索する」 |  | 0205_基本設計仕様書(店頭買取管理).html:4191 |  |
+| HTML設計のみ | POST | /{admin_route}/otcbuyorder/{otcBuyOrderId}/account_team_paid | Design/Admin |  | 店頭買取詳細の「経理払出し済」 |  | 0205_基本設計仕様書(店頭買取管理).html:3118 |  |
+| HTML設計のみ | POST | /{admin_route}/otcbuyorder/{otcBuyOrderId}/restocked | Design/Admin |  | 店頭買取詳細の「入庫済みにする」 |  | 0205_基本設計仕様書(店頭買取管理).html:3118 |  |
+| HTML設計のみ | POST | /{admin_route}/product | Design/Admin |  | 「検索する」で送信 / ソートアイコン押下 |  | 0204_基本設計仕様書(商品管理).html:1169 |  |
+| HTML設計のみ | POST | /{admin_route}/product/bulk_update_buy_price | Design/Admin |  | 「登録」で確定 |  | 0204_基本設計仕様書(商品管理).html:5033 |  |
+| HTML設計のみ | POST | /{admin_route}/product/buy_sale_price_history/search/1 | Design/Admin |  | 「検索」ボタン |  | 0204_基本設計仕様書(商品管理).html:7868 |  |
+| HTML設計のみ | POST | /{admin_route}/product/category/sort_no/move | Design/Admin |  | 並べ替え確定ドラッグ、上下矢印確定 |  | 0204_基本設計仕様書(商品管理).html:5231 |  |
+| HTML設計のみ | POST | /{admin_route}/product/category/{parent_id} | Design/Admin |  | 子カテゴリ作成の送信 |  | 0204_基本設計仕様書(商品管理).html:5530 |  |
+| HTML設計のみ | POST | /{admin_route}/product/category/{id}/edit | Design/Admin |  | カテゴリ更新の送信 |  | 0204_基本設計仕様書(商品管理).html:5530 |  |
+| HTML設計のみ | POST | /{admin_route}/product/category_csv_upload | Design/Admin |  | CSVを送信 |  | 0204_基本設計仕様書(商品管理).html:11218 |  |
+| HTML設計のみ | POST | /{admin_route}/product/department_csv_upload | Design/Admin |  | 部門CSV登録の送信 |  | 0204_基本設計仕様書(商品管理).html:7060 |  |
+| HTML設計のみ | POST | /{admin_route}/product/edit_bulk_update_buy_price | Design/Admin |  | 商品一覧で商品にチェックし「買取・基準価格一括編集」相当のボタンを押す |  | 0204_基本設計仕様書(商品管理).html:5033 |  |
+| HTML設計のみ | POST | /{admin_route}/product/history/stock/export | Design/Admin |  | 在庫履歴の「CSV出力」 |  | 0202_基本設計仕様書(在庫管理機能).html:3077 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product/class/{id} | Design/Admin |  | 一覧 URL へ POST |  | 0204_基本設計仕様書(商品管理).html:4460 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product/image/add | Design/Admin |  | 商品画像の追加（非同期） |  | 0204_基本設計仕様書(商品管理).html:1696 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product/{id}/class/new/create | Design/Admin |  | 規格の新規登録送信 |  | 0204_基本設計仕様書(商品管理).html:4785 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product/{id}/class/{classId}/edit/update | Design/Admin |  | 規格の更新送信 |  | 0204_基本設計仕様書(商品管理).html:4785 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product/{id}/edit/update | Design/Admin |  | 商品を登録（更新）ボタン押下 |  | 0204_基本設計仕様書(商品管理).html:1696 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_buy_discount_csv_upload | Design/Admin |  | CSV 選択してアップロード |  | 0204_基本設計仕様書(商品管理).html:8672 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_card_csv_export | Design/Admin |  | 検索結果があり一覧ブロックが描画された状態で、商品をチェックして「カード商品CSV出力」を押す |  | 0204_基本設計仕様書(商品管理).html:2548 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_card_csv_upload | Design/Admin |  | アップロード送信 |  | 0204_基本設計仕様書(商品管理).html:2343 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_discount_csv_upload | Design/Admin |  | 同一画面でファイルを選び「CSVファイルのアップロード」を押下 |  | 0204_基本設計仕様書(商品管理).html:8556 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_goods_csv_export | Design/Admin |  | 検索結果があり一覧ブロックが描画された状態で、商品をチェックして「グッズ商品CSV出力」を押す |  | 0204_基本設計仕様書(商品管理).html:3115 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_goods_csv_upload | Design/Admin |  | CSV の送信 |  | 0204_基本設計仕様書(商品管理).html:2901 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_price/import | Design/Admin |  | ファイル選択後「アップロード」 |  | 0204_基本設計仕様書(商品管理).html:8451 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_price_csv_export | Design/Admin |  | 検索結果があり一覧ブロックが描画された状態で、商品をチェックして「セール用価格変更CSV出力」を押す / CSVエクスポート |  | 0204_基本設計仕様書(商品管理).html:1842; 0204_基本設計仕様書(商品管理).html:9001 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_price_csv_upload | Design/Admin |  | CSVをアップロード |  | 0204_基本設計仕様書(商品管理).html:9001 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_shelf_number_csv_upload | Design/Admin |  | アップロード送信 |  | 0204_基本設計仕様書(商品管理).html:10973 |  |
+| HTML設計のみ | POST | /{admin_route}/product/product_tag/import | Design/Admin |  | アップロード送信 |  | 0204_基本設計仕様書(商品管理).html:3434 |  |
+| HTML設計のみ | POST | /{admin_route}/product/sale_high_price/import | Design/Admin |  | CSV を選択して「CSVアップロード」を押す |  | 0204_基本設計仕様書(商品管理).html:10201 |  |
+| HTML設計のみ | POST | /{admin_route}/product/section/import | Design/Admin |  | 部門更新のファイル送信 / アップロード送信 |  | 0204_基本設計仕様書(商品管理).html:7060; 0204_基本設計仕様書(商品管理).html:10501 |  |
+| HTML設計のみ | POST | /{admin_route}/product/section/master_import | Design/Admin |  | 部門マスタ CSV の取込POST（本書の主題外）。 |  | 0204_基本設計仕様書(商品管理).html:6717 |  |
+| HTML設計のみ | POST | /{admin_route}/product/section/store | Design/Admin |  | 「登録」ボタン（新規） |  | 0204_基本設計仕様書(商品管理).html:6717 |  |
+| HTML設計のみ | POST | /{admin_route}/product/section/store/{id} | Design/Admin |  | 「登録」ボタン（編集モード） |  | 0204_基本設計仕様書(商品管理).html:6717 |  |
+| HTML設計のみ | POST | /{admin_route}/product/sell_group/create | Design/Admin |  | フォーム送信（新規） |  | 0204_基本設計仕様書(商品管理).html:7589 |  |
+| HTML設計のみ | POST | /{admin_route}/product/sell_group/{id}/update | Design/Admin |  | フォーム送信（更新） |  | 0204_基本設計仕様書(商品管理).html:7589 |  |
+| HTML設計のみ | POST | /{admin_route}/product/shelf_number/import | Design/Admin |  | 取込処理は上記と同じ。別 URL で POST できる。 |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | POST | /{admin_route}/product/shelf_number/master_import | Design/Admin |  | マスタ CSV の取込。 |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | POST | /{admin_route}/product/shelf_number/store | Design/Admin |  | conversion の「登録」 |  | 0204_基本設計仕様書(商品管理).html:7330 |  |
+| HTML設計のみ | POST | /{admin_route}/product/simple_high_price/import | Design/Admin |  | ファイル選択後、「CSV アップロード」ボタン |  | 0204_基本設計仕様書(商品管理).html:9960 |  |
+| HTML設計のみ | POST | /{admin_route}/product/status/import | Design/Admin |  | アップロード送信 |  | 0204_基本設計仕様書(商品管理).html:4139 |  |
+| HTML設計のみ | POST | /{admin_route}/product/storage_code/import | Design/Admin |  | 「アップロード」ボタン / ファイル選択後「アップロード」相当の送信ボタン |  | 0204_基本設計仕様書(商品管理).html:6473; 0204_基本設計仕様書(商品管理).html:10738 |  |
+| HTML設計のみ | POST | /{admin_route}/product/storage_code/store | Design/Admin |  | 画面下部「登録」 |  | 0204_基本設計仕様書(商品管理).html:6166 |  |
+| HTML設計のみ | POST | /{admin_route}/product/storage_code/store/{id} | Design/Admin |  | 画面下部「登録」 |  | 0204_基本設計仕様書(商品管理).html:6166 |  |
+| HTML設計のみ | POST | /{admin_route}/product/tag/store | Design/Admin |  | conversion の「登録」 |  | 0204_基本設計仕様書(商品管理).html:5942 |  |
+| HTML設計のみ | POST | /{admin_route}/product/tag_sales_analysis/import | Design/Admin |  | アップロード送信 |  | 0204_基本設計仕様書(商品管理).html:3893 |  |
+| HTML設計のみ | POST | /{admin_route}/product/tag_sales_analysis/store | Design/Admin |  | フォーム送信による登録または更新。`id` がパスにある場合は当該行を更新対象として束ねる。 |  | 0204_基本設計仕様書(商品管理).html:3680 |  |
+| HTML設計のみ | POST | /{_locale}/purchase/add | Design/Front |  | カートに追加（詳細から） / カートに追加（一覧・詳細から） |  | 0305_基本設計仕様書(フロント_ネット買取).html:2413; 0305_基本設計仕様書(フロント_ネット買取).html:2638 |  |
+| HTML設計のみ | POST | /{admin_route}/purchase/bulk/detail/{id}/sell | Design/Admin |  | 「一括売却登録」 |  | 0206_基本設計仕様書(ネット買取管理機能).html:2857 |  |
+| HTML設計のみ | POST | /{_locale}/purchase/complete | Design/Front |  | 買取依頼完了画面 |  | 0305_基本設計仕様書(フロント_ネット買取).html:2948 |  |
+| HTML設計のみ | POST | /{_locale}/purchase/confirm | Design/Front |  | 買取依頼内容の確認・確定 |  | 0305_基本設計仕様書(フロント_ネット買取).html:2948 |  |
+| HTML設計のみ | POST | /{admin_route}/purchase/csv_export | Design/Admin |  | 買取一覧で1件以上チェックし、「ダウンロード」から「古物台帳入力用CSV」を押す / 買取詳細で「古物台帳入力用CSV出力」を押す / 詳細ヘッダのCSVボタンなどから送信（当画面では hidden で当該買取IDを渡す）。一覧側仕様と共用。 |  | 0206_基本設計仕様書(ネット買取管理機能).html:1429; 0206_基本設計仕様書(ネット買取管理機能).html:2857 |  |
+| HTML設計のみ | POST | /{admin_route}/purchase/csv_export_deposit | Design/Admin |  | 検索を実行済みで一覧に1件以上あり、「ダウンロード」から「入金CSV」を押す |  | 0206_基本設計仕様書(ネット買取管理機能).html:1551 |  |
+| HTML設計のみ | POST | /{admin_route}/purchase/csv_export_product_list?type=sale | Design/Admin |  | 買取一覧で1件以上チェックし、「ダウンロード」から「買取商品一覧CSV」を押す / 同一覧で「買取商品（キャンセル）CSV」を押す / 買取詳細で「買取商品一覧CSV出力」を押す 他2件 |  | 0206_基本設計仕様書(ネット買取管理機能).html:1656; 0206_基本設計仕様書(ネット買取管理機能).html:2857 |  |
+| HTML設計のみ | POST | /{_locale}/purchase/fill | Design/Front |  | 買取手続きの開始（記入画面） |  | 0305_基本設計仕様書(フロント_ネット買取).html:2948 |  |
+| HTML設計のみ | POST | /{_locale}/purchase/login | Design/Front |  | 買取ログイン |  | 0305_基本設計仕様書(フロント_ネット買取).html:2948 |  |
+| HTML設計のみ | POST | /{admin_route}/purchase/search | Design/Admin |  | 「検索」ボタン / 注文者名リンク（氏名） |  | 0206_基本設計仕様書(ネット買取管理機能).html:1063 |  |
+| HTML設計のみ | POST | /{admin_route}/purchase/searchproduct | Design/Admin |  | 「商品追加」（選んで買取） |  | 0206_基本設計仕様書(ネット買取管理機能).html:2857 |  |
+| HTML設計のみ | POST | /{_locale}/purchase/update | Design/Front |  | 数量の再計算（更新） |  | 0305_基本設計仕様書(フロント_ネット買取).html:2638 |  |
+| HTML設計のみ | POST | /{admin_route}/purchase/{buyOrderId}/mail | Design/Admin |  | 入力画面でテンプレートプルダウンを変更 / 入力画面で「確認」 / 確認画面で「送信」 他1件 |  | 0206_基本設計仕様書(ネット買取管理機能).html:3038 |  |
+| HTML設計のみ | POST | /{admin_route}/purchase/{buyOrderId}/register-individual-stock/{individualProductId} | Design/Admin |  | 個別入力商品の実在庫紐付け（別トークン `purchase_register_individual_sto… |  | 0206_基本設計仕様書(ネット買取管理機能).html:2857 |  |
+| HTML設計のみ | POST | /{admin_route}/purchase/{id}/update | Design/Admin |  | 「保存」（フッタ） |  | 0206_基本設計仕様書(ネット買取管理機能).html:2857 |  |
+| HTML設計のみ | POST | /{admin_route}/search/product | Design/Admin |  | 商品追加モーダルで検索実行 / 実在庫の「商品追加／実在庫情報登録」モーダルから商品検索HTMLを返す。 |  | 0203_基本設計仕様書(受注管理機能).html:5184; 0206_基本設計仕様書(ネット買取管理機能).html:2857 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop | Design/Admin |  | 値を入力して「登録」を押す / 閾値を入力して画面下部の「登録」を押す（親フォームと一体） / 入力が検証ルールを満たさない 他5件 |  | 0209_基本設計仕様書(基本情報設定).html:1037; 0209_基本設計仕様書(基本情報設定).html:1144; 0209_基本設計仕様書(基本情報設定).html:2959; 0209_基本設計仕様書(基本情報設定).html:3707 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/additional_system/update | Design/Admin |  | 値を入力して「設定」を押す（検証成功） / 値を入力して「設定」を押す（検証失敗） / CSRF 検証に失敗する |  | 0209_基本設計仕様書(基本情報設定).html:3967 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/csv/{id} | Design/Admin |  | 「設定」を押す |  | 0209_基本設計仕様書(基本情報設定).html:3137 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId} | Design/Admin |  | 二段リストと矢印ボタンで項目を移動し、「設定」を押す |  | 0209_基本設計仕様書(基本情報設定).html:3340 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/customer_agreement | Design/Admin |  | 値を入力して送信する |  | 0209_基本設計仕様書(基本情報設定).html:2003 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/delivery/new | Design/Admin |  | 「登録」を押す（編集画面） |  | 0209_基本設計仕様書(基本情報設定).html:1258 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/delivery/rank/move | Design/Admin |  | 一覧で行をドラッグして並べ替える |  | 0209_基本設計仕様書(基本情報設定).html:1258 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/delivery/{id}/edit | Design/Admin |  | 「登録」を押す（編集画面） |  | 0209_基本設計仕様書(基本情報設定).html:1258 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/payment/image/add | Design/Admin |  | ロゴ画像を非同期アップロード |  | 0209_基本設計仕様書(基本情報設定).html:2231 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/payment/new | Design/Admin |  | 「登録」を押す |  | 0209_基本設計仕様書(基本情報設定).html:2231 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/payment/{id}/edit | Design/Admin |  | 「登録」を押す |  | 0209_基本設計仕様書(基本情報設定).html:2231 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/tax | Design/Admin |  | 共通税率で下部「登録」を押す |  | 0209_基本設計仕様書(基本情報設定).html:2572 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/tax/edit_param | Design/Admin |  | 「個別税率設定」ブロックの「登録」を押す |  | 0209_基本設計仕様書(基本情報設定).html:2572 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/tax/{id}/edit | Design/Admin |  | 共通税率で下部「登録」を押す |  | 0209_基本設計仕様書(基本情報設定).html:2572 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/shop/tradelaw | Design/Admin |  | 値を入力して「登録」を押す |  | 0209_基本設計仕様書(基本情報設定).html:1819 |  |
+| HTML設計のみ | POST | /{admin_route}/setting/system/authority | Design/Admin |  | 「登録」を押し検証に成功する / 「登録」を押し検証に失敗する |  | 0201_基本設計仕様書(システム設定).html:1835 |  |
+| HTML設計のみ | POST | /{_locale}/shopping/confirm | Design/Front |  | 確認・注文確定 |  | 0304_基本設計仕様書(フロント_注文).html:1792 |  |
+| HTML設計のみ | POST | /{_locale}/shopping/delivery | Design/Front |  | 配送業者を変更 |  | 0304_基本設計仕様書(フロント_注文).html:1792 |  |
+| HTML設計のみ | POST | /{_locale}/shopping/delivery/new/confirm | Design/Front |  | 確認画面から登録 |  | 0304_基本設計仕様書(フロント_注文).html:2056 |  |
+| HTML設計のみ | POST | /{_locale}/shopping/delivery/new/edit | Design/Front |  | お届け先を新規登録（編集画面） |  | 0304_基本設計仕様書(フロント_注文).html:2056 |  |
+| HTML設計のみ | POST | /{_locale}/shopping/delivery/{id}/confirm | Design/Front |  | 確認画面から登録 |  | 0304_基本設計仕様書(フロント_注文).html:2056 |  |
+| HTML設計のみ | POST | /{_locale}/shopping/delivery/{id}/edit | Design/Front |  | 既存お届け先を編集 |  | 0304_基本設計仕様書(フロント_注文).html:2056 |  |
+| HTML設計のみ | POST | /{_locale}/shopping/payment | Design/Front |  | お支払い方法・要望・ポイントを変更 |  | 0304_基本設計仕様書(フロント_注文).html:1792 |  |
+| HTML設計のみ | POST | /{_locale}/shopping/shipping/{id} | Design/Front |  | お届け先を選択 |  | 0304_基本設計仕様書(フロント_注文).html:1792 |  |
+| HTML設計のみ | POST | /{_locale}/shopping/shipping_change/{id} | Design/Front |  | お届け先変更（メッセージ送信） |  | 0304_基本設計仕様書(フロント_注文).html:1792 |  |
+| HTML設計のみ | POST | /{_locale}/smaregi/transaction | Design/Admin |  | スマレジ取引通知の受信 |  | 0505_基本設計仕様書(API_受注管理).html:1799 |  |
+| HTML設計のみ | POST | /{admin_route}/standby/（出荷指示リスト主キー | Design/Admin |  | ナビ「受注管理」→「出荷指示リスト」→検索で対象リストを選択し、`admin_shipping_standby_edit` の編集を開いたうえで、少なくとも1件オンで「納品書印刷（日本語）」を押したとき |  | 0203_基本設計仕様書(受注管理機能).html:6772 |  |
+| HTML設計のみ | POST | /{admin_route}/standby/labels | Design/Admin |  | 受注一覧で行をチェックし「送り状出力」を押す / 出荷指示編集で行をチェックし「送り状出力」を押す |  | 0203_基本設計仕様書(受注管理機能).html:3427 |  |
+| HTML設計のみ | POST | /{admin_route}/standby/search | Design/Admin |  | 「検索する」ボタン |  | 0203_基本設計仕様書(受注管理機能).html:6320 |  |
+| HTML設計のみ | POST | /{admin_route}/standby/{id}/print/delivery/en | Design/Admin |  | 表の行チェック状態を保ったまま「納品書印刷（英語）」を押す |  | 0203_基本設計仕様書(受注管理機能).html:6894 |  |
+| HTML設計のみ | POST | /{admin_route}/standby/{id}/print/delivery/{lang} | Design/Admin |  | `order_ids` 連想入力のオンキーを受注主キー一覧として読み、当該出荷指示リストに属する送信対象受… / `{id}`は出荷指示リストの整数主キー。`{lang}`は`ja`または`en`のみ許可される。POST… |  | 0203_基本設計仕様書(受注管理機能).html:6772; 0203_基本設計仕様書(受注管理機能).html:6894 |  |
+| HTML設計のみ | POST | /{admin_route}/standby/{id}/print/picking | Design/Admin |  | 印刷に含める受注だけチェックを残し、「ピッキングリスト印刷」を押す |  | 0203_基本設計仕様書(受注管理機能).html:6650 |  |
+| HTML設計のみ | POST | /{admin_route}/standby/{id}/update | Design/Admin |  | 詳細で備考を入力し「登録」相当の送信ボタンを押す |  | 0203_基本設計仕様書(受注管理機能).html:6419 |  |
+| HTML設計のみ | POST | /{_locale}/… | Design/Front |  | 店頭PC用アカウントでの任意のフロントアクセス |  | 0306_基本設計仕様書(フロント_会員).html:7350 |  |
+| HTML設計のみ | PUT | /%admin_route%/setting/system/member/{id}/down | Design/Admin |  | 上へ・下へを実行する |  | 0201_基本設計仕様書(システム設定).html:969 |  |
+| HTML設計のみ | PUT | /%admin_route%/setting/system/member/{id}/up | Design/Admin |  | 上へ・下へを実行する |  | 0201_基本設計仕様書(システム設定).html:969 |  |
+| HTML設計のみ | PUT | /%eccube_admin_route%/shipping/{id}/order_status | Design/Admin |  | 一括変更の各出荷の更新（画面側からの順次呼び出し） |  | 0203_基本設計仕様書(受注管理機能).html:1320 |  |
+| HTML設計のみ | PUT | /%eccube_admin_route%/shipping/{id}/tracking_number | Design/Admin |  | 受注一覧で問い合わせ番号を入力し更新 |  | 0203_基本設計仕様書(受注管理機能).html:1425 |  |
+| HTML設計のみ | PUT | /admin/buyOrder/{id}.json | Design/Admin / Design/Other |  | ネット買取注文の査定終了処理 / 査定結果を確定する |  | 0507_基本設計仕様書(API_ネット買取管理).html:1676; 0601_基本設計仕様書(その他_MTGBuyer).html:1084 |  |
+| HTML設計のみ | PUT | /admin/buyOrder/{id}/freeComment.json | Design/Admin / Design/Other |  | ネット買取受注のコメント更新 / フリーコメントを更新する |  | 0507_基本設計仕様書(API_ネット買取管理).html:1298; 0601_基本設計仕様書(その他_MTGBuyer).html:1084 |  |
+| HTML設計のみ | PUT | /admin/buyOrder/{id}/status.json | Design/Admin / Design/Other |  | ネット買取受注のステータス更新 / ステータスを更新する / MTGバイヤー入庫モードでステータスを進める |  | 0507_基本設計仕様書(API_ネット買取管理).html:1478; 0601_基本設計仕様書(その他_MTGBuyer).html:1084; 0601_基本設計仕様書(その他_MTGBuyer).html:1179 |  |
+| HTML設計のみ | PUT | /admin/otcBuyOrder/{id}.json | Design/Admin / Design/Other |  | 店頭買取受注の詳細更新 / MTGバイヤーで査定結果を確定する |  | 0506_基本設計仕様書(API_店頭買取管理).html:1508; 0601_基本設計仕様書(その他_MTGBuyer).html:985 |  |
+| HTML設計のみ | PUT | /admin/otcBuyOrder/{id}/freeComment | Design/Admin |  | 店頭買取受注のコメント更新 |  | 0506_基本設計仕様書(API_店頭買取管理).html:1683 |  |
+| HTML設計のみ | PUT | /admin/otcBuyOrder/{id}/freeComment.json | Design/Admin |  | 同上（拡張子あり別名） |  | 0506_基本設計仕様書(API_店頭買取管理).html:1683 |  |
+| HTML設計のみ | PUT | /admin/otcBuyOrder/{id}/free_comment | Design/Other |  | MTGバイヤーでフリーコメントを更新する |  | 0601_基本設計仕様書(その他_MTGBuyer).html:985 |  |
+| HTML設計のみ | PUT | /admin/otcBuyOrder/{id}/free_comment.json | Design/Other |  | MTGバイヤーでフリーコメントを更新する |  | 0601_基本設計仕様書(その他_MTGBuyer).html:985 |  |
+| HTML設計のみ | PUT | /admin/otcBuyOrder/{id}/identification | Design/Admin |  | 店頭買取受注の本人確認更新 |  | 0506_基本設計仕様書(API_店頭買取管理).html:3384 |  |
+| HTML設計のみ | PUT | /admin/otcBuyOrder/{id}/identification.json | Design/Admin / Design/Other |  | 同上（拡張子あり別名） / MTGバイヤーで本人確認状態を更新する |  | 0506_基本設計仕様書(API_店頭買取管理).html:3384; 0601_基本設計仕様書(その他_MTGBuyer).html:985 |  |
+| HTML設計のみ | PUT | /admin/otcBuyOrder/{id}/status | Design/Admin |  | 同上（拡張子なし別名） |  | 0506_基本設計仕様書(API_店頭買取管理).html:1858 |  |
+| HTML設計のみ | PUT | /admin/otcBuyOrder/{id}/status.json | Design/Admin / Design/Other |  | 店頭買取受注のステータス更新 / MTGバイヤーでステータスを更新する |  | 0506_基本設計仕様書(API_店頭買取管理).html:1858; 0601_基本設計仕様書(その他_MTGBuyer).html:985 |  |
+| HTML設計のみ | PUT | /deck/import/{id} | Design/API |  | デッキ更新インポート |  | 0515_基本設計仕様書(API_デッキビルダー).html:1804 |  |
+| HTML設計のみ | PUT | /deck/{id} | Design/API |  | デッキ情報の更新 |  | 0515_基本設計仕様書(API_デッキビルダー).html:1028 |  |
+| HTML設計のみ | PUT | /user | Design/API |  | 自分のユーザー情報変更 |  | 0515_基本設計仕様書(API_デッキビルダー).html:566 |  |
+| HTML設計のみ | PUT | /{_locale}/cart/down/{productClassId} | Design/Front |  | 数量を1減らす |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | PUT | /{_locale}/cart/remove/{productClassId} | Design/Front |  | 商品の削除 |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | PUT | /{_locale}/cart/up/{productClassId} | Design/Front |  | 数量を1増やす |  | 0304_基本設計仕様書(フロント_注文).html:1092 |  |
+| HTML設計のみ | PUT | /{admin_route}/customer/{id}/resend | Design/Admin |  | 会員一覧の「仮登録完了メール再送」操作 |  | 0207_基本設計仕様書(会員管理機能).html:4346 |  |
+| HTML設計のみ | PUT | /{_locale}/purchase/{id}/remove | Design/Front |  | カート内商品の削除 |  | 0305_基本設計仕様書(フロント_ネット買取).html:2638 |  |
+| HTML設計のみ | PUT | /{admin_route}/setting/shop/payment/{id}/down | Design/Admin |  | 「下へ」 |  | 0209_基本設計仕様書(基本情報設定).html:2231 |  |
+| HTML設計のみ | PUT | /{admin_route}/setting/shop/payment/{id}/up | Design/Admin |  | 「上へ」 |  | 0209_基本設計仕様書(基本情報設定).html:2231 |  |
+| 実装未記載候補のみ | ANY | /%eccube_admin_route%/cardset | Admin | admin_cardset_list |  | cardset list |  | Admin/Card/CardsetController.php:49 |
+| 実装未記載候補のみ | ANY | /%eccube_admin_route%/cardset/page/{page_no} | Admin | admin_cardset_list_paged |  | cardset list paged |  | Admin/Card/CardsetController.php:50 |
+| 実装未記載候補のみ | ANY | /%eccube_admin_route%/format | Admin | admin_format_list |  | format list |  | Admin/Card/FormatController.php:40 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/card/bulk_delete | Admin | admin_card_bulk_delete |  | カード一括削除. |  | Admin/Card/CardController.php:308 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/card/{id}/delete | Admin | admin_card_delete |  | カード削除. |  | Admin/Card/CardController.php:269 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/content/block/{id}/delete | Admin | admin_content_block_delete |  | content block delete |  | Admin/Content/BlockController.php:244 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/content/page/{id}/delete | Admin | admin_content_page_delete |  | content page delete |  | Admin/Content/PageController.php:343 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/customer/customer_group/{id}/delete | Admin | admin_customer_group_delete |  | customer group delete |  | Admin/Customer/CustomerGroupController.php:72 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/customer/delete/pattern/{patternId} | Admin | admin_customer_delete_search_pattern |  | 検索パターン削除 |  | Admin/Customer/CustomerController.php:382 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/customer/{id}/delete | Admin | admin_customer_delete |  | customer delete |  | Admin/Customer/CustomerController.php:227 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/customer/{id}/delivery/{did}/delete | Admin | admin_customer_delivery_delete |  | customer delivery delete |  | Admin/Customer/CustomerDeliveryEditController.php:127 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/data/holiday/{id}/delete | Admin | admin_data_holiday_delete |  | data holiday delete |  | Admin/Data/HolidayController.php:136 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/data/top_banner/delete | Admin | admin_data_top_banner_delete |  | data top banner delete |  | Admin/Data/TopBannerController.php:156 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/data/top_banner/{base_info_digit}/delete | Admin | admin_data_top_banner_delete_filter |  | data top banner delete filter |  | Admin/Data/TopBannerController.php:157 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/event/banner/delete | Admin | admin_event_banner_delete |  | S3 上のバナー画像を削除する（CSRF 検証後）。 |  | Admin/Event/BannerController.php:121 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/event/{id}/delete | Admin | admin_event_delete |  | イベント削除（日程情報がある場合は削除不可） |  | Admin/Event/EventController.php:245 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/event/{eventId}/schedule/{eventDetailId}/delete | Admin | admin_schedule_delete |  | スケジュール削除（デッキ登録・申込がある場合は削除不可） |  | Admin/Event/ScheduleController.php:129 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/mall/mail/{Mail}/delete | Admin | admin_mall_mail_delete |  | メールテンプレートの削除 |  | Admin/Mall/MallMailController.php:246 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/mall/tenant/image/revert | Admin | admin_mall_tenant_image_revert |  | アップロード画像をすぐ削除する際にコールされるメソッド. |  | Admin/Mall/TenantController.php:477 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/order/waiting_tag/{id}/delete | Admin | admin_order_waiting_tag_delete |  | 削除処理 |  | Admin/Order/WaitingTagController.php:128 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/order/{id}/delete | Admin | admin_order_delete |  | 受注個別削除 |  | Admin/Order/OrderController.php:288 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/cardset/{id}/delete | Admin | admin_cardset_delete |  | cardset delete |  | Admin/Card/CardsetController.php:186 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/category/{id}/delete | Admin | admin_product_category_delete |  | product category delete |  | Admin/Product/CategoryController.php:438 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/class_category/{class_name_id}/{id}/delete | Admin | admin_product_class_category_delete |  | product class category delete |  | Admin/Product/ClassCategoryController.php:150 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/class_name/{id}/delete | Admin | admin_product_class_name_delete |  | product class name delete |  | Admin/Product/ClassNameController.php:153 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/format/{id}/delete | Admin | admin_format_delete |  | format delete |  | Admin/Card/FormatController.php:130 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/product/class/{id}/delete/{productClassId} | Admin | admin_product_product_class_delete |  | product product class delete |  | Admin/Product/ProductClassController.php:262 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/product/image/revert | Admin | admin_product_image_revert |  | アップロード画像をすぐ削除する際にコールされるメソッド. |  | Admin/Product/ProductController.php:479 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/product/{id}/delete | Admin | admin_product_product_delete |  | product product delete |  | Admin/Product/ProductController.php:1050 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/section/{id}/delete | Admin | admin_product_section_delete |  | 部門削除 |  | Admin/Product/SectionController.php:134 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/sell_group/{id}/delete | Admin | admin_product_sell_group_delete |  | 購入グループ削除（論理削除） |  | Admin/Product/SellGroupController.php:138 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/shelf_number/{id}/delete | Admin | admin_product_shelf_number_delete |  | 棚番号削除 |  | Admin/Product/ShelfNumberController.php:160 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/storage_code/{id}/delete | Admin | admin_product_storage_code_delete |  | 略称タグ削除 |  | Admin/Product/StorageCodeController.php:138 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/tag/{id}/delete | Admin | admin_product_tag_delete |  | 削除処理 |  | Admin/Product/TagController.php:165 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/product/tag_sales_analysis/{id}/delete | Admin | admin_product_tag_sales_analysis_delete |  | 売上分析タグ削除 |  | Admin/Product/TagSalesAnalysisController.php:151 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/purchase/detail/{id}/delete | Admin | admin_purchase_detail_delete |  | 選んで買取サプライ品明細削除 |  | Admin/Purchase/PurchaseController.php:483 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/purchase/{id}/delete | Admin | admin_purchase_delete |  | 買取情報削除 |  | Admin/Purchase/PurchaseController.php:171 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/setting/shop/custom_csv/delete/{csvExtensionId} | Admin | admin_setting_shop_csv_custom_delete |  | カスタムCSV出力設定削除 |  | Admin/Setting/Shop/CustomerCsvController.php:90 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/setting/shop/delivery/{id}/delete | Admin | admin_setting_shop_delivery_delete |  | setting shop delivery delete |  | Admin/Setting/Shop/DeliveryController.php:276 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/setting/shop/mail/{id}/delete | Admin | admin_setting_shop_mail_delete |  | setting shop mail delete |  | Admin/Setting/Shop/MailController.php:233 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/setting/shop/payment/image/revert | Admin | admin_payment_image_revert |  | アップロード画像をすぐ削除する際にコールされるメソッド. |  | Admin/Setting/Shop/PaymentController.php:279 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/setting/shop/payment/{id}/delete | Admin | admin_setting_shop_payment_delete |  | アップロード画像をすぐ削除する際にコールされるメソッド. |  | Admin/Setting/Shop/PaymentController.php:297 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/setting/shop/tax/{id}/delete | Admin | admin_setting_shop_tax_delete |  | 税率設定の削除 |  | Admin/Setting/Shop/TaxRuleController.php:147 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/setting/system/member/{id}/delete | Admin | admin_setting_system_member_delete |  | setting system member delete |  | Admin/Setting/System/MemberController.php:274 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/standby/{id}/delete | Admin | admin_shipping_standby_delete |  | 出荷指示リスト削除 |  | Admin/Order/ShippingStandbyController.php:235 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/store/plugin/api/delete/{id}/uninstall | Admin | admin_store_plugin_api_uninstall |  | New ways to remove plugin: using composer command |  | Admin/Store/OwnerStoreController.php:248 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/store/plugin/{id}/uninstall | Admin | admin_store_plugin_uninstall |  | 対象のプラグインを削除します。 |  | Admin/Store/PluginController.php:374 |
+| 実装未記載候補のみ | DELETE | /%eccube_admin_route%/store/template/{id}/delete | Admin | admin_store_template_delete |  | テンプレート一覧からのダウンロード |  | Admin/Store/TemplateController.php:146 |
+| 実装未記載候補のみ | DELETE | /api/deck/{id} | App API | api_deck_builder_deck_delete |  | deck builder deck delete |  | App/DeckBuilder/DeckController.php:177 |
+| 実装未記載候補のみ | DELETE | /{_locale}{_shop}/mypage/favorite/{id}/delete/{language_code} | Front | mypage_favorite_delete |  | お気に入り商品を削除する. |  | Front/Mypage/MypageController.php:346 |
+| 実装未記載候補のみ | DELETE | /{_locale}{_shop}/products/remove_favorite/{id}/{language_code} | Front | product_remove_favorite |  | お気に入り削除. |  | Front/ProductController.php:711 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/analysis/format-sales | Admin | admin_analysis_format_sales |  | フォーマット売上分析の初期表示. |  | Admin/Analysis/FormatSalesController.php:44 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/analysis/format-sales/export | Admin | admin_analysis_format_sales_export |  | フォーマット売上分析結果をCSVエクスポートする. |  | Admin/Analysis/FormatSalesController.php:98 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/analysis/product-request | Admin | admin_analysis_product_request |  | analysis product request |  | Admin/Analysis/ProductRequestController.php:46 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/analysis/product-request/export | Admin | admin_analysis_product_request_export |  | analysis product request export |  | Admin/Analysis/ProductRequestController.php:92 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/analysis/sales | Admin | admin_analysis_sales |  | analysis sales |  | Admin/Analysis/SalesAnalysisController.php:43 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/analysis/sales/export | Admin | admin_analysis_sales_export |  | analysis sales export |  | Admin/Analysis/SalesAnalysisController.php:97 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/analysis/summary/daily | Admin | admin_summary_daily |  | summary daily |  | Admin/Analysis/SummaryController.php:61 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/analysis/summary/export | Admin | admin_summary_export |  | summary export |  | Admin/Analysis/SummaryController.php:156 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/analysis/summary/monthly | Admin | admin_summary_monthly |  | summary monthly |  | Admin/Analysis/SummaryController.php:71 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/archetype | Admin | admin_archetype_list |  | archetype list |  | Admin/Archetype/ArchetypeController.php:64 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/archetype/csv_import | Admin | admin_archetype_csv_import |  | archetype csv import |  | Admin/Archetype/ArchetypeCsvController.php:47 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/archetype/new | Admin | admin_archetype_new |  | アーキタイプ新規登録画面. |  | Admin/Archetype/ArchetypeController.php:137 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/archetype/search/{page_no} | Admin | admin_archetype_search |  | archetype search |  | Admin/Archetype/ArchetypeController.php:65 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/archetype/{id}/edit | Admin | admin_archetype_edit |  | アーキタイプ編集画面. |  | Admin/Archetype/ArchetypeController.php:165 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/card | Admin | admin_card_list |  | カード一覧・検索画面. |  | Admin/Card/CardController.php:64 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/card/csv_template | Admin | admin_card_csv_template |  | カードマスタ取込用 CSV テンプレートをダウンロードする。 |  | Admin/Card/CardCsvController.php:45 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/card/csv_upload | Admin | admin_card_csv_upload |  | カード CSV アップロード画面を表示する。 |  | Admin/Card/CardCsvController.php:60 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/card/new | Admin | admin_card_new |  | カード新規登録画面. |  | Admin/Card/CardController.php:192 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/card/search/{page_no} | Admin | admin_card_search |  | カード一覧・検索画面. |  | Admin/Card/CardController.php:65 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/card/{id}/edit | Admin | admin_card_edit |  | カード編集画面. |  | Admin/Card/CardController.php:204 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/cardset/new | Admin | admin_cardset_new |  | カードセット新規登録画面. |  | Admin/Card/CardsetController.php:116 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/cardset/{id}/edit | Admin | admin_cardset_edit |  | カードセット編集画面. |  | Admin/Card/CardsetController.php:148 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/change_password | Admin | admin_change_password |  | パスワード変更画面 |  | Admin/AdminController.php:249 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/content/block | Admin | admin_content_block |  | content block |  | Admin/Content/BlockController.php:48 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/content/block/new | Admin | admin_content_block_new |  | content block new |  | Admin/Content/BlockController.php:85 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/content/block/{id}/edit | Admin | admin_content_block_edit |  | content block edit |  | Admin/Content/BlockController.php:86 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/content/branch_toppage | Admin | admin_content_branch_toppage |  | 支店トップページ管理の初期表示 |  | Admin/Content/BranchTopPageController.php:45 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/content/page/new | Admin | admin_content_page_new |  | content page new |  | Admin/Content/PageController.php:89 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/content/page/{id}/edit | Admin | admin_content_page_edit |  | content page edit |  | Admin/Content/PageController.php:90 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/custom_csv/export/{csvExtensionId} | Admin | admin_custom_export |  | カスタムCSV出力 商品・受注・配送・在庫共通のCSV出力を行う。 |  | Admin/CustomExportCsvController.php:72 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer | Admin | admin_customer |  | customer |  | Admin/Customer/CustomerController.php:69 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/blacklist | Admin | admin_customer_blacklist |  | customer blacklist |  | Admin/Customer/BlacklistController.php:38 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/customer_group | Admin | admin_customer_group_new |  | customer group new |  | Admin/Customer/CustomerGroupController.php:39 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/customer_group/{id} | Admin | admin_customer_group |  | customer group |  | Admin/Customer/CustomerGroupController.php:40 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/export | Admin | admin_customer_export |  | 会員CSVの出力. |  | Admin/Customer/CustomerController.php:281 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/mail/{id}/history | Admin | admin_customer_mail_history |  | customer mail history |  | Admin/Customer/CustomerMailController.php:116 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/manual_mail/{id}/{template_id} | Admin | admin_customer_manual_mail |  | customer manual mail |  | Admin/Customer/CustomerMailController.php:150 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/new | Admin | admin_customer_new |  | customer new |  | Admin/Customer/CustomerEditController.php:59 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/page/{page_no} | Admin | admin_customer_page |  | customer page |  | Admin/Customer/CustomerController.php:70 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/pattern/{patternId} | Admin | admin_customer_search_pattern |  | 検索パターンでの検索 |  | Admin/Customer/CustomerController.php:400 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/point/{id}/select | Admin | admin_customer_point_select |  | customer point select |  | Admin/Customer/CustomerPointController.php:38 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/point/{id}/{type} | Admin | admin_customer_point_history |  | customer point history |  | Admin/Customer/CustomerPointController.php:50 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/save/pattern | Admin | admin_customer_save_search_pattern |  | 検索パターン保存 |  | Admin/Customer/CustomerController.php:360 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/{imageUrl} | Admin | admin_identification_image |  | identification image |  | Admin/Customer/CustomerEditController.php:269 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/{id}/delivery/new | Admin | admin_customer_delivery_new |  | お届け先編集画面. |  | Admin/Customer/CustomerDeliveryEditController.php:45 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/{id}/delivery/{did}/edit | Admin | admin_customer_delivery_edit |  | お届け先編集画面. |  | Admin/Customer/CustomerDeliveryEditController.php:46 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/{id}/edit | Admin | admin_customer_edit |  | customer edit |  | Admin/Customer/CustomerEditController.php:60 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/customer/{id}/resend | Admin | admin_customer_resend |  | customer resend |  | Admin/Customer/CustomerController.php:185 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/data/buy_discount | Admin | admin_data_buy_discount |  | data buy discount |  | Admin/Data/BuyDiscountController.php:37 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/data/buy_price_list | Admin | admin_data_buy_price_list |  | 買取価格対応表一覧 |  | Admin/Data/BuyPriceListController.php:45 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/data/buy_price_list/{id}/edit | Admin | admin_data_buy_price_list_edit |  | 買取価格編集 |  | Admin/Data/BuyPriceListController.php:80 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/data/discount | Admin | admin_data_discount |  | data discount |  | Admin/Data/DiscountController.php:37 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/data/holiday | Admin | admin_data_holiday |  | data holiday |  | Admin/Data/HolidayController.php:45 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/data/mtg_master_data | Admin | admin_data_mtg_master_data |  | data mtg master data |  | Admin/Data/MtgMasterDataController.php:333 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/data/top_banner | Admin | admin_data_top_banner |  | data top banner |  | Admin/Data/TopBannerController.php:52 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/data/top_banner/{base_info_digit} | Admin | admin_data_top_banner_filter |  | data top banner filter |  | Admin/Data/TopBannerController.php:53 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/deck | Admin | admin_deck_list |  | deck list |  | Admin/Deck/DeckController.php:74 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/deck/archetype_card_image/{id} | Admin | admin_deck_archetype_card_image |  | アーキタイプに紐づく代表カード取得（Ajax）. |  | Admin/Deck/DeckController.php:653 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/deck/archetype_tags/{id} | Admin | admin_deck_archetype_tags |  | アーキタイプに紐づくデッキタグ取得（Ajax）. |  | Admin/Deck/DeckController.php:636 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/deck/csv_import | Admin | admin_deck_csv_import |  | deck csv import |  | Admin/Deck/DeckCsvController.php:56 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/deck/latest_event_deck | Admin | admin_latest_event_deck_list |  | latest event deck list |  | Admin/Deck/LatestEventDeckController.php:38 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/deck/new | Admin | admin_deck_new |  | デッキ新規登録画面. |  | Admin/Deck/DeckController.php:247 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/deck/search/{page_no} | Admin | admin_deck_search |  | deck search |  | Admin/Deck/DeckController.php:75 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/deck/{id}/duplicate | Admin | admin_deck_duplicate |  | デッキ複製新規（既存デッキをコピーして新規登録画面を開く）. |  | Admin/Deck/DeckController.php:421 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/deck/{id}/edit | Admin | admin_deck_edit |  | デッキ編集画面. |  | Admin/Deck/DeckController.php:261 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/entry_registration | Admin | admin_entry_registration |  | entry registration |  | Admin/Event/EntryRegistrationController.php:64 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/entry_registration/new/{eventDetailId} | Admin | admin_entry_new |  | イベント申込新規（GET: フォーム表示、POST: 登録処理） |  | Admin/Event/EntryRegistrationController.php:137 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/entry_registration/page/{page_no} | Admin | admin_entry_registration_page |  | entry registration page |  | Admin/Event/EntryRegistrationController.php:65 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/entry_registration/search_player | Admin | admin_entry_registration_search_player |  | 申込登録画面: プレイヤー検索モーダル用 HTML 断片 |  | Admin/Event/EntryRegistrationController.php:192 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event | Admin | admin_event_index |  | event index |  | Admin/Event/EventController.php:56 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/banner | Admin | admin_event_banner |  | バナー一覧・設定画面を表示する。 |  | Admin/Event/BannerController.php:57 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/banner/{htmlClass} | Admin | admin_event_banner_narrow |  | バナー一覧・設定画面を表示する。 |  | Admin/Event/BannerController.php:58 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/create | Admin | admin_event_create |  | event create |  | Admin/Event/EventController.php:154 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/entry | Admin | admin_event_entry |  | event entry |  | Admin/Event/EntryController.php:93 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/entry/bulk_csv_import | Admin | admin_event_entry_bulk_csv_import |  | event entry bulk csv import |  | Admin/Event/EventEntryBulkCsvController.php:59 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/entry/bulk_csv_template | Admin | admin_event_entry_bulk_csv_template |  | event entry bulk csv template |  | Admin/Event/EventEntryBulkCsvController.php:156 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/entry/csv | Admin | admin_event_entry_csv_export |  | イベント申込一覧: 検索条件に一致する申込を CSV 出力（一覧のソート・検索条件と同一）. |  | Admin/Event/EntryController.php:340 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/entry/decklist | Admin | admin_event_entry_decklist |  | イベント申込一覧: 検索条件に一致するデッキを印刷用一覧表示 |  | Admin/Event/EntryController.php:503 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/entry/event_detail/{event_detail_id} | Admin | admin_event_entry_event_detail |  | event entry event detail |  | Admin/Event/EntryController.php:95 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/entry/page/{page_no} | Admin | admin_event_entry_page |  | event entry page |  | Admin/Event/EntryController.php:94 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/entry/search_event | Admin | admin_entry_event_html |  | イベント申込一覧: イベント情報検索モーダル用 |  | Admin/Event/EntryController.php:379 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/entry/search_event/page/{page_no} | Admin | admin_entry_event_html_page |  | イベント申込一覧: イベント情報検索モーダル用 |  | Admin/Event/EntryController.php:380 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/entry/{eventEntry}/edit | Admin | admin_event_entry_edit |  | イベント申込詳細・編集（GET: 表示、POST: 更新） |  | Admin/Event/EntryController.php:249 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/page/{page_no} | Admin | admin_event_index_page |  | event index page |  | Admin/Event/EventController.php:57 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/{id}/copy | Admin | admin_event_copy |  | event copy |  | Admin/Event/EventController.php:195 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/{id}/edit | Admin | admin_event_edit |  | event edit |  | Admin/Event/EventController.php:194 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/{eventId}/repeatSchedule/create | Admin | admin_repeat_schedule_create |  | repeat schedule create |  | Admin/Event/RepeatScheduleController.php:39 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/{eventId}/schedule/create | Admin | admin_schedule_create |  | スケジュール新規登録（GET: フォーム表示、POST: 登録処理） |  | Admin/Event/ScheduleController.php:45 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/event/{eventId}/schedule/{eventDetailId}/edit | Admin | admin_schedule_edit |  | スケジュール編集（GET: フォーム表示、POST: 更新処理） |  | Admin/Event/ScheduleController.php:87 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/format/new | Admin | admin_format_new |  | フォーマット登録画面. |  | Admin/Card/FormatController.php:54 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/format/{id}/edit | Admin | admin_format_edit |  | フォーマット編集画面. |  | Admin/Card/FormatController.php:88 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/mall/mail | Admin | admin_mall_mail |  | モール側で設定するメールテンプレート設定画面のcontroller |  | Admin/Mall/MallMailController.php:74 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/mall/mail/preview | Admin | admin_mall_mail_preview |  | mall mail preview |  | Admin/Mall/MallMailController.php:46 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/mall/mail/{Mail} | Admin | admin_mall_mail_edit |  | モール側で設定するメールテンプレート設定画面のcontroller |  | Admin/Mall/MallMailController.php:75 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/mall/tenant/create | Admin | admin_mall_tenant_create |  | テナント登録・編集画面 |  | Admin/Mall/TenantController.php:208 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/mall/tenant/image/load | Admin | admin_mall_tenant_image_load |  | アップロード画像を取得する際にコールされるメソッド. |  | Admin/Mall/TenantController.php:401 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/count/pattern/{pattern_id} | Admin | admin_order_count_pattern |  | 検索パターンの件数を取得 |  | Admin/Order/SearchOrderController.php:197 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/csv_template | Admin | admin_shipping_csv_template |  | アップロード用CSV雛形ファイルダウンロード |  | Admin/Order/CsvImportController.php:189 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/export/order | Admin | admin_order_export_for_input, admin_order_export_order |  | 出荷実績インポート用CSVエクスポート / 受注CSVの出力. |  | Admin/Order/OrderCsvController.php:191; Admin/Order/OrderController.php:374 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/export/pdf | Admin | admin_order_export_pdf |  | order export pdf |  | Admin/Order/OrderController.php:615 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/export/shipping | Admin | admin_order_export_shipping |  | 配送CSVの出力. |  | Admin/Order/OrderController.php:387 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/manual_mail | Admin | admin_order_manual_mail |  | 手動メール通知（一件分） |  | Admin/Order/MailController.php:218 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/manual_mail/mail_all | Admin | admin_order_manual_mail_all |  | 一括手動メール通知 |  | Admin/Order/MailController.php:303 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/manual_mail/mail_all/{templateId} | Admin | admin_order_manual_mail_all_edit |  | 一括手動メール通知 |  | Admin/Order/MailController.php:304 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/manual_mail/{orderId}/{templateId} | Admin | admin_order_manual_mail_edit |  | 手動メール通知（一件分） |  | Admin/Order/MailController.php:219 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/page/{page_no} | Admin | admin_order_page |  | 受注一覧画面. - 検索条件, ページ番号, 表示件数はセッションに保持されます. |  | Admin/Order/OrderController.php:137 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/print/delivery_slips/{lang} | Admin | admin_delivery_slips_export |  | 受注情報 納品書一括印刷 |  | Admin/Order/OrderController.php:731 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/search/customer/html | Admin | admin_order_search_customer_html |  | 顧客情報を検索する. |  | Admin/Order/EditController.php:1081 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/search/customer/html/page/{page_no} | Admin | admin_order_search_customer_html_page |  | 顧客情報を検索する. |  | Admin/Order/EditController.php:1082 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/search/pattern/{pattern_id} | Admin | admin_order_search_pattern |  | 検索パターンによる受注一覧画面. - 1ページ目の表示のみ処理し、2ページ目以降は通常のOrderControllerのindexメソッドで処理される. |  | Admin/Order/SearchOrderController.php:52 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/shipping_csv_upload | Admin | admin_shipping_csv_import |  | 出荷CSVアップロード |  | Admin/Order/CsvImportController.php:42 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/shipping_result_csv/import | Admin | admin_shipping_result_csv_import |  | 出荷実績CSVアップロード画面 |  | Admin/Order/OrderCsvController.php:237 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/waiting_tag | Admin | admin_order_waiting_tag |  | 新規登録画面および編集画面、下記には登録一覧ページ(常に新規) |  | Admin/Order/WaitingTagController.php:47 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/order/{id}/print/delivery | Admin | admin_order_print_delivery_slips |  | 納品書を印刷. |  | Admin/Order/EditController.php:1282 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/otcbuyorder/summary | Admin | admin_otcbuyorder_summary |  | 買取集計データ |  | Admin/OtcBuyOrder/OtcBuyOrderSummaryController.php:49 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/buy_sale_price_history | Admin | admin_product_buy_sale_price_history |  | 買取/販売価格履歴 一覧・検索 GET `/buy sale price history` … 検索フォームのみ（結果なし） |  | Admin/Product/BuySalePriceHistoryController.php:103 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/buy_sale_price_history/export | Admin | admin_product_buy_sale_price_history_export |  | 買取/販売価格履歴 CSVエクスポート |  | Admin/Product/BuySalePriceHistoryController.php:182 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/buy_sale_price_history/search/{page_no} | Admin | admin_product_buy_sale_price_history_search |  | 買取/販売価格履歴 一覧・検索 GET `/buy sale price history` … 検索フォームのみ（結果なし） |  | Admin/Product/BuySalePriceHistoryController.php:104 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/category | Admin | admin_product_category |  | product category |  | Admin/Product/CategoryController.php:67 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/category/category_bulk_csv_upload | Admin | admin_product_category_bulk_csv_upload |  | カテゴリ登録CSVアップロード画面 |  | Admin/Product/Csv/CategoryCsvController.php:72 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/category/csv_template | Admin | admin_product_category_bulk_csv_template |  | カテゴリ登録CSV雛形ダウンロード |  | Admin/Product/Csv/CategoryCsvController.php:51 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/category/export | Admin | admin_product_category_export |  | カテゴリCSVの出力. |  | Admin/Product/CategoryController.php:519 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/category/{parent_id} | Admin | admin_product_category_show |  | product category show |  | Admin/Product/CategoryController.php:68 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/category/{id}/edit | Admin | admin_product_category_edit |  | 既存カテゴリの編集画面（GET）. |  | Admin/Product/CategoryController.php:92 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/category_csv_upload | Admin | admin_product_category_csv_import |  | カテゴリ登録CSVアップロード |  | Admin/Product/Csv/CsvImportController.php:673 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/class_category/export/{class_name_id} | Admin | admin_product_class_category_export |  | 規格分類CSVの出力. |  | Admin/Product/ClassCategoryController.php:272 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/class_category/{class_name_id} | Admin | admin_product_class_category |  | product class category |  | Admin/Product/ClassCategoryController.php:53 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/class_category/{class_name_id}/{id}/edit | Admin | admin_product_class_category_edit |  | product class category edit |  | Admin/Product/ClassCategoryController.php:54 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/class_category_csv_upload | Admin | admin_product_class_category_csv_import |  | 規格分類CSV登録CSVアップロード |  | Admin/Product/Csv/CsvImportController.php:946 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/class_name | Admin | admin_product_class_name |  | product class name |  | Admin/Product/ClassNameController.php:51 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/class_name/export | Admin | admin_product_class_name_export |  | 規格CSVの出力. |  | Admin/Product/ClassNameController.php:208 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/class_name/{id}/edit | Admin | admin_product_class_name_edit |  | product class name edit |  | Admin/Product/ClassNameController.php:52 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/class_name_csv_upload | Admin | admin_product_class_name_csv_import |  | 規格登録CSVアップロード |  | Admin/Product/Csv/CsvImportController.php:832 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/classes/{id}/load | Admin | admin_product_classes_load |  | product classes load |  | Admin/Product/ProductController.php:345 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/csv_template/{type} | Admin | admin_product_csv_template |  | アップロード用CSV雛形ファイルダウンロード |  | Admin/Product/Csv/CsvImportController.php:1205 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/department_csv_upload | Admin | admin_product_department_csv_import |  | 部門登録CSVアップロード |  | Admin/Product/Csv/CsvImportController.php:1077 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/detail/search/id | Admin | admin_product_search_card_detail_by_id |  | カード詳細IDをもとに結果表示に必要な情報を得る |  | Admin/Product/ProductController.php:994 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/doubling_check | Admin | admin_product_doubling_check |  | 重複商品コード確認画面 |  | Admin/Product/ProductController.php:1273 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/edit_bulk_update_buy_price | Admin | admin_product_edit_bulk_update_buy_price |  | product edit bulk update buy price |  | Admin/Product/ProductBulkUpdateBuyPriceController.php:46 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/export | Admin | admin_product_export |  | 商品CSVの出力. |  | Admin/Product/ProductController.php:1303 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/page/{page_no} | Admin | admin_product_page |  | product page |  | Admin/Product/ProductController.php:123 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/pre_doubling_check | Admin | admin_product_pre_doubling_check |  | 重複商品コード確認画面の前ページ |  | Admin/Product/ProductController.php:1261 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product/class/{id} | Admin | admin_product_product_class |  | product product class |  | Admin/Product/ProductClassController.php:72 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product/class/{id}/edit/{productClassId} | Admin | admin_product_product_class_edit |  | product product class edit |  | Admin/Product/ProductClassController.php:174 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product/class/{id}/new | Admin | admin_product_product_class_new |  | product product class new |  | Admin/Product/ProductClassController.php:102 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product/image/load | Admin | admin_product_image_load |  | アップロード画像を取得する際にコールされるメソッド. |  | Admin/Product/ProductController.php:432 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product/new | Admin | admin_product_product_new |  | product product new |  | Admin/Product/ProductController.php:504 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product/{id}/edit | Admin | admin_product_product_edit |  | product product edit |  | Admin/Product/ProductController.php:505 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_all_csv_custom_export/{csvExtensionId} | Admin | admin_product_all_csv_custom_export |  | カスタムCSVエクスポート |  | Admin/Product/Csv/ProductCsvController.php:211 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_card/csv_template | Admin | admin_product_card_csv_template |  | カード商品登録CSV雛形ダウンロード |  | Admin/Product/Csv/CardCsvController.php:70 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_card_csv_upload | Admin | admin_product_card_csv_import |  | カード商品登録CSVアップロード画面 |  | Admin/Product/Csv/CardCsvController.php:83 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_csv_upload | Admin | admin_product_csv_import |  | 商品登録CSVアップロード |  | Admin/Product/Csv/CsvImportController.php:132 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_goods/csv_template | Admin | admin_product_goods_csv_template |  | グッズ商品CSV雛形ファイルダウンロード |  | Admin/Product/Csv/GoodsCsvController.php:62 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_goods_csv_upload | Admin | admin_product_goods_csv_import |  | グッズ・サプライ・情報商材登録CSVアップロード 画面表示 |  | Admin/Product/Csv/GoodsCsvController.php:75 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_price/csv_template | Admin | admin_product_product_price_csv_template |  | 商品価格CSV雛形ファイルダウンロード |  | Admin/Product/Csv/ProductPriceCsvController.php:58 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_price/product_price_csv_upload | Admin | admin_product_product_price_csv_upload |  | 商品価格CSVアップロード画面 |  | Admin/Product/Csv/ProductPriceCsvController.php:75 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_shelf_number_csv_import | Admin | admin_product_shelf_number_csv_import |  | 棚番号更新CSVアップロード画面 |  | Admin/Product/Csv/ProductShelfNumberCsvController.php:71 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_standard_price/csv_template | Admin | admin_product_product_standard_price_csv_template |  | 基準価格変更CSV雛形ファイルダウンロード |  | Admin/Product/Csv/ProductStandardPriceCsvController.php:60 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_standard_price_csv_upload | Admin | admin_product_product_standard_price_csv_upload |  | 基準価格変更CSVアップロード画面 |  | Admin/Product/Csv/ProductStandardPriceCsvController.php:77 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_tag/csv_template | Admin | admin_product_product_tag_csv_template |  | 商品タグ更新CSV雛形ファイルダウンロード |  | Admin/Product/Csv/ProductTagCsvController.php:50 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/product_tag_csv_upload | Admin | admin_product_product_tag_csv_upload |  | 商品タグ更新CSVアップロード画面 |  | Admin/Product/Csv/ProductTagCsvController.php:67 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/sale_high_price/csv_template | Admin | admin_product_sale_high_price_csv_template |  | セール用高額商品価格変更CSV雛形ファイルダウンロード |  | Admin/Product/Csv/ProductSaleHighPriceCsvController.php:52 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/sale_high_price/csv_upload | Admin | admin_product_sale_high_price_csv_upload |  | セール用高額商品価格変更CSVアップロード画面 |  | Admin/Product/Csv/ProductSaleHighPriceCsvController.php:65 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/searchCardDetail | Admin | admin_product_card_detail_html |  | カード詳細検索モーダル 検索結果 |  | Admin/Product/ProductController.php:938 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/section | Admin | admin_product_section |  | 部門一覧・編集・新規作成 |  | Admin/Product/SectionController.php:64 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/section/csv_template | Admin | admin_product_section_csv_template |  | 部門更新CSV雛形ファイルダウンロード |  | Admin/Product/Csv/ProductSectionCsvController.php:52 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/section/csv_upload | Admin | admin_product_section_csv_upload |  | 部門更新CSVアップロード画面 |  | Admin/Product/Csv/ProductSectionCsvController.php:69 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/section/export | Admin | admin_product_section_export |  | 部門CSVの出力 |  | Admin/Product/SectionController.php:199 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/section/master_csv_template | Admin | admin_product_section_master_csv_template |  | 部門CSV雛形ファイルダウンロード（部門マスタ用） |  | Admin/Product/SectionController.php:236 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/section/master_csv_upload | Admin | admin_product_section_master_csv_upload |  | 部門更新CSVアップロード画面 |  | Admin/Product/SectionController.php:260 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/section/{id} | Admin | admin_product_section_edit |  | 部門一覧・編集・新規作成 |  | Admin/Product/SectionController.php:63 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/sell_group | Admin | admin_product_sell_group |  | 購入グループ一覧・新規フォーム |  | Admin/Product/SellGroupController.php:40 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/sell_group/{id} | Admin | admin_product_sell_group_edit |  | 購入グループ編集画面（一覧と同レイアウト・項目を既存値で表示） |  | Admin/Product/SellGroupController.php:87 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/shelf_number | Admin | admin_product_shelf_number |  | 棚番号一覧・編集・新規作成 |  | Admin/Product/ShelfNumberController.php:71 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/shelf_number/csv | Admin | admin_product_shelf_number_csv |  | 棚番号更新CSVアップロード画面（部門マスタと同様に master csv upload を正とする。/csv は互換用） |  | Admin/Product/ShelfNumberController.php:248 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/shelf_number/csv_template | Admin | admin_product_shelf_number_csv_template |  | 棚番号更新CSV雛形ファイルダウンロード |  | Admin/Product/Csv/ProductShelfNumberCsvController.php:54 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/shelf_number/export | Admin | admin_product_shelf_number_export |  | 棚番号CSV出力 |  | Admin/Product/ShelfNumberController.php:201 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/shelf_number/master_csv_template | Admin | admin_product_shelf_number_master_csv_template |  | 棚番号CSV雛形ファイルダウンロード（棚番号マスタ用） |  | Admin/Product/ShelfNumberController.php:234 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/shelf_number/master_csv_upload | Admin | admin_product_shelf_number_master_csv_upload |  | 棚番号更新CSVアップロード画面（部門マスタと同様に master csv upload を正とする。/csv は互換用） |  | Admin/Product/ShelfNumberController.php:247 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/shelf_number/page/{page_no} | Admin | admin_product_shelf_number_page |  | 棚番号一覧・編集・新規作成 |  | Admin/Product/ShelfNumberController.php:69 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/shelf_number/{id} | Admin | admin_product_shelf_number_edit |  | 棚番号一覧・編集・新規作成 |  | Admin/Product/ShelfNumberController.php:70 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/shelf_number/{id}/page/{page_no} | Admin | admin_product_shelf_number_edit_page |  | 棚番号一覧・編集・新規作成 |  | Admin/Product/ShelfNumberController.php:68 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/simple_high_price/csv_template | Admin | admin_product_simple_high_price_csv_template |  | 高額商品価格変更CSV雛形ファイルダウンロード |  | Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:50 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/simple_high_price/csv_upload | Admin | admin_product_simple_high_price_csv_upload |  | 高額商品価格変更CSVアップロード画面 |  | Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:67 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/status/csv_template | Admin | admin_product_status_csv_template |  | 商品公開CSV雛形ファイルダウンロード |  | Admin/Product/Csv/ProductStatusCsvController.php:52 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/status/csv_upload | Admin | admin_product_status_csv_upload |  | 商品公開CSVアップロード画面 |  | Admin/Product/Csv/ProductStatusCsvController.php:69 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock | Admin | admin_stock_list |  | 在庫一覧（検索・ページング表示） |  | Admin/Stock/StockListController.php:94 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/approval_list | Admin | admin_stock_approval_list |  | 在庫編集承認一覧 検索条件・ページ番号・表示件数はセッションに保持する。 |  | Admin/Stock/StockApprovalListController.php:77 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/approval_list/csv | Admin | admin_stock_approval_list_csv |  | 検索結果に基づく在庫編集承認一覧のCSV出力 |  | Admin/Stock/StockApprovalListController.php:188 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/approval_list/line_items/csv | Admin | admin_stock_approval_list_line_items_csv |  | 在庫編集承認モーダル明細のCSV出力（表示上限を超えた件数を含む全件） |  | Admin/Stock/StockApprovalListController.php:359 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/approval_list/line_items/page/{page_no} | Admin | admin_stock_approval_list_line_items_page |  | 在庫編集承認モーダル内の明細テーブルHTMLを取得する - POST: モーダル表示時の初回リクエストで、選択IDと明細の上限なし総件数をセッションに保持して明細を取得 |  | Admin/Stock/StockApprovalListController.php:287 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/approval_list/page/{page_no} | Admin | admin_stock_approval_list_page |  | 在庫編集承認一覧 検索条件・ページ番号・表示件数はセッションに保持する。 |  | Admin/Stock/StockApprovalListController.php:78 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/approval_list/page/{page_no}/count/{page_count} | Admin | admin_stock_approval_list_page_count |  | 在庫編集承認一覧 検索条件・ページ番号・表示件数はセッションに保持する。 |  | Admin/Stock/StockApprovalListController.php:79 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/barcode_replacement_list | Admin | admin_stock_barcode_replacement_list |  | バーコード貼替リスト画面 |  | Admin/Stock/BarcodeReplacementListController.php:40 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/change/csv-template | Admin | admin_stock_change_csv_template |  | 在庫変更CSV雛形ダウンロード |  | Admin/Stock/StockChangeCsvController.php:431 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/change/members | Admin | admin_stock_change_csv_members |  | 店舗IDに紐づく承認通知先メンバー一覧を返す |  | Admin/Stock/StockChangeCsvController.php:396 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/change/new | Admin | admin_stock_change_csv_list |  | 在庫変更CSV登録 画面表示 |  | Admin/Stock/StockChangeCsvController.php:99 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/change/new/page/{page_no} | Admin | admin_stock_change_csv_page |  | 在庫変更CSV登録 画面表示 |  | Admin/Stock/StockChangeCsvController.php:100 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/change/new/page/{page_no}/count/{page_count} | Admin | admin_stock_change_csv_page_count |  | 在庫変更CSV登録 画面表示 |  | Admin/Stock/StockChangeCsvController.php:101 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/csv | Admin | admin_stock_list_csv |  | 在庫一覧CSV出力: セッションの検索条件で全件をCSV出力する。 |  | Admin/Stock/StockListController.php:213 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/custom-csv/{csvExtensionId} | Admin | admin_stock_list_custom_csv |  | 在庫情報カスタムCSV出力（M04-01） |  | Admin/Stock/StockListController.php:270 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/history | Admin | admin_stock_history |  | 在庫履歴検索/一覧 画面表示 |  | Admin/Stock/StockHistoryController.php:64 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/history/page/{page_no} | Admin | admin_stock_history_page |  | 在庫履歴検索/一覧 画面表示 |  | Admin/Stock/StockHistoryController.php:65 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/history/page/{page_no}/count/{page_count} | Admin | admin_stock_history_page_count |  | 在庫履歴検索/一覧 画面表示 |  | Admin/Stock/StockHistoryController.php:66 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/join/new | Admin | admin_stock_join_new_redirect |  | 在庫IDを指定して結合新規画面へリダイレクト（一覧の「結合新規を開く」用） |  | Admin/Stock/StockSplitJoinController.php:509 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/join/new-source-csv-template | Admin | admin_stock_join_new_source_csv_template |  | 結合元商品CSV雛形（新規・編集モーダル共通・2列） |  | Admin/Stock/StockJoinController.php:797 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/join/{id}/approval | Admin | admin_stock_join_approval |  | stock join approval |  | Admin/Stock/StockJoinController.php:188 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/join/{id}/edit | Admin | admin_stock_join_edit |  | stock join edit |  | Admin/Stock/StockJoinController.php:225 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/join/{id}/shortage-csv-export | Admin | admin_stock_join_shortage_csv_export |  | 結合元商品CSV（編集画面・2列で明細全置換） CSVインポートは即時DB登録（Sessionを経由しない）。 |  | Admin/Stock/StockJoinController.php:923 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/join/{id}/shortage-entry | Admin | admin_stock_join_shortage_entry |  | stock join shortage entry |  | Admin/Stock/StockJoinController.php:552 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move-instruction | Admin | admin_stock_move_instruction_list |  | 在庫移動指示一覧（検索・全件表示） |  | Admin/Stock/StockMoveInstructionController.php:66 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move-instruction/csv-template | Admin | admin_stock_move_instruction_csv_download_record |  | 在庫移動実績入力用CSV雛形ダウンロード |  | Admin/Stock/StockMoveInstructionController.php:334 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move-instruction/page/{page_no} | Admin | admin_stock_move_instruction_list_page |  | 在庫移動指示一覧（検索・全件表示） |  | Admin/Stock/StockMoveInstructionController.php:67 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move-instruction/{id} | Admin | admin_stock_move_instruction_detail |  | 在庫移動指示詳細（表示・送り状No・備考の編集） |  | Admin/Stock/StockMoveInstructionController.php:161 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move/inbound_approval/{id} | Admin | admin_stock_move_inbound_approval |  | 入庫承認画面 |  | Admin/Stock/StockMoveController.php:785 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move/inbound_approval_request/{id} | Admin | admin_stock_move_inbound_approval_request |  | 入庫承認申請画面 |  | Admin/Stock/StockMoveController.php:584 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move/inbound_approval_request/{id}/csv-export | Admin | admin_stock_move_inbound_approval_request_csv_export |  | 入庫承認申請画面の在庫移動CSV出力 |  | Admin/Stock/StockMoveController.php:633 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move/new | Admin | admin_stock_move_new |  | stock move new |  | Admin/Stock/StockMoveController.php:143 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move/outbound_approval/{id} | Admin | admin_stock_move_outbound_approval |  | 出庫承認画面 |  | Admin/Stock/StockMoveController.php:455 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move/outbound_approval_request/{id} | Admin | admin_stock_move_outbound_approval_request |  | ピック・出庫承認申請画面 |  | Admin/Stock/StockMoveController.php:258 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move/outbound_approval_request/{id}/csv-export | Admin | admin_stock_move_outbound_approval_request_csv_export |  | ピック・出庫承認申請画面の在庫移動CSV出力 |  | Admin/Stock/StockMoveController.php:388 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move/{id} | Admin | admin_stock_move |  | 入庫完了画面 |  | Admin/Stock/StockMoveController.php:898 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move_transfer | Admin | admin_stock_move_transfer |  | 在庫移動・振替一覧 |  | Admin/Stock/StockMoveTransferController.php:104 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move_transfer/csv_export | Admin | admin_stock_move_transfer_csv_export |  | 検索結果に基づく在庫移動振替一覧のCSV出力 |  | Admin/Stock/StockMoveTransferController.php:410 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move_transfer/move_csv_template | Admin | admin_stock_move_transfer_move_csv_template |  | 在庫移動CSV雛形ダウンロード |  | Admin/Stock/StockMoveTransferController.php:583 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move_transfer/page/{page_no} | Admin | admin_stock_move_transfer_page |  | 在庫移動・振替一覧 |  | Admin/Stock/StockMoveTransferController.php:105 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/move_transfer/transfer_csv_template | Admin | admin_stock_move_transfer_transfer_csv_template |  | 在庫振替CSV雛形ダウンロード |  | Admin/Stock/StockMoveTransferController.php:607 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/page/{page_no} | Admin | admin_stock_list_page |  | 在庫一覧（検索・ページング表示） |  | Admin/Stock/StockListController.php:95 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/page/{page_no}/count/{page_count} | Admin | admin_stock_list_page_count |  | 在庫一覧（検索・ページング表示） |  | Admin/Stock/StockListController.php:96 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/pattern/{patternId} | Admin | admin_stock_list_pattern |  | 検索パターン読み込み・検索実行 |  | Admin/Stock/StockListController.php:385 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/recommend-csv | Admin | admin_stock_list_recommend_csv |  | 在庫リコメンドCSV出力（M04-16） |  | Admin/Stock/StockListController.php:243 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/split-join | Admin | admin_stock_split_join_list |  | 在庫分割結合一覧（検索・一覧表示） |  | Admin/Stock/StockSplitJoinController.php:90 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/split-join/approval-members | Admin | admin_stock_split_join_approval_members |  | 店舗IDに紐づく承認権限メンバー一覧を JSON で返す（分割CSV登録モーダル用）。 |  | Admin/Stock/StockSplitJoinController.php:430 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/split-join/csv-export | Admin | admin_stock_split_join_csv_export |  | stock split join csv export |  | Admin/Stock/StockSplitJoinController.php:213 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/split-join/join-csv-template | Admin | admin_stock_join_csv_template |  | 在庫分割結合一覧（検索・一覧表示） |  | Admin/Stock/StockSplitJoinController.php:175 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/split-join/split-csv-template | Admin | admin_stock_split_csv_template |  | 在庫分割結合一覧（検索・一覧表示） |  | Admin/Stock/StockSplitJoinController.php:183 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/split-join/{id}/status-snapshot | Admin | admin_stock_split_join_status_snapshot |  | 在庫分割・結合のステータス照会（別タブ・他画面での更新後に画面を再読込するための軽量 GET） |  | Admin/Stock/StockSplitJoinController.php:74 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/split/destination-csv-template | Admin | admin_stock_split_new_destination_csv_template |  | 在庫分割・分割先 CSV テンプレートダウンロード |  | Admin/Stock/StockSplitController.php:629 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/split/{id}/approval | Admin | admin_stock_split_approval |  | 在庫分割・承認画面 / 承認・却下処理 |  | Admin/Stock/StockSplitController.php:336 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/split/{id}/edit | Admin | admin_stock_split_edit |  | 在庫分割・編集画面 / 保存処理 |  | Admin/Stock/StockSplitController.php:205 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/stock-bulk-approval/new | Admin | admin_stock_bulk_approval_new |  | 検索画面で選択された在庫を一括編集する画面を表示する。 GET/POST ともに productStockIds[] を受け取る。 |  | Admin/Stock/StockBulkApprovalController.php:52 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/transfer/dest-product-class-info | Admin | admin_stock_transfer_dest_product_class_info |  | 振替先の商品規格情報をJSONで返す（振替先セル表示・振替元との差異表示用） |  | Admin/Stock/StockTransferController.php:450 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/transfer/new | Admin | admin_stock_transfer_new |  | 在庫振替登録画面（初期表示・基本データ表示） GET または POST の product stock id / productStockIds から在庫を取得し一覧に表示する |  | Admin/Stock/StockTransferController.php:112 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/transfer/{id} | Admin | admin_stock_transfer |  | 在庫振替完了画面（承認済・却下後） |  | Admin/Stock/StockTransferController.php:253 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/transfer/{id}/approval | Admin | admin_stock_transfer_approval |  | 在庫振替承認待ち画面 |  | Admin/Stock/StockTransferController.php:286 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/{productStockId}/join/new | Admin | admin_stock_join_new |  | stock join new |  | Admin/Stock/StockJoinController.php:88 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/{productStockId}/split/new | Admin | admin_stock_split_new |  | 在庫分割・新規登録画面 / 分割済みステータス表示 |  | Admin/Stock/StockSplitController.php:78 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/stock/{productStockId}/stock-approval/new | Admin | admin_stock_approval_new |  | 在庫承認画面 |  | Admin/Stock/StockApprovalController.php:54 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/storage | Admin | admin_product_storage_code |  | 略称タグ一覧・編集・新規作成 |  | Admin/Product/StorageCodeController.php:69 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/storage/page/{page_no} | Admin | admin_product_storage_code_page |  | 略称タグ一覧・編集・新規作成 |  | Admin/Product/StorageCodeController.php:67 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/storage/{id} | Admin | admin_product_storage_code_edit |  | 略称タグ一覧・編集・新規作成 |  | Admin/Product/StorageCodeController.php:68 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/storage/{id}/page/{page_no} | Admin | admin_product_storage_code_edit_page |  | 略称タグ一覧・編集・新規作成 |  | Admin/Product/StorageCodeController.php:66 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/storage_code/csv | Admin | admin_product_storage_code_csv |  | 略称タグCSVアップロード画面 |  | Admin/Product/StorageCodeController.php:224 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/storage_code/csv_template | Admin | admin_product_storage_code_csv_template |  | 略称タグCSV雛形ファイルダウンロード |  | Admin/Product/StorageCodeController.php:200 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/storage_code/export | Admin | admin_product_storage_code_export |  | 略称タグCSV出力 |  | Admin/Product/StorageCodeController.php:166 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/tag | Admin | admin_product_tag |  | 新規登録画面および編集画面、下記には登録一覧ページ |  | Admin/Product/TagController.php:64 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/tag/page/{page_no} | Admin | admin_product_tag_page |  | 新規登録画面および編集画面、下記には登録一覧ページ |  | Admin/Product/TagController.php:62 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/tag/{id} | Admin | admin_product_tag_edit |  | 新規登録画面および編集画面、下記には登録一覧ページ |  | Admin/Product/TagController.php:63 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/tag/{id}/page/{page_no} | Admin | admin_product_tag_edit_page |  | 新規登録画面および編集画面、下記には登録一覧ページ |  | Admin/Product/TagController.php:61 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/tag_sales_analysis | Admin | admin_product_tag_sales_analysis |  | 売上分析タグ一覧・編集・新規作成 |  | Admin/Product/TagSalesAnalysisController.php:54 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/tag_sales_analysis/csv_template | Admin | admin_product_tag_sales_analysis_csv_template |  | 売上分析タグ更新CSV雛形ファイルダウンロード |  | Admin/Product/Csv/TagSalesAnalysisCsvController.php:50 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/tag_sales_analysis/csv_upload | Admin | admin_product_tag_sales_analysis_csv_upload |  | 売上分析タグ更新CSVアップロード画面 |  | Admin/Product/Csv/TagSalesAnalysisCsvController.php:67 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/tag_sales_analysis/page/{page_no} | Admin | admin_product_tag_sales_analysis_page |  | 売上分析タグ一覧・編集・新規作成 |  | Admin/Product/TagSalesAnalysisController.php:52 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/tag_sales_analysis/{id} | Admin | admin_product_tag_sales_analysis_edit |  | 売上分析タグ一覧・編集・新規作成 |  | Admin/Product/TagSalesAnalysisController.php:53 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/tag_sales_analysis/{id}/page/{page_no} | Admin | admin_product_tag_sales_analysis_edit_page |  | 売上分析タグ一覧・編集・新規作成 |  | Admin/Product/TagSalesAnalysisController.php:51 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/product/unisearch/feed | Admin | admin_product_unisearch_feed |  | product unisearch feed |  | Admin/Product/UniSearchFeedController.php:35 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/purchase/list | Admin | admin_purchase_list |  | 買取一覧ページを表示する |  | Admin/Purchase/PurchaseController.php:121 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/purchase/page/{page_no} | Admin | admin_purchase_page |  | 買取一覧検索 |  | Admin/Purchase/PurchaseController.php:144 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/purchase/searchproduct/page/{page_no} | Admin | admin_purchase_search_product_page |  | 買取詳細検索 |  | Admin/Purchase/PurchaseController.php:255 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/purchase/{id}/bulkpurchaseload | Admin | admin_purchase_bulk_purchase_load |  | まとめて買取読込 |  | Admin/Purchase/PurchaseController.php:324 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/purchase/{id}/edit | Admin | admin_purchase_edit |  | 買取情報詳細 |  | Admin/Purchase/PurchaseController.php:199 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/purchase/{buyOrderId}/mail | Admin | admin_purchase_manual_mail |  | 手動メール通知 - change: テンプレート選択 |  | Admin/Purchase/MailController.php:48 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/search/product | Admin | admin_search_product |  | search product |  | Admin/SearchProductController.php:51 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/search/product/page/{page_no} | Admin | admin_search_product_page |  | search product page |  | Admin/SearchProductController.php:56 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop | Admin | admin_setting_shop |  | setting shop |  | Admin/Setting/Shop/ShopController.php:45 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/additional_system | Admin | admin_setting_shop_additional_system |  | setting shop additional system |  | Admin/Setting/Shop/AdditionalSystemController.php:41 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/calendar/new | Admin | admin_setting_shop_calendar_new |  | カレンダー設定の初期表示・登録 |  | Admin/Setting/Shop/CalendarController.php:47 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/csv/{id} | Admin | admin_setting_shop_csv |  | setting shop csv |  | Admin/Setting/Shop/CsvController.php:46 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId} | Admin | admin_setting_shop_csv_custom |  | カスタムCSV出力設定画面表示 |  | Admin/Setting/Shop/CustomerCsvController.php:46 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/delivery | Admin | admin_setting_shop_delivery |  | setting shop delivery |  | Admin/Setting/Shop/DeliveryController.php:63 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/delivery/new | Admin | admin_setting_shop_delivery_new |  | setting shop delivery new |  | Admin/Setting/Shop/DeliveryController.php:90 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/delivery/{id}/edit | Admin | admin_setting_shop_delivery_edit |  | setting shop delivery edit |  | Admin/Setting/Shop/DeliveryController.php:91 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/delivery/{id}/minimum_delivery_time | Admin | admin_setting_shop_delivery_minimum_delivery_time_edit |  | setting shop delivery minimum delivery time edit |  | Admin/Setting/Shop/DeliveryController.php:350 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/mail | Admin | admin_setting_shop_mail |  | setting shop mail |  | Admin/Setting/Shop/MailController.php:56 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/mail/{id} | Admin | admin_setting_shop_mail_edit |  | setting shop mail edit |  | Admin/Setting/Shop/MailController.php:57 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/payment | Admin | admin_setting_shop_payment |  | setting shop payment |  | Admin/Setting/Shop/PaymentController.php:48 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/payment/image/load | Admin | admin_payment_image_load |  | アップロード画像を取得する際にコールされるメソッド. |  | Admin/Setting/Shop/PaymentController.php:230 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/payment/new | Admin | admin_setting_shop_payment_new |  | setting shop payment new |  | Admin/Setting/Shop/PaymentController.php:74 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/payment/{id}/edit | Admin | admin_setting_shop_payment_edit |  | setting shop payment edit |  | Admin/Setting/Shop/PaymentController.php:75 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/tax | Admin | admin_setting_shop_tax |  | 税率設定の初期表示・登録 |  | Admin/Setting/Shop/TaxRuleController.php:51 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/tax/new | Admin | admin_setting_shop_tax_new |  | 税率設定の初期表示・登録 |  | Admin/Setting/Shop/TaxRuleController.php:52 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/shop/tradelaw | Admin | admin_setting_shop_tradelaw |  | 特定商取引法設定の初期表示・登録 |  | Admin/Setting/Shop/TradeLawController.php:39 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/system/authority | Admin | admin_setting_system_authority |  | setting system authority |  | Admin/Setting/System/AuthorityController.php:53 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/system/log | Admin | admin_setting_system_log |  | setting system log |  | Admin/Setting/System/LogController.php:31 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/system/member | Admin | admin_setting_system_member |  | setting system member |  | Admin/Setting/System/MemberController.php:58 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/system/member/new | Admin | admin_setting_system_member_new |  | setting system member new |  | Admin/Setting/System/MemberController.php:91 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/system/permission_access_url | Admin | admin_setting_system_permission_access_url |  | setting system permission access url |  | Admin/Setting/System/PermissionAccessUrlController.php:45 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/setting/system/security | Admin | admin_setting_system_security |  | setting system security |  | Admin/Setting/System/SecurityController.php:38 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/shipping/preview_notify_mail/{id} | Admin | admin_shipping_preview_notify_mail |  | shipping preview notify mail |  | Admin/Order/ShippingController.php:233 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/standby/labels | Admin | admin_labels_export |  | 送り状CSV出力 |  | Admin/Order/OrderController.php:757 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/standby/{id}/edit | Admin | admin_shipping_standby_edit |  | 出荷指示リスト 編集画面 |  | Admin/Order/ShippingStandbyController.php:152 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/standby/{id}/print/delivery/{lang} | Admin | admin_shipping_standby_print_delivery_slips |  | 出荷指示リスト 納品書印刷 |  | Admin/Order/ShippingStandbyController.php:393 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/standby/{id}/print/picking | Admin | admin_shipping_standby_print_picking_list |  | 出荷指示リスト ピッキングリスト印刷 |  | Admin/Order/ShippingStandbyController.php:283 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/store/plugin/api/install/{id}/confirm | Admin | admin_store_plugin_install_confirm |  | Do confirm page |  | Admin/Store/OwnerStoreController.php:179 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/store/plugin/api/search | Admin | admin_store_plugin_owners_search |  | Owner's Store Plugin Installation Screen - Search function |  | Admin/Store/OwnerStoreController.php:75 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/store/plugin/api/search/page/{page_no} | Admin | admin_store_plugin_owners_search_page |  | Owner's Store Plugin Installation Screen - Search function |  | Admin/Store/OwnerStoreController.php:76 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/store/plugin/api/upgrade/{id}/confirm | Admin | admin_store_plugin_update_confirm |  | Do confirm update page |  | Admin/Store/OwnerStoreController.php:441 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/store/plugin/authentication_setting | Admin | admin_store_authentication_setting |  | 認証キー設定画面 |  | Admin/Store/PluginController.php:476 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/store/template | Admin | admin_store_template |  | テンプレート一覧画面 |  | Admin/Store/TemplateController.php:48 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/store/template/install | Admin | admin_store_template_install |  | テンプレートの追加画面. |  | Admin/Store/TemplateController.php:188 |
+| 実装未記載候補のみ | GET | /%eccube_admin_route%/store/template/{id}/download | Admin | admin_store_template_download |  | テンプレート一覧からのダウンロード |  | Admin/Store/TemplateController.php:89 |
+| 実装未記載候補のみ | GET | /%eccube_api_v1_route%/admin/buyOrders.json | App API | api_admin_buy_orders_product_arrival |  | ネット買取受注一覧取得 |  | App/MTGBuyer/V1/Admin/BuyOrderController.php:59 |
+| 実装未記載候補のみ | GET | /%eccube_api_v1_route%/admin/fixedPriceSection.json | App API | api_admin_fixed_price_section |  | 固定価格部門IDの取得 |  | App/MTGBuyer/V1/Admin/OptionController.php:50 |
+| 実装未記載候補のみ | GET | /%eccube_api_v1_route%/admin/optionBulkPurchaseId.json | App API | api_admin_option_bulk_purchase_id |  | まとめて買取商品IDの取得 |  | App/MTGBuyer/V1/Admin/OptionController.php:35 |
+| 実装未記載候補のみ | GET | /%eccube_api_v1_route%/admin/otcBuyOrders.json | App API | api_admin_otc_buy_orders |  | 審査未完了の店頭買取受注一覧取得 |  | App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:69 |
+| 実装未記載候補のみ | GET | /%eccube_api_v1_route%/admin/sections.json | App API | api_admin_sections |  | 表示フラグがtrueの部門一覧の取得 |  | App/MTGBuyer/V1/Admin/SectionController.php:35 |
+| 実装未記載候補のみ | GET | /%eccube_api_v1_route%/buying/{cardDetailId}.json | App API | api_buying |  | カード詳細IDから買取用商品情報を取得 |  | App/MTGBuyer/V1/Admin/BuyingController.php:48 |
+| 実装未記載候補のみ | GET | /%eccube_messenger_route%/ | Admin | admin_messenger |  | ダッシュボード（サマリ表示） |  | Admin/Messenger/DashboardController.php:52 |
+| 実装未記載候補のみ | GET | /%eccube_messenger_route%/jobs | Admin | admin_messenger_jobs |  | ジョブ一覧（ページング） |  | Admin/Messenger/DashboardController.php:70 |
+| 実装未記載候補のみ | GET | /%eccube_messenger_route%/jobs/page/{page_no} | Admin | admin_messenger_jobs_page |  | ジョブ一覧（ページング） |  | Admin/Messenger/DashboardController.php:71 |
+| 実装未記載候補のみ | GET | /%eccube_messenger_route%/jobs/{id} | Admin | admin_messenger_job_detail |  | ジョブ詳細 |  | Admin/Messenger/DashboardController.php:224 |
+| 実装未記載候補のみ | GET | /%eccube_messenger_route%/webhooks | Admin | admin_messenger_webhooks |  | Webhook 一覧（ページング） |  | Admin/Messenger/DashboardController.php:107 |
+| 実装未記載候補のみ | GET | /%eccube_messenger_route%/webhooks/page/{page_no} | Admin | admin_messenger_webhooks_page |  | Webhook 一覧（ページング） |  | Admin/Messenger/DashboardController.php:108 |
+| 実装未記載候補のみ | GET | /%eccube_messenger_route%/webhooks/{id} | Admin | admin_messenger_webhook_detail |  | Webhook 詳細 |  | Admin/Messenger/DashboardController.php:144 |
+| 実装未記載候補のみ | GET | /api/archetype/{id} | App API | api_deck_builder_archetype |  | deck builder archetype |  | App/DeckBuilder/ArchetypeController.php:61 |
+| 実装未記載候補のみ | GET | /api/archetypes/{formatId} | App API | api_deck_builder_archetypes |  | deck builder archetypes |  | App/DeckBuilder/ArchetypeController.php:38 |
+| 実装未記載候補のみ | GET | /api/card | App API | api_deck_builder_card_search |  | deck builder card search |  | App/DeckBuilder/CardController.php:160 |
+| 実装未記載候補のみ | GET | /api/cards | App API | api_deck_builder_cards_search |  | deck builder cards search |  | App/DeckBuilder/CardController.php:71 |
+| 実装未記載候補のみ | GET | /api/cards/{id} | App API | api_deck_builder_card |  | deck builder card |  | App/DeckBuilder/CardController.php:142 |
+| 実装未記載候補のみ | GET | /api/categories/tree | App API | api_categories_tree |  | フロント表示対象のカテゴリについて、ルート直下から全ツリー構造を取得する |  | App/CategoryController.php:37 |
+| 実装未記載候補のみ | GET | /api/categories/{id}/tree | App API | api_categories_tree_by_id |  | 指定したカテゴリ ID をルートとしたツリー構造を取得する（本店想定・支店非表示フラグは見ない） |  | App/CategoryController.php:61 |
+| 実装未記載候補のみ | GET | /api/categories/{id}/tree/{branch} | App API | api_categories_tree_by_id_branch |  | 支店フラグ branch に応じたツリー（true: 支店向け、branch hide flg を除外） |  | App/CategoryController.php:70 |
+| 実装未記載候補のみ | GET | /api/deck/usage_analysis/{formatId} | App API | api_deck_builder_usage_analysis |  | deck builder usage analysis |  | App/DeckBuilder/DeckController.php:522 |
+| 実装未記載候補のみ | GET | /api/deck/{id} | App API | api_deck_builder_deck_get |  | deck builder deck get |  | App/DeckBuilder/DeckController.php:214 |
+| 実装未記載候補のみ | GET | /api/decks | App API | api_deck_builder_decks |  | deck builder decks |  | App/DeckBuilder/DeckController.php:262 |
+| 実装未記載候補のみ | GET | /api/master/{name} | App API | api_deck_builder_master |  | 各マスタ名ごとに deck-api の JMS\Expose と同等の公開フィールドを列挙する。 |  | App/DeckBuilder/MasterController.php:77 |
+| 実装未記載候補のみ | GET | /api/metagame | App API | api_deck_builder_metagame |  | deck builder metagame |  | App/DeckBuilder/DeckController.php:556 |
+| 実装未記載候補のみ | GET | /api/popup/card/{lang}/{cardId} | App API | popup_product_by_card_id |  | カードIDからポップアップ用の商品情報を1件取得する |  | App/ProductController.php:265 |
+| 実装未記載候補のみ | GET | /api/popup/product/{lang}/{productId} | App API | popup_product_by_product_id |  | 商品IDからポップアップ用の商品情報を1件取得する |  | App/ProductController.php:150 |
+| 実装未記載候補のみ | GET | /api/product/detail/{productId} | App API | product_detail_by_product_id |  | 商品IDを検索条件として、商品情報を1件取得して返却するAPIエンドポイント |  | App/ProductController.php:50 |
+| 実装未記載候補のみ | GET | /api/product/detail/{productId}.json | App API | product_detail_by_product_id_json |  | 商品IDを検索条件として、商品情報を1件取得して返却するAPIエンドポイント |  | App/ProductController.php:51 |
+| 実装未記載候補のみ | GET | /api/recent_event | App API | api_deck_builder_recent_event |  | deck builder recent event |  | App/DeckBuilder/DeckController.php:643 |
+| 実装未記載候補のみ | GET | /api/user | App API | api_deck_builder_user |  | deck builder user |  | App/DeckBuilder/UserController.php:43 |
+| 実装未記載候補のみ | GET | /article.json | App API | article_by_params |  | WordPressの投稿IDを検索条件として、記事情報を1件取得して返却するAPIエンドポイント |  | App/ArticleController.php:45 |
+| 実装未記載候補のみ | GET | /assets/data/events-dummy{suffix}.json | App API | app_event_schedule |  | 各 endpoint が返す日付範囲の幅 (= 28 日)。フロント側が ±28 日刻みで隣接するため。 |  | App/EventScheduleController.php:55 |
+| 実装未記載候補のみ | GET | /assets/data/events-monthly-{year}-{month}.json | App API | app_event_schedule_monthly |  | 月別タブ専用の JSON エンドポイント。指定 YYYY-MM の 1 日〜末日のスケジュールを返す。 フロント側 (hareruya-event.js) が 月別カレンダーで ` |  | App/EventScheduleController.php:73 |
+| 実装未記載候補のみ | GET | /assets/data/events.json | App API | app_event_schedule_range |  | 月別タブ専用の JSON エンドポイント。指定 YYYY-MM の 1 日〜末日のスケジュールを返す。 フロント側 (hareruya-event.js) が 月別カレンダーで ` |  | App/EventScheduleController.php:87 |
+| 実装未記載候補のみ | GET | /assets/data/header-categories.json | App API | app_header_categories_json |  | ヘッダー 4 段目のカテゴリバーが hover 展開時に取得する JSON エンドポイント。 hareruya-top.js が `/assets/data/header-cate |  | App/HeaderCategoriesController.php:38 |
+| 実装未記載候補のみ | GET | /card.json | App API | card_by_params_json |  | 検索クエリに一致するカード情報を1件取得する |  | App/CardController.php:42 |
+| 実装未記載候補のみ | GET | /popup/old/{oldProductId}.json | App API | popup_card_by_old_product_id_json |  | 旧商品IDからポップアップ用のカード情報を1件取得する（言語指定なし・JP優先） |  | App/ProductController.php:318 |
+| 実装未記載候補のみ | GET | /popup/old/{lang}/{oldProductId}.json | App API | popup_product_by_old_product_id_json |  | 旧商品IDからポップアップ用の商品情報を1件取得する |  | App/ProductController.php:362 |
+| 実装未記載候補のみ | GET | /topBanners/{languageCode}.json | App API | top_banners_by_language_code_json |  | 言語コードを検索条件として、トップバナー情報の一覧を取得して返却するAPIエンドポイント |  | App/ContentController.php:86 |
+| 実装未記載候補のみ | GET | /updateProducts/{strFromDate}/{strToDate}.json | App API | updated_product_classes_json |  | 更新日時が指定期間内の商品規格一覧を返却するAPIエンドポイント |  | App/ProductController.php:205 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/%eccube_user_data_route%/{route} | Front | user_data |  | user data |  | Front/UserDataController.php:41 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/block/auto_new_item | Block内部 | block_auto_new_item |  | block auto new item |  | Block/AutoNewItemController.php:35 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/block/calendar | Block内部 | block_calendar |  | block calendar |  | Block/CalendarController.php:37 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/block/cart | Block内部 | block_cart |  | ヘッダー右端のカートアイコンと hover popup を描画する (Ajax 更新用)。 SP 側 (block cart sp) は nav sp.twig を返し、PC 側 |  | Block/CartController.php:41 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/block/cart_sp | Block内部 | block_cart_sp |  | ヘッダー右端のカートアイコンと hover popup を描画する (Ajax 更新用)。 SP 側 (block cart sp) は nav sp.twig を返し、PC 側 |  | Block/CartController.php:42 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/block/deck_detailed_search_modal | Block内部 | block_deck_detailed_search_modal |  | block deck detailed search modal |  | Block/DeckDetailedSearchModalController.php:43 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/block/event_detailed_search_modal | Block内部 | block_event_detailed_search_modal |  | イベント検索モーダル |  | Block/EventDetailedSearchModalController.php:41 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/block/product_recommend | Block内部 | block_product_recommend |  | block product recommend |  | Block/ProductRecommendController.php:42 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/block/sale_two_row | Block内部 | block_sale_two_row |  | block sale two row |  | Block/SaleTwoRowController.php:42 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/block/search_event | Block内部 | block_search_event |  | イベント関連ページ (event * route) のヘッダー検索フォームを描画する Block。 商品系 `SearchProductController` の対応物で、 mai |  | Block/SearchEventController.php:43 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/cart/buystep/{cart_key} | Front | cart_buystep |  | カートをロック状態に設定し、購入確認画面へ遷移する. |  | Front/CartController.php:375 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/contact/history | Front | contact_history |  | お問い合わせ履歴一覧. |  | Front/ContactController.php:202 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/contact/history/{id}/detail | Front | contact_history_detail |  | お問い合わせ履歴詳細. |  | Front/ContactController.php:222 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/deck/arena/{deckId} | Front | deck_arena |  | Arena 形式 (JSON) でデッキリスト取得 |  | Front/Deck/DeckController.php:487 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/deck/bulk/{deckId} | Front | deck_bulk |  | deck bulk |  | Front/Deck/DeckController.php:340 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/deck/download/{deckId} | Front | deck_download |  | Magic Online 用テキストダウンロード |  | Front/Deck/DeckController.php:454 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/deck/others/ | Front | deck_others |  | deck others |  | Front/Deck/DeckController.php:286 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/deck/result/ | Front | deck_result |  | 検索結果一覧 |  | Front/Deck/DeckController.php:247 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/deck/{formatId}/metagame/ | Front | deck_metagame |  | deck metagame |  | Front/Deck/DeckController.php:111 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/deck/{oldDeckId}/old/ | Front | deck_old |  | deck old |  | Front/Deck/DeckController.php:221 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/deck/{deckId}/show/ | Front | deck_show |  | deck show |  | Front/Deck/DeckController.php:179 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/deck/{formatId}/usage_ranking/ | Front | deck_usage_ranking |  | deck usage ranking |  | Front/Deck/DeckController.php:139 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/entry/activate/{secret_key}/{qtyInCart} | Front | entry_activate |  | 会員のアクティベート（本会員化）を行う. |  | Front/EntryController.php:211 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/events/payment_cancel | Front | event_payment_cancel |  | event payment cancel |  | Front/Event/EventEntryController.php:219 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/forgot | Front | forgot |  | パスワードリマインダ. |  | Front/ForgotController.php:47 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/forgot/complete | Front | forgot_complete |  | 再設定URL送信完了画面. |  | Front/ForgotController.php:126 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/forgot/reset/{reset_key} | Front | forgot_reset |  | パスワード再発行実行画面. |  | Front/ForgotController.php:146 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/goods_api/redirect_goods/{cardId} | Front | goods_api_redirect |  | カードIDから 対応する 商品詳細ページへ 302 redirect する画面遷移用 Controller。 popup product の href fallback (JS 無 |  | Front/GoodsApiController.php:40 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/guide | Front | help_guide |  | ご利用ガイド. |  | Front/HelpController.php:27 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/help/about | Front | help_about |  | 当サイトについて. |  | Front/HelpController.php:39 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/help/agreement | Front | help_agreement |  | 利用規約. |  | Front/HelpController.php:63 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/help/privacy | Front | help_privacy |  | プライバシーポリシー. |  | Front/HelpController.php:51 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/help/tradelaw | Front | help_tradelaw |  | help tradelaw |  | Front/TradeLawController.php:34 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/change_complete | Front | mypage_change_complete |  | 会員情報編集完了画面. |  | Front/Mypage/ChangeController.php:193 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/delivery/new | Front | mypage_delivery_new |  | お届け先編集画面. |  | Front/Mypage/DeliveryController.php:76 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/event_history | Front | mypage_event_history |  | mypage event history |  | Front/Mypage/EventHistoryController.php:39 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/favorite | Front | mypage_favorite |  | お気に入り商品を表示する. |  | Front/Mypage/MypageController.php:292 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/history/{order_no} | Front | mypage_history |  | 購入履歴詳細を表示する. |  | Front/Mypage/MypageController.php:148 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/identification | Front | mypage_identification |  | オンライン本人確認 |  | Front/Mypage/IdentificationController.php:49 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/point_history/{page_no} | Front | mypage_point_history_page |  | ポイント履歴を表示する |  | Front/Mypage/MypageController.php:389 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/purchase_history/net/{buyOrderId} | Front | mypage_purchase_history_detail_net |  | マイページ買取履歴詳細（ネット買取） |  | Front/Mypage/PurchaseHistoryController.php:99 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/purchase_history/net/{buyOrderId}/bulk | Front | mypage_purchase_history_net_bulk |  | マイページまとめて買取査定結果 |  | Front/Mypage/PurchaseHistoryController.php:163 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/purchase_history/otc/{otcBuyOrderId} | Front | mypage_purchase_history_detail_otc |  | マイページ買取履歴詳細（店頭買取） |  | Front/Mypage/PurchaseHistoryController.php:189 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/shopping_history_detail/{order_id} | Front | mypage_shopping_history_detail |  | 購入履歴詳細を表示する. |  | Front/Mypage/MypageController.php:472 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/withdraw | Front | mypage_withdraw, mypage_withdraw_confirm |  | 退会画面. |  | Front/Mypage/WithdrawController.php:58; Front/Mypage/WithdrawController.php:59 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/mypage/withdraw_complete | Front | mypage_withdraw_complete |  | 退会完了画面. |  | Front/Mypage/WithdrawController.php:167 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/products/search/cate/{categoryId} | Front | product_list_category |  | 商品一覧画面. path を pf-eccube3 に合わせて /products/search に変更している。 |  | Front/ProductController.php:134 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/products/search/cate/{categoryId}/tag/{tagId} | Front | product_list_category_tag |  | 商品一覧画面. path を pf-eccube3 に合わせて /products/search に変更している。 |  | Front/ProductController.php:133 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/products/search/tag/{tagId} | Front | product_list_tag |  | 商品一覧画面. path を pf-eccube3 に合わせて /products/search に変更している。 |  | Front/ProductController.php:135 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/products/search/unisearch | Front | product_search_unisearch |  | ユニサーチからのJSON情報から一時的な商品一覧HTMLの生成 |  | Front/ProductController.php:1454 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/products/search/unisearch/query | Front | product_search_unisearch_query |  | フォームからユニサーチ用クエリ文字列を返す（フロントの changeUnisearchQuery 用） |  | Front/ProductController.php:1655 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/products/search/unisearch_api | Front | product_search_unisearch_api |  | ユニサーチ検索APIアクセス |  | Front/ProductController.php:1595 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/products/search/unisearch_rword_api | Front | product_search_unisearch_rword_api |  | 関連ワード API プロキシ |  | Front/ProductController.php:1610 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/products/search/unisuggest_api | Front | product_search_unisuggest_api |  | ユニサジェスト API プロキシ |  | Front/ProductController.php:1625 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/products/search/unisuggest_api/delete | Front | product_search_unisuggest_delete_api |  | ユニサジェスト履歴削除 API プロキシ |  | Front/ProductController.php:1640 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/purchase/complete | Front | purchase_complete |  | 買取依頼完了 |  | Front/Purchase/PurchaseController.php:346 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/purchase/fill | Front | purchase_fill |  | 買取依頼入力 |  | Front/Purchase/PurchaseController.php:185 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/purchase/login | Front | purchase_login |  | 買取用ログイン マイページのログインtwigを利用する |  | Front/Purchase/PurchaseController.php:143 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/shopping/complete | Front | shopping_complete |  | 購入完了画面を表示する. |  | Front/ShoppingController.php:629 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/shopping/error | Front | shopping_error |  | 購入エラー画面. |  | Front/ShoppingController.php:1025 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/shopping/login | Front | shopping_login |  | ログイン画面. |  | Front/ShoppingController.php:984 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/shopping/nonmember | Front | shopping_nonmember |  | 非会員処理 |  | Front/NonMemberShoppingController.php:48 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/shopping/shipping/{id} | Front | shopping_shipping |  | お届け先選択画面. 会員ログイン時, お届け先を選択する画面を表示する |  | Front/ShoppingController.php:695 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/shopping/shipping_edit/{id} | Front | shopping_shipping_edit |  | お届け先の新規作成または編集画面. 会員時は新しいお届け先を作成し, 作成したお届け先を選択状態にして注文手続き画面へ遷移する. |  | Front/ShoppingController.php:775 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/shopping/shipping_multiple | Front | shopping_shipping_multiple |  | 複数配送処理 |  | Front/ShippingMultipleController.php:55 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/shopping/shipping_multiple_edit | Front | shopping_shipping_multiple_edit |  | 複数配送設定時の新規お届け先の設定 会員ログイン時は会員のお届け先に追加する |  | Front/ShippingMultipleController.php:333 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/sitemap.xml | Front | sitemap_xml |  | Output sitemap index |  | Front/SitemapController.php:56 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/sitemap_category.xml | Front | sitemap_category_xml |  | Output sitemap of product categories |  | Front/SitemapController.php:121 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/sitemap_deck.xml | Front | sitemap_deck_xml |  | Output sitemap of deck pages |  | Front/SitemapController.php:216 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/sitemap_deck_show_{page}.xml | Front | sitemap_deck_show_xml |  | Output sitemap of deck detail pages |  | Front/SitemapController.php:227 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/sitemap_page.xml | Front | sitemap_page_xml |  | Output sitemap of pages Output sitemap of pages without 'noindex' in meta robots. |  | Front/SitemapController.php:164 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/sitemap_product_{page}.xml | Front | sitemap_product_xml |  | Output sitemap of products Output sitemap of products as status is 1 |  | Front/SitemapController.php:134 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/sitemap_purchase_{page}.xml | Front | sitemap_purchase_xml |  | Output sitemap of purchase product detail pages |  | Front/SitemapController.php:196 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/waiting_api/get_waiting_number/{base_info_id} | Front | get_waiting_number |  | 店頭注文番号リストの取得 |  | Front/WaitingNumberController.php:56 |
+| 実装未記載候補のみ | GET | /{_locale}{_shop}/waiting_number | Front | waiting_number |  | 注文番号表示画面 |  | Front/WaitingNumberController.php:42 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/analysis/format-sales/search | Admin | admin_analysis_format_sales_search |  | フォーマット売上分析を検索する. |  | Admin/Analysis/FormatSalesController.php:64 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/analysis/product-request/search | Admin | admin_analysis_product_request_search |  | analysis product request search |  | Admin/Analysis/ProductRequestController.php:62 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/analysis/sales/search | Admin | admin_analysis_sales_search |  | analysis sales search |  | Admin/Analysis/SalesAnalysisController.php:62 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/analysis/summary/result | Admin | admin_summary_result |  | summary result |  | Admin/Analysis/SummaryController.php:81 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/archetype | Admin | admin_archetype_list |  | archetype list |  | Admin/Archetype/ArchetypeController.php:64 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/archetype/csv_import | Admin | admin_archetype_csv_import |  | archetype csv import |  | Admin/Archetype/ArchetypeCsvController.php:47 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/archetype/new | Admin | admin_archetype_new |  | アーキタイプ新規登録画面. |  | Admin/Archetype/ArchetypeController.php:137 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/archetype/search/{page_no} | Admin | admin_archetype_search |  | archetype search |  | Admin/Archetype/ArchetypeController.php:65 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/archetype/search_card_image | Admin | admin_archetype_search_card_image |  | 代表カード検索（Ajax）. |  | Admin/Archetype/ArchetypeController.php:253 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/archetype/{id}/delete | Admin | admin_archetype_delete |  | アーキタイプ削除. |  | Admin/Archetype/ArchetypeController.php:179 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/archetype/{id}/edit | Admin | admin_archetype_edit |  | アーキタイプ編集画面. |  | Admin/Archetype/ArchetypeController.php:165 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/card | Admin | admin_card_list |  | カード一覧・検索画面. |  | Admin/Card/CardController.php:64 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/card/export_csv | Admin | admin_card_export_csv |  | 一覧で選択したカードを CSV で出力する。 |  | Admin/Card/CardCsvController.php:143 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/card/generate_list | Admin | admin_card_generate_list |  | カード名リスト生成実行 (Ajax専用) |  | Admin/Card/CardController.php:160 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/card/import | Admin | admin_card_csv_import |  | アップロードされたカード CSV を検証し取り込む。 |  | Admin/Card/CardCsvController.php:73 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/card/new | Admin | admin_card_new |  | カード新規登録画面. |  | Admin/Card/CardController.php:192 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/card/search/{page_no} | Admin | admin_card_search |  | カード一覧・検索画面. |  | Admin/Card/CardController.php:65 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/card/{id}/edit | Admin | admin_card_edit |  | カード編集画面. |  | Admin/Card/CardController.php:204 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/cardset/download | Admin | admin_cardset_download |  | カード画像 ZIP（セット別：カード詳細あたり language id 昇順で最初の 1 枚）をダウンロードする。 POST の cardsetIds が空のときはカードセット未設 |  | Admin/Card/CardsetController.php:233 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/cardset/download_each_lang | Admin | admin_cardset_download_each_lang |  | カード画像 ZIP（言語別フォルダに全言語分）をダウンロードする。 |  | Admin/Card/CardsetController.php:252 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/cardset/new | Admin | admin_cardset_new |  | カードセット新規登録画面. |  | Admin/Card/CardsetController.php:116 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/cardset/{id}/edit | Admin | admin_cardset_edit |  | カードセット編集画面. |  | Admin/Card/CardsetController.php:148 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/change_password | Admin | admin_change_password |  | パスワード変更画面 |  | Admin/AdminController.php:249 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/content/block/new | Admin | admin_content_block_new |  | content block new |  | Admin/Content/BlockController.php:85 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/content/block/{id}/edit | Admin | admin_content_block_edit |  | content block edit |  | Admin/Content/BlockController.php:86 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/content/branch_toppage/register | Admin | admin_content_branch_toppage_register |  | 支店トップページ管理の登録 |  | Admin/Content/BranchTopPageController.php:72 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/content/branch_toppage/select | Admin | admin_content_branch_toppage_select |  | 支店トップページ管理の支店選択 |  | Admin/Content/BranchTopPageController.php:59 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/content/page/new | Admin | admin_content_page_new |  | content page new |  | Admin/Content/PageController.php:89 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/content/page/{id}/edit | Admin | admin_content_page_edit |  | content page edit |  | Admin/Content/PageController.php:90 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/custom_csv/export/{csvExtensionId} | Admin | admin_custom_export |  | カスタムCSV出力 商品・受注・配送・在庫共通のCSV出力を行う。 |  | Admin/CustomExportCsvController.php:72 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer | Admin | admin_customer |  | customer |  | Admin/Customer/CustomerController.php:69 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/blacklist/update | Admin | admin_customer_blacklist_update |  | customer blacklist update |  | Admin/Customer/BlacklistController.php:61 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/customer_group | Admin | admin_customer_group_new |  | customer group new |  | Admin/Customer/CustomerGroupController.php:39 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/customer_group/{id} | Admin | admin_customer_group |  | customer group |  | Admin/Customer/CustomerGroupController.php:40 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/delete/pattern/{patternId} | Admin | admin_customer_delete_search_pattern |  | 検索パターン削除 |  | Admin/Customer/CustomerController.php:382 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/mail | Admin | admin_customer_mail |  | 会員一括メール送信 |  | Admin/Customer/CustomerMailController.php:50 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/manual_mail/{id}/{template_id} | Admin | admin_customer_manual_mail |  | customer manual mail |  | Admin/Customer/CustomerMailController.php:150 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/new | Admin | admin_customer_new |  | customer new |  | Admin/Customer/CustomerEditController.php:59 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/page/{page_no} | Admin | admin_customer_page |  | customer page |  | Admin/Customer/CustomerController.php:70 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/pattern/{patternId} | Admin | admin_customer_search_pattern |  | 検索パターンでの検索 |  | Admin/Customer/CustomerController.php:400 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/point/{id}/{type} | Admin | admin_customer_point_update |  | customer point update |  | Admin/Customer/CustomerPointController.php:51 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/save/pattern | Admin | admin_customer_save_search_pattern |  | 検索パターン保存 |  | Admin/Customer/CustomerController.php:360 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/{id}/delivery/new | Admin | admin_customer_delivery_new |  | お届け先編集画面. |  | Admin/Customer/CustomerDeliveryEditController.php:45 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/{id}/delivery/{did}/edit | Admin | admin_customer_delivery_edit |  | お届け先編集画面. |  | Admin/Customer/CustomerDeliveryEditController.php:46 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/{id}/edit | Admin | admin_customer_edit |  | customer edit |  | Admin/Customer/CustomerEditController.php:60 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/customer/{id}/identification/complete | Admin | admin_customer_identification_complete |  | customer identification complete |  | Admin/Customer/CustomerEditController.php:194 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/data/buy_price_list/{id}/update | Admin | admin_data_buy_price_list_update |  | 買取価格更新 |  | Admin/Data/BuyPriceListController.php:97 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/data/holiday | Admin | admin_data_holiday |  | data holiday |  | Admin/Data/HolidayController.php:45 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/data/mtg_master_data | Admin | admin_data_mtg_master_data |  | data mtg master data |  | Admin/Data/MtgMasterDataController.php:333 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/data/top_banner | Admin | admin_data_top_banner |  | data top banner |  | Admin/Data/TopBannerController.php:52 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/data/top_banner/{base_info_digit} | Admin | admin_data_top_banner_filter |  | data top banner filter |  | Admin/Data/TopBannerController.php:53 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck | Admin | admin_deck_list |  | deck list |  | Admin/Deck/DeckController.php:74 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/bulk_delete | Admin | admin_deck_bulk_delete |  | デッキ一括削除（個別削除兼用）. |  | Admin/Deck/DeckController.php:139 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/bulk_update | Admin | admin_deck_bulk_update |  | デッキ一括編集. |  | Admin/Deck/DeckController.php:185 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/csv_export | Admin | admin_deck_csv_export |  | デッキCSV出力. |  | Admin/Deck/DeckController.php:677 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/csv_import | Admin | admin_deck_csv_import |  | deck csv import |  | Admin/Deck/DeckCsvController.php:56 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/latest_event_deck | Admin | admin_latest_event_deck_list |  | latest event deck list |  | Admin/Deck/LatestEventDeckController.php:38 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/new | Admin | admin_deck_new |  | デッキ新規登録画面. |  | Admin/Deck/DeckController.php:247 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/search/{page_no} | Admin | admin_deck_search |  | deck search |  | Admin/Deck/DeckController.php:75 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/search_card_image | Admin | admin_deck_search_card_image |  | 代表カード検索（Ajax）. |  | Admin/Deck/DeckController.php:567 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/search_event | Admin | admin_deck_search_event |  | イベント検索（Ajax）. |  | Admin/Deck/DeckController.php:488 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/search_player | Admin | admin_deck_search_player |  | プレイヤー検索（Ajax）. |  | Admin/Deck/DeckController.php:442 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/{id}/copy | Admin | admin_deck_copy |  | デッキ複製保存. |  | Admin/Deck/DeckController.php:379 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/{id}/delete | Admin | admin_deck_delete |  | デッキ個別削除. |  | Admin/Deck/DeckController.php:344 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/deck/{id}/edit | Admin | admin_deck_edit |  | デッキ編集画面. |  | Admin/Deck/DeckController.php:261 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/disable_maintenance/{mode} | Admin | admin_disable_maintenance |  | メンテナンス解除 キャッシュ管理やプラグインのインストール等の操作時にajax経由で解除する |  | Admin/Content/MaintenanceController.php:82 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/entry_registration | Admin | admin_entry_registration |  | entry registration |  | Admin/Event/EntryRegistrationController.php:64 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/entry_registration/new/{eventDetailId} | Admin | admin_entry_new |  | イベント申込新規（GET: フォーム表示、POST: 登録処理） |  | Admin/Event/EntryRegistrationController.php:137 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/entry_registration/page/{page_no} | Admin | admin_entry_registration_page |  | entry registration page |  | Admin/Event/EntryRegistrationController.php:65 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event | Admin | admin_event_index |  | event index |  | Admin/Event/EventController.php:56 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/banner/image/upload | Admin | admin_event_banner_image_upload |  | バナー画像を S3 にアップロードする（フォーム送信）。 |  | Admin/Event/BannerController.php:91 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/banner/settings | Admin | admin_event_banner_settings |  | イベントバナー設定フォームを POST で受け取り、検証成功時は永続化して一覧へリダイレクトする（Post-Redirect-Get）。 検証失敗時は同一画面を再表示する。 |  | Admin/Event/BannerController.php:71 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/banner/{htmlClass}/image/upload | Admin | admin_event_banner_image_upload_narrow |  | バナー画像を S3 にアップロードする（フォーム送信）。 |  | Admin/Event/BannerController.php:92 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/banner/{htmlClass}/settings | Admin | admin_event_banner_settings_narrow |  | イベントバナー設定フォームを POST で受け取り、検証成功時は永続化して一覧へリダイレクトする（Post-Redirect-Get）。 検証失敗時は同一画面を再表示する。 |  | Admin/Event/BannerController.php:72 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/create | Admin | admin_event_create |  | event create |  | Admin/Event/EventController.php:154 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/entry | Admin | admin_event_entry |  | event entry |  | Admin/Event/EntryController.php:93 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/entry/bulk_csv_import | Admin | admin_event_entry_bulk_csv_import |  | event entry bulk csv import |  | Admin/Event/EventEntryBulkCsvController.php:59 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/entry/bulk_update | Admin | admin_event_entry_bulk_update |  | イベント申込詳細・編集（GET: 表示、POST: 更新） |  | Admin/Event/EntryController.php:300 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/entry/page/{page_no} | Admin | admin_event_entry_page |  | event entry page |  | Admin/Event/EntryController.php:94 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/entry/search_event/set | Admin | admin_entry_search_event_by_id |  | イベント申込一覧モーダル「決定」: サーバーでイベントを解決し JSON でフォーム用データを返す |  | Admin/Event/EntryController.php:454 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/entry/{eventEntry}/edit | Admin | admin_event_entry_edit |  | イベント申込詳細・編集（GET: 表示、POST: 更新） |  | Admin/Event/EntryController.php:249 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/page/{page_no} | Admin | admin_event_index_page |  | event index page |  | Admin/Event/EventController.php:57 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/{id}/edit | Admin | admin_event_edit |  | event edit |  | Admin/Event/EventController.php:194 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/{eventId}/repeatSchedule/create | Admin | admin_repeat_schedule_create |  | repeat schedule create |  | Admin/Event/RepeatScheduleController.php:39 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/{eventId}/schedule/bulk_delete | Admin | admin_schedule_bulk_delete |  | スケジュール一括削除 |  | Admin/Event/ScheduleController.php:169 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/{eventId}/schedule/create | Admin | admin_schedule_create |  | スケジュール新規登録（GET: フォーム表示、POST: 登録処理） |  | Admin/Event/ScheduleController.php:45 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/event/{eventId}/schedule/{eventDetailId}/edit | Admin | admin_schedule_edit |  | スケジュール編集（GET: フォーム表示、POST: 更新処理） |  | Admin/Event/ScheduleController.php:87 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/format/new | Admin | admin_format_new |  | フォーマット登録画面. |  | Admin/Card/FormatController.php:54 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/format/{id}/edit | Admin | admin_format_edit |  | フォーマット編集画面. |  | Admin/Card/FormatController.php:88 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/mall/mail | Admin | admin_mall_mail |  | モール側で設定するメールテンプレート設定画面のcontroller |  | Admin/Mall/MallMailController.php:74 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/mall/mail/preview | Admin | admin_mall_mail_preview |  | mall mail preview |  | Admin/Mall/MallMailController.php:46 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/mall/mail/{Mail} | Admin | admin_mall_mail_edit |  | モール側で設定するメールテンプレート設定画面のcontroller |  | Admin/Mall/MallMailController.php:75 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/mall/tenant/create | Admin | admin_mall_tenant_create |  | テナント登録・編集画面 |  | Admin/Mall/TenantController.php:208 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/mall/tenant/detail/{id} | Admin | admin_mall_tenant_detail |  | テナント登録・編集画面 |  | Admin/Mall/TenantController.php:209 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/mall/tenant/image/process | Admin | admin_mall_tenant_image_process |  | 画像アップロード時にリクエストされるメソッド. |  | Admin/Mall/TenantController.php:346 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/mall/tenant/page/{page_no} | Admin | admin_mall_tenant_index_page |  | テナント一覧画面 |  | Admin/Mall/TenantController.php:81 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order | Admin | admin_order |  | 受注一覧画面. - 検索条件, ページ番号, 表示件数はセッションに保持されます. |  | Admin/Order/OrderController.php:136 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/bulk_delete | Admin | admin_order_bulk_delete |  | 受注複数一括削除 |  | Admin/Order/OrderController.php:349 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/delete/pattern/{pattern_id} | Admin | admin_order_delete_pattern |  | 検索パターン削除 |  | Admin/Order/SearchOrderController.php:175 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/export/order | Admin | admin_order_export_for_input |  | 出荷実績インポート用CSVエクスポート |  | Admin/Order/OrderCsvController.php:191 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/export/pdf | Admin | admin_order_export_pdf |  | order export pdf |  | Admin/Order/OrderController.php:615 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/export/pdf/download | Admin | admin_order_pdf_download |  | order pdf download |  | Admin/Order/OrderController.php:658 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/generate/standby | Admin | admin_order_generate_standby_list |  | 出荷指示リストを生成 |  | Admin/Order/OrderController.php:786 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/manual_mail/mail_all/{templateId} | Admin | admin_order_manual_mail_all_edit |  | 一括手動メール通知 |  | Admin/Order/MailController.php:304 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/manual_mail/{orderId}/{templateId} | Admin | admin_order_manual_mail_edit |  | 手動メール通知（一件分） |  | Admin/Order/MailController.php:219 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/page/{page_no} | Admin | admin_order_page |  | 受注一覧画面. - 検索条件, ページ番号, 表示件数はセッションに保持されます. |  | Admin/Order/OrderController.php:137 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/print/delivery_slips/{lang} | Admin | admin_delivery_slips_export |  | 受注情報 納品書一括印刷 |  | Admin/Order/OrderController.php:731 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/print/stack | Admin | admin_order_print_stack |  | スタック用紙印刷 |  | Admin/Order/OrderController.php:850 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/print/stack/window | Admin | admin_order_print_stack_window |  | スタック用紙印刷用のウィンドウを表示 |  | Admin/Order/OrderController.php:832 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/save/pattern | Admin | admin_order_save_pattern |  | 検索パターン保存 - 検索フォームをシリアライズし、検索パターンテーブルへ保存します. |  | Admin/Order/SearchOrderController.php:138 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/search/customer/html | Admin | admin_order_search_customer_html |  | 顧客情報を検索する. |  | Admin/Order/EditController.php:1081 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/search/customer/html/page/{page_no} | Admin | admin_order_search_customer_html_page |  | 顧客情報を検索する. |  | Admin/Order/EditController.php:1082 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/search/customer/id | Admin | admin_order_search_customer_by_id |  | 顧客情報を検索する. |  | Admin/Order/EditController.php:1178 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/search/order_item_type | Admin | admin_order_search_order_item_type |  | その他明細情報を取得 |  | Admin/Order/EditController.php:1242 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/search/pattern/{pattern_id} | Admin | admin_order_search_pattern |  | 検索パターンによる受注一覧画面. - 1ページ目の表示のみ処理し、2ページ目以降は通常のOrderControllerのindexメソッドで処理される. |  | Admin/Order/SearchOrderController.php:52 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/shipping_csv_upload | Admin | admin_shipping_csv_import |  | 出荷CSVアップロード |  | Admin/Order/CsvImportController.php:42 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/shipping_result_csv/import | Admin | admin_shipping_result_csv_upload |  | 出荷実績CSVアップロード |  | Admin/Order/OrderCsvController.php:263 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/waiting_tag | Admin | admin_order_waiting_tag |  | 新規登録画面および編集画面、下記には登録一覧ページ(常に新規) |  | Admin/Order/WaitingTagController.php:47 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/order/waiting_tag/new | Admin | admin_order_waiting_tag_store |  | 登録処理 |  | Admin/Order/WaitingTagController.php:83 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/otcbuyorder/status/{otcBuyOrderId}/update | Admin | admin_otcbuyorder_status_update |  | ステータス変更処理 |  | Admin/OtcBuyOrder/OtcBuyOrderController.php:324 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/otcbuyorder/summary/export | Admin | admin_otcbuyorder_summary_export |  | 買取集計CSVの出力 |  | Admin/OtcBuyOrder/OtcBuyOrderSummaryController.php:113 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/otcbuyorder/summary/search | Admin | admin_otcbuyorder_summary_search |  | 買取検索 |  | Admin/OtcBuyOrder/OtcBuyOrderSummaryController.php:68 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product | Admin | admin_product |  | product |  | Admin/Product/ProductController.php:122 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/bulk/product-status/{id} | Admin | admin_product_bulk_product_status |  | Bulk public action |  | Admin/Product/ProductController.php:1422 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/bulk_update_buy_price | Admin | admin_product_bulk_update_buy_price |  | product bulk update buy price |  | Admin/Product/ProductBulkUpdateBuyPriceController.php:72 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/buy_sale_price_history | Admin | admin_product_buy_sale_price_history |  | 買取/販売価格履歴 一覧・検索 GET `/buy sale price history` … 検索フォームのみ（結果なし） |  | Admin/Product/BuySalePriceHistoryController.php:103 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/buy_sale_price_history/search/{page_no} | Admin | admin_product_buy_sale_price_history_search |  | 買取/販売価格履歴 一覧・検索 GET `/buy sale price history` … 検索フォームのみ（結果なし） |  | Admin/Product/BuySalePriceHistoryController.php:104 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/category/import | Admin | admin_product_category_bulk_import |  | カテゴリ登録CSV取込 |  | Admin/Product/Csv/CategoryCsvController.php:118 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/category/sort_no/move | Admin | admin_product_category_sort_no_move |  | 一覧の並び順（sort no）更新（Ajax POST）。カテゴリ新規登録は {@see create} のみ。 |  | Admin/Product/CategoryController.php:488 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/category/{parent_id} | Admin | admin_product_category_create |  | 親カテゴリ配下への新規登録（POST）. |  | Admin/Product/CategoryController.php:115 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/category/{id}/edit | Admin | admin_product_category_update |  | 既存カテゴリの更新（POST）. |  | Admin/Product/CategoryController.php:155 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/category_csv_upload | Admin | admin_product_category_csv_import |  | カテゴリ登録CSVアップロード |  | Admin/Product/Csv/CsvImportController.php:673 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/class_category/sort_no/move | Admin | admin_product_class_category_sort_no_move |  | product class category sort no move |  | Admin/Product/ClassCategoryController.php:244 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/class_category/{class_name_id} | Admin | admin_product_class_category |  | product class category |  | Admin/Product/ClassCategoryController.php:53 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/class_category/{class_name_id}/{id}/edit | Admin | admin_product_class_category_edit |  | product class category edit |  | Admin/Product/ClassCategoryController.php:54 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/class_category_csv_upload | Admin | admin_product_class_category_csv_import |  | 規格分類CSV登録CSVアップロード |  | Admin/Product/Csv/CsvImportController.php:946 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/class_name | Admin | admin_product_class_name |  | product class name |  | Admin/Product/ClassNameController.php:51 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/class_name/sort_no/move | Admin | admin_product_class_name_sort_no_move |  | product class name sort no move |  | Admin/Product/ClassNameController.php:182 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/class_name/{id}/edit | Admin | admin_product_class_name_edit |  | product class name edit |  | Admin/Product/ClassNameController.php:52 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/class_name_csv_upload | Admin | admin_product_class_name_csv_import |  | 規格登録CSVアップロード |  | Admin/Product/Csv/CsvImportController.php:832 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/csv_split | Admin | admin_product_csv_split |  | ProductCategory作成 |  | Admin/Product/Csv/CsvImportController.php:2187 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/csv_split_cleanup | Admin | admin_product_csv_split_cleanup |  | ProductCategory作成 |  | Admin/Product/Csv/CsvImportController.php:2284 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/csv_split_import | Admin | admin_product_csv_split_import |  | ProductCategory作成 |  | Admin/Product/Csv/CsvImportController.php:2248 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/department_csv_upload | Admin | admin_product_department_csv_import |  | 部門登録CSVアップロード |  | Admin/Product/Csv/CsvImportController.php:1077 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/detail/search/id | Admin | admin_product_search_card_detail_by_id |  | カード詳細IDをもとに結果表示に必要な情報を得る |  | Admin/Product/ProductController.php:994 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/edit_bulk_update_buy_price | Admin | admin_product_edit_bulk_update_buy_price |  | product edit bulk update buy price |  | Admin/Product/ProductBulkUpdateBuyPriceController.php:46 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/page/{page_no} | Admin | admin_product_page |  | product page |  | Admin/Product/ProductController.php:123 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product/class/{id} | Admin | admin_product_product_class |  | product product class |  | Admin/Product/ProductClassController.php:72 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product/class/{id}/clear | Admin | admin_product_product_class_clear |  | 商品規格を初期化する. |  | Admin/Product/ProductClassController.php:290 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product/class/{id}/new | Admin | admin_product_product_class_new |  | product product class new |  | Admin/Product/ProductClassController.php:102 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product/class/{id}/store | Admin | admin_product_product_class_store |  | product product class store |  | Admin/Product/ProductClassController.php:125 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product/class/{id}/update/{productClassId} | Admin | admin_product_product_class_update |  | product product class update |  | Admin/Product/ProductClassController.php:199 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product/image/process | Admin | admin_product_image_process |  | 画像アップロード時にリクエストされるメソッド. |  | Admin/Product/ProductController.php:378 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product/new | Admin | admin_product_product_new |  | product product new |  | Admin/Product/ProductController.php:504 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product/{id}/copy | Admin | admin_product_product_copy |  | product product copy |  | Admin/Product/ProductController.php:1147 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product/{id}/edit | Admin | admin_product_product_edit |  | product product edit |  | Admin/Product/ProductController.php:505 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_all_csv_custom_export/{csvExtensionId} | Admin | admin_product_all_csv_custom_export |  | カスタムCSVエクスポート |  | Admin/Product/Csv/ProductCsvController.php:211 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_card_csv_export | Admin | admin_product_card_csv_export |  | カード商品登録CSVエクスポート |  | Admin/Product/Csv/ProductCsvController.php:61 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_card_csv_upload | Admin | admin_product_card_csv_upload |  | カード商品登録CSV取込 |  | Admin/Product/Csv/CardCsvController.php:127 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_csv_upload | Admin | admin_product_csv_import |  | 商品登録CSVアップロード |  | Admin/Product/Csv/CsvImportController.php:132 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_goods_csv_export | Admin | admin_product_goods_csv_export |  | グッズ商品登録CSVエクスポート |  | Admin/Product/Csv/ProductCsvController.php:109 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_goods_csv_upload | Admin | admin_product_goods_csv_upload |  | グッズ・サプライ・情報商材登録CSVアップロード |  | Admin/Product/Csv/GoodsCsvController.php:118 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_price/import | Admin | admin_product_product_price_import |  | 商品価格CSV取込 |  | Admin/Product/Csv/ProductPriceCsvController.php:119 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_price_csv_export | Admin | admin_product_price_csv_export |  | セール用価格変更CSVエクスポート |  | Admin/Product/Csv/ProductCsvController.php:164 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_shelf_number_csv_upload | Admin | admin_product_shelf_number_csv_upload |  | 棚番号更新CSV取込 |  | Admin/Product/Csv/ProductShelfNumberCsvController.php:114 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_standard_price/import | Admin | admin_product_product_standard_price_import |  | 基準価格変更CSV取込 |  | Admin/Product/Csv/ProductStandardPriceCsvController.php:120 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/product_tag/import | Admin | admin_product_product_tag_import |  | 商品タグ更新CSV取込 |  | Admin/Product/Csv/ProductTagCsvController.php:110 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/sale_high_price/import | Admin | admin_product_sale_high_price_import |  | セール用高額商品価格変更CSV取込 |  | Admin/Product/Csv/ProductSaleHighPriceCsvController.php:104 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/searchCardDetail | Admin | admin_product_card_detail_html |  | カード詳細検索モーダル 検索結果 |  | Admin/Product/ProductController.php:938 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/section/import | Admin | admin_product_section_import |  | 部門更新CSV取込 |  | Admin/Product/Csv/ProductSectionCsvController.php:112 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/section/master_import | Admin | admin_product_section_master_import |  | 部門更新CSV取込 |  | Admin/Product/SectionController.php:287 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/section/store/{id} | Admin | admin_product_section_store |  | 登録・更新処理 |  | Admin/Product/SectionController.php:92 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/sell_group/create | Admin | admin_product_sell_group_create |  | 購入グループ新規登録 |  | Admin/Product/SellGroupController.php:58 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/sell_group/{id}/update | Admin | admin_product_sell_group_update |  | 購入グループ更新 |  | Admin/Product/SellGroupController.php:108 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/shelf_number/import | Admin | admin_product_shelf_number_import |  | 棚番号更新CSV取込 |  | Admin/Product/ShelfNumberController.php:270 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/shelf_number/master_import | Admin | admin_product_shelf_number_master_import |  | 棚番号更新CSV取込 |  | Admin/Product/ShelfNumberController.php:269 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/shelf_number/store/{id} | Admin | admin_product_shelf_number_store |  | 登録・更新処理 |  | Admin/Product/ShelfNumberController.php:109 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/simple_high_price/import | Admin | admin_product_simple_high_price_import |  | 高額商品価格変更CSV取込 |  | Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:112 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/status/import | Admin | admin_product_status_import |  | 商品公開CSV取込 |  | Admin/Product/Csv/ProductStatusCsvController.php:113 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock | Admin | admin_stock_list |  | 在庫一覧（検索・ページング表示） |  | Admin/Stock/StockListController.php:94 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/approval_list | Admin | admin_stock_approval_list |  | 在庫編集承認一覧 検索条件・ページ番号・表示件数はセッションに保持する。 |  | Admin/Stock/StockApprovalListController.php:77 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/approval_list/line_items | Admin | admin_stock_approval_list_line_items |  | 在庫編集承認モーダル内の明細テーブルHTMLを取得する - POST: モーダル表示時の初回リクエストで、選択IDと明細の上限なし総件数をセッションに保持して明細を取得 |  | Admin/Stock/StockApprovalListController.php:282 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/approval_list/page/{page_no} | Admin | admin_stock_approval_list_page |  | 在庫編集承認一覧 検索条件・ページ番号・表示件数はセッションに保持する。 |  | Admin/Stock/StockApprovalListController.php:78 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/approval_list/page/{page_no}/count/{page_count} | Admin | admin_stock_approval_list_page_count |  | 在庫編集承認一覧 検索条件・ページ番号・表示件数はセッションに保持する。 |  | Admin/Stock/StockApprovalListController.php:79 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/approval_list/updated | Admin | admin_stock_approval_list_update |  | 一括却下・一括承認 |  | Admin/Stock/StockApprovalListController.php:227 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/barcode_replacement_list/csv_export | Admin | admin_stock_barcode_replacement_list_csv_export |  | バーコード貼替リストCSV出力 |  | Admin/Stock/BarcodeReplacementListController.php:58 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/bulk-edit-dispatch | Admin | admin_stock_list_bulk_edit_dispatch |  | 在庫一括編集: 一覧からの POST を受け、在庫一括編集画面へリダイレクトする。 |  | Admin/Stock/StockListController.php:430 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/change/new | Admin | admin_stock_change_csv_list |  | 在庫変更CSV登録 画面表示 |  | Admin/Stock/StockChangeCsvController.php:99 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/change/new/page/{page_no} | Admin | admin_stock_change_csv_page |  | 在庫変更CSV登録 画面表示 |  | Admin/Stock/StockChangeCsvController.php:100 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/change/new/page/{page_no}/count/{page_count} | Admin | admin_stock_change_csv_page_count |  | 在庫変更CSV登録 画面表示 |  | Admin/Stock/StockChangeCsvController.php:101 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/change/pre-validate | Admin | admin_stock_change_csv_pre_validate |  | CSVの事前検証（在庫上限・減算ゼロ以下チェック）をAJAXで行う。 クライアントサイドのフォーマットチェック通過後に呼び出される。 |  | Admin/Stock/StockChangeCsvController.php:326 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/change/upload | Admin | admin_stock_change_csv_upload |  | 在庫変更CSV登録アップロード |  | Admin/Stock/StockChangeCsvController.php:148 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/delete-pattern/{patternId} | Admin | admin_stock_list_delete_pattern |  | 検索パターン削除 |  | Admin/Stock/StockListController.php:352 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/history | Admin | admin_stock_history |  | 在庫履歴検索/一覧 画面表示 |  | Admin/Stock/StockHistoryController.php:64 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/history/csv_export | Admin | admin_stock_history_csv_export |  | 在庫履歴CSV出力 |  | Admin/Stock/StockHistoryController.php:269 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/history/disposal/csv_export | Admin | admin_stock_history_disposal_csv_export |  | 欠品履歴CSV出力 |  | Admin/Stock/StockHistoryController.php:318 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/history/page/{page_no} | Admin | admin_stock_history_page |  | 在庫履歴検索/一覧 画面表示 |  | Admin/Stock/StockHistoryController.php:65 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/history/page/{page_no}/count/{page_count} | Admin | admin_stock_history_page_count |  | 在庫履歴検索/一覧 画面表示 |  | Admin/Stock/StockHistoryController.php:66 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/history/updated | Admin | admin_stock_history_update |  | 欠品理由の編集 |  | Admin/Stock/StockHistoryController.php:225 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/resolve-new-source-location | Admin | admin_stock_join_resolve_new_source_location |  | stock join resolve new source location |  | Admin/Stock/StockJoinController.php:691 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/save-new-source-quantities | Admin | admin_stock_join_save_new_source_quantities |  | stock join save new source quantities |  | Admin/Stock/StockJoinController.php:636 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/update-shortage | Admin | admin_stock_join_update_shortage |  | stock join update shortage |  | Admin/Stock/StockJoinController.php:601 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/update-source-stock | Admin | admin_stock_join_update_source_stock |  | 結合元在庫数一括更新（使用停止：NEWステータスの結合元はSessionで管理） |  | Admin/Stock/StockJoinController.php:1014 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/update-source-stock-location | Admin | admin_stock_join_update_source_stock_location |  | 結合元の在庫区分変更（Ajax） NEWステータスの場合は Session を更新してページリロードを促す。 |  | Admin/Stock/StockJoinController.php:1090 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/{id}/approval | Admin | admin_stock_join_approval |  | stock join approval |  | Admin/Stock/StockJoinController.php:188 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/{id}/edit | Admin | admin_stock_join_edit |  | stock join edit |  | Admin/Stock/StockJoinController.php:225 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/{id}/edit-source-csv-upload | Admin | admin_stock_join_edit_source_csv_upload |  | 結合元商品CSV（編集画面・2列で明細全置換） CSVインポートは即時DB登録（Sessionを経由しない）。 |  | Admin/Stock/StockJoinController.php:872 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/{id}/registration-memo | Admin | admin_stock_join_update_registration_memo |  | 結合登録メモのみ保存（全ステータスで可能） |  | Admin/Stock/StockJoinController.php:513 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/{id}/shortage-csv-import | Admin | admin_stock_join_shortage_csv_import |  | 結合元商品CSV（編集画面・2列で明細全置換） CSVインポートは即時DB登録（Sessionを経由しない）。 |  | Admin/Stock/StockJoinController.php:939 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/{id}/shortage-entry | Admin | admin_stock_join_shortage_entry |  | stock join shortage entry |  | Admin/Stock/StockJoinController.php:552 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/join/{id}/source/{sourceId}/update-quantity | Admin | admin_stock_join_update_source_quantity |  | 結合元在庫数1行 Session 更新（Ajax） sourceId は product stock id として扱う（NEWステータス専用） |  | Admin/Stock/StockJoinController.php:1055 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move-instruction | Admin | admin_stock_move_instruction_list |  | 在庫移動指示一覧（検索・全件表示） |  | Admin/Stock/StockMoveInstructionController.php:66 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move-instruction/csv-tracking | Admin | admin_stock_move_instruction_csv_tracking |  | 在庫移動実績CSV登録（送り状No.一括登録） |  | Admin/Stock/StockMoveInstructionController.php:368 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move-instruction/labels | Admin | admin_stock_move_instruction_labels_export |  | 送り状CSV出力 |  | Admin/Stock/StockMoveInstructionController.php:317 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move-instruction/{id} | Admin | admin_stock_move_instruction_detail |  | 在庫移動指示詳細（表示・送り状No・備考の編集） |  | Admin/Stock/StockMoveInstructionController.php:161 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move-instruction/{id}/delete | Admin | admin_stock_move_instruction_delete |  | 在庫移動指示削除（送り状No登録後は削除不可） |  | Admin/Stock/StockMoveInstructionController.php:259 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move-instruction/{id}/tracking | Admin | admin_stock_move_instruction_register_tracking |  | 送り状No.登録（一覧画面からモーダルで登録） |  | Admin/Stock/StockMoveInstructionController.php:228 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move/inbound_approval/{id}/submit | Admin | admin_stock_move_inbound_approval_submit |  | 入庫承認画面の送信（再確認 or 承認を mode で分岐） |  | Admin/Stock/StockMoveController.php:822 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move/inbound_approval_request/{id}/differential-csv-import | Admin | admin_stock_move_inbound_approval_request_differential_csv_import |  | 入庫承認申請画面の在庫移動CSV出力 |  | Admin/Stock/StockMoveController.php:639 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move/inbound_approval_request/{id}/update | Admin | admin_stock_move_inbound_approval_request_update |  | 入庫承認申請のデータ更新処理 |  | Admin/Stock/StockMoveController.php:701 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move/new | Admin | admin_stock_move_new |  | stock move new |  | Admin/Stock/StockMoveController.php:143 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move/outbound_approval/{id}/submit | Admin | admin_stock_move_outbound_approval_submit |  | 出庫承認画面の送信（却下 or 承認を mode で分岐） |  | Admin/Stock/StockMoveController.php:493 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move/outbound_approval_request/{id}/shortage-csv-import | Admin | admin_stock_move_shortage_csv_import |  | ピック・出庫承認申請画面の在庫移動CSV出力 |  | Admin/Stock/StockMoveController.php:394 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move/outbound_approval_request/{id}/update | Admin | admin_stock_move_outbound_approval_request_update |  | ピック・出庫承認申請のデータ更新処理 |  | Admin/Stock/StockMoveController.php:304 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move/store | Admin | admin_stock_move_store |  | stock move store |  | Admin/Stock/StockMoveController.php:186 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move_transfer | Admin | admin_stock_move_transfer |  | 在庫移動・振替一覧 |  | Admin/Stock/StockMoveTransferController.php:104 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move_transfer/create_instruction | Admin | admin_stock_move_transfer_create_instruction |  | 移動指示作成 チェックした移動を対象に在庫移動指示を作成し、在庫移動指示一覧へ遷移する |  | Admin/Stock/StockMoveTransferController.php:529 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move_transfer/move_csv_import | Admin | admin_stock_move_transfer_move_csv_import |  | 在庫移動CSV登録 |  | Admin/Stock/StockMoveTransferController.php:222 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move_transfer/return_list_csv_export | Admin | admin_stock_move_transfer_return_list_csv_export |  | 戻しリストCSV出力 |  | Admin/Stock/StockMoveTransferController.php:434 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move_transfer/return_list_pdf_export | Admin | admin_stock_move_transfer_return_list_pdf_export |  | 戻しリストPDF出力 別ウィンドウで表示するため、JSONレスポンスでHTMLを返す |  | Admin/Stock/StockMoveTransferController.php:452 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/move_transfer/transfer_csv_import | Admin | admin_stock_move_transfer_transfer_csv_import |  | 在庫振替CSV登録 |  | Admin/Stock/StockMoveTransferController.php:316 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/page/{page_no} | Admin | admin_stock_list_page |  | 在庫一覧（検索・ページング表示） |  | Admin/Stock/StockListController.php:95 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/page/{page_no}/count/{page_count} | Admin | admin_stock_list_page_count |  | 在庫一覧（検索・ページング表示） |  | Admin/Stock/StockListController.php:96 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/save-pattern | Admin | admin_stock_list_save_pattern |  | 検索パターン保存（base info id を検索フォームの店舗選択から設定し display key='在庫一覧' で保存） |  | Admin/Stock/StockListController.php:303 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split-join | Admin | admin_stock_split_join_list |  | 在庫分割結合一覧（検索・一覧表示） |  | Admin/Stock/StockSplitJoinController.php:90 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split-join/list-join-csv-import | Admin | admin_stock_split_join_list_join_csv_import |  | stock split join list join csv import |  | Admin/Stock/StockSplitJoinController.php:317 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split-join/list-split-csv-import | Admin | admin_stock_split_join_list_split_csv_import |  | stock split join list split csv import |  | Admin/Stock/StockSplitJoinController.php:225 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split/update-destination-stock | Admin | admin_stock_split_update_destination_stock |  | 在庫分割・分割先数量Ajax更新（使用停止：編集画面の分割先は Session で管理） |  | Admin/Stock/StockSplitController.php:436 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split/update-destination-stock-location | Admin | admin_stock_split_update_destination_stock_location |  | 在庫分割・分割先在庫区分Ajax更新 |  | Admin/Stock/StockSplitController.php:483 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split/{id}/approval | Admin | admin_stock_split_approval |  | 在庫分割・承認画面 / 承認・却下処理 |  | Admin/Stock/StockSplitController.php:336 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split/{id}/destination/{destinationId}/delete | Admin | admin_stock_split_delete_destination |  | 在庫分割・分割先削除処理 |  | Admin/Stock/StockSplitController.php:517 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split/{id}/destination/{destinationId}/update-quantity | Admin | admin_stock_split_update_destination_quantity |  | 在庫分割・分割先数量1行 Session 更新（Ajax） destinationId は product stock id として扱う |  | Admin/Stock/StockSplitController.php:446 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split/{id}/edit | Admin | admin_stock_split_edit |  | 在庫分割・編集画面 / 保存処理 |  | Admin/Stock/StockSplitController.php:205 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split/{id}/edit-destination-csv-upload | Admin | admin_stock_split_edit_destination_csv_upload |  | 在庫分割・編集画面用 分割先CSV置換アップロード（Ajax JSON レスポンス） |  | Admin/Stock/StockSplitController.php:587 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/split/{id}/registration-memo | Admin | admin_stock_split_update_registration_memo |  | 在庫分割・登録メモのみ保存（全ステータスで可能） |  | Admin/Stock/StockSplitController.php:549 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/stock-bulk-approval/new | Admin | admin_stock_bulk_approval_new |  | 検索画面で選択された在庫を一括編集する画面を表示する。 GET/POST ともに productStockIds[] を受け取る。 |  | Admin/Stock/StockBulkApprovalController.php:52 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/stock-bulk-approval/store | Admin | admin_stock_bulk_approval_store |  | stock bulk approval store |  | Admin/Stock/StockBulkApprovalController.php:89 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/transfer/new | Admin | admin_stock_transfer_new |  | 在庫振替登録画面（初期表示・基本データ表示） GET または POST の product stock id / productStockIds から在庫を取得し一覧に表示する |  | Admin/Stock/StockTransferController.php:112 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/transfer/store | Admin | admin_stock_transfer_store |  | 在庫振替の登録処理 |  | Admin/Stock/StockTransferController.php:172 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/transfer/{id}/approval/submit | Admin | admin_stock_transfer_approval_submit |  | 在庫振替承認待ち画面の送信（却下 or 承認） |  | Admin/Stock/StockTransferController.php:326 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/join/add-source | Admin | admin_stock_join_add_source |  | stock join add source |  | Admin/Stock/StockJoinController.php:342 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/join/apply-approval | Admin | admin_stock_join_apply_approval |  | stock join apply approval |  | Admin/Stock/StockJoinController.php:737 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/join/delete-source/{sourceId} | Admin | admin_stock_join_delete_source |  | stock join delete source |  | Admin/Stock/StockJoinController.php:409 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/join/move-to-shortage-entry | Admin | admin_stock_join_move_to_shortage_entry |  | stock join move to shortage entry |  | Admin/Stock/StockJoinController.php:451 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/join/new-source-csv-upload | Admin | admin_stock_join_new_source_csv_upload |  | 結合元商品CSV（新規画面・DBには保存せず行データをJSONで返す） |  | Admin/Stock/StockJoinController.php:826 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/join/register | Admin | admin_stock_join_register |  | stock join register |  | Admin/Stock/StockJoinController.php:139 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/split/apply-approval | Admin | admin_stock_split_apply_approval |  | 在庫分割・承認申請処理 |  | Admin/Stock/StockSplitController.php:271 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/split/destination/add | Admin | admin_stock_split_add_destination |  | 在庫分割・分割先追加処理（編集画面からの Ajax POST） |  | Admin/Stock/StockSplitController.php:368 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/split/new/session-destination | Admin | admin_stock_split_new_session_destination |  | 在庫分割・新規登録画面 分割先セッション操作（save/remove/clear） |  | Admin/Stock/StockSplitController.php:100 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/split/register | Admin | admin_stock_split_register |  | 在庫分割・新規登録処理 |  | Admin/Stock/StockSplitController.php:144 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/stock-approval/history-reason/update | Admin | admin_stock_approval_history_reason_update |  | 在庫変動理由の非同期更新処理 |  | Admin/Stock/StockApprovalController.php:137 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/stock/{productStockId}/stock-approval/store | Admin | admin_stock_approval_store |  | stock approval store |  | Admin/Stock/StockApprovalController.php:73 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/storage_code/import | Admin | admin_product_storage_code_import |  | 略称タグCSV入力 |  | Admin/Product/StorageCodeController.php:245 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/storage_code/store/{id} | Admin | admin_product_storage_code_store |  | 登録・更新処理 |  | Admin/Product/StorageCodeController.php:108 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/tag/store/{id} | Admin | admin_product_tag_store |  | 登録・更新処理 |  | Admin/Product/TagController.php:104 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/tag_sales_analysis/import | Admin | admin_product_tag_sales_analysis_import |  | 売上分析タグ更新CSV取込 |  | Admin/Product/Csv/TagSalesAnalysisCsvController.php:110 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/tag_sales_analysis/store/{id} | Admin | admin_product_tag_sales_analysis_store |  | 売上分析タグ登録・更新処理 |  | Admin/Product/TagSalesAnalysisController.php:93 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/product/unisearch/feed | Admin | admin_product_unisearch_feed |  | product unisearch feed |  | Admin/Product/UniSearchFeedController.php:35 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/bulk/detail/{id}/sell | Admin | admin_purchase_bulk_detail_sell |  | 一括で商品の売却フラグをtrueに変更する |  | Admin/Purchase/PurchaseController.php:519 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/csv_export | Admin | admin_purchase_csv_export |  | 買取情報CSV出力 |  | Admin/Purchase/PurchaseController.php:535 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/csv_export_deposit | Admin | admin_purchase_csv_export_deposit |  | 銀行入金CSV出力 |  | Admin/Purchase/PurchaseController.php:564 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/csv_export_product_list | Admin | admin_purchase_csv_export_product_list |  | 買取商品一覧CSV出力 （売却数・キャンセル数のいずれのCSVと共用。クエリ type=sale / type=notSale で切り替え） |  | Admin/Purchase/PurchaseController.php:594 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/csv_export_return_list | Admin | admin_purchase_csv_export_return_list |  | 戻しリストCSV出力 |  | Admin/Purchase/PurchaseController.php:638 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/pdf_export_return_list | Admin | admin_purchase_pdf_export_return_list |  | 戻しリストPDF出力 |  | Admin/Purchase/PurchaseController.php:668 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/search | Admin | admin_purchase_search |  | 買取一覧検索 |  | Admin/Purchase/PurchaseController.php:143 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/searchproduct | Admin | admin_purchase_search_product |  | 買取詳細検索 |  | Admin/Purchase/PurchaseController.php:254 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/searchproduct/page/{page_no} | Admin | admin_purchase_search_product_page |  | 買取詳細検索 |  | Admin/Purchase/PurchaseController.php:255 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/{buyOrderId}/mail | Admin | admin_purchase_manual_mail |  | 手動メール通知 - change: テンプレート選択 |  | Admin/Purchase/MailController.php:48 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/{buyOrderId}/register-individual-stock/{individualProductId} | Admin | admin_purchase_register_individual_stock |  | 個別入力商品の実在庫登録 モーダルで選択した商品規格(ProductClass)を個別入力商品に紐付け、 |  | Admin/Purchase/PurchaseController.php:710 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/purchase/{id}/update | Admin | admin_purchase_update |  | 買取詳細編集 |  | Admin/Purchase/PurchaseController.php:352 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop | Admin | admin_setting_shop |  | setting shop |  | Admin/Setting/Shop/ShopController.php:45 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/additional_system/update | Admin | admin_setting_shop_additional_system_update |  | setting shop additional system update |  | Admin/Setting/Shop/AdditionalSystemController.php:64 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/csv/{id} | Admin | admin_setting_shop_csv |  | setting shop csv |  | Admin/Setting/Shop/CsvController.php:46 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId} | Admin | admin_setting_shop_csv_custom_update |  | カスタムCSV出力設定画面表示 |  | Admin/Setting/Shop/CustomerCsvController.php:63 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/delivery/new | Admin | admin_setting_shop_delivery_new |  | setting shop delivery new |  | Admin/Setting/Shop/DeliveryController.php:90 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/delivery/sort_no/move | Admin | admin_setting_shop_delivery_sort_no_move |  | setting shop delivery sort no move |  | Admin/Setting/Shop/DeliveryController.php:380 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/delivery/{id}/edit | Admin | admin_setting_shop_delivery_edit |  | setting shop delivery edit |  | Admin/Setting/Shop/DeliveryController.php:91 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/delivery/{id}/minimum_delivery_time | Admin | admin_setting_shop_delivery_minimum_delivery_time_edit |  | setting shop delivery minimum delivery time edit |  | Admin/Setting/Shop/DeliveryController.php:350 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/mail | Admin | admin_setting_shop_mail |  | setting shop mail |  | Admin/Setting/Shop/MailController.php:56 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/mail/preview | Admin | admin_setting_shop_mail_preview |  | setting shop mail preview |  | Admin/Setting/Shop/MailController.php:210 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/mail/{id} | Admin | admin_setting_shop_mail_edit |  | setting shop mail edit |  | Admin/Setting/Shop/MailController.php:57 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/payment/image/process | Admin | admin_payment_image_process |  | 画像アップロード時にリクエストされるメソッド. |  | Admin/Setting/Shop/PaymentController.php:180 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/payment/new | Admin | admin_setting_shop_payment_new |  | setting shop payment new |  | Admin/Setting/Shop/PaymentController.php:74 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/payment/sort_no/move | Admin | admin_setting_shop_payment_sort_no_move |  | setting shop payment sort no move |  | Admin/Setting/Shop/PaymentController.php:355 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/payment/{id}/edit | Admin | admin_setting_shop_payment_edit |  | setting shop payment edit |  | Admin/Setting/Shop/PaymentController.php:75 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/tax | Admin | admin_setting_shop_tax |  | 税率設定の初期表示・登録 |  | Admin/Setting/Shop/TaxRuleController.php:51 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/tax/new | Admin | admin_setting_shop_tax_new |  | 税率設定の初期表示・登録 |  | Admin/Setting/Shop/TaxRuleController.php:52 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/shop/tradelaw | Admin | admin_setting_shop_tradelaw |  | 特定商取引法設定の初期表示・登録 |  | Admin/Setting/Shop/TradeLawController.php:39 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/system/authority | Admin | admin_setting_system_authority |  | setting system authority |  | Admin/Setting/System/AuthorityController.php:53 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/system/log | Admin | admin_setting_system_log |  | setting system log |  | Admin/Setting/System/LogController.php:31 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/system/login_history/{page_no} | Admin | admin_setting_system_login_history_page |  | ログイン履歴検索画面を表示する. 左ナビゲーションの選択はGETで遷移する. |  | Admin/Setting/System/LoginHistoryController.php:48 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/system/member/new | Admin | admin_setting_system_member_new |  | setting system member new |  | Admin/Setting/System/MemberController.php:91 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/system/member/{id}/update | Admin | admin_setting_system_member_update |  | setting system member update |  | Admin/Setting/System/MemberController.php:189 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/system/permission_access_url | Admin | admin_setting_system_permission_access_url |  | setting system permission access url |  | Admin/Setting/System/PermissionAccessUrlController.php:45 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/system/permission_access_url/delete/{PermissionAccessUrl} | Admin | admin_setting_system_permission_access_url_delete |  | setting system permission access url delete |  | Admin/Setting/System/PermissionAccessUrlController.php:104 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/setting/system/security | Admin | admin_setting_system_security |  | setting system security |  | Admin/Setting/System/SecurityController.php:38 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/standby/labels | Admin | admin_labels_export |  | 送り状CSV出力 |  | Admin/Order/OrderController.php:757 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/standby/{id}/edit | Admin | admin_shipping_standby_edit |  | 出荷指示リスト 編集画面 |  | Admin/Order/ShippingStandbyController.php:152 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/standby/{id}/print/delivery/{lang} | Admin | admin_shipping_standby_print_delivery_slips |  | 出荷指示リスト 納品書印刷 |  | Admin/Order/ShippingStandbyController.php:393 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/standby/{id}/print/picking | Admin | admin_shipping_standby_print_picking_list |  | 出荷指示リスト ピッキングリスト印刷 |  | Admin/Order/ShippingStandbyController.php:283 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/standby/{id}/update | Admin | admin_shipping_standby_update |  | 出荷指示リスト 更新 |  | Admin/Order/ShippingStandbyController.php:190 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/api/install | Admin | admin_store_plugin_api_install |  | Api Install plugin by composer connect with package repo |  | Admin/Store/OwnerStoreController.php:202 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/api/schema_update | Admin | admin_store_plugin_api_schema_update |  | オーナーズブラグインインストール、スキーマ更新 |  | Admin/Store/OwnerStoreController.php:358 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/api/search | Admin | admin_store_plugin_owners_search |  | Owner's Store Plugin Installation Screen - Search function |  | Admin/Store/OwnerStoreController.php:75 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/api/search/page/{page_no} | Admin | admin_store_plugin_owners_search_page |  | Owner's Store Plugin Installation Screen - Search function |  | Admin/Store/OwnerStoreController.php:76 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/api/update | Admin | admin_store_plugin_api_update |  | オーナーズブラグインインストール、更新処理 |  | Admin/Store/OwnerStoreController.php:404 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/api/upgrade | Admin | admin_store_plugin_api_upgrade |  | オーナーズブラグインインストール、アップデート |  | Admin/Store/OwnerStoreController.php:293 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/authentication_setting | Admin | admin_store_authentication_setting |  | 認証キー設定画面 |  | Admin/Store/PluginController.php:476 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/install | Admin | admin_store_plugin_install |  | プラグインファイルアップロード画面 |  | Admin/Store/PluginController.php:413 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/{id}/disable | Admin | admin_store_plugin_disable |  | 対象のプラグインを無効にします。 |  | Admin/Store/PluginController.php:299 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/{id}/enable | Admin | admin_store_plugin_enable |  | 対象のプラグインを有効にします。 |  | Admin/Store/PluginController.php:222 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/plugin/{id}/update | Admin | admin_store_plugin_update |  | インストール済プラグインからのアップデート |  | Admin/Store/PluginController.php:160 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/template | Admin | admin_store_template |  | テンプレート一覧画面 |  | Admin/Store/TemplateController.php:48 |
+| 実装未記載候補のみ | POST | /%eccube_admin_route%/store/template/install | Admin | admin_store_template_install |  | テンプレートの追加画面. |  | Admin/Store/TemplateController.php:188 |
+| 実装未記載候補のみ | POST | /%eccube_api_v1_route%/admin/buyMainCard.json | App API | api_admin_buy_main_card |  | 複数ネット買取IDからネット買取受注の商品一覧を取得 |  | App/MTGBuyer/V1/Admin/BuyMainCardController.php:37 |
+| 実装未記載候補のみ | POST | /%eccube_api_v1_route%/admin/buyOrderIndivisualInputProduct.json | App API | api_admin_buy_order_indivisual_input_product |  | 複数ネット買取IDから個別入力商品の一覧を取得 |  | App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:37 |
+| 実装未記載候補のみ | POST | /%eccube_api_v1_route%/admin/login.json | App API | api_admin_login |  | 管理者ログイン認証API login id と password を受け取り、認証成功時にJWTトークンとメンバー情報を返す。 |  | App/MTGBuyer/V1/Admin/LoginController.php:45 |
+| 実装未記載候補のみ | POST | /%eccube_api_v1_route%/buying/products | App API | api_buying_products |  | 商品IDのリストから買取用商品情報を取得 |  | App/MTGBuyer/V1/Admin/BuyingController.php:74 |
+| 実装未記載候補のみ | POST | /%eccube_api_v1_route%/search | App API | api_search |  | カード名から買取用商品情報を取得 |  | App/MTGBuyer/V1/Admin/BuyingController.php:111 |
+| 実装未記載候補のみ | POST | /%eccube_smaregi_webhook_route% | Smaregi | smaregi_webhook |  | スマレジ Webhook 受信エンドポイント（検証用） リクエスト内容をログに出力し、200 OK で固定レスポンスを返す。 |  | Smaregi/WebhookController.php:41 |
+| 実装未記載候補のみ | POST | /api/deck | App API | api_deck_builder_deck_post |  | deck builder deck post |  | App/DeckBuilder/DeckController.php:75 |
+| 実装未記載候補のみ | POST | /api/deck/import | App API | api_deck_builder_deck_import_post |  | deck builder deck import post |  | App/DeckBuilder/DeckController.php:667 |
+| 実装未記載候補のみ | POST | /api/order/prints/direct/{base_info_id} | App API | order_direct_print |  | サーバダイレクト印刷API |  | App/OrderController.php:43 |
+| 実装未記載候補のみ | POST | /api/user/login | App API | api_deck_builder_login |  | deck builder login |  | App/DeckBuilder/LoginController.php:43 |
+| 実装未記載候補のみ | POST | /api/user/logout | App API | api_deck_builder_logout |  | deck builder logout |  | App/DeckBuilder/LoginController.php:79 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/cart/clear | Front | cart_clear |  | カート一括削除. |  | Front/CartController.php:106 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/cart/push_receive | Front | cart_push_receive |  | カートをロック状態に設定し、購入確認画面へ遷移する. |  | Front/CartController.php:406 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/cart/{operation}/{productClassId} | Front | cart_handle_item |  | カート明細の加算/減算/削除を行う. - 加算 |  | Front/CartController.php:276 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/deck/bulk_check | Front | deck_bulk_check |  | deck bulk check |  | Front/Deck/DeckController.php:379 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/events/register | Front | event_entry_register |  | event entry register |  | Front/Event/EventEntryController.php:146 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/forgot | Front | forgot |  | パスワードリマインダ. |  | Front/ForgotController.php:47 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/forgot/reset/{reset_key} | Front | forgot_reset |  | パスワード再発行実行画面. |  | Front/ForgotController.php:146 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/mypage/delivery/new | Front | mypage_delivery_new |  | お届け先編集画面. |  | Front/Mypage/DeliveryController.php:76 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/mypage/delivery/new/complete | Front | mypage_delivery_new_complete |  | mypage delivery new complete |  | Front/Mypage/DeliveryController.php:169 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/mypage/delivery/{id}/edit/complete | Front | mypage_delivery_edit_complete |  | mypage delivery edit complete |  | Front/Mypage/DeliveryController.php:170 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/mypage/favorite/cart_add_bulk/{id} | Front | favorite_cart_add_bulk |  | お気に入り画面からカートに追加. |  | Front/ProductController.php:1283 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/mypage/identification/complete | Front | mypage_identification_complete |  | 撮影完了画面 |  | Front/Mypage/IdentificationController.php:128 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/mypage/identification/photograph | Front | mypage_identification_photograph |  | 撮影画面 |  | Front/Mypage/IdentificationController.php:72 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/mypage/login | Front | mypage_login |  | ログイン画面. |  | Front/Mypage/MypageController.php:82 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/mypage/purchase_history/net/{buyOrderId}/confirm | Front | mypage_purchase_history_net_confirm |  | 査定承諾確定 |  | Front/Mypage/PurchaseHistoryController.php:127 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/mypage/withdraw | Front | mypage_withdraw, mypage_withdraw_confirm |  | 退会画面. |  | Front/Mypage/WithdrawController.php:58; Front/Mypage/WithdrawController.php:59 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/notifylist/push_all_receive | Front | push_all_receive |  | まとめて入荷通知 |  | Front/Mypage/NotifylistController.php:175 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/notifylist/push_receive | Front | push_receive |  | 入荷待ち通知変更 |  | Front/Mypage/NotifylistController.php:93 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/add_cart/{id} | Front | product_add_cart |  | カートに追加. |  | Front/ProductController.php:757 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/add_favorite/{id}/{language_code} | Front | product_add_favorite |  | お気に入り追加. |  | Front/ProductController.php:649 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/category | Front | product_category |  | ユニサーチ商品一覧の別エントリ（カテゴリツリー API 等からのリンク用）。 |  | Front/ProductController.php:1307 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/search/cart_add_bulk/{id} | Front | product_list_cart_add_bulk |  | 商品一覧（複数規格表示時）からの一括カート追加（お気に入り {@see addFavoriteCartBulk} と同様）. |  | Front/ProductController.php:1316 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/search/unisearch | Front | product_search_unisearch |  | ユニサーチからのJSON情報から一時的な商品一覧HTMLの生成 |  | Front/ProductController.php:1454 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/search/unisearch/lazy | Front | product_search_unisearch_lazy_load |  | 商品情報の遅延読込(ユニサーチ情報利用) |  | Front/ProductController.php:1469 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/search/unisearch/query | Front | product_search_unisearch_query |  | フォームからユニサーチ用クエリ文字列を返す（フロントの changeUnisearchQuery 用） |  | Front/ProductController.php:1655 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/search/unisearch_api | Front | product_search_unisearch_api |  | ユニサーチ検索APIアクセス |  | Front/ProductController.php:1595 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/search/unisearch_rword_api | Front | product_search_unisearch_rword_api |  | 関連ワード API プロキシ |  | Front/ProductController.php:1610 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/search/unisuggest_api | Front | product_search_unisuggest_api |  | ユニサジェスト API プロキシ |  | Front/ProductController.php:1625 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/products/search/unisuggest_api/delete | Front | product_search_unisuggest_delete_api |  | ユニサジェスト履歴削除 API プロキシ |  | Front/ProductController.php:1640 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/purchase/cart | Front | purchase_cart_update |  | 買取カート更新 |  | Front/Purchase/PurchaseController.php:992 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/purchase/products/search/unisearch/lazy | Front | purchase_product_search_unisearch_lazy_load |  | UniSearch 遅延読込。 |  | Front/Purchase/PurchaseController.php:628 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/shopping/checkout | Front | shopping_checkout |  | 注文確定処理（POST `/shopping/checkout`）. `confirm()` から内部呼び出される場合と、確認画面 `Shopping/confirm.twig` |  | Front/ShoppingController.php:422 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/shopping/customer | Front | shopping_customer |  | お客様情報の変更(非会員) |  | Front/NonMemberShoppingController.php:113 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/shopping/nonmember | Front | shopping_nonmember |  | 非会員処理 |  | Front/NonMemberShoppingController.php:48 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/shopping/redirect_to | Front | shopping_redirect_to |  | 他画面への遷移を行う. お届け先編集画面など, 他画面へ遷移する際に, フォームの値をDBに保存してからリダイレクトさせる. |  | Front/ShoppingController.php:207 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/shopping/shipping_edit/{id} | Front | shopping_shipping_edit |  | お届け先の新規作成または編集画面. 会員時は新しいお届け先を作成し, 作成したお届け先を選択状態にして注文手続き画面へ遷移する. |  | Front/ShoppingController.php:775 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/shopping/shipping_edit/{id}/complete | Front | shopping_shipping_edit_complete |  | お届け先登録処理 |  | Front/ShoppingController.php:864 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/shopping/shipping_multiple | Front | shopping_shipping_multiple |  | 複数配送処理 |  | Front/ShippingMultipleController.php:55 |
+| 実装未記載候補のみ | POST | /{_locale}{_shop}/shopping/shipping_multiple_edit | Front | shopping_shipping_multiple_edit |  | 複数配送設定時の新規お届け先の設定 会員ログイン時は会員のお届け先に追加する |  | Front/ShippingMultipleController.php:333 |
+| 実装未記載候補のみ | PUT | /%eccube_admin_route%/product/class_category/{class_name_id}/{id}/visibility | Admin | admin_product_class_category_visibility |  | product class category visibility |  | Admin/Product/ClassCategoryController.php:200 |
+| 実装未記載候補のみ | PUT | /%eccube_admin_route%/setting/shop/delivery/{id}/visibility | Admin | admin_setting_shop_delivery_visibility |  | setting shop delivery visibility |  | Admin/Setting/Shop/DeliveryController.php:317 |
+| 実装未記載候補のみ | PUT | /%eccube_admin_route%/setting/shop/payment/{id}/visible | Admin | admin_setting_shop_payment_visible |  | アップロード画像をすぐ削除する際にコールされるメソッド. |  | Admin/Setting/Shop/PaymentController.php:334 |
+| 実装未記載候補のみ | PUT | /%eccube_admin_route%/setting/system/member | Admin | admin_setting_system_member |  | setting system member |  | Admin/Setting/System/MemberController.php:58 |
+| 実装未記載候補のみ | PUT | /%eccube_admin_route%/setting/system/member/{id}/down | Admin | admin_setting_system_member_down |  | setting system member down |  | Admin/Setting/System/MemberController.php:253 |
+| 実装未記載候補のみ | PUT | /%eccube_admin_route%/setting/system/member/{id}/up | Admin | admin_setting_system_member_up |  | setting system member up |  | Admin/Setting/System/MemberController.php:232 |
+| 実装未記載候補のみ | PUT | /%eccube_admin_route%/shipping/notify_mail/{id} | Admin | admin_shipping_notify_mail |  | shipping notify mail |  | Admin/Order/ShippingController.php:239 |
+| 実装未記載候補のみ | PUT | /%eccube_api_v1_route%/admin/buyOrder/{id}.json | App API | api_admin_buy_order_update |  | ネット買取注文の査定終了処理 このAPIは、他のAPIとは異なりJSON形式のリクエストが前提となる |  | App/MTGBuyer/V1/Admin/BuyOrderController.php:170 |
+| 実装未記載候補のみ | PUT | /%eccube_api_v1_route%/admin/buyOrder/{id}/freeComment.json | App API | api_admin_buy_order_update_free_comment |  | ネット買取受注コメント更新 |  | App/MTGBuyer/V1/Admin/BuyOrderController.php:93 |
+| 実装未記載候補のみ | PUT | /%eccube_api_v1_route%/admin/buyOrder/{id}/status.json | App API | api_admin_buy_order_update_status |  | ネット買取受注ステータス更新 |  | App/MTGBuyer/V1/Admin/BuyOrderController.php:126 |
+| 実装未記載候補のみ | PUT | /%eccube_api_v1_route%/admin/otcBuyOrder/{id}.json | App API | api_admin_otc_buy_order_update |  | 店頭買取情報更新API このAPIは、他のAPIとは異なりJSON形式のリクエストが前提となる |  | App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:129 |
+| 実装未記載候補のみ | PUT | /%eccube_api_v1_route%/admin/otcBuyOrder/{id}/doubleCheckMember.json | App API | api_admin_otc_buy_order_update_double_check_member |  | ダブルチェック者の更新 |  | App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:231 |
+| 実装未記載候補のみ | PUT | /%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json | App API | api_admin_otc_buy_order_update_free_comment |  | フリーコメントの更新 |  | App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:156 |
+| 実装未記載候補のみ | PUT | /%eccube_api_v1_route%/admin/otcBuyOrder/{id}/identification.json | App API | api_admin_otc_buy_order_update_identification |  | 身分証明書種別の更新 |  | App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:273 |
+| 実装未記載候補のみ | PUT | /%eccube_api_v1_route%/admin/otcBuyOrder/{id}/status.json | App API | api_admin_otc_buy_order_update_status |  | ステータスの更新 |  | App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:190 |
+| 実装未記載候補のみ | PUT | /api/deck/import/{id} | App API | api_deck_builder_deck_import_put |  | deck builder deck import put |  | App/DeckBuilder/DeckController.php:677 |
+| 実装未記載候補のみ | PUT | /api/deck/{id} | App API | api_deck_builder_deck_update |  | deck builder deck update |  | App/DeckBuilder/DeckController.php:124 |
+| 実装未記載候補のみ | PUT | /api/user | App API | api_deck_builder_user_update |  | deck builder user update |  | App/DeckBuilder/UserController.php:78 |
+| 実装未記載候補のみ | PUT | /{_locale}{_shop}/cart/{operation}/{productClassId} | Front | cart_handle_item |  | カート明細の加算/減算/削除を行う. - 加算 |  | Front/CartController.php:276 |
+| 実装未記載候補のみ | PUT | /{_locale}{_shop}/mypage/order/{order_no} | Front | mypage_order |  | 再購入を行う. |  | Front/Mypage/MypageController.php:197 |

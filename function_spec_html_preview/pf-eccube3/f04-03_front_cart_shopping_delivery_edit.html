@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F04-03（注文時の配送先登録・変更） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#お届け先編集画面を表示・送信する-locale-shopping-delivery-id-new-edit">お届け先編集画面を表示・送信する（`/{_locale}/shopping/delivery/{id|new}/edit`）</a>
+<a class="lv3" href="#確認画面から登録する-locale-shopping-delivery-id-new-confirm">確認画面から登録する（`/{_locale}/shopping/delivery/{id|new}/confirm`）</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
+<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
+<a class="lv3" href="#エラー・警告-インライン">エラー・警告（インライン）</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv3" href="#本機能で扱うCookie">本機能で扱うCookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/f04-03_front_cart_shopping_delivery_edit.md</p>
+        <h1>F04-03（注文時の配送先登録・変更）</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>ご注文方法指定の途中でお届け先を新規登録または変更する機能である。お届け先編集画面で配送先名称・氏名・氏名カナ・電話番号・国・郵便番号・住所・会社名を入力し、確認画面を経てアドレス帳へ登録し、登録したお届け先を当該注文の配送先として選択した状態でご注文方法指定へ戻る。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの購入手続き中の配送先編集・確認処理、テンプレート（<code>Shopping/delivery_edit.twig</code>・<code>Shopping/delivery_confirm.twig</code>）、配送先サービスを正とする。</p>
+<p>本機能のカスタマイズ区分はカスタマイズであり、挙動の確認は現行リポ（pf-eccube3）の実装を参照する。DB関連の記述はリニューアル移行先の ec-cube-enterprise を正とする。</p>
+<p>対象はブラウザ経由のフロント（購入手続き中の配送先登録・変更）に限定する。フロントのルートはロケールセグメント付きで提供され、サイトルートからのパスパターンは<code>/{_locale}</code>配下になる（<code>/{_locale}</code>はサービスプロバイダのマウントで決まる確認値）。</p>
+<p>コントローラのメソッド単位の解剖は本文の主題としない。本文ではルートbind名の網羅を主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>購入手続き中のお届け先の新規登録・編集画面の表示と入力項目</li><li>入力→確認→登録の段階遷移と、登録後の配送先選択への遷移</li><li>お届け先登録数の上限判定</li><li>国と都道府県の整合検証</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>ご注文方法指定本体の表示・配送業者・お支払い方法・注文確定（F04-02 注文情報の入力・確認・注文を正とする）</li><li>マイページの配送先登録・変更（マイページ配送先機能を正とする）</li><li>注文確定後の購入完了処理（カートの決済〜購入完了機能を正とする）</li><li>住所自動入力の外部サービス仕様</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>配送先名称（address_name）は、現行（pf-eccube3）では補助テーブル dtb_customer_address_sub に分離して保持するが、移行先（ec-cube-enterprise）には dtb_customer_address_sub が存在せず、お届け先住所テーブル dtb_customer_address の address_name 列（長さ128）に統合されている。本書のDB記述は移行先（統合後の dtb_customer_address.address_name）を主とし、現行の補助テーブル名を括弧で添える。お届け先住所の氏名・氏名カナ・電話番号・国・郵便番号・都道府県・住所・会社名は移行先でも dtb_customer_address で同名に扱う。登録上限・配送先反映の挙動は現行リポ（pf-eccube3）の実装を確認値とする。</p>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>お届け先</td><td>配送先住所。会員のアドレス帳に登録する。</td></tr><tr><td>配送先名称</td><td>お届け先に付ける表示名。</td></tr><tr><td>アドレス帳</td><td>会員が登録した複数のお届け先住所。</td></tr><tr><td>配送先</td><td>当該注文に紐づく配送先。選択したお届け先を反映する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>お届け先を新規登録（編集画面）</td><td><code>GET /{_locale}/shopping/delivery/new/edit</code>、<code>POST /{_locale}/shopping/delivery/new/edit</code></td><td>登録上限内なら新規入力画面を表示する。送信が妥当なら確認画面、不備や入力変更時は編集画面を再表示する。</td></tr><tr><td>既存お届け先を編集</td><td><code>GET /{_locale}/shopping/delivery/{id}/edit</code>、<code>POST /{_locale}/shopping/delivery/{id}/edit</code></td><td>指定IDの住所を読み込み編集画面を表示する。送信が妥当なら確認画面、不備や入力変更時は編集画面を再表示する。</td></tr><tr><td>確認画面から登録</td><td><code>POST /{_locale}/shopping/delivery/new/confirm</code>、<code>POST /{_locale}/shopping/delivery/{id}/confirm</code></td><td>登録上限内かつ検証通過で住所と配送先名称を登録し、当該注文の配送先選択へ遷移する。戻る送信や検証不備は編集画面を表示する。</td></tr></tbody></table></div>
+<p>登録上限超過時はご注文方法指定へ戻す。登録完了後は当該注文の配送先選択（お届け先反映）へ遷移する。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>見出し「配送先の新規登録・変更」、ログイン会員名、変更不可についての案内文、配送先名称・配送先氏名（姓名）・配送先氏名カナ（姓名）・電話番号（3分割）・国・郵便番号・住所（都道府県＋住所2行）・会社名の各入力欄。確認画面へ進むボタンと戻るボタンを表示する。</td></tr><tr><td>必須表示</td><td>配送先名称・配送先氏名・電話番号・国・郵便番号・住所に必須マークの画像を表示する。配送先氏名カナと会社名には必須マークが無い。</td></tr><tr><td>郵便番号</td><td>国によって郵便番号欄が分割（zip01・zip02）または単一（zipcode）に切り替わる。郵便番号からの自動入力ボタンと郵便番号検索リンクを表示する。</td></tr><tr><td>国・都道府県の連動</td><td>国の選択に応じて都道府県の表示・隠しを切り替える。国と都道府県の組合せが不整合なら国の項目にエラーを付与する。</td></tr><tr><td>送信モード</td><td>編集画面の送信は<code>mode=confirm</code>の隠し項目を伴い、確認画面用の遷移を行う。</td></tr><tr><td>モーダル・ポップアップ</td><td>本画面専用のモーダルは持たない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="お届け先編集画面を表示・送信する-locale-shopping-delivery-id-new-edit">お届け先編集画面を表示・送信する（<code>/{_locale}/shopping/delivery/{id|new}/edit</code>）</h3>
+<ol><li>登録上限判定を行う。新規（IDなし）でアドレス帳が上限に達していれば、上限超過のエラーを出してご注文方法指定へ戻す。</li><li>編集対象の住所を取得または新規生成し、配送先名称を初期化したフォームを組む。</li><li>入力変更の再描画指定がある、または未送信・検証不備のときは編集画面を表示する。</li><li>送信が妥当なときは確認画面を表示する。</li></ol>
+<h3 id="確認画面から登録する-locale-shopping-delivery-id-new-confirm">確認画面から登録する（<code>/{_locale}/shopping/delivery/{id|new}/confirm</code>）</h3>
+<ol><li>登録上限判定を行う。上限超過ならご注文方法指定へ戻す。</li><li>住所を登録し、お届け先入力フォームを組む。</li><li>戻る送信でなく、かつ検証通過のときは配送先名称を登録して永続化する。</li><li>セッションの受注の最初の配送に対して、登録したお届け先IDをセッションとCookieへ保存し、当該注文の配送先選択（お届け先反映）へ遷移する。</li><li>戻る送信や検証不備のときは編集画面を表示する。</li></ol>
+<hr>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
+<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>条件</th></tr></thead><tbody><tr><td>見出し</td><td>配送先の新規登録・変更</td><td>Register New/Change Address</td><td>編集画面の表示時</td></tr><tr><td>注意文</td><td>既にいただいています（準備中も含む）ご注文の注文者ならびに配送先の情報は変更されませんので、変更が必要な場合は弊社へご連絡をお願い致します。</td><td>After the order (including preparation) is received, destination information as well as purchase information cannot be updated, so if further changes are necessary, please contact us.</td><td>編集画面の表示時</td></tr><tr><td>入力注意</td><td>※町名・番地の入力漏れにご注意ください。</td><td>-</td><td>住所欄の下</td></tr></tbody></table></div>
+<p>見出し・注意文の英語は<code>Shopping/delivery_edit.en.twig</code>の表示文言を正とする。入力注意は英語テンプレートに対応文言が無いため<code>-</code>とする。</p>
+<h3 id="エラー・警告-インライン">エラー・警告（インライン）</h3>
+<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>お届け先登録数の上限を超えています。</td><td>The maximum number of addresses registration is exceeded.</td><td>新規登録でアドレス帳が上限に達しているとき</td><td>ご注文方法指定画面のエラー領域</td><td>キー <code>front.shopping.error.customer_address_max</code></td></tr><tr><td>国と都道府県の不整合エラー文</td><td>The combination of country and region is incorrect.</td><td>国と都道府県の組合せが不整合のとき</td><td>国の項目直下</td><td>キー <code>form.country.error.invalid</code></td></tr></tbody></table></div>
+<p>エラー文言の英語は<code>message.en.yml</code>の同一ロケールキーを正とする。各入力欄の必須・形式エラーはフォーム検証としてフィールド直下に表示する。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>登録上限</td><td>新規登録時、アドレス帳の件数が登録上限（確認値20）以上なら登録できない。既存編集（IDあり）は上限判定をスキップする。</td></tr><tr><td>国と都道府県の整合</td><td>国が日本で都道府県が国外、または国が日本以外で都道府県が国外でない場合は不整合として国にエラーを付与する。</td></tr><tr><td>氏名カナの扱い</td><td>氏名カナは必須マークが無く、英語ページなどカナが無い場合の扱いはフォーム種別に従う。</td></tr><tr><td>登録後の配送先反映</td><td>登録したお届け先IDをセッションとCookieへ保存し、当該注文の配送先選択へ引き継ぐ。</td></tr></tbody></table></div>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>配送先名称</td><td>必須</td><td>形式・上限はお届け先入力フォーム種別の確認値（移行先の <code>address_name</code> 列長は128）</td><td>既存編集時は登録済み名称、新規は空</td><td>配送先名称（移行先 <code>dtb_customer_address.address_name</code>、現行 <code>dtb_customer_address_sub.address_name</code>）。論理キー <code>addressName</code>。</td></tr><tr><td>配送先氏名（姓）</td><td>必須</td><td>フォーム種別の確認値</td><td>既存値または空</td><td>お届け先住所の姓（<code>dtb_customer_address</code>）。論理キー <code>name.name01</code>。</td></tr><tr><td>配送先氏名（名）</td><td>必須</td><td>フォーム種別の確認値</td><td>既存値または空</td><td>お届け先住所の名（<code>dtb_customer_address</code>）。論理キー <code>name.name02</code>。</td></tr><tr><td>配送先氏名カナ（姓）</td><td>任意</td><td>フォーム種別の確認値</td><td>既存値または空</td><td>お届け先住所の姓カナ（<code>dtb_customer_address</code>）。論理キー <code>kana.kana01</code>。</td></tr><tr><td>配送先氏名カナ（名）</td><td>任意</td><td>フォーム種別の確認値</td><td>既存値または空</td><td>お届け先住所の名カナ（<code>dtb_customer_address</code>）。論理キー <code>kana.kana02</code>。</td></tr><tr><td>電話番号</td><td>必須</td><td>各分割は数値で電話番号桁（確認値<code>tel_len</code>＝5）。3分割（tel01・tel02・tel03）</td><td>既存値または空</td><td>お届け先住所の電話番号（<code>dtb_customer_address</code>）。論理キー <code>tel.tel01</code>・<code>tel.tel02</code>・<code>tel.tel03</code>。</td></tr><tr><td>国</td><td>必須</td><td>選択</td><td>既存値または日本</td><td>お届け先住所の国。論理キー <code>country</code>。都道府県との整合を検証する。</td></tr><tr><td>郵便番号</td><td>必須</td><td>国内は分割（zip01＝3桁・zip02＝4桁）、国外は単一（zipcode）</td><td>既存値または空</td><td>お届け先住所の郵便番号。論理キー <code>zip.zip01</code>・<code>zip.zip02</code> または <code>zipcode</code>。</td></tr><tr><td>住所（都道府県）</td><td>必須</td><td>選択</td><td>既存値または空</td><td>お届け先住所の都道府県。論理キー <code>pref</code>。</td></tr><tr><td>住所（住所1）</td><td>必須</td><td>フォーム種別の確認値</td><td>既存値または空</td><td>お届け先住所の住所1（<code>dtb_customer_address</code>）。論理キー <code>addr01</code>。</td></tr><tr><td>住所（住所2）</td><td>必須</td><td>フォーム種別の確認値</td><td>既存値または空</td><td>お届け先住所の住所2（<code>dtb_customer_address</code>）。論理キー <code>addr02</code>。</td></tr><tr><td>会社名</td><td>任意</td><td>フォーム種別の確認値</td><td>既存値または空</td><td>お届け先住所の会社名（<code>dtb_customer_address</code>）。論理キー <code>company_name</code>。</td></tr></tbody></table></div>
+<p>最大長の具体値はお届け先入力フォーム種別と<code>constant.yml.dist</code>等の確認値を正とする。登録上限の確認値20は<code>constant.yml.dist</code>の<code>deliv_addr_max</code>を正とする。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>新規登録で上限到達</td><td>上限超過エラーを出してご注文方法指定へ戻す。</td></tr><tr><td>既存編集</td><td>上限判定をスキップして編集できる。</td></tr><tr><td>国と都道府県の不整合</td><td>国にエラーを付与し、編集画面を再表示する。</td></tr><tr><td>確認画面で戻る送信</td><td>編集画面を表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>アドレス帳と配送先</td><td>登録したお届け先はアドレス帳に追加され、当該注文の配送先選択へ引き継ぐ。</td></tr><tr><td>セッション・Cookie</td><td>登録後のお届け先IDをセッションとCookieへ保存し、配送先選択で参照する。</td></tr><tr><td>既存注文との分離</td><td>既に受け付けた注文の注文者・配送先は本画面の登録・変更で変わらない（画面上で注意を案内する）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能ではAPI呼び出し・バッチ実行を扱わない。住所自動入力は外部サービスのスクリプトに依存し、本書では仕様確定しない。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>お届け先入力フォーム（配送先名称・氏名・氏名カナ・電話番号・国・郵便番号・住所・会社名）。送信モード・戻るの隠し項目。</td></tr><tr><td>成功時出力</td><td>確認画面の表示、または登録後の配送先選択への遷移。</td></tr><tr><td>失敗時出力</td><td>上限超過でご注文方法指定へ戻る。検証不備で編集画面を再表示する。</td></tr><tr><td>副作用</td><td>お届け先住所とサブ情報の登録、お届け先IDのセッション・Cookie保存。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_customer_address</code></td><td>氏名・氏名カナ・電話番号・国・郵便番号・都道府県・住所・会社名</td><td>お届け先住所の登録先。</td></tr><tr><td><code>dtb_customer_address</code>.<code>address_name</code>（現行 <code>dtb_customer_address_sub.address_name</code>）</td><td>配送先名称</td><td>お届け先の表示名。移行先（ec-cube-enterprise）は <code>dtb_customer_address.address_name</code> に統合。</td></tr><tr><td><code>dtb_shipping</code></td><td>配送先住所</td><td>登録後の選択で当該注文の配送先へ反映する（反映はF04-02）。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_customer_address / dtb_customer_address_sub / dtb_shipping</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>配送先名称・氏名・電話番号・国・郵便番号・住所</td><td>必須。お届け先入力フォーム種別の検証に従う。</td></tr><tr><td>電話番号</td><td>各分割は数値で電話番号桁以内。</td></tr><tr><td>国と都道府県</td><td>組合せが不整合なら国にエラーを付与する。</td></tr><tr><td>登録上限</td><td>新規登録時にアドレス帳件数が上限未満であること。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>お届け先の登録・編集</th></tr></thead><tbody><tr><td>会員ログイン</td><td>自分のアドレス帳に対して登録・編集できる。上限内で新規登録できる。</td></tr><tr><td>未ログイン・非会員</td><td>購入手続きのログイン・受注情報の前提に従う。本書ではログイン会員を前提とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>編集画面の送信が妥当</td><td>確認画面</td></tr><tr><td>編集画面の送信が不備・入力変更指定</td><td>編集画面（再表示）</td></tr><tr><td>確認画面の登録成功</td><td>当該注文の配送先選択（お届け先反映）</td></tr><tr><td>確認画面で戻る送信・検証不備</td><td>編集画面</td></tr><tr><td>新規登録で上限超過</td><td>ご注文方法指定画面</td></tr><tr><td>編集画面の「戻る」</td><td>ご注文方法指定画面</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>確認画面の登録</td><td>お届け先住所とサブ情報を登録し、お届け先IDをセッション・Cookieへ保存する</td><td>配送先選択で登録したお届け先が反映される</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>新規登録の上限超過</td><td>上限超過エラーを出してご注文方法指定へ戻す。</td></tr><tr><td>国と都道府県の不整合</td><td>国にエラーを付与して編集画面を再表示する。</td></tr><tr><td>フォーム検証不備</td><td>編集画面を再表示する。</td></tr><tr><td>編集対象住所が存在しない</td><td>お届け先が見つからない旨で扱う。</td></tr></tbody></table></div>
+<p>表示文言は表示メッセージ節を正とする。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>お届け先登録開始・完了</td><td>対象IDの情報ログ。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>なりすまし対策トークン</li><li>Cookie値</li><li>セッションIDの完全値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>お届け先ID</td><td>登録完了時に保存し、配送先選択で参照する。</td></tr><tr><td>受注ID</td><td>受注の配送を特定するために参照する（保存はF04-02）。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>決済の機微情報はセッションへ保存しない。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<h3 id="本機能で扱うCookie">本機能で扱うCookie</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>お届け先ID</td><td>登録完了時に保存し、配送先選択で参照する。値は本書に記載しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>お届け先住所とサブ情報の登録は永続化処理に任せる。本機能では楽観ロック・悲観ロックの版情報を画面に持たない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

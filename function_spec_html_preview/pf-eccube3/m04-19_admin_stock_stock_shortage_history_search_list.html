@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-19（欠品履歴検索/一覧） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#欠品履歴一覧を開く-初期表示">欠品履歴一覧を開く（初期表示）</a>
+<a class="lv3" href="#検索する・ページ送りする">検索する・ページ送りする</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
+<a class="lv3" href="#常時表示-正常・静的">常時表示（正常・静的）</a>
+<a class="lv3" href="#エラー・警告-インライン">エラー・警告（インライン）</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-ソース位置の索引">調査補助（ソース位置の索引）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m04-19_admin_stock_stock_shortage_history_search_list.md</p>
+        <h1>M04-19（欠品履歴検索/一覧）</h1>
+      </header>
+      <p>受注時に在庫不足で計上できなかった欠品の履歴を、日付帯で検索して一覧表示する画面。</p>
+<h2 id="概要">概要</h2>
+<p>欠品履歴検索/一覧は、受注処理などで在庫が不足し欠品となった記録を、登録日の日付帯で検索して一覧表示する機能である。検索条件・表示件数・ソート条件はセッションに保持し、ページ送り後も同一条件で再検索する。一覧の各行は商品規格編集画面・受注編集画面へのリンクを持つ。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。HareruyaEc プラグインの実装と、検索一覧を駆動する共通処理（SearchControllerTrait）を確認値とする。</p>
+<p>本機能のカスタマイズ区分はカスタマイズである。画面・処理の挙動は現行リポ（pf-eccube3 の HareruyaEc プラグイン）を参照し、DB関連（永続化先のテーブル名・列名・制約）は ec-cube-enterprise を正とする。現行と移行先でスキーマが異なる箇所は「リニューアル移行時の扱い」に集約する。</p>
+<p>対象はブラウザ経由の管理画面に限定する。管理画面プレフィックスは HareruyaEc プラグインの設定キー <code>admin_route</code> で決まるため、本書では <code>%eccube_admin_route%</code> で示す。</p>
+<p>本書の本文ではコントローラのメソッド名は主題としない。ルート bind 名は調査補助へ退避する。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>欠品履歴一覧を開く入口と、検索フォーム送信・ページ送りの挙動</li><li>日付帯（開始・終了）の指定と保持、登録日での絞り込み</li><li>一覧の列構成と件数表示、各行から規格編集・受注編集への遷移</li><li>検索条件・表示件数・ソート条件のセッション保持キー</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>欠品履歴のCSV出力（本機能には存在しない。後述の「本書で扱わないこと」末尾参照）</li><li>欠品履歴の生成（受注処理で在庫不足が起きたときの記録）</li><li>規格編集画面・受注編集画面の仕様（各機能を正とする）</li><li>管理画面の認証・ログイン・権限マスタの詳細</li></ul>
+<p>本機能には欠品履歴のCSV出力ルート・エクスポート処理が存在しない。CSV出力が必要な場合は別機能の追加実装を要する。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>DB関連は ec-cube-enterprise を正とする。現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）でスキーマ・仕様が異なる主な点を記録する。確認できない点は推測せず要確認として残す。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>欠品履歴の主キー</td><td><code>stockout_history_id</code></td><td><code>dtb_stockout_history.id</code></td></tr><tr><td>商品コード列</td><td><code>dtb_product_class.code</code></td><td><code>dtb_product_class.product_code</code></td></tr><tr><td>店舗の保持</td><td>欠品履歴に店舗列を持たない</td><td><code>dtb_stockout_history.base_info_id</code>（店舗）を持つ</td></tr><tr><td>状態列のメモ</td><td><code>dtb_product_sub_class.memo</code></td><td>商品サブ規格テーブルが存在しない（ec-cube-enterprise 実装で要確認）</td></tr><tr><td>欠品理由</td><td>列として保持しない</td><td>基本設計（M04-19シート）は欠品理由列の追加を求める。<code>dtb_stock_history.shortage_reason</code> 等が該当（ec-cube-enterprise 実装で要確認）</td></tr></tbody></table></div>
+<p>基本設計（M04-19シート）が描く店舗・在庫区分・登録元・欠品時販売価格・欠品理由・最終更新者などの追加列は、現行 pf-eccube3 の欠品履歴一覧には未実装である。これらは移行先 ec-cube-enterprise 実装側の仕様であり、本書では現行挙動のみを扱い、追加仕様は「本書で扱わないこと」と本節に集約する。</p>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>欠品履歴</td><td>受注時に在庫が不足し計上できなかった記録。テーブル <code>dtb_stockout_history</code>。一覧の元データ。</td></tr><tr><td>個数</td><td>欠品となった数量。列名 <code>stockout</code>。</td></tr><tr><td>検索条件セッション</td><td>検索フォーム値・表示件数・ページ番号・ソート条件を保持するセッション領域。セッションキー接頭辞は <code>admin.stockout_history.…</code>。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>欠品履歴一覧を開く</td><td><code>GET /%eccube_admin_route%/product/stockout/history</code></td><td>検索フォームを初期表示し、検索条件セッションを消去して一覧は空で表示する。</td></tr><tr><td>「検索する」で送信</td><td><code>POST /%eccube_admin_route%/product/stockout/history/search/1</code></td><td>日付帯を検証・保持し、欠品履歴一覧を1ページ目で組み立てて表示する。</td></tr><tr><td>ページネーションでNページへ</td><td><code>GET /%eccube_admin_route%/product/stockout/history/search/{page_no}</code></td><td>セッションの検索条件で一覧のNページ目を表示する。</td></tr><tr><td>表示件数プルダウン変更</td><td><code>GET /%eccube_admin_route%/product/stockout/history/search/1?page_count=…</code></td><td>ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。</td></tr><tr><td>一覧の商品名リンク</td><td><code>GET /%eccube_admin_route%/product/product/{id}/class/{classId}/edit</code>（別タブ）</td><td>規格編集画面へ遷移する。</td></tr><tr><td>一覧の受注番号リンク</td><td>受注編集画面（別タブ）</td><td>受注編集画面へ遷移する。</td></tr></tbody></table></div>
+<p>検索フォームの送信先は常にページ番号1の検索ルートである。ページ送り・表示件数変更は検索ルートへの GET である。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>上部に検索フォーム。日付（開始・終了）の入力のみを置く。下部に件数見出しと一覧表、ページネーション。</td></tr><tr><td>JS 挙動</td><td>日付入力に日時ピッカー（<code>YYYY-MM-DD</code>）を適用する。select2 と並び順表示用スクリプトを読み込む。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通の検索ボックスと結果テーブルのスタイル。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能ではモーダル・トーストを表示しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="欠品履歴一覧を開く-初期表示">欠品履歴一覧を開く（初期表示）</h3>
+<ol><li>利用者が欠品履歴一覧を開く。</li><li>検索条件・ページ番号・表示件数のセッションを消去する。</li><li>検索フォームを空で初期化し、一覧は空で画面を表示する。</li></ol>
+<h3 id="検索する・ページ送りする">検索する・ページ送りする</h3>
+<ol><li>「検索する」または件数変更・ページ送りで検索ルートへ届く。</li><li>リクエストの並び順が想定外（ASC・DESC 以外）のときは並び順エラーを表示して初期表示へ戻す。</li><li>表示件数はリクエスト値がページマスタに存在すればセッションへ保存し、無ければセッションまたは既定件数を使う。</li><li>検索条件はフォーム値、無ければセッション値を復元して用いる。</li><li>欠品履歴の検索用クエリと件数を組み立て、ページネーションで一覧を作る。</li><li>検索条件・ページ番号・表示件数・ソート条件をセッションへ保存する。</li><li>一覧を画面へ渡して表示する。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>一覧の件数</td><td>欠品履歴に検索条件を適用した件数。共通処理が件数取得経路で数える。</td></tr><tr><td>一覧の対象</td><td>欠品履歴を、規格・規格拡張・商品・言語・状態・操作者・受注補助へ結合して並べる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>日付帯（開始）</td><td>開始が指定されたとき、登録日がその日時以降を対象とする。</td></tr><tr><td>日付帯（終了）</td><td>終了が指定されたとき、終了日を含めるため終了日の翌日0時未満を対象とする。</td></tr><tr><td>状態表示</td><td>規格拡張のメモがあればメモを、無ければ状態名を状態列に表示する。</td></tr><tr><td>本機能の計算</td><td>欠品履歴の集計・再計算は行わない。表示は履歴に記録済みの値をそのまま用いる。</td></tr></tbody></table></div>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>日付（開始）</td><td>任意</td><td><code>yyyy-MM-dd</code> の単一行日時</td><td>空</td><td>欠品履歴の登録日下限。フォームキー <code>date_from</code>。検索条件セッション <code>admin.stockout_history.search</code> に保持。</td></tr><tr><td>日付（終了）</td><td>任意</td><td><code>yyyy-MM-dd</code> の単一行日時</td><td>空</td><td>登録日上限。終了日を含める（翌日0時未満）。フォームキー <code>date_to</code>。</td></tr></tbody></table></div>
+<p>検索フォームはなりすまし対策トークンの検証を無効化している（履歴検索の照会用フォームとして設定）。CSRF 検証無効は照会フォームの設定であり、更新は行わない。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>初回表示（検索前）</td><td>セッションを消去し、一覧を空で表示する。</td></tr><tr><td>日付未指定で検索</td><td>日付帯の絞り込みを付けず、検索条件に一致する欠品履歴を表示する。</td></tr><tr><td>並び順が想定外の値</td><td>並び順エラーを表示し初期表示へ戻す。</td></tr><tr><td>検索結果0件</td><td>「検索条件に該当するデータがありませんでした。」を表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示時点</td><td>一覧は表示時点で欠品履歴テーブルを読んだ結果である。表示後の更新は自動反映しない。</td></tr><tr><td>履歴と現在値</td><td>欠品履歴は欠品発生時点の記録であり、商品の現在在庫・受注の現在状態との一致は保証しない。</td></tr><tr><td>リンク先との整合</td><td>規格編集・受注編集のリンク先で値が変わっても、一覧は再読込まで履歴時点の表示を保つ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能では外部 HTTP API の呼び出しやバッチ実行を扱わない。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>検索フォーム（日付帯）、ページ番号、表示件数、セッションの検索状態。</td></tr><tr><td>成功時出力</td><td>HTML。欠品履歴一覧、件数とページネーション。</td></tr><tr><td>失敗時出力</td><td>並び順エラー時はエラー表示で初期表示へ戻す。0件時は該当データなしの見出し。</td></tr><tr><td>副作用</td><td>検索条件セッション・ページ番号・表示件数・ソート条件の保存。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>当機能の一覧が参照する列を示す。テーブル名・列名は ec-cube-enterprise を正とし、現行（pf-eccube3）と異なる場合は移行先名を主として現行名を括弧で添える。型の細部はスキーマを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_stockout_history</td><td>id（現行 stockout_history_id）, stockout, order_id, product_class_id, base_info_id, member_id, create_date</td><td>欠品履歴の表示・絞り込み。</td></tr><tr><td>dtb_product_class</td><td>product_code（現行 code）</td><td>規格コード（商品コード列）。</td></tr><tr><td>dtb_product</td><td>name, id</td><td>商品名表示・規格編集リンク。</td></tr><tr><td>dtb_product_sub_class（現行のみ。ec-cube-enterprise 実装で要確認）</td><td>memo</td><td>状態列のメモ。移行先に商品サブ規格テーブルが見当たらない。</td></tr><tr><td>mtb_card_condition</td><td>code</td><td>状態列の表示。</td></tr><tr><td>mtb_language</td><td>name_jp</td><td>言語列。</td></tr><tr><td>dtb_member</td><td>name</td><td>登録者列。</td></tr><tr><td>（受注補助）</td><td>order_number</td><td>受注番号列・受注編集リンク。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>欠品履歴テーブル（現行 dtb_stockout_history。移行先の名称は ec-cube-enterprise 実装で要確認）</td><td>検索条件に合致する欠品履歴を抽出し、一覧表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>日付（開始・終了）</td><td>単一行日時。空可。</td></tr><tr><td>並び順</td><td>ASC・DESC（大文字小文字）以外はエラーとし初期表示へ戻す。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>欠品履歴一覧</th></tr></thead><tbody><tr><td>管理画面にログインし当該ルートへ到達できる運用者</td><td>利用できる。細かいロール単位の可否は管理画面のセキュリティ設定と権限マスタの実装を正とする。</td></tr><tr><td>未ログインまたは拒否された主体</td><td>管理画面共通の挙動により利用できない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>欠品履歴一覧を開く</td><td>同一画面（検索前の初期表示）。</td></tr><tr><td>検索する</td><td>同一画面（一覧を表示）。</td></tr><tr><td>ページネーション</td><td>同一画面の別ページ。</td></tr><tr><td>表示件数変更</td><td>同一画面（保存件数で再分割）。</td></tr><tr><td>商品名リンク</td><td>規格編集画面（別タブ）。</td></tr><tr><td>受注番号リンク</td><td>受注編集画面（別タブ）。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>ページ送り・件数変更</td><td>検索条件・ページ番号・表示件数・ソートをセッション <code>admin.stockout_history.…</code> に保持</td><td>同一条件・指定ページで一覧を再表示する。</td></tr><tr><td>初期表示で開く</td><td>検索条件セッションを消去</td><td>一覧を空で表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>並び順が不正</td><td>並び順エラーを表示し初期表示へ戻す。</td></tr><tr><td>検索クエリが組み立てられない</td><td>共通処理が404相当で中断する。</td></tr><tr><td>検索結果0件</td><td>該当データなしの見出しを表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<h3 id="常時表示-正常・静的">常時表示（正常・静的）</h3>
+<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>条件</th></tr></thead><tbody><tr><td>件数見出し</td><td>検索結果 N 件 が該当しました</td><td>件数が1件以上のとき。</td></tr><tr><td>0件見出し</td><td>検索条件に該当するデータがありませんでした。</td><td>件数が0件のとき。</td></tr></tbody></table></div>
+<h3 id="エラー・警告-インライン">エラー・警告（インライン）</h3>
+<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>（並び順エラー文言）</td><td>並び順が不正なとき</td><td>画面上部</td><td>設定キー <code>admin.error.sort</code>。文言はロケール定義を正とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>一覧表示</td><td>本機能は照会のみで業務監査ログを追加しない。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>検索条件</td><td>キー <code>admin.stockout_history.search</code>。検索時に保存、ページ送り・件数変更で読む。</td></tr><tr><td>ページ番号</td><td>キー <code>admin.stockout_history.search.page_no</code>。</td></tr><tr><td>表示件数</td><td>キー <code>admin.stockout_history.search.page_count</code>。</td></tr><tr><td>ソート・並び順</td><td>キー <code>admin.stockout_history.sort</code>、<code>admin.stockout_history.order</code>。</td></tr><tr><td>初期表示時</td><td>検索条件・ページ番号・表示件数を消去する。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>照会フォームが本来保持しない値（パスワード等）は保存しない。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>一覧表示は読み取り主体であり、本機能単体では楽観ロックや明示トランザクション境界を持たない。</p>
+<hr>
+<h2 id="調査補助-ソース位置の索引">調査補助（ソース位置の索引）</h2>
+<p>grep 用のパスのみ示す。ふるまいの正は実装本文とする。</p>
+<ul><li><code>app/Plugin/HareruyaEc/Controller/Admin/Product/StockoutHistoryController.php</code>（ルート <code>admin_product_stockout_history</code> / <code>admin_product_stockout_history_search</code>。<code>sessionKey</code> = <code>stockout_history</code>）</li><li><code>app/Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php</code></li><li><code>app/Plugin/HareruyaEc/Form/Type/Admin/Product/StockoutHistoryType.php</code>（フォーム名 <code>admin_product_stockout_history</code>）</li><li><code>app/Plugin/HareruyaEc/Repository/DtbStockoutHistoryRepository.php</code>（<code>getQueryBuilderBySearchData</code>）</li><li><code>app/Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig</code></li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

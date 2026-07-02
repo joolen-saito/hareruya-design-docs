@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-22（在庫移動・振替CSV登録） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#TODO-未確定項目">TODO（未確定項目）</a>
+<a class="lv2" href="#1-在庫移動・振替CSV登録">1. 在庫移動・振替CSV登録</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#入出力仕様">入出力仕様</a>
+<a class="lv3" href="#開始条件-終了条件">開始条件、終了条件</a>
+<a class="lv3" href="#判定条件">判定条件</a>
+<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
+<a class="lv3" href="#ビジネスロジック">ビジネスロジック</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#例外処理">例外処理</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#Excel設計書からの抽出">Excel設計書からの抽出</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/admin_stock_move_transfer_csv_import.md</p>
+        <h1>M04-22（在庫移動・振替CSV登録）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫移動・振替CSV登録</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr></tbody></table></div>
+<h2 id="TODO-未確定項目">TODO（未確定項目）</h2>
+<ul><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。</li><li>Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。</li></ul>
+<h2 id="1-在庫移動・振替CSV登録">1. 在庫移動・振替CSV登録</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>CSVで在庫移動・振替情報を一括登録する。</p>
+<h3 id="入出力仕様">入出力仕様</h3>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>管理画面の検索条件、フォーム入力、CSVアップロード、または画面操作。</td></tr><tr><td>出力</td><td>画面表示、CSV/PDFダウンロード、登録完了/エラー表示。</td></tr><tr><td>副作用</td><td>対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録。</td></tr></tbody></table></div>
+<h3 id="開始条件-終了条件">開始条件、終了条件</h3>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>開始条件</td><td>管理画面にログイン済みの利用者が対象メニューまたは操作を実行する。</td></tr><tr><td>終了条件</td><td>画面表示、ファイル出力、登録完了、またはエラー表示が完了する。</td></tr></tbody></table></div>
+<h3 id="判定条件">判定条件</h3>
+<ul><li>Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。</li><li>Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。</li></ul>
+<h3 id="プロセスフロー">プロセスフロー</h3>
+<ol><li>利用者または外部システムが対象機能を開始する。</li><li>入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。</li><li>Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。</li><li>登録・更新・出力・連携のいずれかの主処理を実行する。</li><li>成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。</li></ol>
+<h3 id="ビジネスロジック">ビジネスロジック</h3>
+<ul><li>**Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は <code>excel_to_html/output</code> の設計書を正とする。</li><li>**実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>**対象機能の要点**: 店舗間における在庫移動をCSVにて一括で行えます。</li><li>**実装確認値**: StockMoveCsvImportHandler / StockTransferCsvImportHandler を実装確認値とする。</li></ul>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>管理画面の対象業務データを参照し、登録系では対象データと履歴を更新する。</td></tr><tr><td>履歴・ログ</td><td>必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。</td></tr><tr><td>DB関連実装確認値</td><td>対象テーブル: dtb_stock_move_transfer, dtb_stock_move_transfer_detail 明示列: dtb_csv_import_history.member_id 列詳細は `../ec-cube-enterprise` の Entity / Repository / Migration を正とする。</td></tr></tbody></table></div>
+<h3 id="例外処理">例外処理</h3>
+<ul><li>**入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。</li><li>**対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。</li><li>**状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。</li><li>**外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。</li></ul>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。</li><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の Controller Route、Entity、Repository、Migration、Service 実装を正とする。</li></ul>
+<h2 id="Excel設計書からの抽出">Excel設計書からの抽出</h2>
+<pre><code class="language-text">在庫移動CSV登録
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+堀部
+作成日
+2025-08-25
+更新者
+本田
+更新日
+2025-12-23
+機能No
+M04-22
+機能名
+在庫移動CSV登録
+概要
+—
+処理概要 在庫移動CSV登録モーダル
+図形・テキストボックス内テキスト（9件）
+レイアウト図 在庫移動CSVモーダル
+1-1
+1-2
+1-4
+1-3
+1-5
+1-6
+2-1
+2-2
+2-3
+在庫移動CSV登録 / C8 / image 1
+機能仕様処理概要 在庫移動CSV登録モーダル
+在庫移動CSV登録画面概要
+・在庫移動振替一覧画面から在庫移動CSV出力ボタンを押下し、このモーダル（在庫移動CSV登録モーダル）を表示する
+・選択した条件に対して、CSVの商品コードと移動点数をもとに在庫移動の登録を行う
+・登録処理完了後、ステータスは新規作成となり、移動対象の店舗の対象の商品の在庫が移動点数分減る
+権限制御
+・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
+登録処理実行時のエラー
+・アップロードされたファイルがcsv以外のファイルの場合
+・CSVファイルが下記のカラム以外の場合（フォーマット不一致エラー）
+・商品コード、移動点数
+・１ファイルあたりに登録できる商品点数の上限を10,000件に設定 上限数について確認する必要がある
+エラー発生時の挙動
+・モーダルを表示する元画面でエラーを扱う
+・本モーダルの選択内容はリセットされる
+在庫移動登録
+・機能ID: M04-09の「処理概要 初期登録画面」に応じた在庫移動登録処理が行われる
+識別IDラベル書式・制限必須最大値初期値画面部品の説明
+1-1出庫元店舗単一選択(セレクトボックス)○--在庫移動・振替登録 編集（移動）の "識別ID2-2" と同様に
+「出庫元店舗」を選択
+1-2出庫元在庫区分単一選択(ラジオボタン)○--在庫移動・振替登録 編集（移動）の "識別ID2-4" と同様に
+「出庫元在庫区分」を選択
+1-3入庫先店舗単一選択(セレクトボックス)○--在庫移動・振替登録 編集（移動）の "識別ID2-2" と同様に
+「入庫先店舗」を選択
+1-4入庫先在庫区分単一選択(ラジオボタン)○--在庫移動・振替登録 編集（移動）の "識別ID2-4" と同様に
+「入庫先在庫区分」を選択
+1-5ファイルを選択ボタン○--ボタンを押下すると、アップロードするためのディレクトリフォームが開き、
+csvファイルをアップロードすることが出来る
+1-6登録ボタン---在庫移動CSV登録処理を実行
+2-1雛形をダウンロードボタン---ボタン押下時に下記のカラムが記入されているCSVファイルを出力する
+CSVのカラムは下記の通り
+商品コード、移動点数
+登録CSV
+識別ID項目名主キー書式・制限必須最大文字数入力例説明
+2-2商品コード○文字列○255ABCD1234在庫移動対象の商品コードを記入
+2-3移動点数○数値○0~999999999100在庫移動対象の商品の移動点数を記入
+図形・テキストボックス内テキスト（9件）
+画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
+位置テキスト
+C11(1-1)
+R11(1-2)
+C15(1-3)
+R15(1-4)
+C18(1-5)
+C21(1-6)
+Y23(2-1)
+C26(2-2)
+C28(2-3)
+在庫振替CSV登録
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+堀部
+作成日
+2025-08-25
+更新者
+本田
+更新日
+2025-12-23
+機能No
+M04-22
+機能名
+在庫振替CSV登録
+概要
+—
+処理概要 在庫振替CSV登録モーダル
+図形・テキストボックス内テキスト（10件）
+レイアウト図 在庫振替CSVモーダル
+1-1
+2-1
+1-3
+1-2
+1-5
+1-6
+2-2
+1-4
+2-3
+2-4
+在庫振替CSV登録 / D8 / image 1
+機能仕様処理概要 在庫振替CSV登録モーダル
+在庫振替CSV登録画面概要
+・在庫移動振替一覧画面から在庫振替CSV出力ボタンを押下し、このモーダル（在庫振替CSV登録モーダル）を表示する
+・選択した条件に対して、CSVの振替元商品コードと振替先商品コード、振替点数をもとに在庫振替の登録を行う
+・登録処理完了後、ステータスは振替承認待ちとなり、振替対象の商品の在庫が振替点数分減る
+権限制御
+・0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる
+登録処理実行時のエラー
+・アップロードされたファイルがcsv以外のファイルの場合
+・CSVファイルが下記のカラム以外の場合（フォーマット不一致エラー）
+・振替元商品コード、振替先商品コード、移動点数
+・１ファイルあたりに登録できる商品点数の上限を2,000件に設定
+エラー発生時の挙動
+・モーダルを表示する元画面でエラーを扱う
+・本モーダルの選択内容はリセットされる
+在庫移動登録
+・機能ID: M04-09の「処理概要 初期登録画面」に応じた在庫振替登録処理が行われる
+・画面での登録とはことなり、振替元商品コードは同じ商品が複数行あっても許容する（NMの商品をSPとMPにそれぞれ振替するパターンも考えられるため）
+・上記に関連し、振替元商品と振替先商品がまったく同一の行が複数あった場合はエラーとする
+識別IDラベル書式・制限必須最大値初期値画面部品の説明
+1-1店舗単一選択(セレクトボックス)○--在庫移動・振替登録 編集（振替）の "識別ID2-1" と同様に
+「店舗」を選択
+1-2在庫区分単一選択(ラジオボタン)○--在庫移動・振替登録 編集（振替）の "識別ID2-2" と同様に
+「在庫区分」を選択
+1-3承認通知先（所属選択）単一選択(セレクトボックス)---共通処理識別ID1-1参照
+表示内容については下記条件を追加とする
+編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする
+1-4承認通知先（メンバー選択）複数選択(セレクトボックス)○--承認を行う担当者にメール通知を送るために、対象メンバーを選択するためのフォーム
+共通処理識別ID1-2参照
+1-5ファイルを選択ボタン○--ボタンを押下すると、アップロードするためのディレクトリフォームが開き、
+csvファイルをアップロードすることが出来る
+1-6登録ボタン---在庫振替CSV登録処理を実行
+2-1雛形をダウンロードボタン---ボタン押下時に下記のカラムが記入されているCSVファイルを出力する
+CSVのカラムは下記の通り
+商品コード、移動点数
+登録CSV
+識別ID項目名主キー書式・制限必須最大文字数入力例説明
+2-2振替元商品コード○文字列○255ABCD1234在庫振替元の商品コードを記入
+2-3振替先商品コード○文字列○255ABCD1234在庫振替先の商品コードを記入
+2-4振替点数○数値○0~999999999100在庫振替対象の商品の振替点数を記入
+図形・テキストボックス内テキスト（10件）
+画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
+位置テキスト
+D11(1-1)
+D14(1-2)
+D18(1-3)
+P18(1-4)
+D21(1-5)
+D24(1-6)
+V26(2-1)
+D28(2-2)
+D30(2-3)
+D32(2-4)</code></pre>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

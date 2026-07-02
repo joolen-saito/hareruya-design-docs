@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>デッキ管理 — デッキ CSV 出力 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#標準レイアウト-CSV-をダウンロードする-POST-m15-02-admin-deck-deck-csv-export">標準レイアウト CSV をダウンロードする（POST `m15-02_admin_deck_deck_csv_export`）</a>
+<a class="lv3" href="#ランタイム例外が送出されたとき-標準・旧サイト共通">ランタイム例外が送出されたとき（標準・旧サイト共通）</a>
+<a class="lv3" href="#旧サイト向けレイアウト-CSV-をダウンロードする-POST-m15-02-admin-deck-deck-csv-export-old">旧サイト向けレイアウト CSV をダウンロードする（POST `m15-02_admin_deck_deck_csv_export_old`）</a>
+<a class="lv3" href="#POST-の-ID-と-DB-の整合">POST の ID と DB の整合</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-grep向け">調査補助（grep向け）</a>
+<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md</p>
+        <h1>デッキ管理 — デッキ CSV 出力</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>HareruyaEc プラグインが管理画面のデッキ検索一覧から、一覧のチェックボックスで選択したデッキ ID に対応するデータを CSV ファイルとしてダウンロード応答で返す機能である。運用フォーマット用の標準出力と、旧サイト連携向けにカード明細まで行単位で展開する別形式の 2 系統がある。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 配下の HareruyaEc プラグインのソースを確認値とする。</p>
+<p>本機能のカスタマイズ区分は現行踏襲である。挙動は現行リポ（pf-eccube3 の HareruyaEc プラグイン）を参照し、DB関連は ec-cube-enterprise を正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。</p>
+<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<ul><li>ec-cube-enterprise にデッキ関連テーブル一式が実装されており、本機能の出力対象は移行先に存在する。</li><li>デッキ（<code>dtb_deck</code>）の主キー列名が異なる。移行先 ec-cube-enterprise では <code>id</code>、現行 pf-eccube3 では <code>deck_id</code> である。本書が <code>dtb_deck.deck_id</code> と記す主キー参照は、移行先では <code>dtb_deck.id</code> に対応する。デッキ内カード（<code>dtb_deck_card</code>）側の外部キー列は現行・移行先とも <code>deck_id</code> のままである。</li><li>デッキの出力対象列（<code>disp_id</code>、<code>private_flg</code>、<code>text_main</code>、<code>text_side</code>、<code>old_deck_id</code>、<code>event_detail_id</code> ほか）は現行と同一スキーマである。</li><li>旧サイトレイアウトで繰り返し行のソースとするデッキ内カード（<code>dtb_deck_card</code>、列 <code>deck_id</code>、<code>board_id</code>、<code>card_id</code>、<code>count</code>）、および表示フラグ変換で参照する表示マスタ（<code>mtb_disp</code>）は移行先に存在し同一スキーマである。</li></ul>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>検索結果が 1 件以上あり、デッキにチェックを付けて「CSV出力」（標準）を押す</td><td><code>POST /{admin_route}/deck/csvexport</code></td><td><code>deckId[]</code> が送信され、選択デッキ分の標準レイアウト CSV がダウンロードされる。</td></tr><tr><td>同一覧で「CSV出力（旧サイト）」相当のボタンを押す（翻訳キーは <code>admin.btn.csvexport_old</code>）</td><td><code>POST /{admin_route}/deck/csvexport_old</code></td><td>同上で旧サイトレイアウトの CSV が返る。</td></tr><tr><td>一覧はあるがチェックなしでいずれかの CSV ボタンを押す</td><td>（同一 POST 先への送信は送信前のアラートで止まる）</td><td>画面上はクライアントのアラートで中断する。送信をねじ曲げて空送信したときのサーバ挙動は「処理フロー」を参照。</td></tr><tr><td>検索結果ボックス自体が無い（件数未定義）</td><td>（ボタン描画領域に到達しない）</td><td>CSV 出力ボタンは検索結果一覧が存在するときのみ表示される。</td></tr></tbody></table></div>
+<p>送信元の HTML は一括編集用フォームであり、標準のアクションは一括編集とは別ルートであるが、両 CSV ボタンは属性 <code>formaction</code> でそれぞれ <code>m15-02_admin_deck_deck_csv_export</code> / <code>m15-02_admin_deck_deck_csv_export_old</code> にのみ差し替えて送信する。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>「CSV出力」「旧サイト出力」ボタンは検索結果サマリーで件数が正のときに描画される。各行に <code>name="deckId[]"</code> のチェックボックスがある。ヘッダの <code>#allCheck</code> で <code>deckId</code> 属性を持つ行チェックボックスを一括オン／オフする。</td></tr><tr><td>JS 挙動</td><td><code>#csvexport</code> と <code>#csvexport_old</code> のクリックで、チェック済み件数が 0 ならブラウザ <code>alert("CSV出力するデッキをひとつ以上選択してください。")</code> を出して <code>false</code> を返し、送信しない。チェックがある場合のみ、約 500ms 後に <code>type=submit</code> 全要素へ <code>pointer-events</code> を空文字で戻す <code>setTimeout</code> が走る（直前への無効化は同一ブロックには無い）。</td></tr><tr><td>CSS・レイアウト</td><td>本機能だけの固有スタイルは無く、共通の一覧・ボタンスタイルに従う。</td></tr><tr><td>モーダル・ポップアップ</td><td>CSV 送信前の確認ダイアログは無い（一括編集とは別処理）。</td></tr></tbody></table></div>
+<p>一括編集フォーム経由であるため、<code>bulk_update</code> フォーム種別について EC-CUBE／Symfony が既定で付ける CSRF 用の隠しフィールドがリクエストに含まれる。CSV 送信時にも同じフォームが送られるため、当該保護がある場合はトークン付きとなる（フォーム種別のソース上の構成を確認値とする）。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="標準レイアウト-CSV-をダウンロードする-POST-m15-02-admin-deck-deck-csv-export">標準レイアウト CSV をダウンロードする（POST <code>m15-02_admin_deck_deck_csv_export</code>）</h3>
+<ol><li>管理画面の認証および共通 middleware を通過する。</li><li>PHP の実行時間制限を無効にする（<code>set_time_limit(0)</code>）。</li><li>ORM の SQL ロガーを無効にする。</li><li>リクエストボディから <code>deckId</code> を取得する。HTML では <code>deckId[]</code> だが、<code>Request::request-&gt;get('deckId')</code> で取得する実装であり、チェックされていれば配列として届く。</li><li><code>deckId</code> が <code>empty()</code> に該当する場合、<code>admin.csv.error.export.require</code> をフラッシュして <code>Referer</code> ヘッダの URL へ HTTP リダイレクトする。</li><li>サービス側で標準レイアウト用ヘッダ定義つきでエクスポート処理を実行する。</li><li>リポジトリで <code>dtb_deck.deck_id IN (...)</code> に該当するデッキを取得する。JOIN で代表カード画像からカード名（英）を読むための関連が張られる。結果が PHP の論理値で偽となる空配列ならランタイム例外としメッセージキーは <code>admin.csv.error.export.not_registered</code>。</li><li>各デッキについて 1 CSV データ行へ変換する。統率者名は統率者ボード（ボード種別値 3）に紐づくカードあれば英語名を、無ければ空文字とする。</li><li>ストリーミング応答を組み立てる。標準レイアウトでは組み込みの CSV エクスポート用サービス経由で、開く、UTF-8 の BOM を書く、論理キー行（連想配列のキーを <code>array_keys</code> で得た並び）、データ行の順に出力し、閉じる。</li><li>応答ヘッダの <code>Content-Type</code> は設定 <code>csv_export_encoding</code> に基づき <code>text/csv;charset=…</code> とする（値が SJIS-win 系なら Charset 文字列だけ <code>windows-31j</code> に読み替える）。<code>Content-Disposition</code> は <code>attachment</code> とファイル名を付ける。</li><li>ファイル名は接頭辞 <code>deck_</code>、<code>YmdHis</code>、拡張子 <code>.csv</code>。情報ログへファイル名メッセージキーごと出力する応答オブジェクトが返る。実装ではコールバック内で送信も試みられる。</li></ol>
+<h3 id="ランタイム例外が送出されたとき-標準・旧サイト共通">ランタイム例外が送出されたとき（標準・旧サイト共通）</h3>
+<ol><li>サーバ側の catch でメッセージ文字列をフラッシュエラーへ積み、<code>Referer</code> へ HTTP 302 などで返す。</li><li>ダウンロードは開始されない。</li></ol>
+<h3 id="旧サイト向けレイアウト-CSV-をダウンロードする-POST-m15-02-admin-deck-deck-csv-export-old">旧サイト向けレイアウト CSV をダウンロードする（POST <code>m15-02_admin_deck_deck_csv_export_old</code>）</h3>
+<p>手順は標準出力とほぼ同じだが、次が異なる。</p>
+<ul><li>ヘッダ定義および行変換は旧サイト仕様に切り替える。</li><li>データ行生成時、各デッキについて <code>dtb_deck_card</code> をカードと結び付けて列挙し、カードごとに 1 データ行出力する。その際アーキタイプの「旧システム用 ID」を読み取り、空ならランタイム例外で翻訳キー <code>admin.csv.error.data.old_archetype</code> のメッセージを構成する。</li><li><code>format_by_age</code> 列には、紐付くフォーマットの主キーが標準（ソース上 <code>mtb_format</code> の標準規制 ID 整数 1）に等しい場合はリテラル <code>KLD_M19</code> を、それ以外は <code>Archive</code> を連結用文字列へ使う規則で埋める実装となる。</li><li>ストリーム書き込みはコア CSV サービスではなく標準関数で <code>php://output</code> に直接書き込み、<code>Content-Type</code> やファイル名ヘッダ付与は共通ヘルパに委ねる。</li></ul>
+<h3 id="POST-の-ID-と-DB-の整合">POST の ID と DB の整合</h3>
+<ul><li>クエリ結果が空だけがエラー条件である。部分的に存在しない ID が混じっていも、ほかが 1 件以上ヒットしていれば処理は進み、ヒットしない ID は出力に現れない。</li></ul>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<p>本機能では販売金額のような業務集計は行わない。出力される行は、標準レイアウトでは取得できたデッキの件数分、旧サイトレイアウトでは該当デッキに紐づくデッキカード行の合計分である。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<p>本機能に店舗設定のような自由入力項目表は無いため <code>### 入力項目</code> は置かない。入力は一覧チェック結果とそれに伴うフォーム隠しフィールドのみであり、送信仕様は「入出力」に集約する。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>送信デッキ ID</td><td>POST <code>deckId</code>（配列）。未選択送信時サーバ側はフラッシュ後 <code>Referer</code> へリダイレクトする。クライアントは未選択送信を既定では止める。</td></tr><tr><td>標準・旧共通のヒット可否</td><td>IN リストにヒットした行が集合として空である場合のみ「未登録」系メッセージで失敗させる。</td></tr><tr><td>並び順</td><td>リポジトリのクエリ結果の順序規則は利用者がチェックした表示順と一致するとは限らない。</td></tr><tr><td><code>event_date</code> 列の整形</td><td>DateTime が無ければ空文字。あれば書式は <code>Y-m-d H:i:s</code>。</td></tr><tr><td>表示フラグ列（標準レイアウト）</td><td>マスタ <code>disp_id</code> を取込妥当値（0 と 1）へ写像する変換表による。写像に無い値のときのセル値はソース上の未定義インデックス挙動に依存するため、運用データが表示／非表示のいずれかであることを前提としたい場合はコードとデータ両面で確認すること。</td></tr></tbody></table></div>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>旧サイト形式で、アーキタイプに旧 ID が載っていない</td><td>処理は例外で中止しフラッシュ経由で戻す。</td></tr><tr><td>旧サイト形式で、あるデッキに <code>dtb_deck_card</code> が 1 件も無い</td><td>そのデッキからはデータ行が増えず、結果 CSV に当該デッキの行が出ないことがある（実装どおり単調に列挙するのみ）。</td></tr><tr><td>旧サイト形式で、フォーマットが未設定であるデッキ</td><td>ソース上、年代別フォーマット列構築でフォーマット参照を行っており、この状態は実行時致命エラーに至りうる。データ前提で回避するか、コード修正が別途必要であることを確認値とする。</td></tr><tr><td>標準形式で統率カード複数があるデータ</td><td>「最初の統率ボード検索」を想定していないクエリであり、名前は 1 件分に相当する結果に依存する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との対応</td><td>出力対象はチェック済みデッキ ID のみであり、一覧の検索結果全件自動出力ではない。</td></tr><tr><td>リストのソース</td><td>メイン／サイド列は画面上の一覧サマリーではなく、永続化されたテキスト列をそのまま返す（正規化テーブル側と逐語一致しないこともありうる）。</td></tr><tr><td>標準レイアウトと旧サイトレイアウトの行数対応</td><td>標準では概ねデッキ 1 行。旧サイトではカード行数だけ増える。同一デッキの情報はカードごとに列で繰り返す形になる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能では外部 HTTP API の呼び出しやサーバ側バッチの実行結果画面は扱わない。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>POST。チェック済み一覧から送られる <code>deckId[]</code>。一括編集フォームのその他項目は送信されるが、このルート側で読んで業務処理に使われない実装になっている（確認値としてボディサイズ増に留意）。</td></tr><tr><td>成功時出力（標準）</td><td><code>deck_XXXXXXXX.csv</code>。先頭 BOM はコア側の UTF-8 BOM 処理に従う。フィールド出力は設定 <code>csv_export_separator</code> と <code>csv_export_encoding</code> に従いコアサービス経由で行う。</td></tr><tr><td>成功時出力（旧サイト）</td><td>ファイル名規則は同じ接頭辞＋タイムスタンプ。BOM は UTF-8 のバイト連列を明示的に先頭出力する。RFC4180 に近い区切り文字で <code>fputcsv</code> する構成とし、 Charset ヘッダは標準側と共通ヘルパの同一論理となる。</td></tr><tr><td>失敗時出力</td><td><code>admin.csv.error.export.require</code> を含むフラッシュおよび <code>Referer</code> ヘッダのリダイレクト、またはランタイム例外メッセージのフラッシュと同様のリダイレクト。</td></tr><tr><td>副作用</td><td>読取りのみ。ログにファイル名相当の情報を残す経路がある。データ更新はしない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能は ORM とリポジトリ経由で参照する为主な列のみ示す。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_deck</code></td><td>主キー <code>id</code>（現行 pf-eccube3 は <code>deck_id</code>）ほか一覧で表示していた属性に相当する多数の列</td><td>出力の主体。</td></tr><tr><td><code>dtb_deck</code></td><td><code>disp_id</code>、<code>private_flg</code>、<code>text_main</code>、<code>text_side</code>、<code>old_deck_id</code>、<code>event_detail_id</code> ほかイベント・成績系</td><td>CSV 標準レイアウトへ直接転写または軽変換。</td></tr><tr><td><code>dtb_deck_card</code></td><td><code>deck_id</code>、<code>board_id</code>、<code>card_id</code>、<code>count</code></td><td>旧サイトレイアウトの繰り返し行ソース。標準レイアウトでは一覧生成に使わない。</td></tr><tr><td>マスタ <code>mtb_disp</code> とエンティティ上の関連</td><td><code>id</code> と表示・非表示定数との対応</td><td>表示フラグ列の標準レイアウト変換で利用。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_deck / dtb_deck_card / mtb_disp</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>チェックされていない状態でサーバに届いた POST</td><td><code>empty(deckId)</code> で検知してメッセージキー経由で止める（クライアント側とは独立して存在するチェック経路でもある）。</td></tr><tr><td>クエリ結果</td><td>結果が無いときは明示的例外。それ以外は行変換のみ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>CSV 標準出力ルート <code>POST /{admin_route}/deck/csvexport</code></th><th>CSV 旧サイト出力ルート <code>POST /{admin_route}/deck/csvexport_old</code></th></tr></thead><tbody><tr><td>管理画面共通ルートで認証済みで、当メニューを開ける運用権限がある管理者</td><td>操作でき、一覧と同種のデータ読取りのみを伴う応答となる。</td><td>同上。</td></tr></tbody></table></div>
+<p>ファイヤウォールでのロール粒度はプラグイン外の共通設定側の確認値とし、本文では名称を増やして断定しない。</p>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>正常に CSV が組み立てられた</td><td>CSV 応答のみ。ブラウザはダウンロード状態となり一覧 HTML の再マウントは通常行わない。</td></tr><tr><td>ID 未取得や例外</td><td>HTTP フラッシュ後、<code>Referer</code> で示される前画面へ戻り、一覧を再読込するような通常の管理方式に従う。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>選択デッキ ID が空</td><td><code>admin.csv.error.export.require</code> を表示用メッセージとして積み、<code>Referer</code> へ HTTP リダイレクト。</td></tr><tr><td>DB にヒットしない</td><td>メッセージキー <code>admin.csv.error.export.not_registered</code> を例外経由で積む。</td></tr><tr><td>旧サイトレイアウトにおける旧アーキタイプ ID 未取得</td><td>メッセージキー <code>admin.csv.error.data.old_archetype</code> で実体化される本文を積む。</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>本機能ではレートリミットやロックアウトの専用ロジックを持たない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>ダウンロード応答構築完了時</td><td>メッセージ種別ごと出力する情報ログがあり、出力ファイル名を配列データとして載せる。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<p>デッキ CSV 出力のコントローラは、チェック状態をセッションに保存する処理を持たない。検索条件の維持などは一覧側機能の話である。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>本機能のみを切り出したとき固有の読み書きは無い。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>読取りのみの経路であり、開始・コミットの業務トランザクションや楽観／悲観ロックの対象外である。</p>
+<hr>
+<h2 id="調査補助-grep向け">調査補助（grep向け）</h2>
+<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
+<ul><li><code>m15-02_admin_deck_deck_csv_export</code> … <code>POST</code> … <code>/{admin_route}/deck/csvexport</code>（選択デッキに相当する現在フォーマットの CSV をストリーミングで返す。）</li><li><code>m15-02_admin_deck_deck_csv_export_old</code> … <code>POST</code> … <code>/{admin_route}/deck/csvexport_old</code>（旧サイト向けレイアウトの CSV をストリーミングで返す。）</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

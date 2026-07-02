@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>admin_login（管理画面_認証機能） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#ログイン画面表示">ログイン画面表示</a>
+<a class="lv3" href="#ログイン送信">ログイン送信</a>
+<a class="lv3" href="#ログイン後">ログイン後</a>
+<a class="lv2" href="#ログイン送信時の判定順序">ログイン送信時の判定順序</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
+<a class="lv3" href="#フロント表示文言一覧">フロント表示文言一覧</a>
+<a class="lv3" href="#本機能が表示しないメッセージ">本機能が表示しないメッセージ</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#現行実装のセッションキー">現行実装のセッションキー</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv3" href="#セッション用-Cookie">セッション用 Cookie</a>
+<a class="lv3" href="#管理者-Remember-Me">管理者 Remember Me</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/admin_login.md</p>
+        <h1>admin_login（管理画面_認証機能）</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>管理画面ログインは、登録済みの管理者を本人確認し、管理画面を利用できる状態にする機能。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。 既存実装のふるまい、状態、参照するデータ、判定境界、永続化、副作用を確認し、仕様の確からしさを把握することを目的とする。</p>
+<p>対象はブラウザ経由の管理画面ログイン。</p>
+<p>本書では Symfony の route 名、Controller 構成は扱わない。 URL エンドポイントは利用者視点の入口に限り、実装確認値として記載する。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>管理ログイン画面表示時のふるまい</li><li>ログイン ID・パスワード送信時の認証判定</li><li>管理セッション確立時のふるまい</li><li>二段階認証が必要な場合の入口制御</li><li>未ログイン時の保護画面アクセス制御</li><li>ログイン成功・失敗時の副作用</li><li>ログイン履歴、最終ログイン日時、セッション、Cookie に関する確認事項</li><li>自動ログアウト、明示ログアウト時のふるまい</li><li>ログイン画面に表示される正常・エラーメッセージの文言と表示条件</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>Symfony の route 名、Controller 構成</li><li>API ログイン</li><li>二段階認証の入力画面、検証方式、通知方式</li><li>Remember Me トークンの生成方式、更新方式、失効条件</li><li>パスワードハッシュ方式</li><li>Cookie 名・セッションキー名の現行互換保証</li><li>Redis に保存される Remember Me トークンの具体形式</li><li>同一管理者の複数ブラウザ同時ログイン制御</li><li>管理者パスワード再設定</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>本機能はリニューアル移行対象である。Cookie 名、セッションキー名、保存形式は現行実装の確認値として記録し、機能仕様として固定しない。</p>
+<p>移行時に保証する対象は、名称ではなく次のふるまいである。</p>
+<ul><li>管理者ログイン状態をブラウザ単位で保持する。</li><li>未ログインで保護された管理画面へアクセスした場合、ログイン画面へ誘導する。</li><li>管理者としてログイン済みの場合、保護された管理画面を利用できる。</li><li>二段階認証が必要な管理者は、追加認証完了まで保護された管理画面を利用できない。</li><li>明示ログアウト時に管理者としての認証状態を終了する。</li><li>Remember Me が有効な場合、保存済み情報により管理ログイン状態を再確立する。</li><li>ログイン成功履歴と最終ログイン日時更新が実行される。</li></ul>
+<p>次の項目は現行実装の確認値として本書に記録する。名称一致を確認する場合は、設計書ではなくソースコードを確認する。</p>
+<ul><li>Cookie 名</li><li>セッションキー名</li><li>セッション内の保存形式</li><li>Remember Me トークンのサーバ側保存キー</li><li>Cookie 値、セッション ID、Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>管理者</td><td>管理メンバー。ログインにより管理画面への業務操作が許される主体。</td></tr><tr><td>管理セッション</td><td>管理者として認証済みであることをブラウザに紐付けて保持する状態。</td></tr><tr><td>資格情報の検証</td><td>ログイン ID とパスワード等を認証基盤が照合し、本人性を確認する処理。</td></tr><tr><td>保護された管理画面</td><td>未認証または追加認証未完了では利用できない管理側の機能。</td></tr><tr><td>追加認証</td><td>二段階認証など、パスワード成功後に要求される追加の本人確認。</td></tr><tr><td>Remember Me</td><td>Cookie とサーバ側の保存情報を用いて、一定期間ログイン状態を再確立する仕組み。</td></tr><tr><td>試行制限</td><td>ログイン失敗などの条件により、一時的にログイン送信を拒否または遅延させる制御。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>管理ログイン画面</td><td>`GET /%eccube_admin_route%/login`</td><td>未ログイン時にログイン ID・パスワード入力画面を表示する。</td></tr><tr><td>ログイン送信</td><td>`POST /%eccube_admin_route%/login`</td><td>入力値、CSRF、試行制限、管理者状態、パスワードを評価し、認証可否を判定する。</td></tr><tr><td>保護された管理画面</td><td>`GET /%eccube_admin_route%/...`</td><td>未ログインまたは追加認証未完了の場合、業務画面を表示せずログインまたは追加認証へ誘導する。</td></tr><tr><td>ログアウト</td><td>`GET /%eccube_admin_route%/logout`</td><td>管理セッションを終了し、ログイン画面へ戻す。</td></tr><tr><td>Remember Me 再開</td><td>`GET /%eccube_admin_route%/login`</td><td>Cookie とサーバ側情報により、管理ログイン画面でログイン状態を再確立する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>管理ログイン画面にはログイン ID、パスワード、なりすまし対策トークン、送信ボタン、認証エラーまたは制限状態のメッセージを表示する。画面上の日本語文言は「表示メッセージ」のフロント表示文言一覧を正とする。</td></tr><tr><td>JS 挙動</td><td>ログイン可否はサーバ側の認証基盤で判定する。本機能固有の非同期ログイン、リアルタイム ID 検証、パスワード強度表示は扱わない。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通のログインフォーム、入力欄、エラー表示のレイアウトを使う。入力内容や管理者状態によるクライアント側の画面分岐は本機能では扱わない。</td></tr><tr><td>モーダル・ポップアップ</td><td>ログイン、ログアウト、自動ログアウト、Remember Me 再確立のいずれも専用モーダルや確認ダイアログを表示しない。失敗理由はログイン画面上のメッセージで扱う。</td></tr><tr><td>入力項目</td><td>ログイン ID（text）、パスワード（password）、なりすまし対策トークン（hidden）、CSRF（hidden）。必須・形式・未入力時は「業務ルール・計算」の入力項目表を正とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="ログイン画面表示">ログイン画面表示</h3>
+<ol><li>利用者が管理ログイン URL にアクセスする。</li><li>既に管理者としてログイン済みなら、ログイン画面を表示せずホーム画面へ遷移する。</li><li>未ログインなら、ログイン ID・パスワード入力画面を表示する。</li><li>未ログインで保護された管理 URL に来た場合も、ログイン画面へ誘導する。</li></ol>
+<h3 id="ログイン送信">ログイン送信</h3>
+<ol><li>利用者がログイン ID・パスワードを送信する。</li><li>入力不足、なりすまし対策トークン不整合、試行制限に該当する場合はログインを成立させず、ログイン画面でエラーまたは制限状態にする。ログイン送信は Symfony Security の <code>form_login</code> が受けるため、入力不足はログインフォームの <code>NotBlank</code> ではなく認証失敗として扱う。</li><li>ログイン ID から管理者を特定する。</li><li>管理者が存在しない、停止中、ログイン不可の場合は認証エラーにする。</li><li>パスワードを照合する。</li><li>パスワード不一致の場合は認証エラーにする。</li><li>ID・パスワード認証が成功し、追加認証が不要な場合は、管理セッションを作成し、ホーム画面へ遷移する。</li><li>ID・パスワード認証が成功し、二段階認証が必要な場合は、業務画面へ入る前に追加認証へ誘導する。</li></ol>
+<h3 id="ログイン後">ログイン後</h3>
+<ol><li>ログイン成功・失敗はログイン履歴に残る。</li><li>成功時は最終ログイン日時も更新される。</li><li>Remember Me Cookie を持つ状態で管理画面へアクセスした場合は、管理ログイン画面へリダイレクトして認証状態を再確立する。</li><li>無操作時間が設定値を超えた場合、自動ログアウト扱いとなり再ログインが必要になる。</li><li>明示ログアウト時は管理セッションを終了し、ログイン画面へ戻る。</li></ol>
+<hr>
+<h2 id="ログイン送信時の判定順序">ログイン送信時の判定順序</h2>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>ログイン ID またはパスワードが未入力</td><td>ログインを成立させず、ログイン画面に戻す。通常のフォームバリデーションではなく認証失敗として扱う。</td></tr><tr><td>2</td><td>なりすまし対策トークンが不整合</td><td>認証せずログイン画面に戻す。</td></tr><tr><td>3</td><td>試行制限に該当</td><td>ログインを成立させず、制限状態を表示する。</td></tr><tr><td>4</td><td>ログイン ID に一致する管理者が存在しない</td><td>認証エラーとして扱う。</td></tr><tr><td>5</td><td>管理者が停止中またはログイン不可</td><td>認証エラーとして扱う。</td></tr><tr><td>6</td><td>パスワードが不一致</td><td>認証エラーとして扱う。</td></tr><tr><td>7</td><td>ID・パスワード認証成功、かつ追加認証が必要</td><td>追加認証画面へ誘導する。</td></tr><tr><td>8</td><td>ID・パスワード認証成功、かつ追加認証が不要</td><td>管理セッションを確立し、ホーム画面へ遷移する。</td></tr></tbody></table></div>
+<pre class="tabbed-note">認証エラー時の画面表示は、次の2行の共通カスタマイズ説明
+・	カスタマイズ要件
+	・	日本語と英語それぞれのページを切り替えて編集可能とする
+		→	現行に存在する機能のため、ECCUBE4系に寄せた形で現行仕様を踏襲する
+	・	{% set noShopName = true %}を設定することで、titleタグのサフィックス(末尾)に固定文言が追加されないようにする
+		(販売系以外のLPで使用するため)
+	・	ページ確認ボタンを設置し、URLの内容を別タブで開くようにする
+	・	最終更新日時を表示するようにする</pre>
+<pre class="tabbed-note">・	カスタマイズ要件に記載の内容以外は現行踏襲とする</pre>
+<pre class="tabbed-note">処理概要（★はカスタマイズ項目）
+・	(1-1)言語について
+	・	選択すると、選択した言語に応じたページの編集画面に遷移する</pre>
+<pre class="tabbed-note">	・	選択されている言語に応じた画面表示について
+		・	(1-4)URLのテキストボックス左横のパスに、言語に応じたパスセグメントを追加する
+			日本語の場合: https://www.hareruyamtg.com/ja/~
+			英語の場合: https://www.hareruyamtg.com/en/~</pre>
+<pre class="tabbed-note">		・	(1-7)twigファイルのテキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する
+			日本語の場合: .ja.twig
+			英語の場合: .en.twig</pre>
+<pre class="tabbed-note">・	ページ登録について
+	・	ページを新規登録する場合、日英2種類のファイルを作成する</pre>
+<pre class="tabbed-note">★	ページ確認
+	・	(1-5)ページ確認ボタンを追加し、登録されたURLを別タブで表示する</pre>
+<pre class="tabbed-note">★	最終更新日時を表示するようにする</pre>
+<pre class="tabbed-note">・	ページ更新について
+	★	編集できないページの場合、(1-9)コードは(5)登録を押下した後、編集できない旨のエラーを表示する</pre>
+<pre class="tabbed-note">	・	(1-1)言語で選択している言語の(1-7)twigファイルのみを更新する</pre>
+<pre class="tabbed-note">	・	(1-7)twigファイルを変更して更新する場合、日英2種類のtwigファイルを作成する
+		(1-7)twigファイルを変更して更新する場合、選択されている言語のtwigファイルのみ更新する</pre>
+<pre class="tabbed-note">★	タイトルタグの固定文言を非表示
+	・	(1-9)コード内に{% set noShopName = true %}を設定すると、titleタグのサフィックス（末尾）に以下の固定文言が追加されない
+		固定文言:  | 日本最大級 MTG通販サイト『晴れる屋』
+		※	noShopNameの設定はページ管理で行うが、固定文言をつけるかどうかの判定はフロントで行う</pre>
+<div class="table-wrap screen-item-table"><table><thead><tr><th>識別ID</th><th>ラベル</th><th>書式・制限</th><th>必須</th><th>最大文字数<br>または最大値</th><th>初期値</th><th>画面部品の説明</th></tr></thead><tbody><tr class="section-row"><td colspan="7">ページ設定</td></tr><tr><td>1-1</td><td>言語</td><td>単一選択</td><td>-</td><td>-</td><td>-</td><td>・選択すると読み込みが発生し、選択した言語に応じたページ管理(登録・編集)画面を表示する</td></tr><tr><td>1-2</td><td>ページ設定の開閉ボタン</td><td>開閉ボタン</td><td>-</td><td>-</td><td>-</td><td>・押下すると、(1-3)~(1-9)の表示/非表示を切り替える</td></tr><tr><td>1-3</td><td>ページ名</td><td>半角・全角</td><td>〇</td><td>255</td><td>-</td><td>・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する</td></tr><tr><td>1-4</td><td>URL</td><td>半角・全角</td><td>〇</td><td>255</td><td>-</td><td>・テキストボックス左横のパスに、言語に応じたパスセグメントを追加する<br>　例<br>　日本語： https://www.hareruyamtg.com/ja/〜<br>　英語： https://www.hareruyamtg.com/en/〜<br><br>・(5)登録を押下すると、以下の正規表現にマッチしない場合、値が有効でないとエラーメッセージを表示する<br>/^([0-9a-zA-Z_\-]+\/?)+(?&lt;!\/)$/<br><br>・入力なしで(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する<br><br>・URL最後のパスセグメントが/user_dataではない場合、テキストボックスを非表示にし、編集できない</td></tr><tr><td>1-5</td><td>ページ確認ボタン</td><td>ボタン</td><td>-</td><td>-</td><td>-</td><td>・URLに登録されているURLを別タブで開く<br>※ URLに変数が含まれる場合、正しく表示されない</td></tr><tr><td>1-6</td><td>ファイル名のヘルプ</td><td>ラベル</td><td>-</td><td>-</td><td>-</td><td>・マウスオーバーすると、以下の文言を表示する<br>「ページの内容を記述したtwigテンプレートファイルの名前です。」</td></tr><tr><td>1-7</td><td>twigファイル</td><td>半角・全角</td><td>〇</td><td>255</td><td>-</td><td>・テキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する<br>　例<br>　日本語： .ja.twig<br>　英語： .en.twig<br><br>・(5)登録を押下すると、以下の正規表現にマッチしない場合、値が有効でないとエラーメッセージを表示する<br>/^([0-9a-zA-Z_\-]+\/?)+$/<br><br>・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する<br><br>・ファイル名最後のパスセグメントが/user_dataではない場合、テキストボックスを非表示にし、編集できない</td></tr><tr><td>1-8</td><td>コードのヘルプ</td><td>ラベル</td><td>-</td><td>-</td><td>-</td><td>・マウスオーバーすると、以下の文言を表示する<br>「テンプレートファイルを記述します。Twigで記述します。」</td></tr><tr><td>1-9</td><td>コード</td><td>半角・全角</td><td>〇</td><td></td><td>{% extends 'default_frame.twig' %}<br><br>{% block main %}<br><br>{% endblock %}</td><td>・未入力で(5)登録を押下すると、動的に必須入力のエラーメッセージを表示する<br><br>・(5)登録を押下すると、twig構文のエラーチェックを行う<br><br>・コードが編集できないページの場合、readonlyにして入力不可とする<br><br><br>・コード内に{% set noShopName = true %}を設定すると、titleタグのサフィックス（末尾）に以下の固定文言が追加されない<br>　固定文言:  | 日本最大級 MTG通販サイト『晴れる屋』</td></tr><tr><td>1-10</td><td>最終更新日時</td><td>ラベル</td><td>-</td><td>-</td><td>-</td><td>編集しているページの最終更新日時の表示を追加</td></tr><tr class="section-row"><td colspan="7">レイアウト設定</td></tr><tr><td>2-1</td><td>レイアウト設定のヘルプ</td><td>ラベル</td><td>-</td><td>-</td><td>-</td><td>・マウスオーバーすると、以下の文言を表示する<br>「このページに適用するレイアウトを選択します。」</td></tr><tr><td>2-2</td><td>レイアウト設定の開閉ボタン</td><td>開閉ボタン</td><td>-</td><td>-</td><td>-</td><td>・押下すると、(2-3)~(2-4)の表示/非表示を切り替える</td></tr><tr><td>2-3</td><td>PC</td><td>単一選択</td><td>-</td><td>-</td><td>-</td><td>・プレースホルダ: ---</td></tr><tr><td>2-4</td><td>モバイル</td><td>単一選択</td><td>-</td><td>-</td><td>-</td><td>・プレースホルダ: ---</td></tr><tr class="section-row"><td colspan="7">メタ設定</td></tr><tr><td>3-1</td><td>メタ設定のヘルプ</td><td>ラベル</td><td>-</td><td>-</td><td>-</td><td>・マウスオーバーすると、以下の文言を表示する<br>「こページのMETAタグの内容を指定できます。」</td></tr><tr><td>3-2</td><td>メタ設定の開閉ボタン</td><td>開閉ボタン</td><td>-</td><td>-</td><td>-</td><td>・押下すると、(3-3)~(3-8)の表示/非表示を切り替える</td></tr><tr><td>3-3</td><td>author</td><td>半角・全角</td><td>-</td><td>255</td><td>-</td><td>-</td></tr><tr><td>3-4</td><td>description</td><td>半角・全角</td><td>-</td><td>255</td><td>-</td><td>-</td></tr><tr><td>3-5</td><td>keyword</td><td>半角・全角</td><td>-</td><td>255</td><td>-</td><td>-</td></tr><tr><td>3-6</td><td>robot</td><td>半角・全角</td><td>-</td><td>255</td><td>-</td><td>-</td></tr><tr><td>3-7</td><td>metatagの開閉ボタン</td><td>開閉ボタン</td><td>-</td><td>-</td><td>-</td><td>・マウスオーバーすると、以下の文言を表示する<br>「METAタグの出力をカスタマイズできます。twig内で利用されている変数も利用可能です。空欄の場合は、テンプレートフォルダの meta.twig ファイルが読み込まれます。」</td></tr><tr><td>3-8</td><td>metatag</td><td>半角・全角</td><td>-</td><td>-</td><td>-</td><td>-</td></tr><tr class="section-row"><td colspan="7">その他</td></tr><tr><td>4</td><td>ページ管理</td><td>リンク</td><td>-</td><td>-</td><td>-</td><td>・押下すると、ページ管理 (一覧)画面へ遷移する</td></tr><tr><td>5</td><td>登録</td><td>ボタン</td><td>-</td><td>-</td><td>-</td><td>・押下すると、フォームに入力した情報で入力チェックを実施し、入力チェックが正常に完了した場合は登録/更新を行い、エラーが発生した場合はエラーメッセージを画面に表示する</td></tr></tbody></table></div>
+<p>のみとする（詳細は「表示メッセージ」の認証失敗（2行）を参照）。</p>
+<pre><code>ログインできませんでした。
+入力内容に誤りがないかご確認ください。</code></pre>
+<p>管理者の存在有無、停止状態、ログイン不可状態、パスワード不一致は画面上では区別しない。内部的な失敗理由区分はログイン履歴またはサーバログで扱う。</p>
+<hr>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>以下は日本語ロケール（<code>messages.ja.yaml</code> / <code>validators.ja.yaml</code>）で、管理ログイン画面に実際に表示される文言である。括弧内の <code>{店舗名}</code> <code>{N}</code> は実行時に置き換わる値を示す。</p>
+<h3 id="フロント表示文言一覧">フロント表示文言一覧</h3>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>ブラウザのタブ（`&lt;title&gt;`）</td><td>`ログイン - {店舗名}`</td><td>未ログインでログイン画面を表示したとき。`{店舗名}` は店舗基本情報のショップ名</td></tr><tr><td>ページ上部（`noscript`）</td><td>`JavaScript を有効にしてご利用ください`</td><td>JavaScript が無効のときのみ</td></tr><tr><td>画面上部アラート（外枠・`login_frame`）</td><td>（他画面由来のフラッシュ文言。本機能は固定文言を出さない）</td><td>セッションに `eccube.admin.*` フラッシュが残っているときのみ。色は info / success / danger / error / warning で異なる</td></tr><tr><td>フォーム上部アラート（カード内）</td><td>（同上）</td><td>同上</td></tr><tr><td>ログイン ID 入力欄のプレースホルダ</td><td>`ログインID`</td><td>ログイン画面を表示したとき</td></tr><tr><td>パスワード入力欄のプレースホルダ</td><td>`パスワード`</td><td>同上</td></tr><tr><td>送信ボタン</td><td>`ログイン`</td><td>同上</td></tr><tr><td>フォーム直下（赤文字・認証失敗）</td><td>下記「認証失敗（2行）」を参照</td><td>ログイン ID 未入力、パスワード未入力、存在しないログイン ID、停止中またはログイン不可の管理者、パスワード不一致のいずれかで POST 認証が失敗したとき</td></tr><tr><td>フォーム直下（赤文字・CSRF 不整合）</td><td>下記「認証失敗（2行）」を参照</td><td>`_csrf_token` が不整合のとき（文言は認証失敗と同一）</td></tr><tr><td>フォーム直下（赤文字・試行制限・分数なし）</td><td>`ログイン試行回数を超えました。しばらくして再度お試しください。`</td><td>試行制限に該当し、再試行までの分数が算出できないとき</td></tr><tr><td>フォーム直下（赤文字・試行制限・分数あり）</td><td>`ログイン試行回数が多すぎます。{N}分後に再度お試しください。`</td><td>試行制限に該当し、再試行までの分数が算出できるとき。例: `ログイン試行回数が多すぎます。30分後に再度お試しください。`</td></tr><tr><td>ページ下部（著作権）</td><td>`Copyright © 2000-{当年} EC-CUBE CO.,LTD. All Rights Reserved.`</td><td>ログイン画面を表示したとき。`{当年}` は表示時の西暦</td></tr></tbody></table></div>
+<p>認証失敗（2行）— フォーム直下の赤文字に、次の2行が改行付きで表示される。</p>
+<pre><code>ログインできませんでした。
+入力内容に誤りがないかご確認ください。</code></pre>
+<p>上記2行は、ログイン ID 未入力・パスワード未入力・存在しない ID・停止中・ログイン不可・パスワード不一致・CSRF 不整合のいずれでも同じである。失敗理由ごとに文言は変わらない。</p>
+<p>ログイン送信は認証基盤の <code>form_login</code> が受けるため、Symfony Form の <code>NotBlank</code> による「入力されていません。」等のフィールド直下エラーは出さない。未入力も上記「認証失敗（2行）」として表示する。</p>
+<h3 id="本機能が表示しないメッセージ">本機能が表示しないメッセージ</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>ログイン画面上の表示</th></tr></thead><tbody><tr><td>ID・パスワード認証成功（追加認証不要）</td><td>成功メッセージなし。ホーム画面へ遷移する</td></tr><tr><td>ID・パスワード認証成功（二段階認証が必要）</td><td>上記エラー欄には出さない。追加認証画面へ遷移する</td></tr><tr><td>ログイン済みでログイン URL を開く</td><td>なし。ホーム画面へリダイレクトする</td></tr><tr><td>自動ログアウト</td><td>専用メッセージなし</td></tr><tr><td>明示ログアウト</td><td>専用メッセージなし</td></tr></tbody></table></div>
+<p>本機能のログイン処理は <code>addFlash</code> 等で固定の成功・失敗メッセージをセットしない。画面上部アラートに出る文言は、他機能が事前にセッションへ保存した内容のみである。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>認証対象</td><td>管理者として登録され、ログイン可能な状態の管理メンバーだけを認証対象とする。一般フロント会員は管理画面の認証主体ではない。</td></tr><tr><td>判定順序</td><td>入力不足、CSRF、試行制限、管理者存在、有効状態、パスワード照合、追加認証要否の順にログイン成立可否を判定する。</td></tr><tr><td>失敗時表示</td><td>管理者の存在有無、停止状態、ログイン不可状態、パスワード不一致は画面上では詳細に区別しない。表示文言は「表示メッセージ」の認証エラー表を正とする。</td></tr><tr><td>成功時副作用</td><td>管理セッションを確立し、ログイン履歴と最終ログイン日時の更新対象にする。Remember Me が有効な場合は Cookie とサーバ側保存情報により再確立できる。</td></tr><tr><td>試行制限</td><td>固定窓方式でログイン ID と IP アドレス、または IP アドレス単体を単位に送信回数を制御する。</td></tr><tr><td>業務計算</td><td>本機能では金額、件数、在庫などの業務計算を行わない。</td></tr></tbody></table></div>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>ログイン ID</td><td>必須（いずれか未入力は認証失敗として扱う）</td><td>実装の Length 制約に従う（確認値はバリデーション定義を参照）</td><td>空</td><td>認証照合用の送信値。管理者レコードのログイン ID 列へはこの送信だけでは書き込まない。</td></tr><tr><td>パスワード</td><td>必須（同上）</td><td>実装の Length 制約に従う</td><td>空</td><td>照合用。画面・ログ・設計書に原値を出さない。永続化はハッシュ等の不可逆値のみ。</td></tr><tr><td>CSRF トークン</td><td>必須</td><td>—</td><td>フォーム生成時に埋め込み</td><td>フレームワークが検証する。不一致は受理しない。</td></tr><tr><td>なりすまし対策トークン</td><td>必須（機能有効時。フィールドが無い場合は認証失敗）</td><td>—</td><td>フォーム生成時に埋め込み</td><td>フレームワークまたはセキュリティコンポーネントの検証に従う。</td></tr></tbody></table></div>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>ログイン ID またはパスワード未入力</td><td>通常のフォーム送信エラーではなく、認証基盤の失敗としてログイン画面へ戻す。画面上は「ログインできませんでした。」＋「入力内容に誤りがないかご確認ください。」（2行）。</td></tr><tr><td>管理者が存在しない</td><td>認証エラーとして扱い、画面上は上記2行のみ（詳細理由を区別しない）。</td></tr><tr><td>管理者が停止中またはログイン不可</td><td>認証エラーとして扱い、画面上は上記2行のみ。</td></tr><tr><td>パスワード不一致</td><td>認証エラーとして扱い、画面上は上記2行のみ。</td></tr><tr><td>試行制限超過</td><td>ログインを成立させず、画面上は「ログイン試行回数を超えました。しばらくして再度お試しください。」または「ログイン試行回数が多すぎます。{N}分後に再度お試しください。」</td></tr><tr><td>ログイン済みでログイン画面を開く</td><td>ログイン画面を表示せずホーム画面へ誘導する。</td></tr><tr><td>二段階認証が必要</td><td>ID・パスワード認証が成功しても、追加認証完了まで保護された管理画面を利用できない。</td></tr><tr><td>Remember Me Cookie だけがある</td><td>管理ログイン画面への遷移を経て、Cookie とサーバ側情報により認証状態を再確立する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>管理者状態</td><td>認証時点で有効な管理者だけがログインできる。認証後に管理者状態が変更された場合の扱いは、以降の認可・セッション検証の実装に従う。</td></tr><tr><td>セッションと Cookie</td><td>管理ログイン状態はブラウザ単位のセッション Cookie とサーバ側セッションに依存する。Remember Me は別の Cookie とサーバ側保存情報によりログイン状態を再確立する。</td></tr><tr><td>ログイン履歴</td><td>ログイン成功・失敗はログイン履歴に保存する。失敗履歴保存に失敗した場合は認証結果そのものとは切り離してサーバログに記録する。</td></tr><tr><td>最終ログイン日時</td><td>成功時は管理者の最終ログイン日時を更新する。成功履歴保存や最終ログイン日時更新に失敗した場合は、明示的に握りつぶさず例外として扱う。</td></tr><tr><td>二段階認証との整合性</td><td>二段階認証が必要な管理者は、ID・パスワード認証後に追加認証へ進む。追加認証の詳細は二段階認証機能の設計を正とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>本機能はブラウザ経由の管理ログインを対象とし、API ログインは扱わない。</td></tr><tr><td>バッチ</td><td>本機能はバッチを起動しない。管理者状態やパスワードが別処理で変更済みの場合、次回ログイン送信時にその時点の永続化済みデータを読む。</td></tr><tr><td>成功時</td><td>管理セッションを作成し、追加認証が不要ならホーム画面へ遷移する。追加認証が必要なら追加認証画面へ誘導する。</td></tr><tr><td>失敗時</td><td>認証失敗、CSRF 不整合、試行制限などの場合はログイン画面に戻す。専用 JSON 応答は扱わない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ログイン ID、パスワード、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>管理セッション作成、ホーム画面または追加認証画面への遷移</td></tr><tr><td>失敗時出力</td><td>ログイン画面に留まり、認証エラーまたは制限状態を表示</td></tr><tr><td>副作用</td><td>ログイン履歴、最終ログイン日時、セッション／Cookie 状態の更新</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>ログインと監査に直接関係する列のみを以下に列挙する。型の細部はスキーマを参照する。停止中の判定は、管理者ロード時に有効状態の管理者のみを対象にすることで行う。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_member</td><td>login_id</td><td>ログイン識別子。</td></tr><tr><td>dtb_member</td><td>password</td><td>パスワード照合に用いる保存値。平文ではなくハッシュ等の不可逆値として扱う。ログや設計書に原値を書かない。</td></tr><tr><td>dtb_member</td><td>login_date</td><td>ログイン確定処理で更新される最終ログイン日時に相当する。</td></tr><tr><td>dtb_member</td><td>two_factor_auth_enabled</td><td>追加認証が有効かどうかを示す。</td></tr><tr><td>dtb_member</td><td>is_auto_logout</td><td>自動ログアウト制御に使われるフラグ。true の場合、自動ログアウト判定をスキップする。</td></tr><tr><td>dtb_member</td><td>base_info_id</td><td>所属店舗・テナント文脈。</td></tr><tr><td>dtb_login_history</td><td>member_id</td><td>紐付く管理者。ログイン ID から管理者を特定できない失敗では NULL になる。</td></tr><tr><td>dtb_login_history</td><td>user_name</td><td>試行に用いられたユーザー名文字列。</td></tr><tr><td>dtb_login_history</td><td>login_history_status_id</td><td>成功または失敗の区分。</td></tr><tr><td>dtb_login_history</td><td>client_ip</td><td>試行時のクライアント IP。</td></tr><tr><td>dtb_login_history</td><td>base_info_id</td><td>ログイン試行時の店舗文脈。</td></tr><tr><td>dtb_login_history</td><td>create_date</td><td>履歴行の作成日時。</td></tr><tr><td>dtb_login_history</td><td>update_date</td><td>履歴行の更新日時。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>login_id</td><td>ログインフォーム定義では必須。最大長はアプリ共通の ID 最大長設定に従う。</td></tr><tr><td>password</td><td>ログインフォーム定義では必須。最大長はアプリ共通のパスワード最大長設定に従う。</td></tr><tr><td>CSRF</td><td>ログイン送信に付与したトークンを認証基盤側で検証する。</td></tr><tr><td>画面上の入力不備</td><td>ログイン画面のフォーム定義上は必須制約を持つ。ログイン送信は認証基盤の `form_login` が受けるため、送信時は通常のフォーム送信処理ではなく認証処理として判定する。</td></tr></tbody></table></div>
+<p>Symfony Form の自動 CSRF はログインフォームでは無効化され、画面上の <code>_csrf_token</code> を用いる。 CSRF トークンの生成・保管方式はフレームワークの管理範囲とし、本書では業務データとして扱わない。</p>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>ログイン画面</th><th>管理画面の保護機能</th></tr></thead><tbody><tr><td>未ログイン</td><td>利用可</td><td>利用不可。ログイン画面へ誘導する。</td></tr><tr><td>管理者としてログイン済み</td><td>表示せずホーム画面へ誘導する。</td><td>利用可。</td></tr><tr><td>管理者だが二段階認証未完了</td><td>追加認証画面へ誘導する。</td><td>追加認証完了まで利用不可。</td></tr><tr><td>停止中・ログイン不可の管理者</td><td>ログイン画面を表示する。</td><td>認証失敗のため利用不可。</td></tr><tr><td>一般フロント会員のみ</td><td>管理ログイン画面は開ける。</td><td>管理者ではないため利用不可。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>未ログインでログイン URL へアクセス</td><td>ログイン画面</td></tr><tr><td>ログイン済みでログイン URL へアクセス</td><td>ホーム画面</td></tr><tr><td>未ログインで保護された管理画面へアクセス</td><td>ログイン画面</td></tr><tr><td>入力不足</td><td>ログイン画面に留まる。通常のフォーム入力エラーではなく認証失敗として表示する</td></tr><tr><td>認証エラー</td><td>ログイン画面に留まる</td></tr><tr><td>試行制限</td><td>ログイン画面に留まり、制限状態を表示する</td></tr><tr><td>認証成功、かつ追加認証不要</td><td>ホーム画面</td></tr><tr><td>認証成功、かつ二段階認証が必要</td><td>追加認証画面</td></tr><tr><td>Remember Me 再確立が必要</td><td>ログイン画面</td></tr><tr><td>セッション期限切れ・自動ログアウト</td><td>ログイン画面</td></tr><tr><td>明示ログアウト</td><td>ログイン画面</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>ログイン成功</td><td>管理セッションを作成し、ログイン履歴と最終ログイン日時更新の対象にする。</td><td>追加認証不要ならホーム画面を利用できる。</td></tr><tr><td>ログイン成功かつ二段階認証必要</td><td>ID・パスワード認証済み状態を前提に追加認証へ誘導する。</td><td>追加認証完了まで保護された管理画面を利用できない。</td></tr><tr><td>認証失敗</td><td>直近入力のログイン ID を再表示用に保持する場合がある。</td><td>ログイン画面で再入力する。</td></tr><tr><td>Remember Me 再確立</td><td>Cookie とサーバ側保存情報を照合する。</td><td>成功時は管理ログイン状態を再確立する。</td></tr><tr><td>明示ログアウト</td><td>管理セッションを終了する。</td><td>ログイン画面へ戻る。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<p>利用者向けの表示文言は「表示メッセージ」を正とする。本節は処理方針のみを記載する。</p>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th><th>画面表示（参照）</th></tr></thead><tbody><tr><td>入力不足</td><td>認証を成立させずログイン画面に戻す。通常のフォーム入力エラーではなく認証失敗として扱う。</td><td>「ログインできませんでした。」＋「入力内容に誤りがないかご確認ください。」（2行）</td></tr><tr><td>なりすまし対策トークン不整合</td><td>認証しない。ログイン画面に戻す。</td><td>同上（2行）</td></tr><tr><td>管理者が存在しない</td><td>認証エラーとして扱う。</td><td>同上（2行）</td></tr><tr><td>停止中・ログイン不可</td><td>認証エラーとして扱う。</td><td>同上（2行）</td></tr><tr><td>パスワード不一致</td><td>認証エラーとして扱う。</td><td>同上（2行）</td></tr><tr><td>試行回数超過</td><td>一時的に送信を拒否または遅延する。</td><td>「ログイン試行回数を超えました。しばらくして再度お試しください。」または「ログイン試行回数が多すぎます。{N}分後に再度お試しください。」</td></tr><tr><td>二段階認証未完了</td><td>業務画面へ進めず、追加認証画面へ誘導する。</td><td>表示メッセージ・表示しない遷移</td></tr><tr><td>セッション期限切れ・自動ログアウト</td><td>未ログイン扱いに戻す。</td><td>専用メッセージなし</td></tr><tr><td>ログイン履歴保存失敗</td><td>失敗履歴の保存失敗はサーバログへ記録される。成功履歴や最終ログイン日時更新の失敗は明示的に握りつぶさず、例外として扱う。</td><td>画面表示なし</td></tr><tr><td>予期しないシステムエラー</td><td>汎用エラー画面または HTTP エラー応答とする。</td><td>ログイン画面のエラー欄ではない</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>試行制限は、ログイン失敗などの条件によりログイン送信を一時的に拒否または遅延させる制御である。</p>
+<p>管理ログインは Symfony Security の <code>login_throttling</code> を使用する。 固定窓方式で 5 回 / 30 分の上限を持ち、Redis の rate limiter cache に状態を保存する。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>判定タイミング</td><td>ログイン送信時、認証成立前に評価する。</td></tr><tr><td>判定単位</td><td>ログイン ID と IP アドレスの組み合わせ、および IP アドレス単体。</td></tr><tr><td>制限時の結果</td><td>ログインを成立させず、ログイン画面で制限状態を表示する。</td></tr><tr><td>解除条件</td><td>固定窓の 30 分経過により消費済みトークンが解消される。</td></tr><tr><td>成功時リセット</td><td>ログイン成功時に対象リミッターをリセットする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>ログイン成功</td><td>管理者 ID、ログイン ID、成功区分、送信元 IP、店舗文脈、履歴日時をログイン履歴に保存し、管理者の最終ログイン日時を更新する。</td></tr><tr><td>ログイン失敗</td><td>入力されたログイン ID、失敗区分、送信元 IP、店舗文脈、履歴日時をログイン履歴に保存する。</td></tr><tr><td>試行制限</td><td>Symfony Security の試行制限として処理する。ログイン履歴には失敗区分のみを保存し、制限理由は保存しない。</td></tr><tr><td>失敗履歴保存失敗</td><td>例外概要、管理者 ID、ログイン ID、ステータス ID、送信元 IP、店舗文脈、日時をサーバログに記録する。</td></tr><tr><td>ログアウト・自動ログアウト</td><td>Symfony Security のログアウト処理としてセッションを終了する。ログイン履歴には保存しない。</td></tr></tbody></table></div>
+<p>ログイン失敗の画面表示では失敗理由を詳細に出さない。 ログイン履歴には成功／失敗区分、入力されたログイン ID、管理者 ID、送信元 IP、店舗文脈、日時を記録する。失敗理由の詳細区分はログイン履歴には保存しない。</p>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="現行実装のセッションキー">現行実装のセッションキー</h3>
+<p>以下は現行実装で確認したセッションキーである。リニューアル移行時は対応するふるまいが成立することを確認する。キー名の一致はソースコードで確認する。</p>
+<div class="table-wrap"><table><thead><tr><th>キー</th><th>現行実装での用途</th><th>移行時の確認観点</th></tr></thead><tbody><tr><td>`_security.last_username`</td><td>認証試行後に直近入力のログイン ID を保持し、入力欄の再表示などに利用する。</td><td>認証失敗後にログイン ID の再表示が成立する。</td></tr><tr><td>`eccube_mall_connection.admin`</td><td>管理者ログイン確立後に権限種別・店舗 ID・メンバー ID を保持する。データベース接続文脈の切り替えに関わる。</td><td>管理者 ID、権限、店舗文脈をもとに管理画面の操作権限とデータ参照範囲を判定できる。</td></tr><tr><td>`enterprise.temp_post_member_login_action_required`</td><td>管理者ログイン後、ログイン成功履歴の保存や最終ログイン日時更新を実行する条件として使う。処理後にこのフラグを削除しない。</td><td>ログイン成功履歴の保存と最終ログイン日時更新が実行される。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>パスワード、Cookie 値、業務上不要な秘匿値はセッションへ保存しない方針とする。 CSRF トークンはフレームワークの管理範囲とし、本書では業務データとして扱わない。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<h3 id="セッション用-Cookie">セッション用 Cookie</h3>
+<p>以下は現行実装の Symfony Framework session 設定値である。リニューアル移行時は管理者ログイン状態をブラウザ単位で保持できることを確認する。Cookie 名の一致はソースコードで確認する。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>Cookie 名</td><td>`ECCUBE_COOKIE_NAME` 環境変数の値</td></tr><tr><td>寿命</td><td>`ECCUBE_COOKIE_LIFETIME` 環境変数の値</td></tr><tr><td>GC 最大寿命</td><td>`ECCUBE_GC_MAXLIFETIME` 環境変数の値</td></tr><tr><td>HttpOnly</td><td>true</td></tr><tr><td>Secure</td><td>auto</td></tr><tr><td>SameSite</td><td>None</td></tr></tbody></table></div>
+<h3 id="管理者-Remember-Me">管理者 Remember Me</h3>
+<p>以下は現行実装の Remember Me 設定値である。リニューアル移行時は Remember Me による管理ログイン状態の再確立が成立することを確認する。Cookie 名の一致はソースコードで確認する。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行実装の値</th><th>移行時の確認観点</th></tr></thead><tbody><tr><td>Cookie 名</td><td>`eccube_admin_remember_me`</td><td>Remember Me 用 Cookie を識別できる。</td></tr><tr><td>有効時間</td><td>86400 秒</td><td>保存済み情報による管理ログイン状態の再確立が有効時間内に成立する。</td></tr><tr><td>送信時の扱い</td><td>自動で Remember が有効な送信として扱う。</td><td>明示的なチェック項目なしで Remember Me が有効になる。</td></tr><tr><td>属性</td><td>`Secure`、`SameSite=None`</td><td>管理画面アクセス時に Remember Me Cookie を送信できる。</td></tr><tr><td>サーバ側保存</td><td>Redis token provider</td><td>Cookie とサーバ側情報を照合してログイン状態を再確立できる。</td></tr></tbody></table></div>
+<p>アプリログや運用ログに Cookie の値自体を載せない。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>ログイン処理は注文登録や在庫更新のような業務データ更新ではないため、楽観ロック・悲観ロックの対象は持たない。</p>
+<ul><li>管理セッション作成が主処理。</li><li>ログイン履歴・最終ログイン日時更新は監査用の副作用。</li><li>失敗履歴の保存に失敗しても、認証結果そのものとは切り離してサーバログに記録する。</li><li>成功履歴保存・最終ログイン日時更新はログイン後リクエストの副作用として実行され、失敗時に明示的に握りつぶされない。</li><li>同一管理者の複数ブラウザ同時ログインを禁止する要件は、この機能では扱わない。</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

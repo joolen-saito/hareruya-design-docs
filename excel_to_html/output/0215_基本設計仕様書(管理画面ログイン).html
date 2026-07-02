@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>管理画面ログイン - 基本設計仕様書（詳細設計）</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">管理画面ログイン</p>
+      <nav class="toc"><a class="lv1" href="#m01-01">M01-01 パスワード認証</a>
+<a class="lv1" href="#m01-02">M01-02 二段階認証</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <h1>管理画面ログイン 基本設計仕様書（詳細設計）</h1>
+        <p class="crumb">専用の基本設計（Excel）シートが無い機能群の詳細設計書をまとめたページです。各機能の正本は Markdown です。</p>
+      </header>
+      <section class="doc-section" id="m01-01">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/ec-cube-enterprise/m01-01_admin_login_login.md</p>
+    <h1>M01-01 パスワード認証 ／ m01-01_admin_login_login（管理画面_認証機能）</h1>
+  </header>
+  <h2 id="m01-01-概要">概要</h2>
+<p>管理画面ログインは、登録済みの管理者を本人確認し、管理画面を利用できる状態にする機能。</p>
+<p>本機能のカスタマイズ区分は標準であり、挙動・DB関連ともec-cube-enterpriseを正とする。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。 既存実装のふるまい、状態、参照するデータ、判定境界、永続化、副作用を確認し、仕様の確からしさを把握することを目的とする。</p>
+<p>対象はブラウザ経由の管理画面ログイン。</p>
+<p>本書では Symfony の route 名、Controller 構成は扱わない。 URL エンドポイントは利用者視点の入口に限り、実装確認値として記載する。</p>
+<hr>
+<h2 id="m01-01-本書で扱うこと">本書で扱うこと</h2>
+<ul><li>管理ログイン画面表示時のふるまい</li><li>ログイン ID・パスワード送信時の認証判定</li><li>管理セッション確立時のふるまい</li><li>二段階認証が必要な場合の入口制御</li><li>未ログイン時の保護画面アクセス制御</li><li>ログイン成功・失敗時の副作用</li><li>ログイン履歴、最終ログイン日時、セッション、Cookie に関する確認事項</li><li>自動ログアウト、明示ログアウト時のふるまい</li><li>ログイン画面に表示される正常・エラーメッセージの文言と表示条件</li></ul>
+<hr>
+<h2 id="m01-01-本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>Symfony の route 名、Controller 構成</li><li>API ログイン</li><li>二段階認証の入力画面、検証方式、通知方式</li><li>Remember Me トークンの生成方式、更新方式、失効条件</li><li>パスワードハッシュ方式</li><li>Cookie 名・セッションキー名の現行互換保証</li><li>Redis に保存される Remember Me トークンの具体形式</li><li>同一管理者の複数ブラウザ同時ログイン制御</li><li>管理者パスワード再設定</li></ul>
+<hr>
+<h2 id="m01-01-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>本機能はリニューアル移行対象である。Cookie 名、セッションキー名、保存形式は現行実装の確認値として記録し、機能仕様として固定しない。</p>
+<p>移行時に保証する対象は、名称ではなく次のふるまいである。</p>
+<ul><li>管理者ログイン状態をブラウザ単位で保持する。</li><li>未ログインで保護された管理画面へアクセスした場合、ログイン画面へ誘導する。</li><li>管理者としてログイン済みの場合、保護された管理画面を利用できる。</li><li>二段階認証が必要な管理者は、追加認証完了まで保護された管理画面を利用できない。</li><li>明示ログアウト時に管理者としての認証状態を終了する。</li><li>Remember Me が有効な場合、保存済み情報により管理ログイン状態を再確立する。</li><li>ログイン成功履歴と最終ログイン日時更新が実行される。</li></ul>
+<p>次の項目は現行実装の確認値として本書に記録する。名称一致を確認する場合は、設計書ではなくソースコードを確認する。</p>
+<ul><li>Cookie 名</li><li>セッションキー名</li><li>セッション内の保存形式</li><li>Remember Me トークンのサーバ側保存キー</li><li>Cookie 値、セッション ID、Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="m01-01-用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>管理者</td><td>管理メンバー。ログインにより管理画面への業務操作が許される主体。</td></tr><tr><td>管理セッション</td><td>管理者として認証済みであることをブラウザに紐付けて保持する状態。</td></tr><tr><td>資格情報の検証</td><td>ログイン ID とパスワード等を認証基盤が照合し、本人性を確認する処理。</td></tr><tr><td>保護された管理画面</td><td>未認証または追加認証未完了では利用できない管理側の機能。</td></tr><tr><td>追加認証</td><td>二段階認証など、パスワード成功後に要求される追加の本人確認。</td></tr><tr><td>Remember Me</td><td>Cookie とサーバ側の保存情報を用いて、一定期間ログイン状態を再確立する仕組み。</td></tr><tr><td>試行制限</td><td>ログイン失敗などの条件により、一時的にログイン送信を拒否または遅延させる制御。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>管理ログイン画面</td><td><code>GET /%eccube_admin_route%/login</code></td><td>未ログイン時にログイン ID・パスワード入力画面を表示する。</td></tr><tr><td>ログイン送信</td><td><code>POST /%eccube_admin_route%/login</code></td><td>入力値、CSRF、試行制限、管理者状態、パスワードを評価し、認証可否を判定する。</td></tr><tr><td>保護された管理画面</td><td><code>GET /%eccube_admin_route%/...</code></td><td>未ログインまたは追加認証未完了の場合、業務画面を表示せずログインまたは追加認証へ誘導する。</td></tr><tr><td>ログアウト</td><td><code>GET /%eccube_admin_route%/logout</code></td><td>管理セッションを終了し、ログイン画面へ戻す。</td></tr><tr><td>Remember Me 再開</td><td><code>GET /%eccube_admin_route%/login</code></td><td>Cookie とサーバ側情報により、管理ログイン画面でログイン状態を再確立する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>管理ログイン画面にはログイン ID、パスワード、なりすまし対策トークン、送信ボタン、認証エラーまたは制限状態のメッセージを表示する。画面上の日本語文言は「表示メッセージ」のフロント表示文言一覧を正とする。</td></tr><tr><td>JS 挙動</td><td>ログイン可否はサーバ側の認証基盤で判定する。本機能固有の非同期ログイン、リアルタイム ID 検証、パスワード強度表示は扱わない。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通のログインフォーム、入力欄、エラー表示のレイアウトを使う。入力内容や管理者状態によるクライアント側の画面分岐は本機能では扱わない。</td></tr><tr><td>モーダル・ポップアップ</td><td>ログイン、ログアウト、自動ログアウト、Remember Me 再確立のいずれも専用モーダルや確認ダイアログを表示しない。失敗理由はログイン画面上のメッセージで扱う。</td></tr><tr><td>入力項目</td><td>ログイン ID（text）、パスワード（password）、なりすまし対策トークン（hidden）、CSRF（hidden）。必須・形式・未入力時は「業務ルール・計算」の入力項目表を正とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-処理フロー">処理フロー</h2>
+<h3 id="m01-01-ログイン画面表示">ログイン画面表示</h3>
+<ol><li>利用者が管理ログイン URL にアクセスする。</li><li>既に管理者としてログイン済みなら、ログイン画面を表示せずホーム画面へ遷移する。</li><li>未ログインなら、ログイン ID・パスワード入力画面を表示する。</li><li>未ログインで保護された管理 URL に来た場合も、ログイン画面へ誘導する。</li></ol>
+<h3 id="m01-01-ログイン送信">ログイン送信</h3>
+<ol><li>利用者がログイン ID・パスワードを送信する。</li><li>入力不足、なりすまし対策トークン不整合、試行制限に該当する場合はログインを成立させず、ログイン画面でエラーまたは制限状態にする。ログイン送信は Symfony Security の <code>form_login</code> が受けるため、入力不足はログインフォームの <code>NotBlank</code> ではなく認証失敗として扱う。</li><li>ログイン ID から管理者を特定する。</li><li>管理者が存在しない、停止中、ログイン不可の場合は認証エラーにする。</li><li>パスワードを照合する。</li><li>パスワード不一致の場合は認証エラーにする。</li><li>ID・パスワード認証が成功し、追加認証が不要な場合は、管理セッションを作成し、ホーム画面へ遷移する。</li><li>ID・パスワード認証が成功し、二段階認証が必要な場合は、業務画面へ入る前に追加認証へ誘導する。</li></ol>
+<h3 id="m01-01-ログイン後">ログイン後</h3>
+<ol><li>ログイン成功・失敗はログイン履歴に残る。</li><li>成功時は最終ログイン日時も更新される。</li><li>Remember Me Cookie を持つ状態で管理画面へアクセスした場合は、管理ログイン画面へリダイレクトして認証状態を再確立する。</li><li>無操作時間が設定値を超えた場合、自動ログアウト扱いとなり再ログインが必要になる。</li><li>明示ログアウト時は管理セッションを終了し、ログイン画面へ戻る。</li></ol>
+<hr>
+<h2 id="m01-01-ログイン送信時の判定順序">ログイン送信時の判定順序</h2>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>ログイン ID またはパスワードが未入力</td><td>ログインを成立させず、ログイン画面に戻す。通常のフォームバリデーションではなく認証失敗として扱う。</td></tr><tr><td>2</td><td>なりすまし対策トークンが不整合</td><td>認証せずログイン画面に戻す。</td></tr><tr><td>3</td><td>試行制限に該当</td><td>ログインを成立させず、制限状態を表示する。</td></tr><tr><td>4</td><td>ログイン ID に一致する管理者が存在しない</td><td>認証エラーとして扱う。</td></tr><tr><td>5</td><td>管理者が停止中またはログイン不可</td><td>認証エラーとして扱う。</td></tr><tr><td>6</td><td>パスワードが不一致</td><td>認証エラーとして扱う。</td></tr><tr><td>7</td><td>ID・パスワード認証成功、かつ追加認証が必要</td><td>追加認証画面へ誘導する。</td></tr><tr><td>8</td><td>ID・パスワード認証成功、かつ追加認証が不要</td><td>管理セッションを確立し、ホーム画面へ遷移する。</td></tr></tbody></table></div>
+<p>認証エラー時の画面表示は、次の2行のみとする（詳細は「表示メッセージ」の認証失敗（2行）を参照）。</p>
+<pre><code>ログインできませんでした。
+入力内容に誤りがないかご確認ください。</code></pre>
+<p>管理者の存在有無、停止状態、ログイン不可状態、パスワード不一致は画面上では区別しない。内部的な失敗理由区分はログイン履歴またはサーバログで扱う。</p>
+<hr>
+<h2 id="m01-01-表示メッセージ">表示メッセージ</h2>
+<p>以下は日本語ロケール（<code>messages.ja.yaml</code> / <code>validators.ja.yaml</code>）で、管理ログイン画面に実際に表示される文言である。括弧内の <code>{店舗名}</code> <code>{N}</code> は実行時に置き換わる値を示す。</p>
+<h3 id="m01-01-フロント表示文言一覧">フロント表示文言一覧</h3>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>ブラウザのタブ（<code>&lt;title&gt;</code>）</td><td><code>ログイン - {店舗名}</code></td><td>未ログインでログイン画面を表示したとき。<code>{店舗名}</code> は店舗基本情報のショップ名</td></tr><tr><td>ページ上部（<code>noscript</code>）</td><td><code>JavaScript を有効にしてご利用ください</code></td><td>JavaScript が無効のときのみ</td></tr><tr><td>画面上部アラート（外枠・<code>login_frame</code>）</td><td>（他画面由来のフラッシュ文言。本機能は固定文言を出さない）</td><td>セッションに <code>eccube.admin.*</code> フラッシュが残っているときのみ。色は info / success / danger / error / warning で異なる</td></tr><tr><td>フォーム上部アラート（カード内）</td><td>（同上）</td><td>同上</td></tr><tr><td>ログイン ID 入力欄のプレースホルダ</td><td><code>ログインID</code></td><td>ログイン画面を表示したとき</td></tr><tr><td>パスワード入力欄のプレースホルダ</td><td><code>パスワード</code></td><td>同上</td></tr><tr><td>送信ボタン</td><td><code>ログイン</code></td><td>同上</td></tr><tr><td>フォーム直下（赤文字・認証失敗）</td><td>下記「認証失敗（2行）」を参照</td><td>ログイン ID 未入力、パスワード未入力、存在しないログイン ID、停止中またはログイン不可の管理者、パスワード不一致のいずれかで POST 認証が失敗したとき</td></tr><tr><td>フォーム直下（赤文字・CSRF 不整合）</td><td>下記「認証失敗（2行）」を参照</td><td><code>_csrf_token</code> が不整合のとき（文言は認証失敗と同一）</td></tr><tr><td>フォーム直下（赤文字・試行制限・分数なし）</td><td><code>ログイン試行回数を超えました。しばらくして再度お試しください。</code></td><td>試行制限に該当し、再試行までの分数が算出できないとき</td></tr><tr><td>フォーム直下（赤文字・試行制限・分数あり）</td><td><code>ログイン試行回数が多すぎます。{N}分後に再度お試しください。</code></td><td>試行制限に該当し、再試行までの分数が算出できるとき。例: <code>ログイン試行回数が多すぎます。30分後に再度お試しください。</code></td></tr><tr><td>ページ下部（著作権）</td><td><code>Copyright © 2000-{当年} EC-CUBE CO.,LTD. All Rights Reserved.</code></td><td>ログイン画面を表示したとき。<code>{当年}</code> は表示時の西暦</td></tr></tbody></table></div>
+<p>認証失敗（2行）— フォーム直下の赤文字に、次の2行が改行付きで表示される。</p>
+<pre><code>ログインできませんでした。
+入力内容に誤りがないかご確認ください。</code></pre>
+<p>上記2行は、ログイン ID 未入力・パスワード未入力・存在しない ID・停止中・ログイン不可・パスワード不一致・CSRF 不整合のいずれでも同じである。失敗理由ごとに文言は変わらない。</p>
+<p>ログイン送信は認証基盤の <code>form_login</code> が受けるため、Symfony Form の <code>NotBlank</code> による「入力されていません。」等のフィールド直下エラーは出さない。未入力も上記「認証失敗（2行）」として表示する。</p>
+<h3 id="m01-01-本機能が表示しないメッセージ">本機能が表示しないメッセージ</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>ログイン画面上の表示</th></tr></thead><tbody><tr><td>ID・パスワード認証成功（追加認証不要）</td><td>成功メッセージなし。ホーム画面へ遷移する</td></tr><tr><td>ID・パスワード認証成功（二段階認証が必要）</td><td>上記エラー欄には出さない。追加認証画面へ遷移する</td></tr><tr><td>ログイン済みでログイン URL を開く</td><td>なし。ホーム画面へリダイレクトする</td></tr><tr><td>自動ログアウト</td><td>専用メッセージなし</td></tr><tr><td>明示ログアウト</td><td>専用メッセージなし</td></tr></tbody></table></div>
+<p>本機能のログイン処理は <code>addFlash</code> 等で固定の成功・失敗メッセージをセットしない。画面上部アラートに出る文言は、他機能が事前にセッションへ保存した内容のみである。</p>
+<hr>
+<h2 id="m01-01-業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>認証対象</td><td>管理者として登録され、ログイン可能な状態の管理メンバーだけを認証対象とする。一般フロント会員は管理画面の認証主体ではない。</td></tr><tr><td>判定順序</td><td>入力不足、CSRF、試行制限、管理者存在、有効状態、パスワード照合、追加認証要否の順にログイン成立可否を判定する。</td></tr><tr><td>失敗時表示</td><td>管理者の存在有無、停止状態、ログイン不可状態、パスワード不一致は画面上では詳細に区別しない。表示文言は「表示メッセージ」の認証エラー表を正とする。</td></tr><tr><td>成功時副作用</td><td>管理セッションを確立し、ログイン履歴と最終ログイン日時の更新対象にする。Remember Me が有効な場合は Cookie とサーバ側保存情報により再確立できる。</td></tr><tr><td>試行制限</td><td>固定窓方式でログイン ID と IP アドレス、または IP アドレス単体を単位に送信回数を制御する。</td></tr><tr><td>業務計算</td><td>本機能では金額、件数、在庫などの業務計算を行わない。</td></tr></tbody></table></div>
+<h3 id="m01-01-入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>ログイン ID</td><td>必須（いずれか未入力は認証失敗として扱う）</td><td>実装確認値 50 文字（<code>LoginType</code> の <code>eccube_id_max_len</code>）</td><td>空</td><td>認証照合用の送信値。管理者レコードのログイン ID 列へはこの送信だけでは書き込まない。</td></tr><tr><td>パスワード</td><td>必須（同上）</td><td>実装確認値 50 文字（<code>LoginType</code> の <code>eccube_password_max_len</code>）</td><td>空</td><td>照合用。画面・ログ・設計書に原値を出さない。永続化はハッシュ等の不可逆値のみ。</td></tr><tr><td>CSRF トークン</td><td>必須</td><td>—</td><td>フォーム生成時に埋め込み</td><td>フレームワークが検証する。不一致は受理しない。</td></tr><tr><td>なりすまし対策トークン</td><td>必須（機能有効時。フィールドが無い場合は認証失敗）</td><td>—</td><td>フォーム生成時に埋め込み</td><td>フレームワークまたはセキュリティコンポーネントの検証に従う。</td></tr></tbody></table></div>
+<h3 id="m01-01-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>ログイン ID またはパスワード未入力</td><td>通常のフォーム送信エラーではなく、認証基盤の失敗としてログイン画面へ戻す。画面上は「ログインできませんでした。」＋「入力内容に誤りがないかご確認ください。」（2行）。</td></tr><tr><td>管理者が存在しない</td><td>認証エラーとして扱い、画面上は上記2行のみ（詳細理由を区別しない）。</td></tr><tr><td>管理者が停止中またはログイン不可</td><td>認証エラーとして扱い、画面上は上記2行のみ。</td></tr><tr><td>パスワード不一致</td><td>認証エラーとして扱い、画面上は上記2行のみ。</td></tr><tr><td>試行制限超過</td><td>ログインを成立させず、画面上は「ログイン試行回数を超えました。しばらくして再度お試しください。」または「ログイン試行回数が多すぎます。{N}分後に再度お試しください。」</td></tr><tr><td>ログイン済みでログイン画面を開く</td><td>ログイン画面を表示せずホーム画面へ誘導する。</td></tr><tr><td>二段階認証が必要</td><td>ID・パスワード認証が成功しても、追加認証完了まで保護された管理画面を利用できない。</td></tr><tr><td>Remember Me Cookie だけがある</td><td>管理ログイン画面への遷移を経て、Cookie とサーバ側情報により認証状態を再確立する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>管理者状態</td><td>認証時点で有効な管理者だけがログインできる。認証後に管理者状態が変更された場合の扱いは、以降の認可・セッション検証の実装に従う。</td></tr><tr><td>セッションと Cookie</td><td>管理ログイン状態はブラウザ単位のセッション Cookie とサーバ側セッションに依存する。Remember Me は別の Cookie とサーバ側保存情報によりログイン状態を再確立する。</td></tr><tr><td>ログイン履歴</td><td>ログイン成功・失敗はログイン履歴に保存する。失敗履歴保存に失敗した場合は認証結果そのものとは切り離してサーバログに記録する。</td></tr><tr><td>最終ログイン日時</td><td>成功時は管理者の最終ログイン日時を更新する。成功履歴保存や最終ログイン日時更新に失敗した場合は、明示的に握りつぶさず例外として扱う。</td></tr><tr><td>二段階認証との整合性</td><td>二段階認証が必要な管理者は、ID・パスワード認証後に追加認証へ進む。追加認証の詳細は二段階認証機能の設計を正とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-API-バッチ結果">API/バッチ結果</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>本機能はブラウザ経由の管理ログインを対象とし、API ログインは扱わない。</td></tr><tr><td>バッチ</td><td>本機能はバッチを起動しない。管理者状態やパスワードが別処理で変更済みの場合、次回ログイン送信時にその時点の永続化済みデータを読む。</td></tr><tr><td>成功時</td><td>管理セッションを作成し、追加認証が不要ならホーム画面へ遷移する。追加認証が必要なら追加認証画面へ誘導する。</td></tr><tr><td>失敗時</td><td>認証失敗、CSRF 不整合、試行制限などの場合はログイン画面に戻す。専用 JSON 応答は扱わない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>ログイン ID、パスワード、なりすまし対策トークン</td></tr><tr><td>成功時出力</td><td>管理セッション作成、ホーム画面または追加認証画面への遷移</td></tr><tr><td>失敗時出力</td><td>ログイン画面に留まり、認証エラーまたは制限状態を表示</td></tr><tr><td>副作用</td><td>ログイン履歴、最終ログイン日時、セッション／Cookie 状態の更新</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-DBカラム">DBカラム</h2>
+<p>ログインと監査に直接関係する列のみを以下に列挙する。型の細部はスキーマを参照する。停止中の判定は、管理者ロード時に有効状態の管理者のみを対象にすることで行う。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_member</td><td>login_id</td><td>ログイン識別子。</td></tr><tr><td>dtb_member</td><td>password</td><td>パスワード照合に用いる保存値。平文ではなくハッシュ等の不可逆値として扱う。ログや設計書に原値を書かない。</td></tr><tr><td>dtb_member</td><td>login_date</td><td>ログイン確定処理で更新される最終ログイン日時に相当する。</td></tr><tr><td>dtb_member</td><td>two_factor_auth_enabled</td><td>追加認証が有効かどうかを示す。</td></tr><tr><td>dtb_member</td><td>is_auto_logout</td><td>自動ログアウト制御に使われるフラグ。true の場合、自動ログアウト判定をスキップする。</td></tr><tr><td>dtb_member</td><td>base_info_id</td><td>所属店舗・テナント文脈。</td></tr><tr><td>dtb_login_history</td><td>member_id</td><td>紐付く管理者。ログイン ID から管理者を特定できない失敗では NULL になる。</td></tr><tr><td>dtb_login_history</td><td>user_name</td><td>試行に用いられたユーザー名文字列。</td></tr><tr><td>dtb_login_history</td><td>login_history_status_id</td><td>成功または失敗の区分。</td></tr><tr><td>dtb_login_history</td><td>client_ip</td><td>試行時のクライアント IP。</td></tr><tr><td>dtb_login_history</td><td>base_info_id</td><td>ログイン試行時の店舗文脈。</td></tr><tr><td>dtb_login_history</td><td>create_date</td><td>履歴行の作成日時。</td></tr><tr><td>dtb_login_history</td><td>update_date</td><td>履歴行の更新日時。</td></tr></tbody></table></div>
+<h3 id="m01-01-DB操作">DB操作</h3>
+<p>当機能が行う永続化操作を以下に示す。テーブル名は ec-cube-enterprise を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録</td><td>dtb_login_history</td><td>認証成功時に成功区分（status_id=1）で履歴を1件登録する。</td></tr><tr><td>登録</td><td>dtb_login_history</td><td>認証失敗時に失敗区分（status_id=0）で履歴を1件登録する。ログイン ID から管理者を特定できない失敗では member_id を NULL とする。</td></tr><tr><td>更新</td><td>dtb_member</td><td>認証成功時に login_date（最終ログイン日時）を更新する。認証失敗時は更新しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>login_id</td><td>ログインフォーム定義では必須。最大長はアプリ共通の ID 最大長設定（実装確認値 50 文字）に従う。</td></tr><tr><td>password</td><td>ログインフォーム定義では必須。最大長はアプリ共通のパスワード最大長設定（実装確認値 50 文字）に従う。管理ログインには文字数下限の事前チェックは無い（最小桁チェックは顧客ログイン専用の実装であり、管理ログインには適用しない）。</td></tr><tr><td>CSRF</td><td>ログイン送信に付与したトークンを認証基盤側で検証する。</td></tr><tr><td>画面上の入力不備</td><td>ログイン画面のフォーム定義上は必須制約を持つ。ログイン送信は認証基盤の <code>form_login</code> が受けるため、送信時は通常のフォーム送信処理ではなく認証処理として判定する。</td></tr></tbody></table></div>
+<p>Symfony Form の自動 CSRF はログインフォームでは無効化され、画面上の <code>_csrf_token</code> を用いる。 CSRF トークンの生成・保管方式はフレームワークの管理範囲とし、本書では業務データとして扱わない。</p>
+<hr>
+<h2 id="m01-01-権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>ログイン画面</th><th>管理画面の保護機能</th></tr></thead><tbody><tr><td>未ログイン</td><td>利用可</td><td>利用不可。ログイン画面へ誘導する。</td></tr><tr><td>管理者としてログイン済み</td><td>表示せずホーム画面へ誘導する。</td><td>利用可。</td></tr><tr><td>管理者だが二段階認証未完了</td><td>追加認証画面へ誘導する。</td><td>追加認証完了まで利用不可。</td></tr><tr><td>停止中・ログイン不可の管理者</td><td>ログイン画面を表示する。</td><td>認証失敗のため利用不可。</td></tr><tr><td>一般フロント会員のみ</td><td>管理ログイン画面は開ける。</td><td>管理者ではないため利用不可。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>未ログインでログイン URL へアクセス</td><td>ログイン画面</td></tr><tr><td>ログイン済みでログイン URL へアクセス</td><td>ホーム画面</td></tr><tr><td>未ログインで保護された管理画面へアクセス</td><td>ログイン画面</td></tr><tr><td>入力不足</td><td>ログイン画面に留まる。通常のフォーム入力エラーではなく認証失敗として表示する</td></tr><tr><td>認証エラー</td><td>ログイン画面に留まる</td></tr><tr><td>試行制限</td><td>ログイン画面に留まり、制限状態を表示する</td></tr><tr><td>認証成功、かつ追加認証不要</td><td>ホーム画面</td></tr><tr><td>認証成功、かつ二段階認証が必要</td><td>追加認証画面</td></tr><tr><td>Remember Me 再確立が必要</td><td>ログイン画面</td></tr><tr><td>セッション期限切れ・自動ログアウト</td><td>ログイン画面</td></tr><tr><td>明示ログアウト</td><td>ログイン画面</td></tr></tbody></table></div>
+<h3 id="m01-01-遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>ログイン成功</td><td>管理セッションを作成し、ログイン履歴と最終ログイン日時更新の対象にする。</td><td>追加認証不要ならホーム画面を利用できる。</td></tr><tr><td>ログイン成功かつ二段階認証必要</td><td>ID・パスワード認証済み状態を前提に追加認証へ誘導する。</td><td>追加認証完了まで保護された管理画面を利用できない。</td></tr><tr><td>認証失敗</td><td>直近入力のログイン ID を再表示用に保持する場合がある。</td><td>ログイン画面で再入力する。</td></tr><tr><td>Remember Me 再確立</td><td>Cookie とサーバ側保存情報を照合する。</td><td>成功時は管理ログイン状態を再確立する。</td></tr><tr><td>明示ログアウト</td><td>管理セッションを終了する。</td><td>ログイン画面へ戻る。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-エラー処理">エラー処理</h2>
+<p>利用者向けの表示文言は「表示メッセージ」を正とする。本節は処理方針のみを記載する。</p>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th><th>画面表示（参照）</th></tr></thead><tbody><tr><td>入力不足</td><td>認証を成立させずログイン画面に戻す。通常のフォーム入力エラーではなく認証失敗として扱う。</td><td>「ログインできませんでした。」＋「入力内容に誤りがないかご確認ください。」（2行）</td></tr><tr><td>なりすまし対策トークン不整合</td><td>認証しない。ログイン画面に戻す。</td><td>同上（2行）</td></tr><tr><td>管理者が存在しない</td><td>認証エラーとして扱う。</td><td>同上（2行）</td></tr><tr><td>停止中・ログイン不可</td><td>認証エラーとして扱う。</td><td>同上（2行）</td></tr><tr><td>パスワード不一致</td><td>認証エラーとして扱う。</td><td>同上（2行）</td></tr><tr><td>試行回数超過</td><td>一時的に送信を拒否または遅延する。</td><td>「ログイン試行回数を超えました。しばらくして再度お試しください。」または「ログイン試行回数が多すぎます。{N}分後に再度お試しください。」</td></tr><tr><td>二段階認証未完了</td><td>業務画面へ進めず、追加認証画面へ誘導する。</td><td>表示メッセージ・表示しない遷移</td></tr><tr><td>セッション期限切れ・自動ログアウト</td><td>未ログイン扱いに戻す。</td><td>専用メッセージなし</td></tr><tr><td>ログイン履歴保存失敗</td><td>失敗履歴の保存失敗はサーバログへ記録される。成功履歴や最終ログイン日時更新の失敗は明示的に握りつぶさず、例外として扱う。</td><td>画面表示なし</td></tr><tr><td>予期しないシステムエラー</td><td>汎用エラー画面または HTTP エラー応答とする。</td><td>ログイン画面のエラー欄ではない</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-試行制限">試行制限</h2>
+<p>試行制限は、ログイン失敗などの条件によりログイン送信を一時的に拒否または遅延させる制御である。</p>
+<p>管理ログインは Symfony Security の <code>login_throttling</code> を使用する。 固定窓方式で 5 回 / 30 分の上限を持ち、Redis の rate limiter cache に状態を保存する。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>判定タイミング</td><td>ログイン送信時、認証成立前に評価する。</td></tr><tr><td>判定単位</td><td>ログイン ID と IP アドレスの組み合わせ、および IP アドレス単体。</td></tr><tr><td>制限時の結果</td><td>ログインを成立させず、ログイン画面で制限状態を表示する。</td></tr><tr><td>解除条件</td><td>固定窓の 30 分経過により消費済みトークンが解消される。</td></tr><tr><td>成功時リセット</td><td>ログイン成功時に対象リミッターをリセットする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-01-ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>ログイン成功</td><td>管理者 ID、ログイン ID、成功区分、送信元 IP、店舗文脈、履歴日時をログイン履歴に保存し、管理者の最終ログイン日時を更新する。</td></tr><tr><td>ログイン失敗</td><td>入力されたログイン ID、失敗区分、送信元 IP、店舗文脈、履歴日時をログイン履歴に保存する。</td></tr><tr><td>試行制限</td><td>Symfony Security の試行制限として処理する。ログイン履歴には失敗区分のみを保存し、制限理由は保存しない。</td></tr><tr><td>失敗履歴保存失敗</td><td>例外概要、管理者 ID、ログイン ID、ステータス ID、送信元 IP、店舗文脈、日時をサーバログに記録する。</td></tr><tr><td>ログアウト・自動ログアウト</td><td>Symfony Security のログアウト処理としてセッションを終了する。ログイン履歴には保存しない。</td></tr></tbody></table></div>
+<p>ログイン失敗の画面表示では失敗理由を詳細に出さない。 ログイン履歴には成功／失敗区分、入力されたログイン ID、管理者 ID、送信元 IP、店舗文脈、日時を記録する。失敗理由の詳細区分はログイン履歴には保存しない。</p>
+<h3 id="m01-01-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="m01-01-セッション">セッション</h2>
+<h3 id="m01-01-現行実装のセッションキー">現行実装のセッションキー</h3>
+<p>以下は現行実装で確認したセッションキーである。リニューアル移行時は対応するふるまいが成立することを確認する。キー名の一致はソースコードで確認する。</p>
+<div class="table-wrap"><table><thead><tr><th>キー</th><th>現行実装での用途</th><th>移行時の確認観点</th></tr></thead><tbody><tr><td><code>_security.last_username</code></td><td>認証試行後に直近入力のログイン ID を保持し、入力欄の再表示などに利用する。</td><td>認証失敗後にログイン ID の再表示が成立する。</td></tr><tr><td><code>eccube_mall_connection.admin</code></td><td>管理者ログイン確立後に権限種別・店舗 ID・メンバー ID を保持する。データベース接続文脈の切り替えに関わる。</td><td>管理者 ID、権限、店舗文脈をもとに管理画面の操作権限とデータ参照範囲を判定できる。</td></tr><tr><td><code>enterprise.temp_post_member_login_action_required</code></td><td>管理者ログイン後、ログイン成功履歴の保存や最終ログイン日時更新を実行する条件として使う。処理後にこのフラグを削除しない。</td><td>ログイン成功履歴の保存と最終ログイン日時更新が実行される。</td></tr></tbody></table></div>
+<h3 id="m01-01-セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>パスワード、Cookie 値、業務上不要な秘匿値はセッションへ保存しない方針とする。 CSRF トークンはフレームワークの管理範囲とし、本書では業務データとして扱わない。</p>
+<hr>
+<h2 id="m01-01-Cookie">Cookie</h2>
+<h3 id="m01-01-セッション用-Cookie">セッション用 Cookie</h3>
+<p>以下は現行実装の Symfony Framework session 設定値である。リニューアル移行時は管理者ログイン状態をブラウザ単位で保持できることを確認する。Cookie 名の一致はソースコードで確認する。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>Cookie 名</td><td><code>ECCUBE_COOKIE_NAME</code> 環境変数の値</td></tr><tr><td>寿命</td><td><code>ECCUBE_COOKIE_LIFETIME</code> 環境変数の値</td></tr><tr><td>GC 最大寿命</td><td><code>ECCUBE_GC_MAXLIFETIME</code> 環境変数の値</td></tr><tr><td>HttpOnly</td><td>true</td></tr><tr><td>Secure</td><td>auto</td></tr><tr><td>SameSite</td><td>None</td></tr></tbody></table></div>
+<h3 id="m01-01-管理者-Remember-Me">管理者 Remember Me</h3>
+<p>以下は現行実装の Remember Me 設定値である。リニューアル移行時は Remember Me による管理ログイン状態の再確立が成立することを確認する。Cookie 名の一致はソースコードで確認する。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行実装の値</th><th>移行時の確認観点</th></tr></thead><tbody><tr><td>Cookie 名</td><td><code>eccube_admin_remember_me</code></td><td>Remember Me 用 Cookie を識別できる。</td></tr><tr><td>有効時間</td><td>86400 秒</td><td>保存済み情報による管理ログイン状態の再確立が有効時間内に成立する。</td></tr><tr><td>送信時の扱い</td><td>自動で Remember が有効な送信として扱う。</td><td>明示的なチェック項目なしで Remember Me が有効になる。</td></tr><tr><td>属性</td><td><code>Secure</code>、<code>SameSite=None</code></td><td>管理画面アクセス時に Remember Me Cookie を送信できる。</td></tr><tr><td>サーバ側保存</td><td>Redis token provider</td><td>Cookie とサーバ側情報を照合してログイン状態を再確立できる。</td></tr></tbody></table></div>
+<p>アプリログや運用ログに Cookie の値自体を載せない。</p>
+<hr>
+<h2 id="m01-01-排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>ログイン処理は注文登録や在庫更新のような業務データ更新ではないため、楽観ロック・悲観ロックの対象は持たない。</p>
+<ul><li>管理セッション作成が主処理。</li><li>ログイン履歴・最終ログイン日時更新は監査用の副作用。</li><li>失敗履歴の保存に失敗しても、認証結果そのものとは切り離してサーバログに記録する。</li><li>成功履歴保存・最終ログイン日時更新はログイン後リクエストの副作用として実行され、失敗時に明示的に握りつぶされない。</li><li>同一管理者の複数ブラウザ同時ログインを禁止する要件は、この機能では扱わない。</li></ul>
+</section>
+<section class="doc-section" id="m01-02">
+  <header class="page-header">
+    <p class="crumb">Source:<br>functions/ec-cube-enterprise/m01-02_admin_login_two_factor_auth.md</p>
+    <h1>M01-02 二段階認証 ／ m01-02_admin_login_two_factor_auth（管理画面_二段階認証）</h1>
+  </header>
+  <p>管理画面における二段階認証。</p>
+<h2 id="m01-02-概要">概要</h2>
+<p>管理画面二段階認証は、管理者としての ID・パスワード認証が成功したあと、登録済みの TOTP 方式のワンタイムトークンで再度本人確認を行い、認証済み状態をブラウザに紐付けて保持する機能である。</p>
+<p>本機能のカスタマイズ区分は標準であり、挙動・DB関連ともec-cube-enterpriseを正とする。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。 既存実装のふるまい、状態、参照するデータ、判定境界、永続化、副作用を確認し、仕様の確からしさを把握することを目的とする。</p>
+<p>対象はブラウザ経由の管理画面であり、二段階認証の有効化、初回設定、追加認証、本人による再設定を含む。</p>
+<p>本書では Symfony の route 名、URL パス、Controller 構成は扱わない。 利用者がたどる境界として、「利用者視点の入口」に HTTP メソッドとサイトルートからのパスパターン（実装確認値）を記載する。</p>
+<hr>
+<h2 id="m01-02-本書で扱うこと">本書で扱うこと</h2>
+<ul><li>システム全体および個別管理者における二段階認証の有効／無効の扱い</li><li>パスワード認証後、保護された管理画面へ進む前の追加認証としての TOTP 検証</li><li>二段階認証が有効な管理者の、秘密鍵未設定時の初回設定。QR の表示およびトークンによる登録</li><li>本人による秘密鍵の再設定および既存デバイスへの影響</li><li>認証済み状態を表す HTTPOnly Cookie の付与・検証・有効期限</li><li>メンバー管理画面での「2 段階認証」スイッチおよび一覧での設定完了／未完了の表示</li><li>各画面に表示される正常・警告・エラーメッセージの文言と表示条件</li></ul>
+<hr>
+<h2 id="m01-02-本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>Symfony の route 名、URL パス、Controller 構成</li><li>管理画面ログインにおけるログイン ID・パスワードの検証、試行制限、ログイン履歴</li><li>API ログインおよび API 経由の認証</li><li>TOTP ライブラリの内部アルゴリズム、時刻許容ウィンドウの数値。実装依存のため許容ウィンドウの有無に触れるに留める</li><li>パスワードハッシュ方式、CSRF・セッション Cookie の詳細</li><li>Cookie 名・属性の現行互換保証</li><li>同一管理者の複数ブラウザ同時利用時の競合排除としての排他ロック</li></ul>
+<hr>
+<h2 id="m01-02-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>二段階認証用 Cookie 名、保存 JSON の構造、パラメータ名は現行実装の確認値として記録し、機能仕様として固定しない。</p>
+<p>移行時に保証する対象は、名称ではなく次のふるまいである。</p>
+<ul><li>システムで二段階認証が無効な場合、追加認証を要求しない。</li><li>二段階認証が有効な管理者は、パスワード認証後、トークン検証および初回秘密鍵登録のいずれかを完了するまで保護された管理画面を利用できない。</li><li>トークン検証または秘密鍵登録が成功したあと、一定期間は同一ブラウザで追加認証を省略できる。その範囲は認証済み Cookie が有効な期間による。</li><li>管理者の 2 段階認証を OFF にした場合、当該管理者に対する追加認証要求は発生しない。当該管理者の秘密鍵が DB に残るかどうかは実装に従う。</li></ul>
+<p>次の項目は現行実装の確認値として記録する。名称一致を確認する場合は、設計書ではなくソースコードまたは環境変数定義を確認する。</p>
+<ul><li>二段階認証用 Cookie 名。既定は環境変数 <code>ECCUBE_2FA_COOKIE_NAME</code> 由来の値となる</li><li>認証済み状態の有効日数。環境変数 <code>ECCUBE_2FA_EXPIRE</code> 由来。0 のときはブラウザセッションに近い扱いとなる</li><li>Cookie の Path、Secure、SameSite。いずれも SSL 強制設定と連動する</li><li>Cookie 値、TOTP 秘密鍵、6 桁トークンの原値</li></ul>
+<hr>
+<h2 id="m01-02-用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>管理者</td><td>管理メンバー。本機能では Symfony Security 上で管理者としてログイン済みの主体を指す。</td></tr><tr><td>システム 2FA</td><td>アプリ設定により、二段階認証機能全体を有効にするスイッチ。無効時は追加認証や画面誘導を行わない。</td></tr><tr><td>個別 2FA 有効</td><td>メンバーごとの <code>two_factor_auth_enabled</code>。有効時のみ追加認証の対象となる。</td></tr><tr><td>TOTP 用秘密鍵</td><td>認証アプリとサーバが共有する秘密。DB に保持し、設計書やログに原値を書かない。</td></tr><tr><td>デバイス トークン</td><td>認証アプリが表示する 6 桁のワンタイムコードとして入力される値。</td></tr><tr><td>追加認証</td><td>パスワード成功後、6 桁トークンを検証する画面・処理。</td></tr><tr><td>初回設定</td><td>個別 2FA が ON だが秘密鍵が未設定のときに、QR 等を用いて秘密鍵を登録する画面・処理。</td></tr><tr><td>認証済み Cookie</td><td>トークン検証または秘密鍵登録成功後に付与され、一定期間追加認証を省略する HTTPOnly Cookie。</td></tr><tr><td>本人の再設定</td><td>既に秘密鍵がある状態で、新しい秘密鍵に付け替える操作。認証済み Cookie があるときにのみ当該画面を利用できる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>保護された管理画面</td><td><code>GET /%eccube_admin_route%/…</code>（業務 URL。未完了時は次項へ誘導）</td><td>システム 2FA と個別 2FA がともに ON、かつ認証済み Cookie が無効なとき、業務画面の代わりに追加認証画面または初回設定画面へ誘導する。</td></tr><tr><td>追加認証画面</td><td><code>GET /%eccube_admin_route%/two_factor_auth/auth</code>、<code>POST /%eccube_admin_route%/two_factor_auth/auth</code></td><td>6 桁トークンを入力し、成功するとホーム画面相当へ遷移し、認証済み Cookie が付与される。失敗時は同一画面で再入力を促す。</td></tr><tr><td>初回設定画面</td><td><code>GET /%eccube_admin_route%/two_factor_auth/set</code>、<code>POST /%eccube_admin_route%/two_factor_auth/set</code></td><td>QR コードを表示し、6 桁トークンで秘密鍵を確定する。成功すると秘密鍵が保存され、認証済み Cookie が付与され、ホーム画面相当へ遷移する。</td></tr><tr><td>本人の再設定画面</td><td><code>GET /%eccube_admin_route%/setting/system/two_factor_auth/edit</code>、<code>POST /%eccube_admin_route%/setting/system/two_factor_auth/edit</code></td><td>ヘッダー等から開く想定であり、認証済み Cookie があるユーザーにのみ到達しやすい。新しい秘密鍵の登録用 QR と 6 桁検証を行う。</td></tr><tr><td>メンバー編集</td><td><code>GET /%eccube_admin_route%/setting/system/member/{id}/edit</code> 等（メンバー管理の編集経路）</td><td>別の管理者による他メンバー編集。個別 2FA の ON/OFF を切り替え可能。ON だが秘密鍵未登録の場合は一覧で未完了が示される。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>追加認証画面では 6 桁トークン入力欄と送信ボタンを表示する。初回設定・本人再設定画面では QR コード、秘密鍵候補を保持する隠し項目、6 桁トークン入力欄、送信ボタンを表示する。メンバー管理では個別 2FA の ON/OFF と設定完了状態を表示する。画面上の日本語文言は「表示メッセージ」のフロント表示文言一覧を正とする。</td></tr><tr><td>JS 挙動</td><td>追加認証、初回設定、本人再設定の成立判定はサーバ側で行う。本機能固有の非同期検証やリアルタイムトークン検証は扱わない。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通のフォーム、警告、成功メッセージ、QR 表示領域を用いる。画面上の状態分岐は、システム 2FA、個別 2FA、秘密鍵有無、認証済み Cookie の判定結果に従う。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能は二段階認証の確認に専用モーダル、ポップアップ、トーストを使わない。失敗や成功は画面メッセージまたはリダイレクト後のメッセージで扱う。</td></tr><tr><td>入力項目</td><td>追加認証・初回設定・本人再設定は 6 桁トークン（text）と送信ボタン。初回設定・再設定では秘密鍵候補（hidden）と CSRF、なりすまし対策トークン（hidden、有効時）を伴う。メンバー管理では個別 2FA のトグル等のフォームがある。詳細は「業務ルール・計算」の入力項目表を正とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-処理フロー">処理フロー</h2>
+<h3 id="m01-02-保護画面へのアクセス時・入口ガード">保護画面へのアクセス時・入口ガード</h3>
+<ol><li>リクエストが管理画面であること、かつシステム 2FA が有効であることを確認する。いずれかで無ければ何もしない。</li><li>追加認証画面そのものへのリクエストは、ガードによるリダイレクトの対象外とする。</li><li>初回設定画面へのリクエストは、当該管理者の秘密鍵が未設定のときのみガードの対象外とする。秘密鍵が既にある場合は対象とし、これにより初回設定ルートへの安易な迂回を防ぐ。</li><li>現在利用者が管理者であり、個別 2FA が ON であり、認証済み Cookie が有効でない場合、秘密鍵の有無に応じて追加認証画面または初回設定画面へリダイレクトする。それ以外はそのまま後続処理へ進む。</li></ol>
+<h3 id="m01-02-追加認証・秘密鍵が既に設定済みの場合">追加認証・秘密鍵が既に設定済みの場合</h3>
+<ol><li>システム 2FA が無効、または認証済み Cookie が既に有効なら、ホーム画面相当へ送る。</li><li>秘密鍵が未設定なら、初回設定画面へ誘導する。</li><li>POST で 6 桁トークンを受け取り、フォーム妥当性のうえで秘密鍵と照合する。</li><li>成功時はホーム画面相当へリダイレクトし、認証済み Cookie を付与する。</li><li>失敗時またはフォーム不正時は、同画面に留まり、再入力を促す文言を表示する。</li></ol>
+<h3 id="m01-02-初回設定・個別-2FA-ON-かつ秘密鍵未設定の場合">初回設定・個別 2FA ON かつ秘密鍵未設定の場合</h3>
+<ol><li>システム 2FA が無効、または認証済み Cookie が既に有効なら、ホーム画面相当へ送る。</li><li>既に秘密鍵が設定済みなら、追加認証画面へ送る。未認証状態での秘密鍵の再設定を防ぐためである。</li><li>GET 時は新規秘密鍵候補を生成し、フォームの隠し項目に渡し、QR コード用データとして画面に出す。</li><li>POST 時は隠し項目の秘密鍵と入力 6 桁を照合し、成功時に DB に保存し、フラッシュ成功メッセージと認証済み Cookie を付与してホーム画面相当へ送る。</li><li>失敗時はエラーメッセージを表示する。GET 時に既に秘密鍵が DB 上ある場合は警告を出し、再設定に相当することを伝える。</li></ol>
+<h3 id="m01-02-本人による再設定・秘密鍵の付け替え">本人による再設定・秘密鍵の付け替え</h3>
+<ol><li>認証済み Cookie が無効な場合、ホーム画面相当へ送る。以降のガードにより追加認証へ誘導される想定である。</li><li>初回設定と同様に GET で秘密鍵候補と QR を出し、POST で検証する。画面上の遷移およびレイアウトは管理画面標準フレームを用いる。</li><li>成功時の DB 更新により、従来のデバイスから発行されたトークンは無効化される。新秘密鍵で認証アプリを再登録する必要がある。</li></ol>
+<hr>
+<h2 id="m01-02-管理画面アクセス時の判定順序">管理画面アクセス時の判定順序</h2>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>管理画面リクエストでない、またはシステム 2FA が無効</td><td>追加認証の誘導を行わない。</td></tr><tr><td>2</td><td>追加認証画面へのリクエスト</td><td>後続処理を実行する。</td></tr><tr><td>3</td><td>初回設定画面へのリクエストかつ秘密鍵未設定</td><td>後続処理を実行する。</td></tr><tr><td>4</td><td>初回設定画面へのリクエストかつ秘密鍵あり</td><td>通常のガード対象とし、追加認証へ誘導する。</td></tr><tr><td>5</td><td>利用者が管理者でない、または個別 2FA が OFF</td><td>追加認証の誘導を行わない。</td></tr><tr><td>6</td><td>認証済み Cookie が有効</td><td>追加認証の誘導を行わない。</td></tr><tr><td>7</td><td>秘密鍵あり</td><td>追加認証画面へ誘導する。</td></tr><tr><td>8</td><td>秘密鍵なし</td><td>初回設定画面へ誘導する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-表示メッセージ">表示メッセージ</h2>
+<p>以下は日本語ロケール（<code>messages.ja.yaml</code> / <code>validators.ja.yaml</code>）で、本機能の画面に実際に表示される文言である。括弧内の <code>{店舗名}</code> <code>{当年}</code> は実行時に置き換わる値を示す。</p>
+<h3 id="m01-02-フロント表示文言一覧">フロント表示文言一覧</h3>
+<h4 id="m01-02-追加認証画面・初回設定画面-ログインフレーム">追加認証画面・初回設定画面（ログインフレーム）</h4>
+<p>追加認証画面と初回設定画面は管理ログインと同じログインフレームを用いる。タイトルや <code>noscript</code>、著作権表示はログイン画面と同一である。</p>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>ブラウザのタブ（<code>&lt;title&gt;</code>）</td><td><code>ログイン - {店舗名}</code></td><td>追加認証画面または初回設定画面を表示したとき。<code>{店舗名}</code> は店舗基本情報のショップ名</td></tr><tr><td>ページ上部（<code>noscript</code>）</td><td><code>JavaScript を有効にしてご利用ください</code></td><td>JavaScript が無効のときのみ</td></tr><tr><td>画面上部アラート（外枠）</td><td>（他画面由来のフラッシュ文言。本機能は固定文言を出さない）</td><td>セッションに <code>eccube.admin.*</code> フラッシュが残っているときのみ</td></tr><tr><td>カード内アラート</td><td>（同上）</td><td>同上</td></tr><tr><td>見出し（<code>h5</code>）</td><td><code>2段階認証</code></td><td>追加認証画面または初回設定画面を表示したとき</td></tr><tr><td>ページ下部（著作権）</td><td><code>Copyright © 2000-{当年} EC-CUBE CO.,LTD. All Rights Reserved.</code></td><td>同上。<code>{当年}</code> は表示時の西暦</td></tr></tbody></table></div>
+<h4 id="m01-02-追加認証画面">追加認証画面</h4>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>トークン入力欄のプレースホルダ</td><td><code>トークン</code></td><td>追加認証画面を表示したとき</td></tr><tr><td>送信ボタン</td><td><code>認証</code></td><td>同上</td></tr><tr><td>フォーム上部（赤文字）</td><td><code>トークンに誤りがあります。再度入力してください。</code></td><td>POST で 6 桁トークンが未入力、6 桁以外、または TOTP 検証に失敗したとき。いずれも同一文言</td></tr><tr><td>トークン入力欄直下（フォーム検証）</td><td><code>入力されていません。</code></td><td>POST でトークンが空のとき、Symfony Form の検証エラーとして併せて出る場合がある</td></tr></tbody></table></div>
+<p>追加認証画面の POST 失敗時は、利用者向けには上記「再度入力してください。」を主とする。空入力時に「入力されていません。」が併記される場合がある。</p>
+<h4 id="m01-02-初回設定画面">初回設定画面</h4>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>QR コード説明文</td><td><code>QRコードを2段階認証用スマートフォンアプリで読み込み、表示された6桁の数字を入力してください。</code></td><td>初回設定画面を表示したとき</td></tr><tr><td>トークン入力欄のプレースホルダ</td><td><code>トークン</code></td><td>同上</td></tr><tr><td>送信ボタン</td><td><code>登録</code></td><td>同上</td></tr><tr><td>フォーム上部（赤文字・再入力）</td><td><code>トークンに誤りがあります。再度入力してください。</code></td><td>POST でフォームが妥当だが TOTP 検証に失敗したとき</td></tr><tr><td>フォーム上部（赤文字・形式不正）</td><td><code>トークンに誤りがあります。数字6桁で入力してください。</code></td><td>POST でトークンが未入力、または 6 桁数字以外のとき</td></tr><tr><td>トークン入力欄直下（フォーム検証）</td><td><code>入力されていません。</code></td><td>POST でトークンが空のとき、Symfony Form の検証エラーとして併せて出る場合がある</td></tr></tbody></table></div>
+<h4 id="m01-02-本人の再設定画面-管理画面標準フレーム">本人の再設定画面（管理画面標準フレーム）</h4>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>ブラウザのタブ（<code>&lt;title&gt;</code>）</td><td><code>システム設定 2段階認証 - {店舗名}</code></td><td>本人の再設定画面を表示したとき</td></tr><tr><td>パンくず相当（サブタイトル）</td><td><code>システム設定</code></td><td>同上</td></tr><tr><td>カード見出し</td><td><code>2段階認証</code></td><td>同上</td></tr><tr><td>QR コード行ラベル</td><td><code>QRコード</code></td><td>同上</td></tr><tr><td>トークン行ラベル</td><td><code>トークン</code></td><td>同上。ラベル横に <code>必須</code> バッジを表示する</td></tr><tr><td>トークン行ツールチップ</td><td><code>QRコードを2段階認証用スマートフォンアプリで読み込み、表示された6桁の数字を入力してください。</code></td><td>トークン行ラベルまたはヘルプアイコンにホバーしたとき</td></tr><tr><td>送信ボタン</td><td><code>登録</code></td><td>同上</td></tr><tr><td>画面上部アラート（警告）</td><td><code>既に2段階認証の設定が行われています。再設定すると登録済みのデバイスが使用出来なくなります。</code></td><td>GET で秘密鍵が既に DB にあるとき（本人の再設定画面のみ）</td></tr><tr><td>トークン入力欄近傍（赤文字・再入力）</td><td><code>トークンに誤りがあります。再度入力してください。</code></td><td>POST でフォームが妥当だが TOTP 検証に失敗したとき</td></tr><tr><td>トークン入力欄近傍（赤文字・形式不正）</td><td><code>トークンに誤りがあります。数字6桁で入力してください。</code></td><td>POST でトークンが未入力、または 6 桁数字以外のとき</td></tr><tr><td>トークン入力欄直下（フォーム検証）</td><td><code>入力されていません。</code></td><td>POST でトークンが空のとき、Symfony Form の検証エラーとして併せて出る場合がある</td></tr></tbody></table></div>
+<h4 id="m01-02-初回設定・本人再設定成功後-ホーム画面相当">初回設定・本人再設定成功後（ホーム画面相当）</h4>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>画面上部アラート（成功）</td><td><code>2段階認証の設定が完了しました。</code></td><td>初回設定または本人再設定の POST が成功し、ホーム画面相当へリダイレクトした直後</td></tr></tbody></table></div>
+<h4 id="m01-02-管理画面ヘッダー-ユーザーメニュー">管理画面ヘッダー（ユーザーメニュー）</h4>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>ヘッダーユーザーメニュー内リンク</td><td><code>2段階認証 設定</code></td><td>ログイン中の管理者の個別 2FA が ON のときのみ表示する</td></tr></tbody></table></div>
+<h4 id="m01-02-メンバー一覧">メンバー一覧</h4>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>一覧列見出し</td><td><code>2段階認証</code></td><td>メンバー一覧を表示したとき</td></tr><tr><td>設定状態アイコンのツールチップ（完了）</td><td><code>2段階認証の設定は完了しています。</code></td><td>当該メンバーの個別 2FA が ON かつ秘密鍵が登録済みのとき</td></tr><tr><td>設定状態アイコンのツールチップ（未完了）</td><td><code>2段階認証の設定が未完了です。このユーザでログインし、設定を完了させてください。</code></td><td>当該メンバーの個別 2FA が ON かつ秘密鍵が未登録のとき</td></tr></tbody></table></div>
+<h4 id="m01-02-メンバー編集">メンバー編集</h4>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>2 段階認証行ラベル</td><td><code>2段階認証</code></td><td>メンバー編集画面を表示したとき</td></tr><tr><td>2 段階認証行ツールチップ</td><td><code>有効にすると2段階認証でのログインが必要になります。2段階認証のデバイス設定をしていない状態でログインした場合、設定後にログインできるようになります。</code></td><td>ラベルまたはヘルプアイコンにホバーしたとき</td></tr></tbody></table></div>
+<h4 id="m01-02-試行制限-追加認証-POST">試行制限（追加認証 POST）</h4>
+<div class="table-wrap"><table><thead><tr><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>エラー応答</td><td><code>試行回数の上限を超過しました。しばらくお待ちいただき、再度お試しください。</code></td><td>追加認証画面への POST がユーザー単位 5 回 / 30 分の上限を超えたとき（本番向けレート制限設定）。初回設定・本人再設定の POST は同一制限の対象外</td></tr></tbody></table></div>
+<h3 id="m01-02-本機能が表示しないメッセージ">本機能が表示しないメッセージ</h3>
+<div class="table-wrap"><table><thead><tr><th>事象</th><th>画面上の表示</th></tr></thead><tbody><tr><td>追加認証成功</td><td>成功メッセージなし。ホーム画面相当へ遷移し、認証済み Cookie を付与する</td></tr><tr><td>保護画面アクセス時の追加認証・初回設定への誘導</td><td>専用メッセージなし。該当画面へリダイレクトする</td></tr><tr><td>システム 2FA 無効、または認証済み Cookie 有効で各画面へ直接アクセス</td><td>専用メッセージなし。ホーム画面相当へリダイレクトする</td></tr><tr><td>秘密鍵設定済み管理者が初回設定画面へアクセス</td><td>専用メッセージなし。追加認証画面へリダイレクトする</td></tr><tr><td>本人再設定で認証済み Cookie が無効</td><td>専用メッセージなし。ホーム画面相当へ送り、ガードにより追加認証または初回設定へ誘導する</td></tr><tr><td>メンバー管理で個別 2FA の ON/OFF を保存</td><td>本機能専用の成功・失敗メッセージなし。メンバー管理の共通保存メッセージに従う</td></tr></tbody></table></div>
+<p>追加認証画面の POST 失敗時は、TOTP 不一致・未入力・桁数不正を画面上では区別しない（追加認証画面ではすべて「再度入力してください。」）。初回設定・本人再設定の POST では、形式不正と TOTP 不一致で文言が分かれる。</p>
+<hr>
+<h2 id="m01-02-業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>追加認証の対象</td><td>システム 2FA が有効、個別 2FA が ON、認証済み Cookie が無効な管理者を対象にする。秘密鍵がある場合は追加認証、秘密鍵が無い場合は初回設定へ誘導する。</td></tr><tr><td>TOTP 検証</td><td>入力された 6 桁トークンを、管理者の秘密鍵または POST された秘密鍵候補と照合する。許容ウィンドウなど TOTP ライブラリ内部の詳細は本書では仕様固定しない。</td></tr><tr><td>初回設定</td><td>個別 2FA が ON で秘密鍵が未設定の場合、秘密鍵候補と 6 桁トークンが一致したときに秘密鍵を DB に保存し、認証済み Cookie を付与する。</td></tr><tr><td>本人の再設定</td><td>認証済み Cookie が有効な利用者だけが秘密鍵を付け替える。更新後は旧秘密鍵に基づく認証アプリのトークンを使えない。</td></tr><tr><td>認証済み状態</td><td>トークン検証または秘密鍵登録に成功した後、認証済み Cookie を付与し、有効期間内は追加認証を省略する。</td></tr><tr><td>メンバー管理</td><td>個別 2FA の ON/OFF は管理者レコードに保存する。OFF の管理者には追加認証を要求しない。</td></tr></tbody></table></div>
+<h3 id="m01-02-入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>デバイス トークン（6 桁）</td><td>必須</td><td>6 桁数字として検証（表記ゆれ・桁不足は失敗）</td><td>空</td><td>TOTP 照合のみ。永続化しない。</td></tr><tr><td>秘密鍵候補（hidden）</td><td>初回設定・本人再設定の POST で必須</td><td>—</td><td>GET で生成した値をフォームに埋め込み</td><td>検証成功時に <code>dtb_member.two_factor_auth_key</code> へ保存する値の元。ログに原値を出さない。</td></tr><tr><td>個別 2FA の ON/OFF（メンバー管理）</td><td>画面により必須／任意はフォーム定義に従う</td><td>—</td><td>現行の <code>two_factor_auth_enabled</code></td><td><code>dtb_member.two_factor_auth_enabled</code> を更新する。</td></tr><tr><td>CSRF / なりすまし対策トークン</td><td>必須</td><td>—</td><td>フォーム埋め込み</td><td>フレームワークの検証に従う。</td></tr></tbody></table></div>
+<h3 id="m01-02-エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>システム 2FA が無効</td><td>個別 2FA や秘密鍵の状態にかかわらず追加認証を要求しない。</td></tr><tr><td>個別 2FA が OFF</td><td>システム 2FA が有効でも当該管理者には追加認証を要求しない。</td></tr><tr><td>個別 2FA が ON で秘密鍵が未設定</td><td>初回設定画面へ誘導し、秘密鍵登録完了まで保護された管理画面を利用できない。</td></tr><tr><td>初回設定画面へ秘密鍵設定済み管理者がアクセス</td><td>追加認証画面へ送る。未認証状態での秘密鍵再設定を防ぐ。</td></tr><tr><td>本人再設定時に認証済み Cookie が無効</td><td>ホーム画面相当へ送られ、その後ガードにより追加認証または初回設定へ誘導される。</td></tr><tr><td>Cookie 有効期間が切れた</td><td>次回の保護画面アクセス時に追加認証または初回設定が必要になる。</td></tr><tr><td>同一管理者が複数ブラウザを使う</td><td>認証済み状態はブラウザの Cookie と管理者の秘密鍵に依存する。複数ブラウザ同時利用を排他する要件は持たない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>秘密鍵と Cookie</td><td>認証済み Cookie は管理者 ID と秘密鍵から検証される。秘密鍵を更新した場合、旧秘密鍵に基づく Cookie や認証アプリのトークンは有効な認証材料として扱われない。</td></tr><tr><td>DB 更新とレスポンス</td><td>初回設定または本人再設定では、秘密鍵保存と認証済み Cookie 付与が成功時の副作用になる。保存失敗時の扱いはフレームワークおよび永続化層の例外処理に委ねる。</td></tr><tr><td>メンバー管理との整合性</td><td>個別 2FA の ON/OFF はメンバー管理で変更される。変更後の追加認証要求は、次回以降の管理画面アクセス時の判定に従う。</td></tr><tr><td>時刻との整合性</td><td>TOTP 検証はサーバ時刻とライブラリの許容範囲に依存する。本書では許容ウィンドウの数値を仕様固定しないが、実装確認値は前後 2 ステップ（<code>TwoFactorAuthService::verifyCode</code> が <code>verifyCode($authKey, $token, 2)</code> を呼ぶ）。</td></tr><tr><td>外部連携との整合性</td><td>本機能は外部認証サービスや通知 API を呼び出さない。TOTP 秘密鍵と認証済み Cookie の範囲で判定する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-API-バッチ結果">API/バッチ結果</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>本機能はブラウザ経由の管理画面フォームとして動作し、二段階認証のための専用公開 API は扱わない。</td></tr><tr><td>バッチ</td><td>本機能はバッチを起動しない。秘密鍵や個別 2FA 設定が別処理で変更済みの場合、次回の管理画面アクセス時にその時点の永続化済みデータを読む。</td></tr><tr><td>成功時</td><td>追加認証成功、初回設定成功、本人再設定成功のいずれも、認証済み Cookie の付与または秘密鍵更新を伴い、ホーム画面相当へ遷移する。</td></tr><tr><td>失敗時</td><td>トークン不一致、フォーム不正、秘密鍵保存失敗などは画面メッセージまたは共通例外処理に委ねる。本機能専用の JSON エラー応答は扱わない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>6 桁デバイス トークン。初回設定または再設定の送信ではフォーム経由で秘密鍵も送る。また CSRF。なりすまし対策トークンはフォームの仕組みに従う。</td></tr><tr><td>成功時出力</td><td>ホーム画面相当へのリダイレクトと認証済み Cookie の付与。初回設定または再設定が成功した場合は DB の秘密鍵更新と成功メッセージも出す。</td></tr><tr><td>失敗時出力</td><td>同一または遷移先画面に留まり、トークン誤りおよび桁数不正などのメッセージを表示する。</td></tr><tr><td>副作用</td><td>管理者レコードの <code>two_factor_auth_key</code> 更新、レスポンスへの Cookie 付与。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-DBカラム">DBカラム</h2>
+<p>二段階認証に直接関係する列のみを以下に列挙する。型や一覧の細部はスキーマを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_member</td><td>two_factor_auth_key</td><td>TOTP の秘密鍵。平文に近い秘匿情報として扱い、ログや設計書に原値を書かない。</td></tr><tr><td>dtb_member</td><td>two_factor_auth_enabled</td><td>個別 2FA の ON/OFF。</td></tr></tbody></table></div>
+<h3 id="m01-02-DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>更新</td><td>dtb_member</td><td>初回設定・本人再設定で 6 桁トークン検証に成功したとき、two_factor_auth_key（TOTP 秘密鍵）を更新する。persist/flush で即時確定する。本機能では削除は行わない。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>デバイス トークン</td><td>必須、6 桁固定長。数字以外や桁数不一致はフォームエラーとなり、画面では 6 桁で入力するよう促すメッセージを表示する。</td></tr><tr><td>秘密鍵の隠し項目</td><td>初回設定および再設定の POST では必須。GET で生成した値が送り返される前提。</td></tr><tr><td>CSRF</td><td>管理フォームの標準仕組みにより検証する。詳細はフレームワークの管理範囲とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>保護された管理画面</th><th>追加認証・初回設定</th></tr></thead><tbody><tr><td>未ログインで管理者でない</td><td>管理ログインの対象。本書では詳述しない。</td><td>対象外。</td></tr><tr><td>管理者、個別 2FA OFF</td><td>利用可。システム 2FA の有無は問わない。</td><td>誘導されない。</td></tr><tr><td>システム 2FA OFF</td><td>追加認証なしで利用可。</td><td>誘導されない。</td></tr><tr><td>管理者、個別 2FA ON、認証済み Cookie 有効</td><td>利用可。</td><td>不要。</td></tr><tr><td>管理者、個別 2FA ON、認証済み Cookie 無効、秘密鍵あり</td><td>追加認証完了まで利用不可。</td><td>追加認証画面で検証。</td></tr><tr><td>管理者、個別 2FA ON、認証済み Cookie 無効、秘密鍵なし</td><td>初回設定完了まで利用不可。</td><td>初回設定画面で登録。</td></tr><tr><td>本人の再設定</td><td>認証済み Cookie がある場合のみ当該画面へ到達しやすい。</td><td>Cookie 無効時はホーム画面へ送られ、ガードで再び追加認証または初回設定へ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>システム 2FA 無効</td><td>通常の管理画面。追加認証は行わない。</td></tr><tr><td>個別 2FA OFF</td><td>通常の管理画面。</td></tr><tr><td>個別 2FA ON、秘密鍵なし、未認証</td><td>初回設定画面。</td></tr><tr><td>個別 2FA ON、秘密鍵あり、未認証</td><td>追加認証画面。</td></tr><tr><td>トークン検証または初回登録成功</td><td>ホーム画面相当。</td></tr><tr><td>本人の再設定で認証済み Cookie 無効</td><td>ホーム画面相当。その後ガードにより追加認証等へ進むことがある。</td></tr></tbody></table></div>
+<h3 id="m01-02-遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>追加認証成功</td><td>認証済み Cookie を付与する。</td><td>ホーム画面相当を利用できる。</td></tr><tr><td>初回設定成功</td><td>秘密鍵を保存し、認証済み Cookie を付与する。</td><td>ホーム画面相当を利用できる。</td></tr><tr><td>本人再設定成功</td><td>秘密鍵を新しい値に更新する。</td><td>新しい認証アプリ設定を前提に、以降の追加認証を行う。</td></tr><tr><td>個別 2FA OFF</td><td>メンバー管理で個別 2FA を無効にする。</td><td>当該管理者には追加認証を要求しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-エラー処理">エラー処理</h2>
+<p>利用者向けの表示文言は「表示メッセージ」を正とする。本節は処理方針のみを記載する。</p>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th><th>画面表示（参照）</th></tr></thead><tbody><tr><td>6 桁トークンが空・形式不正（追加認証）</td><td>同一画面に留まり再入力を促す。</td><td><code>トークンに誤りがあります。再度入力してください。</code></td></tr><tr><td>TOTP 検証失敗（追加認証）</td><td>同上。</td><td>同上</td></tr><tr><td>6 桁トークンが空・形式不正（初回設定・本人再設定）</td><td>同一画面に留まり形式不正を促す。</td><td><code>トークンに誤りがあります。数字6桁で入力してください。</code></td></tr><tr><td>TOTP 検証失敗（初回設定・本人再設定）</td><td>同一画面に留まり再入力を促す。</td><td><code>トークンに誤りがあります。再度入力してください。</code></td></tr><tr><td>追加認証 POST の試行制限超過</td><td>リクエストを拒否する。</td><td><code>試行回数の上限を超過しました。しばらくお待ちいただき、再度お試しください。</code></td></tr><tr><td>システム 2FA 無効なのに各画面へ直接アクセス</td><td>ホーム画面相当へ送る。</td><td>専用メッセージなし</td></tr><tr><td>秘密鍵設定済みが初回設定画面へ入ろうとした</td><td>追加認証画面へ送る。</td><td>専用メッセージなし</td></tr></tbody></table></div>
+<p>追加認証画面では失敗理由を画面上で区別しない。初回設定・本人再設定では形式不正と TOTP 不一致で文言が分かれる。</p>
+<hr>
+<h2 id="m01-02-試行制限">試行制限</h2>
+<p>追加認証画面への POST は、本番向けレート制限設定にてユーザー単位で 5 回 / 30 分の上限が掛かりうる。 初回設定および再設定画面の POST が同一制限に含まれるかは実装のルート定義に従い、必要ならソースで確認する。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>扱い</th></tr></thead><tbody><tr><td>対象</td><td>追加認証画面の POST を中心に、実装が定義した経路。</td></tr><tr><td>超過時</td><td>制限によりリクエストが拒否される。表示文言は「表示メッセージ」の試行制限表を正とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="m01-02-ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>トークン検証失敗、フォーム不正</td><td>専用の業務ログは定義しない。汎用ログに残る場合がある。</td></tr><tr><td>秘密鍵の保存・更新</td><td>ログイン履歴とは別途、二段階認証専用の監査テーブルは本機能では持たない。</td></tr></tbody></table></div>
+<h3 id="m01-02-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>TOTP 秘密鍵および 6 桁トークン</li><li>なりすまし対策トークン</li><li>二段階認証用 Cookie の値</li><li>セッション ID の完全値</li></ul>
+<hr>
+<h2 id="m01-02-セッション">セッション</h2>
+<h3 id="m01-02-本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>追加認証判定</td><td>二段階認証の成立・否認は主に認証済み Cookie と DB の秘密鍵で判定する。</td></tr><tr><td>OTP 保持</td><td>管理セッション内に OTP を保持する要件は本書の範囲では扱わない。</td></tr><tr><td>認証済み状態</td><td>追加認証済み状態は Cookie で保持する。セッションキー名や保存形式は本機能の仕様として固定しない。</td></tr></tbody></table></div>
+<h3 id="m01-02-セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>OTP、秘密鍵、認証済み Cookie の値を業務データとしてセッションに載せない方針と解釈できる。判定と保持は Cookie 側で足りる。</p>
+<hr>
+<h2 id="m01-02-Cookie">Cookie</h2>
+<h3 id="m01-02-二段階認証済み-Cookie">二段階認証済み Cookie</h3>
+<p>以下は現行実装での確認事項である。移行時は「ブラウザが管理画面パス配下で一定期間追加認証を省略できる」ことが成立するかを確認する。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>名称</td><td>環境変数 <code>ECCUBE_2FA_COOKIE_NAME</code> を経由して決まるパラメータ。既定の確認はコード定数および <code>eccube.yaml</code> で行う。実装確認値は <code>eccube_2fa</code>。</td></tr><tr><td>値の意味</td><td>JSON 形式で複数管理者 ID 分のエントリを保持しうる。各エントリに検証用ハッシュと更新時刻を含む。</td></tr><tr><td>検証</td><td>エントリのハッシュが当該管理者の ID と秘密鍵から導かれる期待値と一致し、かつ有効期限設定を満たすこと。</td></tr><tr><td>有効期限</td><td>環境変数 <code>ECCUBE_2FA_EXPIRE</code> の日数。実装確認値は 14 日（付与時刻＋14×24×60×60 秒）。0 のときは Cookie の expires がセッション扱いに近い。</td></tr><tr><td>Path</td><td>アプリケーションのベースパスと管理画面ルートセグメントに連動。</td></tr><tr><td>HttpOnly</td><td>true</td></tr><tr><td>Secure</td><td>SSL 強制設定が有効なとき true。</td></tr><tr><td>SameSite</td><td>SSL 強制設定が有効なとき、<code>None</code> が使われる実装がある。</td></tr></tbody></table></div>
+<p>アプリログに Cookie 値やハッシュ原値を載せない。</p>
+<hr>
+<h2 id="m01-02-排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>二段階認証は注文や在庫更新のような業務データ更新を主目的としない。 秘密鍵更新とレスポンス Cookie 付与は実装に従い、楽観・悲観ロックによる排他は本機能の要件としては扱わない。</p>
+</section>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

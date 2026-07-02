@@ -1,0 +1,265 @@
+# M04-08（在庫移動・振替検索/一覧）
+
+## 文書情報
+
+| 項目 | 内容 |
+|------|------|
+| 機能名 | 在庫移動・振替検索/一覧 |
+| 機能分類 | 管理画面 / 在庫管理 |
+| カスタマイズ区分 | 新規実装 |
+| 作成日 | 2026-06-11 |
+| 参照元 | excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html |
+| 実装確認 | ../ec-cube-enterprise（`StockMoveTransferController::index` / `SearchStockMoveTransferType` / `DtbStockMoveTransferRepository::getQueryBuilderBySearchData` / `DtbStockMoveTransferDetailRepository::getAggregatesByStockMoveTransferIds`） |
+
+## 改訂履歴
+
+| 日付 | 内容 |
+|------|------|
+| 2026-06-11 | 新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。 |
+| 2026-06-12 | ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化。 |
+
+## 1. 在庫移動・振替検索/一覧
+
+### 機能の目的と役割
+
+在庫移動・振替の登録情報を、ID・送り状No・出庫元/入庫先の店舗・在庫区分・移動タイプ・ステータス・各日付・承認者/登録者などの条件で検索し、一覧表示する管理画面機能。一覧の各行には移動点数合計・基準価格合計・ステータスを表示し、行を選択して在庫移動指示作成・各種CSV/PDF出力（在庫移動振替CSV・戻しリストCSV/PDF・バーコード貼替リストCSV）へ繋ぐ。あわせて、一覧画面上のモーダルから在庫移動CSV登録・在庫振替CSV登録（M04-22）の入口を提供する。
+
+本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。画面・項目の業務要件は基本設計仕様書（0202_基本設計仕様書(在庫管理機能)）を正とし、URLエンドポイント・検索条件・DBカラム・処理順序はリニューアル先 ec-cube-enterprise 実装を正とする。
+
+### 本書で扱うこと
+
+- 在庫移動・振替一覧の入口（検索・ページング・表示件数変更）と表示要素
+- 検索条件（フォームキー付き）とセッション保持
+- 一覧から各機能（CSV登録モーダル、各種CSV/PDF出力、移動指示作成）への接続点
+- 未検索・入力不備時の扱い
+
+### 本書で扱わないこと
+
+以下は本書では仕様確定せず、対応機能の設計を正とする。
+
+- 在庫移動・振替CSV登録（M04-22）、在庫移動・振替情報CSV出力（M04-10）、戻しリストCSV出力（M04-33）、戻しリストPDF出力（M04-34）、バーコード貼替リストCSV出力（M04-30）の各列・整形仕様
+- 在庫移動・振替登録/編集（M04-09）、在庫移動指示一覧（移動指示作成の遷移先）の画面・更新仕様
+- 管理画面ログイン認証・編集可能店舗の権限制御そのもの（共通設計を正とする）
+
+### 利用者視点の入口（エンドポイント）
+
+| 入口 | URLエンドポイント（ルート名） | 期待されるふるまい |
+|------|------------------------------|--------------------|
+| 一覧トップ／検索 | `GET,POST /%admin%/product/stock/move_transfer`（`admin_stock_move_transfer`） | GETは初期表示、POSTは検索実行。検索条件をセッションに保存し1ページ目を表示する。 |
+| ページ送り | `GET /%admin%/product/stock/move_transfer/page/{page_no}`（`admin_stock_move_transfer_page`） | セッションの検索条件を復元し、指定ページを表示する。 |
+| 在庫移動振替CSV出力 | `GET /%admin%/product/stock/move_transfer/csv_export`（`admin_stock_move_transfer_csv_export`） | セッションの検索条件で全件CSVを出力する（M04-10）。 |
+| 戻しリストCSV出力 | `POST /%admin%/product/stock/move_transfer/return_list_csv_export`（`admin_stock_move_transfer_return_list_csv_export`） | 選択した移動IDを対象に戻しリストCSVを出力する（M04-33）。 |
+| 戻しリストPDF出力 | `POST /%admin%/product/stock/move_transfer/return_list_pdf_export`（`admin_stock_move_transfer_return_list_pdf_export`） | 選択した移動IDを対象に戻しリストPDF用HTMLをJSONで返す（M04-34）。 |
+| 在庫移動CSV登録 | `POST /%admin%/product/stock/move_transfer/move_csv_import`（`admin_stock_move_transfer_move_csv_import`） | モーダルからの在庫移動CSV取込（M04-22）。 |
+| 在庫振替CSV登録 | `POST /%admin%/product/stock/move_transfer/transfer_csv_import`（`admin_stock_move_transfer_transfer_csv_import`） | モーダルからの在庫振替CSV取込（M04-22）。 |
+| 在庫移動CSV雛形 | `GET /%admin%/product/stock/move_transfer/move_csv_template`（`admin_stock_move_transfer_move_csv_template`） | `stock_move.csv`（ヘッダ: 商品コード／移動点数）を出力。 |
+| 在庫振替CSV雛形 | `GET /%admin%/product/stock/move_transfer/transfer_csv_template`（`admin_stock_move_transfer_transfer_csv_template`） | `stock_transfer.csv`（ヘッダ: 振替元商品コード／振替先商品コード／振替点数）を出力。 |
+
+`%admin%` は管理画面ルートプレフィックス（`eccube_admin_route`）。すべて管理画面ログインを要する。テンプレートは `@admin/Stock/MoveTransfer/index.twig`。
+
+### 画面表示・一覧項目
+
+| 観点 | 内容 |
+|------|------|
+| 表示順 | 実装は登録日（`create_date`）降順 → 在庫移動振替ID（`id`）降順（`getQueryBuilderBySearchData`）。Excel要件は「在庫移動振替ID降順」だが、実装は登録日降順を第1キーとする（実IDは登録日順に採番されるため概ね一致する）。 |
+| 集計表示 | 各在庫移動振替IDの移動点数合計・基準価格合計を `DtbStockMoveTransferDetailRepository::getAggregatesByStockMoveTransferIds()` で取得し、一覧へ渡す（`stockMoveTransferAggregates`）。 |
+| 表示件数 | 既定 `eccube_default_page_count`。クエリ `page_count` が表示件数マスタ（`PageMax`）に一致すれば採用し、セッション `eccube.admin.stock.move_transfer.page_count` に保存する。 |
+| モーダル/付帯データ | 在庫移動CSV登録フォーム・在庫振替CSV登録フォーム、店舗一覧（`csvMoveTransferRegisterBaseInfos`）、移動タイプ定数（`MOVE_TRANSFER_TYPE_MOVE=1` / `MOVE_TRANSFER_TYPE_TRANSFER=2`）を画面へ渡す。 |
+
+### 検索条件
+
+`SearchStockMoveTransferType`（ブロックプレフィックス `admin_search_stock_move_transfer`）で受け取り、`getQueryBuilderBySearchData()` がクエリを組み立てる。
+
+| 項目（フォームキー） | 形式・絞り込み |
+|----------------------|----------------|
+| 在庫移動・振替ID `stock_move_transfer_id` | 数字のみは完全一致、非数字混在は ID文字列の部分一致（LIKE） |
+| 移動指示ID `move_instruction_id` | NULL以外を部分一致（LIKE） |
+| 送り状No `tracking_no` | 部分一致（LIKE） |
+| 出庫元店舗 `move_from_base_info` | `BaseInfo` 複数選択（IN） |
+| 入庫先店舗 `move_to_base_info` | `BaseInfo` 複数選択（IN） |
+| 出庫元在庫区分 `move_from_stock_location_id` | EC-CUBE在庫／スマレジ在庫の複数選択（IN） |
+| 入庫先在庫区分 `move_to_stock_location_id` | EC-CUBE在庫／スマレジ在庫の複数選択（IN） |
+| 移動タイプ `move_transfer_type` | 在庫移動／在庫振替の複数選択（IN） |
+| ステータス `move_transfer_status` | `MtbStockMoveTransferStatus`（ID昇順）の複数選択（IN） |
+| 登録日 `create_date_start`〜`create_date_end` | 範囲（終了日は+1日して未満比較） |
+| 出庫承認 所属 `move_from_approval_department`／担当者名 `move_from_approval_member_name` | 出庫承認者で内部結合し、所属名一致・氏名LIKE |
+| 登録者 所属 `registered_department`／氏名 `registered_member_name` | 登録者で所属名一致・氏名LIKE |
+| 入庫承認 所属 `move_to_approval_department`／担当者名 `move_to_approval_member_name` | 入庫承認者で内部結合し、所属名一致・氏名LIKE |
+| 出庫日 `move_from_stock_date_start`〜`move_from_stock_date_end` | 範囲 |
+| 入庫日 `move_to_stock_date_start`〜`move_to_stock_date_end` | 範囲 |
+
+日付3ペア（登録日・出庫日・入庫日）は POST_SUBMIT で開始>終了をチェックし、不正時は終了側に `admin.common.date_end_error` を付与する。
+
+### プロセスフロー
+
+1. リクエスト受信。`BaseInfo` 全件で検索フォーム・CSV登録モーダルフォームを生成。クエリ `page_count` 指定時はマスタ照合し採用値をセッションへ保存。
+2. **POST（検索実行）**: フォーム検証。不正なら `has_errors=true`・`pagination=null` で再表示（一覧は描画しない）。正常なら検索条件（`FormUtil::getViewData`）をセッション `eccube.admin.stock.move_transfer.search` に、`page_no=1` を `...page_no` に保存。
+3. **GET（`?resume=1`）**: セッションのページ番号・検索条件を復元して再submit。
+4. **GET（`page_no` 指定）**: ページ番号をセッションに保存し検索条件を復元（空ならフォーム既定値を保存）。
+5. **GET（初回）**: ページ番号=1・フォーム既定値を検索条件としてセッション保存。
+6. 復元した検索データで `getQueryBuilderBySearchData()` → `paginator->paginate($qb, $page_no, $pageCount)`。
+7. 表示中ページの在庫移動振替IDを収集し、移動点数・基準価格合計を集計して一覧・フォーム・表示件数マスタとともに画面へ返す。
+
+### 一覧からの操作と接続点（設計要件）
+
+| 操作 | 接続先 | 実装上の扱い |
+|------|--------|--------------|
+| 在庫移動CSV登録／在庫振替CSV登録 | M04-22 | 一覧上のモーダルから上記取込ルートへPOST。エラーは元画面（一覧）上部に表示、モーダルの選択内容はリセット。 |
+| 在庫移動振替CSV出力 | M04-10 | セッションの検索条件で全件出力。 |
+| 戻しリストCSV出力／PDF出力 | M04-33／M04-34 | 選択した在庫移動振替IDを `ids[]` でPOST。CSRFトークン検証後、`validateReturnListExportRequest()` で選択有無・対象妥当性を検証（移動であること・閾値対象など）。 |
+| バーコード貼替リストCSV出力 | M04-30 | 移動かつ入庫先がスマレジ在庫の場合のみ（出力ルートは別機能側。本コントローラ未実装＝実装要確認）。 |
+| 在庫移動指示作成 | 在庫移動指示一覧 | 移動タイプ＝移動・同一出庫元/入庫先店舗・ステータス出庫承認済み・移動指示ID未登録の条件を満たす移動をまとめて作成（作成処理ルートは別コントローラ。本コントローラ未実装＝実装要確認）。 |
+
+### 状態・データ更新
+
+| 対象 | 内容 |
+|------|------|
+| 主データ | 一覧・検索は**参照のみ**で業務データを更新しない。検索条件・ページ番号・表示件数をセッションに保持する。 |
+| 永続化先 | 在庫移動振替 `dtb_stock_move_transfer`（`move_transfer_type`・`move_transfer_status_id`・`move_instruction_id`・`tracking_no`・出庫元/入庫先の店舗ID・在庫区分・承認者・各日時・`registered_member_id`・`updated_member_id`）、明細 `dtb_stock_move_transfer_detail`（移動点数・基準価格合計等）。 |
+| セッションキー | `eccube.admin.stock.move_transfer.search` / `...page_no` / `...page_count`。 |
+
+### 例外処理
+
+- **検索入力不備**: 日付の開始>終了など検証エラー時はリダイレクトせず `has_errors=true`・`pagination=null` で同一画面を再表示（既存テスト `testIndexPostRejectsWhenCreateDateStartIsAfterEnd`）。
+- **CSV登録エラー**: 取込エラーは元画面（一覧）上部にエラー表示。検索項目・一覧の選択状態は維持され、CSV登録モーダルの選択内容はリセットされる（Excel要件）。
+- **戻しリスト出力の選択なし**: `ids` 未選択時は `admin.stock.move_transfer.return_list_csv_export.no_selection` を表示し、現在ページへリダイレクト。
+- **CSRF不正**: 戻しリストCSV/PDFは `isTokenValid()` を要求する。
+
+### 関連設計への接続点
+
+- 画面項目・一覧列・CSV/PDF列の詳細は、参照元Excel設計書（在庫移動振替一覧シートおよび各CSV/PDF機能）を正とする。
+- URLエンドポイント・検索条件・DBカラム・処理順序は `../ec-cube-enterprise` の `StockMoveTransferController` / `SearchStockMoveTransferType` / `DtbStockMoveTransferRepository` 実装を正とする。
+
+## リニューアル移行時の扱い
+
+- 本機能は新規実装であり、対応する現行（pf-eccube3）の同等機能は存在しない。仕様は基本設計仕様書（在庫管理機能）を正とする。
+- 永続化先は在庫移動振替（`dtb_stock_move_transfer`）であり、検索・一覧で扱うステータスは `move_transfer_status_id`、登録者は `registered_member_id`、更新者は `updated_member_id` で保持する。移動点数・基準価格合計は明細（`dtb_stock_move_transfer_detail`）の集計で算出する。
+- 一覧の並び順はExcel設計の「在庫移動振替ID降順」を正とする。現状の ec-cube-enterprise 実装は登録日（`create_date`）降順 → ID降順でありExcel要件とキーが異なるため、**実装側の是正対象**（テストはExcel期待値=ID降順で設計する）。
+
+<details>
+<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+
+```text
+在庫移動・振替検索一覧(検索・結果)
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+堀部
+作成日
+2025-08-25
+更新者
+本田
+更新日
+2025-12-23
+機能No
+M04-09
+機能名
+在庫移動振替一覧（検索・結果）
+概要
+—
+処理概要 在庫移動振替一覧（検索・結果）画面
+図形・テキストボックス内テキスト（44件）
+レイアウト図 在庫移動振替一覧（検索・結果）画面
+1-1
+1-2
+2-1
+2-2
+2-3
+2-4
+2-5
+2-6
+2-7
+2-8
+2-9
+3-1
+3-3
+3-4
+3-5
+3-7
+3-8
+3-10
+3-2
+3-6
+3-9
+4-1
+4-2
+4-3
+4-4
+4-5
+4-6
+4-7
+4-8
+5-1
+5-2
+5-3
+5-4
+5-5
+5-6
+5-7
+5-8
+5-9
+5-10
+5-11
+5-12
+5-13
+5-14
+5-15
+画像レイヤー（2枚）: 在庫移動・振替検索一覧(検索・結果) / B7 / image 1 + 在庫移動・振替検索一覧(検索・結果) / B7 / image 2
+機能仕様処理概要 在庫移動振替一覧（検索・結果）画面
+在庫一覧画面（検索・結果）概要
+・在庫移動・振替の一覧として機能する
+・在庫移動・振替についてCSVを利用してそれぞれ一括登録できる
+・選択した一覧の移動・振替について、各種CSVを出力することができる
+・選択した一覧の移動について、在庫移動指示を作成することができる
+CSVファイル登録
+・在庫移動CSV登録ボタンを押下すると、在庫移動CSV登録モーダルが表示される
+・在庫移動が登録されると、対象の在庫移動のステータスは新規登録となる
+・機能ID: M04-22の在庫移動CSV登録のモーダルを表示
+・在庫振替CSV登録ボタンを押下すると、在庫振替CSV登録モーダルが表示される
+・在庫振替が登録されると、対象の在庫振替のステータスは振替承認待ちとなる
+・機能ID: M04-22の在庫振替CSV登録のモーダルを表示
+CSVファイル登録時のエラー挙動
+・CSVファイル登録時にエラーがあり登録が行われなかった場合、一覧画面上部のエラー表示エリアにエラー内容を表示
+・検索項目および一覧の選択状態は失われない
+・機能ID: M04-22の在庫移動CSV登録および在庫振替CSV登録モーダルの選択内容はリセットされる
+検索結果の表示
+・検索ボタン押下後、検索が完了したらページを再描画し、検索結果の件数表示と、検索結果一覧を表示する
+・一覧は在庫移動振替IDを降順として表示する
+移動指示作成について
+・検索結果一覧テーブルで移動・振替をチェックした場合、チェックした移動・振替を対象に移動指示作成を行う
+・移動指示の作成条件は以下とする
+①移動タイプが移動であること
+②選択された移動の出庫元店舗がすべて同一であること（在庫区分は同一でなくてもよい）
+③選択された移動の入庫先店舗がすべて同一であること（在庫区分は同一でなくてもよい）
+④ステータスが出庫承認済みであること
+⑤移動指示IDが未登録の移動であること
+・上記の条件を満たしている場合、チェックされた移動をまとめて在庫移動指示を作成し、在庫移動指示一覧画面へ遷移する
+各種出力について
+・検索結果一覧テーブルで移動・振替をチェックした場合、チェックした移動・振替を対象に出力を行う
+・バーコード印刷用CSV出力
+・選択された移動について、機能ID: M04-30 バーコード貼替リストCSV出力の機能と同様の形式のCSV出力を行う
+※CSVレイアウトはM04-30 バーコード貼替リストCSV出力を参照
+・移動かつ入庫先がスマレジ在庫である場合のみ出力を可能とする
+・在庫移動振替CSV出力
+・機能ID: M04-22のCSVを利用
+・戻しリストCSV出力
+・機能ID: M04-33のCSVを利用
+・在庫移動である場合にのみ出力を可能とする
+・入庫先の閾値を元にCSVは作成・出力される
+・戻しリストPDF出力
+・機能ID: M04-34のPDFを利用
+・在庫移動である場合にのみ出力を可能とする
+・入庫先の閾値を元にPDFは作成・出力される
+識別IDラベル書式・制限必須最大値初期値画面部品の説明検索対象項目
+CSVファイル登録在庫移動在庫振替
+1-1在庫移動CSV登録ボタン-----
+1-2在庫振替CSV登録ボタン-----
+検索条件
+2-1在庫移動・振替ID数値---在庫移動・振替登録 編集（振替）の "識別ID1-1" 「在庫移動・振替ID」の検索に利用○○
+```
+
+</details>

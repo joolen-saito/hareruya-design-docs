@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-13（在庫分割結合登録/編集） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#1-在庫分割結合登録-編集">1. 在庫分割結合登録/編集</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
+<a class="lv3" href="#ステータス区分-MtbStockSplitJoinStatus">ステータス区分（`MtbStockSplitJoinStatus`）</a>
+<a class="lv3" href="#フォーム項目・バリデーション">フォーム項目・バリデーション</a>
+<a class="lv3" href="#在庫増減ロジック・プロセスフロー">在庫増減ロジック・プロセスフロー</a>
+<a class="lv3" href="#トランザクション・同時実行制御">トランザクション・同時実行制御</a>
+<a class="lv3" href="#分岐・遷移・例外-実メッセージキー">分岐・遷移・例外（実メッセージキー）</a>
+<a class="lv3" href="#状態・データ更新-更新系">状態・データ更新（更新系）</a>
+<a class="lv3" href="#結合テスト観点-既存テストの出典">結合テスト観点（既存テストの出典）</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/m04-13_admin_stock_stock_split_join_register_edit.md</p>
+        <h1>M04-13（在庫分割結合登録/編集）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫分割結合登録/編集</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockSplitController</code> / <code>StockJoinController</code> / <code>StockSplitRegisterAction</code> / <code>StockJoinRegisterAction</code> / <code>StockSplitApplyApprovalAction</code> / <code>StockJoinMoveToShortageEntryAction</code> / <code>StockJoinApplyApprovalAction</code> / <code>StockSplitApprovalApproveAction</code> / <code>StockSplitApprovalRejectAction</code> / <code>StockJoinApprovalApproveAction</code> / <code>StockSplitNewType</code> / <code>StockJoinNewType</code> / <code>StockSplitJoinType</code> / Entity <code>DtbStockSplitJoin</code> / <code>DtbStockSplitJoinDetail</code> / <code>DtbStockSplitJoinStatusHistory</code> / <code>MtbStockSplitJoinStatus</code>）</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化。</td></tr></tbody></table></div>
+<h2 id="1-在庫分割結合登録-編集">1. 在庫分割結合登録/編集</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>在庫検索一覧（M04-01）で選択した1件の商品在庫（<code>ProductStock</code>）を起点に、在庫を「分割」または「結合」する管理画面機能。</p>
+<ul><li>**分割**: 1件の分割元在庫を減算し、複数の分割先在庫へ振り分ける（分割元1 → 分割先複数）。</li><li>**結合**: 複数の結合元在庫を減算し、1件の結合先在庫へまとめる（結合元複数 → 結合先1）。結合元には欠品（不足点数）を登録できる。</li></ul>
+<p>分割・結合はいずれも <code>dtb_stock_split_join</code>（種別 <code>split_join_type</code>）で一元管理し、新規登録→（結合は結合元登録／欠品入力）→承認申請→承認待ち→承認（入庫済み）または却下、というステータス遷移を持つ。各操作時に在庫数・総原価を更新し、在庫変動履歴・ステータス履歴・承認リストへ記録する。</p>
+<p>本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。画面・項目の業務要件は基本設計仕様書（0202_基本設計仕様書(在庫管理機能)）を正とし、URLエンドポイント・DBカラム・在庫増減ロジック・処理順序はリニューアル先 ec-cube-enterprise 実装を正とする。</p>
+<h3 id="本書で扱うこと">本書で扱うこと</h3>
+<ul><li>分割・結合の新規登録、編集（分割先／結合元の追加・数量・削除）、承認申請、承認・却下の入口と更新仕様</li><li>分割／結合のフォーム項目・バリデーション（CSRFキー、数量チェック、店舗編集権限）</li><li>在庫増減ロジック（分割元減算／分割先加算／結合元減算／結合先加算／却下時の戻し）と総原価の再計算</li><li>トランザクション境界・悲観ロック、Session を介した一時保持（NEWステータス）とDB確定タイミング</li><li>在庫変動履歴（<code>dtb_stock_history</code>）・分割結合ステータス履歴（<code>dtb_stock_split_join_status_history</code>）・承認リスト（<code>dtb_stock_approval_list</code>）・欠品履歴（<code>dtb_stockout_history</code>）への記録</li><li>結合元・分割先CSV雛形ダウンロード／取込（明細置換）、欠品CSV出力／取込</li></ul>
+<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
+<ul><li>在庫検索一覧（M04-01）からの遷移ボタンと遷移可否のアラート判定（M04-01側を正とする）</li><li>在庫承認一覧（M04-12 系）・在庫変動履歴一覧（M04-05 系）など、本機能が出力するレコードを参照する画面の仕様</li><li>管理画面ログイン認証・権限制御そのもの（共通設計を正とする）</li><li>在庫分割結合一覧（<code>admin_stock_split_join_list</code>、<code>StockSplitJoinController</code>）の検索・表示仕様</li></ul>
+<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
+<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。<code>{productStockId}</code> は分割元／結合先となる <code>ProductStock</code> のID、<code>{id}</code> は <code>dtb_stock_split_join</code> のID。すべて管理画面ログインを要する。</p>
+<h4 id="在庫分割-StockSplitController">在庫分割（<code>StockSplitController</code>）</h4>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>ルート名 / メソッド / path</th><th>ふるまい</th></tr></thead><tbody><tr><td>分割 新規登録画面</td><td><code>admin_stock_split_new</code> / GET / <code>/product/stock/{productStockId}/split/new</code></td><td>分割元在庫の情報と分割数入力フォーム（<code>StockSplitNewType</code>）を表示。</td></tr><tr><td>分割 登録処理</td><td><code>admin_stock_split_register</code> / POST / <code>/product/stock/{productStockId}/split/register</code></td><td>分割数で分割元在庫を減算し <code>DtbStockSplitJoin</code>（種別=分割, ステータス=新規登録）を作成。成功時は編集画面へ。</td></tr><tr><td>分割 編集画面／保存</td><td><code>admin_stock_split_edit</code> / GET,POST / <code>/product/stock/split/{id}/edit</code></td><td>分割先の追加・数量・メモを編集。POSTはメモをDB保存、分割先数量はSession保持。結合タイプは結合編集へリダイレクト。</td></tr><tr><td>分割先 追加</td><td><code>admin_stock_split_add_destination</code> / POST / <code>/product/stock/{productStockId}/split/destination/add</code></td><td>分割先 <code>ProductStock</code> をSessionへ追加（数量0で初期化）。</td></tr><tr><td>分割先 数量更新（Ajax）</td><td><code>admin_stock_split_update_destination_quantity</code> / POST / <code>/product/stock/split/{id}/destination/{destinationId}/update-quantity</code></td><td>NEWステータス時、分割先1行の数量をSession更新。</td></tr><tr><td>分割先 在庫区分更新（Ajax）</td><td><code>admin_stock_split_update_destination_stock_location</code> / POST</td><td>分割先の在庫区分（EC-CUBE/スマレジ）をDB更新。</td></tr><tr><td>分割先 削除</td><td><code>admin_stock_split_delete_destination</code> / POST / <code>/product/stock/split/{id}/destination/{destinationId}/delete</code></td><td>NEWステータス時、分割先をSessionから削除（在庫操作なし）。</td></tr><tr><td>分割 承認申請</td><td><code>admin_stock_split_apply_approval</code> / POST / <code>/product/stock/{productStockId}/split/apply-approval</code></td><td>Sessionの分割先を <code>DtbStockSplitJoinDetail</code> としてDB登録し、ステータスを「分割承認待ち」へ。承認リスト作成・通知メール送信。</td></tr><tr><td>分割 承認画面／承認・却下</td><td><code>admin_stock_split_approval</code> / GET,POST / <code>/product/stock/split/{id}/approval</code></td><td>POSTで `approval_mode=approve</td></tr><tr><td>登録メモ保存</td><td><code>admin_stock_split_update_registration_memo</code> / POST / <code>/product/stock/split/{id}/registration-memo</code></td><td>全ステータスでメモのみ保存。</td></tr><tr><td>分割先CSV雛形</td><td><code>admin_stock_split_new_destination_csv_template</code> / GET</td><td>「商品コード, 分割先在庫数」2列のテンプレートCSV。</td></tr><tr><td>分割先CSV置換取込（Ajax）</td><td><code>admin_stock_split_edit_destination_csv_upload</code> / POST / <code>/product/stock/split/{id}/edit-destination-csv-upload</code></td><td>NEWステータス時、分割先をCSVで全置換（Sessionへ）。</td></tr><tr><td>分割先数量更新（旧/停止）</td><td><code>admin_stock_split_update_destination_stock</code> / POST</td><td>廃止。常に400を返す（<code>@deprecated</code>）。</td></tr></tbody></table></div>
+<h4 id="在庫結合-StockJoinController">在庫結合（<code>StockJoinController</code>）</h4>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>ルート名 / メソッド / path</th><th>ふるまい</th></tr></thead><tbody><tr><td>結合 新規登録画面</td><td><code>admin_stock_join_new</code> / GET / <code>/product/stock/{productStockId}/join/new</code></td><td>結合先在庫の情報と結合点数入力フォーム（<code>StockJoinNewType</code>）を表示。Sessionの結合元候補も復元。</td></tr><tr><td>結合 登録処理</td><td><code>admin_stock_join_register</code> / POST / <code>/product/stock/{productStockId}/join/register</code></td><td>結合点数（<code>destination_stock</code>）で <code>DtbStockSplitJoin</code>（種別=結合, ステータス=新規登録）を作成。この時点では在庫操作なし。成功時は編集画面へ。</td></tr><tr><td>結合 編集画面／保存</td><td><code>admin_stock_join_edit</code> / GET,POST / <code>/product/stock/join/{id}/edit</code></td><td>結合元の追加・数量・メモを編集。POSTはメモをDB保存、結合元数量はSession保持。</td></tr><tr><td>結合元 追加</td><td><code>admin_stock_join_add_source</code> / POST / <code>/product/stock/{productStockId}/join/add-source</code></td><td>結合元 <code>ProductStock</code> と数量をSessionへ追加。</td></tr><tr><td>結合元 数量更新（Ajax）</td><td><code>admin_stock_join_update_source_quantity</code> / POST / <code>/product/stock/join/{id}/source/{sourceId}/update-quantity</code></td><td>NEWステータス時、結合元1行の数量をSession更新。</td></tr><tr><td>結合元 在庫区分更新（Ajax）</td><td><code>admin_stock_join_update_source_stock_location</code> / POST</td><td>NEWはSession付け替え、それ以外はDB更新。</td></tr><tr><td>結合元 削除</td><td><code>admin_stock_join_delete_source</code> / POST / <code>/product/stock/{productStockId}/join/delete-source/{sourceId}</code></td><td>NEWステータス時、結合元をSessionから削除。</td></tr><tr><td>欠品入力へ遷移</td><td><code>admin_stock_join_move_to_shortage_entry</code> / POST / <code>/product/stock/{productStockId}/join/move-to-shortage-entry</code></td><td>Sessionの結合元を <code>DtbStockSplitJoinDetail</code> としてDB登録し結合元在庫を減算、ステータスを「結合元登録」へ。</td></tr><tr><td>欠品入力画面／保存</td><td><code>admin_stock_join_shortage_entry</code> / GET,POST / <code>/product/stock/join/{id}/shortage-entry</code></td><td>「結合元登録」ステータス専用。各結合元の欠品点数を入力。</td></tr><tr><td>欠品数量更新（Ajax）</td><td><code>admin_stock_join_update_shortage</code> / POST</td><td>欠品点数をSession保持（DB確定は承認申請時）。</td></tr><tr><td>結合 承認申請</td><td><code>admin_stock_join_apply_approval</code> / POST / <code>/product/stock/{productStockId}/join/apply-approval</code></td><td>欠品を確定（欠品調整在庫処理）し、ステータスを「結合承認待ち」へ。承認リスト作成。</td></tr><tr><td>結合 承認画面／承認・却下</td><td><code>admin_stock_join_approval</code> / GET,POST / <code>/product/stock/join/{id}/approval</code></td><td>POSTで承認（結合先加算＋仕入価格）または却下を実行。</td></tr><tr><td>登録メモ保存</td><td><code>admin_stock_join_update_registration_memo</code> / POST / <code>/product/stock/join/{id}/registration-memo</code></td><td>全ステータスでメモのみ保存。</td></tr><tr><td>結合元CSV雛形</td><td><code>admin_stock_join_new_source_csv_template</code> / GET</td><td>「商品コード, 結合元数量」2列のテンプレートCSV。</td></tr><tr><td>結合元CSV取込（新規・Ajax）</td><td><code>admin_stock_join_new_source_csv_upload</code> / POST / <code>/product/stock/{productStockId}/join/new-source-csv-upload</code></td><td>新規画面用。DB保存せず行データをJSONで返す。</td></tr><tr><td>結合元CSV置換取込（編集・Ajax）</td><td><code>admin_stock_join_edit_source_csv_upload</code> / POST / <code>/product/stock/join/{id}/edit-source-csv-upload</code></td><td>編集画面用。結合元明細を全置換（Sessionへ）。</td></tr><tr><td>欠品CSV出力</td><td><code>admin_stock_join_shortage_csv_export</code> / GET / <code>/product/stock/join/{id}/shortage-csv-export</code></td><td>「結合元登録」ステータス時に欠品入力用CSVを出力。</td></tr><tr><td>欠品CSV取込（Ajax）</td><td><code>admin_stock_join_shortage_csv_import</code> / POST / <code>/product/stock/join/{id}/shortage-csv-import</code></td><td>「結合元登録」ステータス時に欠品点数をSessionへ取込。</td></tr></tbody></table></div>
+<h3 id="ステータス区分-MtbStockSplitJoinStatus">ステータス区分（<code>MtbStockSplitJoinStatus</code>）</h3>
+<div class="table-wrap"><table><thead><tr><th>ID</th><th>定数</th><th>名称</th><th>主な用途</th></tr></thead><tbody><tr><td>1</td><td><code>NEW</code></td><td>新規登録</td><td>分割登録直後／結合登録直後。分割先・結合元はSessionで一時保持。</td></tr><tr><td>2</td><td><code>JOIN_SOURCE_REGISTERED</code></td><td>結合元登録</td><td>結合のみ。結合元明細をDB確定し在庫減算済み。欠品入力可。</td></tr><tr><td>3</td><td><code>SPLIT_APPROVAL_WAITING</code></td><td>分割承認待ち</td><td>分割の承認申請後。</td></tr><tr><td>4</td><td><code>JOIN_APPROVAL_WAITING</code></td><td>結合承認待ち</td><td>結合の承認申請後。</td></tr><tr><td>5</td><td><code>RECEIPT_COMPLETED</code></td><td>入庫済み</td><td>承認完了（分割先／結合先へ加算済み）。</td></tr><tr><td>6</td><td><code>REJECTED</code></td><td>却下</td><td>承認却下（分割は分割元へ戻し済み）。</td></tr></tbody></table></div>
+<h3 id="フォーム項目・バリデーション">フォーム項目・バリデーション</h3>
+<h4 id="分割-新規登録-StockSplitNewType-admin-stock-split-register">分割 新規登録（<code>StockSplitNewType</code> / <code>admin_stock_split_register</code>）</h4>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>フォームキー／パラメータ</th><th>必須</th><th>検証</th></tr></thead><tbody><tr><td>分割メモ</td><td><code>admin_stock_split_new[split_join_memo]</code>（TextareaType）</td><td>任意</td><td>—</td></tr><tr><td>分割数</td><td><code>split_quantity</code></td><td>必須</td><td>1以上（<code>admin.stock.split.quantity_min</code>）かつ分割元在庫数以下（<code>admin.stock.split.quantity_exceeds_stock</code>）。</td></tr><tr><td>CSRF</td><td><code>_token</code>（トークンID <code>stock_split_register</code>）</td><td>必須</td><td>不正時 <code>admin.common.save_error</code>。</td></tr><tr><td>店舗編集権限</td><td>（ログインメンバー）</td><td>—</td><td><code>Member::isEditableShop(BaseInfo)</code> が false なら <code>admin.stock.split.not_editable_store</code>。</td></tr></tbody></table></div>
+<h4 id="結合-新規登録-StockJoinNewType-admin-stock-join-register">結合 新規登録（<code>StockJoinNewType</code> / <code>admin_stock_join_register</code>）</h4>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>フォームキー／パラメータ</th><th>必須</th><th>検証</th></tr></thead><tbody><tr><td>結合メモ</td><td><code>split_join_memo</code>（TextareaType。<code>StockJoinNewType</code> submit経由でも検証）</td><td>任意</td><td>—</td></tr><tr><td>結合点数</td><td><code>destination_stock</code></td><td>必須</td><td>0超（<code>admin.stock.join.destination_stock_min</code>）。整数化（<code>filter_var</code>）。</td></tr><tr><td>CSRF</td><td><code>_token</code>（トークンID <code>stock_join_register</code>）</td><td>必須</td><td>不正時 <code>admin.common.csrf_invalid</code>。</td></tr><tr><td>店舗編集権限</td><td>（ログインメンバー）</td><td>—</td><td>false なら <code>admin.stock.join.not_editable_store</code>。</td></tr></tbody></table></div>
+<h4 id="編集・承認共通-StockSplitJoinType">編集・承認共通（<code>StockSplitJoinType</code>）</h4>
+<p>分割編集・結合編集・欠品入力・承認申請で共通利用。項目は分割結合メモ <code>split_join_memo</code>（TextareaType）と承認通知先メンバー <code>approval_notification_target_members</code>（ChoiceType, 複数選択）。通知先候補は <code>MemberRepository::getApprovalAuthorityMembers(BaseInfo)</code>（当該店舗の承認権限保有メンバー）。承認申請成功時、選択された通知先のうち承認権限を持つメンバーへ承認依頼メール（<code>MailService::sendStockApprovalAlertMail</code>）を送信する。</p>
+<h4 id="承認・却下-StockSplitApprovalSubmitAction-ほか">承認・却下（<code>StockSplitApprovalSubmitAction</code> ほか）</h4>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>パラメータ</th><th>検証</th></tr></thead><tbody><tr><td>承認モード</td><td><code>approval_mode</code></td><td><code>approve</code> / <code>reject</code> 以外は <code>admin.common.save_error</code>。</td></tr><tr><td>却下メモ</td><td><code>rejected_memo</code></td><td>却下時は必須（全角/NBSP正規化後に空なら <code>admin.stock.move.rejection_reason_required</code>）。</td></tr><tr><td>仕入価格（結合承認）</td><td><code>purchase_price</code></td><td>数字以外を除去。結合先の総原価加算に使用。</td></tr><tr><td>CSRF</td><td><code>_token</code>（トークンID <code>authenticate</code>）</td><td>不正時 <code>admin.common.csrf_invalid</code>。</td></tr><tr><td>ステータス</td><td>—</td><td>分割は <code>SPLIT_APPROVAL_WAITING</code>、結合は <code>JOIN_APPROVAL_WAITING</code> 以外なら不整合エラー。</td></tr></tbody></table></div>
+<h3 id="在庫増減ロジック・プロセスフロー">在庫増減ロジック・プロセスフロー</h3>
+<p>在庫数・総原価・原価単価の更新は <code>ProductStockEntityManager::save()</code>（<code>dtb_product_stock</code> と <code>dtb_product_class.stock</code> を更新）を経由し、在庫変動履歴は <code>StockHistoryEntityManager::save()</code>（<code>dtb_stock_history</code>）で記録する。総原価の出庫計算は <code>ProductStock::getMovementTotalCost()</code>、原価単価は「総原価 ÷ 在庫数」で再計算する。</p>
+<h4 id="1-分割-登録-StockSplitRegisterAction">1. 分割 登録（<code>StockSplitRegisterAction</code>）</h4>
+<p>基本設計4-4の処理順（在庫減算→在庫変動履歴→ステータス履歴→在庫分割情報）に対応。実装は単一トランザクション（<code>wrapInTransaction</code>）で分割元 <code>ProductStock</code> を <code>PESSIMISTIC_WRITE</code> ロック・<code>refresh</code> 後に以下を実行する。</p>
+<ol><li>在庫不足チェック: 分割数 &gt; 現在庫なら中断し <code>admin.stock.split.quantity_exceeds_stock</code>（在庫操作なし＝ロールバック）。</li><li>**①在庫減算**: 新在庫 = <code>max(0, 現在庫 - 分割数)</code>、新総原価 = 現総原価 - 出庫総原価、原価単価を再計算して <code>ProductStock</code> を更新。</li><li>**④在庫分割情報登録**: <code>DtbStockSplitJoin</code>（種別=分割, ステータス=新規登録）を作成。減算前の在庫数・総原価・原価単価・基準価格をスナップショットとして保持し、<code>outbound_total_cost</code> に出庫総原価を記録。在庫変動履歴が <code>history_source_id</code> としてIDを参照するため先に flush。</li><li>**②在庫変動履歴登録**: <code>SPLIT_OUTBOUND</code> 種別、履歴ソース <code>STOCK_SPLIT_EDIT</code>、変動数 <code>-分割数</code>、減算前後の在庫・原価を記録。</li><li>**③ステータス履歴登録**: <code>dtb_stock_split_join_status_history</code> に新規登録ステータスを記録。</li></ol>
+<p>成功時 <code>admin.stock.split.register_complete</code> を表示し編集画面へ。分割先はこの時点では未登録（編集画面でSession追加）。</p>
+<h4 id="2-分割-編集-承認申請-StockSplitApplyApprovalAction">2. 分割 編集～承認申請（<code>StockSplitApplyApprovalAction</code>）</h4>
+<p>編集画面で分割先（<code>ProductStock</code>）と各数量をSession（キー <code>stock_split_edit_destinations_{id}</code>）に保持。承認申請で以下を実行する。</p>
+<ol><li>Sessionの分割先から <code>DtbStockSplitJoinDetail</code> を作成（<code>cost_price</code>=分割先原価単価, <code>total_cost</code>=原価単価×数量, <code>stock</code>=分割先在庫スナップショット）し flush。</li><li>コミット規則検証: 分割数1以上、分割先1件以上（<code>admin.stock.split.destination_required</code>）、分割先合計1以上（<code>admin.stock.split.destination_total_zero</code>）。</li><li>ステータスを「分割承認待ち」へ変更、<code>move_to_approval_at</code>／<code>move_to_approval_member</code> を記録、ステータス履歴を追加。</li><li>承認リスト <code>DtbStockApprovalList</code>（未承認）を1行作成（対象在庫数=分割先件数+1、変動数=分割先合計、移動総原価=分割元原価単価×分割数）。</li></ol>
+<p>却下済み（<code>REJECTED</code>）からの承認申請は <code>admin.stock.split.apply_approval_invalid_status</code>。</p>
+<h4 id="3-分割-承認-StockSplitApprovalApproveAction-却下-StockSplitApprovalRejectAction">3. 分割 承認（<code>StockSplitApprovalApproveAction</code>）／却下（<code>StockSplitApprovalRejectAction</code>）</h4>
+<ul><li>**承認**: ステータス <code>SPLIT_APPROVAL_WAITING</code> を <code>PESSIMISTIC_WRITE</code> ロック・<code>refresh</code>。各分割先 <code>ProductStock</code> をロックし、移動総原価（分割元総原価 × 分割数 / 分割元在庫）を、分割先の買取金額×個数の比で按分して加算。分割先在庫を <code>+数量</code>、総原価加算、原価単価再計算し <code>SPLIT_INBOUND</code> 履歴を記録。ステータスを「入庫済み」、承認リストを承認済みに更新。既に入庫済みなら冪等成功、その他ステータスは <code>admin.stock.split.approval_status_error</code>。</li><li>**却下**: ステータス <code>SPLIT_APPROVAL_WAITING</code> 前提。分割元 <code>ProductStock</code> をロックし、分割登録時に減算した在庫（<code>+分割数</code>）と原価（原価単価×分割数）を戻し、<code>SPLIT_REJECT</code> 履歴を記録。ステータスを「却下」、却下メモを保存、承認リストを却下に更新。</li></ul>
+<h4 id="4-結合-登録-StockJoinRegisterAction">4. 結合 登録（<code>StockJoinRegisterAction</code>）</h4>
+<p>結合点数（<code>destination_stock</code>&gt;0）で <code>DtbStockSplitJoin</code>（種別=結合, ステータス=新規登録）を作成。<code>stock</code>／<code>split_join_quantity</code> に結合点数、原価単価・総原価は結合先 <code>ProductStock</code> の現在値を記録。ステータス履歴を追加。**この時点では在庫操作を行わない**（結合先への加算は承認時）。成功時 <code>admin.stock.join.register_complete</code>。</p>
+<h4 id="5-結合-編集-欠品入力遷移-StockJoinMoveToShortageEntryAction">5. 結合 編集～欠品入力遷移（<code>StockJoinMoveToShortageEntryAction</code>）</h4>
+<p>編集画面で結合元と数量をSession（キー <code>stock_join_edit_sources_{id}</code>）に保持。欠品入力へ遷移する操作で、NEWステータスなら単一トランザクションで以下を実行する。</p>
+<ol><li>検証: 結合元1件以上（<code>admin.stock.join.require_at_least_one_source</code>）、計画結合数1以上（<code>admin.stock.join.apply_approval_zero_quantity</code>）。</li><li>各結合元 <code>ProductStock</code> をロック・<code>refresh</code>。数量は <code>min(入力数量, 在庫数)</code> に丸め、0以下はスキップ。</li><li><code>DtbStockSplitJoinDetail</code> を作成（基準価格・原価単価・総原価・在庫スナップショット・結合数量）。</li><li>結合元在庫を <code>-数量</code>、総原価減算、原価単価再計算し <code>JOIN_OUTBOUND</code> 履歴を記録。</li><li>ヘッダ（<code>DtbStockSplitJoin</code>）の派生原価を <code>StockJoinDetailDerivedHeaderCostApplier</code> で再計算。</li><li>ステータスを「結合元登録」へ変更しステータス履歴を追加。</li></ol>
+<p>既に「結合元登録」ステータスの場合はDB明細を検証のみして遷移する。NEW/結合元登録以外は <code>admin.stock.join.move_to_shortage_only_from_registered</code>。</p>
+<h4 id="6-結合-欠品入力-承認申請-StockJoinShortageEntryAction-StockJoinApplyApprovalAction">6. 結合 欠品入力～承認申請（<code>StockJoinShortageEntryAction</code> / <code>StockJoinApplyApprovalAction</code>）</h4>
+<ul><li>欠品入力画面は「結合元登録」ステータス専用（不一致は <code>admin.stock.join.shortage_entry_invalid_status</code>）。結合数0の明細は表示対象外。欠品点数はSession（キー <code>eccube.admin.stock.join.shortage.{id}</code>）に保持。</li><li>承認申請: 「結合元登録」前提。各結合元の欠品点数を確定し、有効結合数（結合量-欠品量）の合計が1未満なら <code>admin.stock.join.apply_approval_zero_quantity</code>。欠品&gt;0の明細は「案B方式」で在庫調整する。</li><li>**欠品加算[<code>JOIN_SHORTAGE_ADD</code>]**: <code>JOIN_OUTBOUND</code> で出庫した全量を結合元へ戻す。</li><li>**欠品減算[<code>JOIN_SHORTAGE_SUBTRACT</code>]**: 有効数量（結合量-欠品量）のみを再減算する。</li><li>欠品分は <code>DtbStockoutHistory</code>（欠品履歴）を作成し、<code>DtbStockSplitJoinDetail.missing_quantity</code>／<code>missing_member_id</code> を更新。</li><li>ステータスを「結合承認待ち」へ、承認リスト <code>DtbStockApprovalList</code>（未承認, 種別 <code>JOIN_INBOUND</code>）を作成。</li></ul>
+<h4 id="7-結合-承認-StockJoinApprovalApproveAction">7. 結合 承認（<code>StockJoinApprovalApproveAction</code>）</h4>
+<p>ステータス <code>JOIN_APPROVAL_WAITING</code> を <code>PESSIMISTIC_WRITE</code> ロック・<code>refresh</code>。結合先 <code>ProductStock</code>（<code>DtbStockSplitJoin.product_stock_id</code>）をロックし、在庫を <code>+結合数量</code>、総原価に仕入価格（<code>purchase_price</code>）を加算、原価単価を再計算し <code>JOIN_INBOUND</code> 履歴を記録。ステータスを「入庫済み」へ。結合数量が0以下なら例外（<code>admin.stock.join.approval_no_inbound_quantity</code>）。却下は分割と同様に承認画面POSTから処理する。</p>
+<h3 id="トランザクション・同時実行制御">トランザクション・同時実行制御</h3>
+<ul><li>在庫を増減する各 Action（分割登録／分割承認・却下／結合欠品入力遷移／結合承認申請／結合承認）は、対象 <code>ProductStock</code> および <code>DtbStockSplitJoin</code> を <code>LockMode::PESSIMISTIC_WRITE</code> でロックし <code>refresh()</code> で最新化したうえで単一トランザクション内で在庫・履歴・ステータスを更新する。例外時は <code>rollback()</code>。</li><li>NEWステータス中の分割先・結合元・欠品の入力値は **DBではなくSession** に保持し、承認申請・欠品入力遷移のタイミングで一括してDB確定する。登録メモのみ各ステータスでDB即時保存可能。</li><li>結合承認申請で同一結合元 <code>ProductStock</code> を複数明細が参照する場合に備え、明細ごとに <code>flush()</code> してDB値を確定する。</li></ul>
+<h3 id="分岐・遷移・例外-実メッセージキー">分岐・遷移・例外（実メッセージキー）</h3>
+<div class="table-wrap"><table><thead><tr><th>状況</th><th>実装の扱い</th></tr></thead><tbody><tr><td>CSRFトークン不正</td><td>分割登録 <code>admin.common.save_error</code>、結合登録・承認系 <code>admin.common.csrf_invalid</code>。元画面へリダイレクト。</td></tr><tr><td>店舗編集権限なし</td><td>分割 <code>admin.stock.split.not_editable_store</code>／結合 <code>admin.stock.join.not_editable_store</code>。</td></tr><tr><td>分割数 &lt; 1</td><td><code>admin.stock.split.quantity_min</code>。</td></tr><tr><td>分割数 &gt; 在庫</td><td><code>admin.stock.split.quantity_exceeds_stock</code>（トランザクション中断）。</td></tr><tr><td>結合点数 ≤ 0</td><td><code>admin.stock.join.destination_stock_min</code>。</td></tr><tr><td>分割先未登録／合計0</td><td><code>admin.stock.split.destination_required</code> / <code>admin.stock.split.destination_total_zero</code>。</td></tr><tr><td>分割先・結合元の重複追加</td><td><code>admin.stock.split_join.destination_already_exists</code>。</td></tr><tr><td>対象 <code>DtbStockSplitJoin</code> が見つからない／種別不一致</td><td><code>admin.stock.split_join.not_found</code> / <code>admin.stock.join.source_not_found</code>。</td></tr><tr><td>種別取り違え（分割IDで結合画面など）</td><td>対応する編集画面（<code>admin_stock_split_edit</code> / <code>admin_stock_join_edit</code>）へリダイレクト。</td></tr><tr><td>編集対象が承認待ちステータス</td><td>編集POSTは保存せず承認画面（<code>admin_stock_split_approval</code> / <code>admin_stock_join_approval</code>）へリダイレクト。</td></tr><tr><td>承認モード不正</td><td><code>admin.common.save_error</code>。</td></tr><tr><td>却下メモ未入力</td><td><code>admin.stock.move.rejection_reason_required</code>。</td></tr><tr><td>承認ステータス不整合</td><td>分割 <code>admin.stock.split.approval_status_error</code> / <code>admin.stock.split.approval_invalid_status</code>、結合 <code>admin.stock.join.apply_approval_invalid_status</code> / <code>admin.stock.join.shortage_entry_invalid_status</code>。</td></tr><tr><td>メモ専用エンドポイントを別種別で呼出</td><td><code>createNotFoundException()</code>（404）。</td></tr><tr><td>マスタ未整備（ステータス／変動種別／履歴ソース欠落）</td><td><code>\LogicException</code>（<code>admin.stock.join.status_not_found</code> 等）。</td></tr><tr><td>CSV取込時のCSRF/ファイル不正・ステータス不可</td><td>JSONで <code>ok=false</code> とエラーメッセージ（例 <code>admin.stock.split_join.already_applied</code>、<code>admin.stock.join.receipt_completed_locked</code>）。</td></tr></tbody></table></div>
+<p>成功時の主なメッセージキー: <code>admin.stock.split.register_complete</code>、<code>admin.stock.split.apply_approval_success</code>、<code>admin.stock.split.approval_approve_complete</code>、<code>admin.stock.move.reject_complete</code>、<code>admin.stock.join.register_complete</code>、<code>admin.stock.join.moved_to_shortage_entry</code>、<code>admin.stock.join.apply_approval_success</code>、<code>admin.stock.join.approval_approve_complete</code>、共通 <code>admin.common.save_complete</code> / <code>admin.common.delete_complete</code>。</p>
+<h3 id="状態・データ更新-更新系">状態・データ更新（更新系）</h3>
+<p>本機能は**更新系**であり、以下の実Entity／テーブルを更新する。</p>
+<div class="table-wrap"><table><thead><tr><th>対象テーブル</th><th>Entity</th><th>用途・主な列</th></tr></thead><tbody><tr><td><code>dtb_stock_split_join</code></td><td><code>DtbStockSplitJoin</code></td><td>分割・結合の基本情報。<code>split_join_type</code>（1=分割/2=結合）、<code>stock_split_join_status_id</code>、<code>product_stock_id</code>（分割元/結合先）、<code>standard_price</code>、<code>unit_cost_price</code>、<code>total_cost</code>、<code>stock</code>、<code>split_join_quantity</code>、<code>split_join_memo</code>、<code>outbound_total_cost</code>、<code>move_to_approval_member_id</code>/<code>move_to_approval_at</code>、<code>rejected_memo</code>、登録者/更新者/登録日/更新日。</td></tr><tr><td><code>dtb_stock_split_join_detail</code></td><td><code>DtbStockSplitJoinDetail</code></td><td>分割先／結合元の明細。<code>subject_product_stock_id</code>、<code>standard_price</code>、<code>cost_price</code>、<code>total_cost</code>、<code>stock</code>、<code>split_join_quantity</code>、**欠品点数 <code>missing_quantity</code>**、**欠品登録者 <code>missing_member_id</code>**。</td></tr><tr><td><code>dtb_stock_split_join_status_history</code></td><td><code>DtbStockSplitJoinStatusHistory</code></td><td>ステータス遷移履歴。<code>stock_split_join_id</code>、<code>stock_split_join_status_id</code>、<code>update_member_id</code>、<code>update_date</code>。</td></tr><tr><td><code>dtb_product_stock</code> / <code>dtb_product_class</code></td><td><code>ProductStock</code> / <code>ProductClass</code></td><td>在庫数 <code>stock</code>・総原価 <code>total_cost</code> を <code>ProductStockEntityManager::save()</code> で更新。</td></tr><tr><td><code>dtb_stock_history</code></td><td><code>DtbStockHistory</code></td><td>在庫変動履歴。変動種別 <code>SPLIT_OUTBOUND</code> / <code>SPLIT_INBOUND</code> / <code>SPLIT_REJECT</code> / <code>JOIN_OUTBOUND</code> / <code>JOIN_INBOUND</code> / <code>JOIN_SHORTAGE_ADD</code> / <code>JOIN_SHORTAGE_SUBTRACT</code>、履歴ソース <code>STOCK_SPLIT_EDIT</code> / <code>STOCK_JOIN_EDIT</code>、<code>history_source_id</code>=<code>DtbStockSplitJoin.id</code>。</td></tr><tr><td><code>dtb_stock_approval_list</code></td><td><code>DtbStockApprovalList</code></td><td>承認申請時に未承認で作成、承認・却下時に状態更新。</td></tr><tr><td><code>dtb_stockout_history</code></td><td><code>DtbStockoutHistory</code></td><td>結合の欠品確定時に欠品点数を記録。</td></tr></tbody></table></div>
+<h3 id="結合テスト観点-既存テストの出典">結合テスト観点（既存テストの出典）</h3>
+<p>既存の <code>tests/Eccube/Tests/Web/Admin/Stock/StockSplitControllerTest.php</code> / <code>StockJoinControllerTest.php</code> がエンドポイントごとの挙動を網羅する。</p>
+<ul><li>分割: 新規GET（既存分割あり/なし）、登録のCSRF不正・成功・在庫不足エラー・権限なし、編集GET（分割/結合種別）・POST成功・承認待ち時リダイレクト・不正フォーム、承認申請のCSRF不正・成功・joinId有無別エラー、承認画面の承認成功・却下（メモ空/成功/例外）・不明モード、分割先の追加（CSRF/不正ID/未存在/ステータス不正/重複/成功）・削除・CSV雛形・CSV取込。</li><li>結合: 新規200、登録成功・CSRF不正・LogicException・権限なし、編集GET/POST・承認待ち時リダイレクト、結合元の追加/削除、欠品入力遷移（成功/検証例外）、登録メモ保存（成功/承認へ戻り/例外）、欠品入力GET・ステータス不正、欠品数量更新、承認申請の対象なし、結合元CSV雛形・取込（新規/編集）、結合元数量更新（Ajax/非Ajax/ステータス別）、在庫区分更新（非Ajax/LogicException/Throwable）。</li></ul>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>在庫検索一覧（M04-01）の「在庫分割登録」「在庫結合登録」ボタンが本機能の新規登録画面（<code>admin_stock_split_new</code> / <code>admin_stock_join_new</code>）への入口。遷移可否のアラート（複数店舗選択時など）はM04-01側の要件。</li><li>承認申請で作成する <code>DtbStockApprovalList</code> は在庫承認関連画面（<code>StockApprovalController</code> / <code>StockApprovalListController</code>）の対象。</li><li>在庫変動履歴（<code>dtb_stock_history</code>）は在庫変動履歴一覧（M04-05系）から参照される。</li><li>画面項目・CSV列・帳票レイアウトの詳細は参照元Excel設計書の該当シートを正とする。</li></ul>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>本機能は新規実装であり、現行（pf-eccube3）に在庫分割結合の相当機能は無い。移行先 ec-cube-enterprise の実装を確認値とし、移行先スキーマを記録する。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>移行先（ec-cube-enterprise）の扱い</th></tr></thead><tbody><tr><td>在庫分割結合の基本情報</td><td><code>dtb_stock_split_join</code> に保持（<code>split_join_type</code> で分割/結合を区別、登録日 <code>create_date</code> 等）。</td></tr><tr><td>分割先・結合元などの明細</td><td><code>dtb_stock_split_join_detail</code> に保持。欠品点数は <code>missing_quantity</code>、欠品登録者は <code>missing_member_id</code>。</td></tr><tr><td>ステータス履歴</td><td><code>dtb_stock_split_join_status_history</code> に記録する。</td></tr><tr><td>ステータス区分</td><td>マスタ <code>mtb_stock_split_join_status</code>（新規登録1/結合元登録2/分割承認待ち3/結合承認待ち4/入庫済み5/却下6）。</td></tr><tr><td>欠品の列名</td><td>基本設計の「欠品」は移行先で <code>missing_quantity</code> / <code>missing_member_id</code> として実装する（旧称 <code>shortage_quantity</code> / <code>source_stock</code> 等は Entity の互換メソッドで読み替え）。</td></tr><tr><td>在庫・原価の更新先</td><td><code>dtb_product_stock.stock</code> / <code>total_cost</code> と <code>dtb_product_class.stock</code>、在庫変動履歴 <code>dtb_stock_history</code>。</td></tr></tbody></table></div>
+<p>上記以外で基本設計に記載があり ec-cube-enterprise 実装で確認しきれない列は、推測でスキーマ化せず「ec-cube-enterprise 実装で要確認」とする。</p>
+<details>
+<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+<pre><code class="language-text">在庫分割結合登録編集（分割）
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+佐藤
+作成日
+2025-08-25
+更新者
+石川
+更新日
+2026-02-06
+機能No
+M04-13
+機能名
+在庫分割結合登録編集
+概要
+在庫分割結合の詳細、編集画面
+処理概要
+図形・テキストボックス内テキスト（70件）
+レイアウト図 新規登録
+1-1
+1-2
+1-3
+1-4
+1-5
+1-6
+1-7
+1-8
+1-9
+1-10
+2-1
+2-2
+2-3
+2-4
+2-5
+2-6
+2-7
+2-8
+2-9
+2-10
+4-1
+4-2
+3-1
+1-11
+在庫分割結合登録編集（分割） / B7 / image 6
+機能仕様処理概要
+1. 初期登録画面概要
+・在庫検索一覧画面から任意の商品在庫を1つ選択し、在庫検索一覧画面の「在庫分割登録」ボタンを押下すると、選択商品在庫を分割対象とし、この画面（在庫分割登録の初期画面）へ遷移する
+・選択した商品に対して、分割点数を入力し登録を行う
+・登録後、ステータスは新規登録となり、分割対象の商品の在庫が分割点数分減る
+2. 在庫分割登録ステータス遷移
+入庫完了
+在庫一覧から分割登録を押下し遷移
+新規登録
+分割対象の商品在庫を減らす
+分割先商品
+登録
+承認申請
+分割承認待ち
+承認
+却下
+入庫済み
+却下
+分割先の商品在庫を増やす
+分割元の商品在庫を戻す
+画面遷移図をExcel図形座標で再構成（画面 8件 / 遷移 7件 / 元コネクタ 7件）
+遷移一覧（7件）
+遷移元遷移先
+在庫一覧から分割登録を押下し遷移新規登録
+新規登録分割先商品
+登録
+承認申請
+分割先商品
+登録
+承認申請分割承認待ち
+分割承認待ち承認
+承認入庫済み
+分割承認待ち却下
+却下却下
+接続関係整理図
+分割先商品
+登録
+承認申請
+在庫一覧から分割登録を押下し遷移
+承認
+新規登録
+分割承認待ち
+入庫済み
+却下
+3. 表示内容
+3-1.在庫一覧にて選択した商品情報・在庫情報を表示 ※画面部品一覧にて詳細記載
+4.分割元商品登録処理
+4-1.登録時に入力値チェックを行う
+4-2.入力値チェックについては画面部品一覧表の必須・最大値・画面部品の説明に記載されている条件に従いエラーとする
+必須：必須列に”○”がある場合、項目が未入力の場合エラー
+最大値：入力値が最大値を超える場合エラー
+画面部品の説明にあるチェック条件：チェック条件該当する場合エラー
+4-3.入力チェックの結果エラーがなければ在庫分割情報と在庫変動履歴、分割ステータス履歴の登録処理および分割元在庫の減算処理を行う
+4-4.処理順は、在庫減算処理→在庫変動履歴登録→分割ステータス履歴登録→在庫分割情報の順で処理を行う
+4-5.在庫減算するため下記の処理を行う
+4-5-1.在庫数の計算を行い分割数量分減算し登録する
+※計算式は、「現在の在庫数-分割数」とする
+4-5-2.在庫数を減算した後の在庫の総原価を計算し登録する
+※計算式は「別添資料_在庫変動時の履歴作成について」シートの「⑤在庫変更のタイミングで必ず対象在庫の総原価の更新を行う」【出庫時】を参照
+4-6.在庫変動履歴を登録する
+・登録内容は「別添資料_在庫変動時の履歴作成について」参照
+4-7.在庫分割情報として下記を登録する
+4-7-1.基本情報として下記を登録する
+項目 内容
+在庫分割結合ID 自動採番
+処理タイプ 在庫分割
+ステータス 新規登録
+登録日 登録日
+更新日 更新日
+登録者 登録者
+更新者 更新者
+在庫分割結合登録編集（結合)
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+佐藤
+作成日
+2025-08-25
+更新者
+本田
+更新日
+2026-01-13
+機能No
+M04-13
+機能名
+在庫分割結合登録編集（結合）
+概要
+—
+処理概要 在庫分割結合登録編集（結合）新規登録画面
+処理概要 在庫分割結合登録編集（結合）結合承認申請画面
+処理概要 在庫分割結合登録編集（結合）結合承認画面
+処理概要 在庫分割結合登録編集（結合）完了画面
+図形・テキストボックス内テキスト（135件）
+レイアウト図 在庫分割結合登録編集（結合）画面
+1-1
+1-2
+1-3
+1-4
+1-6
+1-5
+1-7
+1-8
+1-9
+1-10
+1-11
+2-1
+2-2
+2-3
+2-5
+2-6
+2-7
+2-8
+2-9
+2-10
+3-1
+4-1
+4-2
+4-3
+5-1
+5-2
+2-11
+6-1
+6-2
+8-1
+7-17
+7-18
+2-4
+在庫分割結合登録編集（結合) / C7 / image 7
+機能仕様処理概要 在庫分割結合登録編集（結合）新規登録画面
+結合登録画面概要
+・在庫検索一覧画面から任意の商品在庫を1つ選択し、在庫検索一覧画面の「在庫結合登録」ボタンを押下すると、選択商品在庫を結合元商品とし、この画面（在庫結合登録の初期画面）へ遷移する
+・選択した商品に対して、結合点数を入力し登録を行う
+・登録後、ステータスは新規登録となる
+結合登録ステータス遷移
+アクション
+ステータス
+ピック
+作業
+新規登録
+NG
+新規登録
+欠品登録
+結合
+承認待ち
+結合
+承認
+却下
+入庫済み
+結合作業
+結合元
+登録
+結合元
+登録
+アクション
+ステータス
+ピック
+作業
+新規登録
+NG
+新規登録
+欠品登録
+結合
+承認待ち
+結合
+承認
+却下
+入庫済み
+結合作業
+結合元
+登録
+結合元
+登録
+結合元登録画面
+アクション
+ステータス
+ピック
+作業
+新規登録
+NG
+新規登録
+欠品登録
+結合
+承認待ち
+結合
+承認
+却下
+入庫済み
+結合作業
+結合元
+登録
+結合元
+登録</code></pre>
+</details>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

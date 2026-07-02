@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API デッキビルダー — メタゲーム情報参照 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#認証・認可">認証・認可</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#メタゲーム情報を取得する-GET-metagame">メタゲーム情報を取得する（GET `/metagame`）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv3" href="#リクエスト">リクエスト</a>
+<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
+<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
+<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
+<a class="lv3" href="#副作用">副作用</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-api/a15-14_api_deck_builder_deck_metagame.md</p>
+        <h1>API デッキビルダー — メタゲーム情報参照</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>デッキビルダーアプリが、指定フォーマットのメタゲーム情報（直近期間に登録された大会デッキのアーキタイプ別件数とシェア率）を取得するためのAPIである。deck-api（デッキビルダー用のAPIアプリケーション）が提供するJSON APIで、フォーマットごとに集計範囲内の大会デッキ件数をアーキタイプ別に数え、占有率を算出して返す。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はdeck-apiのメタゲーム情報取得処理、ルート定義（<code>config/routes.yaml</code>）、フォーマットマスタ・デッキを扱うリポジトリを正とする。</p>
+<p>本機能のカスタマイズ区分は現行踏襲とする。挙動はdeck-api（デッキビルダー用APIアプリケーション）の実装を確認値とし、DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseの実装を正とする。</p>
+<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>指定フォーマット（複数指定可）のアーキタイプ別大会デッキ件数の集計</li><li>アーキタイプごとの占有率（<code>rate</code>）の算出</li><li>集計範囲の開始日（<code>from_date</code>）の算出</li><li>フォーマット指定なし・該当なし時の応答</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
+<ul><li>採用カードの枚数集計（採用枚数情報参照APIの設計を正とする）</li><li>デッキ一覧検索・デッキ詳細参照（各デッキAPIの設計を正とする）</li><li>アーキタイプそのものの管理・登録（アーキタイプ関連の設計を正とする）</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>デッキビルダー関連テーブルは、現行（deck-api）と移行先（ec-cube-enterprise）で同一スキーマであり、テーブル名も一致する。本機能の集計に関わる主な対応は次のとおり。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（deck-api）</th><th>移行先（ec-cube-enterprise）</th><th>差分・注意</th></tr></thead><tbody><tr><td>フォーマットマスタ</td><td><code>mtb_format</code>。集計範囲はメタゲーム分析日数（<code>meta_range</code>）で算出</td><td><code>mtb_format</code>・<code>meta_range</code></td><td>同一テーブル・列名。</td></tr><tr><td>デッキ本体</td><td><code>dtb_deck</code>。フォーマット（<code>format_id</code>）・公開区分（<code>disp_id</code>）・イベント日（<code>event_date</code>）・デッキ種別（<code>deck_type_id</code>）・アーキタイプ（<code>archetype_id</code>）</td><td>同一列名</td><td>集計対象は公開区分が公開かつデッキ種別が大会のデッキ。</td></tr><tr><td>アーキタイプ</td><td><code>dtb_archetype</code>。代表カード画像はカード画像（<code>card_image_id</code>）の結合で取得</td><td>同一。<code>dtb_archetype</code>・<code>card_image_id</code>・<code>mtb_card_image</code></td><td>アーキタイプ自体に画像列は持たず、カード画像テーブルを結合する。</td></tr></tbody></table></div>
+<p>現行と移行先でスキーマに差はなく、移行時に追加・改廃する集計列は本書では確認していない。</p>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>フォーマット</td><td>対戦の構築ルール区分。メタゲーム集計の単位。</td></tr><tr><td>アーキタイプ</td><td>デッキの型・分類。集計はアーキタイプ単位で行う。</td></tr><tr><td>大会デッキ</td><td>大会由来として登録されたデッキ。集計対象はデッキ種別が大会のものに限る。</td></tr><tr><td>集計範囲</td><td>フォーマットごとに設定された日数（メタ範囲）で区切る直近の期間。</td></tr><tr><td>占有率</td><td>フォーマット内の全大会デッキ件数に対する各アーキタイプの件数の割合。<code>rate</code>として返す。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>メタゲーム情報参照</td><td><code>GET /metagame</code></td><td>クエリの<code>format_id</code>で指定したフォーマットについて、集計範囲内の大会デッキをアーキタイプ別に集計し、件数と占有率をコード200のJSONで返す。</td></tr></tbody></table></div>
+<p>応答形式はJSON。呼び出し元はデッキビルダーアプリ。</p>
+<hr>
+<h2 id="認証・認可">認証・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本APIは認証を行わない。<code>jwt-token</code>ヘッダの検証・プレイヤーの特定をいずれも行わず、誰でも呼び出せる参照系である。</td></tr><tr><td>認証失敗時</td><td>認証処理を持たないため、認証起因のHTTP 401は返さない。</td></tr><tr><td>認可</td><td>公開デッキのみを集計対象とするため、利用者状態によらず同一の集計結果を返す。呼び出し可能なクライアントはデッキビルダーアプリ。</td></tr></tbody></table></div>
+<p>トークン原値・署名シークレットは本書に記載しない。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="メタゲーム情報を取得する-GET-metagame">メタゲーム情報を取得する（GET <code>/metagame</code>）</h3>
+<ol><li>クエリの<code>format_id</code>と<code>count</code>を受け取る。<code>format_id</code>が未指定（null）の場合は入力不正（HTTP 400）とし、「invalid request parameter」を返す。</li><li><code>format_id</code>に一致するフォーマットを取得する。単一値・複数値のいずれも指定できる。該当するフォーマットが1件も無い場合は該当なし（HTTP 404）とし、「format not found」を返す。</li><li>各フォーマットについて、フォーマットのメタ範囲で区切った集計範囲内の公開・大会デッキを、アーキタイプ別に件数集計する。<code>count</code>を指定した場合は件数上位から最大<code>count</code>件のアーキタイプに絞る。</li><li>フォーマットごとに全アーキタイプの件数合計を求め、各アーキタイプの件数を合計で割って占有率（<code>rate</code>、小数第2位まで）を算出する。</li><li>フォーマットごとに識別子・名称・集計範囲開始日（<code>from_date</code>）・アーキタイプ別集計（<code>archetypes</code>）を組み立て、コード200のJSONで返す。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象データ</td><td>デッキのうち、対象フォーマットに属し、公開区分が公開で、デッキ種別が大会のものを対象とする。</td></tr><tr><td>集計範囲</td><td>イベント日（<code>event_date</code>）が、現在からフォーマットのメタ範囲日数前の0時0分から本日23時59分59秒までの範囲にあるものを対象とする。</td></tr><tr><td>集計単位</td><td>アーキタイプ（<code>archetype_id</code>）でグループ化し、デッキ件数（<code>deck_count</code>）を数える。</td></tr><tr><td>並び順</td><td>デッキ件数の降順で並べる。</td></tr><tr><td>件数制限</td><td>クエリ<code>count</code>を指定した場合、フォーマットごとに上位<code>count</code>件のアーキタイプに絞る。未指定の場合は全件を返す。</td></tr><tr><td>占有率</td><td>フォーマット内の全アーキタイプの件数合計を分母とし、各アーキタイプの件数を100分率で算出する（小数第2位まで四捨五入）。</td></tr><tr><td>キャッシュ</td><td>集計結果はフォーマットと件数上限ごとにキャッシュキーを分けて結果キャッシュする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="入出力">入出力</h2>
+<h3 id="リクエスト">リクエスト</h3>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>format_id</code></td><td>クエリ</td><td>integer または array</td><td>必須</td><td>集計対象のフォーマット識別子。単一値または複数値で指定する。未指定の場合は入力不正（HTTP 400）となる。</td></tr><tr><td><code>count</code></td><td>クエリ</td><td>integer</td><td>任意</td><td>フォーマットごとに返すアーキタイプの上限件数。未指定の場合は全件を返す。</td></tr></tbody></table></div>
+<p>本APIは認証用の<code>jwt-token</code>ヘッダを必要としない。</p>
+<h3 id="レスポンス-成功">レスポンス（成功）</h3>
+<p>HTTP 200。応答本体はラッパオブジェクトで、JSONキーはsnake_caseで組み立てる。</p>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200。</td></tr><tr><td><code>formats</code></td><td>array</td><td>フォーマットごとの集計結果の配列。</td></tr><tr><td><code>formats[].id</code></td><td>integer</td><td>フォーマット識別子。</td></tr><tr><td><code>formats[].name_jp</code></td><td>string</td><td>フォーマットの日本語名。</td></tr><tr><td><code>formats[].name_en</code></td><td>string</td><td>フォーマットの英語名。</td></tr><tr><td><code>formats[].from_date</code></td><td>string</td><td>集計範囲の開始日時。<code>Y/m/d h:m:s</code>書式の文字列。</td></tr><tr><td><code>formats[].archetypes</code></td><td>array</td><td>アーキタイプ別の集計結果の配列。件数降順。</td></tr><tr><td><code>formats[].archetypes[].id</code></td><td>integer</td><td>アーキタイプ識別子。</td></tr><tr><td><code>formats[].archetypes[].name_jp</code></td><td>string</td><td>アーキタイプの日本語名。</td></tr><tr><td><code>formats[].archetypes[].name_en</code></td><td>string</td><td>アーキタイプの英語名。</td></tr><tr><td><code>formats[].archetypes[].card_image</code></td><td>string</td><td>アーキタイプを代表するカード画像のURL。未設定のときはnull。</td></tr><tr><td><code>formats[].archetypes[].deck_count</code></td><td>integer</td><td>集計範囲内のデッキ件数。</td></tr><tr><td><code>formats[].archetypes[].rate</code></td><td>number</td><td>フォーマット内での占有率（百分率、小数第2位まで）。</td></tr></tbody></table></div>
+<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
+<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>400</td><td><code>format_id</code>が未指定（null）</td><td><code>{code, message}</code>（<code>message</code>は「invalid request parameter」）</td></tr><tr><td>404</td><td><code>format_id</code>に一致するフォーマットが1件も無い</td><td><code>{code, message}</code>（<code>message</code>は「format not found」）</td></tr><tr><td>500</td><td>集計処理中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
+<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
+<p>成功時の応答例（実装確認値に基づく代表値）。</p>
+<pre><code class="language-json">{
+  "code": 200,
+  "formats": [
+    {
+      "id": 1,
+      "name_jp": "スタンダード",
+      "name_en": "Standard",
+      "from_date": "2026/05/04 00:05:00",
+      "archetypes": [
+        {
+          "id": 101,
+          "name_jp": "白単アグロ",
+          "name_en": "Mono White Aggro",
+          "card_image": "https://example.invalid/images/101.jpg",
+          "deck_count": 42,
+          "rate": 35.0
+        },
+        {
+          "id": 102,
+          "name_jp": "青赤コントロール",
+          "name_en": "Izzet Control",
+          "card_image": null,
+          "deck_count": 18,
+          "rate": 15.0
+        }
+      ]
+    }
+  ]
+}</code></pre>
+<h3 id="副作用">副作用</h3>
+<p>無し（参照のみ）。集計結果はフォーマットと件数上限ごとに結果キャッシュするが、業務データの更新は行わない。</p>
+<p>応答はJSON応答整形を経て返す。本APIは連想配列を組み立てて返すため、JSONキーは実装で記述したsnake_case（<code>code</code>・<code>formats</code>・<code>name_jp</code>・<code>from_date</code>・<code>deck_count</code>・<code>rate</code>等）となる。<code>serialize_null</code>は有効で、未設定項目はnullで返す。</p>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>format_id</code></td><td>必須。未指定（null）の場合は入力不正（HTTP 400）とし、「invalid request parameter」を返す。一致するフォーマットが無い場合は該当なし（HTTP 404）とし、「format not found」を返す。</td></tr><tr><td><code>count</code></td><td>任意。指定した場合はフォーマットごとの返却件数の上限となる。形式の追加検証は本APIでは行わない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の集計範囲・デッキ状況に基づく集計結果を返す。本APIはデータを更新しない。結果キャッシュの有効期間内は同一結果を返す場合がある。</td></tr><tr><td>一覧と詳細</td><td>本APIはアーキタイプ別の集計のみを返し、個々のデッキ詳細とは別管理とする。デッキ詳細の値との一致は保証しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>フォーマットマスタ（<code>mtb_format</code>）</td><td>識別子（<code>id</code>）・名称（<code>name_jp</code>・<code>name_en</code>）・メタゲーム分析日数（<code>meta_range</code>）</td><td>集計対象の特定、応答の名称、集計範囲の算出に用いる。</td></tr><tr><td>デッキ（<code>dtb_deck</code>）</td><td>フォーマット（<code>format_id</code>）・公開区分（<code>disp_id</code>）・イベント日（<code>event_date</code>）・デッキ種別（<code>deck_type_id</code>）・アーキタイプ（<code>archetype_id</code>）</td><td>集計対象の絞り込みとグループ化に用いる。</td></tr><tr><td>アーキタイプ（<code>dtb_archetype</code>）</td><td>名称（<code>name_jp</code>・<code>name_en</code>）・カード画像（<code>card_image_id</code>）</td><td>応答のアーキタイプ名称・代表カード画像に用いる。代表カード画像はカード画像（<code>mtb_card_image</code>）を結合する。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_archetype / dtb_deck / mtb_card_image / mtb_format</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>メタゲーム情報参照</th></tr></thead><tbody><tr><td>任意のクライアント</td><td>認証なしで集計結果を取得できる。公開デッキのみを対象とするため利用者によらず同一結果となる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>format_id</code>未指定</td><td>入力不正（HTTP 400）とし、「invalid request parameter」を返す。</td></tr><tr><td>該当フォーマットなし</td><td>該当なし（HTTP 404）とし、「format not found」を返す。</td></tr><tr><td>集計処理中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>パスワード</li><li>Cookie値・セッションIDの完全値</li></ul>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

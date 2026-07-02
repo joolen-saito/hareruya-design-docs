@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>デッキ管理 — 検索一覧からの一括編集 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#一括編集を実行する-POST-m15-04-admin-deck-deck-bulk-update">一括編集を実行する（POST `m15-04_admin_deck_deck_bulk_update`）</a>
+<a class="lv3" href="#一覧に一括編集フォームを載せる-表示時">一覧に一括編集フォームを載せる（表示時）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#一括更新時の判定順序">一括更新時の判定順序</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
+<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m15-04_admin_deck_deck_bulk_update.md</p>
+        <h1>デッキ管理 — 検索一覧からの一括編集</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>HareruyaEc プラグインの管理画面「デッキ管理」において、検索結果一覧でチェックした複数デッキに対し、チェックボックスで選択した項目だけを共通値でまとめて更新する機能である。一覧・検索・詳細編集・CSV 入出力とは別ルートで POST され、<code>change_flgs[項目名]</code> でサーバに「どの列を上書きするか」が伝わる。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。カスタマイズ区分は「カスタマイズ」。画面・挙動は pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とし、DB関連（テーブル・列・型・制約・関連）は ec-cube-enterprise の実装を正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。</p>
+<p>コントローラのメソッド単位の解剖は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<ul><li>画面・挙動は現行（pf-eccube3 の HareruyaEc プラグイン）の確認値、DBスキーマは移行先（ec-cube-enterprise）を正とする。</li><li>一括編集の対象データはデッキ（<code>dtb_deck</code>）および関連するデッキカード（<code>dtb_deck_card</code>）である。これらは移行先 ec-cube-enterprise にも存在する。<code>change_flgs[項目名]</code> で指定された列のみを共通値で更新する点は実装挙動であり、移行先での列名・型は ec-cube-enterprise の <code>DtbDeck</code>／<code>DtbDeckCard</code> を正とする。</li><li>デッキ管理一括編集の管理画面（コントローラ）が ec-cube-enterprise に移植済みかは未確認のため、移植有無と差分は ec-cube-enterprise 実装で要確認とする。現行と移行先でデッキ系テーブルのスキーマ差が判明した場合は本節とDB節を更新する。</li></ul>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビなどからデッキ一覧の初期画面を開く（検索結果ゼロ）</td><td><code>GET /{admin_route}/deck</code></td><td>一括編集フォームは検索結果ボックス内にあり、結果が無いときはパネルごと描画されないため、この入口からは一括編集を実行できない。</td></tr><tr><td>検索を実行し結果が 1 件以上ある</td><td><code>POST /{admin_route}/deck/search/{page_no}</code>（検索フォーム）</td><td>一覧・チェックボックス・一括編集パネルが表示される。</td></tr><tr><td>「一括編集」ボタンでパネルを開き、項目チェック・入力後「一括編集実行」</td><td><code>POST /{admin_route}/deck/bulk_update</code></td><td>CSRF とフォーム検証を通過すれば選択デッキが更新され、成功フラッシュが積まれたうえで直前一覧へ戻る。</td></tr></tbody></table></div>
+<p>一覧まわりのフォームは <code>bulk_update_form</code> の <code>action</code> が <code>m15-04_admin_deck_deck_bulk_update</code> に固定されている。CSV 出力・一括削除は同一フォーム内の別ボタンで <code>formaction</code> が差し替わる（本書の範囲外）。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>検索結果が 1 件以上のときのみ、一覧ヘッダ付近に CSV 出力・旧サイト向け出力・一括削除・「一括編集」アコーディオン・ページ件数・ソートがある。テーブル左端は <code>deckId[]</code> のチェックボックス、表頭 <code>#allCheck</code> で <code>[deckId]</code> 属性を持つ行チェックを一括オンオフする。一括編集パネル内は項目ごとに「変更フラグ用チェック」と入力ウィジェットを組み合わせる。初期状態では入力ブロックは <code>display: none</code>。</td></tr><tr><td>JS 挙動（一覧共通）</td><td>Select2 を検索条件のフォーマット・アーキタイプ・タグ、および一括編集のアーキタイプ・フォーマット・デッキタグに適用する。検索側のアーキタイプはフォーマット・カラー選択で選択肢がフィルタされる。</td></tr><tr><td>JS 挙動（一括編集）</td><td>変更フラグのチェックで対応する <code>#bulk_update_form_*</code> を表示切替し、チェック時に子要素の <code>.required</code> に HTML5 <code>required</code> を付与する（チェックオフで除去）。ページ読込時は一括編集の入力から <code>required</code> を剥がし、変更フラグはすべてオフにする。イベント開催日は moment 日本語ロケール付き datetimepicker（<code>YYYY-MM-DD HH:mm</code>）。「一括編集実行」押下時、変更フラグが 1 つも無ければアラート「変更されている項目がありません。」で送信中止。チェック済みデッキが 0 件なら「一括編集するデッキをひとつ以上選択してください。」で中止。通過後、フォームの <code>submit</code> イベントに確認「一括編集の内容を送信しますか？」を紐付ける（送信のたびにハンドラが追加され、同一セッションで複数回実行すると確認が複数回積み上がり得る実装である）。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通の Bootstrap 系。一括編集アコーディオンは <code>accordion</code> / <code>toggle</code> / <code>accpanel</code> 構造で、管理テンプレートの <code>function.js</code> によるスライド開閉が前提。</td></tr><tr><td>モーダル・ポップアップ</td><td>専用モーダルは使わない。確認は <code>alert</code> / <code>confirm</code> のみ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="一括編集を実行する-POST-m15-04-admin-deck-deck-bulk-update">一括編集を実行する（POST <code>m15-04_admin_deck_deck_bulk_update</code>）</h3>
+<ol><li>管理画面の認証・共通制約を通過する。</li><li>フォーム名 <code>m15-04_admin_deck_deck_bulk_update</code> でリクエストを処理し、CSRF を検証する。失敗時はアクセス拒否（HTTP 403）の扱いになる（共通ヘルパの実装に従う）。</li><li>フォーム検証に失敗した場合、エラーメッセージをフラッシュに積み、<code>Referer</code> ヘッダの URL へ HTTP リダイレクトする。</li><li>検証成功時、フォーム項目名とエンティティ更新用セッター名の対応表に従い、各 <code>change_flgs[項目名]</code> が存在する項目だけについて、フォームの値をセッターに渡して各デッキ行を更新する。<code>change_flgs</code> に無い項目は既存値を保持する。</li><li>リクエストの <code>deckId</code> を配列として取得し、各要素が非空かつ半角数字のみであることを検査する。1 つでも不一致なら HTTP 404 で打ち切る。</li><li>デッキ ID 集合に対応する行をリポジトリから取得する（取得方法は「エッジケース」参照）。</li><li>取得した各行について手順 4 の更新を適用し、最終更新者として操作者の管理者 ID を <code>member_id</code> に記録する。永続化コンテキストへ登録する。</li><li>まとめて flush する。</li><li>成功メッセージキー <code>admin.register.complete</code> をフラッシュに積み、<code>Referer</code> へリダイレクトする。</li></ol>
+<h3 id="一覧に一括編集フォームを載せる-表示時">一覧に一括編集フォームを載せる（表示時）</h3>
+<ol><li>デッキ検索一覧用のコントローラが <code>bulkUpdateForm</code> として空の <code>m15-04_admin_deck_deck_bulk_update</code> フォームビューをテンプレートへ渡す（トークンのみ実体化し、入力は未送信状態）。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<p>本機能では件数集計や売上計算は行わない。</p>
+<hr>
+<h2 id="一括更新時の判定順序">一括更新時の判定順序</h2>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>CSRF トークン</td><td>無効ならアクセス拒否。</td></tr><tr><td>2</td><td>送信フォームの検証（全項目。変更フラグは検証対象の絞り込みに使わない）</td><td>失敗ならエラーフラッシュと Referer へリダイレクト。</td></tr><tr><td>3</td><td>各 <code>deckId</code> が半角数字のみか</td><td>1 件でも不正なら HTTP 404。</td></tr><tr><td>4</td><td>各行について各列</td><td><code>change_flgs</code> にキーがある列だけ、フォーム値で上書きする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>変更対象列</td><td><code>format</code>, <code>archetype</code>, <code>disp</code>, <code>privateFlg</code>, <code>eventNameJp</code>, <code>eventNameEn</code>, <code>eventDate</code>, <code>ranking</code>, <code>result</code>, <code>winCount</code>, <code>lossCount</code>, <code>drawCount</code>, <code>dciNo</code>, <code>playerName</code>, <code>deckTags</code>, <code>sourceUrl</code> のいずれかについて、対応する変更フラグが POST に含まれるときだけ、その列の現在のフォーム値を全対象デッキに適用する。</td></tr><tr><td>フォーマット</td><td>空の選択（プレースホルダ相当）で上書きすると、永続化層では外部参照なしとして解釈され得る（未選択時の解釈はフォーム送信値に従う）。</td></tr><tr><td>アーキタイプ</td><td>エンティティの「アーキタイプと代表カード画像を同時設定」用の更新経路を使う。アーキタイプに代表カード画像が無い場合は画像参照の更新は行われない実装である。</td></tr><tr><td>デッキタグ</td><td>多値選択。変更フラグが付いた場合の値で既存のタグ紐付けが置き換わる（空選択は空コレクションとして解釈され得る）。</td></tr><tr><td>編集者</td><td>各対象デッキの <code>member_id</code> は操作した管理者アカウント ID に更新される。</td></tr></tbody></table></div>
+<p>本機能では売上・順位計算などの業務計算は行わない。</p>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>フォーマット</td><td>任意</td><td>—</td><td>未選択表示</td><td><code>dtb_deck</code> のフォーマット外部参照。変更フラグ <code>format</code> が付いたときのみ更新。変更フラグがオフのときは検証だけ受け、値の上書きは行わない。</td></tr><tr><td>アーキタイプ</td><td>任意</td><td>—</td><td>未選択表示</td><td><code>dtb_deck</code> のアーキタイプ外部参照と代表カード画像の更新。変更フラグ <code>archetype</code>。</td></tr><tr><td>公開状態</td><td>必須</td><td>—</td><td>マスタの展開ラジオの先頭選択</td><td><code>dtb_deck</code> の表示マスタ参照。変更フラグ <code>disp</code>。フォーム定義上は常に必須。</td></tr><tr><td>デッキリスト公開状態</td><td>必須</td><td>—</td><td>「公開」側</td><td><code>dtb_deck.private_flg</code>。真偽。変更フラグ <code>privateFlg</code>。</td></tr><tr><td>イベント名（日）</td><td>任意</td><td>50 文字（コア設定 <code>stext_len</code> の実値。環境で上書きされ得る）</td><td>空</td><td><code>dtb_deck.event_name_jp</code>。変更フラグ <code>eventNameJp</code>。DB 列は 255 文字まで持つため、フォーム上限と DB 上限は一致しない。</td></tr><tr><td>イベント名（英）</td><td>任意</td><td>同上</td><td>空</td><td><code>dtb_deck.event_name_en</code>。変更フラグ <code>eventNameEn</code>。</td></tr><tr><td>イベント開催日</td><td>任意</td><td>—</td><td>空</td><td><code>dtb_deck.event_date</code>。単一行テキスト＋datetimepicker。設定 <code>HareruyaEc.const.format.datetime</code> の形式。変更フラグ <code>eventDate</code>。</td></tr><tr><td>順位</td><td>任意</td><td>数値検証のみ（1 超 99999999 以下）</td><td>空</td><td><code>dtb_deck.ranking</code>。変更フラグ <code>ranking</code>。空欄時の扱いは整数項目としての変換結果に従う。チェックを付けたうえで不整数は検証エラー。</td></tr><tr><td>成績</td><td>任意</td><td>フォームに Length 制約なし</td><td>空</td><td><code>dtb_deck.result</code>（スキーマ上 32 文字）。変更フラグ <code>result</code>。長大文字列は DB または永続化層の制限に依存する。</td></tr><tr><td>勝利数</td><td>任意</td><td>0 以上 99999999 以下</td><td>空</td><td><code>dtb_deck.win_count</code>。変更フラグ <code>winCount</code>。</td></tr><tr><td>敗北数</td><td>任意</td><td>同上</td><td>空</td><td><code>dtb_deck.loss_count</code>。変更フラグ <code>lossCount</code>。</td></tr><tr><td>引き分け数</td><td>任意</td><td>同上</td><td>空</td><td><code>dtb_deck.draw_count</code>。変更フラグ <code>drawCount</code>。</td></tr><tr><td>DCIナンバー</td><td>任意</td><td>50 文字かつ数字のみ（正規表現）</td><td>空</td><td><code>dtb_deck.dci_no</code>（スキーマ上 16 文字）。変更フラグ <code>dciNo</code>。フォーム上限と DB 上限は一致しない。</td></tr><tr><td>プレイヤー名</td><td>任意</td><td>50 文字</td><td>空</td><td><code>dtb_deck.player_name</code>（スキーマ上 64 文字）。変更フラグ <code>playerName</code>。</td></tr><tr><td>タグ</td><td>任意</td><td>—</td><td>未選択</td><td><code>dtb_deck</code> のデッキタグ多対多。変更フラグ <code>deckTags</code>。</td></tr><tr><td>引用元URL</td><td>任意</td><td>50 文字</td><td>空</td><td><code>dtb_deck.source_url</code>（スキーマ上 2048 文字）。変更フラグ <code>sourceUrl</code>。一括編集フォームのみ 50 文字制約が掛かり、詳細画面と上限が異なる。</td></tr></tbody></table></div>
+<p>数値上限 99999999 は <code>HareruyaEc.const.deck.max.number</code> の確認値である。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>POST された <code>deckId</code> の一部が DB に存在しない</td><td>取得できたデッキ行だけを更新する。存在しない ID についてエラーにはしない。</td></tr><tr><td>サーバ実装でのリポジトリ呼び出し</td><td>コントローラ側の取得メソッド呼び出し名と、リポジトリに定義された複数 ID 取得メソッド名が一致しないソースがあり得る。その場合は未定義メソッド呼び出しとなる（調査補助でファイルとメソッド名を照合すること）。</td></tr><tr><td>変更フラグを 1 つも付けずに送信</td><td>クライアントの「一括編集実行」でブロックされる。サーバ側は変更フラグが無くても検証が通れば flush だけ行い、実質データ変化はセッターが呼ばれない。</td></tr><tr><td><code>deckId</code> を付けずに POST</td><td>クライアントではブロックされない経路があり得る。サーバでは <code>deckId</code> を <code>foreach</code> しており、PHP の版によっては致命的エラーまたは警告となり得る。</td></tr><tr><td>Referer が無い</td><td>リダイレクト先が空や不正 URL になり得る。ブラウザとクライアント実装に依存する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との一致</td><td>更新直後は Referer で戻った検索一覧の内容は、検索条件が同じでも再検索タイミング・他操作の有無に依存する。</td></tr><tr><td>詳細画面</td><td>一括編集はデッキ本文（カードリスト）や <code>latest_flg</code> 等を変更しない。詳細画面で見える項目の一部のみが対象。</td></tr><tr><td>同時更新</td><td>楽観ロックは用いない。後勝ちで上書きされる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能では API 呼び出し・バッチ実行を扱わない。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>POST ボディに <code>m15-04_admin_deck_deck_bulk_update</code> フィールド群、<code>_token</code>、<code>change_flgs[...]</code>、<code>deckId[]</code>。</td></tr><tr><td>成功時出力</td><td>HTTP 302 前後で成功フラッシュ。</td></tr><tr><td>失敗時出力</td><td>検証失敗時はエラーフラッシュと Referer へリダイレクト。ID 形式不正時は HTTP 404。CSRF 失敗時は共通の拒否応答。</td></tr><tr><td>副作用</td><td><code>dtb_deck</code> 行の更新、<code>member_id</code> の更新、多対多タグの付け替え（該当フラグ時）、代表カード画像の更新（アーキタイプ変更フラグ時かつ画像ありの場合）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>当機能が直接書き換え得る主な列（型・制約の詳細は Doctrine マッピングを参照）。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_deck</code></td><td><code>format_id</code>, <code>archetype_id</code>, <code>disp_id</code>, <code>private_flg</code>, <code>event_name_jp</code>, <code>event_name_en</code>, <code>event_date</code>, <code>ranking</code>, <code>result</code>, <code>win_count</code>, <code>loss_count</code>, <code>draw_count</code>, <code>dci_no</code>, <code>player_name</code>, <code>source_url</code>, <code>member_id</code>, 代表カード画像外部参照</td><td>変更フラグに従い部分更新。</td></tr><tr><td>デッキとタグの中間</td><td>—</td><td><code>deckTags</code> 変更フラグ時にコレクションを置き換え。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_deck</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>CSRF</td><td>フォーム名単位のトークン検証に失敗すると拒否される。</td></tr><tr><td>全体</td><td>変更の有無にかかわらず、フォーム定義上必須の項目（公開状態・プライベートフラグのラジオなど）は常に妥当な値が送られる必要がある。</td></tr><tr><td>文字列長・正規表現・数値範囲</td><td>「入力項目」表および一括編集フォーム型の宣言どおりに従う。</td></tr><tr><td>deckId</td><td>各要素が <code>^\d+$</code> に一致すること。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>デッキ検索一覧・一括編集 POST</th></tr></thead><tbody><tr><td>未ログインまたは管理画面のアクセス拒否</td><td>管理画面共通の壁で到達できない（詳細は管理画面認証を正とする）。</td></tr><tr><td>デッキ管理メニューを利用できる管理者</td><td>一覧表示と POST が行える実装になっている（ルート単位の細かなロール差分はコア設定を正とする）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>一括編集成功</td><td><code>Referer</code> の URL（通常は検索結果ページ）へリダイレクト。</td></tr><tr><td>フォーム検証失敗</td><td>同上。</td></tr><tr><td>deckId 形式エラー</td><td>HTTP 404。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>一括編集 POST 成功・失敗（リダイレクト時）</td><td>セッション上のフラッシュにメッセージを積む。</td><td>Referer の画面を再取得。検索条件の再現は Referer が指す URL（セッション保持された検索）に依存する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSRF 無効</td><td>アクセス拒否（HTTP 403）。</td></tr><tr><td>フォーム検証エラー</td><td>各エラーをフラッシュし、Referer へリダイレクト。</td></tr><tr><td>deckId が非数字</td><td>HTTP 404。</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>本機能では試行制限を扱わない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<p>明示的な監査ログ出力は本処理内に限定しては定義されていない（管理画面共通のリクエストログの有無は基盤実装を正とする）。</p>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<p>検索条件・ページ番号はデッキ一覧のセッションキー <code>admin.deck.search</code> 系で保持されるが、一括編集処理本体はそれを書き換えない。フラッシュメッセージはセッションを用いる。</p>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>フォームに入力された一括編集の各値を、処理成功後にセッションへ永続化する実装にはなっていない（次回表示は初期空フォーム）。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>本機能単体で新たに Cookie を設定しない。管理画面セッション用 Cookie は環境依存（管理画面ログイン設計を正とする）。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>明示的なトランザクション境界や楽観ロック Version 列の更新は行わない。複数デッキに対する persist は 1 回の flush でまとめて送信される。</p>
+<hr>
+<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
+<ul><li>ルート定義: pf-eccube3 の <code>app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php</code>（bind 名 <code>m15-04_admin_deck_deck_bulk_update</code>）。</li><li>受信処理: 同プラグイン <code>Controller/Admin/DeckController.php</code> の <code>bulkUpdate</code>（本文では記載しないが、ここでのみメソッド名を明示）。</li><li>フォーム型: <code>Form/Type/Admin/Deck/DeckBulkUpdateType.php</code>。</li><li>テンプレート: <code>Resource/template/admin/Deck/deck.twig</code> の <code>bulk_update_form</code>。</li><li>スクリプト: <code>Resource/template/admin/assets/js/deck-search.js</code>。</li><li>ID 複数取得: <code>Repository/DtbDeckRepository.php</code> の <code>findByDeckIds</code>（コントローラ側の呼び出し名との対応はソースで要確認）。</li></ul>
+<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
+<ul><li><code>m15-04_admin_deck_deck_bulk_update</code> … <code>POST</code> … <code>/{admin_route}/deck/bulk_update</code>（検索結果フォームから、<code>deckId[]</code> と一括編集用フィールド、<code>change_flgs</code> を POST し、検証後に選択デッキを更新して Referer へリダイレクトする。）</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

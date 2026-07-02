@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>在庫管理 — 在庫リコメンドCSV出力 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#在庫リコメンドCSVを出力する-product-batch-ExportPopularProductRecommendCsv">在庫リコメンドCSVを出力する（`product:batch ExportPopularProductRecommendCsv`）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m04-16_admin_stock_product_stock_recommend_csv_export.md</p>
+        <h1>在庫管理 — 在庫リコメンドCSV出力</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>人気商品のリコメンド（在庫リコメンド）情報をCSVファイルとして出力する機能である。コンソールの商品バッチから実行し、対象データを集計して所定のパスにCSVファイルを書き出す。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの商品バッチ（在庫リコメンドCSV出力処理）、リコメンド対象を抽出するリポジトリ、出力先パスの設定を正とする。</p>
+<p>本機能のカスタマイズ区分は現行踏襲であり、挙動は現行リポ pf-eccube3（HareruyaEc プラグインのバッチ）を参照し、DB関連は ec-cube-enterprise を正とする。</p>
+<p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+<p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>在庫リコメンドCSVの生成（コンソールバッチ）</li><li>出力先ファイルへの書き出し</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>リコメンド対象の集計ロジックの詳細（実装を確認値とする）</li><li>出力したCSVを利用する側の仕様</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>挙動は現行リポ pf-eccube3 を正とし、永続化に関わるテーブル・列は移行先 ec-cube-enterprise を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3 / HareruyaEc）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>起動形態</td><td>コンソールの商品バッチ（在庫リコメンドCSV出力処理）</td><td>在庫リコメンドCSV出力サービスとして実装。起動形態の最終確定は移行先運用に従う。</td></tr><tr><td>集計対象テーブル</td><td>HareruyaEc プラグインの規格・販売実績系テーブル</td><td>在庫リコメンドCSV出力サービスは dtb_product_stock・dtb_product_class・dtb_product・dtb_base_info・dtb_weekly_stock_history・dtb_sales_quantity・dtb_stock_up_quantity を参照する。</td></tr></tbody></table></div>
+<p>集計列の対応で ec-cube-enterprise 実装の対応列を確認しきれないものは、推測でスキーマ化せず「ec-cube-enterprise 実装で要確認」とする。</p>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>在庫リコメンド</td><td>人気商品のリコメンド情報。</td></tr><tr><td>出力先パス</td><td>CSVを書き出すファイルパス（設定値）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールの商品バッチ</td><td><code>product:batch ExportPopularProductRecommendCsv</code></td><td>在庫リコメンド情報を集計し、所定のパスにCSVファイルを書き出す。</td></tr></tbody></table></div>
+<p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="在庫リコメンドCSVを出力する-product-batch-ExportPopularProductRecommendCsv">在庫リコメンドCSVを出力する（<code>product:batch ExportPopularProductRecommendCsv</code>）</h3>
+<ol><li>在庫リコメンド（人気商品リコメンド）の対象データを取得する。</li><li>設定された出力先パスにCSVファイルを作成する。</li><li>ヘッダ行を書き出す。</li><li>対象データの各行をCSVとして書き出し、ファイルを閉じる。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>出力対象</td><td>在庫リコメンド（人気商品リコメンド）の対象データ。</td></tr><tr><td>出力先</td><td>設定された出力先パスのCSVファイル。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>出力</td><td>ヘッダと各行をCSVとして所定パスに書き出す。</td></tr><tr><td>上書き</td><td>実行時に出力先ファイルを生成する（既存があれば上書きする）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は在庫リコメンドCSVを所定パスに出力する。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>在庫リコメンドのCSVファイル（所定パス）。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>CSVファイルの作成・上書き。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。テーブル・列名は移行先 ec-cube-enterprise を正とする。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_product_stock</td><td>product_class_id, base_info_id</td><td>集計対象の在庫。商品規格・店舗にひもづく。</td></tr><tr><td>dtb_product_class / dtb_product</td><td>product_code, name</td><td>出力する商品コード・商品名。</td></tr><tr><td>dtb_sales_quantity</td><td>販売数量集計列</td><td>販売実績の集計に用いる。詳細は ec-cube-enterprise 実装を確認値とする。</td></tr><tr><td>dtb_weekly_stock_history / dtb_stock_up_quantity</td><td>集計列</td><td>週次在庫・入荷数の集計に用いる。詳細は ec-cube-enterprise 実装を確認値とする。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product / dtb_product_class / dtb_product_stock 等（集計テーブルを結合）</td><td>リコメンド条件に合致する商品・規格在庫を抽出・集計し、CSV出力する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>リコメンドファイル</td><td>実行時点の集計で出力先CSVを上書きする。利用側は当ファイルを参照する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<p>本機能はコンソールから実行する。ブラウザ経由の権限制御は持たない。</p>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>ファイル出力エラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>出力先の機微なパス情報（必要に応じて）</li></ul>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>本機能はファイル出力が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

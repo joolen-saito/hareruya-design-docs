@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>カード管理 — カード CSV 登録（取込） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#画面を表示する-GET-admin-card-csv">画面を表示する（GET `admin_card_csv`）</a>
+<a class="lv3" href="#ファイルを取り込む-POST-m14-05-admin-card-card-csv-import">ファイルを取り込む（POST `m14-05_admin_card_card_csv_import`）</a>
+<a class="lv3" href="#取込中に検証例外または実行時例外が出たとき">取込中に検証例外または実行時例外が出たとき</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#カード-CSV-取込時の判定順序">カード CSV 取込時の判定順序</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#CSV-列-論理キー-一覧">CSV 列（論理キー）一覧</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-grep・参照用">調査補助（grep・参照用）</a>
+<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m14-05_admin_card_card_csv_import.md</p>
+        <h1>カード管理 — カード CSV 登録（取込）</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>HareruyaEc プラグインが管理画面に提供する「カード登録 CSV, TSV」画面である。利用者がアップロードしたファイルの 1 行目を論理キー（例: <code>name_jp</code>）として解釈し、カードマスタとカード詳細・関連マスタ紐付けを登録または更新する。区切りは拡張子が <code>tsv</code> のときタブ、それ以外はコア設定の CSV 区切り文字を使う。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とする。</p>
+<p>本機能のカスタマイズ区分はカスタマイズである。現行挙動は pf-eccube3 の HareruyaEc プラグインを参照し、永続化に関わるテーブル名・列名などのDB関連は ec-cube-enterprise を正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。</p>
+<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>DB関連の記述は ec-cube-enterprise の実装を正とする。取込先のカードマスタ・カード詳細・フォーマット紐付け・画像のテーブル名・列名は現行（pf-eccube3）と移行先（ec-cube-enterprise）で同一スキーマである。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>カード共通</td><td><code>mtb_card</code></td><td>同一スキーマ（<code>mtb_card</code>）。</td></tr><tr><td>カード詳細</td><td><code>mtb_card_detail</code></td><td>同一スキーマ（<code>mtb_card_detail</code>）。</td></tr><tr><td>フォーマット紐付け</td><td><code>dtb_card_format</code></td><td>同一スキーマ（<code>dtb_card_format</code>）。</td></tr><tr><td>画像</td><td><code>mtb_card_image</code></td><td>同一スキーマ（<code>mtb_card_image</code>）。</td></tr></tbody></table></div>
+<p>取込の判定順序・必須列・既存判定の挙動は現行（pf-eccube3）を参照する。永続化先のテーブル・列は移行先でも同名である。</p>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>カード一覧上部の「CSV,TSV取り込み」リンク</td><td><code>GET /{admin_route}/card/csvimport</code></td><td>ファイル選択とフォーマット説明表が表示される。</td></tr><tr><td>フォーマット説明を読み、ファイルを選んで「CSV, TSVファイルのアップロード」押下</td><td><code>POST /{admin_route}/card/csvimport</code></td><td>検証と取込が走り、結果メッセージとともに同一機能の GET へ戻る。</td></tr></tbody></table></div>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ページタイトルは「カード管理」。サブタイトルは「カード登録CSV, TSVアップロード」。アップロードボックス、フォーマット表（1 行目が論理キー、2 行目が日本語説明・改行付き文言）。</td></tr><tr><td>JS 挙動</td><td><code>spin.min.js</code> と <code>card-csvimport.js</code> を読み込む。フォーム submit で送信ボタンを無効化し、スピナーを表示する。取込完了までボタンは再度有効化されない（ページ遷移で再描画される）。</td></tr><tr><td>CSS・レイアウト</td><td>Bootstrap 横型フォームテーマ。取込専用の追加 CSS はない。</td></tr><tr><td>モーダル・ポップアップ</td><td>確認ダイアログはない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="画面を表示する-GET-admin-card-csv">画面を表示する（GET <code>admin_card_csv</code>）</h3>
+<ol><li>管理画面の認証・共通制約を通過する。</li><li>フォーム型 <code>admin_csv_import</code> で空のフォームを生成し、リクエストを取り込む。</li><li>取込対象列の論理キーと説明の連想配列をテンプレートに渡し、Twig を描画する。</li></ol>
+<h3 id="ファイルを取り込む-POST-m14-05-admin-card-card-csv-import">ファイルを取り込む（POST <code>m14-05_admin_card_card_csv_import</code>）</h3>
+<ol><li>管理画面の認証・共通制約を通過する。</li><li>取込処理用オブジェクトを生成し、同じく <code>admin_csv_import</code> のフォームを生成して <code>handleRequest</code> する。</li><li>共有のフォーム検証ヘルプで CSRF を検証し、不合格ならアクセス拒否（HTTP 403）として扱われ得る。検証エラー時はエラーメッセージをフラッシュに積み、<code>admin_card_csv</code> へリダイレクトする応答を組み立てるが、<code>import</code> 側がこの戻り値で処理を打ち切るかは呼び出し元の実装次第である（実装を確認値とする）。</li><li>フォームからアップロードファイルを取得する。</li><li>情報ログ「カードCSV登録開始」を出す。</li><li>ファイルを一時ディレクトリ（<code>csv_temp_realdir</code>）に保存し、内容を読み込んで文字コード変換・改行正規化・BOM・ゼロ幅文字の除去を行う。拡張子が <code>tsv</code> なら区切りはタブ、そうでなければ <code>csv_import_delimiter</code> を使い、ヘッダ行を 0 行目とする <code>CsvImportService</code> を構築する。失敗時は <code>false</code> となり、その場合はリダイレクトで GET 画面へ戻る。</li><li>想定キー一覧とファイルのヘッダ配列を比較する。比較から除外する論理キーは <code>old_product_id</code>、<code>old_en_product_id</code>、<code>card_detail_id</code> である。一致しない場合は翻訳キー <code>admin.csv.error.format.header</code> をメッセージとする例外を投げる（翻訳は例外生成時点では行わない）。</li><li>ヘッダ列数を基準に、データが 1 行以上あるか、各行の列数がヘッダと一致するかを後続のループで検証する。データ 0 行は <code>admin.csv.error.data.empty</code>。</li><li>ORM の SQL ロガーを無効にし、トランザクションを開始する。</li><li>各行について、必須列（後述）を検証し、英語カード名の <code>//</code> を <code>/</code> に置換した文字列で既存カードを検索する。無ければ新規カードとして生成する。</li><li>行の値に応じてカード共通項目・タイプ・色・フォーマット・詳細・画像等を更新し、都度 <code>flush</code> する。100 行ごとに ORM キャッシュを解放する。</li><li>全行処理後に再度キャッシュ解放を行い、サービス内で <code>commit</code> を呼ぶ。コントローラでも <code>commit</code> を呼ぶ。</li><li>成功時、情報ログ「カードCSV登録完了」とフラッシュ成功キー <code>admin.register.complete</code> を積む。</li><li>更新対象になったカード ID の配列（重複排除後）を引数に、支店更新通知サービスを呼ぶ。通信失敗時はエラーテーブル登録とログに留まり、取込自体の成功フラッシュは打ち消さない。</li><li>一時ファイルを削除してから <code>admin_card_csv</code> へリダイレクトする。</li></ol>
+<h3 id="取込中に検証例外または実行時例外が出たとき">取込中に検証例外または実行時例外が出たとき</h3>
+<ol><li>トランザクションを <code>rollback</code> する。</li><li>情報ログに例外メッセージを残す。</li><li>例外メッセージをそのまま管理画面エラーフラッシュに積む（多くの経路では事前に <code>trans</code> 済みの文言が入る）。</li><li>一時ファイル削除を試み、<code>admin_card_csv</code> へリダイレクトする。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<p>本機能では売上集計や件数ダッシュボード向けの集計は行わない。</p>
+<hr>
+<h2 id="カード-CSV-取込時の判定順序">カード CSV 取込時の判定順序</h2>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>CSRF・フォーム・ファイル必須・サイズ・MIME</td><td>不合格ならエラー扱いでアップロード画面へ戻すか、HTTP 403。</td></tr><tr><td>2</td><td>一時保存と <code>CsvImportService</code> 構築</td><td>失敗時はリダイレクトのみ（追加フラッシュはこの分岐では積まない）。</td></tr><tr><td>3</td><td>ヘッダの論理キー列（除外列適用後）が想定と完全一致</td><td>違反時は <code>admin.csv.error.format.header</code>。</td></tr><tr><td>4</td><td>データ行が 1 行以上</td><td>違反時は <code>admin.csv.error.data.empty</code>。</td></tr><tr><td>5</td><td>各行の列数がヘッダ列数と一致</td><td>違反時は <code>admin.csv.error.format.body</code>（行番号付き）。</td></tr><tr><td>6</td><td>必須論理キーが空でない（<code>cmc</code> は後段で空を 0 扱いするため例外ルールあり）</td><td>違反時は <code>admin.csv.error.data.require</code>。</td></tr><tr><td>7</td><td>参照マスタ（色・タイプ・セット等）に英名が存在</td><td>欠ける場合は <code>admin.csv.error.data.not_registered</code>。</td></tr><tr><td>8</td><td>トランザクションコミットと支店通知</td><td>成否はログ・支店エラー表に分割される。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>既存判定</td><td>英語カード名は <code>//</code> を <code>/</code> に直した値で <code>mtb_card</code> 相当を検索する。ヒットしなければ新規。</td></tr><tr><td>日本語名ほか（条件付き）</td><td><code>name_jp</code> が空でない行だけ、<code>＋</code> を <code>/</code> に置換して日本語名・アリーナ日本語名・日本語ルールテキストを上書きする。空の行ではこれらは更新されない。</td></tr><tr><td>マナコスト</td><td><code>White</code>→<code>W</code> 等の置換と <code>{</code> <code>}</code>→<code>(</code> <code>)</code> を行ってから保存する。</td></tr><tr><td>CMC</td><td>レイアウト値により解釈が変わる。<code>Split</code> は <code>/</code> 区切りの数値を合計。<code>Flip</code> は先頭片方。<code>Double Faced,Meld</code> は <code>Meld</code> としてレイアウトマスタを引く。空の <code>cmc</code> は必須チェックから外れ、数値変換時は 0 扱いになり得る。</td></tr><tr><td>多値列</td><td><code>color</code>、<code>cardtype</code>、<code>subtype</code>、<code>specialtype</code>、<code>color_identity</code> は <code>,</code> または <code>/</code> で分割し、重複を除いてマスタ英名と照合する。同一英語カード名の 2 行目以降では、直前に登録した集合で上書きしない実装がある（配列 <code>registeredCards</code> による分岐）。</td></tr><tr><td>フォーマット</td><td>CSV の <code>format</code> はカンマ区切り英名。行に含まれない既存の合法性付きフォーマット紐付けは削除する。新規・継続行はレガル制限に紐づけて保存する。ソースコメントに、禁止・制限のみのフォーマットを CSV だけでは再現できない旨の TODO がある。</td></tr><tr><td>プロモーション</td><td>空なら非プロモ定数に戻す。</td></tr><tr><td>イラストレータ</td><td>マスタに無い英名は新規マスタ行を作成して紐付ける。</td></tr><tr><td>画像 URL</td><td>日本語・英語・表側のみ更新。<code>card_detail_id</code> が行に無いときは <code>null</code> 条件で既存画像を探す実装になり、意図しない行との突合になる余地がある（実装を確認値とする）。</td></tr><tr><td>裏面詳細 ID</td><td>空なら <code>null</code>。値があるとき対象行が無ければエラー。</td></tr><tr><td>色順</td><td>名前でマスタ検索。空なら外部キーを <code>null</code>。</td></tr><tr><td>keyword_ability</td><td>ヘッダには含まれるが登録処理では読まない。</td></tr></tbody></table></div>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>CSV, TSVファイル選択</td><td>必須</td><td>ファイルサイズ上限は <code>csv_size</code> MB（<code>constant.yml.dist</code> では 5）。MIME は <code>text/plain</code>、<code>text/csv</code>、<code>text/tab-separated-values</code>、<code>application/vnd.ms-excel</code> のいずれかとして検証される</td><td>未選択</td><td>フォーム項目キー <code>import_file</code>。永続化は行わず、一時ディレクトリへ保存したうえで取込パイプラインへ渡す。空ファイルはフォーム層の <code>NotBlank</code> により通常は弾かれる。</td></tr></tbody></table></div>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>ヘッダのみでデータ行がない</td><td><code>admin.csv.error.data.empty</code>。</td></tr><tr><td>ヘッダ列数とデータ列数が異なる</td><td>該当行番号付きで <code>admin.csv.error.format.body</code>。</td></tr><tr><td>英語名が同一の複数データ行</td><td>同一カードに対する更新となる。タイプ・色等は最初に触れた行の結果が <code>registeredCards</code> により保持され、後続行では変更されない場合がある。</td></tr><tr><td>支店通知失敗</td><td>DB 取込は完了済み。失敗内容を支店更新エラーに残しログに JSON を出す。</td></tr><tr><td>Windows かつ PHP7 かつパス区切りが <code>\</code></td><td>一時読込後に UTF-8 検出時は <code>SJIS-win</code> へ一度変換する分岐がある。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧・検索との即時一致</td><td>取込成功後は同一 DB を見る画面なら再検索で反映される。キャッシュ層は取込中に定期的にクリアされる。</td></tr><tr><td>支店系統</td><td>通知失敗時はローカル DB と支店側の整合は保証されない。別途再連携機能の設計を正とする。</td></tr><tr><td>同一ファイルの再実行</td><td>英語名キーで上書き更新となるため、冪等ではない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>取込 HTTP レスポンスは HTML へリダイレクトするのみ。支店向け通知は別サービスが cURL で JSON API を叩く。成功・失敗はログと <code>dtb_branch_update_error</code> 相当の永続化に分かれる。</td></tr><tr><td>バッチ</td><td>本機能ではバッチ起動を扱わない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>multipart の <code>import_file</code>、フォーム CSRF トークン、論理キー行＋データ行の CSV または TSV。</td></tr><tr><td>成功時出力</td><td>302 で <code>admin_card_csv</code>、フラッシュ成功 <code>admin.register.complete</code>。</td></tr><tr><td>失敗時出力</td><td>302 で同画面、フラッシュにエラー文言または翻訳キー文字列。</td></tr><tr><td>副作用</td><td><code>mtb_card</code>・<code>mtb_card_detail</code>・中間・画像・イラストレータ等の INSERT/UPDATE、<code>dtb_card_format</code> の DELETE を含み得る。一時ファイル削除。支店通知。</td></tr></tbody></table></div>
+<hr>
+<h2 id="CSV-列-論理キー-一覧">CSV 列（論理キー）一覧</h2>
+<p>1 行目は次のキーを、この順で並べる。表の説明欄は画面の日本語ラベルに相当する。</p>
+<div class="table-wrap"><table><thead><tr><th>論理キー</th><th>画面説明（概要）</th></tr></thead><tbody><tr><td>name_jp</td><td>カード名(日本語)（<code>＋</code>→<code>/</code>）</td></tr><tr><td>name_en</td><td>カード名(英語)（<code>//</code>→<code>/</code>）</td></tr><tr><td>arena_format_name_jp</td><td>アリーナカード名(日本語)</td></tr><tr><td>arena_format_name_en</td><td>アリーナカード名(英語)</td></tr><tr><td>text_jp</td><td>ルールテキスト(日本語)</td></tr><tr><td>text_en</td><td>ルールテキスト(英語)</td></tr><tr><td>mana_cost</td><td>マナコスト</td></tr><tr><td>cmc</td><td>点数で見たマナコスト</td></tr><tr><td>power</td><td>パワー</td></tr><tr><td>toughness</td><td>タフネス</td></tr><tr><td>loyalty</td><td>忠誠度</td></tr><tr><td>color</td><td>カラー（多値）</td></tr><tr><td>cardtype</td><td>カードタイプ（多値）</td></tr><tr><td>subtype</td><td>サブタイプ（多値）</td></tr><tr><td>specialtype</td><td>特殊タイプ（多値）</td></tr><tr><td>keyword_ability</td><td>キーワード能力（現行取込では未使用）</td></tr><tr><td>format</td><td>使用可能フォーマット</td></tr><tr><td>set</td><td>セット</td></tr><tr><td>rarity</td><td>レアリティ</td></tr><tr><td>illustrator</td><td>イラストレーター</td></tr><tr><td>layout</td><td>レイアウト</td></tr><tr><td>flavor_jp</td><td>フレーバーテキスト(日本語)</td></tr><tr><td>flavor_en</td><td>フレーバーテキスト(英語)</td></tr><tr><td>card_no</td><td>カードNo</td></tr><tr><td>promotion</td><td>プロモーション名</td></tr><tr><td>foil_flg</td><td>Foilフラグ</td></tr><tr><td>promotion_flg</td><td>プロモフラグ</td></tr><tr><td>image_jp</td><td>画像URL(日本語)</td></tr><tr><td>image_en</td><td>画像URL(英語)</td></tr><tr><td>card_detail_id</td><td>カード詳細ID</td></tr><tr><td>back_card_detail_id</td><td>裏面カード詳細ID</td></tr><tr><td>color_sequence</td><td>色順</td></tr><tr><td>color_identity</td><td>固有色（多値）</td></tr></tbody></table></div>
+<p>必須として別定義されている論理キーは <code>name_en</code>、<code>cmc</code>（空は後続で 0 扱い）、<code>rarity</code>、<code>layout</code>、<code>promotion_flg</code>、<code>image_en</code> である。ヘッダ比較では <code>card_detail_id</code> など 3 キーは抜き出して比較するため、ファイルから省略してよい。</p>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列（概念）</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_card</code></td><td>名称・テキスト・マナ・CMC・パワー／タフネス／忠誠度・色順外部キー 等</td><td>カード共通。</td></tr><tr><td><code>mtb_card_detail</code></td><td>セット・レア・レイアウト・フレーバー・番号・各種フラグ・裏面 ID 等</td><td>行単位で作成または更新。</td></tr><tr><td><code>dtb_card_format</code></td><td>カード ID・フォーマット ID・制限区分</td><td>フォーマット列に無い既存行は削除されうる。</td></tr><tr><td>画像・中間</td><td><code>mtb_card_image</code> 等</td><td>言語 ID と表裏フラグで日本語・英語表を更新。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_card_format / mtb_card / mtb_card_detail / mtb_card_image</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>アップロードファイル</td><td>必須、最大 <code>csv_size</code> MB、許可 MIME 一覧に一致。</td></tr><tr><td>ヘッダ</td><td>論理キー順と除外ルールにより完全一致。不一致時メッセージキー <code>admin.csv.error.format.header</code>（フラッシュ表示時にテンプレート側で翻訳される想定）。</td></tr><tr><td>データ行</td><td>列数一致、必須論理キー、マスタ存在、裏面 ID 存在、および各参照先の整合性。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>カード CSV 取込</th></tr></thead><tbody><tr><td>管理画面に入れる通常の管理者</td><td>ルート定義上は個別のアノテーションを持たず、管理画面共通の認証・認可が適用される実装である。</td></tr><tr><td>未ログインまたは共通ルールで遮断される利用者</td><td>当パスへ到達できない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>GET で画面を開く</td><td><code>admin_card_csv</code> の同一テンプレート。</td></tr><tr><td>POST が成功</td><td>フラッシュ成功を伴い <code>admin_card_csv</code> へ HTTP リダイレクト。</td></tr><tr><td>POST が失敗（例外・フォームエラー扱い）</td><td>フラッシュエラーを伴い <code>admin_card_csv</code> へ HTTP リダイレクト。</td></tr><tr><td>CSRF 不正</td><td>共有ヘルプでは HTTP 403 が投げられ得る。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>取込 POST 完了</td><td>一時ファイル削除、ORM トランザクション終了</td><td>空フォームとフォーマット表のみの GET。フラッシュに成功または失敗。</td></tr></tbody></table></div>
+<p>カード検索用セッション <code>admin.card.*</code> は本取込では主に参照しない。</p>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>フォーム・ファイル検証</td><td>field エラーをフラッシュに載せる、<code>admin_card_csv</code> へ戻る経路（戻り値の扱いは実装を確認値とする）。</td></tr><tr><td>ヘッダ不一致</td><td>例外メッセージ <code>admin.csv.error.format.header</code>、ロールバック、エラーフラッシュ。</td></tr><tr><td>行形式・必須・マスタ欠落</td><td>対応する翻訳メッセージを例外で発生させ、同様にロールバックとフラッシュ。</td></tr><tr><td>一時ファイル処理失敗</td><td><code>CsvImportService</code> 構築失敗時はフラッシュを増やさずリダイレクトのみの分岐がある。</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>本機能ではログイン試行制限やアップロード回数の独自レートリミットは扱わない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>取込開始</td><td>情報ログ「カードCSV登録開始」。</td></tr><tr><td>取込完了</td><td>情報ログ「カードCSV登録完了」。</td></tr><tr><td>取込失敗</td><td>情報ログ「エラーが発生しました」と例外メッセージ配列。</td></tr><tr><td>支店通知成功</td><td>情報ログにカード ID 連結。</td></tr><tr><td>支店通知失敗</td><td>情報ログに失敗と JSON。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>CSRF トークン原値</li><li>セッション ID の完全値</li><li>クッキー値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>フラッシュ</td><td>成功・エラーメッセージは <code>eccube.admin.success</code> / <code>eccube.admin.error</code> に積まれる。</td></tr><tr><td>カード検索セッション</td><td>取込画面の表示・取込完了では更新しない。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>アップロードファイル本体や全行バッファをセッションに載せない。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>本機能専用の Cookie を新設しない。管理画面のセッション Cookie に従う。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>POST 取込ではコントローラがトランザクションを開始し、例外時はロールバックする。登録ループ内では行単位で <code>flush</code> し、ループ後にサービス内でも <code>commit</code> を呼ぶ実装になっている。コントローラでも <code>commit</code> を呼ぶため、アクティブなトランザクションが残らない環境では二度目の <code>commit</code> が例外になり得る。実装を確認値とする。</p>
+<p>行ロック・悲観ロック・楽観ロック・ロックファイルは使用しない。ロールバック対象や部分反映の扱いは本節のトランザクション境界と例外時の記載を正とする。</p>
+<hr>
+<h2 id="調査補助-grep・参照用">調査補助（grep・参照用）</h2>
+<p>ルートは <code>app/Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php</code>。画面と POST は <code>app/Plugin/HareruyaEc/Controller/Admin/CardCsvController.php</code>。取込本体は <code>app/Plugin/HareruyaEc/Service/Csv/CardCsv.php</code> と <code>AbstractCsvService.php</code>。フォーム型は <code>app/Plugin/HareruyaEc/Form/Type/Admin/CsvImportType.php</code>。Twig は <code>app/Plugin/HareruyaEc/Resource/template/admin/Card/card_csv_import.twig</code>、スクリプトは <code>app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-csvimport.js</code>。メッセージは <code>app/Plugin/HareruyaEc/Resource/locale/message.ja.yml</code> の <code>admin.csv</code> 配下。支店通知は <code>app/Plugin/HareruyaEc/Service/BranchUpdateService.php</code>。</p>
+<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
+<ul><li><code>admin_card_csv</code> … <code>GET</code> … <code>/{admin_route}/card/csvimport</code>（アップロードフォームと、取込 CSV の論理キー一覧（説明付き）を表示する。）</li><li><code>m14-05_admin_card_card_csv_import</code> … <code>POST</code> … <code>/{admin_route}/card/csvimport</code>（multipart で送られたファイルを検証し、取込処理成功時はフラッシュに成功メッセージを積み、支店連携通知を試みたうえで GET <code>admin_card_csv</code> へリダイレクトする。）</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

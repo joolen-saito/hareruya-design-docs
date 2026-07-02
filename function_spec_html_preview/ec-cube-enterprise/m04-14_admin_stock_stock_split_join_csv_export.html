@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-14（在庫分割結合情報CSV出力） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#1-在庫分割結合情報CSV出力">1. 在庫分割結合情報CSV出力</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
+<a class="lv3" href="#出力対象データと出力列">出力対象データと出力列</a>
+<a class="lv3" href="#整形・ファイル仕様">整形・ファイル仕様</a>
+<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
+<a class="lv3" href="#分岐・例外">分岐・例外</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/m04-14_admin_stock_stock_split_join_csv_export.md</p>
+        <h1>M04-14（在庫分割結合情報CSV出力）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫分割結合情報CSV出力</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockSplitJoinController::csvExport</code> / <code>StockSplitJoinCsvExportService</code> / <code>DtbStockSplitJoinRepository::getQueryBuilderBySearchData</code> / <code>CsvExportService</code> / <code>DtbStockSplitJoin</code> / <code>DtbStockSplitJoinDetail</code>）</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Repository/Entity）と既存テストを読み込み、出力列・並び・ファイル名・整形を実装確認値で具体化。</td></tr></tbody></table></div>
+<h2 id="1-在庫分割結合情報CSV出力">1. 在庫分割結合情報CSV出力</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>在庫分割結合一覧（M04-12）の検索条件に一致する在庫分割・結合情報を、固定12列のCSVとして出力する管理画面機能。一覧画面の在庫分割結合CSV出力ボタンから呼び出される。</p>
+<p>本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。出力列・出力条件の業務要件は基本設計仕様書を正とし、出力列の値・並び・ファイル名・文字コードはリニューアル先 ec-cube-enterprise 実装（<code>StockSplitJoinCsvExportService</code>）を正とする。</p>
+<h3 id="本書で扱うこと">本書で扱うこと</h3>
+<ul><li>在庫分割結合情報CSVの入口（エンドポイント）と対象データ</li><li>出力列（固定12列）・並び順・ファイル名・文字コード・整形</li><li>検索条件の引き継ぎ（セッション）と0件時の扱い</li></ul>
+<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
+<ul><li>出力フォーマットを選択するカスタムCSV出力（M04-15）</li><li>一覧・検索条件そのもの（M04-12）</li><li>結合欠品の検品CSV出力（<code>StockJoinShortageCsvExportService</code>、欠品入力画面の機能）</li></ul>
+<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>在庫分割結合CSV出力</td><td><code>GET /%admin%/product/stock/split-join/csv-export</code>（<code>admin_stock_split_join_csv_export</code>）</td><td>セッション <code>admin.stock.split_join.search</code> の検索条件を <code>SearchStockSplitJoinType</code> に復元し、一致データ全件をCSVとして <code>StreamedResponse</code> で返す。</td></tr></tbody></table></div>
+<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。管理画面ログインを要する。</p>
+<h3 id="出力対象データと出力列">出力対象データと出力列</h3>
+<p><code>StockSplitJoinCsvExportService::exportBySearchData()</code> が <code>DtbStockSplitJoinRepository::getQueryBuilderBySearchData()</code> のクエリに <code>orderBy('s.id', 'ASC')</code> を上書きして取得した <code>DtbStockSplitJoin</code> を行に展開する。Excelの出力項目（識別ID 1〜12）と実装の <code>CSV_HEADER</code> が1対1で対応する。</p>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>ヘッダ（実装値）</th><th>出力値（実装）</th></tr></thead><tbody><tr><td>1</td><td>ID</td><td><code>DtbStockSplitJoin.id</code></td></tr><tr><td>2</td><td>タイプ</td><td>分割（<code>SPLIT_JOIN_TYPE_SPLIT=1</code>）／結合（<code>SPLIT_JOIN_TYPE_JOIN=2</code>）のラベル</td></tr><tr><td>3</td><td>店舗</td><td><code>ProductStock.baseInfo</code> の会社名（無い場合 <code>-</code>）</td></tr><tr><td>4</td><td>在庫区分</td><td><code>ProductStock</code> のロケーション名（EC-CUBE在庫／スマレジ在庫）</td></tr><tr><td>5</td><td>分割元・結合先商品名</td><td>商品名＋規格分類1・規格分類2を <code> - </code> 連結</td></tr><tr><td>6</td><td>分割元・結合先点数</td><td><code>DtbStockSplitJoin.splitJoinQuantity</code>（分割数／結合数）</td></tr><tr><td>7</td><td>分割元・結合先商品の基準価格の合計</td><td><code>standardPrice × splitJoinQuantity</code>（四捨五入の整数）</td></tr><tr><td>8</td><td>分割先・結合元点数</td><td>明細 <code>Details</code> の <code>splitJoinQuantity</code> 合計</td></tr><tr><td>9</td><td>分割先・結合元商品の基準価格の合計</td><td>明細ごとの <code>standardPrice × splitJoinQuantity</code> の合計</td></tr><tr><td>10</td><td>ステータス</td><td><code>MtbStockSplitJoinStatus.name</code></td></tr><tr><td>11</td><td>登録日時</td><td><code>createDate</code> を <code>Y/m/d H:i</code> で整形</td></tr><tr><td>12</td><td>登録者</td><td><code>RegisteredMember</code> の氏名（無い場合 <code>-</code>）</td></tr></tbody></table></div>
+<h3 id="整形・ファイル仕様">整形・ファイル仕様</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>並び順</td><td>在庫分割結合ID（<code>s.id</code>）の昇順。一覧表示（<code>createDate</code> 降順）とは異なり、出力時にID昇順へ上書きする。</td></tr><tr><td>ファイル名</td><td><code>stock_split_join_YmdHis.csv</code>（出力時刻）。</td></tr><tr><td>Content-Type</td><td><code>application/octet-stream</code>、<code>Content-Disposition: attachment</code>。</td></tr><tr><td>文字コード</td><td><code>CsvExportService</code> の共通設定 <code>eccube_csv_export_encoding</code>（既定 <code>SJIS-win</code>）でUTF-8から変換して出力。</td></tr><tr><td>0件時</td><td>ヘッダ行のみを出力する（既存テスト <code>testExportBySearchDataOutputsHeaderOnlyWhenNoResults</code>）。</td></tr><tr><td>ログ</td><td>出力完了時に <code>log_info('在庫分割結合CSV出力完了. ファイル名: ...')</code>。</td></tr></tbody></table></div>
+<h3 id="プロセスフロー">プロセスフロー</h3>
+<ol><li><code>csv-export</code> をGET受信。</li><li>セッション <code>admin.stock.split_join.search</code> の検索ビューデータを取得し、<code>SearchStockSplitJoinType</code> に <code>FormUtil::submitAndGetData()</code> で submit して <code>searchData</code> を得る（未検索・空セッション時は条件なし＝全件）。</li><li><code>StockSplitJoinCsvExportService::exportBySearchData($searchData)</code> を呼び出す。</li><li><code>getQueryBuilderBySearchData()</code> で条件付きクエリを構築し <code>orderBy('s.id', 'ASC')</code> を適用、<code>getResult()</code> で <code>DtbStockSplitJoin</code> 一覧を取得。</li><li>各レコードを上表の12列に展開して行を生成。</li><li><code>StreamedResponse</code> のコールバックで <code>CsvExportService::fopen/fputcsv/fclose</code> によりヘッダ→データ行を書き出す。</li></ol>
+<h3 id="分岐・例外">分岐・例外</h3>
+<ul><li>**未検索でのCSV要求**: 在庫一覧（M04-01）と異なり、本ルートは検索必須ガードを持たず、空セッション時は条件なしで全件出力する（実装確認値）。</li><li>**0件**: ヘッダ行のみ出力（エラーにはしない）。</li><li>**検索条件の構造不整合**: フォーム submit で復元できない条件は無視され、結果が条件なしに近づく（実装要確認: 旧構造セッションのリセット処理は本ルートには無い）。</li></ul>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>**参照のみ**。<code>dtb_stock_split_join</code> と <code>dtb_stock_split_join_detail</code> を結合参照し、CSVへ整形出力するだけで更新しない。</td></tr><tr><td>履歴・ログ</td><td>取込履歴等の作成は無し。出力完了の <code>log_info</code> のみ。</td></tr></tbody></table></div>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>出力項目（識別ID 1〜12）の業務定義は参照元Excel設計書（在庫分割結合情報CSV出力シート）を正とする。</li><li>出力列の値・並び・ファイル名・文字コードは <code>../ec-cube-enterprise</code> の <code>StockSplitJoinCsvExportService</code> / <code>DtbStockSplitJoinRepository</code> / <code>CsvExportService</code> 実装を正とする。</li><li>検索条件はM04-12、出力フォーマット選択はM04-15を参照。</li></ul>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>本機能は新規実装であり、現行リポ（pf-eccube3 など）に対応機能は存在しない。移行先 ec-cube-enterprise の実装を確認値とする。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>移行先（ec-cube-enterprise）の扱い</th></tr></thead><tbody><tr><td>出力対象データ</td><td><code>dtb_stock_split_join</code> と <code>dtb_stock_split_join_detail</code> を結合した在庫分割結合情報。</td></tr><tr><td>出力サービス</td><td><code>StockSplitJoinCsvExportService::exportBySearchData()</code> で生成。固定12列（<code>CSV_HEADER</code>）。</td></tr><tr><td>並び順</td><td>在庫分割結合ID（<code>s.id</code>）の昇順で出力（基本設計の記載どおり）。</td></tr><tr><td>文字コード</td><td><code>eccube_csv_export_encoding</code>（既定 <code>SJIS-win</code>）。</td></tr></tbody></table></div>
+<p>Excelの出力列はすべて <code>CSV_HEADER</code> の12列に対応づけられている。出力値の細部（基準価格合計の丸め等）は上記サービス実装を正とする。</p>
+<details>
+<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+<pre><code class="language-text">在庫分割結合情報CSV出力
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+佐藤
+作成日
+2025-08-25
+更新者
+本田
+更新日
+2026-02-05
+機能No
+M04-14
+機能名
+在庫分割結合情報CSV出力
+概要
+—
+処理概要
+CSV出力項目
+識別ID項目名備考
+1ID在庫分割・結合登録 編集（分割）の "識別ID1-1" 「在庫分割結合ID」
+在庫分割・結合登録 編集（結合）の "識別ID1-1" 「在庫結合結合ID」
+2タイプ在庫分割・結合登録 編集（分割）の "識別ID1-2" 「処理タイプ」
+在庫分割・結合登録 編集（結合）の "識別ID1-2" 「処理タイプ」
+3店舗在庫分割・結合登録 編集（分割）の "識別ID1-3" 「店舗」
+在庫分割・結合登録 編集（結合）の "識別ID1-3" 「店舗」
+4在庫区分在庫分割・結合登録 編集（分割）の "識別ID1-4" 「在庫区分」
+在庫分割・結合登録 編集（結合）の "識別ID1-4" 「在庫区分」
+5分割元・結合先商品名在庫分割・結合登録 編集（分割）の "識別ID2-1" 「分割元商品名」
+在庫分割・結合登録 編集（結合）の "識別ID2-1" 「結合先商品名」
+6分割元・結合先点数在庫分割・結合登録 編集（分割）の "識別ID2-10" 「分割数」
+在庫分割・結合登録 編集（結合）の "識別ID2-10" 「結合数」
+7分割元・結合先商品の基準価格の合計在庫分割・結合一覧検索の "識別ID5-7" 「基準価格の合計」
+8分割先・結合元点数在庫分割・結合登録 編集（分割）の "識別ID2-21" 「分割先在庫数」
+在庫分割・結合登録 編集（結合）の "識別ID7-1" 「結合元点数」
+9分割先・結合元商品の基準価格の合計在庫分割・結合一覧検索の "識別ID5-9" 「基準価格の合計」
+10ステータス在庫分割・結合登録 編集（分割）の "識別ID1-5" 「ステータス」
+在庫分割・結合登録 編集（結合）の "識別ID1-5" 「ステータス」
+11登録日時在庫分割・結合登録 編集（分割）の "識別ID1-6" 「登録日」
+在庫分割・結合登録 編集（結合）の "識別ID1-6" 「登録日」
+12登録者在庫分割・結合登録 編集（分割）の "識別ID1-9" 「登録者」
+在庫分割・結合登録 編集（結合）の "識別ID1-9" 「登録者」
+機能仕様処理概要
+在庫分割結合CSV出力
+・在庫分割結合一覧画面の在庫分割結合CSV出力ボタンを押下してCSVを出力する
+・検索結果のデータを取得しCSV出力する
+・在庫分割結合IDの昇順で出力</code></pre>
+</details>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-08（在庫移動・振替検索/一覧） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#1-在庫移動・振替検索-一覧">1. 在庫移動・振替検索/一覧</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
+<a class="lv3" href="#画面表示・一覧項目">画面表示・一覧項目</a>
+<a class="lv3" href="#検索条件">検索条件</a>
+<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
+<a class="lv3" href="#一覧からの操作と接続点-設計要件">一覧からの操作と接続点（設計要件）</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#例外処理">例外処理</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md</p>
+        <h1>M04-08（在庫移動・振替検索/一覧）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫移動・振替検索/一覧</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockMoveTransferController::index</code> / <code>SearchStockMoveTransferType</code> / <code>DtbStockMoveTransferRepository::getQueryBuilderBySearchData</code> / <code>DtbStockMoveTransferDetailRepository::getAggregatesByStockMoveTransferIds</code>）</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化。</td></tr></tbody></table></div>
+<h2 id="1-在庫移動・振替検索-一覧">1. 在庫移動・振替検索/一覧</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>在庫移動・振替の登録情報を、ID・送り状No・出庫元/入庫先の店舗・在庫区分・移動タイプ・ステータス・各日付・承認者/登録者などの条件で検索し、一覧表示する管理画面機能。一覧の各行には移動点数合計・基準価格合計・ステータスを表示し、行を選択して在庫移動指示作成・各種CSV/PDF出力（在庫移動振替CSV・戻しリストCSV/PDF・バーコード貼替リストCSV）へ繋ぐ。あわせて、一覧画面上のモーダルから在庫移動CSV登録・在庫振替CSV登録（M04-22）の入口を提供する。</p>
+<p>本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。画面・項目の業務要件は基本設計仕様書（0202_基本設計仕様書(在庫管理機能)）を正とし、URLエンドポイント・検索条件・DBカラム・処理順序はリニューアル先 ec-cube-enterprise 実装を正とする。</p>
+<h3 id="本書で扱うこと">本書で扱うこと</h3>
+<ul><li>在庫移動・振替一覧の入口（検索・ページング・表示件数変更）と表示要素</li><li>検索条件（フォームキー付き）とセッション保持</li><li>一覧から各機能（CSV登録モーダル、各種CSV/PDF出力、移動指示作成）への接続点</li><li>未検索・入力不備時の扱い</li></ul>
+<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
+<p>以下は本書では仕様確定せず、対応機能の設計を正とする。</p>
+<ul><li>在庫移動・振替CSV登録（M04-22）、在庫移動・振替情報CSV出力（M04-10）、戻しリストCSV出力（M04-33）、戻しリストPDF出力（M04-34）、バーコード貼替リストCSV出力（M04-30）の各列・整形仕様</li><li>在庫移動・振替登録/編集（M04-09）、在庫移動指示一覧（移動指示作成の遷移先）の画面・更新仕様</li><li>管理画面ログイン認証・編集可能店舗の権限制御そのもの（共通設計を正とする）</li></ul>
+<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>一覧トップ／検索</td><td><code>GET,POST /%admin%/product/stock/move_transfer</code>（<code>admin_stock_move_transfer</code>）</td><td>GETは初期表示、POSTは検索実行。検索条件をセッションに保存し1ページ目を表示する。</td></tr><tr><td>ページ送り</td><td><code>GET /%admin%/product/stock/move_transfer/page/{page_no}</code>（<code>admin_stock_move_transfer_page</code>）</td><td>セッションの検索条件を復元し、指定ページを表示する。</td></tr><tr><td>在庫移動振替CSV出力</td><td><code>GET /%admin%/product/stock/move_transfer/csv_export</code>（<code>admin_stock_move_transfer_csv_export</code>）</td><td>セッションの検索条件で全件CSVを出力する（M04-10）。</td></tr><tr><td>戻しリストCSV出力</td><td><code>POST /%admin%/product/stock/move_transfer/return_list_csv_export</code>（<code>admin_stock_move_transfer_return_list_csv_export</code>）</td><td>選択した移動IDを対象に戻しリストCSVを出力する（M04-33）。</td></tr><tr><td>戻しリストPDF出力</td><td><code>POST /%admin%/product/stock/move_transfer/return_list_pdf_export</code>（<code>admin_stock_move_transfer_return_list_pdf_export</code>）</td><td>選択した移動IDを対象に戻しリストPDF用HTMLをJSONで返す（M04-34）。</td></tr><tr><td>在庫移動CSV登録</td><td><code>POST /%admin%/product/stock/move_transfer/move_csv_import</code>（<code>admin_stock_move_transfer_move_csv_import</code>）</td><td>モーダルからの在庫移動CSV取込（M04-22）。</td></tr><tr><td>在庫振替CSV登録</td><td><code>POST /%admin%/product/stock/move_transfer/transfer_csv_import</code>（<code>admin_stock_move_transfer_transfer_csv_import</code>）</td><td>モーダルからの在庫振替CSV取込（M04-22）。</td></tr><tr><td>在庫移動CSV雛形</td><td><code>GET /%admin%/product/stock/move_transfer/move_csv_template</code>（<code>admin_stock_move_transfer_move_csv_template</code>）</td><td><code>stock_move.csv</code>（ヘッダ: 商品コード／移動点数）を出力。</td></tr><tr><td>在庫振替CSV雛形</td><td><code>GET /%admin%/product/stock/move_transfer/transfer_csv_template</code>（<code>admin_stock_move_transfer_transfer_csv_template</code>）</td><td><code>stock_transfer.csv</code>（ヘッダ: 振替元商品コード／振替先商品コード／振替点数）を出力。</td></tr></tbody></table></div>
+<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。すべて管理画面ログインを要する。テンプレートは <code>@admin/Stock/MoveTransfer/index.twig</code>。</p>
+<h3 id="画面表示・一覧項目">画面表示・一覧項目</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示順</td><td>実装は登録日（<code>create_date</code>）降順 → 在庫移動振替ID（<code>id</code>）降順（<code>getQueryBuilderBySearchData</code>）。Excel要件は「在庫移動振替ID降順」だが、実装は登録日降順を第1キーとする（実IDは登録日順に採番されるため概ね一致する）。</td></tr><tr><td>集計表示</td><td>各在庫移動振替IDの移動点数合計・基準価格合計を <code>DtbStockMoveTransferDetailRepository::getAggregatesByStockMoveTransferIds()</code> で取得し、一覧へ渡す（<code>stockMoveTransferAggregates</code>）。</td></tr><tr><td>表示件数</td><td>既定 <code>eccube_default_page_count</code>。クエリ <code>page_count</code> が表示件数マスタ（<code>PageMax</code>）に一致すれば採用し、セッション <code>eccube.admin.stock.move_transfer.page_count</code> に保存する。</td></tr><tr><td>モーダル/付帯データ</td><td>在庫移動CSV登録フォーム・在庫振替CSV登録フォーム、店舗一覧（<code>csvMoveTransferRegisterBaseInfos</code>）、移動タイプ定数（<code>MOVE_TRANSFER_TYPE_MOVE=1</code> / <code>MOVE_TRANSFER_TYPE_TRANSFER=2</code>）を画面へ渡す。</td></tr></tbody></table></div>
+<h3 id="検索条件">検索条件</h3>
+<p><code>SearchStockMoveTransferType</code>（ブロックプレフィックス <code>admin_search_stock_move_transfer</code>）で受け取り、<code>getQueryBuilderBySearchData()</code> がクエリを組み立てる。</p>
+<div class="table-wrap"><table><thead><tr><th>項目（フォームキー）</th><th>形式・絞り込み</th></tr></thead><tbody><tr><td>在庫移動・振替ID <code>stock_move_transfer_id</code></td><td>数字のみは完全一致、非数字混在は ID文字列の部分一致（LIKE）</td></tr><tr><td>移動指示ID <code>move_instruction_id</code></td><td>NULL以外を部分一致（LIKE）</td></tr><tr><td>送り状No <code>tracking_no</code></td><td>部分一致（LIKE）</td></tr><tr><td>出庫元店舗 <code>move_from_base_info</code></td><td><code>BaseInfo</code> 複数選択（IN）</td></tr><tr><td>入庫先店舗 <code>move_to_base_info</code></td><td><code>BaseInfo</code> 複数選択（IN）</td></tr><tr><td>出庫元在庫区分 <code>move_from_stock_location_id</code></td><td>EC-CUBE在庫／スマレジ在庫の複数選択（IN）</td></tr><tr><td>入庫先在庫区分 <code>move_to_stock_location_id</code></td><td>EC-CUBE在庫／スマレジ在庫の複数選択（IN）</td></tr><tr><td>移動タイプ <code>move_transfer_type</code></td><td>在庫移動／在庫振替の複数選択（IN）</td></tr><tr><td>ステータス <code>move_transfer_status</code></td><td><code>MtbStockMoveTransferStatus</code>（ID昇順）の複数選択（IN）</td></tr><tr><td>登録日 <code>create_date_start</code>〜<code>create_date_end</code></td><td>範囲（終了日は+1日して未満比較）</td></tr><tr><td>出庫承認 所属 <code>move_from_approval_department</code>／担当者名 <code>move_from_approval_member_name</code></td><td>出庫承認者で内部結合し、所属名一致・氏名LIKE</td></tr><tr><td>登録者 所属 <code>registered_department</code>／氏名 <code>registered_member_name</code></td><td>登録者で所属名一致・氏名LIKE</td></tr><tr><td>入庫承認 所属 <code>move_to_approval_department</code>／担当者名 <code>move_to_approval_member_name</code></td><td>入庫承認者で内部結合し、所属名一致・氏名LIKE</td></tr><tr><td>出庫日 <code>move_from_stock_date_start</code>〜<code>move_from_stock_date_end</code></td><td>範囲</td></tr><tr><td>入庫日 <code>move_to_stock_date_start</code>〜<code>move_to_stock_date_end</code></td><td>範囲</td></tr></tbody></table></div>
+<p>日付3ペア（登録日・出庫日・入庫日）は POST_SUBMIT で開始&gt;終了をチェックし、不正時は終了側に <code>admin.common.date_end_error</code> を付与する。</p>
+<h3 id="プロセスフロー">プロセスフロー</h3>
+<ol><li>リクエスト受信。<code>BaseInfo</code> 全件で検索フォーム・CSV登録モーダルフォームを生成。クエリ <code>page_count</code> 指定時はマスタ照合し採用値をセッションへ保存。</li><li>**POST（検索実行）**: フォーム検証。不正なら <code>has_errors=true</code>・<code>pagination=null</code> で再表示（一覧は描画しない）。正常なら検索条件（<code>FormUtil::getViewData</code>）をセッション <code>eccube.admin.stock.move_transfer.search</code> に、<code>page_no=1</code> を <code>...page_no</code> に保存。</li><li>**GET（<code>?resume=1</code>）**: セッションのページ番号・検索条件を復元して再submit。</li><li>**GET（<code>page_no</code> 指定）**: ページ番号をセッションに保存し検索条件を復元（空ならフォーム既定値を保存）。</li><li>**GET（初回）**: ページ番号=1・フォーム既定値を検索条件としてセッション保存。</li><li>復元した検索データで <code>getQueryBuilderBySearchData()</code> → <code>paginator-&gt;paginate($qb, $page_no, $pageCount)</code>。</li><li>表示中ページの在庫移動振替IDを収集し、移動点数・基準価格合計を集計して一覧・フォーム・表示件数マスタとともに画面へ返す。</li></ol>
+<h3 id="一覧からの操作と接続点-設計要件">一覧からの操作と接続点（設計要件）</h3>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>接続先</th><th>実装上の扱い</th></tr></thead><tbody><tr><td>在庫移動CSV登録／在庫振替CSV登録</td><td>M04-22</td><td>一覧上のモーダルから上記取込ルートへPOST。エラーは元画面（一覧）上部に表示、モーダルの選択内容はリセット。</td></tr><tr><td>在庫移動振替CSV出力</td><td>M04-10</td><td>セッションの検索条件で全件出力。</td></tr><tr><td>戻しリストCSV出力／PDF出力</td><td>M04-33／M04-34</td><td>選択した在庫移動振替IDを <code>ids[]</code> でPOST。CSRFトークン検証後、<code>validateReturnListExportRequest()</code> で選択有無・対象妥当性を検証（移動であること・閾値対象など）。</td></tr><tr><td>バーコード貼替リストCSV出力</td><td>M04-30</td><td>移動かつ入庫先がスマレジ在庫の場合のみ（出力ルートは別機能側。本コントローラ未実装＝実装要確認）。</td></tr><tr><td>在庫移動指示作成</td><td>在庫移動指示一覧</td><td>移動タイプ＝移動・同一出庫元/入庫先店舗・ステータス出庫承認済み・移動指示ID未登録の条件を満たす移動をまとめて作成（作成処理ルートは別コントローラ。本コントローラ未実装＝実装要確認）。</td></tr></tbody></table></div>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>一覧・検索は**参照のみ**で業務データを更新しない。検索条件・ページ番号・表示件数をセッションに保持する。</td></tr><tr><td>永続化先</td><td>在庫移動振替 <code>dtb_stock_move_transfer</code>（<code>move_transfer_type</code>・<code>move_transfer_status_id</code>・<code>move_instruction_id</code>・<code>tracking_no</code>・出庫元/入庫先の店舗ID・在庫区分・承認者・各日時・<code>registered_member_id</code>・<code>updated_member_id</code>）、明細 <code>dtb_stock_move_transfer_detail</code>（移動点数・基準価格合計等）。</td></tr><tr><td>セッションキー</td><td><code>eccube.admin.stock.move_transfer.search</code> / <code>...page_no</code> / <code>...page_count</code>。</td></tr></tbody></table></div>
+<h3 id="例外処理">例外処理</h3>
+<ul><li>**検索入力不備**: 日付の開始&gt;終了など検証エラー時はリダイレクトせず <code>has_errors=true</code>・<code>pagination=null</code> で同一画面を再表示（既存テスト <code>testIndexPostRejectsWhenCreateDateStartIsAfterEnd</code>）。</li><li>**CSV登録エラー**: 取込エラーは元画面（一覧）上部にエラー表示。検索項目・一覧の選択状態は維持され、CSV登録モーダルの選択内容はリセットされる（Excel要件）。</li><li>**戻しリスト出力の選択なし**: <code>ids</code> 未選択時は <code>admin.stock.move_transfer.return_list_csv_export.no_selection</code> を表示し、現在ページへリダイレクト。</li><li>**CSRF不正**: 戻しリストCSV/PDFは <code>isTokenValid()</code> を要求する。</li></ul>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>画面項目・一覧列・CSV/PDF列の詳細は、参照元Excel設計書（在庫移動振替一覧シートおよび各CSV/PDF機能）を正とする。</li><li>URLエンドポイント・検索条件・DBカラム・処理順序は <code>../ec-cube-enterprise</code> の <code>StockMoveTransferController</code> / <code>SearchStockMoveTransferType</code> / <code>DtbStockMoveTransferRepository</code> 実装を正とする。</li></ul>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<ul><li>本機能は新規実装であり、対応する現行（pf-eccube3）の同等機能は存在しない。仕様は基本設計仕様書（在庫管理機能）を正とする。</li><li>永続化先は在庫移動振替（<code>dtb_stock_move_transfer</code>）であり、検索・一覧で扱うステータスは <code>move_transfer_status_id</code>、登録者は <code>registered_member_id</code>、更新者は <code>updated_member_id</code> で保持する。移動点数・基準価格合計は明細（<code>dtb_stock_move_transfer_detail</code>）の集計で算出する。</li><li>一覧の並び順はExcel設計の「在庫移動振替ID降順」を正とする。現状の ec-cube-enterprise 実装は登録日（<code>create_date</code>）降順 → ID降順でありExcel要件とキーが異なるため、**実装側の是正対象**（テストはExcel期待値=ID降順で設計する）。</li></ul>
+<details>
+<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+<pre><code class="language-text">在庫移動・振替検索一覧(検索・結果)
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+堀部
+作成日
+2025-08-25
+更新者
+本田
+更新日
+2025-12-23
+機能No
+M04-09
+機能名
+在庫移動振替一覧（検索・結果）
+概要
+—
+処理概要 在庫移動振替一覧（検索・結果）画面
+図形・テキストボックス内テキスト（44件）
+レイアウト図 在庫移動振替一覧（検索・結果）画面
+1-1
+1-2
+2-1
+2-2
+2-3
+2-4
+2-5
+2-6
+2-7
+2-8
+2-9
+3-1
+3-3
+3-4
+3-5
+3-7
+3-8
+3-10
+3-2
+3-6
+3-9
+4-1
+4-2
+4-3
+4-4
+4-5
+4-6
+4-7
+4-8
+5-1
+5-2
+5-3
+5-4
+5-5
+5-6
+5-7
+5-8
+5-9
+5-10
+5-11
+5-12
+5-13
+5-14
+5-15
+画像レイヤー（2枚）: 在庫移動・振替検索一覧(検索・結果) / B7 / image 1 + 在庫移動・振替検索一覧(検索・結果) / B7 / image 2
+機能仕様処理概要 在庫移動振替一覧（検索・結果）画面
+在庫一覧画面（検索・結果）概要
+・在庫移動・振替の一覧として機能する
+・在庫移動・振替についてCSVを利用してそれぞれ一括登録できる
+・選択した一覧の移動・振替について、各種CSVを出力することができる
+・選択した一覧の移動について、在庫移動指示を作成することができる
+CSVファイル登録
+・在庫移動CSV登録ボタンを押下すると、在庫移動CSV登録モーダルが表示される
+・在庫移動が登録されると、対象の在庫移動のステータスは新規登録となる
+・機能ID: M04-22の在庫移動CSV登録のモーダルを表示
+・在庫振替CSV登録ボタンを押下すると、在庫振替CSV登録モーダルが表示される
+・在庫振替が登録されると、対象の在庫振替のステータスは振替承認待ちとなる
+・機能ID: M04-22の在庫振替CSV登録のモーダルを表示
+CSVファイル登録時のエラー挙動
+・CSVファイル登録時にエラーがあり登録が行われなかった場合、一覧画面上部のエラー表示エリアにエラー内容を表示
+・検索項目および一覧の選択状態は失われない
+・機能ID: M04-22の在庫移動CSV登録および在庫振替CSV登録モーダルの選択内容はリセットされる
+検索結果の表示
+・検索ボタン押下後、検索が完了したらページを再描画し、検索結果の件数表示と、検索結果一覧を表示する
+・一覧は在庫移動振替IDを降順として表示する
+移動指示作成について
+・検索結果一覧テーブルで移動・振替をチェックした場合、チェックした移動・振替を対象に移動指示作成を行う
+・移動指示の作成条件は以下とする
+①移動タイプが移動であること
+②選択された移動の出庫元店舗がすべて同一であること（在庫区分は同一でなくてもよい）
+③選択された移動の入庫先店舗がすべて同一であること（在庫区分は同一でなくてもよい）
+④ステータスが出庫承認済みであること
+⑤移動指示IDが未登録の移動であること
+・上記の条件を満たしている場合、チェックされた移動をまとめて在庫移動指示を作成し、在庫移動指示一覧画面へ遷移する
+各種出力について
+・検索結果一覧テーブルで移動・振替をチェックした場合、チェックした移動・振替を対象に出力を行う
+・バーコード印刷用CSV出力
+・選択された移動について、機能ID: M04-30 バーコード貼替リストCSV出力の機能と同様の形式のCSV出力を行う
+※CSVレイアウトはM04-30 バーコード貼替リストCSV出力を参照
+・移動かつ入庫先がスマレジ在庫である場合のみ出力を可能とする
+・在庫移動振替CSV出力
+・機能ID: M04-22のCSVを利用
+・戻しリストCSV出力
+・機能ID: M04-33のCSVを利用
+・在庫移動である場合にのみ出力を可能とする
+・入庫先の閾値を元にCSVは作成・出力される
+・戻しリストPDF出力
+・機能ID: M04-34のPDFを利用
+・在庫移動である場合にのみ出力を可能とする
+・入庫先の閾値を元にPDFは作成・出力される
+識別IDラベル書式・制限必須最大値初期値画面部品の説明検索対象項目
+CSVファイル登録在庫移動在庫振替
+1-1在庫移動CSV登録ボタン-----
+1-2在庫振替CSV登録ボタン-----
+検索条件
+2-1在庫移動・振替ID数値---在庫移動・振替登録 編集（振替）の "識別ID1-1" 「在庫移動・振替ID」の検索に利用○○</code></pre>
+</details>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

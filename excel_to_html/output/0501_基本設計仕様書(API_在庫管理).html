@@ -1,0 +1,1582 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0501_基本設計仕様書(API_在庫管理)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* function-design-embed:start */
+    .function-design-embed {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-header {
+      margin-bottom: 18px;
+    }
+
+    .function-design-header h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .function-design-header h4 {
+      margin: 0;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-source {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .function-design-note {
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      border-left: 3px solid #f0ad4e;
+      background: rgba(240, 173, 78, 0.10);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .function-design-body h1,
+    .function-design-body h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+    }
+
+    .function-design-body h3 {
+      margin: 22px 0 10px;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-body h4 {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .function-design-body p {
+      margin: 9px 0;
+    }
+
+    .function-design-body ul,
+    .function-design-body ol {
+      margin: 9px 0;
+      padding-left: 26px;
+    }
+
+    .function-design-body li {
+      margin: 3px 0;
+    }
+
+    .function-design-body code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--band);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .function-design-body pre {
+      overflow-x: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      white-space: pre-wrap;
+    }
+
+    .function-design-body pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .function-design-body .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .function-design-body table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .function-design-body th,
+    .function-design-body td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .function-design-body th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .function-design-body tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* function-design-embed:end */
+/* endpoint-supplement-style:start */
+    .endpoint-supplement .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    .endpoint-supplement table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .endpoint-supplement th,
+    .endpoint-supplement td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .endpoint-supplement th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .endpoint-supplement tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* endpoint-supplement-style:end */
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0501_基本設計仕様書(API_在庫管理)</p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">スマレジ連携処理</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">スマレジwebhook連携エラー再連携</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">サイトリニューアル</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+            <p class="doc-p" style="--lv:0">在庫管理API機能</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>堀部</td><td>2025-09-05</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">画面設計</h4>
+            <p class="doc-p" style="--lv:1">A01-01 スマレジ連携処理</p>
+            <p class="doc-p" style="--lv:1">A01-02 スマレジwebhook連携エラー再連携</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>スマレジ連携処理</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>在庫管理API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-07-28</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A01-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>スマレジ連携処理</dd></div>
+            <div class="kv"><dt>概要</dt><dd>スマレジとの連携処理</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-3-shapes">図形・テキストボックス内テキスト（20件）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/smaregi/stocks</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　POST　認証の有無　有　認証方式　IP制限　リクエスト書式　JSON　レスポンス書式　なし(ステータスコードのみ)</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <p class="doc-p" style="--lv:1">スマレジの在庫が変動するタイミングで、ECCUBEとスマレジをスマレジプラットフォームAPIを介して連携させる</p>
+            <p class="doc-p" style="--lv:2">トリガーとなるポイントに合わせて、APIやWebhookを活用して連携させる</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">実装時の注意点</h4>
+            <p class="doc-p" style="--lv:2">API利用時の注意事項一般　https://developers.smaregi.dev/apidoc/common/#section/Webhook</p>
+            <p class="doc-p" style="--lv:2">APIのレート制限(スロットリング)　https://developers.smaregi.dev/apidoc/common/#section/%E3%83%AC%E3%83%BC%E3%83%88%E5%88%B6%E9%99%90</p>
+            <div class="doc-bullet" style="--lv:6"><span class="doc-marker">※</span><span>秒間50回が上限になりますが、理論上1秒間にレジ25台(在庫・受注処理で2回として仮定)が同時決済まで対応可能</span></div>
+            <div class="doc-bullet" style="--lv:6"><span class="doc-marker">※</span><span>レート制限を超えた場合もエラーレスポンスで待機時間が返ってくるのでリトライ処理が可能</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <p class="doc-p" style="--lv:1">在庫におけるスマレジとの連携は大きく分けて3つの方式</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>1</th><th>スマレジ -&gt; ECCUBE (Webhook方式)</th><th>スマレジ側で在庫変動があった場合、取引完了や取引キャンセル(全キャンセル)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>2</td><td>ECCUBE -&gt; スマレジ(API個別)</td><td>CSV登録等の一括処理ではない管理画面でスマレジ側の在庫変動が発生した場合</td></tr>
+                <tr><td>3</td><td>ECCUBE -&gt; スマレジ連携(Patch一括)</td><td>CSV登録等の一括処理でスマレジ側の在庫変動が発生した場合</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:2">スマレジ連携方式一覧</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>操作場所</th><th>機能名</th><th>方式</th><th>概要</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>スマレジ</td><td>スマレジで取引完了時</td><td>1:webhook</td><td>スマレジで受注した結果による在庫変動結果をwebhookで受信し、スマレジ在庫数を減らす</td></tr>
+                <tr><td>スマレジ</td><td>スマレジで取引全キャンセル</td><td>1:webhook</td><td>スマレジでの受注が全キャンセルされた結果をwebhookで受信し、スマレジ在庫数を戻す</td></tr>
+                <tr><td>管理画面</td><td>在庫編集</td><td>2:API個別</td><td>在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する<br>実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す</td></tr>
+                <tr><td>管理画面</td><td>在庫一括編集</td><td>2:API個別</td><td>在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する<br>実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す</td></tr>
+                <tr><td>管理画面</td><td>在庫変更CSV登録</td><td>3:Patch一括</td><td>在庫区分がスマレジの場合に編集結果をスマレジ側に反映する</td></tr>
+                <tr><td>管理画面</td><td>在庫移動指示</td><td>2 or 3 ※1</td><td>スマレジ在庫に入庫する場合、その移動指示結果を入庫済みになったタイミングで反映</td></tr>
+                <tr><td>管理画面</td><td>在庫移動指示</td><td>2 or 3 ※1</td><td>スマレジ在庫から出庫する場合、その移動指示結果を出庫承認済みになったタイミングで反映</td></tr>
+                <tr><td>管理画面</td><td>分割結合(分割)</td><td>2 or 3 ※1</td><td>スマレジ在庫から分割するために、福袋やオリパを出庫にする</td></tr>
+                <tr><td>管理画面</td><td>分割結合(分割)</td><td>2 or 3 ※1</td><td>スマレジ在庫に福袋やオリパを分割した結果を入庫する</td></tr>
+                <tr><td>管理画面</td><td>分割結合(結合)</td><td>2 or 3 ※1</td><td>スマレジの在庫から福袋やオリパを作るための商品を出庫する</td></tr>
+                <tr><td>管理画面</td><td>分割結合(結合)</td><td>2 or 3 ※1</td><td>スマレジの在庫に結合した福袋やオリパを入庫する</td></tr>
+                <tr><td>管理画面</td><td>棚卸し</td><td>3:Patch一括</td><td>スマレジの在庫を棚卸した場合、結果をスマレジ側に反映する</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:6">※1　上限件数を閾値にして、閾値を越えたらPatch一括処理。越えなかったらAPI個別</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">1.スマレジ -&gt; ECCUBE (Webhook方式) 処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">スマレジ -&gt; ECCUBE (Webhook方式)</h4>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">★1-1. スマレジで取引完了もしくは取引全キャンセルをhookにwebhook発動</h4>
+          </div>
+          <div class="diagram-block">
+            <figure class="diagram-frame" data-diagram-layout="excel" data-diagram-connectors="15" data-diagram-nodes="10" data-transition-edges="5">
+              <div class="diagram-viewport">
+                <div class="diagram-stage diagram-stage-excel" style="width:831px;height:3985px">
+                  <svg class="diagram-lines" viewBox="0 0 831 3985" preserveAspectRatio="none" aria-hidden="true">
+                    <defs>
+                      <marker id="diagram-arrow-sheet-3-1" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#5F7048"></path>
+                      </marker>
+                    </defs>
+                    <path d="M 238.1 61.5 L 238.1 254.8" fill="none" stroke="#70AD47" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M 577.3 61.5 L 577.3 254.8" fill="none" stroke="#70AD47" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M 239.8 99.8 L 576.0 99.8" fill="none" stroke="#70AD47" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#diagram-arrow-sheet-3-1)"></path>
+                    <path d="M 239.8 156.7 L 576.0 156.7" fill="none" stroke="#70AD47" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-start="url(#diagram-arrow-sheet-3-1)" marker-end="url(#diagram-arrow-sheet-3-1)"></path>
+                    <path d="M 239.8 212.4 L 576.0 212.4" fill="none" stroke="#70AD47" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#diagram-arrow-sheet-3-1)"></path>
+                    <path d="M 228.5 2551.7 L 228.5 2686.7" fill="none" stroke="#70AD47" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M 567.8 2551.7 L 567.8 2683.4" fill="none" stroke="#70AD47" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M 230.2 2590.1 L 566.5 2590.1" fill="none" stroke="#70AD47" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#diagram-arrow-sheet-3-1)"></path>
+                    <path d="M 230.2 2647.1 L 566.5 2647.1" fill="none" stroke="#70AD47" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-start="url(#diagram-arrow-sheet-3-1)" marker-end="url(#diagram-arrow-sheet-3-1)"></path>
+                    <path d="M 270.6 3777.7 L 270.6 3845.2" fill="none" stroke="#70AD47" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M 609.9 3777.7 L 609.9 3841.1" fill="none" stroke="#70AD47" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M 272.3 3816.0 L 608.6 3816.0" fill="none" stroke="#70AD47" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#diagram-arrow-sheet-3-1)"></path>
+                    <path d="M 271.5 3935.9 L 607.8 3935.9" fill="none" stroke="#70AD47" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-start="url(#diagram-arrow-sheet-3-1)" marker-end="url(#diagram-arrow-sheet-3-1)"></path>
+                    <path d="M 610.9 3903.3 L 610.9 3966.6" fill="none" stroke="#70AD47" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M 270.4 3903.3 L 270.4 3966.7" fill="none" stroke="#70AD47" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                  <div class="diagram-node" style="left:199.4px;top:18.0px;width:77.4px;height:38.9px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">スマレジ</div>
+                  <div class="diagram-node" style="left:540.0px;top:18.0px;width:74.5px;height:37.5px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">ECCUBE</div>
+                  <div class="diagram-node" style="left:251.4px;top:64.9px;width:319.7px;height:38.6px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">A. ★スマレジ在庫変動履歴IDを送信</div>
+                  <div class="diagram-node" style="left:266.5px;top:122.6px;width:277.8px;height:37.5px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">B. ★在庫変動履歴IDで取引詳細を要求</div>
+                  <div class="diagram-node" style="left:277.6px;top:178.3px;width:247.6px;height:38.6px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">C. ★在庫変動履歴情報を返す</div>
+                  <div class="diagram-node" style="left:63.2px;top:67.4px;width:197.1px;height:60.8px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">取引完了 or <br>取引全キャンセル</div>
+                  <div class="diagram-node" style="left:575.0px;top:193.8px;width:238.2px;height:37.9px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">スマレジ在庫変更履歴情報取得</div>
+                  <div class="diagram-node" style="left:189.8px;top:2508.0px;width:77.4px;height:39.0px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">ECCUBE</div>
+                  <div class="diagram-node" style="left:530.5px;top:2508.0px;width:74.6px;height:37.6px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">スマレジ</div>
+                  <div class="diagram-node" style="left:241.9px;top:2555.1px;width:319.8px;height:38.8px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">D. ★在庫相対値更新で在庫更新</div>
+                  <div class="diagram-node" style="left:257.0px;top:2612.9px;width:277.8px;height:37.6px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">E. ★APIのレスポンスを返す</div>
+                  <div class="diagram-node" style="left:33.8px;top:2569.2px;width:197.1px;height:33.6px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">管理画面操作による在庫変更</div>
+                  <div class="diagram-node" style="left:565.5px;top:2568.9px;width:238.3px;height:38.0px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">スマレジ在庫更新</div>
+                  <div class="diagram-node" style="left:231.9px;top:3734.1px;width:77.4px;height:38.9px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">ECCUBE</div>
+                  <div class="diagram-node" style="left:572.6px;top:3734.1px;width:74.6px;height:37.5px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">スマレジ</div>
+                  <div class="diagram-node" style="left:284.0px;top:3781.1px;width:319.8px;height:38.7px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">F. ★在庫一括相対値更新でデータ登録</div>
+                  <div class="diagram-node" style="left:298.3px;top:3901.8px;width:277.8px;height:37.5px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">G. ★処理結果をURLに返す</div>
+                  <div class="diagram-node" style="left:18.0px;top:3795.2px;width:255.0px;height:33.5px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">管理画面操作による在庫変更CSV登録</div>
+                  <div class="diagram-node" style="left:482.3px;top:3861.8px;width:255.0px;height:33.5px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">非同期による処理</div>
+                  <div class="diagram-node" style="left:88.6px;top:3924.8px;width:181.8px;height:33.5px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">ECCUBE側の処理を実行</div>
+                </div>
+              </div>
+              <figcaption>画面遷移図をExcel図形座標で再構成（画面 10件 / 遷移 5件 / 元コネクタ 15件）</figcaption>
+              <details class="transition-list">
+                <summary>遷移一覧（5件）</summary>
+                <div class="item-table-wrap">
+                  <table class="item-table">
+                    <thead><tr><th>遷移元</th><th>遷移先</th></tr></thead>
+                    <tbody>
+                      <tr><td>取引完了 or <br>取引全キャンセル</td><td>A. ★スマレジ在庫変動履歴IDを送信</td></tr>
+                      <tr><td>C. ★在庫変動履歴情報を返す</td><td>スマレジ在庫変更履歴情報取得</td></tr>
+                      <tr><td>管理画面操作による在庫変更</td><td>スマレジ在庫更新</td></tr>
+                      <tr><td>管理画面操作による在庫変更CSV登録</td><td>F. ★在庫一括相対値更新でデータ登録</td></tr>
+                      <tr><td>ECCUBE側の処理を実行</td><td>G. ★処理結果をURLに返す</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            </figure>
+          </div>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:6">※ 在庫変動履歴情報のIDは商品と店舗の組合せでしかまとめて取得できないので、取引商品種類数分CのAPIを叩く必要がある</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">★1-2. 取得したスマレジ在庫変更履歴情報をもとにECCUBE上のスマレジ在庫情報を更新</h4>
+            <p class="doc-p" style="--lv:4">在庫区分が02:売上の時は出庫処理, 12:の時は入庫処理を実施</p>
+            <p class="doc-p" style="--lv:4">取得したスマレジ在庫変更履歴情報の在庫区分が02:売上と12:返品のみ、情報更新処理を実施。それ以外は無視する</p>
+            <p class="doc-p" style="--lv:4">店頭受取分の商品IDの場合、スマレジ側の在庫は変動しないので無視する</p>
+            <p class="doc-p" style="--lv:4">スマレジの在庫変動履歴IDはECCUBE側の在庫変動履歴に紐づけて保存しておく</p>
+            <p class="doc-p" style="--lv:4">在庫変動履歴の登録については、「在庫変動時の履歴作成について」シートを参照</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">1-1 A. Webhook受信データ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>契約ID</td><td>String</td><td>〇</td><td></td><td></td><td>スマレジの契約ID</td></tr>
+                <tr><td>イベント名</td><td>String</td><td>〇</td><td></td><td>pos:stock</td><td>取引のイベント名固定 [pos:transactions]</td></tr>
+                <tr><td>アクション</td><td>String</td><td>〇</td><td></td><td>edited</td><td>edited: 更新,  bulk-update: 一括更新</td></tr>
+                <tr><td>在庫変動履歴IDリスト</td><td>int[]</td><td>〇</td><td></td><td></td><td>スマレジの以下の3つの情報のセットを1配列データとした配列リスト<br>在庫変更履歴ID, 商品ID, 店舗ID</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">1-1 A. レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:0">{<br>  "contractId": "string",<br>  "event": "string",<br>  "action": "edited",<br>  "ids": [<br>    {<br>      "id": "1",<br>      "productId": "1",<br>      "storeId": "0"<br>    },<br>    {<br>      "id": "10",<br>      "productId": "1",<br>      "storeId": "0"<br>    }<br>  ]<br>}</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">1-1 A. Webhook受信時に返すステータスコード　資料URL</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明　https://www1.smaregi.dev/apidoc/#operation/postWebhookTransactions</h3>
+            <p class="doc-p" style="--lv:0">200　レスポンスデータは空を返す　https://developers.smaregi.dev/apidoc/common/#section/Webhook</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">1-1 B. 在庫変動履歴情報取得API リクエストパラメータ（★はカスタマイズ項目）</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>契約ID</td><td>String</td><td>〇</td><td></td><td></td><td>スマレジの契約ID</td></tr>
+                <tr><td>商品ID</td><td>String</td><td>〇</td><td></td><td></td><td>情報取得するスマレジ商品ID</td></tr>
+                <tr><td>店舗ID</td><td>String</td><td>〇</td><td></td><td></td><td>情報取得するスマレジ店舗ID</td></tr>
+                <tr><td>在庫変動履歴ID</td><td>String</td><td>〇</td><td></td><td></td><td>情報取得する在庫変動履歴ID</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">1-1 B. 在庫変動履歴情報取得API リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:6">資料URL</p>
+            <p class="doc-p" style="--lv:1">https://api.smaregi.dev/{contract_id}/stock/changes/{product_id}/{store_id}?id={在庫変動履歴ID}　https://www1-dev.smaregi.jp/apidoc/#operation/getStockHistoryList</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">1-1 B.在庫変動履歴情報取得API ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200　正常取得</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">1-1 C. 取引情報取得API レスポンスデータ</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">名前　型　説明</h3>
+            <p class="doc-p" style="--lv:0">在庫変動履歴ID</p>
+            <p class="doc-p" style="--lv:0">更新日時　データ更新時の日時。[YYYY-MM-DDThh:mm:ssTZD]</p>
+            <p class="doc-p" style="--lv:0">商品ID</p>
+            <p class="doc-p" style="--lv:0">店舗ID</p>
+            <p class="doc-p" style="--lv:0">数量　入出庫数(相対値で設定)</p>
+            <p class="doc-p" style="--lv:0">在庫数　処理後の在庫数</p>
+            <p class="doc-p" style="--lv:0">取置き在庫数　処理後の取置き在庫数</p>
+            <p class="doc-p" style="--lv:0">在庫区分　在庫を更新理由となる区分 <br>01:修正、02:売上、03:仕入、04:出庫、05:入庫、06:レンタル、07:取置き、08:棚卸、09:調整、10:出荷、<br>12:返品、13:販促品、14:ロス、15:スマレジAPI連携、16:売上引当、17:入庫欠品、18:受注在庫引当</p>
+            <p class="doc-p" style="--lv:0">商品単価</p>
+            <p class="doc-p" style="--lv:0">原価</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">1-1 C. レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">※ 右記URLを参照　https://www1-dev.smaregi.jp/apidoc/#operation/getStockHistoryList</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">2. ECCUBE -&gt; スマレジ(API個別) 処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">ECCUBE -&gt; スマレジ(API個別)</h4>
+            <p class="doc-p" style="--lv:3">ECCUBE側の管理画面で操作した結果、スマレジの在庫を変動させた場合で、変動させた商品の種類が少ない場合に利用する</p>
+            <p class="doc-p" style="--lv:3">※ CSVではなく、管理画面操作から直接データが反映される場合を想定</p>
+            <p class="doc-p" style="--lv:3">※ スロットリングによる制限を考慮して、1回の管理画面操作での上限数は設定する。上限数は要検討。仮設定で、20商品を上限。更新系APIのレート制限である20回/秒を参考値</p>
+            <p class="doc-p" style="--lv:6">100商品を上限。一括処理時の上限数を参考値</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">★2-1. 管理画面操作によってスマレジ側の在庫を変動</h4>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">★2-2. 在庫相対値更新APIによりスマレジの在庫を適宜変動させる</h4>
+            <p class="doc-p" style="--lv:5">※ 在庫更新のPatch処理は、在庫変動数ではなく在庫総数を更新する処理のため使用しない</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">2-2 D. 在庫相対値更新API リクエストパラメータ（★はカスタマイズ項目）</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>契約ID</td><td>String</td><td>〇</td><td></td><td></td><td>スマレジの契約ID</td></tr>
+                <tr><td>商品ID</td><td>String</td><td>〇</td><td></td><td></td><td>情報取得するスマレジ商品ID</td></tr>
+                <tr><td>店舗ID</td><td>String</td><td>〇</td><td></td><td></td><td>情報取得するスマレジ店舗ID</td></tr>
+                <tr><td>在庫数(在庫変動数)</td><td>String</td><td>〇</td><td></td><td></td><td>現在の値に対し、入力された値を加算（入力値が負の場合は減算）した値</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">2-2 E. 在庫相対値更新API のステータスコード　資料URL</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明　https://www1-dev.smaregi.jp/apidoc/#operation/updateStockRelatively</h3>
+            <p class="doc-p" style="--lv:0">200　リクエストパラメータに在庫変動履歴情報を追加して返す</p>
+            <p class="doc-p" style="--lv:0">400　計算後の在庫数が999999999より大きい場合<br>計算後の在庫数が-999999999未満の場合<br>店舗IDが存在しない場合</p>
+            <p class="doc-p" style="--lv:0">404　URI指定の商品IDが存在しない場合</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">2-2 E. 在庫相対値更新API レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>契約ID</td><td>String</td><td>リクエストパラメータと同値</td></tr>
+                <tr><td>商品ID</td><td>String</td><td>リクエストパラメータと同値</td></tr>
+                <tr><td>店舗ID</td><td>String</td><td>リクエストパラメータと同値</td></tr>
+                <tr><td>在庫数(在庫変動数)</td><td>String</td><td>リクエストパラメータと同値</td></tr>
+                <tr><td>在庫変動履歴</td><td>Array</td><td>[id:在庫変動履歴ID, memo:メモ]の配列を返す</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">3. ECCUBE -&gt; スマレジ連携(Patch一括) 処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">ECCUBE -&gt; スマレジ連携(Patch一括)</h4>
+            <p class="doc-p" style="--lv:3">ECCUBE側の管理画面でCSVなどで一括で登録するなどして、大量の商品の種類数でスマレジの在庫変動が発生する場合に利用する</p>
+            <p class="doc-p" style="--lv:3">主にCSVによる登録を想定</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">★3-1. 管理画面操作によってスマレジ側の在庫のCSVによる登録処理</h4>
+            <p class="doc-p" style="--lv:3">コールバックURLは処理結果が返ってきた時に処理ができるようにパラメータを設定する。</p>
+            <p class="doc-p" style="--lv:3">CSVファイルはコールバックで返ってきた時に処理に使用するので、S3に保存しておく</p>
+            <p class="doc-p" style="--lv:3">登録したCSVは各CSV登録画面で、CSV履歴として表示し処理結果を明示できるようにしておく。100件以上ある場合は、100件毎の小データにCSVを分割してS3に上げて履歴表示する</p>
+            <div class="doc-bullet" style="--lv:4"><span class="doc-marker">※</span><span>「3-2 F. 在庫一括相対値更新API リクエストパラメータのコールバックURLに設定するGETパラメータ」を参照</span></div>
+            <p class="doc-p" style="--lv:4">※ この段階ではスマレジ側の登録の成功/失敗が判別できないので、ECCUBE側の在庫変動処理は行わない。結果がコールバックURLに返ってきた時に処理を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">★3-2. 在庫一括相対値更新APIによりスマレジの在庫変動を一括登録</h4>
+            <p class="doc-p" style="--lv:4">※ 在庫一括更新のPatch処理は、在庫変動数ではなく在庫総数を更新する処理のため使用しない</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">★3-3. 登録した処理結果がリクエストパラメータに登録したURLに非同期で返ってくるので、登録されていれば返ってきたらECCUBE側の在庫データも更新</h4>
+            <p class="doc-p" style="--lv:3">処理が成功していれば、問合せ用IDやコールバックURLのパラメータに従い処理対象のCSVを特定し、S3よりダウンロードしてECCUBE側の処理を実行</p>
+            <p class="doc-p" style="--lv:3">処理結果をCSV処理履歴に登録する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">3-2 F. 在庫一括相対値更新API リクエストパラメータ（★はカスタマイズ項目）</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>契約ID</td><td>String</td><td>〇</td><td></td><td></td><td>スマレジの契約ID</td></tr>
+                <tr><td>コールバックURL</td><td>String</td><td>〇</td><td></td><td></td><td>処理が完了した際にその結果をWebhook通知するURL</td></tr>
+                <tr><td>在庫情報.商品ID</td><td>String</td><td>〇</td><td></td><td></td><td>情報取得するスマレジ商品ID</td></tr>
+                <tr><td>在庫情報.店舗ID</td><td>String</td><td>〇</td><td></td><td></td><td>情報取得するスマレジ店舗ID</td></tr>
+                <tr><td>在庫情報.在庫数(在庫変動数)</td><td>String</td><td>〇</td><td></td><td></td><td>現在の値に対し、入力された値を加算（入力値が負の場合は減算）した値</td></tr>
+                <tr class="item-table-section"><td colspan="6">3-2 F. 在庫一括相対値更新API リクエストパラメータのコールバックURLに設定するGETパラメータ</td></tr>
+                <tr><td>項目名</td><td>型</td><td>必須</td><td>最大文字数<br>または最大値</td><td>入力例</td><td>備考</td></tr>
+                <tr><td>id</td><td>String</td><td>〇</td><td></td><td></td><td>処理したCSVを特定するためのID</td></tr>
+                <tr><td>相対処理区分</td><td>String</td><td>〇</td><td></td><td></td><td>在庫一括処理が入庫のみなのか、出庫のみなのか、両方なのか<br>1:入庫一括処理のみ	<br>2:出庫一括処理のみ	<br>3:入庫、出庫両方あり</td></tr>
+                <tr><td>在庫変動処理区分</td><td>String</td><td>〇</td><td></td><td></td><td>在庫変動が発生するCSV処理の区分</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">3-2 F. 在庫一括相対値更新API のステータスコード　資料URL</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明　https://www1-dev.smaregi.jp/apidoc/#operation/postBulkUpdate</h3>
+            <p class="doc-p" style="--lv:0">200　処理受付完了</p>
+            <p class="doc-p" style="--lv:0">400　商品IDと店舗IDの組み合わせがリクエスト内で重複している場合<br>在庫数に0が指定された場合<br>リクエスト上限数が超えている場合<br>在庫情報が1件も送られてこなかった場合<br>リクエスト内の全ての在庫情報で指定しているフィールドが揃っていない場合<br>リクエスト内の全ての在庫変動履歴で指定しているフィールドが揃っていない場合</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">3-2 F. 在庫一括相対値更新API 登録時レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>問い合わせ用ID</td><td>String</td><td>一括登録した際に発行されるID。問い合わせ用ID</td></tr>
+                <tr><td>コールバックURL</td><td>String</td><td>リクエストパラメータと同値</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">3-3 G. コールバックURL受信データ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>問合せID</td><td>String</td><td>〇</td><td></td><td></td><td>在庫一括相対値更新APIに登録した際の問合せID</td></tr>
+                <tr><td>結果.在庫変動履歴ID</td><td>String</td><td></td><td></td><td></td><td>処理に成功した場合に「結果」の配列の中身として届く</td></tr>
+                <tr><td>結果.商品ID</td><td>String</td><td></td><td></td><td></td><td>処理に成功した場合に「結果」の配列の中身として届く</td></tr>
+                <tr><td>結果.店舗ID</td><td>String</td><td></td><td></td><td></td><td>処理に成功した場合に「結果」の配列の中身として届く</td></tr>
+                <tr><td>エラーメッセージ</td><td>String</td><td></td><td></td><td></td><td>処理に失敗した場合にエラー内容が入る</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <section class="shape-block" id="sheet-3-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（20件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="I59"><td class="shape-ref">I59</td><td>スマレジ</td></tr>
+                  <tr data-shape-index="2" data-shape-ref="I59"><td class="shape-ref">I59</td><td>ECCUBE</td></tr>
+                  <tr data-shape-index="3" data-shape-ref="I59"><td class="shape-ref">I59</td><td>A. ★スマレジ在庫変動履歴IDを送信</td></tr>
+                  <tr data-shape-index="4" data-shape-ref="I59"><td class="shape-ref">I59</td><td>B. ★在庫変動履歴IDで取引詳細を要求</td></tr>
+                  <tr data-shape-index="5" data-shape-ref="I59"><td class="shape-ref">I59</td><td>C. ★在庫変動履歴情報を返す</td></tr>
+                  <tr data-shape-index="6" data-shape-ref="I59"><td class="shape-ref">I59</td><td>取引完了 or <br>取引全キャンセル</td></tr>
+                  <tr data-shape-index="7" data-shape-ref="I59"><td class="shape-ref">I59</td><td>スマレジ在庫変更履歴情報取得</td></tr>
+                  <tr data-shape-index="8" data-shape-ref="H173"><td class="shape-ref">H173</td><td>ECCUBE</td></tr>
+                  <tr data-shape-index="9" data-shape-ref="H173"><td class="shape-ref">H173</td><td>スマレジ</td></tr>
+                  <tr data-shape-index="10" data-shape-ref="H173"><td class="shape-ref">H173</td><td>D. ★在庫相対値更新で在庫更新</td></tr>
+                  <tr data-shape-index="11" data-shape-ref="H173"><td class="shape-ref">H173</td><td>E. ★APIのレスポンスを返す</td></tr>
+                  <tr data-shape-index="12" data-shape-ref="H173"><td class="shape-ref">H173</td><td>管理画面操作による在庫変更</td></tr>
+                  <tr data-shape-index="13" data-shape-ref="H173"><td class="shape-ref">H173</td><td>スマレジ在庫更新</td></tr>
+                  <tr data-shape-index="14" data-shape-ref="G229"><td class="shape-ref">G229</td><td>ECCUBE</td></tr>
+                  <tr data-shape-index="15" data-shape-ref="G229"><td class="shape-ref">G229</td><td>スマレジ</td></tr>
+                  <tr data-shape-index="16" data-shape-ref="G229"><td class="shape-ref">G229</td><td>F. ★在庫一括相対値更新でデータ登録</td></tr>
+                  <tr data-shape-index="17" data-shape-ref="G229"><td class="shape-ref">G229</td><td>G. ★処理結果をURLに返す</td></tr>
+                  <tr data-shape-index="18" data-shape-ref="G229"><td class="shape-ref">G229</td><td>管理画面操作による在庫変更CSV登録</td></tr>
+                  <tr data-shape-index="19" data-shape-ref="G229"><td class="shape-ref">G229</td><td>非同期による処理</td></tr>
+                  <tr data-shape-index="20" data-shape-ref="G229"><td class="shape-ref">G229</td><td>ECCUBE側の処理を実行</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      <!-- function-design-embed:start a01-01-a01-01_api_stock_smaregi_stock_sync -->
+      <section class="function-design-embed" id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync" data-source="functions/ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A01-01 スマレジ連携処理 / A01-01（スマレジ連携処理）</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-文書情報">文書情報</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>スマレジ連携処理</td></tr><tr><td>機能分類</td><td>API / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise</td></tr></tbody></table></div>
+          <h2 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-改訂履歴">改訂履歴</h2>
+          <div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr></tbody></table></div>
+          <h2 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-TODO-未確定項目">TODO（未確定項目）</h2>
+          <ul><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。</li><li>Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。</li></ul>
+          <h2 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-1-スマレジ連携処理">1. スマレジ連携処理</h2>
+          <h3 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-機能の目的と役割">機能の目的と役割</h3>
+          <p>スマレジWebhookを受け、取引・在庫に関する連携処理を非同期で実行する。</p>
+          <p>本機能のカスタマイズ区分は新規実装であり、仕様・挙動は基本設計仕様書（Excel）を正とし、DB関連の記述はec-cube-enterprise実装（スマレジWebhook受信テーブル dtb_smaregi_webhook_request）を正とする。</p>
+          <h3 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-リニューアル移行時の扱い">リニューアル移行時の扱い</h3>
+          <p>本機能は新規実装のため対応する現行実装は無い。永続化先はec-cube-enterprise実装のスマレジWebhook受信テーブル dtb_smaregi_webhook_request を正とする。当テーブルの列は id、contract_id（契約ID）、smaregi_event_id（スマレジイベントID）、event（イベント）、action（アクション）、request_headers（リクエストヘッダー）、request_body（リクエストボディ）、received_at（受信日時）、started_at（開始日時）、completed_at（完了日時）、status（ステータス）、create_date、update_date を確認値とする。基本設計が描くAPI個別連携・Patch一括連携・在庫相対値更新等のうち、ec-cube-enterprise実装で未確認の処理範囲は実装確認後に確定する。</p>
+          <h3 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-入出力仕様">入出力仕様</h3>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>外部システムまたはMTGバイヤーからのAPIリクエスト。</td></tr><tr><td>出力</td><td>APIレスポンス。成功・失敗の詳細は実装を正とする。</td></tr><tr><td>副作用</td><td>対象データの更新、外部連携履歴または受信履歴の記録。</td></tr></tbody></table></div>
+          <h3 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-開始条件-終了条件">開始条件、終了条件</h3>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>開始条件</td><td>API呼び出しを受け、認証・認可・署名等の実装側チェックを通過する。</td></tr><tr><td>終了条件</td><td>レスポンスを返し、必要なDB更新または非同期処理投入が完了する。</td></tr></tbody></table></div>
+          <h3 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-判定条件">判定条件</h3>
+          <ul><li>Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。</li><li>Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。</li></ul>
+          <h3 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-プロセスフロー">プロセスフロー</h3>
+          <ol><li>利用者または外部システムが対象機能を開始する。</li><li>入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。</li><li>Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。</li><li>登録・更新・出力・連携のいずれかの主処理を実行する。</li><li>成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。</li></ol>
+          <h3 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-ビジネスロジック">ビジネスロジック</h3>
+          <ul><li>**Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は <code>excel_to_html/output</code> の設計書を正とする。</li><li>**実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>**対象機能の要点**: 在庫処理に関連するスマレジとの連携処理</li><li>**実装確認値**: POST /%eccube_smaregi_webhook_route%（既定 smaregi/webhook）。WebhookController / Smaregi Webhook Transaction handlers を実装確認値とする。</li></ul>
+          <h3 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-状態・データ更新">状態・データ更新</h3>
+          <div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>API対象の買取・在庫・スマレジWebhook関連データを作成・更新・参照する。</td></tr><tr><td>履歴・ログ</td><td>必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。</td></tr><tr><td>DB関連実装確認値</td><td>dtb_smaregi_webhook_request.smaregi_event_id, event, action, request_headers, request_body, status</td></tr></tbody></table></div>
+          <h3 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-例外処理">例外処理</h3>
+          <ul><li>**入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。</li><li>**対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。</li><li>**状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。</li><li>**外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。</li></ul>
+          <h3 id="function-design-a01-01-a01-01_api_stock_smaregi_stock_sync-関連設計への接続点">関連設計への接続点</h3>
+          <ul><li>画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。</li><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の Controller Route、Entity、Repository、Migration、Service 実装を正とする。</li></ul>
+          <details>
+          <summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+          <pre><code class="language-text">スマレジ連携処理
+          ドキュメント名
+          在庫管理API機能
+          セクション
+          —
+          プロジェクト名
+          サイトリニューアル
+          作成者
+          堀部
+          作成日
+          2025-07-28
+          更新者
+          —
+          更新日
+          —
+          機能No
+          A01-01
+          機能名
+          スマレジ連携処理
+          概要
+          スマレジとの連携処理
+          処理概要（★はカスタマイズ項目）
+          図形・テキストボックス内テキスト（20件）
+          GET POST PUT DELETE PATCH OPTIONS HEAD 有 無 〇
+          エンドポイントURL
+          /smaregi/stocks
+          プロトコル HTTP メソッド POST 認証の有無 有 認証方式 IP制限 リクエスト書式 JSON レスポンス書式 なし(ステータスコードのみ)
+          カスタマイズ説明
+          スマレジの在庫が変動するタイミングで、ECCUBEとスマレジをスマレジプラットフォームAPIを介して連携させる
+          トリガーとなるポイントに合わせて、APIやWebhookを活用して連携させる
+          実装時の注意点
+          API利用時の注意事項一般 https://developers.smaregi.dev/apidoc/common/#section/Webhook
+          APIのレート制限(スロットリング) https://developers.smaregi.dev/apidoc/common/#section/%E3%83%AC%E3%83%BC%E3%83%88%E5%88%B6%E9%99%90
+          ※秒間50回が上限になりますが、理論上1秒間にレジ25台(在庫・受注処理で2回として仮定)が同時決済まで対応可能
+          ※レート制限を超えた場合もエラーレスポンスで待機時間が返ってくるのでリトライ処理が可能
+          機能仕様処理概要（★はカスタマイズ項目）
+          在庫におけるスマレジとの連携は大きく分けて3つの方式
+          1スマレジ -&gt; ECCUBE (Webhook方式)スマレジ側で在庫変動があった場合、取引完了や取引キャンセル(全キャンセル)
+          2ECCUBE -&gt; スマレジ(API個別)CSV登録等の一括処理ではない管理画面でスマレジ側の在庫変動が発生した場合
+          3ECCUBE -&gt; スマレジ連携(Patch一括)CSV登録等の一括処理でスマレジ側の在庫変動が発生した場合
+          スマレジ連携方式一覧
+          操作場所機能名方式概要
+          スマレジスマレジで取引完了時1:webhookスマレジで受注した結果による在庫変動結果をwebhookで受信し、スマレジ在庫数を減らす
+          スマレジスマレジで取引全キャンセル1:webhookスマレジでの受注が全キャンセルされた結果をwebhookで受信し、スマレジ在庫数を戻す
+          管理画面在庫編集2:API個別在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する
+          実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す
+          管理画面在庫一括編集2:API個別在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する
+          実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す
+          管理画面在庫変更CSV登録3:Patch一括在庫区分がスマレジの場合に編集結果をスマレジ側に反映する
+          管理画面在庫移動指示2 or 3 ※1スマレジ在庫に入庫する場合、その移動指示結果を入庫済みになったタイミングで反映
+          管理画面在庫移動指示2 or 3 ※1スマレジ在庫から出庫する場合、その移動指示結果を出庫承認済みになったタイミングで反映
+          管理画面分割結合(分割)2 or 3 ※1スマレジ在庫から分割するために、福袋やオリパを出庫にする
+          管理画面分割結合(分割)2 or 3 ※1スマレジ在庫に福袋やオリパを分割した結果を入庫する
+          管理画面分割結合(結合)2 or 3 ※1スマレジの在庫から福袋やオリパを作るための商品を出庫する
+          管理画面分割結合(結合)2 or 3 ※1スマレジの在庫に結合した福袋やオリパを入庫する
+          管理画面棚卸し3:Patch一括スマレジの在庫を棚卸した場合、結果をスマレジ側に反映する
+          ※1 上限件数を閾値にして、閾値を越えたらPatch一括処理。越えなかったらAPI個別
+          1.スマレジ -&gt; ECCUBE (Webhook方式) 処理概要（★はカスタマイズ項目）
+          スマレジ -&gt; ECCUBE (Webhook方式)
+          ★1-1. スマレジで取引完了もしくは取引全キャンセルをhookにwebhook発動
+          スマレジ
+          ECCUBE
+          A. ★スマレジ在庫変動履歴IDを送信
+          B. ★在庫変動履歴IDで取引詳細を要求
+          C. ★在庫変動履歴情報を返す
+          取引完了 or
+          取引全キャンセル
+          スマレジ在庫変更履歴情報取得
+          ECCUBE
+          スマレジ
+          D. ★在庫相対値更新で在庫更新
+          E. ★APIのレスポンスを返す
+          管理画面操作による在庫変更
+          スマレジ在庫更新
+          ECCUBE
+          スマレジ
+          F. ★在庫一括相対値更新でデータ登録
+          G. ★処理結果をURLに返す
+          管理画面操作による在庫変更CSV登録
+          非同期による処理
+          ECCUBE側の処理を実行
+          画面遷移図をExcel図形座標で再構成（画面 10件 / 遷移 5件 / 元コネクタ 15件）
+          遷移一覧（5件）
+          遷移元遷移先
+          取引完了 or
+          取引全キャンセルA. ★スマレジ在庫変動履歴IDを送信
+          C. ★在庫変動履歴情報を返すスマレジ在庫変更履歴情報取得
+          管理画面操作による在庫変更スマレジ在庫更新
+          管理画面操作による在庫変更CSV登録F. ★在庫一括相対値更新でデータ登録
+          ECCUBE側の処理を実行G. ★処理結果をURLに返す
+          ※ 在庫変動履歴情報のIDは商品と店舗の組合せでしかまとめて取得できないので、取引商品種類数分CのAPIを叩く必要がある
+          ★1-2. 取得したスマレジ在庫変更履歴情報をもとにECCUBE上のスマレジ在庫情報を更新
+          在庫区分が02:売上の時は出庫処理, 12:の時は入庫処理を実施
+          取得したスマレジ在庫変更履歴情報の在庫区分が02:売上と12:返品のみ、情報更新処理を実施。それ以外は無視する
+          店頭受取分の商品IDの場合、スマレジ側の在庫は変動しないので無視する
+          スマレジの在庫変動履歴IDはECCUBE側の在庫変動履歴に紐づけて保存しておく
+          在庫変動履歴の登録については、「在庫変動時の履歴作成について」シートを参照
+          1-1 A. Webhook受信データ
+          項目名型必須最大文字数
+          または最大値入力例備考
+          契約IDString〇スマレジの契約ID
+          イベント名String〇pos:stock取引のイベント名固定 [pos:transactions]
+          アクションString〇editededited: 更新, bulk-update: 一括更新
+          在庫変動履歴IDリストint[]〇スマレジの以下の3つの情報のセットを1配列データとした配列リスト
+          在庫変更履歴ID, 商品ID, 店舗ID
+          1-1 A. レスポンスデータサンプル
+          {
+          "contractId": "string",
+          "event": "string",
+          "action": "edited",
+          "ids": [
+          {
+          "id": "1",
+          "productId": "1",
+          "storeId": "0"
+          },
+          {
+          "id": "10",
+          "productId": "1",
+          "storeId": "0"</code></pre>
+          </details>
+        </div>
+      </section>
+      <!-- function-design-embed:end a01-01-a01-01_api_stock_smaregi_stock_sync -->
+</section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>スマレジwebhook連携エラー再連携</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>在庫管理API機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-07-28</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A01-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>スマレジwebhook連携エラー再連携</dd></div>
+            <div class="kv"><dt>概要</dt><dd>スマレジ連携のwebhookで連携エラーになったものを再連携する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-4-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-4-spec-2">処理内容は、スマレジ連携処理と処理概要1-2と同様の処理を実行する</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">バッチプログラムの起動方法の変更</h4>
+            <p class="doc-p" style="--lv:2">サーバ構成が変更になるので、AWS Step Functionsを利用して実装する</p>
+            <p class="doc-p" style="--lv:1">APIの仕様が廃止予定のスマレジAPIからプラットフォームAPIに変更</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">本店・支店の処理を統合</h4>
+            <p class="doc-p" style="--lv:2">全店舗のデータをともに処理対象とする</p>
+            <p class="doc-p" style="--lv:1">スマレジ連携処理でスマレジ -&gt; ECCUBE (Webhook方式)で連携に失敗したものをリトライする</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>1. APIでバッチ駆動時間から5時間前までの間のスマレジの在庫変動履歴データを取得する</span></div>
+            <p class="doc-p" style="--lv:3">そのデータの中で、在庫変動区分が「02:取引」もしくは「12:返品」でかつ、その在庫変動履歴IDがECCUBE側の在庫変動履歴に保存されているかを検索し、保存されていないIDを抽出</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>2. スマレジ在庫と連携されていないデータを再連携処理する</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-2" style="--lv:3"><span class="spec-badge">機能仕様</span>処理内容は、スマレジ連携処理と処理概要1-2と同様の処理を実行する</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>3. バッチの実行時間を閉店時間などを見て可変的に実行する運用に変更する</span></div>
+            <p class="doc-p" style="--lv:3">取得する期間は可変で実装し、実行タイミング(1時間あたりの実行回数)やバッチの実行時間、APIでのエラー発生率、テスト結果等を踏まえて検討する</p>
+            <p class="doc-p" style="--lv:3">全店舗閉店後はスマレジが稼働しないので、バッチ処理は閉店後1回のみとする</p>
+            <p class="doc-p" style="--lv:3">念の為、取引のスマレジ再連携バッチと処理時間が被らないように設定する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎時16分</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　スマレジプラットフォームAPI　出力先(フォーマット)　DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">Webhookが何らかの理由で失敗したスマレジ取引情報</h4>
+            <p class="doc-p" style="--lv:2">スマレジ側のwebhookにはリトライ処理が実装されていないので、在庫変動履歴が連携済みか確認が必要</p>
+            <p class="doc-p" style="--lv:3">以下の条件下でwebhookに失敗している場合、再連携処理を実行</p>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>スマレジ在庫変動履歴IDがECCUBE側に登録されているかどうかを検索し、保存されていないIDを抽出</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>在庫変動区分が「02:取引」もしくは「12:返品」</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>店頭受取のデータではない</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">スマレジ在庫変動履歴データ.取引更新時間　バッチ駆動時間(X)からバッチ駆動時間よりY時間前(X-Y hours)の間</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:1">Webhookに失敗した処理が、スマレジ連携処理と処理概要1-2と同等の処理が完了した状態になる</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+</section>
+
+
+<!-- endpoint-supplement:start -->
+<section class="endpoint-supplement">
+  <div class="sheet-doc">
+    <hr>
+    <h1>実装差分追補</h1>
+    <p>この節は Controller の本番利用 route と既存の「利用者視点の入口」を突合し、利用者が画面操作・ファイル出力・外部API呼び出しとして到達する入口を追補したものである。Block内部描画や CORS 用 OPTIONS は含めない。</p>
+    <h2 id="endpoint-supplement-user-entry">利用者視点の入口</h2>
+    <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>smaregi webhookを実行する</td><td>`POST /%eccube_smaregi_webhook_route%`</td><td>リクエスト内容を処理し、JSON等のレスポンスで結果を返す。</td></tr></tbody></table></div>
+  </div>
+      <!-- function-design-embed:start a01-02-a01-02_api_stock_smaregi_webhook_error_retry -->
+      <section class="function-design-embed" id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry" data-source="functions/ec-cube-enterprise/a01-02_api_stock_smaregi_webhook_error_retry.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/ec-cube-enterprise/a01-02_api_stock_smaregi_webhook_error_retry.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A01-02 スマレジwebhook連携エラー再連携 / A01-02（スマレジwebhook連携エラー再連携）</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-文書情報">文書情報</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>スマレジwebhook連携エラー再連携</td></tr><tr><td>機能分類</td><td>API / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise</td></tr></tbody></table></div>
+          <h2 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-改訂履歴">改訂履歴</h2>
+          <div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr></tbody></table></div>
+          <h2 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-TODO-未確定項目">TODO（未確定項目）</h2>
+          <ul><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。</li><li>Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。</li></ul>
+          <h2 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-1-スマレジwebhook連携エラー再連携">1. スマレジwebhook連携エラー再連携</h2>
+          <h3 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-機能の目的と役割">機能の目的と役割</h3>
+          <p>スマレジWebhook連携でエラーとなったリクエストを再処理する。</p>
+          <p>本機能のカスタマイズ区分は新規実装であり、仕様・挙動は基本設計仕様書（Excel）を正とし、DB関連の記述はec-cube-enterprise実装（スマレジWebhook受信テーブル dtb_smaregi_webhook_request）を正とする。</p>
+          <h3 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-リニューアル移行時の扱い">リニューアル移行時の扱い</h3>
+          <p>本機能は新規実装のため対応する現行実装は無い。永続化先はec-cube-enterprise実装のスマレジWebhook受信テーブル dtb_smaregi_webhook_request を正とする。再連携の状態管理に用いる列は status（ステータス）、started_at（開始日時）、completed_at（完了日時）、update_date を確認値とする。基本設計が描くStep Functionsによるスケジュール起動・取得期間の可変化等の運用面は、ec-cube-enterprise実装および運用設定で確定する。</p>
+          <h3 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-入出力仕様">入出力仕様</h3>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>外部システムまたはMTGバイヤーからのAPIリクエスト。</td></tr><tr><td>出力</td><td>APIレスポンス。成功・失敗の詳細は実装を正とする。</td></tr><tr><td>副作用</td><td>対象データの更新、外部連携履歴または受信履歴の記録。</td></tr></tbody></table></div>
+          <h3 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-開始条件-終了条件">開始条件、終了条件</h3>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>開始条件</td><td>API呼び出しを受け、認証・認可・署名等の実装側チェックを通過する。</td></tr><tr><td>終了条件</td><td>レスポンスを返し、必要なDB更新または非同期処理投入が完了する。</td></tr></tbody></table></div>
+          <h3 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-判定条件">判定条件</h3>
+          <ul><li>Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。</li><li>Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。</li></ul>
+          <h3 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-プロセスフロー">プロセスフロー</h3>
+          <ol><li>利用者または外部システムが対象機能を開始する。</li><li>入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。</li><li>Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。</li><li>登録・更新・出力・連携のいずれかの主処理を実行する。</li><li>成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。</li></ol>
+          <h3 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-ビジネスロジック">ビジネスロジック</h3>
+          <ul><li>**Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は <code>excel_to_html/output</code> の設計書を正とする。</li><li>**実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>**対象機能の要点**: スマレジ連携のwebhookで連携エラーになったものを再連携する</li><li>**実装確認値**: SmaregiWebhookEventRepository / EventService のステータス管理を実装確認値とする。</li></ul>
+          <h3 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-状態・データ更新">状態・データ更新</h3>
+          <div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>API対象の買取・在庫・スマレジWebhook関連データを作成・更新・参照する。</td></tr><tr><td>履歴・ログ</td><td>必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。</td></tr><tr><td>DB関連実装確認値</td><td>dtb_smaregi_webhook_request.status, started_at, completed_at, update_date</td></tr></tbody></table></div>
+          <h3 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-例外処理">例外処理</h3>
+          <ul><li>**入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。</li><li>**対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。</li><li>**状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。</li><li>**外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。</li></ul>
+          <h3 id="function-design-a01-02-a01-02_api_stock_smaregi_webhook_error_retry-関連設計への接続点">関連設計への接続点</h3>
+          <ul><li>画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。</li><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の Controller Route、Entity、Repository、Migration、Service 実装を正とする。</li></ul>
+          <details>
+          <summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+          <pre><code class="language-text">スマレジwebhook連携エラー再連携
+          ドキュメント名
+          在庫管理API機能
+          セクション
+          —
+          プロジェクト名
+          サイトリニューアル
+          作成者
+          堀部
+          作成日
+          2025-07-28
+          更新者
+          —
+          更新日
+          —
+          機能No
+          A01-02
+          機能名
+          スマレジwebhook連携エラー再連携
+          概要
+          スマレジ連携のwebhookで連携エラーになったものを再連携する
+          処理概要（★はカスタマイズ項目）
+          処理内容は、スマレジ連携処理と処理概要1-2と同様の処理を実行する
+          カスタマイズ説明
+          バッチプログラムの起動方法の変更
+          サーバ構成が変更になるので、AWS Step Functionsを利用して実装する
+          APIの仕様が廃止予定のスマレジAPIからプラットフォームAPIに変更
+          本店・支店の処理を統合
+          全店舗のデータをともに処理対象とする
+          スマレジ連携処理でスマレジ -&gt; ECCUBE (Webhook方式)で連携に失敗したものをリトライする
+          機能仕様処理概要（★はカスタマイズ項目）
+          ★1. APIでバッチ駆動時間から5時間前までの間のスマレジの在庫変動履歴データを取得する
+          そのデータの中で、在庫変動区分が「02:取引」もしくは「12:返品」でかつ、その在庫変動履歴IDがECCUBE側の在庫変動履歴に保存されているかを検索し、保存されていないIDを抽出
+          ★2. スマレジ在庫と連携されていないデータを再連携処理する
+          機能仕様処理内容は、スマレジ連携処理と処理概要1-2と同様の処理を実行する
+          ★3. バッチの実行時間を閉店時間などを見て可変的に実行する運用に変更する
+          取得する期間は可変で実装し、実行タイミング(1時間あたりの実行回数)やバッチの実行時間、APIでのエラー発生率、テスト結果等を踏まえて検討する
+          全店舗閉店後はスマレジが稼働しないので、バッチ処理は閉店後1回のみとする
+          念の為、取引のスマレジ再連携バッチと処理時間が被らないように設定する
+          実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎時16分
+          入力データ元 スマレジプラットフォームAPI 出力先(フォーマット) DB
+          入力データ詳細
+          Webhookが何らかの理由で失敗したスマレジ取引情報
+          スマレジ側のwebhookにはリトライ処理が実装されていないので、在庫変動履歴が連携済みか確認が必要
+          以下の条件下でwebhookに失敗している場合、再連携処理を実行
+          ・スマレジ在庫変動履歴IDがECCUBE側に登録されているかどうかを検索し、保存されていないIDを抽出
+          ・在庫変動区分が「02:取引」もしくは「12:返品」
+          ・店頭受取のデータではない
+          入力データ検索条件
+          項目名 条件 備考
+          スマレジ在庫変動履歴データ.取引更新時間 バッチ駆動時間(X)からバッチ駆動時間よりY時間前(X-Y hours)の間
+          実行結果詳細 ※主にDBの登録・更新結果について記載
+          Webhookに失敗した処理が、スマレジ連携処理と処理概要1-2と同等の処理が完了した状態になる
+          エラーハンドリング</code></pre>
+          </details>
+        </div>
+      </section>
+      <!-- function-design-embed:end a01-02-a01-02_api_stock_smaregi_webhook_error_retry -->
+</section>
+<!-- endpoint-supplement:end -->
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

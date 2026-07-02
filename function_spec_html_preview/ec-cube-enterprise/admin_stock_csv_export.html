@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-04（在庫情報CSV出力） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#TODO-未確定項目">TODO（未確定項目）</a>
+<a class="lv2" href="#1-在庫情報CSV出力">1. 在庫情報CSV出力</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#入出力仕様">入出力仕様</a>
+<a class="lv3" href="#開始条件-終了条件">開始条件、終了条件</a>
+<a class="lv3" href="#判定条件">判定条件</a>
+<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
+<a class="lv3" href="#ビジネスロジック">ビジネスロジック</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#例外処理">例外処理</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#Excel設計書からの抽出">Excel設計書からの抽出</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/admin_stock_csv_export.md</p>
+        <h1>M04-04（在庫情報CSV出力）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫情報CSV出力</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr></tbody></table></div>
+<h2 id="TODO-未確定項目">TODO（未確定項目）</h2>
+<ul><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。</li><li>Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。</li></ul>
+<h2 id="1-在庫情報CSV出力">1. 在庫情報CSV出力</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>検索条件に一致する在庫情報をCSVで出力する。</p>
+<h3 id="入出力仕様">入出力仕様</h3>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>管理画面の検索条件、フォーム入力、CSVアップロード、または画面操作。</td></tr><tr><td>出力</td><td>画面表示、CSV/PDFダウンロード、登録完了/エラー表示。</td></tr><tr><td>副作用</td><td>対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録。</td></tr></tbody></table></div>
+<h3 id="開始条件-終了条件">開始条件、終了条件</h3>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>開始条件</td><td>管理画面にログイン済みの利用者が対象メニューまたは操作を実行する。</td></tr><tr><td>終了条件</td><td>画面表示、ファイル出力、登録完了、またはエラー表示が完了する。</td></tr></tbody></table></div>
+<h3 id="判定条件">判定条件</h3>
+<ul><li>Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。</li><li>Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。</li></ul>
+<h3 id="プロセスフロー">プロセスフロー</h3>
+<ol><li>利用者または外部システムが対象機能を開始する。</li><li>入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。</li><li>Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。</li><li>登録・更新・出力・連携のいずれかの主処理を実行する。</li><li>成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。</li></ol>
+<h3 id="ビジネスロジック">ビジネスロジック</h3>
+<ul><li>**Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は <code>excel_to_html/output</code> の設計書を正とする。</li><li>**実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>**対象機能の要点**: 在庫データのCSV出力が行えます。</li><li>**実装確認値**: StockListCsvExportService を実装確認値とする。</li></ul>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>管理画面の対象業務データを参照し、登録系では対象データと履歴を更新する。</td></tr><tr><td>履歴・ログ</td><td>必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。</td></tr><tr><td>DB関連実装確認値</td><td>dtb_product_class.stock, dtb_product_stock.stock</td></tr></tbody></table></div>
+<h3 id="例外処理">例外処理</h3>
+<ul><li>**入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。</li><li>**対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。</li><li>**状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。</li><li>**外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。</li></ul>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。</li><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の Controller Route、Entity、Repository、Migration、Service 実装を正とする。</li></ul>
+<h2 id="Excel設計書からの抽出">Excel設計書からの抽出</h2>
+<pre><code class="language-text">在庫情報CSV出力
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+佐藤
+作成日
+2025-08-25
+更新者
+本田
+更新日
+2026-01-28
+機能No
+M04-04
+機能名
+在庫情報CSV出力
+概要
+—
+処理概要
+CSV出力項目
+識別ID項目名備考
+1商品ID-
+2商品名-
+3商品コード-
+5店舗名-
+6在庫区分名-
+7言語-
+8状態-
+10基準価格-
+11販売価格-
+12買取価格-
+14原価単価-
+15総原価-
+13在庫-
+16当日販売数-
+17前日販売数-
+183日間販売数-
+191週間販売数-
+201ヶ月間販売数-
+2190日間販売数-
+機能仕様処理概要
+在庫情報カスタムCSV出力
+・在庫一覧の検索条件を適用した結果をCSVとして出力する。</code></pre>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

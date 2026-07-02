@@ -1,0 +1,1848 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0408_基本設計仕様書(バッチ_会員)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* function-design-embed:start */
+    .function-design-embed {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-header {
+      margin-bottom: 18px;
+    }
+
+    .function-design-header h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .function-design-header h4 {
+      margin: 0;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-source {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .function-design-note {
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      border-left: 3px solid #f0ad4e;
+      background: rgba(240, 173, 78, 0.10);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .function-design-body h1,
+    .function-design-body h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+    }
+
+    .function-design-body h3 {
+      margin: 22px 0 10px;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-body h4 {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .function-design-body p {
+      margin: 9px 0;
+    }
+
+    .function-design-body ul,
+    .function-design-body ol {
+      margin: 9px 0;
+      padding-left: 26px;
+    }
+
+    .function-design-body li {
+      margin: 3px 0;
+    }
+
+    .function-design-body code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--band);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .function-design-body pre {
+      overflow-x: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      white-space: pre-wrap;
+    }
+
+    .function-design-body pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .function-design-body .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .function-design-body table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .function-design-body th,
+    .function-design-body td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .function-design-body th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .function-design-body tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* function-design-embed:end */
+</style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0408_基本設計仕様書(バッチ_会員)</p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">リニューアル時パスワードリセットメール送信</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">ポイント失効</a></li>
+                  <li><a href="#sheet-5" data-sheet="sheet-5">ポイント有効期限通知</a></li>
+                  <li><a href="#sheet-6" data-sheet="sheet-6">必須項目が空欄の会員発生通知</a></li>
+                  <li><a href="#sheet-7" data-sheet="sheet-7">ポイント差分発生通知</a></li>
+                  <li><a href="#sheet-8" data-sheet="sheet-8">スマレジ使用ポイント連携</a></li>
+                  <li><a href="#sheet-9" data-sheet="sheet-9">身分証有効期限切れ通知</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">サイトリニューアル</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+            <p class="doc-p" style="--lv:0">会員 バッチ機能</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>高久</td><td>2025-09-10</td></tr>
+                <tr><td>0.2</td><td>入力・出力・エラーハンドリングの追記</td><td>高久</td><td>2025-09-30</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">バッチ設計</h4>
+            <p class="doc-p" style="--lv:1">B08-01 リニューアル時パスワードリセットメール送信</p>
+            <p class="doc-p" style="--lv:1">B08-02 ポイント失効</p>
+            <p class="doc-p" style="--lv:1">B08-03 ポイント有効期限通知</p>
+            <p class="doc-p" style="--lv:1">B08-04 必須項目が空欄の会員発生通知</p>
+            <p class="doc-p" style="--lv:1">B08-05 ポイント差分発生通知</p>
+            <p class="doc-p" style="--lv:1">B08-06 スマレジ使用ポイント連携</p>
+            <p class="doc-p" style="--lv:1">B08-07 身分証有効期限切れ通知</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>リニューアル時パスワードリセットメール送信</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>会員 バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-10</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-30</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B08-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>リニューアル時パスワードリセットメール送信</dd></div>
+            <div class="kv"><dt>概要</dt><dd>リニューアル時にパスワード再設定を促すメールを送信する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-3-spec-2">処理内容</a>
+            <a href="#sheet-3-shapes">図形・テキストボックス内テキスト（1件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">リニューアル時にパスワード再設定を促すメールを送信する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">現行ECサイトインポートされたアカウントにパスワードリセットメールを送信</p>
+            <p class="doc-p" style="--lv:1">(カスタマイズ後のシステムは厳格なパスワードを設定してもらう想定のため、全会員のパスワードを変更を促す可能性)</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">事前準備</h4>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>現行ECサイトから会員情報インポート後、各ユーザーの会員データに「パスワード再設定キーコード(※)」を登録する。</span></div>
+            <p class="doc-p" style="--lv:2">「パスワード再設定キーコード」を登録すると会員データの最終更新日が自動的に更新される。</p>
+            <p class="doc-p" style="--lv:2">※パスワード再設定キーコードはパスワード再設定用URLで使われるコードのこと。全ユーザー毎に個別生成され重複しないコード(ユニークコード)が割り振られる。</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>リニューアル時パスワードリセットメール送信バッチを実行する際に日付入力しないとエラーとなる。</span></div>
+            <p class="doc-p" style="--lv:2">引数には「パスワード再設定キーコード登録開始した日時」を入力し実行する。</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>リニューアル時パスワードリセットメール送信バッチを実行後、該当者に対してサイトリニューアルの案内およびパスワード再設定URLをメール送信される。</span></div>
+            <p class="doc-p" style="--lv:2">設定言語(日本語・英語)によって、メール本文が切替わる</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信後、データベース内にあるメール送信履歴データ(dtb_user_mail_history)に送信内容が保存される。</span></div>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">送信対象</h4>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>会員情報データ最終更新日時がバッチ実行時に指定された日時以降のもの(最終更新日 &gt;=  指定日時)</span></div>
+            <p class="doc-p" style="--lv:2">今回の指定日時は「パスワード再設定キーコード登録開始した日時」を設定</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>会員情報データ内にパスワード再設定キーコードが事前に設定されていること</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　-　実行タイミング　手動実行</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　メール・DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <p class="doc-p" style="--lv:0">バッチ実行時に、パスワード再設定コードを登録した日時を入力し実行する。</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">会員データ.最終更新日　&gt;= パスワード再設定キーコード登録開始した日時(手入力)</p>
+            <p class="doc-p" style="--lv:0">会員データ.パスワード再設定キーコード　未設定以外が該当(IS NOT NULL)　事前に「パスワード再設定キーコード」の登録が必要</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>メール送信</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信先は会員データにあるメールアドレス宛に送信する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信元は[info@hareruyamtg.com]に設定</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>日本語メール本文</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>件名:　【晴れる屋】弊社Webサイトリニューアルに伴う、会員情報移行についてのお願い</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>本文</span></div>
+            <p class="doc-p" style="--lv:2">[名前(姓)] [名前(名)] 様<br><br>いつもご利用いただき、誠にありがとうございます。晴れる屋です。<br><br>現在、弊社Webサイトリニューアルに伴うメンテナンスを行っており、サイトへのアクセスができなくなっております。<br><br>メンテナンス終了後は、旧サイトに登録されていた会員様の情報が新サイトに移行されます。              <br>そのため、メンテナンス終了後は移行された情報が正しいものであるかどうか、ご確認をお願いいたします。               <br>その際にパスワードがリセットされるため、新しいパスワードの入力も併せてお願いいたします。   <br>また、複数のお届け先を登録されていた場合、一番最初に登録されたお届け先以外は削除されます。           <br>大変お手数ですが、複数のお届け先を引き続きご利用になる場合、削除されたお届け先の再登録をお願いいたします。<br><br>今回のリニューアルにより、お客様にはご不便とご迷惑をおかけし、誠に申し訳ありません。              <br>何卒ご理解とご協力のほど、よろしくお願い申し上げます。             <br><br>■PC用サイト<br>[パスワード再発行URL]<br>■スマートフォン用サイト<br>[パスワード再発行URL]?ismodesmartphone=on<br><br>*************************************<br>《晴れる屋/Hareruya》<br>〒169-0075<br>東京都新宿区高田馬場3-12-2 OCビル2F<br>E-MAIL : info@hareruyamtg.com<br>URL :http://www.hareruyamtg.com<br>*************************************</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>英語メール本文</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>件名:　【Important】Notice regarding your account transfer to the renewed Hareruya web store.</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>本文</span></div>
+            <p class="doc-p" style="--lv:2">Dear [名前(名)]  [名前(姓)]										<br>												<br>Thank you for using Hareruya.											<br>												<br>We are currently undergoing maintenance work and the Hareruya web store is not able to access.												<br>When maintenance work is complete, your account that has been registered before the maintenance work will automatically be transferred to the new platform.												<br>When your account has been transferred the password you have registered will be reset.												<br>Please register your password once again.												<br>												<br>We deeply apologize for the trouble we ask regarding our web store renewal and we thank you in advance for your understanding.												<br>												<br>Kind regards,												<br>Hareruya Inc.												<br>												<br>* PC										<br>[パスワード再発行URL]												<br>* Smartphone												<br>[パスワード再発行URL]?ismodesmartphone=on												<br>												<br>*************************************<br>《Hareruya》<br>OC Bldg. 2F 3-12-2 Takadanobaba Shinjuku-ku Tokyo JAPAN 169-0075<br>TEL: 03-5332-7544<br>E-MAIL : info@hareruyamtg.com<br>URL :http://www.hareruyamtg.com<br>*************************************</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>メール送信後処理(1通ごとに処理実行)</span></div>
+            <p class="doc-p" style="--lv:1">メール送信後、データベース内にあるメール送信履歴データ(dtb_user_mail_history)に下記情報が登録される</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>送信日時</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>送信時のメール件名</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>送信したメール本文の全文</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>メール送信時に使用したテンプレートのファイル名('Mail/customer_migration.twig' または 'Mail/customer_migration.en.twig')</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>送信した相手のユーザーID</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>パスワード再設定コードを登録した日時が未入力の場合、下記メッセージが出力され処理が終了する。</span></div>
+            <p class="doc-p" style="--lv:1">「日付を指定してください。」</p>
+          </div>
+          <section class="shape-block" id="sheet-3-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（1件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="D5"><td class="shape-ref">D5</td><td>パスワードは移行する想定のため、リセットおよび再設定させない<br>そのためこちらのバッチは不要<br><br>https://docs.google.com/spreadsheets/d/1X_GG3Nuh5Yo0pd_Im3SRBxJrahJT909jRVcczg-rfEM/edit?gid=1427727830#gid=1427727830&amp;range=A119</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+      <!-- function-design-embed:start b08-01-b08-01_batch_customer_customer_send_account_migration -->
+      <section class="function-design-embed" id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration" data-source="functions/pf-eccube3/b08-01_batch_customer_customer_send_account_migration.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b08-01_batch_customer_customer_send_account_migration.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B08-01 リニューアル時パスワードリセットメール送信 / バッチ 会員管理 — リニューアル時パスワードリセットメール送信</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-概要">概要</h2>
+          <p>サイトリニューアルに伴い、指定した基準日以降に更新された会員に対し、パスワード再設定を促す案内メールを送信するバッチである。コマンドライン（コンソールコマンド）から、基準日を引数に指定して実行する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの会員バッチ（アカウント移行通知処理）、会員を抽出するリポジトリ、移行通知メール送信処理を正とする。カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド・基準日引数）</li><li>対象会員の抽出</li><li>パスワード再設定案内メールの送信</li><li>基準日未指定時の挙動</li></ul>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>パスワード再設定そのもの（パスワード変更機能を正とする）</li><li>移行通知メールの本文・件名（メールテンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動の参照は現行（pf-eccube3）、DB関連の記述は移行先（ec-cube-enterprise）を正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>会員の抽出・宛先</td><td>会員テーブル<code>dtb_customer</code>の更新日・メール</td><td>同一スキーマ。<code>dtb_customer</code>の<code>update_date</code>（更新日）・<code>email</code>（メール）で同名</td></tr></tbody></table></div>
+          <p>会員テーブルは現行・移行先とも<code>dtb_customer</code>で同一スキーマである。差分は確認されない。</p>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>基準日</td><td>抽出対象を絞る更新日の基準。コマンド引数で指定する。</td></tr><tr><td>移行通知メール</td><td>リニューアルに伴いパスワード再設定を促す案内メール。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>customer:batch sendAccountMigration &lt;基準日&gt;</code></td><td>基準日以降に更新された会員へ、パスワード再設定を促す案内メールを送信する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。基準日が未指定の場合は日付の指定を促して終了する。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-リニューアル時パスワードリセットメールを送信する-customer-batch-sendAccountMigration-基準日">リニューアル時パスワードリセットメールを送信する（<code>customer:batch sendAccountMigration &lt;基準日&gt;</code>）</h3>
+          <ol><li>引数の基準日を取得する。未指定の場合は日付の指定を促して終了する。</li><li>メール用テンプレートとメール送信経路を準備する。</li><li>基準日以降の更新日を持つ会員を抽出する。</li><li>会員ごとに移行通知メールを送信する。</li><li>一定件数ごとに件数とメモリ使用量をコンソールに出力する。</li></ol>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>抽出条件</td><td>基準日以降に更新された会員。</td></tr><tr><td>送信単位</td><td>会員1人につき1通の移行通知メール。</td></tr><tr><td>進捗出力</td><td>一定件数ごとに件数・メモリ使用量を出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>対象抽出時点</td><td>バッチ実行時点で抽出条件に一致するデータを対象にする。実行後に変更されたデータは次回実行の対象判定に従う。</td></tr><tr><td>途中失敗・再実行</td><td>途中失敗時に確定済みの副作用が残るかはAPI・バッチ結果およびエラー処理の節を正とする。未処理条件に残るデータは再実行時に再抽出される。</td></tr><tr><td>同時実行</td><td>ロックファイルや行ロックの有無は排他制御・トランザクションの節を正とする。明示ロックが無い場合、多重実行時の重複検知・通知抑止は保証しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名と基準日。基準日未指定なら案内して終了する。成功時は対象会員へ移行通知メールを送信する。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名、基準日。</td></tr><tr><td>成功時出力</td><td>対象会員への移行通知メール送信、進捗のコンソール出力。</td></tr><tr><td>失敗時出力</td><td>基準日未指定の案内、またはエラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>移行通知メール送信。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_customer</code></td><td><code>update_date</code>（更新日）</td><td>基準日以降の会員抽出に使用する。</td></tr><tr><td><code>dtb_customer</code></td><td><code>email</code>（メール）</td><td>通知メールの宛先に使用する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_customer</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>基準日が未指定</td><td>日付の指定を促して終了する。</td></tr><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>送信時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>進捗</td><td>一定件数ごとの件数・メモリ使用量のコンソール出力。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>会員のメールアドレス等の機微値</li><li>メール送信の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b08-01-b08-01_batch_customer_customer_send_account_migration-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは抽出と通知が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b08-01-b08-01_batch_customer_customer_send_account_migration -->
+      <!-- function-design-embed:start b08-04-b08-04_batch_customer_customer_check_blank_required -->
+      <section class="function-design-embed" id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required" data-source="functions/pf-eccube3/b08-04_batch_customer_customer_check_blank_required.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b08-04_batch_customer_customer_check_blank_required.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B08-04 必須項目が空欄の会員発生通知 / バッチ 会員管理 — 必須項目が空欄の会員発生通知</h4>
+          <p class="function-design-note">※ この機能には専用の画面シートが無いため、親機能シート「リニューアル時パスワードリセットメール送信」の末尾に統合した詳細設計書です。</p>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-概要">概要</h2>
+          <p>必須項目が空欄になっている会員を抽出し、該当があれば管理者へアラートメールを送信するバッチである。コマンドライン（コンソールコマンド）から実行する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの会員バッチ（必須項目空欄会員チェック処理）、会員を抽出するリポジトリ、アラートメール送信処理を正とする。カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>必須項目が空欄の会員の抽出</li><li>該当時の管理者へのアラートメール</li></ul>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>会員情報の入力・編集（会員情報変更機能を正とする）</li><li>アラートメールの本文・宛先設定（メール設定・テンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動の参照は現行（pf-eccube3）、DB関連の記述は移行先（ec-cube-enterprise）を正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>会員の必須項目判定</td><td>会員テーブル<code>dtb_customer</code>の必須とされる各列</td><td>同一スキーマ。<code>dtb_customer</code>の同名各列</td></tr></tbody></table></div>
+          <p>会員テーブルは現行・移行先とも<code>dtb_customer</code>で同一スキーマである。空欄判定対象の各列の名称差は確認されない。</p>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>必須項目</td><td>会員に必須とされる項目。空欄だと運用に支障が出る。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>customer:batch checkBlankRequiredItemCustomer</code></td><td>必須項目が空欄の会員を抽出し、該当があれば管理者へアラートメールを送信する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-必須項目空欄会員チェックを実行する-customer-batch-checkBlankRequiredItemCustomer">必須項目空欄会員チェックを実行する（<code>customer:batch checkBlankRequiredItemCustomer</code>）</h3>
+          <ol><li>メール送信用の経路を準備する。</li><li>必須項目が空欄である会員の一覧を取得する。</li><li>該当する会員がある場合は、その一覧で管理者へアラートメールを送信する。</li></ol>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>必須項目が空欄である会員。</td></tr><tr><td>通知判定</td><td>該当が1件以上あるときに管理者へ通知する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-業務ルール・計算">業務ルール・計算</h2>
+          <ul><li>必須項目の空欄判定は会員DB上の現行値を対象とし、画面フォームの入力補正や既定値付与は行わない。</li><li>空文字、NULL、未設定値を不備候補として扱い、項目別の許容条件は既存の会員必須項目定義に従う。</li><li>バッチは検出と通知・ログ出力を目的とし、会員情報を直接補完・更新しない。</li></ul>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>対象抽出時点</td><td>バッチ実行時点で抽出条件に一致するデータを対象にする。実行後に変更されたデータは次回実行の対象判定に従う。</td></tr><tr><td>途中失敗・再実行</td><td>途中失敗時に確定済みの副作用が残るかはAPI・バッチ結果およびエラー処理の節を正とする。未処理条件に残るデータは再実行時に再抽出される。</td></tr><tr><td>同時実行</td><td>ロックファイルや行ロックの有無は排他制御・トランザクションの節を正とする。明示ロックが無い場合、多重実行時の重複検知・通知抑止は保証しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は該当会員があれば管理者へアラートメールを送信し、無ければメールを送らず完了する。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>該当時の管理者アラートメール送信。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>アラートメール送信。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_customer</code></td><td>必須とされる各列</td><td>空欄の会員抽出に使用する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_customer</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>該当なし</td><td>何もせず完了する。</td></tr><tr><td>取得・送信時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>会員の個人情報の機微値</li><li>メール送信の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b08-04-b08-04_batch_customer_customer_check_blank_required-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは抽出と通知が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b08-04-b08-04_batch_customer_customer_check_blank_required -->
+</section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>ポイント失効</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>会員 バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-10</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-30</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B08-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>ポイント失効</dd></div>
+            <div class="kv"><dt>概要</dt><dd>ポイント失効処理を行う</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-4-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-4-spec-2">処理内容</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">ポイント失効処理を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">有効期限が切れたポイントを失効処理を行う。</p>
+            <p class="doc-p" style="--lv:1">併せて、スマレジ内のユーザー情報も同様にポイント失効をおこなう</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイントの有効期限は晴れる屋サイトで「ポイント発行日より6ヶ月(※)」と記載されており、それ以降のポイントは失効となる</span></div>
+            <p class="doc-p" style="--lv:2">※システムでのポイント有効期限は183日間と定義されているため、若干のズレは発生する</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジに失効ポイントを差し引くAPI通信を粉う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>プレイヤーデータにあるポイント残高を失効ポイントを差し引いたポイントへ更新する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイントの有効期限は「ポイント発行日より6ヶ月」とし、それ以降はポイント失効となる</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイント履歴データに失効ポイントのレコードを追加する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日0:00</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB ・ スマレジAPI</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>ポイント履歴データ(dtb_point_history)からユーザー毎に「バッチ実行日から有効期限日(183日前)までのポイント累計(以下、ポイント累計)」と</span></div>
+            <p class="doc-p" style="--lv:1">プレイヤーデータ(dtb_player)にある「ポイント残高(point 以下、ポイント残高)」を一時的に取得</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">※</span><span>ポイント累計は加算ポイント(プラス値)のみ対象とし、失効や使用したポイント(マイナス値)は累計に含めない</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>ポイント累計とポイント残高を比較し、ポイント残高の方が多いものを本取得する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>条件</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>ポイント履歴データ.ポイント発行日</td><td>&gt;= 183日前の日時</td><td>有効期限は半年間(183日)</td></tr>
+                <tr><td>ポイント履歴データ.ポイント増減量</td><td>&gt; 0</td><td>加算ポイントのみ</td></tr>
+                <tr><td>プレイヤーデータ.ポイント残高</td><td>＞ ポイント履歴データ.ポイント増減量の合計</td><td>上記2条件に該当するポイント増減量の合計</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>「入力データ詳細」で取得した一覧からユーザー毎に以下の処理を行う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>「ポイント累計」からプレイヤーデータにある「ポイント残高」を差し引き、「失効ポイント」を算出する(計算結果はマイナス値になる)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ユーザーの「失効ポイント」の値をスマレジのポイント増減APIに送信し、失効ポイント分を差し引く</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>プレイヤーデータ(dtb_player)にあるポイント残高(point)を「ポイント累計」の値へ更新する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイント履歴データに下記の内容を登録する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>会員ID:プレイヤーデータ(dtb_player)にある顧客ID(customer_id)</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>増減ポイント:失効ポイント</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>備考:「有効期限切れによる失効」に固定</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>有効期限:本日から183日間後の日時</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>登録日時:本日の日時</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ポイント属性ID: 1(付与型)で登録</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">※</span><span>スマレジ取引IDという項目が存在するが、登録される処理が入っておらず未使用</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>スマレジへのポイント増減API登録失敗(タイムアウト・レスポンスステータスが失敗扱いの場合)</span></div>
+            <p class="doc-p" style="--lv:1">エラーが発生したユーザーのポイント失効処理(スマレジ・ユーザーポイント増減含め)は今回は行わず、次のユーザーの処理を行う</p>
+            <p class="doc-p" style="--lv:1">(該当ユーザーのポイント失効処理は翌日以降に持ち越しとなる)</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start b08-02-b08-02_batch_customer_customer_lost_points -->
+      <section class="function-design-embed" id="function-design-b08-02-b08-02_batch_customer_customer_lost_points" data-source="functions/pf-eccube3/b08-02_batch_customer_customer_lost_points.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b08-02_batch_customer_customer_lost_points.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B08-02 ポイント失効 / バッチ 会員管理 — ポイント失効</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-概要">概要</h2>
+          <p>有効期限を過ぎたポイントを失効させるバッチである。コマンドライン（コンソールコマンド）から実行する。失効対象の会員ごとに、失効分をスマレジへ連携し、連携が成功した場合に会員の保有ポイントを失効後の残ポイントへ更新してポイント履歴を記録する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの会員バッチ（ポイント失効処理）、ポイント履歴・ポイント種別を扱うリポジトリ、スマレジポイント連携処理を正とする。カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>失効対象会員の抽出と失効ポイントの算出</li><li>スマレジ連携の成否に応じた保有ポイント更新とポイント履歴記録</li><li>リクエスト上限への配慮（インターバル）</li></ul>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>ポイント付与・利用そのもの（ポイント処理を正とする）</li><li>スマレジポイント連携サービスの内部仕様</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動の参照は現行（pf-eccube3）、DB関連の記述は移行先（ec-cube-enterprise）を正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>会員のポイント保持</td><td>プレイヤー拡張テーブルの保有ポイント・スマレジID</td><td><code>dtb_player</code>の<code>point</code>（ポイント残高）・<code>smaregi_id</code>（スマレジID）</td></tr><tr><td>ポイント履歴の記録</td><td>ポイント履歴テーブル</td><td><code>dtb_point_history</code>の<code>point_change</code>（ポイント増減量）・<code>note</code>（備考）・<code>issue_date</code>（ポイント発行日）・ポイント種別</td></tr></tbody></table></div>
+          <p><code>dtb_player</code>・<code>dtb_point_history</code>は移行先ec-cube-enterpriseに存在し、列構成は現行と同一相当である。</p>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>失効</td><td>有効期限を過ぎたポイントを無効化すること。</td></tr><tr><td>残ポイント</td><td>失効後に残るポイント。</td></tr><tr><td>ポイント履歴</td><td>ポイントの増減記録。失効分を記録する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>customer:batch lostPoint</code></td><td>失効対象の会員について、失効分をスマレジへ連携し、保有ポイントを更新してポイント履歴を記録する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-ポイント失効を実行する-customer-batch-lostPoint">ポイント失効を実行する（<code>customer:batch lostPoint</code>）</h3>
+          <ol><li>失効対象の会員と失効後の残ポイントを取得する。</li><li>会員ごとに、失効分（残ポイントと現保有ポイントの差）を算出する。</li><li>失効分をスマレジへ連携する。連携が成功しない場合は当該会員をスキップする。</li><li>連携が成功した場合、会員の保有ポイントを残ポイントへ更新する。</li><li>失効分のポイント履歴（付与種別、所定の備考、発行日時）を記録する。</li><li>リクエスト上限に配慮し、会員ごとに短いインターバルを挟む。</li><li>すべての更新を確定する。</li></ol>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>失効分</td><td>失効後の残ポイントと現保有ポイントの差として算出する。</td></tr><tr><td>連携前提</td><td>スマレジ連携が成功した会員のみ保有ポイントを更新し履歴を記録する。</td></tr><tr><td>流量制御</td><td>会員ごとに短いインターバルを挟む。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は失効分を反映し履歴を記録する。連携失敗の会員はスキップする。</td></tr><tr><td>API</td><td>スマレジへ失効分を連携する。成功時のみ保有ポイントを更新する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>保有ポイントの更新、失効分のポイント履歴記録、スマレジ連携。</td></tr><tr><td>失敗時出力</td><td>連携失敗会員のスキップ。</td></tr><tr><td>副作用</td><td>保有ポイント更新、ポイント履歴記録、スマレジ連携。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_player</code>（選手情報）</td><td><code>point</code>（ポイント残高）・<code>smaregi_id</code>（スマレジID）</td><td>失効後の更新・連携に使用する。</td></tr><tr><td><code>dtb_point_history</code>（ポイント履歴）</td><td><code>point_change</code>（ポイント増減量）・<code>note</code>（備考）・<code>issue_date</code>（ポイント発行日）・ポイント種別</td><td>失効分を記録する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_player / dtb_point_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>ポイントと履歴</td><td>失効分の保有ポイント更新とポイント履歴記録を対応させる。</td></tr><tr><td>スマレジ</td><td>連携成功を更新の前提とし、失敗会員は次回実行で再試行できる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>スマレジ連携が成功しない</td><td>当該会員をスキップする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>スマレジ連携の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b08-02-b08-02_batch_customer_customer_lost_points-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>会員ごとに更新を積み、最後に確定する。本バッチは楽観ロック・悲観ロックの対象は持たない。流量制御のため会員ごとにインターバルを挟む。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b08-02-b08-02_batch_customer_customer_lost_points -->
+</section>
+      <section class="sheet-panel" id="sheet-5">
+        <div class="sheet-heading">
+          <h2>ポイント有効期限通知</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>会員 バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-10</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>盛田</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2026-02-04</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B08-03</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>ポイント有効期限通知</dd></div>
+            <div class="kv"><dt>概要</dt><dd>ポイント有効期限が近付いている会員に通知を行う</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-5-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-5-spec-2">処理内容</a>
+            <a href="#sheet-5-spec-3">処理内容</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">ポイント有効期限が近付いている会員に通知を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">ポイント有効期限切れ前にユーザーにお知らせメールを送信する</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-5-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-5-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイントの有効期限は晴れる屋サイトで「ポイント発行日より6ヶ月(※)」と記載されており、それ以降のポイントは失効となる</span></div>
+            <p class="doc-p" style="--lv:2">※システムでのポイント有効期限は183日間と定義されているため、若干のズレは発生する</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイント有効期限メール通知は有効期限切れ「30日前」および「１週間前」の２回通知を行う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>仮会員と退会済み会員は対象外とする</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-5-spec-3" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイント有効期限メール通知対象者リストを取得する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>指定された有効期限日に未使用のポイント残っている場合、ポイント有効期限メールを送信する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日0:05</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　メール</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>ポイント履歴データ(dtb_point_history)から以下の条件にすべて該当するデータをユーザー毎に取得する</span></div>
+            <p class="doc-p" style="--lv:1">1.　有効期限から指定日数(30日 or 7日)遡った日付に取得したポイントがある場合(以下 指定日獲得ポイント)</p>
+            <p class="doc-p" style="--lv:2">例　バッチ実行日が2025/9/30の場合、ポイント有効期限切れになる日は2025/4/1になる。</p>
+            <p class="doc-p" style="--lv:3">有効期限30日前は2025/5/1になり、その日に獲得したポイントの有無を確認し、ある場合には対象</p>
+            <p class="doc-p" style="--lv:1">2.　有効期限から指定日数(30日 or 7日)遡った日付までで残ポイントがある場合(以下 残ポイント)</p>
+            <p class="doc-p" style="--lv:2">例　上記の同様の条件の場合</p>
+            <p class="doc-p" style="--lv:3">有効期限30日前は2025/5/1までの全獲得ポイント合計から使用ポイント合計を差し引いて、その結果がプラス(残ポイント)がある場合</p>
+            <p class="doc-p" style="--lv:1">3.　会員の会員ステータスが、仮会員、退会済み会員のいずれでもない</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>条件</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>ポイント履歴データ.ポイント発行日</td><td>&gt;= 183日前の日時 + (30日 or 7日)</td><td>有効期限は半年間(183日)から30日前もしくは7日前</td></tr>
+                <tr><td>会員情報.会員ステータス</td><td>仮会員ではない かつ 退会会員ではない</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>通知する有効期限間近ポイント数</span></div>
+            <p class="doc-p" style="--lv:1">いずれかの値のうち、最小ポイントのものを有効期限間近ポイントとして案内する</p>
+            <p class="doc-p" style="--lv:1">1.　プレイヤーデータ(dtb_player)にある「ポイント残高」</p>
+            <p class="doc-p" style="--lv:1">2.　入力データ詳細で取得したデータから「残ポイント」</p>
+            <p class="doc-p" style="--lv:1">3.　入力データ詳細で取得したデータから「指定日獲得ポイント」</p>
+            <p class="doc-p" style="--lv:1">(通常は3が該当するが、該当の処理がコードに含まれているため記載)</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>メール送信</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信先は会員データにあるメールアドレス宛に送信する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信元は[info@hareruyamtg.com]に設定</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>日本語メール本文</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>件名:　※重要【晴れる屋】ポイント有効期限のお知らせ</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>本文</span></div>
+            <p class="doc-p" style="--lv:2">いつも晴れる屋をご利用いただき誠にありがとうございます。<br><br>下記のポイントに関しまして有効期限が迫っていることをお知らせさせていただきます。<br><br>---------------------------<br><br>[有効期限間近ポイント] ポイント　有効期限　[有効期限日時]<br><br>---------------------------<br><br>※有効期限内にご利用いただけないポイントは失効となってしまいます。<br>失効となったポイントの再加算はいたしかねますのでご注意ください。<br><br>※こちらのメールは自動送信となっております。<br>ご返信いただきましても、お問い合わせにはお答えできかねますのでご了承ください。<br>お問い合わせにつきましてはこちらからお願いいたします<br>https://www.hareruyamtg.com/ja/contact<br><br>*************************************<br>《晴れる屋/Hareruya》<br>〒169-0075<br>東京都新宿区高田馬場3-12-2 OCビル2F<br>E-MAIL : info@hareruyamtg.com<br>URL :https://www.hareruyamtg.com<br>*************************************</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>英語メール本文</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>件名:　【Hareruya】 Your points are about to expire</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>本文</span></div>
+            <p class="doc-p" style="--lv:2">We strongly recommend you to spend these points before expired.	<br>										<br>---------------------------<br>Points nearing expiration:<br>[有効期限間近ポイント]  points<br><br>Expiration date:<br>[有効期限日時(D/M/Y形式)]<br>---------------------------<br>										<br>*This e-mail message was sent to you by an automated e-mail system.<br>Please click the following link if you'd like to contact us.<br>https://www.hareruyamtg.com/en/contact<br><br>*************************************<br>[Hareruya]<br>〒169-0075<br>3-12-2 OC Building 2F Takadanobaba Shinjuku-ku Tokyo-to<br>E-MAIL : info@hareruyamtg.com<br>URL :https://www.hareruyamtg.com/en/<br>*************************************</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">※</span><span>テンプレート内に有効期限間近ポイント数および有効期限日を記載する箇所がないため追記</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>メール送信後処理(1通ごとに処理実行)</span></div>
+            <p class="doc-p" style="--lv:1">メール送信後、データベース内にあるメール送信履歴データ(dtb_mail_history)に下記情報が登録される</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>送信日時</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>送信時のメール件名</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>送信したメール本文の全文</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>メール送信時に使用したテンプレートのファイル名('Mail/point_expire_notification.twig' または 'Mail/point_expire_notification.en.twig')</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>送信した相手のユーザーID</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>該当処理なし</span></div>
+          </div>
+        </div>
+      <!-- function-design-embed:start b08-03-b08-03_batch_customer_customer_point_expire_notification -->
+      <section class="function-design-embed" id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification" data-source="functions/pf-eccube3/b08-03_batch_customer_customer_point_expire_notification.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b08-03_batch_customer_customer_point_expire_notification.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B08-03 ポイント有効期限通知 / バッチ 会員管理 — ポイント有効期限通知</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-概要">概要</h2>
+          <p>ポイントの有効期限が近づいている会員に対し、失効予定日と失効予定ポイントを案内する通知メールを送信するバッチである。コマンドライン（コンソールコマンド）から実行する。失効までの事前通知日数は2段階で設定し、それぞれの段階で対象会員へ通知する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの会員バッチ（ポイント有効期限通知処理）、ポイント履歴を扱うリポジトリ、事前通知日数の設定値、通知メール送信処理を正とする。カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>2段階の事前通知日数による対象会員の抽出</li><li>失効予定日・失効予定ポイントの通知</li></ul>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>ポイント失効そのもの（ポイント失効バッチを正とする）</li><li>通知メールの本文・件名（メールテンプレート管理を正とする）</li><li>事前通知日数の設定値の運用（設定管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動の参照は現行（pf-eccube3）、DB関連の記述は移行先（ec-cube-enterprise）を正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>ポイント履歴</td><td>ポイント履歴テーブルの付与・利用・発行日時</td><td><code>dtb_point_history</code>の<code>point_change</code>（ポイント増減量）・<code>issue_date</code>（ポイント発行日）</td></tr><tr><td>会員の保有ポイント</td><td>プレイヤー拡張テーブルの保有ポイント</td><td><code>dtb_player</code>の<code>point</code>（ポイント残高）</td></tr></tbody></table></div>
+          <p><code>dtb_point_history</code>・<code>dtb_player</code>は移行先ec-cube-enterpriseに存在し、列構成は現行と同一相当である。</p>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>事前通知日数</td><td>失効の何日前に通知するかの日数。2段階で設定する。</td></tr><tr><td>失効予定日</td><td>ポイントが失効する予定の日。</td></tr><tr><td>失効予定ポイント</td><td>失効が見込まれるポイント数。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>customer:batch pointExpireNotification</code></td><td>失効が近い会員へ、失効予定日と失効予定ポイントを案内する通知メールを送信する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-ポイント有効期限通知を実行する-customer-batch-pointExpireNotification">ポイント有効期限通知を実行する（<code>customer:batch pointExpireNotification</code>）</h3>
+          <ol><li>メール用テンプレートとメール送信経路を準備する。</li><li>設定された2段階の事前通知日数のそれぞれについて、次を行う。</li></ol>
+          <ul><li>当該日数で失効対象となる会員を抽出する。</li><li>失効予定日（現在日＋事前通知日数）を求める。</li><li>会員ごとに、失効予定ポイントを算出し、失効予定日とあわせて通知メールを送信する。</li></ul>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>各事前通知日数で失効対象になる会員。</td></tr><tr><td>失効予定ポイント</td><td>保有ポイント・付与/利用の集計・対象ポイントの最小値として算出する。</td></tr><tr><td>失効予定日</td><td>現在日に事前通知日数を加えた日。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>2段階通知</td><td>設定された2つの事前通知日数のそれぞれで通知する。</td></tr><tr><td>失効予定ポイント</td><td>保有ポイントと集計値・対象ポイントのうち最小値を採る。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>対象抽出時点</td><td>バッチ実行時点で抽出条件に一致するデータを対象にする。実行後に変更されたデータは次回実行の対象判定に従う。</td></tr><tr><td>途中失敗・再実行</td><td>途中失敗時に確定済みの副作用が残るかはAPI・バッチ結果およびエラー処理の節を正とする。未処理条件に残るデータは再実行時に再抽出される。</td></tr><tr><td>同時実行</td><td>ロックファイルや行ロックの有無は排他制御・トランザクションの節を正とする。明示ロックが無い場合、多重実行時の重複検知・通知抑止は保証しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は各段階の対象会員へ通知メールを送信する。対象が無ければ送らない。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名、事前通知日数の設定。</td></tr><tr><td>成功時出力</td><td>対象会員への有効期限通知メール送信。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>通知メール送信。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_point_history</code>（ポイント履歴）</td><td><code>point_change</code>（ポイント増減量）・<code>issue_date</code>（ポイント発行日）</td><td>失効対象の抽出と失効予定ポイントの算出に使用する。</td></tr><tr><td><code>dtb_player</code>（選手情報）</td><td><code>point</code>（ポイント残高）</td><td>失効予定ポイントの算出に使用する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_player / dtb_point_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>送信時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>会員のメールアドレス等の機微値</li><li>メール送信の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b08-03-b08-03_batch_customer_customer_point_expire_notification-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは抽出と通知が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b08-03-b08-03_batch_customer_customer_point_expire_notification -->
+</section>
+      <section class="sheet-panel" id="sheet-6">
+        <div class="sheet-heading">
+          <h2>必須項目が空欄の会員発生通知</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>会員 バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-10</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-30</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-04</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>必須項目が空欄の会員発生通知</dd></div>
+            <div class="kv"><dt>概要</dt><dd>必須項目が空欄の会員について管理者あてにメールを送信する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-6-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-6-spec-2">処理内容</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">必須項目が空欄の会員について管理者あてにメールを送信する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">会員情報で必須項目に未記入があるユーザー一覧を取得し、</p>
+            <p class="doc-p" style="--lv:1">該当ユーザーがいる場合、管理者あてに該当ユーザー一覧を送信する。</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">備考</h4>
+            <p class="doc-p" style="--lv:1">現システム(EC-CUBE)では、会員登録・編集時に必須事項の入力チェックは必ず行われるため</p>
+            <p class="doc-p" style="--lv:1">ECBeingからEC-CUBEへユーザーデータインポート後にユーザーデータの整合性を行うために作られた可能性があります。</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-6-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-6-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>会員データのうち、下記項目で1つでも未入力の項目があるユーザーを取得する(退会者を除く)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>該当者がいる場合、該当者一覧リストを作成し管理者のE-Mailにメールを送信する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>該当者がいない場合にはバッチを終了</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日 4:05</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　メール</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>会員データのうち、下記項目で1つでも未設定の項目があるユーザーを取得する(退会者を除く)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>国ID</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>都道府県ID</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>名前(姓)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>名前(名)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>電話番号(1列目)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>電話番号(2列目)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>電話番号(3列目)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メールアドレス</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>住所1</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>住所2</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>住所3</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>郵便番号</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>該当するユーザーがある場合、会員IDおよび上記項目全てをコロン(:)区切りを取得(以下 ユーザー情報抜粋データ)を取得する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>取得例</span></div>
+            <p class="doc-p" style="--lv:1">contory:[国名]:pref:[都道府県名]:name01:[名前(姓)]:name02:[名前(姓)]:tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)]:email:[メールアドレス]:addr01:[住所1]:addr02:[住所2] :addr03:[住所3]:postal_code:[郵便番号]</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">※</span><span>未設定項目がある箇所には、'null'という文字列に置き換わる</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">※</span><span>「国名」および「都道府県名」は各マスターデータから名称を取得した上で表示される</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">会員データ.国ID　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.都道府県ID　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.名前(姓)　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.名前(名)　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.電話番号(1列目)　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.電話番号(2列目)　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.メールアドレス　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.住所1　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.住所2　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.住所3　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.郵便番号1(上3桁)　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.郵便番号2(上4桁)　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.郵便番号(ハイフン無し7桁)　未設定(NULL)</p>
+            <p class="doc-p" style="--lv:0">会員データ.退会者フラグ　無効　退会者を除く</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>「入力データ詳細」で取得した一覧からユーザー毎に以下の処理を行う</span></div>
+            <p class="doc-p" style="--lv:1">「会員ID」・「ユーザー情報抜粋データ」を改行で区切りながら、該当ユーザー分を繰り返しながらメール本文を作成する</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>全ユーザー分の処理が完了し、必須項目の未設定ユーザーが存在した場合は晴れる屋システム管理者のメールアドレスに送信する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信先は[it_common@hareruyamtg.com]に送信する</span></div>
+            <p class="doc-p" style="--lv:2">(メールの宛先はmtb_optionテーブルのcheck_bric_mail_addressカラムに設定されているメールアドレス)</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信元は本店IDを指定して取得</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>件名:　必須項目が空欄である会員の存在を通知するメール</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>本文(例)</span></div>
+            <p class="doc-p" style="--lv:2">会員ID<br>11111<br>contory:日本:pref:東京都:name01:テスト:name02:ユーザー:tel01:000:tel02:0000:tel03:0000:email:test@test.com:addr01:新宿区:addr02:高田馬場3-12-2 :addr03:null:postal_code:null<br>22222<br>contory:日本:pref:東京都:name01:テスト:name02:ユーザー2:tel01:000:tel02:0000:tel03:0000:email:null:addr01:新宿区:addr02:高田馬場3-12-2 :addr03:OCビル2F:zip01:null :zip02:null :zipcode:null .<br>.<br>.<br>(以下略)</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>該当処理なし</span></div>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-7">
+        <div class="sheet-heading">
+          <h2>ポイント差分発生通知</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>会員 バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-10</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-30</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B08-05</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>ポイント差分発生通知</dd></div>
+            <div class="kv"><dt>概要</dt><dd>ポイント履歴データの累計ポイントと会員データの所有ポイントに差異がないか確認</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-7-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-7-spec-2">処理内容</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">ポイント履歴データの累計ポイントと会員データの所有ポイントに差異がないか確認</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">ポイント履歴データの会員毎に全期間ポイント合計(履歴合計値)と会員データの現在のポイントを照らし合わせ、</p>
+            <p class="doc-p" style="--lv:1">誤差があった場合は会員データの現在のポイントに履歴合計値を上書きし、管理者にポイント差異メールを送信する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">備考</h4>
+            <p class="doc-p" style="--lv:1">ポイントのスマレジ連動処理は行っていないため、手動でスマレジポイントの更新が必要</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-7-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-7-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ポイント履歴データから全期限のユーザー別ポイント累計(履歴合計値)を算出し、会員データの現在のポイントと照らし合わせ差異がある</span></div>
+            <p class="doc-p" style="--lv:2">ユーザー情報および履歴合計値を取得し、一覧を作成する</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>会員データの現在のポイントに履歴合計値を上書きを行い、メール送信用のため更新情報を一時的に保存する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信用更新情報を編集し、管理者メールアドレス宛にメール送信をする</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日3:30</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB / メール</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>全ユーザー毎に下記データを一時取得</span></div>
+            <p class="doc-p" style="--lv:1">1.　ポイント履歴データ(dtb_point_history)のポイント増減量(point_change)の全期間合計</p>
+            <p class="doc-p" style="--lv:1">2.　プレイヤーデータ(dtb_player)のポイント残高(point)</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>各ユーザーで、上記1と2の結果値が異なっているものだけを抽出</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">ポイント履歴データ.ポイント増減量の全期間合計　!= プレイヤーデータ.ポイント残高</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>「入力データ詳細」で取得した一覧からユーザー毎に以下の処理を行う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>プレイヤーデータのポイント残高をポイント履歴データのポイント増減量全期間合計値へ更新する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メールでポイント差分一覧を送るために、下記の情報を変数に残しておく</span></div>
+            <p class="doc-p" style="--lv:2">1.　ユーザID</p>
+            <p class="doc-p" style="--lv:2">2.　ポイント履歴データのポイント増減量全期間合計値</p>
+            <p class="doc-p" style="--lv:2">3.　プレイヤーデータのポイント残高(更新前)</p>
+            <p class="doc-p" style="--lv:2">4.　上記3から2を差し引いだ差分値</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>全ユーザー分の処理が完了し、ポイント差分があった場合は晴れる屋システム管理者のメールアドレスに送信する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メールでポイント差分一覧をメール本文に含められるようにCSV形式に変換する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信先は[it_common@hareruyamtg.com]に送信する</span></div>
+            <p class="doc-p" style="--lv:2">(メールの宛先はmtb_optionテーブルのadjust_point_variance_mail_addrカラムに設定されているメールアドレス)</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信元は[info@hareruyamtg.com]に設定</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>件名:　ポイント差分発生通知メール</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>本文(例)</span></div>
+            <p class="doc-p" style="--lv:2">以下のポイント差分が発生したため自動調整されました。<br>会員ID, 履歴合計値, 現在のポイント, 差分<br>11111,5340,5310,-30<br>22222,1362,1562,200<br>.<br>.<br>(以下略)</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>該当処理なし</span></div>
+          </div>
+        </div>
+      <!-- function-design-embed:start b08-05-b08-05_batch_customer_customer_adjust_point_variance -->
+      <section class="function-design-embed" id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance" data-source="functions/pf-eccube3/b08-05_batch_customer_customer_adjust_point_variance.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b08-05_batch_customer_customer_adjust_point_variance.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B08-05 ポイント差分発生通知 / バッチ 会員管理 — ポイント差分発生通知</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-概要">概要</h2>
+          <p>会員の保有ポイントとポイント履歴の合計に差分がある会員を検出し、保有ポイントを履歴合計へ補正したうえで、差分の一覧を管理者へ通知メールで送信するバッチである。コマンドライン（コンソールコマンド）から実行する。スマレジとEC側のポイントの差分を検知する位置づけである。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの会員バッチ（ポイント差分補正・通知処理）、ポイント履歴を扱うリポジトリ、通知メール送信処理を正とする。カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>保有ポイントと履歴合計の差分検出</li><li>保有ポイントの履歴合計への補正</li><li>差分一覧の管理者への通知</li></ul>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>ポイント付与・利用そのもの（ポイント処理を正とする）</li><li>スマレジ側ポイントの管理</li><li>通知メールの本文・宛先設定（メール設定・テンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動の参照は現行（pf-eccube3）、DB関連の記述は移行先（ec-cube-enterprise）を正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>会員の保有ポイント</td><td>プレイヤー拡張テーブルの保有ポイント・会員参照</td><td><code>dtb_player</code>の<code>point</code>（ポイント残高）・会員参照（<code>dtb_customer</code>への関連）</td></tr><tr><td>ポイント履歴</td><td>ポイント履歴テーブルのポイント変動</td><td><code>dtb_point_history</code>の<code>point_change</code>（ポイント増減量）</td></tr></tbody></table></div>
+          <p><code>dtb_player</code>・<code>dtb_point_history</code>は移行先ec-cube-enterpriseに存在し、列構成は現行と同一相当である。</p>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>保有ポイント</td><td>会員が現在保持しているポイント。</td></tr><tr><td>履歴合計</td><td>ポイント履歴の増減を合計した値。</td></tr><tr><td>差分</td><td>保有ポイントと履歴合計の差。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>customer:batch adjustPointVariance</code></td><td>保有ポイントと履歴合計に差分のある会員を検出し、保有ポイントを履歴合計へ補正して差分一覧を管理者へ通知する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-ポイント差分発生通知を実行する-customer-batch-adjustPointVariance">ポイント差分発生通知を実行する（<code>customer:batch adjustPointVariance</code>）</h3>
+          <ol><li>保有ポイントと履歴合計に差分がある会員の一覧を取得する。</li><li>会員ごとに、保有ポイントを履歴合計へ補正する。</li><li>会員ごとに差分（保有ポイントと履歴合計の差）を算出して一覧に積む。</li><li>補正をすべて確定する。</li><li>メール送信用の経路を準備し、差分一覧があれば管理者へ通知メールを送信する。</li></ol>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>保有ポイントと履歴合計に差分がある会員。</td></tr><tr><td>差分</td><td>補正前の保有ポイントと履歴合計の差として算出する。</td></tr><tr><td>通知判定</td><td>差分一覧が空でない場合に管理者へ通知する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>補正</td><td>保有ポイントを履歴合計へ合わせる。</td></tr><tr><td>通知内容</td><td>会員ID・履歴合計・補正前保有ポイント・差分を一覧で通知する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。成功時は差分会員の保有ポイントを補正し、差分一覧を管理者へ通知する。差分が無ければ通知しない。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>保有ポイントの補正、差分一覧の管理者通知メール。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>保有ポイントの補正、通知メール送信。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_player</code>（選手情報）</td><td><code>point</code>（ポイント残高）・会員参照</td><td>差分検出と補正に使用する。</td></tr><tr><td><code>dtb_point_history</code>（ポイント履歴）</td><td><code>point_change</code>（ポイント増減量）</td><td>履歴合計の算出に使用する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_player / dtb_point_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>保有ポイントと履歴</td><td>保有ポイントを履歴合計へ補正し整合させる。補正前の差分は通知で記録する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>差分なし</td><td>補正・通知を行わず完了する。</td></tr><tr><td>取得・送信時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>メール送信の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b08-05-b08-05_batch_customer_customer_adjust_point_variance-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>会員ごとの補正を積み、最後に確定する。本バッチは楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b08-05-b08-05_batch_customer_customer_adjust_point_variance -->
+</section>
+      <section class="sheet-panel" id="sheet-8">
+        <div class="sheet-heading">
+          <h2>スマレジ使用ポイント連携</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>会員 バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-10</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-30</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B08-06</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>スマレジ使用ポイント連携</dd></div>
+            <div class="kv"><dt>概要</dt><dd>通販購入時の使用ポイント情報をスマレジに反映する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-8-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-8-spec-2">処理内容</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">スマレジで使用したポイントを連携する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">通販購入時の使用ポイント情報をスマレジに反映する</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-8-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">前提条件</h4>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>このバッチは通販での購入完了時に、ポイント使用されて購入されたときに本処理とは別の処理で実行されるバッチになる</span></div>
+            <p class="doc-p" style="--lv:2">別の処理にすることでサーバ負荷分散につながる</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>バッチの実行タイミングはデータベースに購入データが登録した際に発行される注文IDの値をバッチに引き渡したうえで実行する</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-8-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>バッチ実行時に渡された注文IDを使って注文データから「使用ポイント」を取得する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>スマレジ連携ポイント増減APIに「使用ポイント」を送信し、ポイント減算処理を行う。</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　商品購入完了処理中　実行タイミング　-</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　スマレジAPI</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>バッチを実行する際に送られる注文IDから注文サブデータ抽出し、購入したユーザーIDと注文で消費したポイントを取得する。</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>注文サブデータからユーザーIDからプレイヤーデータを抽出し、スマレジ用ユーザーIDを取得する。</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>条件</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>注文サブデータ.注文ID</td><td>注文ID</td><td>注文データ登録時に発行された注文ID</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>スマレジ連携ポイント増減APIに今回の消費ポイント情報を送信</span></div>
+            <p class="doc-p" style="--lv:1">正常に送信ができれば処理終了し、失敗した場合は注文サブデータに処理失敗情報を保存する(エラーハンドリング欄参照)</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>注文IDが未入力もしくは該当データなし</span></div>
+            <p class="doc-p" style="--lv:1">処理を終了する(正常終了扱い[return終了])</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>スマレジ連携ポイント増減API通信失敗した場合</span></div>
+            <p class="doc-p" style="--lv:1">注文サブデータのスマレジエラーメッセージ(point_error_message)にエラー詳細JSONを、スマレジ仕様ポイントエラーフラグ(smaregi_error_flg)をTrueを設定し更新する</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start b08-06-b08-06_batch_customer_smaregi_update_point -->
+      <section class="function-design-embed" id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point" data-source="functions/pf-eccube3/b08-06_batch_customer_smaregi_update_point.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b08-06_batch_customer_smaregi_update_point.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B08-06 スマレジ使用ポイント連携 / バッチ 会員管理 — スマレジ使用ポイント連携</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-概要">概要</h2>
+          <p>指定した受注で使用したポイントを、スマレジ側の会員ポイントへ反映（減算連携）するバッチである。コマンドライン（コンソールコマンド）から、対象の受注IDを引数に指定して実行する。購入完了処理や購入完了再処理から別プロセスとして呼び出される。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインのスマレジバッチ（使用ポイント連携処理）、受注サブ・選手情報を扱うリポジトリ、スマレジポイント連携処理を正とする。カスタマイズ区分は現行踏襲であり、挙動はpf-eccube3を参照し、DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド・受注ID引数）</li><li>受注の使用ポイントのスマレジへの減算連携</li><li>連携失敗時のエラー記録</li></ul>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>スマレジポイント連携サービスの内部仕様・API仕様</li><li>ポイント使用そのものの処理（受注処理・ポイント処理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動の参照は現行（pf-eccube3）、DB関連の記述は移行先（ec-cube-enterprise）を正とする。最大の差は受注の拡張情報の保持先である。</p>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>受注の拡張情報（消費ポイント・連携エラー）</td><td>補助テーブル受注サブ<code>dtb_order_sub</code>に保持</td><td>補助表を廃し受注<code>dtb_order</code>へ統合。<code>spended_points</code>（ポイント使用）・<code>point_error_message</code>（ポイント連携エラーメッセージ）・<code>smaregi_error_flg</code>（スマレジ連携エラーフラグ）</td></tr><tr><td>会員のスマレジID</td><td>プレイヤー拡張テーブルのスマレジID</td><td><code>dtb_player</code>の<code>smaregi_id</code>（スマレジID）</td></tr></tbody></table></div>
+          <p>現行は消費ポイントと連携エラー情報を受注サブ<code>dtb_order_sub</code>に保持するが、移行先ec-cube-enterpriseでは補助表を持たず、これらを受注<code>dtb_order</code>の列（<code>spended_points</code>・<code>point_error_message</code>・<code>smaregi_error_flg</code>）へ統合している。本文の挙動説明にある「受注サブ」は現行の保持先を指す。</p>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>使用ポイント</td><td>受注で使用したポイント。スマレジへ減算で反映する。</td></tr><tr><td>受注サブ</td><td>受注の拡張情報。消費ポイント・連携エラー状態を保持する。</td></tr><tr><td>選手情報</td><td>会員に紐づく拡張情報。スマレジIDを保持する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>smaregi:batch updatePoint &lt;受注ID&gt;</code></td><td>指定受注の使用ポイントをスマレジ会員ポイントへ減算連携する。失敗時はエラーを記録する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。受注IDが未指定または数値でない場合は処理を行わずに終了する。購入完了処理・購入完了再処理から別プロセスで呼び出される。</p>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-スマレジ使用ポイント連携を実行する-smaregi-batch-updatePoint-受注ID">スマレジ使用ポイント連携を実行する（<code>smaregi:batch updatePoint &lt;受注ID&gt;</code>）</h3>
+          <ol><li>引数の受注IDが未指定または数値でない場合は処理を終了する。</li><li>受注IDから受注サブと会員（選手情報）を取得する。</li><li>会員のスマレジIDに対し、受注の消費ポイント分を減算してスマレジへ連携する。</li><li>連携が成功した場合は終了する。</li><li>連携が失敗した場合は受注サブにエラーメッセージを記録し、連携エラーフラグを立てて保存する。</li></ol>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>連携量</td><td>受注の消費ポイントを負の値（減算）としてスマレジへ連携する。</td></tr><tr><td>失敗時の記録</td><td>連携失敗時はエラーメッセージとエラーフラグを受注サブに残し、後続の再連携対象とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名と受注ID。受注IDが不正なら何もせず終了する。成功時はスマレジへ使用ポイントを反映する。</td></tr><tr><td>API</td><td>スマレジへ会員ポイントを減算連携する。失敗時はエラー内容を受注サブに保持する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名、受注ID。</td></tr><tr><td>成功時出力</td><td>スマレジ会員ポイントへの減算反映。</td></tr><tr><td>失敗時出力</td><td>受注サブへのエラーメッセージ記録・連携エラーフラグ設定。</td></tr><tr><td>副作用</td><td>スマレジポイント連携、受注サブの連携状態更新。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order</code>（現行は受注サブ<code>dtb_order_sub</code>）</td><td><code>spended_points</code>（ポイント使用。現行の消費ポイント）</td><td>連携する減算量に使用する。</td></tr><tr><td><code>dtb_order</code>（現行は受注サブ<code>dtb_order_sub</code>）</td><td><code>point_error_message</code>（ポイント連携エラーメッセージ）・<code>smaregi_error_flg</code>（スマレジ連携エラーフラグ）</td><td>失敗時に記録する。</td></tr><tr><td><code>dtb_player</code>（選手情報）</td><td><code>smaregi_id</code>（スマレジID）</td><td>連携先会員の特定に使用する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order / dtb_order_sub / dtb_player</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>連携状態</td><td>失敗時はエラー状態を残し、スマレジEC受注連携エラー再連携バッチで再試行できる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>受注IDが未指定・数値でない</td><td>処理を行わずに終了する。</td></tr><tr><td>連携失敗</td><td>エラーメッセージとエラーフラグを受注サブに記録する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>連携失敗</td><td>エラーメッセージを受注サブに記録する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>スマレジ連携の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b08-06-b08-06_batch_customer_smaregi_update_point-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>連携結果を受注サブへ反映して確定する。本バッチは楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b08-06-b08-06_batch_customer_smaregi_update_point -->
+</section>
+      <section class="sheet-panel" id="sheet-9">
+        <div class="sheet-heading">
+          <h2>身分証有効期限切れ通知</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>会員 バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-10</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-30</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B08-07</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>身分証有効期限切れ通知</dd></div>
+            <div class="kv"><dt>概要</dt><dd>身分証の有効期限切れ間近のユーザーの身分証データ削除およびメール通知を行い、管理者には該当ユーザー一覧をメール送信を行う</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-9-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-9-spec-2">処理内容</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">身分証の有効期限切れ間近のユーザーの身分証データ削除およびメール通知を行い、管理者には該当ユーザー一覧をメール送信を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">オンライン本人確認もしくは簡易書留で送付された有効期限2週間前の身分証データを削除対象とし、</p>
+            <p class="doc-p" style="--lv:1">ユーザーに身分証有効切れの処理および通知メールを送信を行い、処理最後に管理者に該当ユーザー一覧をメール送信する</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-9-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-9-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>プレイヤーデータの身分証有効期限切れ2週間前のユーザーを取得する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>該当ユーザーの身分証有効期限日を初期化(NULL)に設定</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ユーザー宛に身分証有効期限切れ通知メールを送信</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>上記処理後に、該当ユーザーのユーザーIDおよび氏名の一覧を作成し、管理者にメールを送信</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日8:00</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB / メール</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>プレイヤーデータにある身分証有効期限(idExpirationDate)から2週間前に有効期限が切れるユーザーを取得します。</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>該当者がいない場合には、処理を終了する。</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">プレイヤーデータ.身分証有効期限日　&lt;= 2週間前の日付</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>「入力データ詳細」で取得した一覧からユーザー毎に以下の処理を行う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>プレイヤーデータにある身分証有効期限(idExpirationDate)を未設定値(null)へ更新する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>オンライン本人確認の場合は、プレイヤーデータにある本人確認ステータスID(identity_confirm_status_id)を0(未設定)へ更新する</span></div>
+            <p class="doc-p" style="--lv:2">簡易書留で確認している場合は、本人確認ステータスの変更は行わない</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>メール送信</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信先は会員データにあるメールアドレス宛に送信する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信元は[info@hareruyamtg.com]に設定</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール本文</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>件名:　【晴れる屋】オンライン本人確認の更新手続きのお願い</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>本文(例)</span></div>
+            <p class="doc-p" style="--lv:2">大変お世話になっております。晴れる屋です。<br><br>平素より晴れる屋のネット買取サービスをご利用いただきまして誠にありがとうございます。<br><br>お客様が現在ご登録いただいている「オンライン本人確認」の身分証の有効期限が残り2週間を切っております。<br>お手数ですが下記のURLより、新しい身分証の登録をお願いします。<br>https://www.hareruyamtg.com/ja/mypage/identification<br><br>※現在お客様のオンライン本人確認のステータスは「未確認」に切り替わっています。<br>※現在進行中のお取引がある場合は身分証を更新いただくまで取引を進めることはできません。<br><br>■お問い合わせについて<br>ご不明な点がございましたら下記URLよりお問い合わせください。<br>https://www.hareruyamtg.com/ja/contact<br><br>よりよいショップを目指し、スタッフ一同頑張っていきますので、<br>今後とも、お引立ての程よろしくお願いいたします。<br><br>*************************************<br>《晴れる屋 トーナメントセンター 東京 ネット買取》<br>〒169-0075<br>東京都新宿区高田馬場3-12-2　OCビル3階<br>晴れる屋 ネット買取担当 宛<br>電話番号 03-5937-1588<br>URL :http://www.hareruyamtg.com/purchase/<br>*************************************</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>該当ユーザーへ身分証有効切れ通知メール送信完了後、管理者に今回身分証有効期限切れ該当者を通知する</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>該当ユーザーへ身分証有効切れ通知メール送信完了後、管理者に今回身分証有効期限切れ該当者を通知する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>該当者をユーザーIDとユーザー名をスペースで区分け、ユーザー毎に1行ずつ記載して本文に記載できる形式に編集する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信先は[it_common@hareruyamtg.com]に送信する</span></div>
+            <p class="doc-p" style="--lv:2">(メールの宛先はmtb_optionテーブルのcheck_id_expired_mail_addressカラムに設定されているメールアドレス)</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>メール送信元は[info@hareruyamtg.com]に設定</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>件名:　身分証の有効期限切れ会員の存在を通知するメール</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>本文</span></div>
+            <p class="doc-p" style="--lv:2">会員ID 氏名<br>11111 テストユーザー<br>22222 テストユーザー2<br>.<br>.<br>(以下略)</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>該当処理なし</span></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

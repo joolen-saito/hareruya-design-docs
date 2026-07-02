@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-03（在庫一括編集） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#在庫一括編集画面を開く">在庫一括編集画面を開く</a>
+<a class="lv3" href="#在庫一括編集を登録する">在庫一括編集を登録する</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
+<a class="lv3" href="#エラー・警告-インライン">エラー・警告（インライン）</a>
+<a class="lv3" href="#フラッシュ・トースト">フラッシュ・トースト</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-ソース位置の索引">調査補助（ソース位置の索引）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md</p>
+        <h1>M04-03（在庫一括編集）</h1>
+      </header>
+      <p>商品検索一覧で選択した商品の規格について、増減させる在庫数と在庫変動理由を一括で入力し、まとめて在庫数を更新する画面。</p>
+<h2 id="概要">概要</h2>
+<p>在庫一括編集は、商品検索一覧でチェックした商品の各規格を一覧に並べ、規格ごとに在庫の増減数・在庫変動理由・在庫変動理由区分を入力させ、送信時に各規格の在庫数を増減して更新する機能である。更新時には在庫変更履歴を記録し、在庫が0から増えた規格には入荷通知メールを送る。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。HareruyaEc プラグインの実装を確認値とする。</p>
+<p>本機能のカスタマイズ区分はカスタマイズであり、画面・処理フロー・検証などの挙動は現行のpf-eccube3（HareruyaEcプラグイン）を正とし、永続化に関わるDB関連はリニューアル先のec-cube-enterprise実装を正とする。両者でスキーマが異なる箇所は移行先名を主とし現行名を括弧で添える。</p>
+<p>対象はブラウザ経由の管理画面に限定する。管理画面プレフィックスは HareruyaEc プラグインの設定キー <code>admin_route</code>（<code>$app['config']['admin_route']</code>）で決まるため、本書では <code>%eccube_admin_route%</code> で示す。</p>
+<p>本書の本文ではコントローラのメソッド名・クラス名は主題としない。ルート bind 名は調査補助へ退避する。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>商品検索一覧から在庫一括編集画面を開く入口と、選択した商品の規格の並べ方</li><li>増減させる在庫数・在庫変動理由・在庫変動理由区分の入力ルールと検証</li><li>送信時の在庫数の更新計算、在庫変更履歴の記録、入荷通知メールと支店在庫連携の発火条件</li><li>入力エラー時の再表示と、正常終了時の商品検索一覧への戻り</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>商品検索一覧の検索フォーム・ページング・チェックボックス選択そのものの仕様（別機能 m03-01_admin_product_product_search_list を正とする）</li><li>価格一括編集・買取価格一括編集の入力ルール（同一コントローラだが対象が異なる別機能）</li><li>在庫変更履歴の検索・一覧・CSV出力（M04-17 / M04-18 を正とする）</li><li>入荷通知メールの文面・送信基盤、支店在庫連携の通信仕様</li><li>管理画面の認証・ログイン・権限マスタの詳細</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>挙動は現行のpf-eccube3を正とし、DB関連はリニューアル先のec-cube-enterpriseを正とする。在庫変更履歴のスキーマは現行と移行先で名称・構成が異なるため、本書のDB記述はec-cube-enterpriseの名称を主とし現行名を括弧で添える。差分は次のとおり。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>在庫数（規格本体・規格在庫）</td><td>dtb_product_class.stock / dtb_product_stock.stock</td><td>同一スキーマ</td></tr><tr><td>在庫変動理由のメモ列</td><td>dtb_stock_history.memo</td><td>dtb_stock_history.stock_change_reason</td></tr><tr><td>在庫変動区分の関連キー</td><td>dtb_stock_history.stock_change_type_id（区分マスタ mtb_stock_change_type）</td><td>dtb_stock_history.stock_change_type_detail_id（区分マスタ mtb_stock_change_type_detail）</td></tr><tr><td>在庫履歴の関連キー</td><td>dtb_stock_history.product_class_id（規格を参照）</td><td>dtb_stock_history.product_stock_id（規格在庫を参照）</td></tr><tr><td>在庫履歴の追加列</td><td>無し</td><td>total_cost_price_before / total_cost_price_after / unit_cost_price_before / unit_cost_price_after / stock_change_quantity / registered_at / approval 系列を持つ</td></tr><tr><td>入荷集計列</td><td>dtb_product_sub_class.stock_up_quantity01〜10</td><td>該当テーブルが見当たらない（ec-cube-enterprise 実装で要確認）</td></tr><tr><td>永続化モデル</td><td>送信時に全対象規格の在庫数を即時更新し、在庫変更履歴を都度記録する（直接更新型）</td><td>承認ワークフロー型。登録時は承認データ（dtb_stock_edit_approval / dtb_stock_edit_approval_detail / dtb_stock_approval_list）を作成し、在庫は即時更新しない。在庫変動区分が廃棄のときのみ dtb_product_stock を即時更新し履歴を残す。在庫の本反映は承認後となる</td></tr></tbody></table></div>
+<p>挙動・画面の正は現行（pf-eccube3）の直接更新型とし、本書の処理フロー・業務ルール・表示メッセージは現行を記述する。一方、永続化の正はリニューアル先（ec-cube-enterprise）であり、DB操作は承認ワークフロー型となる（下記「DB操作」節を正とする）。両者は更新の確定タイミングと対象テーブルが構造的に異なるため、結合試験では参照リポに応じて期待値を読み替える。</p>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>商品規格</td><td>商品に紐づく言語・状態などの単位。在庫数は規格単位で持つ。テーブルは <code>dtb_product_class</code> と <code>dtb_product_stock</code>、拡張情報は <code>dtb_product_sub_class</code>。</td></tr><tr><td>増減させる在庫数</td><td>現在の在庫数へ加算する差分。負数で減算もできる。フォームキー <code>stock_change</code>。</td></tr><tr><td>在庫変動理由</td><td>履歴に残す自由記述のメモ。フォームキー <code>stock_change_memo</code>。</td></tr><tr><td>在庫変動理由区分</td><td>入荷・マスタ更新などの区分マスタ。フォームキー <code>stock_change_type_id</code>。</td></tr><tr><td>在庫変更履歴</td><td>在庫を変えた記録。テーブル <code>dtb_stock_history</code>。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>商品検索一覧で商品を選び「在庫一括編集」を押下</td><td><code>POST /%eccube_admin_route%/product/edit_bulk_update_stock</code></td><td>選択した商品の規格を一覧化した在庫一括編集画面を表示する。商品未選択なら一覧へ戻す。</td></tr><tr><td>在庫一括編集画面で「登録」を押下</td><td><code>POST /%eccube_admin_route%/product/bulk_update_stock</code></td><td>各規格の在庫数を増減して更新し、商品検索一覧へ戻る。検証エラー時は同一画面でエラーを表示する。</td></tr><tr><td>「商品検索に戻る」を押下</td><td><code>GET /%eccube_admin_route%/product/search/{page_no}</code></td><td>セッションに保持したページ番号で商品検索一覧へ戻る。</td></tr></tbody></table></div>
+<p>商品検索一覧の「在庫一括編集」ボタンは検索フォームの送信ボタンであり、選択した商品IDを <code>productIds[]</code>、検索条件を同時に送る <code>formaction</code> 付きの送信である。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>規格ごとに1行を並べる表を表示する。列はID、商品名、言語、状態、在庫数、増減させる在庫数、当日・昨日・3日間・1週間・1ヶ月間の販売総数。増減させる在庫数の列には、在庫変動理由区分の選択、増減数の数値入力、在庫変動理由のテキスト入力を縦に並べる。</td></tr><tr><td>JS 挙動</td><td>画面読込時に各行の増減数入力を監視し、増減数が0以外のとき在庫変動理由の入力欄に <code>required</code> を付け、0のとき外す。サーバ側でも0以外で理由空はエラーにするため、JS は補助的なクライアント検証である。</td></tr><tr><td>CSS・レイアウト</td><td>管理画面共通の表スタイル。増減数入力にはサーバ側で算出した最小値・最大値の属性を付ける（最小は現在庫を0にできる値、最大は在庫上限まで増やせる値）。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能ではモーダル・トーストを表示しない。エラーは画面上部とフォーム直下に表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="在庫一括編集画面を開く">在庫一括編集画面を開く</h3>
+<ol><li>商品検索一覧で1件以上の商品を選び「在庫一括編集」を押下する。選択IDは <code>productIds</code> として送られる。</li><li><code>productIds</code> が空のときは「商品が選択されていません。」を表示し、商品検索一覧の保持ページへリダイレクトする。</li><li>選択商品の検索条件フォームから言語・状態の選択を読み取り、表示対象の規格を絞り込む補助情報とする。</li><li>選択商品の規格を在庫更新向けに取得し、各規格を1行に展開した一括編集フォームを組み立てて画面を表示する。</li></ol>
+<h3 id="在庫一括編集を登録する">在庫一括編集を登録する</h3>
+<ol><li>「登録」を押下すると各行の入力が送信される。</li><li>フォーム全体を検証する。増減数が0以外で在庫変動理由が空の行、在庫がマイナスになる行、在庫上限を超える行、在庫変動理由が上限を超える行はエラーとする。</li><li>検証エラーがあれば、選択商品の規格を取り直してフォームを再構築し、エラー文言とともに同一画面を再表示する。在庫は更新しない。</li><li>検証を通った行のうち、増減数が0の行は更新対象から除外する。</li><li>各更新対象の規格について、新しい在庫数を現在庫＋増減数で求め、規格在庫と規格本体の在庫数を更新する。更新前在庫が0だった規格は入荷通知の対象として記録する。</li><li>在庫変動理由区分が入荷またはマスタ更新で、かつ増減数が正のときは、規格拡張の入荷集計列（直近期間別の入荷数）に増減数を加算する。</li><li>各更新対象について在庫変更履歴を1件作成する。理由メモが未指定なら既定文言「価格・在庫一括更新による在庫数更新」を用いる。</li><li>支店向けに本店在庫の更新を通知する。入荷通知対象がある場合は入荷通知メールを送る。</li><li>永続化を確定し、「登録が完了しました。」を表示して、商品検索一覧の保持ページへリダイレクトする。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>一覧へ並べる規格</td><td>選択商品IDの規格を在庫更新向けに取得する。商品検索の言語・状態選択があれば、その条件で表示対象規格を絞る補助に用いる。</td></tr><tr><td>販売総数の各列</td><td>規格拡張に保持する期間別の販売数量（当日・昨日・3日間・1週間・1ヶ月間相当）を表示する。本画面では再集計せず保持値を表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>新在庫数の計算</td><td>規格ごとに新在庫数＝現在庫＋増減させる在庫数。負の増減数で減算する。</td></tr><tr><td>更新対象の判定</td><td>増減させる在庫数が0の行は更新しない。0以外の行のみ在庫数を更新し履歴を記録する。</td></tr><tr><td>入荷通知の判定</td><td>更新前在庫が0だった規格を入荷通知対象とする。対象が1件以上あれば入荷通知メールを送る。</td></tr><tr><td>入荷集計の加算</td><td>在庫変動理由区分が入荷またはマスタ更新で、増減数が正のときのみ、規格拡張の入荷集計列に増減数を加算する。</td></tr><tr><td>履歴の理由メモ</td><td>在庫変動理由が入力済みならその値、未指定なら既定文言を履歴メモとする。</td></tr><tr><td>上限・下限</td><td>新在庫数が0未満になる更新は不可。新在庫数が在庫桁数の上限（9桁、最大999999999）を超える更新は不可。</td></tr></tbody></table></div>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>増減させる在庫数</td><td>必須</td><td>整数。フォームの最大10桁、HTML 上の最大値属性は999999999。新在庫数の上限は在庫桁数9桁（999999999）</td><td>0</td><td>規格在庫 <code>dtb_product_stock.stock</code> と規格 <code>dtb_product_class.stock</code> を新在庫数で更新。フォームキー <code>stock_change</code>。新在庫数が0未満・上限超過はコレクション検証でエラー。</td></tr><tr><td>在庫変動理由区分</td><td>必須</td><td>—</td><td>区分マスタの先頭相当</td><td>在庫変更履歴 <code>dtb_stock_history.stock_change_type_detail_id</code>（現行 <code>stock_change_type_id</code>）。フォームキー <code>stock_change_type_id</code>。区分マスタは移行先 <code>mtb_stock_change_type_detail</code>（現行 <code>mtb_stock_change_type</code>）の単一選択。入荷・マスタ更新かつ増減数が正のとき入荷集計列も加算。</td></tr><tr><td>在庫変動理由</td><td>増減数が0以外のとき必須、0なら任意</td><td>最大65535文字（設定キー <code>stock_history.memo</code>）</td><td>空</td><td>在庫変更履歴 <code>dtb_stock_history.stock_change_reason</code>（現行 <code>memo</code>）。フォームキー <code>stock_change_memo</code>。未入力かつ増減数0以外は行ごとにエラー。未指定で更新成立時は既定文言を保存。</td></tr></tbody></table></div>
+<p>増減数が0以外で在庫変動理由が空のときは、行の送信後処理とコレクション検証の双方で「ID: …の在庫変動理由が入力されていません。」相当のエラーになる。商品規格ID（<code>product_class_id</code>）と現在庫（<code>stock</code>）は隠し項目として送られ、計算と表示にのみ用いる。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>商品未選択で開く</td><td>「商品が選択されていません。」を表示し商品検索一覧へ戻す。</td></tr><tr><td>選択した規格が送信時に削除済み</td><td>「…：対象の商品は既に削除されています。」を表示しエラー扱いとする。当該行は更新しない。</td></tr><tr><td>増減数0の行</td><td>更新せず履歴も残さない。理由欄は空でもよい。</td></tr><tr><td>新在庫数が負になる行</td><td>「…：在庫がマイナスになる更新はできません。」を表示し全体を更新しない。</td></tr><tr><td>新在庫数が上限超過の行</td><td>「…：在庫の合計が…を超える更新はできせん。」を表示し全体を更新しない。</td></tr><tr><td>在庫変動理由が上限超過</td><td>「ID …：在庫変動理由は最大65535バイト以下で入力してください。」を表示し全体を更新しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>規格在庫と規格本体</td><td>同一更新で <code>dtb_product_stock.stock</code> と <code>dtb_product_class.stock</code> を同じ新在庫数に揃える。</td></tr><tr><td>履歴との整合</td><td>更新成立した規格ごとに在庫変更履歴を1件作る。変更前在庫と変更後在庫を記録する。</td></tr><tr><td>同時更新</td><td>本画面は表示時点の在庫を現在庫として計算する。送信までに他処理が在庫を変えた場合、その差分は考慮しない。</td></tr><tr><td>支店連携</td><td>永続化確定後に支店へ更新を通知する。連携の到達保証は連携機能側の設計を正とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能では外部 HTTP API の呼び出しやバッチ実行を扱わない。入荷通知メール送信と支店在庫連携の通知は更新処理内で行う。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>選択商品ID（<code>productIds</code>）、検索条件、各規格の増減数・在庫変動理由区分・在庫変動理由。</td></tr><tr><td>成功時出力</td><td>在庫更新後、商品検索一覧の保持ページへリダイレクトし「登録が完了しました。」を表示。</td></tr><tr><td>失敗時出力</td><td>検証エラー時は同一画面でエラー文言と入力値を保持して再表示。</td></tr><tr><td>副作用</td><td>規格在庫・規格本体在庫の更新、在庫変更履歴の追加、入荷集計列の加算、入荷通知メール、支店在庫通知。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>当機能に直接関係する列のみを示す。型の細部はスキーマを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>dtb_product_class</td><td>stock</td><td>規格本体の在庫数。新在庫数で更新。</td></tr><tr><td>dtb_product_stock</td><td>stock</td><td>規格在庫の在庫数。新在庫数で更新。</td></tr><tr><td>dtb_product_sub_class</td><td>stock_up_quantity01〜10</td><td>入荷・マスタ更新かつ増減正のとき加算する入荷集計列。移行先に該当テーブルが見当たらない（ec-cube-enterprise 実装で要確認）。</td></tr><tr><td>dtb_stock_history</td><td>stock_change_type_detail_id（現行 stock_change_type_id）, product_stock_id（現行 product_class_id）, stock, old_stock, sell_price, stock_change_reason（現行 memo）, history_source_type_id, member_id, registered_at（現行 create_date）</td><td>在庫変更履歴。変更後在庫・変更前在庫・操作者を記録。列名は移行先のec-cube-enterpriseを主とし現行名を括弧で添える。移行先では一括編集の登録では作成せず、在庫変動区分が廃棄のときのみ作成する（history_source_type_id は STOCK_EDIT）。</td></tr><tr><td>dtb_stock_edit_approval</td><td>approval_status, base_info_id, registered_member_id, registered_at</td><td>移行先の承認単位。一括編集の登録時に1件作成。approval_status は未承認（=1。承認ステータスのマスター化は要確認）。</td></tr><tr><td>dtb_stock_edit_approval_detail</td><td>編集明細（規格在庫・増減数・変更前在庫・変更前単価・理由区分・理由 等）</td><td>移行先。対象規格ごとに編集内容を1件作成する明細。</td></tr><tr><td>dtb_stock_approval_list</td><td>history_source_type_id, history_source_id, approval_status, product_stock_total_count, base_info_id</td><td>移行先の承認対象リスト。一括編集では history_source_type_id が STOCK_BULK_EDIT（=2）、approval_status は未承認で作成。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正はリニューアル先（ec-cube-enterprise）であり、一括編集は承認ワークフロー型である。テーブル名・操作は ec-cube-enterprise を正典とする。現行（pf-eccube3）の直接更新型との差は「リニューアル移行時の扱い」を参照。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録</td><td>dtb_stock_edit_approval</td><td>一括編集の登録時に承認単位を1件作成する（approval_status=未承認）。</td></tr><tr><td>登録</td><td>dtb_stock_edit_approval_detail</td><td>対象規格ごとに編集明細を1件作成する。</td></tr><tr><td>登録</td><td>dtb_stock_approval_list</td><td>承認対象リストを1件作成する（history_source_type_id=STOCK_BULK_EDIT、未承認）。</td></tr><tr><td>更新</td><td>dtb_product_stock</td><td>在庫変動区分が廃棄のときのみ、当該規格在庫の stock を即時更新する。入庫・マスタ更新等では即時更新しない（承認後に反映）。</td></tr><tr><td>登録</td><td>dtb_stock_history</td><td>在庫変動区分が廃棄のときのみ、在庫変更履歴を1件作成する（history_source_type_id=STOCK_EDIT）。</td></tr></tbody></table></div>
+<p>現行（pf-eccube3）では、上記に代えて、登録時に対象規格すべての dtb_product_class.stock と dtb_product_stock.stock を即時更新し、各規格に dtb_stock_history を都度作成する。</p>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>増減させる在庫数</td><td>必須・整数。最大10桁。新在庫数が0未満または在庫上限（999999999）超過はコレクション検証でエラー。</td></tr><tr><td>在庫変動理由区分</td><td>必須・区分マスタの単一選択。</td></tr><tr><td>在庫変動理由</td><td>増減数0以外のとき必須。最大65535バイト相当（設定キー <code>stock_history.memo</code>）。</td></tr><tr><td>全体検証</td><td>不正な行があれば在庫を一切更新せず、対象IDを並べたエラー文言を表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>在庫一括編集</th></tr></thead><tbody><tr><td>管理画面にログインし当該ルートへ到達できる運用者</td><td>利用できる。細かいロール単位の可否は管理画面のセキュリティ設定と権限マスタの実装を正とする。</td></tr><tr><td>未ログインまたは拒否された主体</td><td>管理画面共通の挙動により利用できない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>商品未選択で在庫一括編集を押下</td><td>商品検索一覧（保持ページ）へリダイレクト。</td></tr><tr><td>在庫一括編集を表示</td><td>在庫一括編集画面を表示。</td></tr><tr><td>登録が検証エラー</td><td>同一画面を再表示。</td></tr><tr><td>登録が成功</td><td>商品検索一覧（保持ページ）へリダイレクト。</td></tr><tr><td>「商品検索に戻る」</td><td>商品検索一覧（保持ページ）。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>登録成功・商品未選択・戻るリンク</td><td>商品検索一覧の保持ページ番号をセッション <code>admin.product.search.page_no</code> から読む</td><td>商品検索一覧をその保持ページで表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>商品未選択</td><td>エラー文言を表示し商品検索一覧へリダイレクト。</td></tr><tr><td>規格削除済み</td><td>エラー文言を表示し、全体を更新しない。</td></tr><tr><td>在庫マイナス・上限超過・理由超過・理由未入力</td><td>全体を更新せず同一画面でエラー文言を表示。</td></tr></tbody></table></div>
+<hr>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<h3 id="エラー・警告-インライン">エラー・警告（インライン）</h3>
+<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>商品が選択されていません。</td><td>商品未選択で開いたとき</td><td>フラッシュ（一覧側）</td><td>設定キー <code>admin.error.select_no_product</code>。</td></tr><tr><td>ID: …在庫変動理由が入力されていません。</td><td>増減数0以外で理由が空の行</td><td>フォーム直下</td><td>行ごとの送信後処理が付与。</td></tr><tr><td>%s：対象の商品は既に削除されています。</td><td>規格が送信時に削除済み</td><td>フォーム上部</td><td>%s は規格ID。</td></tr><tr><td>%s:在庫がマイナスになる更新はできません。</td><td>新在庫数が負</td><td>フォーム直下</td><td>設定キー <code>admin.product_class.stock_minus</code>。</td></tr><tr><td>%s:在庫の合計が %s を超える更新はできせん。</td><td>新在庫数が上限超過</td><td>フォーム直下</td><td>設定キー <code>admin.product_class.stock_overflow</code>（原文表記のまま）。</td></tr><tr><td>ID %s:在庫変動理由は最大65535バイト以下で入力してください。</td><td>在庫変動理由が上限超過</td><td>フォーム直下</td><td>設定キー <code>admin.product_class.inventory_change_error</code>。</td></tr></tbody></table></div>
+<h3 id="フラッシュ・トースト">フラッシュ・トースト</h3>
+<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件</th></tr></thead><tbody><tr><td>登録が完了しました。</td><td>在庫更新が成功したとき（設定キー <code>admin.register.complete</code>）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>在庫更新の成立ごと</td><td>在庫変更履歴に変更前在庫・変更後在庫・区分・理由メモ・操作者を記録する。</td></tr></tbody></table></div>
+<p>操作者は在庫変更履歴の <code>member_id</code> に保持する。</p>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>在庫更新と履歴記録は同一の永続化で確定する。本画面は表示時点の在庫を基準に増減を計算するため、悲観ロックによる規格在庫の取り合いは本機能では行わない。CSV取込側（M04-21）は更新ロックを取るが、本画面のフォーム送信経路ではロック取得は行わない。</p>
+<hr>
+<h2 id="調査補助-ソース位置の索引">調査補助（ソース位置の索引）</h2>
+<p>grep 用のパスのみ示す。ふるまいの正は実装本文とする。</p>
+<ul><li><code>app/Plugin/HareruyaEc/Controller/Admin/Product/ProductController.php</code>（<code>editBulkUpdateProductStock</code>、<code>editBulkUpdateMainProcess</code>。ルート <code>m03-02_admin_product_product_edit_bulk_update_stock</code>）</li><li><code>app/Plugin/HareruyaEc/Controller/Admin/Product/ProductClassController.php</code>（<code>bulkUpdateProductStock</code>。ルート <code>admin_product_bulk_update_stock</code>）</li><li><code>app/Plugin/HareruyaEc/Form/Type/Admin/Product/BulkUpdateProductStockType.php</code>、<code>Stock.php</code>、<code>StockValidator.php</code></li><li><code>app/Plugin/HareruyaEc/Resource/template/admin/Product/bulk_update_stock.twig</code></li><li><code>app/Plugin/HareruyaEc/config.yml</code>（<code>product_sub_class.length.stock</code> = 9、<code>stock_history.memo</code> = 65535）</li></ul>
+<p>リニューアル先（ec-cube-enterprise、DB操作・永続化の正）:</p>
+<ul><li><code>src/Eccube/Service/Admin/Stock/StockBulkApprovalStoreAction.php</code>（承認データ作成。<code>processOne</code>。L133「廃棄の場合のみ、在庫情報の更新を行う」）</li><li><code>src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php</code>、<code>Form/Type/Admin/StockBulkApprovalType.php</code></li><li><code>src/Eccube/Entity/DtbStockEditApproval.php</code>、<code>DtbStockEditApprovalDetail.php</code>、<code>DtbStockApprovalList.php</code>、<code>Entity/ProductStock.php</code>、<code>Entity/Master/MtbStockHistorySourceType.php</code>（<code>STOCK_BULK_EDIT</code> = 2）</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

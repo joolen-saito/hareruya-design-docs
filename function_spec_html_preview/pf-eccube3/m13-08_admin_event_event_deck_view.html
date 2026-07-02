@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M13-08（デッキ表示） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#デッキ表示画面を開く">デッキ表示画面を開く</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-grep">調査補助（grep）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m13-08_admin_event_event_deck_view.md</p>
+        <h1>M13-08（デッキ表示）</h1>
+      </header>
+      <p>管理画面「イベント管理」のイベント申込一覧から、現在の申込検索条件に該当するイベントに登録されたデッキを、印刷向けのデッキリストとして別ウィンドウで表示する機能である。</p>
+<h2 id="概要">概要</h2>
+<p>デッキ表示は、管理者がイベント申込一覧で絞り込んだ条件に該当するデッキ（メインデッキ・サイドボードのカード構成）を一覧表示し、印刷して大会運営に用いるための読み取り専用画面である。表示対象は申込一覧の検索条件セッションから決まり、本画面では検索フォームや更新操作を持たない。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。既存実装が表示するデッキの抽出条件、カード構成の組み立て、ページ分割、読み取り専用であることを確認し、仕様の確からしさを把握することを目的とする。</p>
+<p>対象はブラウザ経由の管理画面のデッキ表示画面である。本機能は晴れる屋向けプラグインで提供され、EC-CUBE3系のSilexアプリケーション上で動作する。管理画面プレフィックスはアプリケーション設定<code>admin_route</code>（<code>$app['config']['admin_route']</code>）で決まり、ルートはこの値を連結して登録される。確認観点は申込用サービスプロバイダのルート登録とする。</p>
+<p>申込の検索条件の決まり方はM13-06を正とする。本書はデッキ表示画面の表示内容と抽出に範囲を限定し、デッキの登録・編集、デッキ管理画面（<code>/deck</code>配下）、申込CSV出力は扱わない。</p>
+<p>本機能のカスタマイズ区分はカスタマイズである。挙動の参照リポはpf-eccube3（HareruyaEcプラグイン）の現行実装とし、DB関連（永続化先のテーブル名・列名、DBカラム節）はec-cube-enterpriseを正とする。現行と移行先でスキーマが異なる箇所はリニューアル移行時の扱いに集約する。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>イベント申込一覧のデッキ表示ボタンから別ウィンドウでデッキ表示画面を開いたときのふるまい</li><li>申込一覧の検索条件セッションからデッキ表示対象を決める仕組み</li><li>表示するデッキ情報（プレイヤー名・DCIナンバー・イベント名・開催日・メイン／サイドのカード一覧と枚数）</li><li>メインデッキを1ページ40枚で分割し、サイドボードを先頭ページに載せるページ分割</li><li>本画面が読み取り専用であること</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>申込検索の検索条件・検索モード・セッション保持（M13-06を正とする）</li><li>デッキの登録・編集・複製・削除（デッキ管理画面の機能を正とする）</li><li>デッキ管理画面（<code>/deck</code>配下）のデッキ一覧・CSV取込</li><li>申込CSVの出力（M13-06の範囲外で別機能）</li><li>カード名・カードリストのエンコード仕様の詳細</li><li>管理画面へのアクセス制御、ログイン、権限設定の詳細</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>表示・抽出・ページ分割の挙動は現行（pf-eccube3）を正とし、参照する列名は移行先（ec-cube-enterprise）を正とする。本画面は読み取り専用でDBを更新しない。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>論理削除</td><td><code>dtb_deck</code>は<code>deleted_at</code>による論理削除</td><td>同一方式（<code>deleted_at</code>による論理削除を維持）</td></tr><tr><td>デッキの主キー列</td><td><code>dtb_deck.deck_id</code></td><td><code>dtb_deck.id</code>（主キー列名を<code>id</code>に統一。参照列<code>player_id</code>・<code>event_detail_id</code>は同名維持）</td></tr><tr><td>メイン／サイドの符号化列</td><td><code>dtb_deck.text_main</code>／<code>text_side</code></td><td>同名（<code>text_main</code>／<code>text_side</code>）</td></tr><tr><td>プレイヤー名列</td><td><code>dtb_deck.player_name</code></td><td>同名（<code>player_name</code>）</td></tr><tr><td>日程・イベントの主キー列</td><td><code>dtb_event_detail.event_detail_id</code>、<code>dtb_event.event_id</code></td><td><code>dtb_event_detail.id</code>、<code>dtb_event.id</code>（参照列<code>event_id</code>は同名維持）</td></tr></tbody></table></div>
+<p>カードリストの復号・1ページ40枚のページ分割・プレイヤー名の代替表示という業務上の扱いは現行・移行先で同じとする。</p>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>デッキ</td><td>申込プレイヤーが登録したカード構成。テーブルは<code>dtb_deck</code>。メイン・サイドのカード一覧を符号化した文字列を持つ。</td></tr><tr><td>メインデッキ</td><td>デッキのメイン部分のカード一覧。</td></tr><tr><td>サイドボード</td><td>デッキのサイド部分のカード一覧。</td></tr><tr><td>カードリスト</td><td>デッキの符号化文字列をカード名・枚数の配列に復号したもの。復号はカード関連のユーティリティで行う。</td></tr><tr><td>申込検索条件セッション</td><td>イベント申込一覧（M13-06）が保持する検索条件。デッキ表示の抽出条件として読む。セッションキーは<code>admin.event_entry.search</code>。</td></tr><tr><td>プレイヤー名</td><td>デッキに登録されたプレイヤー名。未設定時は会員の氏名カナ（カナ姓・カナ名）を用いる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>デッキ表示ボタン（申込一覧）</td><td><code>GET /%admin_route%/entry/deckList</code></td><td>申込一覧の検索条件に該当するデッキのデッキリストを表示する。</td></tr></tbody></table></div>
+<p>デッキ表示ボタンは申込一覧画面（M13-06）から別ウィンドウ（幅960、高さ900）で開く。本画面は管理画面の共通フレームを継承せず、印刷向けの独立したHTMLとして描画する。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>デッキごとのカードに、プレイヤー名・ページ番号・先頭文字、DCIナンバー、イベント名（英）、開催日、メインデッキ見出しと枚数、メインのカード一覧（枚数・カード名）、サイドボード見出しと枚数、サイドのカード一覧、デッキチェック記入欄を表示する。画面上部に印刷ボタンを表示する。</td></tr><tr><td>JS挙動</td><td>印刷ボタンはブラウザの印刷ダイアログを開く。検索・更新・非同期取得は行わない。</td></tr><tr><td>CSS・レイアウト</td><td>印刷向け専用CSS（<code>decklist.css</code>）を読み込み、デッキ単位のカードを並べる。管理画面共通のサイドバー・ヘッダは持たない。</td></tr><tr><td>モーダル・ポップアップ</td><td>モーダル・確認ダイアログを表示しない。画面自体が別ウィンドウで開く。</td></tr><tr><td>入力項目</td><td>本画面は入力フォーム・テキスト入力を持たない。表示と印刷のみ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="デッキ表示画面を開く">デッキ表示画面を開く</h3>
+<ol><li>申込一覧（M13-06）の検索条件セッション（<code>admin.event_entry.search</code>）を読む。無ければ空とする。</li><li>申込一覧の検索フォーム（フォーム名<code>admin_entry_list</code>）を生成し、読み出した検索条件を反映して検索データを得る。</li><li>ソートキー・並び順をリクエストの値、無ければ既定とする。</li><li>デッキリポジトリの登録デッキ取得で、検索条件に該当するデッキ（エンティティ）の一覧を取得する。</li><li>デッキごとにメイン・サイドのカードリストを復号し、メイン枚数・サイド枚数を合計する。</li><li>メインのカード一覧を1ページ40枚で分割する。先頭ページにはサイドボードを載せ、2ページ目以降のサイドは空とする。</li><li>ページごとにプレイヤー名・DCIナンバー・日程・メインカード・メイン枚数・サイド枚数を組み立てる。プレイヤー名はデッキのプレイヤー名（前後空白を除去）を用い、空のときは会員のカナ姓・カナ名を半角空白で連結する。</li><li>組み立てたデッキリストをデッキリスト用テンプレートで描画する。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>表示対象デッキ</td><td>申込一覧の検索条件に該当するデッキ（<code>dtb_deck</code>）。デッキはプレイヤー・会員・イベント詳細・イベントと結合し、申込・申込状況とも結合して抽出する。イベント詳細IDの指定があれば当該日程に限定し、イベント名の語があればイベント名（日・英）で絞り込む。詳細な抽出条件は申込検索条件と登録デッキ取得の実装を正とする。</td></tr><tr><td>メイン枚数</td><td>復号したメインカード一覧の枚数の合計。</td></tr><tr><td>サイド枚数</td><td>復号したサイドカード一覧の枚数の合計。</td></tr><tr><td>ページ分割</td><td>メインカードを1ページ40枚単位で分割する。デッキごとにページ番号と総ページ数を持つ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>抽出条件の出所</td><td>デッキ表示の対象は、申込一覧の検索条件セッション（<code>admin.event_entry.search</code>）から決まる。本画面では検索条件を入力させない。</td></tr><tr><td>プレイヤー名の決定</td><td>デッキのプレイヤー名を前後空白除去して用いる。空の場合は会員のカナ姓・カナ名を半角空白で連結して表示する。</td></tr><tr><td>カードリストの復号</td><td>デッキのメイン・サイドの符号化文字列を、カード名・枚数の配列に復号する。復号はカード関連のユーティリティで行う。</td></tr><tr><td>ページ分割</td><td>メインカード一覧を1ページ40枚で分割し、デッキ単位でページを構成する。サイドボードは先頭ページにのみ表示する。</td></tr><tr><td>枚数集計</td><td>メイン・サイドそれぞれの枚数を合計し、各見出しに表示する。</td></tr><tr><td>計算</td><td>金額計算・税計算・丸めは行わない。枚数の合計のみを行う。</td></tr></tbody></table></div>
+<p>本機能は入力フォームを持たないため、入力項目に紐づく表を持たない。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>申込検索条件セッションが無い</td><td>検索条件を空として扱い、登録デッキ取得の結果に従う。</td></tr><tr><td>デッキが0件</td><td>デッキリストに何も表示しない（印刷ボタンのみ）。</td></tr><tr><td>デッキのプレイヤー名が空</td><td>会員のカナ姓・カナ名を半角空白で連結して表示する。</td></tr><tr><td>メインが40枚を超える</td><td>40枚ごとにページを分け、ページ番号と総ページ数を表示する。</td></tr><tr><td>サイドボードが無い</td><td>サイド一覧を空として表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>デッキ表示の内容は画面表示時にデータベースから読み取った値である。表示後のデッキ・申込の更新は自動反映しない。</td></tr><tr><td>申込一覧との整合性</td><td>デッキ表示の対象は申込一覧の検索条件セッションに基づく。申込一覧で検索した後に条件を変えずに開けば、同一条件の対象を扱う。検索条件をセッションから読むため、別タブでの検索条件変更があれば表示対象が変わり得る。</td></tr><tr><td>読み取り専用</td><td>本画面はデッキ・申込・台帳を更新しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能ではAPI呼び出し・バッチ実行を扱わない。デッキ表示のためにデータベースを読み取るのみである。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>デッキ表示のGET。検索条件は申込一覧の検索条件セッションから読む。</td></tr><tr><td>成功時出力</td><td>デッキリストの印刷向けHTMLをサーバ側で描画する。</td></tr><tr><td>失敗時出力</td><td>本画面固有のエラー画面は持たない。読み取り障害はアプリケーションの共通例外処理に委ねる。</td></tr><tr><td>副作用</td><td>持たない。セッション・台帳を更新しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>当機能の表示・抽出に直接関係する代表的な列のみを記載する。型や一覧の細部、結合の詳細はスキーマと登録デッキ取得の実装を正とする。列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は現行名を括弧で添える。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_deck</code></td><td><code>id</code>（現行<code>deck_id</code>）、<code>player_id</code>、<code>event_detail_id</code></td><td>表示対象デッキの特定、プレイヤー・日程との結合。</td></tr><tr><td><code>dtb_deck</code></td><td><code>text_main</code>、<code>text_side</code></td><td>メイン・サイドのカード一覧の符号化列。復号元。</td></tr><tr><td><code>dtb_deck</code></td><td><code>player_name</code></td><td>プレイヤー名表示。空時は会員カナで代替。</td></tr><tr><td><code>dtb_event_detail</code></td><td><code>id</code>（現行<code>event_detail_id</code>）、<code>start_date</code>、<code>event_id</code></td><td>開催日表示、日程・イベントとの結合。</td></tr><tr><td><code>dtb_event</code></td><td><code>name_en</code></td><td>イベント名（英）表示。</td></tr></tbody></table></div>
+<p>会員のカナ姓・カナ名（<code>name01</code>／<code>name02</code>等の氏名・カナ列）はプレイヤー名が空のときの代替表示に用いる。具体列はプレイヤー・会員のスキーマを正とする。</p>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_deck / dtb_event / dtb_event_detail</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<p>本画面は入力フォームを持たない。利用者入力に対する検証は行わない。抽出条件の妥当性は申込検索（M13-06）のフォーム検証を正とする。</p>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>デッキ表示</th></tr></thead><tbody><tr><td>未ログイン</td><td>管理画面共通のログイン誘導に従う。</td></tr><tr><td>管理メンバーでログイン済み</td><td>管理画面のアクセス制御がイベント管理（申込）のURLを許可するときに到達する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>申込一覧のデッキ表示ボタン</td><td>デッキ表示画面を別ウィンドウで開く。</td></tr><tr><td>印刷ボタン</td><td>ブラウザの印刷ダイアログ（画面遷移はしない）。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>申込一覧のデッキ表示ボタン</td><td>申込一覧で検索条件を検索条件セッション（<code>admin.event_entry.search</code>）へ保存する（M13-06）。</td><td>デッキ表示画面が当該検索条件に該当するデッキを表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>申込検索条件セッションが無い</td><td>空条件として扱い、登録デッキ取得の結果に従う。</td></tr><tr><td>データベース読み取りの障害</td><td>アプリケーションの共通例外処理に委ねる。本画面固有の利用者向けメッセージは設けない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>本機能では利用者向けのフラッシュ・エラーメッセージを扱わない。画面はデッキ情報と印刷ボタンの表示のみで、操作結果メッセージを出さない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>デッキ表示</td><td>本機能単体では業務監査ログを追加で書く処理は持たない。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>セッション識別子の完全値</li><li>なりすまし対策トークンやCookieの原値</li><li>プレイヤー・会員の個人情報の本文</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>デッキ表示時</td><td>申込一覧の検索条件セッション（<code>admin.event_entry.search</code>）を読み取り専用で参照する。本画面ではセッションを更新しない。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>デッキ・申込の永続データはセッションへ保存しない。本画面はセッションを読むだけで書き込まない。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>本機能はデッキ表示のために新たなCookieを設定しない。セッションCookieは管理画面共通の仕組みを正とする。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>本機能のデッキ表示は参照のみであり、業務トランザクションを張らない。同時に複数の管理者が表示してもロックを取り合う要件は持たない。</p>
+<hr>
+<h2 id="調査補助-grep">調査補助（grep）</h2>
+<p>論理説明と切り離し、ソース照合用。</p>
+<pre><code>app/Plugin/HareruyaEc/ServiceProvider/Admin/EntryServiceProvider.php
+app/Plugin/HareruyaEc/Controller/Admin/EntryController.php
+app/Plugin/HareruyaEc/Repository/DtbDeckRepository.php
+app/Plugin/HareruyaEc/Util/CardUtil.php
+app/Plugin/HareruyaEc/Resource/template/admin/Entry/decklist.twig</code></pre>
+<p>bind名（コード探索用）: <code>admin_entry_decklist</code>（GETデッキ表示）。表示対象の抽出は登録デッキ取得（<code>getEntryDeckData</code>）を用い、検索条件は申込一覧の検索条件セッションから読む。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

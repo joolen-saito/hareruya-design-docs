@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-09（在庫移動・振替登録/編集） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#TODO-未確定項目">TODO（未確定項目）</a>
+<a class="lv2" href="#1-在庫移動・振替登録-編集">1. 在庫移動・振替登録/編集</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#入出力仕様">入出力仕様</a>
+<a class="lv3" href="#開始条件-終了条件">開始条件、終了条件</a>
+<a class="lv3" href="#判定条件">判定条件</a>
+<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
+<a class="lv3" href="#ビジネスロジック">ビジネスロジック</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#例外処理">例外処理</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#Excel設計書からの抽出">Excel設計書からの抽出</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/admin_stock_move_transfer_register_edit.md</p>
+        <h1>M04-09（在庫移動・振替登録/編集）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫移動・振替登録/編集</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr></tbody></table></div>
+<h2 id="TODO-未確定項目">TODO（未確定項目）</h2>
+<ul><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。</li><li>Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。</li></ul>
+<h2 id="1-在庫移動・振替登録-編集">1. 在庫移動・振替登録/編集</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>店舗間の在庫移動または振替を登録・編集し、出庫・入庫・承認に必要な情報を保持する。</p>
+<h3 id="入出力仕様">入出力仕様</h3>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>管理画面の検索条件、フォーム入力、CSVアップロード、または画面操作。</td></tr><tr><td>出力</td><td>画面表示、CSV/PDFダウンロード、登録完了/エラー表示。</td></tr><tr><td>副作用</td><td>対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録。</td></tr></tbody></table></div>
+<h3 id="開始条件-終了条件">開始条件、終了条件</h3>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>開始条件</td><td>管理画面にログイン済みの利用者が対象メニューまたは操作を実行する。</td></tr><tr><td>終了条件</td><td>画面表示、ファイル出力、登録完了、またはエラー表示が完了する。</td></tr></tbody></table></div>
+<h3 id="判定条件">判定条件</h3>
+<ul><li>Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。</li><li>Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。</li></ul>
+<h3 id="プロセスフロー">プロセスフロー</h3>
+<ol><li>利用者または外部システムが対象機能を開始する。</li><li>入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。</li><li>Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。</li><li>登録・更新・出力・連携のいずれかの主処理を実行する。</li><li>成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。</li></ol>
+<h3 id="ビジネスロジック">ビジネスロジック</h3>
+<ul><li>**Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は <code>excel_to_html/output</code> の設計書を正とする。</li><li>**実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>**対象機能の要点**: 店舗間における在庫移動を行えます。</li><li>**実装確認値**: StockMoveController / StockTransferController / DtbStockMoveTransfer 系を実装確認値とする。</li></ul>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>管理画面の対象業務データを参照し、登録系では対象データと履歴を更新する。</td></tr><tr><td>履歴・ログ</td><td>必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。</td></tr><tr><td>DB関連実装確認値</td><td>対象テーブル: dtb_stock_move_transfer, dtb_stock_move_transfer_detail 明示列: dtb_stock_move_transfer_status_history.update_member_id 列詳細は `../ec-cube-enterprise` の Entity / Repository / Migration を正とする。</td></tr></tbody></table></div>
+<h3 id="例外処理">例外処理</h3>
+<ul><li>**入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。</li><li>**対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。</li><li>**状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。</li><li>**外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。</li></ul>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。</li><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の Controller Route、Entity、Repository、Migration、Service 実装を正とする。</li></ul>
+<h2 id="Excel設計書からの抽出">Excel設計書からの抽出</h2>
+<pre><code class="language-text">在庫移動・振替登録 編集 (移動)
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+堀部
+作成日
+2025-08-25
+更新者
+石川
+更新日
+2026-02-06
+機能No
+M04-09
+機能名
+在庫移動・振替登録 編集（移動１（新規））
+概要
+—
+処理概要 初期登録画面
+処理概要 ピック・出庫処理申請画面
+処理概要 出庫承認画面
+処理概要 入庫承認申請画面
+処理概要 入庫承認画面
+処理概要 完了画面
+図形・テキストボックス内テキスト（214件）
+レイアウト図 初期登録画面
+1-2
+1-4
+1-5
+2-1
+1-7
+1-6
+2-2
+2-3
+2-4
+1-1
+3-1
+1-3
+3-2
+3-3
+3-4
+3-5
+3-6
+1-8
+1-9
+1-11
+1-10
+3-7
+4-1
+4-2
+4-3
+5-1
+6-1
+6-2
+6-3
+7-2
+7-1
+画像レイヤー（2枚）: 在庫移動・振替登録 編集 (移動) / B7 / image 9 + 在庫移動・振替登録 編集 (移動) / B7 / image 10
+機能仕様処理概要 初期登録画面
+初期登録画面概要
+・在庫検索一覧画面から任意の商品在庫を選択し、在庫検索一覧画面の「在庫移動登録」ボタンを押下すると、選択商品在庫を移動対象とし、この画面（在庫移動登録の初期画面）へ遷移する
+・選択した商品に対して、移動点数を入力して登録を行う
+・登録後、ステータスは新規作成となり、移動対象の商品の在庫が移動点数分減る
+移動登録ステータス遷移
+アクション
+ステータス
+新規
+登録
+ピック
+欠品
+登録
+新規
+登録
+入庫
+完了
+アクション
+ステータス
+入庫先
+NG
+新規
+登録
+ピック
+欠品
+登録
+出庫
+承認
+発送
+手続き
+着荷
+入庫
+承認
+差分
+通知
+新規
+登録
+出庫
+承認待ち
+却下
+出庫
+承認済み
+移動中
+入庫
+完了
+入庫
+承認待ち
+NG
+差分
+登録
+新規登録画面
+アクション
+ステータス
+入庫先
+NG
+新規
+登録
+ピック
+欠品
+在庫移動・振替登録 編集(振替)
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+堀部
+作成日
+2025-08-25
+更新者
+石川
+更新日
+2025-11-08
+機能No
+M04-09
+機能名
+在庫移動・振替登録 編集（振替）
+概要
+在庫の振替を行う
+・ 状態変更による移動をこの機能について対応とする
+処理概要 初期登録画面
+処理概要 在庫振替承認待ち画面
+処理概要 入庫完了・却下画面
+処理概要 商品検索モーダル
+図形・テキストボックス内テキスト（66件）
+レイアウト図 初期登録画面
+4-1
+5-1
+5-2
+1-1
+1-2
+1-4
+1-5
+1-6
+2-1
+2-2
+2-3
+2-4
+3-1
+3-2
+3-7
+3-4
+3-11
+3-12
+3-3
+1-3
+3-5
+3-6
+3-9
+3-10
+3-8
+3-13
+3-14
+1-7
+1-8
+1-9
+画像レイヤー（2枚）: 在庫移動・振替登録 編集(振替) / A8 / image 9 + 在庫移動・振替登録 編集(振替) / A8 / image 10
+要件説明（要件定義の内容）
+概要
+在庫の店舗間移動することが可能
+機能
+データの権限について
+・移動元の在庫データに関してはユーザーが編集権限を保持している店舗に関連付けられた在庫データを編集可能とする
+・移動先に関してはユーザーの編集権限がなくても指定することを可能とする
+在庫移動対象について
+・店舗間での在庫移動が可能とする
+※本店EC(2F)から本店バックヤード（3F,B2F）、成田倉庫への移動も含む
+・他店舗への在庫移動の場合、在庫区分区分は同じ区分しか選択できないものとする。ECCUBEの在庫からスマレジ在庫への移動、もしくはその反対のパターンを禁止
+・同一店舗内も移動可能とする。自店舗内移動の場合のみ別区分を選択可能とする。また同一店舗内の移動の場合、承認は不要
+例）同一店舗内にてショーケース品（スマレジ在庫）からEC在庫（EC-CUBE）への移動
+・状態変更による移動をこの機能について対応とする
+※1対１の商品移動
+操作要件
+・在庫検索/一覧画面で選択した商品を移動させることが可能とする
+・商品登録されていない物品や什器などは在庫移動機能の対象外とする
+登録後のデータ変更に関して
+・送付ミス等による在庫状況に問題がある場合、差し戻しを行う為、在庫移動内容の修正・追加を実施できるようにする
+・在庫移動時に入庫側では却下は選択できず、「差し戻し」を選択し、物理在庫と論理在庫が一致するような修正登録を行う
+差し戻し登録について
+・入庫先で発送内容に不備を発見し、問題がある状態になっている論理在庫を物理在庫の状況に合わせるよう管理画面で差分情報を登録する
+数量の不備 --- 差分点数を登録
+発送カードの種類違いのミス --- 差分商品追加からダイアログを開き、ミスのあった商品を在庫移動に追加する
+・差し戻しのステータスが届いた出庫元は内容を確認し、承認を行う。出庫元が承認を行なった檀家で、出庫元の在庫を差し戻し内容に沿って更新を行う
+差し戻し承認前に出庫元による欠品登録は可能とする
+想定以上の点数を送付してしまっている状態で出庫元側で受注等で在庫変動が発生した状態で欠品が発覚するケースが考えられるため
+欠品登録について
+・現行システムの受注登録と同じように、欠品登録を行えるようにする
+欠品登録は移動元店舗が行う
+欠品理由を登録できるようにする
+・廃棄、棚卸ロスは切り出して計上する
+廃棄理由を登録できるようにする
+※廃棄理由と欠品理由は分けて登録し、分析機能で集計できるようにする
+在庫変更理由について
+・在庫変動理由を在庫移動とし入力項目は不要とする
+・在庫変動履歴は、下記の内容を表示する
+1． 受注の時のように、在庫変動による在庫数、増減という表現とする
+2． 店舗移動の移動元と移動先を表示する※○○店から○○店に移動のようなメッセージを表示する
+3． 在庫移動登録IDを表示する
+・詳細は「在庫変動時の履歴作成について」シートを参照
+在庫変動について
+・在庫移動を新規登録すると移動元店舗の商品在庫が減算とする
+・入庫後に入庫完了にされると移動先の店舗に商品在庫が加算とする
+・差し戻し後に移動元店舗側で承認を行うと、差分の修正変動(加算・減算どちらも)が発生する
+・在庫移動が新規登録されたのち、承認されず却下された場合は出庫元の在庫移動を戻す処理を行う(在庫を加算する)
+ステータス管理について
+・在庫移動状況をステータスで管理する
+・「在庫移動実績インポート」にてインポートが行われた際もステータスが変更とする
+※通販チームによって本店から支店に在庫移動する場合などを想定
+在庫移動指示リストについて
+・"在庫移動指示"機能にてリスト作成時対象データとする
+入庫時振り分けについて
+本店に発送する際は、いったんすべて3Fにすればよい。その後統合仕入れにて振り分けを行う。
+そのため、在庫移動時に振り分けは不要
+支店は即入庫されても懸念がなく、合理的であると考えている（本店だと入庫されたことの通知が行くため、配慮が必要）
+移動時スマレジ連携について
+・在庫変動時、連携対象の条件を満たしている場合に限り、スマレジへ商品情報を連携する
+・スマレジに情報がない場合にEC-CUBEから商品マスターの連携を行うとする
+承認プロセスについて</code></pre>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

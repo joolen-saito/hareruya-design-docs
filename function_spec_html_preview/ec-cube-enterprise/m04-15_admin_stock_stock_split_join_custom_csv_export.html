@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-15（在庫分割結合情報カスタムCSV出力） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#1-在庫分割結合情報カスタムCSV出力">1. 在庫分割結合情報カスタムCSV出力</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#実装状況-重要・実装要確認">実装状況（重要・実装要確認）</a>
+<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
+<a class="lv3" href="#想定プロセスフロー-Excel要件-在庫一覧方式に倣う">想定プロセスフロー（Excel要件 + 在庫一覧方式に倣う）</a>
+<a class="lv3" href="#出力項目-カスタム対象の母集合">出力項目（カスタム対象の母集合）</a>
+<a class="lv3" href="#分岐・例外-実装時の想定">分岐・例外（実装時の想定）</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/m04-15_admin_stock_stock_split_join_custom_csv_export.md</p>
+        <h1>M04-15（在庫分割結合情報カスタムCSV出力）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫分割結合情報カスタムCSV出力</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockSplitJoinController</code>（custom-csvルートなし） / <code>StockSplitJoinCsvExportService</code>（固定列） / <code>Master\CsvType</code>（<code>CSV_TYPE_STOCK_SPLIT=12</code>） / 参考: <code>StockListController::stockListCustomCsv</code> ＝在庫一覧のカスタムCSV実装）</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装を読み込み、在庫分割結合のカスタムCSV専用実装が未提供である点を確認・明記。エンドポイント・出力サービス・CsvType種別を実装確認値で具体化。</td></tr></tbody></table></div>
+<h2 id="1-在庫分割結合情報カスタムCSV出力">1. 在庫分割結合情報カスタムCSV出力</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>カスタムCSV共通設定で作成した出力フォーマットに従い、在庫分割結合情報の出力項目・並びを変更してCSV出力する想定の管理画面機能。一覧画面（M04-12）の「在庫情報カスタムCSV出力」相当の入口から、保存済みフォーマットを選択して出力する。</p>
+<p>本機能のカスタマイズ区分は新規実装であり、出力項目変更・出力条件の業務要件は基本設計仕様書を正とする。対応する現行（pf-eccube3）実装は無い。</p>
+<h3 id="実装状況-重要・実装要確認">実装状況（重要・実装要確認）</h3>
+<p><code>../ec-cube-enterprise</code> を確認した時点では、**在庫分割結合専用のカスタムCSV出力ルート・サービスは未実装**である。確認した事実は以下のとおり。</p>
+<ul><li><code>StockSplitJoinController</code> には <code>csv-export</code>（固定列。M04-14）はあるが、フォーマットIDを受け取る <code>custom-csv</code> 系ルートは存在しない。</li><li><code>StockSplitJoinCsvExportService</code> は固定12列（<code>CSV_HEADER</code>）で出力し、<code>dtb_csv</code> のフォーマット選択を適用する分岐を持たない。</li><li>一方でCSV種別マスタ <code>Master\CsvType</code> には <code>CSV_TYPE_STOCK_SPLIT = 12</code> が定義されており、在庫分割結合向けのカスタムCSV枠は用意されている。</li><li>在庫一覧側には <code>StockListController::stockListCustomCsv</code>（<code>admin_stock_list_custom_csv</code>、<code>/custom-csv/{csvExtensionId}</code>）というカスタムCSVの実装があり、在庫分割結合に同等機能を追加する際の参照実装となる。</li></ul>
+<p>したがって本書の出力フォーマット適用・選択フローは、Excel設計（要件）を正とし、実装は在庫一覧のカスタムCSV方式に倣う前提で記述する。最終的なエンドポイント・出力列のカスタム適用は ec-cube-enterprise 実装で要確認。</p>
+<h3 id="本書で扱うこと">本書で扱うこと</h3>
+<ul><li>在庫分割結合のカスタムCSV出力の位置づけと、固定列CSV出力（M04-14）との差分</li><li>カスタムCSV共通設定（<code>dtb_csv</code> / CSV種別 <code>CSV_TYPE_STOCK_SPLIT</code>）との接続点</li><li>実装上の未提供範囲（要確認事項）</li></ul>
+<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
+<ul><li>固定12列の在庫分割結合情報CSV出力（M04-14）</li><li>カスタムCSV共通設定（出力項目設定）画面そのものの仕様</li><li>一覧・検索条件（M04-12）</li></ul>
+<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>在庫分割結合カスタムCSV出力</td><td>（未実装。要追加）</td><td>フォーマットID（<code>csvExtensionId</code> 相当）を指定し、<code>CSV_TYPE_STOCK_SPLIT</code> のカスタム設定に従って出力項目・並びを変更して出力する想定。</td></tr><tr><td>参考：在庫一覧カスタムCSV</td><td><code>GET /%admin%/product/stock/custom-csv/{csvExtensionId}</code>（<code>admin_stock_list_custom_csv</code>）</td><td>在庫一覧での既存実装。対象が在庫種別でない／存在しない場合は404。本機能の実装時に倣う方式。</td></tr></tbody></table></div>
+<h3 id="想定プロセスフロー-Excel要件-在庫一覧方式に倣う">想定プロセスフロー（Excel要件 + 在庫一覧方式に倣う）</h3>
+<ol><li>一覧画面でカスタムCSV出力リンクを押下し、保存済みフォーマット名（または「出力項目設定」）を表示する。</li><li>フォーマット名を選択すると、対応する <code>csvExtensionId</code>（<code>CSV_TYPE_STOCK_SPLIT</code> のCSV設定）で出力ルートを呼び出す。</li><li>セッションの検索条件で在庫分割結合データを取得する（M04-14と同じ対象データ）。</li><li>カスタムCSV設定の選択列・並びに従って列を組み替えて出力する。</li></ol>
+<h3 id="出力項目-カスタム対象の母集合">出力項目（カスタム対象の母集合）</h3>
+<p>カスタムCSVで選択可能な列の母集合は、固定出力（M04-14）の12列を基準とする想定。</p>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>項目（M04-14基準）</th></tr></thead><tbody><tr><td>1〜12</td><td>ID／タイプ／店舗／在庫区分／分割元・結合先商品名／分割元・結合先点数／分割元・結合先基準価格合計／分割先・結合元点数／分割先・結合元基準価格合計／ステータス／登録日時／登録者</td></tr></tbody></table></div>
+<p>選択可能列の最終的な定義（追加列の有無、表示名）は ec-cube-enterprise のカスタムCSV設定（<code>dtb_csv</code>・CSV種別 <code>CSV_TYPE_STOCK_SPLIT</code>）実装で要確認。</p>
+<h3 id="分岐・例外-実装時の想定">分岐・例外（実装時の想定）</h3>
+<ul><li>**フォーマット不正/不存在**: 在庫一覧方式に倣い、<code>csvExtensionId</code> が存在しない／在庫分割結合種別（<code>CSV_TYPE_STOCK_SPLIT</code>）でない場合は404とする想定（実装要確認）。</li><li>**0件**: 固定出力（M04-14）と同様にヘッダ行のみを出力する想定。</li></ul>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>**参照のみ**。<code>dtb_stock_split_join</code> / <code>dtb_stock_split_join_detail</code> を参照し出力するのみ。</td></tr><tr><td>カスタムCSV設定</td><td>出力列の選択・並びはカスタムCSV共通設定（<code>dtb_csv</code>、CSV種別 <code>CSV_TYPE_STOCK_SPLIT=12</code>）に従う。</td></tr></tbody></table></div>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>出力項目変更・選択フローの業務定義は参照元Excel設計書（在庫分割結合情報CSV出力シート、識別ID 1-6「在庫情報カスタムCSV出力」）を正とする。</li><li>固定列の在庫分割結合CSVはM04-14、検索条件はM04-12を参照。</li><li>実装方式は在庫一覧カスタムCSV（<code>StockListController::stockListCustomCsv</code> / <code>admin_stock_list_custom_csv</code>）を参照実装とする。</li></ul>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>本機能は新規実装であり、現行リポ（pf-eccube3 など）に対応機能は存在しない。移行先 ec-cube-enterprise の実装を確認値とする。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>移行先（ec-cube-enterprise）の扱い</th></tr></thead><tbody><tr><td>出力対象データ</td><td><code>dtb_stock_split_join</code> と <code>dtb_stock_split_join_detail</code> を結合した在庫分割結合情報。</td></tr><tr><td>カスタムCSV設定</td><td>出力列の選択・並びはカスタムCSV共通設定（<code>dtb_csv</code>、<code>CSV_TYPE_STOCK_SPLIT=12</code>）に従う想定。</td></tr><tr><td>出力サービス</td><td>現状は固定列の <code>StockSplitJoinCsvExportService</code> のみ。カスタム設定を適用する出力経路は未実装（要追加・要確認）。</td></tr></tbody></table></div>
+<p>カスタムCSVの選択可能列・適用ロジックは、推測でスキーマ化せず「ec-cube-enterprise 実装で要確認（現状未実装）」とする。</p>
+<details>
+<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+<pre><code class="language-text">在庫分割結合情報CSV出力
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+佐藤
+作成日
+2025-08-25
+更新者
+本田
+更新日
+2026-02-05
+機能No
+M04-14
+機能名
+在庫分割結合情報CSV出力
+概要
+—
+処理概要
+CSV出力項目
+識別ID項目名備考
+1ID在庫分割・結合登録 編集（分割）の "識別ID1-1" 「在庫分割結合ID」
+在庫分割・結合登録 編集（結合）の "識別ID1-1" 「在庫結合結合ID」
+2タイプ在庫分割・結合登録 編集（分割）の "識別ID1-2" 「処理タイプ」
+在庫分割・結合登録 編集（結合）の "識別ID1-2" 「処理タイプ」
+3店舗在庫分割・結合登録 編集（分割）の "識別ID1-3" 「店舗」
+在庫分割・結合登録 編集（結合）の "識別ID1-3" 「店舗」
+4在庫区分在庫分割・結合登録 編集（分割）の "識別ID1-4" 「在庫区分」
+在庫分割・結合登録 編集（結合）の "識別ID1-4" 「在庫区分」
+5分割元・結合先商品名在庫分割・結合登録 編集（分割）の "識別ID2-1" 「分割元商品名」
+在庫分割・結合登録 編集（結合）の "識別ID2-1" 「結合先商品名」
+6分割元・結合先点数在庫分割・結合登録 編集（分割）の "識別ID2-10" 「分割数」
+在庫分割・結合登録 編集（結合）の "識別ID2-10" 「結合数」
+7分割元・結合先商品の基準価格の合計在庫分割・結合一覧検索の "識別ID5-7" 「基準価格の合計」
+8分割先・結合元点数在庫分割・結合登録 編集（分割）の "識別ID2-21" 「分割先在庫数」
+在庫分割・結合登録 編集（結合）の "識別ID7-1" 「結合元点数」
+9分割先・結合元商品の基準価格の合計在庫分割・結合一覧検索の "識別ID5-9" 「基準価格の合計」
+10ステータス在庫分割・結合登録 編集（分割）の "識別ID1-5" 「ステータス」
+在庫分割・結合登録 編集（結合）の "識別ID1-5" 「ステータス」
+11登録日時在庫分割・結合登録 編集（分割）の "識別ID1-6" 「登録日」
+在庫分割・結合登録 編集（結合）の "識別ID1-6" 「登録日」
+12登録者在庫分割・結合登録 編集（分割）の "識別ID1-9" 「登録者」
+在庫分割・結合登録 編集（結合）の "識別ID1-9" 「登録者」
+機能仕様処理概要
+在庫分割結合CSV出力
+・在庫分割結合一覧画面の在庫分割結合CSV出力ボタンを押下してCSVを出力する
+・検索結果のデータを取得しCSV出力する
+・在庫分割結合IDの昇順で出力</code></pre>
+</details>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

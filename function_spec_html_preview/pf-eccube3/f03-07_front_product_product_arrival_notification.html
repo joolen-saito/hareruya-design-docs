@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F03-07（入荷時通知） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#入荷通知を依頼・取り消しする-POST-cart-pushReceive">入荷通知を依頼・取り消しする（POST `/cart/pushReceive`）</a>
+<a class="lv3" href="#入荷通知依頼一覧を表示する-GET-mypage-notifylist">入荷通知依頼一覧を表示する（GET `/mypage/notifylist`）</a>
+<a class="lv2" href="#入荷通知依頼-時の判定順序">`入荷通知依頼` 時の判定順序</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
+<a class="lv3" href="#登録・取り消し-非同期応答">登録・取り消し（非同期応答）</a>
+<a class="lv3" href="#確認ダイアログ">確認ダイアログ</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/f03-07_front_product_product_arrival_notification.md</p>
+        <h1>F03-07（入荷時通知）</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>入荷時通知は、ログイン会員が在庫切れ等の商品規格について入荷時の通知を依頼登録できる機能である。商品詳細や商品一覧の入荷通知ボタンから非同期で登録を依頼し、同じ商品規格を再度依頼するとその依頼を取り消す（トグル）。依頼件数には上限があり、上限に達している場合は登録しない。登録した依頼の一覧はマイページの入荷通知依頼一覧で確認できる。実際の入荷時のメール送信は在庫改定の管理処理を正とする。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの入荷通知依頼処理（カートの入荷通知依頼）、入荷通知依頼一覧処理、入荷通知依頼エンティティ、依頼上限の比較処理、メッセージ（<code>message.ja.yml</code>）を正とする。</p>
+<p>本機能のカスタマイズ区分はカスタマイズであり、挙動の確認は現行リポ（pf-eccube3）の実装を参照する。DB関連の記述はリニューアル移行先の ec-cube-enterprise を正とする。</p>
+<p>対象はブラウザ経由のフロントに限定する。フロントのルートはロケールを先頭に付けた<code>/{_locale}</code>配下に配置される。</p>
+<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。本文ではルートbind名の網羅は主説明とせず、「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>入荷通知依頼の登録・取り消し（非同期）の入口と判定順序</li><li>会員ログインの要否と、未ログイン時の扱い</li><li>依頼の重複判定（同一商品規格の再依頼でトグル）と件数上限</li><li>マイページの入荷通知依頼一覧の表示</li><li>利用者へ返すメッセージ</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>入荷時の通知メールの送信（在庫改定・在庫補充の管理処理を正とする）</li><li>入荷済みに伴う依頼の論理削除（在庫改定の管理処理を正とする）</li><li>商品詳細・商品一覧画面そのものの仕様（F03-02・F03-01 を正とする）</li><li>カート機能そのものの仕様（カート機能の設計を正とする）</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>現行（pf-eccube3）と移行先（ec-cube-enterprise）で、入荷通知依頼テーブル dtb_product_request（列 product_class_id・player_id・create_date・deleted_at）とオプションマスタ mtb_option（依頼上限の論理キー arrival_alert_max）は同一スキーマである。削除は deleted_at による論理削除で、件数上限の集計は未削除の依頼のみを数える点も移行先で同じ。入荷時の通知メール送信および入荷に伴う依頼の論理削除は在庫改定の管理処理を正とし、本書では扱わない。</p>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>会員</td><td>フロントにログインしている顧客。</td></tr><tr><td>選手情報</td><td>会員に紐づく拡張情報。入荷通知依頼は選手情報に紐づく。</td></tr><tr><td>商品規格</td><td>コンディション・言語等の組で在庫を持つ単位。入荷通知依頼はこの単位で行う。</td></tr><tr><td>入荷通知依頼</td><td>商品規格に対する入荷時の通知の依頼。会員ごとに保持する。</td></tr><tr><td>依頼上限</td><td>1会員が登録できる入荷通知依頼の最大件数。オプションの依頼上限値（<code>arrival_alert_max</code>）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>入荷通知ボタン（商品詳細・商品一覧）</td><td><code>POST /{_locale}/cart/pushReceive</code></td><td>非同期で当該商品規格の入荷通知依頼を登録する。既に依頼済みなら取り消す。</td></tr><tr><td>入荷通知依頼一覧を開く</td><td><code>GET /{_locale}/mypage/notifylist</code></td><td>ログイン会員自身の入荷通知依頼の対象商品を一覧表示する。</td></tr></tbody></table></div>
+<p>フロントのページであり管理画面プレフィックスは付かない。ロケールは<code>/{_locale}</code>の先頭区切りで決まる。登録・取り消しは非同期リクエスト、一覧は会員ログインを要する。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>入荷通知ボタン（依頼／キャンセルの確認表示を伴う）、入荷通知依頼一覧（対象商品の一覧）。</td></tr><tr><td>JS挙動</td><td>入荷通知ボタンは非同期で依頼の登録・取り消しを呼び、返却JSONの状態に応じて表示を切り替える。依頼・キャンセルの確認ダイアログを表示する。</td></tr><tr><td>CSS・レイアウト</td><td>ボタンの依頼済み・未依頼の状態を表示で区別する。</td></tr><tr><td>モーダル・ポップアップ</td><td>依頼・キャンセルの確認ダイアログを持つ（依頼・キャンセルそれぞれの見出し・本文・OK／キャンセルのボタン文言を持つ）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="入荷通知を依頼・取り消しする-POST-cart-pushReceive">入荷通知を依頼・取り消しする（POST <code>/cart/pushReceive</code>）</h3>
+<ol><li>商品規格IDを受け取り、該当する商品規格を特定する。特定できない場合は対象商品が削除済みである旨のJSONを返す。</li><li>ログイン会員を特定する。会員でない場合は、検索の戻り先をセッションへ保存し、未ログインを示すJSON（メッセージ付き）を返す。</li><li>会員に紐づく選手情報を特定する。</li><li>当該選手・当該商品規格の依頼が既にある場合は、その依頼を削除し、取り消しを示すJSON（メッセージ付き）を返す。</li><li>依頼が無い場合、当該会員の依頼件数が上限以上かを判定する。上限以上の場合は、上限件数を含む上限超過のJSON（メッセージ付き）を返す。</li><li>上記を通過した場合のみ、入荷通知依頼を作成して保存し、依頼成功を示すJSON（メッセージ付き）を返す。</li></ol>
+<h3 id="入荷通知依頼一覧を表示する-GET-mypage-notifylist">入荷通知依頼一覧を表示する（GET <code>/mypage/notifylist</code>）</h3>
+<ol><li>会員ログインを要求し、ログイン会員を特定する。</li><li>当該会員の入荷通知依頼の対象商品を取得する。</li><li>入荷通知依頼一覧として表示する。</li></ol>
+<hr>
+<h2 id="入荷通知依頼-時の判定順序"><code>入荷通知依頼</code> 時の判定順序</h2>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>商品規格が特定できるか</td><td>できないなら対象商品が削除済みのJSON（対象の商品は削除済です。、状態<code>fail</code>）</td></tr><tr><td>2</td><td>ログイン会員か</td><td>会員でないなら戻り先をセッション保存し未ログインJSON（入荷通知を依頼する場合ログインしてください、状態<code>nologin</code>）</td></tr><tr><td>3</td><td>同一商品規格の依頼が既にあるか</td><td>あるなら依頼を削除し取り消しJSON（入荷通知依頼をキャンセルしました。、状態<code>cancel</code>）</td></tr><tr><td>4</td><td>依頼件数が上限未満か</td><td>上限以上なら上限超過JSON（入荷通知依頼は（上限件数）件までです。、状態<code>fail</code>）</td></tr><tr><td>5</td><td>上記を通過</td><td>依頼を作成し依頼成功JSON（入荷通知依頼しました。、状態<code>success</code>）</td></tr></tbody></table></div>
+<hr>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<h3 id="登録・取り消し-非同期応答">登録・取り消し（非同期応答）</h3>
+<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>入荷通知依頼しました。</td><td>You have registered an Item Waiting for Arrival</td><td>依頼の登録成功時</td><td>入荷通知ボタン付近の通知</td><td>状態<code>success</code></td></tr><tr><td>入荷通知依頼をキャンセルしました。</td><td>Your registered Item Waiting for Arrival has been canceled.</td><td>既に依頼済みの商品規格を再依頼したとき</td><td>同上</td><td>状態<code>cancel</code></td></tr><tr><td>入荷通知依頼は（上限件数）件までです。</td><td>Up to （上限件数） items are able to register for Item Waiting for Arrival.</td><td>依頼件数が上限以上のとき</td><td>同上</td><td>状態<code>fail</code>。上限件数は依頼上限値を埋め込む</td></tr><tr><td>入荷通知を依頼する場合ログインしてください</td><td>To register Item Waiting for Arrival, please log in.</td><td>未ログインで依頼しようとしたとき</td><td>同上</td><td>状態<code>nologin</code></td></tr><tr><td>対象の商品は削除済です。</td><td>The item has been deleted.</td><td>対象の商品規格が特定できないとき</td><td>同上</td><td>状態<code>fail</code></td></tr></tbody></table></div>
+<p>英語は<code>message.en.yml</code>の同一ロケールキーを正とする。</p>
+<h3 id="確認ダイアログ">確認ダイアログ</h3>
+<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示文言（英語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>入荷通知／入荷通知依頼を行いますか?</td><td>Request Items／Proceed to request for Items Waiting for Arrival?</td><td>未依頼の商品規格で依頼ボタンを押したとき</td><td>確認ダイアログ</td><td>見出しと本文</td></tr><tr><td>入荷通知をキャンセル／入荷通知依頼をキャンセルしますか?</td><td>Cancel request for Items Waiting for Arrival／Proceed to cancel Items Waiting for Arrival?</td><td>依頼済みの商品規格でボタンを押したとき</td><td>確認ダイアログ</td><td>見出しと本文</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>会員限定</td><td>入荷通知依頼の登録・取り消しはログイン会員に限る。未ログインは登録せず未ログイン応答とする。</td></tr><tr><td>依頼単位</td><td>依頼は商品規格単位で行う。</td></tr><tr><td>重複判定（トグル）</td><td>同一会員・同一商品規格の依頼が既にある場合は、再依頼で当該依頼を削除（取り消し）する。新規の重複作成は行わない。</td></tr><tr><td>件数上限</td><td>1会員あたりの依頼件数が依頼上限値以上のとき、新規依頼を作成しない。上限値はオプションの依頼上限（<code>arrival_alert_max</code>）を参照する。</td></tr><tr><td>件数の数え方</td><td>削除済み（論理削除）でない依頼の件数を上限と比較する。</td></tr><tr><td>戻り先の保存</td><td>未ログインのとき、検索の戻り先（参照元）をセッションへ保存する。</td></tr></tbody></table></div>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>商品規格</td><td>必須</td><td>—</td><td>無し</td><td>依頼・取り消しの対象商品規格。フォームキー<code>product_class_id</code>。入荷通知依頼として作成・削除する。</td></tr></tbody></table></div>
+<p>登録・取り消しは非同期リクエストのパラメータで受け取り、画面フォームの入力欄は持たない。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>商品規格が特定できない</td><td>対象商品が削除済みのJSONを返し、登録しない。</td></tr><tr><td>未ログインで依頼</td><td>戻り先をセッション保存し、未ログインJSONを返し、登録しない。</td></tr><tr><td>同一商品規格を再依頼</td><td>既存依頼を削除（取り消し）する。</td></tr><tr><td>依頼件数が上限以上</td><td>上限超過JSONを返し、登録しない。</td></tr><tr><td>未依頼かつ上限未満</td><td>依頼を作成する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>依頼と会員</td><td>依頼は会員に紐づく選手情報に紐づく。登録・取り消しは当該会員の依頼のみを対象とする。</td></tr><tr><td>一覧と依頼状態</td><td>入荷通知依頼一覧は当該会員の依頼の対象商品を参照する。</td></tr><tr><td>入荷時の削除との関係</td><td>入荷に伴う依頼の論理削除・通知メールは在庫改定の管理処理を正とする。本機能は登録・取り消しと一覧表示を担う。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>API</td><td>登録・取り消しは非同期リクエストで、結果と表示文言をJSONで返す。</td></tr><tr><td>バッチ</td><td>本機能ではバッチを実行しない。入荷時の通知メール送信は在庫改定の管理処理を正とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>登録・取り消しは商品規格ID。一覧は会員ログイン情報。</td></tr><tr><td>成功時出力</td><td>登録・取り消しは状態と文言のJSON。一覧はHTML表示。</td></tr><tr><td>失敗時出力</td><td>未ログイン・上限超過・対象商品削除済みのJSON。</td></tr><tr><td>副作用</td><td>入荷通知依頼の作成・削除。未ログイン時の戻り先のセッション保存。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_product_request</code></td><td><code>product_class_id</code></td><td>依頼の対象商品規格。</td></tr><tr><td><code>dtb_product_request</code></td><td><code>player_id</code></td><td>依頼を行った会員（選手情報）。会員ごとの件数集計・重複判定キー。</td></tr><tr><td><code>dtb_product_request</code></td><td><code>create_date</code></td><td>依頼の作成日時。一覧の並びに用いる。</td></tr><tr><td><code>dtb_product_request</code></td><td><code>deleted_at</code></td><td>論理削除日時。上限件数の集計で未削除のみを数える。</td></tr><tr><td><code>mtb_option</code></td><td><code>arrival_alert_max</code></td><td>依頼件数の上限値（論理キー <code>arrival_alert_max</code>）。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_product_request / mtb_option</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>商品規格</td><td>指定の商品規格が特定できることを要する。特定できない場合は対象商品削除済みの応答。</td></tr><tr><td>ログイン状態</td><td>会員ログインを要する。会員でない場合は未ログイン応答。</td></tr><tr><td>件数上限</td><td>依頼件数が依頼上限値以上では新規依頼を作成しない。</td></tr><tr><td>重複</td><td>同一会員・同一商品規格の依頼がある場合は再依頼で取り消す。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>依頼の登録・取り消し</th><th>入荷通知依頼一覧</th></tr></thead><tbody><tr><td>未ログイン</td><td>未ログイン応答（登録しない）</td><td>アクセス不可（会員ログインへ誘導）</td></tr><tr><td>ログイン済み会員</td><td>自分の依頼のみ登録・取り消し可能</td><td>自分の依頼のみ閲覧可能</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>マイページの入荷通知依頼一覧</td><td>入荷通知依頼一覧（<code>GET /{_locale}/mypage/notifylist</code>）</td></tr><tr><td>入荷通知ボタン</td><td>画面遷移せず非同期で結果を反映する</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>未ログインで入荷通知ボタン</td><td>検索の戻り先（参照元）をセッションへ保存する。</td><td>会員ログイン後、保存した戻り先を起点に利用を続けられる（ログイン機能を正とする）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>対象商品規格が特定できない</td><td>対象商品削除済みのJSONを返す。</td></tr><tr><td>未ログインで依頼</td><td>戻り先をセッション保存し、未ログインJSON（ログインを促す文言）を返す。登録しない。</td></tr><tr><td>依頼件数が上限超過</td><td>上限件数を含む上限超過JSONを返す。登録しない。</td></tr><tr><td>未ログインで一覧</td><td>会員ログインへ誘導する（会員ログイン機能を正とする）。</td></tr></tbody></table></div>
+<p>表示文言は表示メッセージ節を正とする。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<p>本機能は固有の業務監査ログを主目的としない。</p>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>Cookie値</li><li>セッションIDの完全値</li><li>会員の個人情報（メールアドレス・氏名等）</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>未ログインで入荷通知ボタンを押下</td><td>検索の戻り先（参照元）をセッションへ保存する。</td></tr><tr><td>依頼の登録・取り消し成功時</td><td>本機能はセッションへ機微情報を保存しない。</td></tr></tbody></table></div>
+<p>キー名の正確な文字列は実装を確認値とする。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>入荷通知依頼の作成・削除はそれぞれ確定する。本機能では楽観ロック・悲観ロックの対象は持たない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

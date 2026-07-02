@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>カード管理 — カード情報 CSV 出力 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#CSV-をダウンロードする-POST-m14-02-admin-card-card-csv-export">CSV をダウンロードする（POST `m14-02_admin_card_card_csv_export`）</a>
+<a class="lv3" href="#取得-ID-の一部のみ-DB-に存在するとき">取得 ID の一部のみ DB に存在するとき</a>
+<a class="lv3" href="#変換中に-RuntimeException-が送出されたとき">変換中に `RuntimeException` が送出されたとき</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#出力列とデータの対応-業務ルール">出力列とデータの対応（業務ルール）</a>
+<a class="lv3" href="#カード単位で共通する列-カード詳細の反復ごとに同じ値が繰り返される">カード単位で共通する列（カード詳細の反復ごとに同じ値が繰り返される）</a>
+<a class="lv3" href="#カード詳細ごとに変わる列-1-詳細につき-1-データ行">カード詳細ごとに変わる列（1 詳細につき 1 データ行）</a>
+<a class="lv3" href="#カード詳細が-1-件も無いカード">カード詳細が 1 件も無いカード</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-grep・参照用">調査補助（grep・参照用）</a>
+<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m14-02_admin_card_card_csv_export.md</p>
+        <h1>カード管理 — カード情報 CSV 出力</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>HareruyaEc プラグインが管理画面の「カード管理」検索一覧から、チェックボックスで選んだカード ID を対象に、カードマスタおよびカード詳細に相当する列を並べた CSV ファイルをダウンロード応答として返す機能である。ヘッダ行は項目の論理キー（例: <code>name_jp</code>）であり、商品 CSV のように店舗設定で項目を並べ替える仕組みは使わない。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とする。</p>
+<p>本機能のカスタマイズ区分はカスタマイズである。現行挙動は pf-eccube3 の HareruyaEc プラグインを参照し、永続化に関わるテーブル名・列名などのDB関連は ec-cube-enterprise を正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。</p>
+<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>DB関連の記述は ec-cube-enterprise の実装を正とする。出力が参照するカードマスタ・カード詳細・関連マスタは現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）で同一のテーブル名・列名であり、同一スキーマである。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>カード共通列の源泉</td><td><code>mtb_card</code></td><td>同一スキーマ（<code>mtb_card</code>）。</td></tr><tr><td>行複製単位</td><td><code>mtb_card_detail</code></td><td>同一スキーマ（<code>mtb_card_detail</code>）。</td></tr><tr><td>関連マスタ・画像</td><td>カラー・タイプ・フォーマット・固有色・<code>mtb_card_image</code>・プロモーション等</td><td>同一スキーマ。</td></tr></tbody></table></div>
+<p>出力列の論理キーと並びは現行挙動（pf-eccube3）を参照し、移行先でも同じカードマスタ構造を読む。</p>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>検索結果が 1 件以上あり、一覧でカードをチェックして「CSV出力」を押す</td><td><code>POST /{admin_route}/card/csvexport</code></td><td>選択したカード ID がフォームデータとして送られ、該当データの CSV がブラウザにダウンロードされる。</td></tr><tr><td>検索結果エリアが無い・件数ゼロ</td><td>（ボタン自体が描画されない）</td><td>CSV 出力ボタンは検索結果ボックス内にのみ配置されるため、この入口からは実行できない。</td></tr></tbody></table></div>
+<p>同一 HTML フォームの既定の <code>action</code> は検索用の <code>POST /{admin_route}/card/search/1</code> であるが、「CSV出力」ボタンは <code>formaction</code> で <code>m14-02_admin_card_card_csv_export</code> にだけ差し替えて送信する。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>「CSV出力」ボタンは検索結果ヘッダ付近にあり、<code>pagination.totalItemCount &gt; 0</code> のときだけ表示される。各行に <code>name="cardIds[]"</code> のチェックボックスがある。表頭チェック <code>#allCheck</code> で <code>[cardId]</code> 属性を持つチェックボックスを一括オンオフする。</td></tr><tr><td>JS 挙動</td><td>「CSV出力」クリック後、約 500ms は <code>type=submit</code> の <code>pointer-events</code> を空にして多重送信しにくくし、その後解除する。クライアント側で CSV の内容や件数は検証しない。</td></tr><tr><td>CSS・レイアウト</td><td>本機能専用の追加スタイルはない。</td></tr><tr><td>モーダル・ポップアップ</td><td>出力前の確認ダイアログはない。</td></tr></tbody></table></div>
+<p>検索フォームはカード検索機能側の実装どおり CSRF を無効にした型で生成されているため、「CSV出力」送信にも検索フォームと同じく CSRF トークンフィールドは付かない（一括削除ボタン側だけ別途トークンを抱える実装がある）。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="CSV-をダウンロードする-POST-m14-02-admin-card-card-csv-export">CSV をダウンロードする（POST <code>m14-02_admin_card_card_csv_export</code>）</h3>
+<ol><li>管理画面の認証・共通制約を通過する。</li><li>PHP の実行時間制限を無効にする（<code>set_time_limit(0)</code>）。</li><li>ORM の SQL ロガーを無効にする。</li><li>リクエストボディから <code>cardIds</code> を取得する（配列形式の <code>cardIds[]</code>）。</li><li><code>cardIds</code> が PHP の <code>empty()</code> で真と判定される場合、サービス層はフラッシュにメッセージキー <code>admin.csv.error.export.card</code> を積み、<code>m14-01_admin_card_card_search</code> へリダイレクト応答を組み立てる。ページ番号はセッションキー <code>admin.card.search.page_no</code> があればそれを使い、無ければルート既定に委ねる。</li><li>コントローラは手順 5 の戻り値が「空」と判定された場合にのみ、別メッセージ <code>admin.csv.error.export.require</code> を積み <code>Referer</code> へ HTTP リダイレクトする。手順 5 がリダイレクトオブジェクトを返す場合、<code>empty()</code> は偽になり、この分岐には入らない実装順序になっている（実装を確認値とする）。</li><li>リポジトリで <code>id</code> が渡された集合に含まれるカードマスタを取得する。1 件も得られなければ <code>RuntimeException</code> とし、メッセージは翻訳キー <code>admin.csv.error.export.not_registered</code> を経由する。</li><li>取得した各カードについて、共通列を配列で組み立てたうえで、紐付くカード詳細ごとに行を複製し、詳細固有の列を末尾に連結する。キーワード能力列は現状常に空文字を立てる。</li><li><code>StreamedResponse</code> のコールバック内でコアの CSV エクスポートサービスを用い、開く・UTF-8 の BOM を書く・ヘッダ行（論理キーを <code>array_keys</code> で取得した順）・データ行を順に書き込み・閉じる。</li><li>ファイル名は接頭辞 <code>cards_</code> と日時（<code>YmdHis</code>）と拡張子 <code>.csv</code> を連結したものとする。</li><li>応答ヘッダに CSV 向けの <code>Content-Type</code>（設定 <code>csv_export_encoding</code> に応じた charset。値が <code>SJIS-win</code> のときは <code>windows-31j</code> に読み替え）と <code>Content-Disposition: attachment</code> を付与する。</li><li>ストリーム送信後、情報ログにファイル名を記録する応答を返す（コールバック内で送信が走る実装になっている）。</li></ol>
+<h3 id="取得-ID-の一部のみ-DB-に存在するとき">取得 ID の一部のみ DB に存在するとき</h3>
+<ol><li>手順 7 の取得は「存在する ID 分」だけ返す。存在しない ID が混在しても、この段階ではエラーにしない。</li><li>すべての指定 ID が存在しなければ手順 7 の例外に至る。</li></ol>
+<h3 id="変換中に-RuntimeException-が送出されたとき">変換中に <code>RuntimeException</code> が送出されたとき</h3>
+<ol><li>コントローラはメッセージ文字列をフラッシュに積み、<code>Referer</code> へリダイレクトする。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<p>本機能では件数集計や売上などの業務集計は行わない。出力対象は POST で明示されたカード ID に対応し、かつリポジトリで検索できたカードのみである。</p>
+<hr>
+<h2 id="出力列とデータの対応-業務ルール">出力列とデータの対応（業務ルール）</h2>
+<p>ヘッダ行の並びはコントローラ内の連想配列のキー順に依存する。データ行は同一順で値を並べる。</p>
+<h3 id="カード単位で共通する列-カード詳細の反復ごとに同じ値が繰り返される">カード単位で共通する列（カード詳細の反復ごとに同じ値が繰り返される）</h3>
+<div class="table-wrap"><table><thead><tr><th>論理キー</th><th>内容</th></tr></thead><tbody><tr><td><code>name_jp</code></td><td>カード名（日本語）。DB 値をそのまま出力する。</td></tr><tr><td><code>name_en</code></td><td>カード名（英語）。</td></tr><tr><td><code>arena_format_name_jp</code></td><td>アリーナ表示名（日本語）。</td></tr><tr><td><code>arena_format_name_en</code></td><td>アリーナ表示名（英語）。</td></tr><tr><td><code>text_jp</code></td><td>ルールテキスト（日本語）。</td></tr><tr><td><code>text_en</code></td><td>ルールテキスト（英語）。</td></tr><tr><td><code>mana_cost</code></td><td>マナコスト文字列。</td></tr><tr><td><code>cmc</code></td><td>点数で見たマナコスト。</td></tr><tr><td><code>power</code></td><td>パワー。</td></tr><tr><td><code>toughness</code></td><td>タフネス。</td></tr><tr><td><code>loyalty</code></td><td>忠誠度。</td></tr><tr><td><code>color</code></td><td>関連カラーを英名で読み、コンマで連結する（単一値ならコンマなし）。</td></tr><tr><td><code>cardtype</code></td><td>カードタイプも同様に英名をコンマ連結する。</td></tr><tr><td><code>subtype</code></td><td>サブタイプも同様。</td></tr><tr><td><code>specialtype</code></td><td>特殊タイプも同様。</td></tr><tr><td><code>keyword_ability</code></td><td>現行実装では空文字固定（ソースに TODO コメントがある）。</td></tr><tr><td><code>format</code></td><td>カードに紐付くフォーマットを英名で読み、コンマ連結。</td></tr></tbody></table></div>
+<h3 id="カード詳細ごとに変わる列-1-詳細につき-1-データ行">カード詳細ごとに変わる列（1 詳細につき 1 データ行）</h3>
+<div class="table-wrap"><table><thead><tr><th>論理キー</th><th>内容</th></tr></thead><tbody><tr><td><code>set</code></td><td>セットの英名。未設定なら空文字。</td></tr><tr><td><code>rarity</code></td><td>レアリティの英名。</td></tr><tr><td><code>illustrator</code></td><td>イラストレータの英名。</td></tr><tr><td><code>layout</code></td><td>レイアウトの英名。</td></tr><tr><td><code>flavor_jp</code></td><td>フレーバー（日本語）。</td></tr><tr><td><code>flavor_en</code></td><td>フレーバー（英語）。</td></tr><tr><td><code>card_no</code></td><td>カード番号。</td></tr><tr><td><code>promotion</code></td><td>プロモーションの英名。</td></tr><tr><td><code>foil_flg</code></td><td>Foil フラグを整数キャストした値。</td></tr><tr><td><code>promotion_flg</code></td><td>プロモフラグを整数キャストした値。</td></tr><tr><td><code>image_jp</code></td><td>画像コレクションのうち言語が日本語かつ表側の最初の要素の URL。無ければ空文字。</td></tr><tr><td><code>image_en</code></td><td>同上（英語）。</td></tr><tr><td><code>card_detail_id</code></td><td>カード詳細の主キー。</td></tr><tr><td><code>back_card_detail_id</code></td><td>裏面カード詳細 ID（スカラー）。</td></tr><tr><td><code>color_sequence</code></td><td>色順マスタがあればその名前。無ければ null が渡りうる。</td></tr><tr><td><code>color_identity</code></td><td>固有色を英名でコンマ連結（カード単位の値が各行に繰り返される）。</td></tr></tbody></table></div>
+<h3 id="カード詳細が-1-件も無いカード">カード詳細が 1 件も無いカード</h3>
+<p>ソース上、<code>convertExportCsvRows</code> 末尾に「詳細なし」分岐があるが、代入先変数名などに不整合があり、実行経路によっては未定義変数参照や列数不足が起きうる。実装を確認値とし、詳細なしデータの運用可否はコードレビューと実行検証に委ねる。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<ul><li>出力対象は画面・APIで確定した検索条件、権限、店舗・支店条件に一致するレコードに限定する。</li><li>金額・数量・日時・ステータスは参照時点の永続化済み値をそのまま出力し、CSV生成時に再計算・補正しない。</li><li>文字コード、列順、ヘッダ、空値表現は既存CSV仕様を正とし、該当値がない項目は空欄として扱う。</li><li>件数上限やページングの有無は呼び出し元の検索条件・既存実装に従い、出力途中で対象データが更新されても再読込による整合補正は行わない。</li></ul>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との対応</td><td>出力対象は一覧にチェックを付けたカード ID のみであり、検索でヒットした全件を自動では出力しない。</td></tr><tr><td>複数詳細</td><td>1 カードに複数のカード詳細があるとき、共通列は同一値のまま行が複製される。</td></tr><tr><td>指定 ID と返却件数</td><td>POST に含まれるが DB に無い ID は静かに無視され、残りが空ならエラーとなる。</td></tr><tr><td>並び順</td><td>リポジトリの <code>findBy</code> に依存し、利用者が一覧で選んだ順序の再現は保証しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能では外部 HTTP API の呼び出しやサーバ側バッチの実行結果画面は扱わない。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td><code>POST</code>。ボディに <code>cardIds[]</code>（整数文字列の配列）。</td></tr><tr><td>成功時出力</td><td><code>text/csv</code> のストリーム。ファイル名は <code>cards_YmdHis.csv</code> 形式。先頭に UTF-8 BOM。フィールド値は設定のエンコーディングへ変換したうえで <code>fputcsv</code> により出力され、区切り文字は設定 <code>csv_export_separator</code>。</td></tr><tr><td>失敗時出力</td><td>フラッシュメッセージ付きで検索一覧または Referer へ HTTP リダイレクト（経路は実装どおり）。</td></tr><tr><td>副作用</td><td>読み取りクエリとログ出力のみ。該当マスタを更新しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>出力はエンティティ経由であり、参照される主なテーブルは次のとおりである。列の網羅と型はマッピングを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列（概念）</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_card</code></td><td>名称・テキスト・マナ・パワー／タフネス／忠誠度・色順など</td><td>カード共通列の源泉。</td></tr><tr><td><code>mtb_card_detail</code></td><td>セット・レア・レイアウト・フレーバー・カード番号・フラグ・裏面 ID など</td><td>行複製単位。</td></tr><tr><td>関連マスタ・中間</td><td>カラー・タイプ・フォーマット・固有色・画像・プロモーション等</td><td>英名連結や画像 URL 解決に利用。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>mtb_card / mtb_card_detail</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>選択 ID</td><td>未送信・空配列時はサービス側でエラー扱いし一覧へ戻す実装がある（メッセージキーは <code>admin.csv.error.export.card</code>）。</td></tr><tr><td>対象データ</td><td>指定 ID に対応するカードが 1 件も無いときは <code>admin.csv.error.export.not_registered</code>。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>CSV 出力</th></tr></thead><tbody><tr><td>管理画面に入れる通常の管理者</td><td>ルート定義上は個別のアノテーションを持たず、管理画面共通の認証・認可が適用される実装である。</td></tr><tr><td>未ログインまたは共通ルールで遮断される利用者</td><td>当パスへ到達できない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>出力成功</td><td>ブラウザがファイルをダウンロードする。一覧ページへ自動で戻す処理はレスポンス本体には含めない。</td></tr><tr><td>ID 未取得などでサービスがリダイレクトを返した場合</td><td><code>m14-01_admin_card_card_search</code>（ページ番号はセッションがあればそれを使用）。</td></tr><tr><td>コントローラが Referer へリダイレクトする場合</td><td>直前の管理画面 URL（ヘッダが欠けると不整合がありうる）。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<p>検索条件・ページングはカード検索のセッションに残る。CSV 出力はそれらを読み直して絞り込み直しはしない。</p>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>cardIds</code> が空</td><td>フラッシュ <code>admin.csv.error.export.card</code>。<code>m14-01_admin_card_card_search</code> へのリダイレクト応答を組み立てる（手順は「処理フロー」参照）。</td></tr><tr><td>コントローラの <code>empty($cardIds)</code> が真</td><td>フラッシュ <code>admin.csv.error.export.require</code>、<code>Referer</code> へリダイレクト。</td></tr><tr><td>対象カードが存在しない</td><td>例外メッセージをフラッシュし <code>Referer</code> へリダイレクト。</td></tr><tr><td>その他 <code>RuntimeException</code></td><td>同上。</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>本機能ではログイン試行制限や API レートリミットは扱わない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>CSV 出力が完了したとき</td><td>情報ログに、生成したファイル名を配列要素として残すメッセージ「カードCSV出力ファイル名」。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>CSRF トークン原値</li><li>セッション ID の完全値</li><li>クッキー値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>読み取り</td><td>未選択時のリダイレクト先ページ番号として <code>admin.card.search.page_no</code> を参照する場合がある。</td></tr><tr><td>書き込み</td><td>CSV 出力処理はセッションを更新しない。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>出力 CSV のバイナリや行バッファ全体をセッションに載せない。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>本機能専用の Cookie を新設しない。管理画面のセッション Cookie に従う。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>参照クエリとストリーム出力のみであり、本機能単体ではトランザクションを開始しない。</p>
+<p>行ロック・悲観ロック・楽観ロック・ロックファイルは使用しない。ロールバック対象や部分反映の扱いは本節のトランザクション境界と例外時の記載を正とする。</p>
+<hr>
+<h2 id="調査補助-grep・参照用">調査補助（grep・参照用）</h2>
+<p>ルートは <code>app/Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php</code>。コントローラは <code>app/Plugin/HareruyaEc/Controller/Admin/CardCsvController.php</code> の <code>export</code>。変換とストリームは <code>app/Plugin/HareruyaEc/Service/Csv/CardCsv.php</code>。画面は <code>app/Plugin/HareruyaEc/Resource/template/admin/Card/card.twig</code> と <code>app/Plugin/HareruyaEc/Resource/template/admin/assets/js/card-search.js</code>。CSV 出力のエンコードと <code>fputcsv</code> は <code>app/Plugin/HareruyaEc/Service/CsvExportService.php</code> が継承側で上書きする。</p>
+<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
+<ul><li><code>m14-02_admin_card_card_csv_export</code> … <code>POST</code> … <code>/{admin_route}/card/csvexport</code>（フォーム POST で渡されたカード ID の一覧を読み取り、ストリーミングで CSV を返す。）</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

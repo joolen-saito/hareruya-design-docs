@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-30（バーコード貼替リストCSV出力） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#1-バーコード貼替リストCSV出力">1. バーコード貼替リストCSV出力</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
+<a class="lv3" href="#検索フォーム項目-BarcodeReplacementListType">検索フォーム項目（`BarcodeReplacementListType`）</a>
+<a class="lv3" href="#CSV出力仕様">CSV出力仕様</a>
+<a class="lv3" href="#抽出条件-DtbPriceHistoryRepository-iterateBarcodeReplacementListExportRows">抽出条件（`DtbPriceHistoryRepository::iterateBarcodeReplacementListExportRows`）</a>
+<a class="lv3" href="#出力順">出力順</a>
+<a class="lv3" href="#出力列-BarcodeReplacementListCsvExportService-CSV-HEADER-と整形-BarcodeReplacementListCsvRowFormatter">出力列（`BarcodeReplacementListCsvExportService::CSV_HEADER`）と整形（`BarcodeReplacementListCsvRowFormatter`）</a>
+<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
+<a class="lv3" href="#分岐・例外">分岐・例外</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#実装要確認-未解決">実装要確認（未解決）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/m04-30_admin_stock_stock_barcode_replacement_list_csv_export.md</p>
+        <h1>M04-30（バーコード貼替リストCSV出力）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>バーコード貼替リストCSV出力</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>BarcodeReplacementListController</code> / <code>BarcodeReplacementListType</code> / <code>BarcodeReplacementListCsvExportService</code> / <code>BarcodeReplacementListCsvRowFormatter</code> / <code>DtbPriceHistoryRepository::iterateBarcodeReplacementListExportRows</code> / <code>CsvExportService</code>）</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Form/Entity/Repository）と既存テストを読み込み、出力列・抽出条件・整形・並び順を実装確認値で具体化。初版で誤記していた取得元（在庫移動指示系）を実装に合わせ価格変更履歴系へ修正。</td></tr></tbody></table></div>
+<h2 id="1-バーコード貼替リストCSV出力">1. バーコード貼替リストCSV出力</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>指定期間で価格調整（価格変更履歴）が発生し、かつ対象店舗のスマレジ在庫にある商品の商品コードリストを、スマレジバーコードシール貼り替え用にCSV出力する機能。出力対象店舗（1店舗・必須）と価格変更発生期間（From/To 必須・最大1か月）を指定して出力する。</p>
+<p>本機能のカスタマイズ区分は新規実装であり、現行（pf-eccube3）に対応実装はない。画面・項目・業務条件は基本設計仕様書（0202_基本設計仕様書(在庫管理機能)）を正とし、URLエンドポイント・抽出条件・出力列・整形・並び順はリニューアル先 ec-cube-enterprise 実装を正とする。</p>
+<p>&gt; 注: 本機能の出力対象は「価格変更履歴（<code>dtb_price_history</code>）× スマレジ在庫」であり、在庫移動指示（<code>dtb_stock_move_instruction</code>）とは無関係。初版が DB実装確認値として記載していた在庫移動系テーブル・<code>StockMoveInstructionLabelCsvExporterService</code> は誤りのため本改訂で削除した。</p>
+<h3 id="本書で扱うこと">本書で扱うこと</h3>
+<ul><li>バーコード貼替リスト画面の入口（表示・CSV出力）と検索フォーム項目</li><li>出力対象の抽出条件（価格変更履歴・スマレジ在庫・ステータス）</li><li>出力列（6列）・各列の整形（商品名トリム・言語/状態・販売価格整形・スマレジバーコード生成）</li><li>出力順・文字コード・ファイル名・フォームバリデーション・例外</li></ul>
+<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
+<ul><li>スマレジ連携・スマレジ在庫数の取り込みそのもの（連携設計を正とする）</li><li>価格変更履歴（<code>dtb_price_history</code>）の生成元（価格変更機能側を正とする）</li><li>バーコードシールの物理仕様・印刷（資料 PPTX/XLSX を正とする）</li></ul>
+<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>HTTPメソッド</th><th>ふるまい</th></tr></thead><tbody><tr><td>バーコード貼替リスト画面</td><td><code>/%admin%/product/stock/barcode_replacement_list</code>（<code>admin_stock_barcode_replacement_list</code>）</td><td>GET</td><td>検索フォーム（<code>BarcodeReplacementListType</code>）を <code>@admin/Stock/barcode_replacement_list.twig</code> で表示。</td></tr><tr><td>バーコード貼替リストCSV出力</td><td><code>/%admin%/product/stock/barcode_replacement_list/csv_export</code>（<code>admin_stock_barcode_replacement_list_csv_export</code>）</td><td>POST</td><td>CSRF検証後、フォーム検証→出力対象店舗・価格変更発生期間でCSVを <code>StreamedResponse</code> 出力。検証NG時はエラー表示して画面へリダイレクト。</td></tr></tbody></table></div>
+<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。管理画面ログインを要する。</p>
+<h3 id="検索フォーム項目-BarcodeReplacementListType">検索フォーム項目（<code>BarcodeReplacementListType</code>）</h3>
+<div class="table-wrap"><table><thead><tr><th>フォームキー</th><th>種別</th><th>必須</th><th>初期値</th><th>説明</th></tr></thead><tbody><tr><td><code>base_info</code></td><td><code>EntityType</code>（<code>BaseInfo</code>、単一選択）</td><td>○（<code>NotBlank</code>）</td><td>ログイン者のデフォルト検索表示店舗（<code>Member::getDefaultSearchBaseInfo()</code>）</td><td>出力対象店舗（Excel識別ID 1）。1店舗のみ選択。</td></tr><tr><td><code>price_change_period_from</code></td><td><code>DateType</code>（single_text）</td><td>○（<code>NotBlank</code>）</td><td>前日（<code>yesterday</code> 00:00:00）</td><td>価格変更発生期間 From（Excel識別ID 2）。出力時は時刻を 00:00:00 に補正。</td></tr><tr><td><code>price_change_period_to</code></td><td><code>DateType</code>（single_text）</td><td>○（<code>NotBlank</code>）</td><td>当日（<code>today</code> 00:00:00）</td><td>価格変更発生期間 To。出力時は時刻を 23:59:59 に補正。</td></tr></tbody></table></div>
+<ul><li><code>POST_SUBMIT</code> で From &gt; To の場合、<code>price_change_period_to</code> に <code>admin.stock.barcode_replacement_list.price_change_period_invalid</code> のエラーを付与する。</li><li>CSRFトークン保護有効（<code>csrf_protection: true</code>、ブロック接頭辞 <code>admin_barcode_replacement_list</code>）。</li></ul>
+<p>&gt; **Excel記載の「価格変更発生期間は最大で1か月間」の上限を正とする。** 現状のフォーム（POST_SUBMIT）は From&gt;To のみ検証し、1か月上限の明示バリデーションが無いため、**実装側で上限チェックの追加が必要**（テストは1か月超の期間指定→エラーを期待値とする）。</p>
+<h3 id="CSV出力仕様">CSV出力仕様</h3>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>出力列数</td><td>6列（ヘッダ行 + データ行）</td></tr><tr><td>文字コード</td><td><code>CsvExportService</code> 経由で <code>eccube_csv_export_encoding</code>（既定 <code>SJIS-win</code>）に変換して出力。</td></tr><tr><td>ファイル名</td><td><code>barcode_replacement_list_&lt;YmdHis&gt;.csv</code>（出力時刻）</td></tr><tr><td>MIME / 形式</td><td><code>Content-Type: application/octet-stream</code>、<code>Content-Disposition: attachment</code>、<code>StreamedResponse</code> でストリーム出力</td></tr><tr><td>メモリ</td><td>DBは <code>iterateAssociative</code>、CSVはコールバック内で1行ずつ書き出し全件メモリ保持しない</td></tr></tbody></table></div>
+<h3 id="抽出条件-DtbPriceHistoryRepository-iterateBarcodeReplacementListExportRows">抽出条件（<code>DtbPriceHistoryRepository::iterateBarcodeReplacementListExportRows</code>）</h3>
+<p><code>dtb_price_history</code> を起点に、規格（<code>dtb_product_class</code>）ごとに最新の価格変更1件（<code>DISTINCT ON (pc.id)</code>、<code>create_date DESC</code>）を取り、以下を満たすものを抽出する。</p>
+<ul><li>価格変更履歴 <code>ph.create_date</code> が <code>price_change_period_from</code>〜<code>price_change_period_to</code>（From 00:00:00〜To 23:59:59）の範囲内。</li><li>対象店舗（<code>base_info_id</code>）のスマレジ在庫区分（<code>stock_location_id = ProductStock::STOCK_LOCATION_SMAREGI</code>）の <code>dtb_product_stock</code> が存在し、在庫数 <code>COALESCE(stock, 0) &gt;= 0</code>。</li><li>規格のスマレジ連携フラグ有効（<code>pc.smaregi_alignment_flg = TRUE</code>）。</li><li>スマレジ商品ID登録済み（<code>pc.smaregi_product_id IS NOT NULL AND TRIM(...) &lt;&gt; ''</code>）。</li><li>商品・商品規格のステータスが廃止でない（<code>p_status.id &lt;&gt; DISPLAY_ABOLISHED</code> かつ <code>pc_status.id &lt;&gt; DISPLAY_ABOLISHED</code>。非公開は含む）。</li></ul>
+<h3 id="出力順">出力順</h3>
+<p>外側クエリで次の優先順に整列する（Excel「出力順」要件に対応）。</p>
+<ol><li>色の並び順 昇順（<code>mtb_color_sequence.sort_no</code>、欠損は 99999）</li><li>カードタイプの並び順 昇順（<code>dtb_card_cardtype</code> 経由 <code>mtb_cardtype.sort_no</code> の最小値、欠損は 99999）</li><li>点数で見たマナコスト 昇順（<code>mtb_card.cmc</code>、欠損は 99999）</li><li>基準価格 降順（<code>pc.standard_price DESC NULLS LAST</code>）</li><li>規格ID 昇順（<code>product_class_id ASC</code>）</li></ol>
+<h3 id="出力列-BarcodeReplacementListCsvExportService-CSV-HEADER-と整形-BarcodeReplacementListCsvRowFormatter">出力列（<code>BarcodeReplacementListCsvExportService::CSV_HEADER</code>）と整形（<code>BarcodeReplacementListCsvRowFormatter</code>）</h3>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>CSVヘッダ</th><th>取得元 / 整形</th><th>Excel識別ID</th></tr></thead><tbody><tr><td>1</td><td>商品名</td><td><code>Product::name</code>。商品名の**最後の <code>]</code> までを残し、それ以降（色・レアリティ等の略称後）を除去**（<code>strrpos</code> で末尾の <code>]</code> を検索）。<code>]</code> が無ければ全文出力。</td><td>1</td></tr><tr><td>2</td><td>言語・状態</td><td>「言語名(日)・状態コード」形式（例: <code>英語・NM</code>）。商品/グッズ予約カテゴリ（<code>Category::GOODS_ID</code> / <code>RESERVED_GOODS_ID</code>）に属する場合は <code>サプライ品</code>。片方欠損時は存在する方のみ。</td><td>2</td></tr><tr><td>3</td><td>販売価格</td><td>規格の**基準価格**（<code>pc.standard_price</code>）を <code>number_format()</code>＋<code>円</code> で整形（例: <code>1,200円</code>）。null は空文字。</td><td>3</td></tr><tr><td>4</td><td>スマレジ商品ID</td><td><code>pc.smaregi_product_id</code></td><td>4</td></tr><tr><td>5</td><td>スマレジ商品コード</td><td><code>pc.smaregi_product_code</code></td><td>5</td></tr><tr><td>6</td><td>スマレジバーコード</td><td><code>'22'</code> + スマレジ商品コード（6桁・左0埋め）+ 販売価格（基準価格、7桁・左0埋め）。各桁数超過時は下位桁を採用。商品コード空なら空文字。</td><td>6</td></tr></tbody></table></div>
+<p>&gt; ヘッダ名は「販売価格」だが、値はExcel定義どおり**基準価格**（<code>standard_price</code>）を出力する（整形・バーコード生成とも基準価格を使用）。Excel記載の「状態記号は既存バーコードに出力済みのため出力不要」は、出力列に状態記号列が無いことで満たされる。</p>
+<h3 id="プロセスフロー">プロセスフロー</h3>
+<ol><li><code>admin_stock_barcode_replacement_list</code>（GET）で検索フォームを表示。店舗初期値=デフォルト検索表示店舗、期間初期値=前日〜当日。</li><li><code>admin_stock_barcode_replacement_list_csv_export</code>（POST）受信。<code>isTokenValid()</code> でCSRF検証。</li><li><code>BarcodeReplacementListType</code> を <code>handleRequest</code>。未submitまたは不正なら各エラーメッセージを <code>addError(..., 'admin')</code> し <code>admin_stock_barcode_replacement_list</code> へリダイレクト。</li><li><code>base_info</code>・<code>price_change_period_from</code>（00:00:00補正）・<code>price_change_period_to</code>（23:59:59補正）を取得。</li><li><code>BarcodeReplacementListCsvExportService::export($baseInfo, $from, $to)</code> を呼ぶ。</li><li>Service は <code>set_time_limit(0)</code>、<code>StreamedResponse</code> コールバック内でヘッダ行を出力し、<code>iterateBarcodeReplacementListExportRows()</code> の各行を <code>BarcodeReplacementListCsvRowFormatter</code> で整形して <code>fputcsv</code>。完了時 <code>log_info('バーコード貼替リストCSV出力完了...')</code>。</li></ol>
+<h3 id="分岐・例外">分岐・例外</h3>
+<ul><li>**CSRF不正 / フォーム未submit・無効**: フォームのエラーメッセージを <code>addError(..., 'admin')</code> で表示し、<code>admin_stock_barcode_replacement_list</code> へリダイレクト（既存テスト <code>testCsvExportWithInvalidFormRedirectsToIndex</code>）。</li><li>**From &gt; To**: フォーム POST_SUBMIT で <code>price_change_period_to</code> にエラー付与 → 上記リダイレクト経路でエラー表示。</li><li>**必須未入力（店舗/期間）**: <code>NotBlank</code> 違反 → 同上。</li><li>**対象0件**: 条件に該当する規格が無い場合はヘッダ行のみのCSVを出力する。</li><li>正常時は <code>StreamedResponse</code> でCSVをダウンロード（既存テスト <code>testCsvExportReturnsStreamedResponseWhenValid</code>）。</li></ul>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>**参照のみ**。価格変更履歴・スマレジ在庫・規格情報を読み出してCSV化するのみで、業務データを更新しない。</td></tr><tr><td>参照テーブル</td><td><code>dtb_price_history</code>（価格変更履歴）、<code>dtb_product_class</code>（スマレジ連携フラグ・スマレジ商品ID/コード・基準価格・言語・状態・ステータス）、<code>dtb_product</code>（商品名・ステータス・保管コード・カード詳細）、<code>dtb_product_stock</code>（対象店舗のスマレジ在庫）、<code>dtb_product_category</code> / <code>mtb_card</code> / <code>mtb_color_sequence</code> / <code>mtb_cardtype</code> / <code>mtb_card_condition</code> / <code>mtb_language</code> 等（区分・並び順）。</td></tr><tr><td>ログ</td><td>アプリケーションログに出力完了（<code>log_info</code>）を記録。</td></tr></tbody></table></div>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>出力列・出力対象・商品名トリム規則・出力順の業務要件はExcel設計書（バーコード貼替リストCSV出力シート）を正とする。</li><li>URLエンドポイント・抽出条件・整形・並び順・ファイル名・文字コードは <code>BarcodeReplacementListController</code> / <code>BarcodeReplacementListCsvExportService</code> / <code>BarcodeReplacementListCsvRowFormatter</code> / <code>DtbPriceHistoryRepository</code> を正とする。</li><li>スマレジバーコード仕様（<code>22</code> + 商品コード6桁 + 価格7桁）は資料（バーコード関連資料）を出典とし、実装で確定。</li></ul>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<ul><li>本機能は新規実装であり、現行（pf-eccube3）に同等機能はない。移行後はec-cube-enterpriseの実装が初出となる。DB関連はec-cube-enterpriseを正とする。</li><li>出力は価格変更履歴（<code>dtb_price_history</code>）と対象店舗のスマレジ在庫（<code>dtb_product_stock</code> の <code>stock_location_id = スマレジ</code>）を突き合わせ、規格（<code>dtb_product_class</code>）単位で抽出する。永続化先テーブルの新規作成は無く、既存テーブルの参照で構成される。</li><li>スマレジ商品ID・スマレジ商品コード・スマレジ連携フラグは <code>dtb_product_class</code>（<code>smaregi_product_id</code> / <code>smaregi_product_code</code> / <code>smaregi_alignment_flg</code>）、スマレジ在庫は <code>dtb_product_stock</code>（<code>stock_location_id = ProductStock::STOCK_LOCATION_SMAREGI</code>）で確認済み。</li></ul>
+<h2 id="実装要確認-未解決">実装要確認（未解決）</h2>
+<ul><li>Excel記載の「価格変更発生期間は最大1か月」の上限バリデーションは、<code>BarcodeReplacementListType</code> では From&gt;To チェックのみで、1か月上限の明示チェックは未確認。</li></ul>
+<details>
+<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+<pre><code class="language-text">バーコード貼替リストCSV出力
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+佐藤
+作成日
+2025-08-25
+更新者
+石川
+更新日
+2025-12-11
+機能No
+M04-30
+機能名
+バーコード貼替リストCSV出力
+概要
+対象店舗のスマレジ在庫にある商品の
+商品コードリストを出力
+処理概要
+図形・テキストボックス内テキスト（3件）
+レイアウト図
+1
+2
+3
+バーコード貼替リストCSV出力 / C7 / image 1
+カスタマイズ説明
+・カスタマイズ要件
+・指定期間で価格調整が発生した商品、かつ、対象店舗のスマレジ在庫にある商品の商品コードリストを出力する
+機能仕様処理概要
+・初期表示
+・出力対象店舗はログイン者のデフォルト検索店舗をデフォルト表示とする
+・価格変更発生期間はFromに前日、Toに当日を設定し、前日の00:00:00から当日の23:59:59までを対象とする
+・検索
+・出力対象店舗は1店舗のみ選択可能で、必須とする
+・価格変更発生期間はFromとToどちらも必須とする
+・価格変更発生期間のFromの時間は00:00:00、Toの時間は23:59:59で検索を行う
+・価格変更発生期間は最大で1か月間を選択可能
+・以下の条件で検索を行う
+・対象店舗のスマレジ在庫の在庫数が0以上のもの
+・スマレジ商品IDが登録済み
+・スマレジ連携フラグが有効
+・商品および商品規格のステータスが廃止でない（非公開は検索結果に含む）
+・価格変更発生期間で指定された期間内に価格変更履歴が存在する
+・出力項目について
+・商品名
+・[]で囲まれた略称の後だけ出さないようにする
+例: 【ネオンインク・Foil】(361)■ボーダーレス■《恐れを知らぬ者、カタラ/Katara, the Fearless》[TLA] 金R
+↓
+【ネオンインク・Foil】(361)■ボーダーレス■《恐れを知らぬ者、カタラ/Katara, the Fearless》[TLA]
+※金Rだけ不要なので出さない
+・[]がなければすべて出す
+・略称は後ろの方についているので、[]を後ろから検索し、略称以前を取り出す
+・状態記号
+・既存のバーコードに出力されている状態記号は出力不要
+・出力順について
+・色の並び順昇順
+・カードタイプの並び順昇順
+・点数で見たマナコストの昇順
+・基準価格降順（価格が高い順）
+識別IDラベル書式・制限必須最大値初期値画面部品の説明
+1出力対象店舗単一選択--デフォルト検索店舗-
+2価格調整発生期間日付--Frrom:前日
+To:当日-
+3バーコード貼替リストCSV出力ボタン---バーコード貼替リストをダウンロード
+CSV出力項目
+識別ID項目名備考
+1商品名商品名の出力方法については処理概要に記載
+2言語・状態言語の日本語名・状態のコードの形式で出力（例: 英語・NM）
+3販売価格基準価格を出力
+#,###円の形で整形して出力
+4スマレジ商品IDスマレジ商品ID
+5スマレジ商品コードスマレジ商品コード
+6スマレジバーコード22 + スマレジ商品コード(6桁0埋め) + 販売価格(7桁0埋め)
+参考ファイル: 晴れる屋様_共有フォルダ\03_基本設計フェーズ\基本設計書\資料\バーコード関連資料\09161332プレイド品.xlsx
+画像レイヤー（2枚）: バーコード貼替リストCSV出力 / A81 / image 2 + バーコード貼替リストCSV出力 / A88 / image 3
+参考ファイル: 晴れる屋様_共有フォルダ\03_基本設計フェーズ\基本設計書\資料\バーコード関連資料\バーコードシール仕様.pptx
+画像レイヤー（2枚）: バーコード貼替リストCSV出力 / B116 / image 4 + バーコード貼替リストCSV出力 / A137 / image 5
+図形・テキストボックス内テキスト（3件）
+画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。
+位置テキスト
+L6(1)
+Z6(2)
+AA11(3)</code></pre>
+</details>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

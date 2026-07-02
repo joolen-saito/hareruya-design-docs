@@ -1,0 +1,408 @@
+# Function Doc Name Normalization Report
+
+## Applied Renames
+
+- `functions/ec-cube-enterprise/admin_content_cache.md` -> `functions/ec-cube-enterprise/m09-08_admin_content_content_cache.md`
+- `functions/ec-cube-enterprise/admin_content_css.md` -> `functions/ec-cube-enterprise/m09-05_admin_content_content_css.md`
+- `functions/ec-cube-enterprise/admin_content_file.md` -> `functions/ec-cube-enterprise/m09-02_admin_content_content_file.md`
+- `functions/ec-cube-enterprise/admin_content_js.md` -> `functions/ec-cube-enterprise/m09-06_admin_content_content_js.md`
+- `functions/ec-cube-enterprise/admin_content_layout.md` -> `functions/ec-cube-enterprise/m09-03_admin_content_content_layout.md`
+- `functions/ec-cube-enterprise/admin_content_maintenance.md` -> `functions/ec-cube-enterprise/m09-09_admin_content_content_maintenance.md`
+- `functions/ec-cube-enterprise/admin_content_news.md` -> `functions/ec-cube-enterprise/m09-01_admin_content_content_news.md`
+- `functions/ec-cube-enterprise/admin_customer_analysis_tag_csv_export.md` -> `functions/ec-cube-enterprise/m08-15_admin_customer_customer_analysis_tag_csv_export.md`
+- `functions/ec-cube-enterprise/admin_customer_analysis_tag_csv_import.md` -> `functions/ec-cube-enterprise/m08-16_admin_customer_customer_analysis_tag_csv_import.md`
+- `functions/ec-cube-enterprise/admin_customer_analysis_tag_master.md` -> `functions/ec-cube-enterprise/m08-11_admin_customer_customer_analysis_tag_master.md`
+- `functions/ec-cube-enterprise/admin_home_ec_cube_news.md` -> `functions/ec-cube-enterprise/m02-05_admin_home_home_ec_cube_news.md`
+- `functions/ec-cube-enterprise/admin_home_order_status.md` -> `functions/ec-cube-enterprise/m02-01_admin_home_home_order_status.md`
+- `functions/ec-cube-enterprise/admin_home_recommend_plugins.md` -> `functions/ec-cube-enterprise/m02-06_admin_home_home_recommend_plugins.md`
+- `functions/ec-cube-enterprise/admin_home_sales_chart.md` -> `functions/ec-cube-enterprise/m02-03_admin_home_home_sales_chart.md`
+- `functions/ec-cube-enterprise/admin_home_sales_status.md` -> `functions/ec-cube-enterprise/m02-02_admin_home_home_sales_status.md`
+- `functions/ec-cube-enterprise/admin_home_shop_status.md` -> `functions/ec-cube-enterprise/m02-04_admin_home_home_shop_status.md`
+- `functions/ec-cube-enterprise/admin_login.md` -> `functions/ec-cube-enterprise/m01-01_admin_login_login.md`
+- `functions/ec-cube-enterprise/admin_order_bulk_status_change.md` -> `functions/ec-cube-enterprise/m05-12_admin_order_order_bulk_status_change.md`
+- `functions/ec-cube-enterprise/admin_order_mail.md` -> `functions/ec-cube-enterprise/m05-15_admin_order_order_mail.md`
+- `functions/ec-cube-enterprise/admin_order_shipping_memo.md` -> `functions/ec-cube-enterprise/m05-17_admin_order_order_shipping_memo.md`
+- `functions/ec-cube-enterprise/admin_order_shop_memo.md` -> `functions/ec-cube-enterprise/m05-16_admin_order_order_shop_memo.md`
+- `functions/ec-cube-enterprise/admin_order_status_change.md` -> `functions/ec-cube-enterprise/m05-14_admin_order_order_status_change.md`
+- `functions/ec-cube-enterprise/admin_order_tracking_number.md` -> `functions/ec-cube-enterprise/m05-13_admin_order_order_tracking_number.md`
+- `functions/ec-cube-enterprise/admin_product_simple_low_price_csv_export.md` -> `functions/ec-cube-enterprise/m03-43_admin_product_product_simple_low_price_csv_export.md`
+- `functions/ec-cube-enterprise/admin_product_simple_low_price_csv_import.md` -> `functions/ec-cube-enterprise/m03-44_admin_product_product_simple_low_price_csv_import.md`
+- `functions/ec-cube-enterprise/admin_purchase_online_product_cancel_csv_export.md` -> `functions/ec-cube-enterprise/m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export.md`
+- `functions/ec-cube-enterprise/admin_purchase_online_return_list_csv_export.md` -> `functions/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md`
+- `functions/ec-cube-enterprise/admin_purchase_online_return_list_pdf_export.md` -> `functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md`
+- `functions/ec-cube-enterprise/admin_purchase_store_product_cancel_csv_export.md` -> `functions/ec-cube-enterprise/m06-13_admin_store_purchase_purchase_store_product_cancel_csv_export.md`
+- `functions/ec-cube-enterprise/admin_purchase_store_product_list_csv_export.md` -> `functions/ec-cube-enterprise/m06-12_admin_store_purchase_purchase_store_product_list_csv_export.md`
+- `functions/ec-cube-enterprise/admin_purchase_store_return_list_csv_export.md` -> `functions/ec-cube-enterprise/m06-10_admin_store_purchase_purchase_store_return_list_csv_export.md`
+- `functions/ec-cube-enterprise/admin_purchase_store_return_list_pdf_export.md` -> `functions/ec-cube-enterprise/m06-11_admin_store_purchase_purchase_store_return_list_pdf_export.md`
+- `functions/ec-cube-enterprise/admin_setting_shop_calendar.md` -> `functions/ec-cube-enterprise/m10-12_admin_base_setting_setting_shop_calendar.md`
+- `functions/ec-cube-enterprise/admin_setting_shop_mall_shop_list.md` -> `functions/ec-cube-enterprise/m10-14_admin_base_setting_setting_shop_mall_shop_list.md`
+- `functions/ec-cube-enterprise/admin_setting_shop_order_status.md` -> `functions/ec-cube-enterprise/m10-11_admin_base_setting_setting_shop_order_status.md`
+- `functions/ec-cube-enterprise/admin_setting_system_login_history.md` -> `functions/ec-cube-enterprise/m11-04_admin_system_setting_setting_system_login_history.md`
+- `functions/ec-cube-enterprise/admin_setting_system_masterdata.md` -> `functions/ec-cube-enterprise/m11-05_admin_system_setting_setting_system_masterdata.md`
+- `functions/ec-cube-enterprise/admin_setting_system_system_info.md` -> `functions/ec-cube-enterprise/m11-06_admin_system_setting_setting_system_system_info.md`
+- `functions/ec-cube-enterprise/admin_stock_approval_list.md` -> `functions/ec-cube-enterprise/m04-32_admin_stock_stock_approval_list.md`
+- `functions/ec-cube-enterprise/admin_stock_barcode_replacement_list_csv_export.md` -> `functions/ec-cube-enterprise/m04-30_admin_stock_stock_barcode_replacement_list_csv_export.md`
+- `functions/ec-cube-enterprise/admin_stock_csv_export.md` -> `functions/ec-cube-enterprise/m04-04_admin_stock_stock_csv_export.md`
+- `functions/ec-cube-enterprise/admin_stock_edit.md` -> `functions/ec-cube-enterprise/m04-02_admin_stock_stock_edit.md`
+- `functions/ec-cube-enterprise/admin_stock_invoice_csv_export.md` -> `functions/ec-cube-enterprise/m04-28_admin_stock_stock_invoice_csv_export.md`
+- `functions/ec-cube-enterprise/admin_stock_move_instruction_export.md` -> `functions/ec-cube-enterprise/m04-25_admin_stock_stock_move_instruction_export.md`
+- `functions/ec-cube-enterprise/admin_stock_move_instruction_picking_list_print.md` -> `functions/ec-cube-enterprise/m04-26_admin_stock_stock_move_instruction_picking_list_print.md`
+- `functions/ec-cube-enterprise/admin_stock_move_instruction_search_create.md` -> `functions/ec-cube-enterprise/m04-24_admin_stock_stock_move_instruction_search_create.md`
+- `functions/ec-cube-enterprise/admin_stock_move_result_csv_export.md` -> `functions/ec-cube-enterprise/m04-27_admin_stock_stock_move_result_csv_export.md`
+- `functions/ec-cube-enterprise/admin_stock_move_result_csv_import.md` -> `functions/ec-cube-enterprise/m04-29_admin_stock_stock_move_result_csv_import.md`
+- `functions/ec-cube-enterprise/admin_stock_move_return_list_csv_export.md` -> `functions/ec-cube-enterprise/m04-33_admin_stock_stock_move_return_list_csv_export.md`
+- `functions/ec-cube-enterprise/admin_stock_move_return_list_pdf_export.md` -> `functions/ec-cube-enterprise/m04-34_admin_stock_stock_move_return_list_pdf_export.md`
+- `functions/ec-cube-enterprise/admin_stock_move_transfer_csv_export.md` -> `functions/ec-cube-enterprise/m04-10_admin_stock_stock_move_transfer_csv_export.md`
+- `functions/ec-cube-enterprise/admin_stock_move_transfer_csv_import.md` -> `functions/ec-cube-enterprise/m04-22_admin_stock_stock_move_transfer_csv_import.md`
+- `functions/ec-cube-enterprise/admin_stock_move_transfer_register_edit.md` -> `functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md`
+- `functions/ec-cube-enterprise/admin_stock_move_transfer_search_list.md` -> `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md`
+- `functions/ec-cube-enterprise/admin_stock_search_list.md` -> `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md`
+- `functions/ec-cube-enterprise/admin_stock_shortage_csv_export.md` -> `functions/ec-cube-enterprise/m04-06_admin_stock_stock_shortage_csv_export.md`
+- `functions/ec-cube-enterprise/admin_stock_shortage_history_csv_export.md` -> `functions/ec-cube-enterprise/m04-20_admin_stock_stock_shortage_history_csv_export.md`
+- `functions/ec-cube-enterprise/admin_stock_split_join_csv_export.md` -> `functions/ec-cube-enterprise/m04-14_admin_stock_stock_split_join_csv_export.md`
+- `functions/ec-cube-enterprise/admin_stock_split_join_csv_import.md` -> `functions/ec-cube-enterprise/m04-23_admin_stock_stock_split_join_csv_import.md`
+- `functions/ec-cube-enterprise/admin_stock_split_join_custom_csv_export.md` -> `functions/ec-cube-enterprise/m04-15_admin_stock_stock_split_join_custom_csv_export.md`
+- `functions/ec-cube-enterprise/admin_stock_split_join_register_edit.md` -> `functions/ec-cube-enterprise/m04-13_admin_stock_stock_split_join_register_edit.md`
+- `functions/ec-cube-enterprise/admin_stock_split_join_search_list.md` -> `functions/ec-cube-enterprise/m04-12_admin_stock_stock_split_join_search_list.md`
+- `functions/ec-cube-enterprise/admin_stock_warning_csv_export.md` -> `functions/ec-cube-enterprise/m04-07_admin_stock_stock_warning_csv_export.md`
+- `functions/ec-cube-enterprise/admin_two_factor_auth.md` -> `functions/ec-cube-enterprise/m01-02_admin_login_two_factor_auth.md`
+- `functions/ec-cube-enterprise/api_otc_buy_order_double_check_member_update.md` -> `functions/ec-cube-enterprise/a06-16_api_store_purchase_otc_buy_order_double_check_member_update.md`
+- `functions/ec-cube-enterprise/api_otc_buy_order_partial_cancel_sync.md` -> `functions/ec-cube-enterprise/a06-14_api_store_purchase_otc_buy_order_partial_cancel_sync.md`
+- `functions/ec-cube-enterprise/api_otc_buy_order_same_store_members.md` -> `functions/ec-cube-enterprise/a06-15_api_store_purchase_otc_buy_order_same_store_members.md`
+- `functions/ec-cube-enterprise/api_smaregi_stock_sync.md` -> `functions/ec-cube-enterprise/a01-01_api_stock_smaregi_stock_sync.md`
+- `functions/ec-cube-enterprise/api_smaregi_webhook_error_retry.md` -> `functions/ec-cube-enterprise/a01-02_api_stock_smaregi_webhook_error_retry.md`
+- `functions/ec-cube-enterprise/batch_purchase_auto_stock.md` -> `functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md`
+- `functions/ec-cube-enterprise/batch_stock_shortage.md` -> `functions/ec-cube-enterprise/b01-02_batch_data_stock_shortage.md`
+- `functions/ec-cube-enterprise/batch_stock_warning.md` -> `functions/ec-cube-enterprise/b01-03_batch_data_stock_warning.md`
+- `functions/ec-cube-enterprise/front_mypage_credit_card.md` -> `functions/ec-cube-enterprise/f06-19_front_member_mypage_credit_card.md`
+- `functions/pf-api/api_admin_login.md` -> `functions/pf-api/a06-01_api_store_purchase_admin_login.md`
+- `functions/pf-api/api_article_related.md` -> `functions/pf-api/a17-02_api_other_article_related.md`
+- `functions/pf-api/api_article_search_single.md` -> `functions/pf-api/a17-01_api_other_article_search_single.md`
+- `functions/pf-api/api_bulk_purchase_id.md` -> `functions/pf-api/a07-01_api_online_purchase_bulk_purchase_id.md`
+- `functions/pf-api/api_buy_main_card.md` -> `functions/pf-api/a07-06_api_online_purchase_buy_main_card.md`
+- `functions/pf-api/api_buy_order_end.md` -> `functions/pf-api/a07-05_api_online_purchase_buy_order_end.md`
+- `functions/pf-api/api_buy_order_free_comment.md` -> `functions/pf-api/a07-03_api_online_purchase_buy_order_free_comment.md`
+- `functions/pf-api/api_buy_order_indivisual_input_product.md` -> `functions/pf-api/a07-07_api_online_purchase_buy_order_indivisual_input_product.md`
+- `functions/pf-api/api_buy_order_list.md` -> `functions/pf-api/a07-02_api_online_purchase_buy_order_list.md`
+- `functions/pf-api/api_buy_order_status.md` -> `functions/pf-api/a07-04_api_online_purchase_buy_order_status.md`
+- `functions/pf-api/api_buying_products_search.md` -> `functions/pf-api/a06-08_api_store_purchase_buying_products_search.md`
+- `functions/pf-api/api_card_detail_get.md` -> `functions/pf-api/a14-02_api_card_card_detail_get.md`
+- `functions/pf-api/api_card_get.md` -> `functions/pf-api/a14-01_api_card_card_get.md`
+- `functions/pf-api/api_card_search_single.md` -> `functions/pf-api/a14-03_api_card_card_search_single.md`
+- `functions/pf-api/api_deck_archetype_search.md` -> `functions/pf-api/a15-07_api_deck_builder_deck_archetype_search.md`
+- `functions/pf-api/api_deck_card_search.md` -> `functions/pf-api/a15-08_api_deck_builder_deck_card_search.md`
+- `functions/pf-api/api_deck_delete.md` -> `functions/pf-api/a15-11_api_deck_builder_deck_delete.md`
+- `functions/pf-api/api_deck_get.md` -> `functions/pf-api/a15-12_api_deck_builder_deck_get.md`
+- `functions/pf-api/api_deck_import_register.md` -> `functions/pf-api/a15-17_api_deck_builder_deck_import_register.md`
+- `functions/pf-api/api_deck_import_update.md` -> `functions/pf-api/a15-18_api_deck_builder_deck_import_update.md`
+- `functions/pf-api/api_deck_login.md` -> `functions/pf-api/a15-01_api_deck_builder_deck_login.md`
+- `functions/pf-api/api_deck_logout.md` -> `functions/pf-api/a15-02_api_deck_builder_deck_logout.md`
+- `functions/pf-api/api_deck_master.md` -> `functions/pf-api/a15-06_api_deck_builder_deck_master.md`
+- `functions/pf-api/api_deck_metagame.md` -> `functions/pf-api/a15-14_api_deck_builder_deck_metagame.md`
+- `functions/pf-api/api_deck_recent_event.md` -> `functions/pf-api/a15-16_api_deck_builder_deck_recent_event.md`
+- `functions/pf-api/api_deck_register.md` -> `functions/pf-api/a15-09_api_deck_builder_deck_register.md`
+- `functions/pf-api/api_deck_search.md` -> `functions/pf-api/a15-13_api_deck_builder_deck_search.md`
+- `functions/pf-api/api_deck_update.md` -> `functions/pf-api/a15-10_api_deck_builder_deck_update.md`
+- `functions/pf-api/api_deck_usage_card.md` -> `functions/pf-api/a15-15_api_deck_builder_deck_usage_card.md`
+- `functions/pf-api/api_deck_user_get.md` -> `functions/pf-api/a15-03_api_deck_builder_deck_user_get.md`
+- `functions/pf-api/api_deck_user_other_get.md` -> `functions/pf-api/a15-04_api_deck_builder_deck_user_other_get.md`
+- `functions/pf-api/api_deck_user_update.md` -> `functions/pf-api/a15-05_api_deck_builder_deck_user_update.md`
+- `functions/pf-api/api_fixed_price_section.md` -> `functions/pf-api/a06-12_api_store_purchase_fixed_price_section.md`
+- `functions/pf-api/api_otc_buy_order_free_comment.md` -> `functions/pf-api/a06-04_api_store_purchase_otc_buy_order_free_comment.md`
+- `functions/pf-api/api_otc_buy_order_identification.md` -> `functions/pf-api/a06-13_api_store_purchase_otc_buy_order_identification.md`
+- `functions/pf-api/api_otc_buy_order_list.md` -> `functions/pf-api/a06-02_api_store_purchase_otc_buy_order_list.md`
+- `functions/pf-api/api_otc_buy_order_status.md` -> `functions/pf-api/a06-05_api_store_purchase_otc_buy_order_status.md`
+- `functions/pf-api/api_otc_buy_order_update.md` -> `functions/pf-api/a06-03_api_store_purchase_otc_buy_order_update.md`
+- `functions/pf-api/api_popup_card.md` -> `functions/pf-api/a02-02_api_product_popup_card.md`
+- `functions/pf-api/api_popup_card_old.md` -> `functions/pf-api/a02-04_api_product_popup_card_old.md`
+- `functions/pf-api/api_popup_product.md` -> `functions/pf-api/a02-01_api_product_popup_product.md`
+- `functions/pf-api/api_popup_product_old.md` -> `functions/pf-api/a02-03_api_product_popup_product_old.md`
+- `functions/pf-api/api_product_detail.md` -> `functions/pf-api/a17-04_api_other_product_detail.md`
+- `functions/pf-api/api_section_list.md` -> `functions/pf-api/a06-11_api_store_purchase_section_list.md`
+- `functions/pf-api/api_updated_product_class.md` -> `functions/pf-api/a02-05_api_product_updated_product_class.md`
+- `functions/pf-eccube3/admin_archetype_csv_import.md` -> `functions/pf-eccube3/m15-10_admin_deck_archetype_csv_import.md`
+- `functions/pf-eccube3/admin_card_bulk_delete.md` -> `functions/pf-eccube3/m14-03_admin_card_card_bulk_delete.md`
+- `functions/pf-eccube3/admin_card_csv_export.md` -> `functions/pf-eccube3/m14-02_admin_card_card_csv_export.md`
+- `functions/pf-eccube3/admin_card_csv_import.md` -> `functions/pf-eccube3/m14-05_admin_card_card_csv_import.md`
+- `functions/pf-eccube3/admin_card_format_register_edit_delete.md` -> `functions/pf-eccube3/m14-10_admin_card_card_format_register_edit_delete.md`
+- `functions/pf-eccube3/admin_card_register_update_delete.md` -> `functions/pf-eccube3/m14-04_admin_card_card_register_update_delete.md`
+- `functions/pf-eccube3/admin_card_search.md` -> `functions/pf-eccube3/m14-01_admin_card_card_search.md`
+- `functions/pf-eccube3/admin_cardset_image_download.md` -> `functions/pf-eccube3/m14-07_admin_card_cardset_image_download.md`
+- `functions/pf-eccube3/admin_cardset_list.md` -> `functions/pf-eccube3/m14-06_admin_card_cardset_list.md`
+- `functions/pf-eccube3/admin_cardset_register_update_delete.md` -> `functions/pf-eccube3/m14-08_admin_card_cardset_register_update_delete.md`
+- `functions/pf-eccube3/admin_content_block.md` -> `functions/pf-eccube3/m09-07_admin_content_content_block.md`
+- `functions/pf-eccube3/admin_content_branch_top_page.md` -> `functions/pf-eccube3/m09-10_admin_content_content_branch_top_page.md`
+- `functions/pf-eccube3/admin_content_page.md` -> `functions/pf-eccube3/m09-04_admin_content_content_page.md`
+- `functions/pf-eccube3/admin_customer_blacklist.md` -> `functions/pf-eccube3/m08-13_admin_customer_customer_blacklist.md`
+- `functions/pf-eccube3/admin_customer_csv_export.md` -> `functions/pf-eccube3/m08-03_admin_customer_customer_csv_export.md`
+- `functions/pf-eccube3/admin_customer_delivery.md` -> `functions/pf-eccube3/m08-09_admin_customer_customer_delivery.md`
+- `functions/pf-eccube3/admin_customer_edit.md` -> `functions/pf-eccube3/m08-04_admin_customer_customer_edit.md`
+- `functions/pf-eccube3/admin_customer_group.md` -> `functions/pf-eccube3/m08-12_admin_customer_customer_group.md`
+- `functions/pf-eccube3/admin_customer_mail_all.md` -> `functions/pf-eccube3/m08-02_admin_customer_customer_mail_all.md`
+- `functions/pf-eccube3/admin_customer_mail_history.md` -> `functions/pf-eccube3/m08-07_admin_customer_customer_mail_history.md`
+- `functions/pf-eccube3/admin_customer_manual_mail.md` -> `functions/pf-eccube3/m08-08_admin_customer_customer_manual_mail.md`
+- `functions/pf-eccube3/admin_customer_online_identification.md` -> `functions/pf-eccube3/m08-10_admin_customer_customer_online_identification.md`
+- `functions/pf-eccube3/admin_customer_resend_provisional_mail.md` -> `functions/pf-eccube3/m08-14_admin_customer_customer_resend_provisional_mail.md`
+- `functions/pf-eccube3/admin_customer_search_list.md` -> `functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md`
+- `functions/pf-eccube3/admin_data_buy_discount_list.md` -> `functions/pf-eccube3/m16-08_admin_data_data_buy_discount_list.md`
+- `functions/pf-eccube3/admin_data_buy_price_list.md` -> `functions/pf-eccube3/m16-06_admin_data_data_buy_price_list.md`
+- `functions/pf-eccube3/admin_data_buy_price_list_edit.md` -> `functions/pf-eccube3/m16-07_admin_data_data_buy_price_list_edit.md`
+- `functions/pf-eccube3/admin_data_holiday_add_delete.md` -> `functions/pf-eccube3/m16-03_admin_data_data_holiday_add_delete.md`
+- `functions/pf-eccube3/admin_data_sale_discount_list.md` -> `functions/pf-eccube3/m16-05_admin_data_data_sale_discount_list.md`
+- `functions/pf-eccube3/admin_data_top_banner.md` -> `functions/pf-eccube3/m16-02_admin_data_data_top_banner.md`
+- `functions/pf-eccube3/admin_deck_archetype_crud.md` -> `functions/pf-eccube3/m15-09_admin_deck_deck_archetype_crud.md`
+- `functions/pf-eccube3/admin_deck_archetype_search.md` -> `functions/pf-eccube3/m15-08_admin_deck_deck_archetype_search.md`
+- `functions/pf-eccube3/admin_deck_bulk_delete.md` -> `functions/pf-eccube3/m15-03_admin_deck_deck_bulk_delete.md`
+- `functions/pf-eccube3/admin_deck_bulk_update.md` -> `functions/pf-eccube3/m15-04_admin_deck_deck_bulk_update.md`
+- `functions/pf-eccube3/admin_deck_csv_export.md` -> `functions/pf-eccube3/m15-02_admin_deck_deck_csv_export.md`
+- `functions/pf-eccube3/admin_deck_csv_import.md` -> `functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md`
+- `functions/pf-eccube3/admin_deck_edit.md` -> `functions/pf-eccube3/m15-05_admin_deck_deck_edit.md`
+- `functions/pf-eccube3/admin_deck_latest_event.md` -> `functions/pf-eccube3/m15-11_admin_deck_deck_latest_event.md`
+- `functions/pf-eccube3/admin_deck_search.md` -> `functions/pf-eccube3/m15-01_admin_deck_deck_search.md`
+- `functions/pf-eccube3/admin_deck_tag_list.md` -> `functions/pf-eccube3/m15-07_admin_deck_deck_tag_list.md`
+- `functions/pf-eccube3/admin_event_banner.md` -> `functions/pf-eccube3/m13-14_admin_event_event_banner.md`
+- `functions/pf-eccube3/admin_event_csv_export.md` -> `functions/pf-eccube3/m13-09_admin_event_event_csv_export.md`
+- `functions/pf-eccube3/admin_event_deck_view.md` -> `functions/pf-eccube3/m13-08_admin_event_event_deck_view.md`
+- `functions/pf-eccube3/admin_event_duplicate_register.md` -> `functions/pf-eccube3/m13-05_admin_event_event_duplicate_register.md`
+- `functions/pf-eccube3/admin_event_edit_delete.md` -> `functions/pf-eccube3/m13-02_admin_event_event_edit_delete.md`
+- `functions/pf-eccube3/admin_event_entry_bulk_update.md` -> `functions/pf-eccube3/m13-07_admin_event_event_entry_bulk_update.md`
+- `functions/pf-eccube3/admin_event_entry_csv_import.md` -> `functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md`
+- `functions/pf-eccube3/admin_event_entry_edit.md` -> `functions/pf-eccube3/m13-10_admin_event_event_entry_edit.md`
+- `functions/pf-eccube3/admin_event_entry_management_search.md` -> `functions/pf-eccube3/m13-06_admin_event_event_entry_management_search.md`
+- `functions/pf-eccube3/admin_event_entry_register.md` -> `functions/pf-eccube3/m13-12_admin_event_event_entry_register.md`
+- `functions/pf-eccube3/admin_event_entry_search.md` -> `functions/pf-eccube3/m13-11_admin_event_event_entry_search.md`
+- `functions/pf-eccube3/admin_event_image_setting.md` -> `functions/pf-eccube3/m13-15_admin_event_event_image_setting.md`
+- `functions/pf-eccube3/admin_event_repeat_schedule.md` -> `functions/pf-eccube3/m13-04_admin_event_event_repeat_schedule.md`
+- `functions/pf-eccube3/admin_event_schedule_add.md` -> `functions/pf-eccube3/m13-03_admin_event_event_schedule_add.md`
+- `functions/pf-eccube3/admin_event_search_list.md` -> `functions/pf-eccube3/m13-01_admin_event_event_search_list.md`
+- `functions/pf-eccube3/admin_format_list.md` -> `functions/pf-eccube3/m14-09_admin_card_format_list.md`
+- `functions/pf-eccube3/admin_hareruya_mtg_masterdata.md` -> `functions/pf-eccube3/m16-04_admin_data_hareruya_mtg_masterdata.md`
+- `functions/pf-eccube3/admin_order_bulk_manual_mail.md` -> `functions/pf-eccube3/m05-06_admin_order_order_bulk_manual_mail.md`
+- `functions/pf-eccube3/admin_order_csv_export.md` -> `functions/pf-eccube3/m05-02_admin_order_order_csv_export.md`
+- `functions/pf-eccube3/admin_order_custom_csv_export.md` -> `functions/pf-eccube3/m05-03_admin_order_order_custom_csv_export.md`
+- `functions/pf-eccube3/admin_order_edit.md` -> `functions/pf-eccube3/m05-11_admin_order_order_edit.md`
+- `functions/pf-eccube3/admin_order_labels_csv_export.md` -> `functions/pf-eccube3/m05-07_admin_order_order_labels_csv_export.md`
+- `functions/pf-eccube3/admin_order_print_delivery_slips_en.md` -> `functions/pf-eccube3/m05-10_admin_order_order_print_delivery_slips_en.md`
+- `functions/pf-eccube3/admin_order_print_delivery_slips_ja.md` -> `functions/pf-eccube3/m05-09_admin_order_order_print_delivery_slips_ja.md`
+- `functions/pf-eccube3/admin_order_search_list.md` -> `functions/pf-eccube3/m05-01_admin_order_order_search_list.md`
+- `functions/pf-eccube3/admin_order_shipping_csv_export.md` -> `functions/pf-eccube3/m05-04_admin_order_order_shipping_csv_export.md`
+- `functions/pf-eccube3/admin_order_shipping_custom_csv_export.md` -> `functions/pf-eccube3/m05-05_admin_order_order_shipping_custom_csv_export.md`
+- `functions/pf-eccube3/admin_order_shipping_export_for_import.md` -> `functions/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.md`
+- `functions/pf-eccube3/admin_order_shipping_result_csv_import.md` -> `functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md`
+- `functions/pf-eccube3/admin_order_shipping_standby_detail_edit_delete.md` -> `functions/pf-eccube3/m05-20_admin_order_order_shipping_standby_detail_edit_delete.md`
+- `functions/pf-eccube3/admin_order_shipping_standby_list_create.md` -> `functions/pf-eccube3/m05-18_admin_order_order_shipping_standby_list_create.md`
+- `functions/pf-eccube3/admin_order_shipping_standby_list_search.md` -> `functions/pf-eccube3/m05-19_admin_order_order_shipping_standby_list_search.md`
+- `functions/pf-eccube3/admin_order_shipping_standby_picking_list_print.md` -> `functions/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md`
+- `functions/pf-eccube3/admin_order_shipping_standby_print_delivery_slips_en.md` -> `functions/pf-eccube3/m05-23_admin_order_order_shipping_standby_print_delivery_slips_en.md`
+- `functions/pf-eccube3/admin_order_shipping_standby_print_delivery_slips_ja.md` -> `functions/pf-eccube3/m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja.md`
+- `functions/pf-eccube3/admin_order_stack_paper_print.md` -> `functions/pf-eccube3/m05-08_admin_order_order_stack_paper_print.md`
+- `functions/pf-eccube3/admin_order_waiting_tag.md` -> `functions/pf-eccube3/m05-27_admin_order_order_waiting_tag.md`
+- `functions/pf-eccube3/admin_otc_buy_order_old_goods_account_csv_export.md` -> `functions/pf-eccube3/m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export.md`
+- `functions/pf-eccube3/admin_otc_buy_order_summary_csv_export.md` -> `functions/pf-eccube3/m06-09_admin_store_purchase_otc_buy_order_summary_csv_export.md`
+- `functions/pf-eccube3/admin_product_abbreviation_tag_register_edit.md` -> `functions/pf-eccube3/m03-14_admin_product_product_abbreviation_tag_register_edit.md`
+- `functions/pf-eccube3/admin_product_bulk_buy_standard_price_edit.md` -> `functions/pf-eccube3/m03-10_admin_product_product_bulk_buy_standard_price_edit.md`
+- `functions/pf-eccube3/admin_product_buy_discount_csv_import.md` -> `functions/pf-eccube3/m03-36_admin_product_product_buy_discount_csv_import.md`
+- `functions/pf-eccube3/admin_product_buy_sale_price_history.md` -> `functions/pf-eccube3/m03-23_admin_product_product_buy_sale_price_history.md`
+- `functions/pf-eccube3/admin_product_buy_sale_price_history_csv_export.md` -> `functions/pf-eccube3/m03-24_admin_product_product_buy_sale_price_history_csv_export.md`
+- `functions/pf-eccube3/admin_product_card_csv_export.md` -> `functions/pf-eccube3/m03-03_admin_product_product_card_csv_export.md`
+- `functions/pf-eccube3/admin_product_card_csv_import.md` -> `functions/pf-eccube3/m03-26_admin_product_product_card_csv_import.md`
+- `functions/pf-eccube3/admin_product_category_csv_export.md` -> `functions/pf-eccube3/m03-12_admin_product_product_category_csv_export.md`
+- `functions/pf-eccube3/admin_product_category_csv_import.md` -> `functions/pf-eccube3/m03-41_admin_product_product_category_csv_import.md`
+- `functions/pf-eccube3/admin_product_category_list.md` -> `functions/pf-eccube3/m03-45_admin_product_product_category_list.md`
+- `functions/pf-eccube3/admin_product_category_register_edit.md` -> `functions/pf-eccube3/m03-11_admin_product_product_category_register_edit.md`
+- `functions/pf-eccube3/admin_product_class_edit.md` -> `functions/pf-eccube3/m03-09_admin_product_product_class_edit.md`
+- `functions/pf-eccube3/admin_product_custom_csv_export.md` -> `functions/pf-eccube3/m03-06_admin_product_product_custom_csv_export.md`
+- `functions/pf-eccube3/admin_product_department_csv_import.md` -> `functions/pf-eccube3/m03-20_admin_product_product_department_csv_import.md`
+- `functions/pf-eccube3/admin_product_discount_csv_import.md` -> `functions/pf-eccube3/m03-34_admin_product_product_discount_csv_import.md`
+- `functions/pf-eccube3/admin_product_duplicate_product_code_check.md` -> `functions/pf-eccube3/m03-25_admin_product_product_duplicate_product_code_check.md`
+- `functions/pf-eccube3/admin_product_edit.md` -> `functions/pf-eccube3/m03-02_admin_product_product_edit.md`
+- `functions/pf-eccube3/admin_product_goods_csv_export.md` -> `functions/pf-eccube3/m03-04_admin_product_product_goods_csv_export.md`
+- `functions/pf-eccube3/admin_product_goods_csv_import.md` -> `functions/pf-eccube3/m03-27_admin_product_product_goods_csv_import.md`
+- `functions/pf-eccube3/admin_product_product_class_list.md` -> `functions/pf-eccube3/m03-08_admin_product_product_product_class_list.md`
+- `functions/pf-eccube3/admin_product_product_price_csv_import.md` -> `functions/pf-eccube3/m03-30_admin_product_product_product_price_csv_import.md`
+- `functions/pf-eccube3/admin_product_product_tag_csv_import.md` -> `functions/pf-eccube3/m03-28_admin_product_product_product_tag_csv_import.md`
+- `functions/pf-eccube3/admin_product_sale_high_price_csv_import.md` -> `functions/pf-eccube3/m03-33_admin_product_product_sale_high_price_csv_import.md`
+- `functions/pf-eccube3/admin_product_sale_price_csv_export.md` -> `functions/pf-eccube3/m03-05_admin_product_product_sale_price_csv_export.md`
+- `functions/pf-eccube3/admin_product_sale_price_csv_import.md` -> `functions/pf-eccube3/m03-31_admin_product_product_sale_price_csv_import.md`
+- `functions/pf-eccube3/admin_product_sales_analysis_management.md` -> `functions/pf-eccube3/m03-17_admin_product_product_sales_analysis_management.md`
+- `functions/pf-eccube3/admin_product_search_list.md` -> `functions/pf-eccube3/m03-01_admin_product_product_search_list.md`
+- `functions/pf-eccube3/admin_product_section.md` -> `functions/pf-eccube3/m03-18_admin_product_product_section.md`
+- `functions/pf-eccube3/admin_product_section_csv_export.md` -> `functions/pf-eccube3/m03-19_admin_product_product_section_csv_export.md`
+- `functions/pf-eccube3/admin_product_section_csv_import.md` -> `functions/pf-eccube3/m03-35_admin_product_product_section_csv_import.md`
+- `functions/pf-eccube3/admin_product_sell_group.md` -> `functions/pf-eccube3/m03-22_admin_product_product_sell_group.md`
+- `functions/pf-eccube3/admin_product_shelf_number_csv_import.md` -> `functions/pf-eccube3/m03-40_admin_product_product_shelf_number_csv_import.md`
+- `functions/pf-eccube3/admin_product_shelf_number_register_edit.md` -> `functions/pf-eccube3/m03-21_admin_product_product_shelf_number_register_edit.md`
+- `functions/pf-eccube3/admin_product_simple_high_price_csv_import.md` -> `functions/pf-eccube3/m03-32_admin_product_product_simple_high_price_csv_import.md`
+- `functions/pf-eccube3/admin_product_status_csv.md` -> `functions/pf-eccube3/m03-38_admin_product_product_status_csv.md`
+- `functions/pf-eccube3/admin_product_stock_custom_csv_export.md` -> `functions/pf-eccube3/m04-05_admin_stock_product_stock_custom_csv_export.md`
+- `functions/pf-eccube3/admin_product_stock_history_csv_export.md` -> `functions/pf-eccube3/m04-11_admin_stock_product_stock_history_csv_export.md`
+- `functions/pf-eccube3/admin_product_stock_recommend_csv_export.md` -> `functions/pf-eccube3/m04-16_admin_stock_product_stock_recommend_csv_export.md`
+- `functions/pf-eccube3/admin_product_storage_code_csv_import.md` -> `functions/pf-eccube3/m03-37_admin_product_product_storage_code_csv_import.md`
+- `functions/pf-eccube3/admin_product_storage_code_export.md` -> `functions/pf-eccube3/m03-15_admin_product_product_storage_code_export.md`
+- `functions/pf-eccube3/admin_product_storage_code_import.md` -> `functions/pf-eccube3/m03-16_admin_product_product_storage_code_import.md`
+- `functions/pf-eccube3/admin_product_tag.md` -> `functions/pf-eccube3/m03-13_admin_product_product_tag.md`
+- `functions/pf-eccube3/admin_product_tag_sales_analysis_csv_import.md` -> `functions/pf-eccube3/m03-29_admin_product_product_tag_sales_analysis_csv_import.md`
+- `functions/pf-eccube3/admin_purchase_csv_export_deposit.md` -> `functions/pf-eccube3/m07-05_admin_online_purchase_purchase_csv_export_deposit.md`
+- `functions/pf-eccube3/admin_purchase_manual_mail.md` -> `functions/pf-eccube3/m07-04_admin_online_purchase_purchase_manual_mail.md`
+- `functions/pf-eccube3/admin_purchase_online_buy_order_edit.md` -> `functions/pf-eccube3/m07-03_admin_online_purchase_purchase_online_buy_order_edit.md`
+- `functions/pf-eccube3/admin_purchase_online_old_goods_ledger_csv_export.md` -> `functions/pf-eccube3/m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export.md`
+- `functions/pf-eccube3/admin_purchase_online_product_list_csv_export.md` -> `functions/pf-eccube3/m07-06_admin_online_purchase_purchase_online_product_list_csv_export.md`
+- `functions/pf-eccube3/admin_purchase_online_search_list.md` -> `functions/pf-eccube3/m07-01_admin_online_purchase_purchase_online_search_list.md`
+- `functions/pf-eccube3/admin_purchase_store_history.md` -> `functions/pf-eccube3/m06-05_admin_store_purchase_purchase_store_history.md`
+- `functions/pf-eccube3/admin_purchase_store_history_csv_export_all.md` -> `functions/pf-eccube3/m06-06_admin_store_purchase_purchase_store_history_csv_export_all.md`
+- `functions/pf-eccube3/admin_purchase_store_history_select_csv_export.md` -> `functions/pf-eccube3/m06-07_admin_store_purchase_purchase_store_history_select_csv_export.md`
+- `functions/pf-eccube3/admin_purchase_store_otc_buy_info_edit.md` -> `functions/pf-eccube3/m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit.md`
+- `functions/pf-eccube3/admin_purchase_store_search_list.md` -> `functions/pf-eccube3/m06-01_admin_store_purchase_purchase_store_search_list.md`
+- `functions/pf-eccube3/admin_purchase_store_status_change.md` -> `functions/pf-eccube3/m06-04_admin_store_purchase_purchase_store_status_change.md`
+- `functions/pf-eccube3/admin_purchase_store_summary.md` -> `functions/pf-eccube3/m06-08_admin_store_purchase_purchase_store_summary.md`
+- `functions/pf-eccube3/admin_sales_arrival_notification_csv_export.md` -> `functions/pf-eccube3/m12-06_admin_analytics_sales_arrival_notification_csv_export.md`
+- `functions/pf-eccube3/admin_sales_arrival_notification_search_list.md` -> `functions/pf-eccube3/m12-05_admin_analytics_sales_arrival_notification_search_list.md`
+- `functions/pf-eccube3/admin_sales_daily_monthly_csv_export.md` -> `functions/pf-eccube3/m12-02_admin_analytics_sales_daily_monthly_csv_export.md`
+- `functions/pf-eccube3/admin_sales_daily_monthly_summary.md` -> `functions/pf-eccube3/m12-01_admin_analytics_sales_daily_monthly_summary.md`
+- `functions/pf-eccube3/admin_sales_format_analysis_csv_export.md` -> `functions/pf-eccube3/m12-08_admin_analytics_sales_format_analysis_csv_export.md`
+- `functions/pf-eccube3/admin_sales_format_analysis_summary.md` -> `functions/pf-eccube3/m12-07_admin_analytics_sales_format_analysis_summary.md`
+- `functions/pf-eccube3/admin_sales_order_analysis_csv_export.md` -> `functions/pf-eccube3/m12-04_admin_analytics_sales_order_analysis_csv_export.md`
+- `functions/pf-eccube3/admin_sales_order_analysis_summary.md` -> `functions/pf-eccube3/m12-03_admin_analytics_sales_order_analysis_summary.md`
+- `functions/pf-eccube3/admin_setting_shop.md` -> `functions/pf-eccube3/m10-01_admin_shop_setting_setting_shop.md`
+- `functions/pf-eccube3/admin_setting_shop_additional_system.md` -> `functions/pf-eccube3/m10-16_admin_base_setting_setting_shop_additional_system.md`
+- `functions/pf-eccube3/admin_setting_shop_auto_mail.md` -> `functions/pf-eccube3/m10-08_admin_base_setting_setting_shop_auto_mail.md`
+- `functions/pf-eccube3/admin_setting_shop_csv.md` -> `functions/pf-eccube3/m10-10_admin_base_setting_setting_shop_csv.md`
+- `functions/pf-eccube3/admin_setting_shop_csv_custom.md` -> `functions/pf-eccube3/m10-13_admin_base_setting_setting_shop_csv_custom.md`
+- `functions/pf-eccube3/admin_setting_shop_customer_agreement.md` -> `functions/pf-eccube3/m10-03_admin_base_setting_setting_shop_customer_agreement.md`
+- `functions/pf-eccube3/admin_setting_shop_delivery.md` -> `functions/pf-eccube3/m10-06_admin_base_setting_setting_shop_delivery.md`
+- `functions/pf-eccube3/admin_setting_shop_delivery_free_conditions.md` -> `functions/pf-eccube3/m10-05_admin_base_setting_setting_shop_delivery_free_conditions.md`
+- `functions/pf-eccube3/admin_setting_shop_mail.md` -> `functions/pf-eccube3/m10-09_admin_base_setting_setting_shop_mail.md`
+- `functions/pf-eccube3/admin_setting_shop_payment.md` -> `functions/pf-eccube3/m10-04_admin_base_setting_setting_shop_payment.md`
+- `functions/pf-eccube3/admin_setting_shop_register.md` -> `functions/pf-eccube3/m10-15_admin_base_setting_setting_shop_register.md`
+- `functions/pf-eccube3/admin_setting_shop_tax.md` -> `functions/pf-eccube3/m10-07_admin_base_setting_setting_shop_tax.md`
+- `functions/pf-eccube3/admin_setting_shop_tradelaw.md` -> `functions/pf-eccube3/m10-02_admin_base_setting_setting_shop_tradelaw.md`
+- `functions/pf-eccube3/admin_setting_system_authority.md` -> `functions/pf-eccube3/m11-03_admin_system_setting_setting_system_authority.md`
+- `functions/pf-eccube3/admin_stock_bulk_edit.md` -> `functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md`
+- `functions/pf-eccube3/admin_stock_csv_import.md` -> `functions/pf-eccube3/m04-21_admin_stock_stock_csv_import.md`
+- `functions/pf-eccube3/admin_stock_history_csv_export.md` -> `functions/pf-eccube3/m04-18_admin_stock_stock_history_csv_export.md`
+- `functions/pf-eccube3/admin_stock_history_search_list.md` -> `functions/pf-eccube3/m04-17_admin_stock_stock_history_search_list.md`
+- `functions/pf-eccube3/admin_stock_inventory_plan.md` -> `functions/pf-eccube3/m04-31_admin_stock_stock_inventory_plan.md`
+- `functions/pf-eccube3/admin_stock_shortage_history_search_list.md` -> `functions/pf-eccube3/m04-19_admin_stock_stock_shortage_history_search_list.md`
+- `functions/pf-eccube3/admin_top_banner.md` -> `functions/pf-eccube3/m16-01_admin_data_top_banner.md`
+- `functions/pf-eccube3/api_order_smaregi_receive.md` -> `functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md`
+- `functions/pf-eccube3/api_order_store_call_number.md` -> `functions/pf-eccube3/a05-03_api_order_order_store_call_number.md`
+- `functions/pf-eccube3/api_point_granter.md` -> `functions/pf-eccube3/a17-03_api_other_point_granter.md`
+- `functions/pf-eccube3/batch_create_latest_article_list.md` -> `functions/pf-eccube3/b17-01_batch_other_create_latest_article_list.md`
+- `functions/pf-eccube3/batch_customer_adjust_point_variance.md` -> `functions/pf-eccube3/b08-05_batch_customer_customer_adjust_point_variance.md`
+- `functions/pf-eccube3/batch_customer_check_blank_required.md` -> `functions/pf-eccube3/b08-04_batch_customer_customer_check_blank_required.md`
+- `functions/pf-eccube3/batch_customer_lost_points.md` -> `functions/pf-eccube3/b08-02_batch_customer_customer_lost_points.md`
+- `functions/pf-eccube3/batch_customer_point_expire_notification.md` -> `functions/pf-eccube3/b08-03_batch_customer_customer_point_expire_notification.md`
+- `functions/pf-eccube3/batch_customer_send_account_migration.md` -> `functions/pf-eccube3/b08-01_batch_customer_customer_send_account_migration.md`
+- `functions/pf-eccube3/batch_event_check_cvs_payment.md` -> `functions/pf-eccube3/b13-02_batch_event_event_check_cvs_payment.md`
+- `functions/pf-eccube3/batch_event_check_processing_payment.md` -> `functions/pf-eccube3/b13-01_batch_event_event_check_processing_payment.md`
+- `functions/pf-eccube3/batch_order_check_duplicate_point.md` -> `functions/pf-eccube3/b05-06_batch_order_order_check_duplicate_point.md`
+- `functions/pf-eccube3/batch_order_check_not_reflected_point.md` -> `functions/pf-eccube3/b05-07_batch_order_order_check_not_reflected_point.md`
+- `functions/pf-eccube3/batch_order_copy_order_number.md` -> `functions/pf-eccube3/b05-01_batch_order_order_copy_order_number.md`
+- `functions/pf-eccube3/batch_order_delete_smaregi_product.md` -> `functions/pf-eccube3/b05-05_batch_order_order_delete_smaregi_product.md`
+- `functions/pf-eccube3/batch_order_resend_mail.md` -> `functions/pf-eccube3/b05-02_batch_order_order_resend_mail.md`
+- `functions/pf-eccube3/batch_order_resend_smaregi_product.md` -> `functions/pf-eccube3/b05-04_batch_order_order_resend_smaregi_product.md`
+- `functions/pf-eccube3/batch_order_store_call_number_initialize.md` -> `functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md`
+- `functions/pf-eccube3/batch_product_arrival_notification_cancel.md` -> `functions/pf-eccube3/b02-02_batch_product_product_arrival_notification_cancel.md`
+- `functions/pf-eccube3/batch_product_favorite_sale_notification.md` -> `functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md`
+- `functions/pf-eccube3/batch_product_no_section_check.md` -> `functions/pf-eccube3/b02-04_batch_product_product_no_section_check.md`
+- `functions/pf-eccube3/batch_product_sales_period_summary.md` -> `functions/pf-eccube3/b02-01_batch_product_product_sales_period_summary.md`
+- `functions/pf-eccube3/batch_product_stock_initialize.md` -> `functions/pf-eccube3/b02-06_batch_product_product_stock_initialize.md`
+- `functions/pf-eccube3/batch_product_storage_period_summary.md` -> `functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md`
+- `functions/pf-eccube3/batch_product_weekly_stock_history_update.md` -> `functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md`
+- `functions/pf-eccube3/batch_purchase_summary.md` -> `functions/pf-eccube3/b06-02_batch_purchase_purchase_summary.md`
+- `functions/pf-eccube3/batch_smaregi_check_error_order.md` -> `functions/pf-eccube3/b05-08_batch_order_smaregi_check_error_order.md`
+- `functions/pf-eccube3/batch_smaregi_check_transaction.md` -> `functions/pf-eccube3/b05-09_batch_order_smaregi_check_transaction.md`
+- `functions/pf-eccube3/batch_smaregi_update_point.md` -> `functions/pf-eccube3/b08-06_batch_customer_smaregi_update_point.md`
+- `functions/pf-eccube3/front_block_recommend.md` -> `functions/pf-eccube3/f03-05_front_product_block_recommend.md`
+- `functions/pf-eccube3/front_branch_global_nav_pc.md` -> `functions/pf-eccube3/f02-03_front_global_nav_branch_global_nav_pc.md`
+- `functions/pf-eccube3/front_branch_global_nav_sp.md` -> `functions/pf-eccube3/f02-04_front_global_nav_branch_global_nav_sp.md`
+- `functions/pf-eccube3/front_buy_cart.md` -> `functions/pf-eccube3/f05-05_front_online_purchase_buy_cart.md`
+- `functions/pf-eccube3/front_buy_product_detail.md` -> `functions/pf-eccube3/f05-04_front_online_purchase_buy_product_detail.md`
+- `functions/pf-eccube3/front_buy_product_list.md` -> `functions/pf-eccube3/f05-03_front_online_purchase_buy_product_list.md`
+- `functions/pf-eccube3/front_buy_product_search.md` -> `functions/pf-eccube3/f05-02_front_online_purchase_buy_product_search.md`
+- `functions/pf-eccube3/front_buy_shopping_complete.md` -> `functions/pf-eccube3/f05-06_front_online_purchase_buy_shopping_complete.md`
+- `functions/pf-eccube3/front_buy_top.md` -> `functions/pf-eccube3/f05-01_front_online_purchase_buy_top.md`
+- `functions/pf-eccube3/front_cart_index.md` -> `functions/pf-eccube3/f04-01_front_cart_cart_index.md`
+- `functions/pf-eccube3/front_customer_entry.md` -> `functions/pf-eccube3/f06-01_front_member_customer_entry.md`
+- `functions/pf-eccube3/front_customer_login.md` -> `functions/pf-eccube3/f06-03_front_member_customer_login.md`
+- `functions/pf-eccube3/front_entry_activate.md` -> `functions/pf-eccube3/f06-02_front_member_entry_activate.md`
+- `functions/pf-eccube3/front_event_detail.md` -> `functions/pf-eccube3/f07-03_front_event_event_detail.md`
+- `functions/pf-eccube3/front_event_entry_complete.md` -> `functions/pf-eccube3/f07-04_front_event_event_entry_complete.md`
+- `functions/pf-eccube3/front_event_search.md` -> `functions/pf-eccube3/f07-02_front_event_event_search.md`
+- `functions/pf-eccube3/front_event_top.md` -> `functions/pf-eccube3/f07-01_front_event_event_top.md`
+- `functions/pf-eccube3/front_forgot_password_reset.md` -> `functions/pf-eccube3/f06-04_front_member_forgot_password_reset.md`
+- `functions/pf-eccube3/front_global_nav_notification.md` -> `functions/pf-eccube3/f02-05_front_global_nav_global_nav_notification.md`
+- `functions/pf-eccube3/front_global_nav_pc.md` -> `functions/pf-eccube3/f02-01_front_global_nav_global_nav_pc.md`
+- `functions/pf-eccube3/front_global_nav_sp.md` -> `functions/pf-eccube3/f02-02_front_global_nav_global_nav_sp.md`
+- `functions/pf-eccube3/front_home_branch.md` -> `functions/pf-eccube3/f01-02_front_top_home_branch.md`
+- `functions/pf-eccube3/front_home_main.md` -> `functions/pf-eccube3/f01-01_front_top_home_main.md`
+- `functions/pf-eccube3/front_mypage_arrival_notification.md` -> `functions/pf-eccube3/f06-08_front_member_mypage_arrival_notification.md`
+- `functions/pf-eccube3/front_mypage_bulk_purchase_result.md` -> `functions/pf-eccube3/f06-12_front_member_mypage_bulk_purchase_result.md`
+- `functions/pf-eccube3/front_mypage_buy_history.md` -> `functions/pf-eccube3/f06-11_front_member_mypage_buy_history.md`
+- `functions/pf-eccube3/front_mypage_buy_history_detail.md` -> `functions/pf-eccube3/f06-12_front_member_mypage_buy_history_detail.md`
+- `functions/pf-eccube3/front_mypage_contact.md` -> `functions/pf-eccube3/f06-22_front_member_mypage_contact.md`
+- `functions/pf-eccube3/front_mypage_customer_edit.md` -> `functions/pf-eccube3/f06-18_front_member_mypage_customer_edit.md`
+- `functions/pf-eccube3/front_mypage_delivery_edit.md` -> `functions/pf-eccube3/f06-20_front_member_mypage_delivery_edit.md`
+- `functions/pf-eccube3/front_mypage_event_deck_complete.md` -> `functions/pf-eccube3/f06-17_front_member_mypage_event_deck_complete.md`
+- `functions/pf-eccube3/front_mypage_event_deck_edit.md` -> `functions/pf-eccube3/f06-16_front_member_mypage_event_deck_edit.md`
+- `functions/pf-eccube3/front_mypage_event_reserved_list.md` -> `functions/pf-eccube3/f06-14_front_member_mypage_event_reserved_list.md`
+- `functions/pf-eccube3/front_mypage_favorite_product.md` -> `functions/pf-eccube3/f06-09_front_member_mypage_favorite_product.md`
+- `functions/pf-eccube3/front_mypage_index.md` -> `functions/pf-eccube3/f06-05_front_member_mypage_index.md`
+- `functions/pf-eccube3/front_mypage_online_identification.md` -> `functions/pf-eccube3/f06-13_front_member_mypage_online_identification.md`
+- `functions/pf-eccube3/front_mypage_order_history.md` -> `functions/pf-eccube3/f06-06_front_member_mypage_order_history.md`
+- `functions/pf-eccube3/front_mypage_order_history_detail.md` -> `functions/pf-eccube3/f06-07_front_member_mypage_order_history_detail.md`
+- `functions/pf-eccube3/front_mypage_point_history.md` -> `functions/pf-eccube3/f06-10_front_member_mypage_point_history.md`
+- `functions/pf-eccube3/front_mypage_withdraw.md` -> `functions/pf-eccube3/f06-21_front_member_mypage_withdraw.md`
+- `functions/pf-eccube3/front_otc_buy_entry_complete.md` -> `functions/pf-eccube3/f08-03_front_store_purchase_otc_buy_entry_complete.md`
+- `functions/pf-eccube3/front_otc_buy_entry_input.md` -> `functions/pf-eccube3/f08-02_front_store_purchase_otc_buy_entry_input.md`
+- `functions/pf-eccube3/front_otc_buy_entry_login.md` -> `functions/pf-eccube3/f08-01_front_store_purchase_otc_buy_entry_login.md`
+- `functions/pf-eccube3/front_product_arrival_notification.md` -> `functions/pf-eccube3/f03-07_front_product_product_arrival_notification.md`
+- `functions/pf-eccube3/front_product_category_list.md` -> `functions/pf-eccube3/f03-04_front_product_product_category_list.md`
+- `functions/pf-eccube3/front_product_detail.md` -> `functions/pf-eccube3/f03-02_front_product_product_detail.md`
+- `functions/pf-eccube3/front_product_detail_search.md` -> `functions/pf-eccube3/f03-03_front_product_product_detail_search.md`
+- `functions/pf-eccube3/front_product_favorite.md` -> `functions/pf-eccube3/f03-08_front_product_product_favorite.md`
+- `functions/pf-eccube3/front_product_recently_viewed.md` -> `functions/pf-eccube3/f03-06_front_product_product_recently_viewed.md`
+- `functions/pf-eccube3/front_product_search_list.md` -> `functions/pf-eccube3/f03-01_front_product_product_search_list.md`
+- `functions/pf-eccube3/front_shopping_complete.md` -> `functions/pf-eccube3/f04-04_front_cart_shopping_complete.md`
+- `functions/pf-eccube3/front_shopping_delivery_edit.md` -> `functions/pf-eccube3/f04-03_front_cart_shopping_delivery_edit.md`
+- `functions/pf-eccube3/front_shopping_order_method.md` -> `functions/pf-eccube3/f04-02_front_cart_shopping_order_method.md`
+- `functions/pf-eccube3/front_store_order_call_number.md` -> `functions/pf-eccube3/f06-25_front_member_store_order_call_number.md`
+- `functions/pf-eccube3/front_store_pc_account_control.md` -> `functions/pf-eccube3/f06-26_front_member_store_pc_account_control.md`
+- `functions/pf-eccube3/other_mtg_buyer_store_purchase.md` -> `functions/pf-eccube3/o01-01_other_mtg_buyer_mtg_buyer_store_purchase.md`
+
+## Skipped
+
+- `functions/pf-api/api_buying_products_by_detail.md`: one Markdown is shared by multiple TODO rows
+  - line 348: A06-06 API / 店頭買取管理 / カード詳細IDから買取用商品情報を取得
+  - line 359: A06-17 API / 店頭買取管理 / 買取用商品情報取得
+- `functions/pf-api/api_buying_products_by_ids.md`: one Markdown is shared by multiple TODO rows
+  - line 349: A06-07 API / 店頭買取管理 / 商品IDリストから買取用商品情報を取得
+  - line 352: A06-10 API / 店頭買取管理 / 商品IDリストから買取用商品情報を取得する
+  - line 360: A06-18 API / 店頭買取管理 / 買取用商品情報一括取得
+- `functions/pf-api/api_order_print_direct.md`: one Markdown is shared by multiple TODO rows
+  - line 339: A05-01 API / 受注管理 / 注文印刷_印刷情報をプリンタへ送信
+  - line 340: A05-02 API / 受注管理 / 注文印刷_該当受注のステータスを印刷済みに変更
+- `functions/pf-api/api_product_search_by_name.md`: one Markdown is shared by multiple TODO rows
+  - line 351: A06-09 API / 店頭買取管理 / 商品名から商品詳細の情報を取得
+  - line 395: A17-05 API / その他 / [任意門]商品名から商品詳細の情報を取得
+- `functions/pf-api/api_top_banner_get.md`: one Markdown is shared by multiple TODO rows
+  - line 368: A08-01 API / コンテンツ管理 / トップバナーIDのトップバナー情報を取得
+  - line 396: A16-01 API / データ管理 / トップバナーIDのトップバナー情報を取得
+- `functions/pf-api/api_top_banner_list.md`: one Markdown is shared by multiple TODO rows
+  - line 369: A08-02 API / コンテンツ管理 / 指定言語の設定済みトップバナー一覧を取得
+  - line 397: A16-02 API / データ管理 / 指定言語の設定済みトップバナー一覧を取得
+- `functions/pf-eccube3/admin_analysis_used_card.md`: one Markdown is shared by multiple TODO rows
+  - line 253: M12-09 管理画面 / 分析集計 / デッキ採用枚数集計 出力条件変更
+  - line 254: M12-10 管理画面 / 分析集計 / デッキ採用枚数集計 特集タグ編集用CSVダウンロード
+- `functions/pf-eccube3/admin_customer_point.md`: one Markdown is shared by multiple TODO rows
+  - line 201: M08-05 管理画面 / 会員管理 / ポイント付与
+  - line 202: M08-06 管理画面 / 会員管理 / ポイント履歴
+- `functions/pf-eccube3/admin_setting_system_member.md`: one Markdown is shared by multiple TODO rows
+  - line 239: M11-01 管理画面 / システム情報設定（設定） / メンバー管理一覧
+  - line 240: M11-02 管理画面 / システム情報設定（設定） / メンバー管理
+- `functions/pf-eccube3/batch_s3_file_sync.md`: one Markdown is shared by multiple TODO rows
+  - line 329: (blank) バッチ / インフラ / (blank)
+  - line 330: (blank) バッチ / インフラ / (blank)
+- `functions/pf-eccube3/front_contact_history.md`: one Markdown is shared by multiple TODO rows
+  - line 57: F06-23 フロント / 会員 / お問い合わせ履歴
+  - line 58: F06-24 フロント / 会員 / お問い合わせ履歴詳細

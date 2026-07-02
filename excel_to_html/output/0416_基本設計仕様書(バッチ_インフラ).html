@@ -1,0 +1,1570 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0416_基本設計仕様書(バッチ_インフラ)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0416_基本設計仕様書(バッチ_インフラ)</p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">WordPress主要ファイルからS3バケットへ同期</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">S3からWP主要ファイル同期(記事管理サーバ用)</a></li>
+                  <li><a href="#sheet-5" data-sheet="sheet-5">S3からWP主要ファイル同期(記事サーバ1用)</a></li>
+                  <li><a href="#sheet-6" data-sheet="sheet-6">S3からWP主要ファイル同期(記事サーバ2用)</a></li>
+                  <li><a href="#sheet-7" data-sheet="sheet-7">WAF不正アクセスログ集計処理</a></li>
+                  <li><a href="#sheet-8" data-sheet="sheet-8">月次商品情報スナップショット</a></li>
+                  <li><a href="#sheet-9" data-sheet="sheet-9">Redash用データベース作成</a></li>
+                  <li><a href="#sheet-10" data-sheet="sheet-10">EC-CUBE 同期ディレクトリ処理バッチ</a></li>
+                  <li><a href="#sheet-11" data-sheet="sheet-11">サイトマップ生成処理</a></li>
+                  <li><a href="#sheet-12" data-sheet="sheet-12">ステージングデータベース保守バッチ</a></li>
+                  <li><a href="#sheet-13" data-sheet="sheet-13">S3画像サイズチェック処理</a></li>
+                  <li><a href="#sheet-14" data-sheet="sheet-14">データベースデッドロック感知</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">サイトリニューアル</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+            <p class="doc-p" style="--lv:0">インフラ バッチ機能</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>高久</td><td>2025-08-12</td></tr>
+                <tr><td>0.2</td><td>シート追加・一部修正</td><td>高久</td><td>2025-09-19</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">バッチ設計</h4>
+            <p class="doc-p" style="--lv:1">B16-01 WordPress主要ファイルからS3バケットへ同期</p>
+            <p class="doc-p" style="--lv:1">B16-02 S3からWP主要ファイル同期(記事管理サーバ用)</p>
+            <p class="doc-p" style="--lv:1">B16-03 S3からWP主要ファイル同期(記事サーバ1用)</p>
+            <p class="doc-p" style="--lv:1">B16-04 S3からWP主要ファイル同期(記事サーバ2用)</p>
+            <p class="doc-p" style="--lv:1">B16-05 WAF不正アクセスログ集計処理</p>
+            <p class="doc-p" style="--lv:1">B16-06 月次商品情報スナップショット</p>
+            <p class="doc-p" style="--lv:1">B16-07 Redash用データベース作成</p>
+            <p class="doc-p" style="--lv:1">B16-08 EC-CUBE 同期ディレクトリ処理バッチ</p>
+            <p class="doc-p" style="--lv:1">B16-09 サイトマップ生成処理</p>
+            <p class="doc-p" style="--lv:1">B16-10 ステージングデータベース保守バッチ</p>
+            <p class="doc-p" style="--lv:1">B16-11 S3画像サイズチェック処理</p>
+            <p class="doc-p" style="--lv:1">B16-12 データベースデッドロック感知</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>WordPress主要ファイルからS3バケットへ同期</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>WordPress主要ファイルからS3バケットへ同期</dd></div>
+            <div class="kv"><dt>概要</dt><dd>記事管理サーバのWordpress主要ファイルをS3へ転送・同期</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-3-shapes">図形・テキストボックス内テキスト（1件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">記事管理サーバのWordpress主要ファイルをS3へ転送・同期</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">記事管理サーバのWordpressファイルにあるファイル群をS3バケットに保存されているWordpressファイルに転送・同期する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">記事(Wordpress)用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">同期対象</h4>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>同期対象は下記ディレクトリ内にある全ファイルを同期を行う</span></div>
+            <p class="doc-p" style="--lv:2">[Wordpress Rootディレクトリ]/wp-content/themes</p>
+            <p class="doc-p" style="--lv:3">Wordpressのテーマ(晴れる屋の記事ブログページデザインなど)が保存されているディレクトリ</p>
+            <p class="doc-p" style="--lv:2">[Wordpress Rootディレクトリ]/wp-content/plugins</p>
+            <p class="doc-p" style="--lv:3">Wordpressで使用されているプラグイン(記事画像をS3に保存するプラグインなど)が保存されているディレクトリ</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>同期の際、下記のような条件で同期が行われる</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ファイルやディレクトリの作成・更新日(タイムスタンプ)の同期チェック(exact-timestamps)</span></div>
+            <p class="doc-p" style="--lv:3">ローカルとS3のファイルで作成・更新日(タイムスタンプ)が一致しないときにはファイルの同期が行われる</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ファイルやディレクトリが削除された場合の同期(delete)</span></div>
+            <p class="doc-p" style="--lv:3">ローカル内のディレクトリもしくはファイルがない場合、同様にS3内にあるファイル・ディレクトリが削除される</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　Crontab　実行タイミング　毎分</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　記事管理サーバ内Wordpress該当ディレクトリ　出力先(フォーマット)　AWS S3</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+          <section class="shape-block" id="sheet-3-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（1件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="D7"><td class="shape-ref">D7</td><td>現行で動いているwordpressサーバーがそのまま動き続けるため、実装しない</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>S3からWP主要ファイル同期(記事管理サーバ用)</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>S3からWordpress主要ファイルを同期<br>(記事管理サーバ)</dd></div>
+            <div class="kv"><dt>概要</dt><dd>S3に保存されているWordpressファイルを記事管理サーバのWordpressファイルに転送・同期</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-4-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-4-shapes">図形・テキストボックス内テキスト（2件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">S3に保存されているWordpressファイルをWordpressサーバのWordpressファイルへ転送・同期</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">機能No. B16-1「WordPress主要ファイルからS3バケットへ同期」でS3バケット保存されているWordpressファイルを</p>
+            <p class="doc-p" style="--lv:1">記事管理サーバ内にあるWordpressファイルに転送・同期する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">記事(Wordpress)用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">同期対象</h4>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>同期対象は下記ディレクトリ内にある全ファイルを同期を行う</span></div>
+            <p class="doc-p" style="--lv:2">[Wordpress Rootディレクトリ]/wp-content/themes</p>
+            <p class="doc-p" style="--lv:3">Wordpressのテーマ(晴れる屋の記事ブログページデザインなど)が保存されているディレクトリ</p>
+            <p class="doc-p" style="--lv:2">[Wordpress Rootディレクトリ]/wp-content/plugins</p>
+            <p class="doc-p" style="--lv:3">Wordpressで使用されているプラグイン(記事画像をS3に保存するプラグインなど)が保存されているディレクトリ</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>同期の際、下記のような条件で同期が行われる</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ファイルやディレクトリの作成・更新日(タイムスタンプ)の同期チェック(exact-timestamps)</span></div>
+            <p class="doc-p" style="--lv:3">ローカルとS3のファイルで作成・更新日(タイムスタンプ)が一致しないときにはファイルの同期が行われる</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ファイルやディレクトリが削除された場合の同期(delete)</span></div>
+            <p class="doc-p" style="--lv:3">S3のディレクトリもしくはファイルがない場合、同様にローカル内にあるファイル・ディレクトリが削除される</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　Crontab　実行タイミング　毎日0:00</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　AWS S3　出力先(フォーマット)　記事管理サーバ内Wordpress該当ディレクトリ</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+          <section class="shape-block" id="sheet-4-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（2件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="N5"><td class="shape-ref">N5</td><td>現行で動いているwordpressサーバーがそのまま動き続けるため、実装しない</td></tr>
+                  <tr data-shape-index="2" data-shape-ref="O14"><td class="shape-ref">O14</td><td>このバッチは不要というか存在していないと思う<br>WordPressの管理画面が動いているサーバーはS3に上げるけど、S3から持ってくる必要ないので</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-5">
+        <div class="sheet-heading">
+          <h2>S3からWP主要ファイル同期(記事サーバ1用)</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-03</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>S3からWordpress主要ファイルを同期<br>(記事サーバー1用)</dd></div>
+            <div class="kv"><dt>概要</dt><dd>S3に保存されているWordpressファイルをWordpressサーバへファイルを転送・同期</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-5-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-5-shapes">図形・テキストボックス内テキスト（1件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">S3に保存されているWordpressファイルをWordpressサーバのWordpressファイルへ転送・同期</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">機能No. B16-1「WordPress主要ファイルからS3バケットへ同期」でS3バケット保存されているWordpressファイルを</p>
+            <p class="doc-p" style="--lv:1">記事サーバ1内にあるWordpressファイルに転送・同期する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">記事(Wordpress)用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-5-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">同期対象</h4>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>同期対象は下記ディレクトリ内にある全ファイルを同期を行う</span></div>
+            <p class="doc-p" style="--lv:2">[Wordpress Rootディレクトリ]/wp-content/themes</p>
+            <p class="doc-p" style="--lv:3">Wordpressのテーマ(晴れる屋の記事ブログページデザインなど)が保存されているディレクトリ</p>
+            <p class="doc-p" style="--lv:2">[Wordpress Rootディレクトリ]/wp-content/plugins</p>
+            <p class="doc-p" style="--lv:3">Wordpressで使用されているプラグイン(記事画像をS3に保存するプラグインなど)が保存されているディレクトリ</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>同期の際、下記のような条件で同期が行われる</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ファイルやディレクトリの作成・更新日(タイムスタンプ)の同期チェック(exact-timestamps)</span></div>
+            <p class="doc-p" style="--lv:3">ローカルとS3のファイルで作成・更新日(タイムスタンプ)が一致しないときにはファイルの同期が行われる</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ファイルやディレクトリが削除された場合の同期(delete)</span></div>
+            <p class="doc-p" style="--lv:3">S3のディレクトリもしくはファイルがない場合、同様にローカル内にあるファイル・ディレクトリが削除される</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　Crontab　実行タイミング　毎分</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　AWS S3　出力先(フォーマット)　記事サーバ1内Wordpress該当ディレクトリ</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+          <section class="shape-block" id="sheet-5-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（1件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="C5"><td class="shape-ref">C5</td><td>現行で動いているwordpressサーバーがそのまま動き続けるため、実装しない</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-6">
+        <div class="sheet-heading">
+          <h2>S3からWP主要ファイル同期(記事サーバ2用)</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-04</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>S3からWordpress主要ファイルを同期<br>(記事サーバー2用)</dd></div>
+            <div class="kv"><dt>概要</dt><dd>S3に保存されているWordpressファイルをWordpressサーバへファイルを転送・同期</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-6-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-6-shapes">図形・テキストボックス内テキスト（1件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">S3に保存されているWordpressファイルをWordpressサーバのWordpressファイルへ転送・同期</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">機能No. B16-1「WordPress主要ファイルからS3バケットへ同期」でS3バケット保存されているWordpressファイルを</p>
+            <p class="doc-p" style="--lv:1">記事サーバ2にあるWordpressファイルに転送・同期する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">記事(Wordpress)用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-6-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">同期対象</h4>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>同期対象は下記ディレクトリ内にある全ファイルを同期を行う</span></div>
+            <p class="doc-p" style="--lv:2">[Wordpress Rootディレクトリ]/wp-content/themes</p>
+            <p class="doc-p" style="--lv:3">Wordpressのテーマ(晴れる屋の記事ブログページデザインなど)が保存されているディレクトリ</p>
+            <p class="doc-p" style="--lv:2">[Wordpress Rootディレクトリ]/wp-content/plugins</p>
+            <p class="doc-p" style="--lv:3">Wordpressで使用されているプラグイン(記事画像をS3に保存するプラグインなど)が保存されているディレクトリ</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>同期の際、下記のような条件で同期が行われる</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ファイルやディレクトリの作成・更新日(タイムスタンプ)の同期チェック(exact-timestamps)</span></div>
+            <p class="doc-p" style="--lv:3">ローカルとS3のファイルで作成・更新日(タイムスタンプ)が一致しないときにはファイルの同期が行われる</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ファイルやディレクトリが削除された場合の同期(delete)</span></div>
+            <p class="doc-p" style="--lv:3">S3のディレクトリもしくはファイルがない場合、同様にローカル内にあるファイル・ディレクトリが削除される</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　Crontab　実行タイミング　毎分</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　AWS S3　出力先(フォーマット)　記事サーバ2内Wordpress該当ディレクトリ</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+          <section class="shape-block" id="sheet-6-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（1件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="B5"><td class="shape-ref">B5</td><td>現行で動いているwordpressサーバーがそのまま動き続けるため、実装しない</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-7">
+        <div class="sheet-heading">
+          <h2>WAF不正アクセスログ集計処理</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-19</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-05</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>WAF不正アクセスログ集計処理</dd></div>
+            <div class="kv"><dt>概要</dt><dd>晴れる屋サイトへの不正アクセスと判断されたアクセスログを集計</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-7-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-7-spec-2">処理内容</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">晴れる屋EC-CUBEで不正アクセスと判断されたアクセスログを生成</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">晴れる屋EC-CUBEのWAFで不正アクセスと判断されたログを取得し</p>
+            <p class="doc-p" style="--lv:1">処理結果をS3にアップロードおよびSlack通知を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">バッチ処理用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-7-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-7-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>晴れる屋EC-CUBEのWAFで不正アクセスした際に生成されるログを元に、前日分のログ統合・集計を行う。</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>対象のサーバは下記の通りになります</span></div>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>サーバ種別</th><th>ロードバランサ―名</th><th>WAF名</th><th>S3ログ転送先</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>本店ECフロントサーバ(ECFront)</td><td>ELB-EC-Prod</td><td>IP_Block_List</td><td>S3://aws-waf-logs-prod-hareruyaec</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:2">本店ECフロントサーバ読込専用(ECReadFront)</p>
+            <p class="doc-p" style="--lv:2">デッキ構築SPAサーバ(PROD_DeckSPA)</p>
+            <p class="doc-p" style="--lv:2">デッキAPI(PROD_Deckbuilder-API)　PROD-deckbuilder-api　Rate-Base-blocker-for-deckapi　S3://aws-waf-logs-prod-deckapi</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>下記のサーバは集計の対象外となります</span></div>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>サーバ種別</th><th>ロードバランサ―名</th><th>WAF名</th><th>S3ログ転送先</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>記事サーバ(Article)</td><td>ELB-Article-Prod</td><td>Article_IP_Block</td><td>-</td></tr>
+                <tr><td>APIサーバ(PROD_API)</td><td>API-Prod</td><td>-</td><td>-</td></tr>
+                <tr><td>ステージング用ECフロントサーバ</td><td>STG-Branch-Admin-ELB</td><td>stg-all-search-blocker</td><td>-</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>S3に保存されているログから前日分の不正アクセスログをローカルに一時保存する。</span></div>
+            <p class="doc-p" style="--lv:2">取得先S3パス S3://[ログ保存先バケット]/AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD]</p>
+            <p class="doc-p" style="--lv:2">※上記パス以降の時刻ディレクトリ(HH/MM)をすべて取得</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>取得したログを1日分のログファイルに纏め、gzip形式でファイルを圧縮してS3に保存する</span></div>
+            <p class="doc-p" style="--lv:2">保存先S3パス S3://[ログ保存先バケット]/YYMMDD_result.gz</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>1日分のログファイルから、ブロックしたIPアドレスおよび出現回数を集計する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>集計結果を2通りの処理を行う</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>集計結果をファイルに保存して、S3に保存する</span></div>
+            <p class="doc-p" style="--lv:3">保存先S3パス  S3://[ログ保存先バケット]/YYMMDD_attach</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>集計結果をSlack通知用メールサービスを使い、Slackチャンネルに通知する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日4時</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　AWS S3　出力先(フォーマット)　AWS S3 / Slackチャンネル</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-8">
+        <div class="sheet-heading">
+          <h2>月次商品情報スナップショット</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2026-03-16</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-06</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>月次商品情報スナップショット</dd></div>
+            <div class="kv"><dt>概要</dt><dd>月末に店舗・商品規格ごとに一部の事項を抽出し、集計結果をS3に保存する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-8-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-8-spec-2">処理内容</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">月初に店舗・在庫場所・商品規格ごとに一部の事項を抽出し、結果をS3に保存する</p>
+            <p class="doc-p" style="--lv:1">本店支店含め全店舗出力を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">バッチ処理用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-8-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-8-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <p class="doc-p" style="--lv:1">①　本番DBの最新スナップショットを取得する</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">★</span><span>現行はprd-branch-db-clusterという名称でスナップショットの検索を行い、最新のものを取得しているが、リニューアル後の環境に合わせる</span></div>
+            <p class="doc-p" style="--lv:1">②　一時的なDBクラスタとインスタンスの作成</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>抽出したスナップショットからクラスタを復元</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>名前はmonthly-inventory-checkとする</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>クラスタ内にDBインスタンスを作成する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>名前はrestore-for-inventoryとする</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>データベースが完全に立ち上がり利用可能になるまで30分のスリープを入れる ※30分で終わらないようであれば延ばす</span></div>
+            <p class="doc-p" style="--lv:1">③　一時的なDBインスタンスに対してクエリを実行し、実行結果をZIPに圧縮する</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>以下の条件で取得を行う</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">★</span><span>商品規格の公開フラグが1: 公開となっているもの（現行だとvisibleを見ているので、見るカラムを変更する）</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">★</span><span>商品在庫に紐づく店舗が閉店でないこと（現行だとテスト店舗フラグを見ているが、テスト店舗フラグはなくなるので、見るカラムを変更する）</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">★</span><span>本店支店含め全店舗出力を行う（現行は本店と支店でDBが分かれていたためそれぞれ出力していたが、リニューアル後は統一されるため全店舗出力を行う）</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>出力項目は以下とする</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>商品コード</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>販売価格</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>買取価格</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>店舗名</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">★</span><span>在庫区分名（ECCUBEまたはスマレジ、在庫は店舗ごと在庫区分ごとに持つため必要となる）</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>在庫数</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>並び順は以下とする</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>店舗IDの昇順、在庫区分名（EC、スマレジの順）</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ZIPファイルの名前は以下とする</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">★</span><span>stock_YYYYMMDD.txt.zip（現行はbranch_YYYYMMDD.txt.zipだが、支店のみの在庫を出すわけではないため）</span></div>
+            <p class="doc-p" style="--lv:1">④　③で作ったZIPファイルをS3にアップロードする</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>アップロード先のバケットはs3://inventorycheck/とする</span></div>
+            <p class="doc-p" style="--lv:1">⑤　②で作成した一時的なDBクラスタとインスタンスを削除する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎月1日 午前1時</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　AWS S3</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-9">
+        <div class="sheet-heading">
+          <h2>Redash用データベース作成</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-07</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>Redash用データベース作成</dd></div>
+            <div class="kv"><dt>概要</dt><dd>分析用Redash用データベースを作成する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-9-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-9-spec-2">処理内容</a>
+            <a href="#sheet-9-shapes">図形・テキストボックス内テキスト（1件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">分析用Redash用データベースを作成する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">稼働データベースとは別のデータベースを用意し、Redashで分析するためのデータを作成する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">バッチ処理用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-9-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-9-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>本番データベースをスナップショットを行い、Redash用データベースを作成する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>Redash用データベースから以下の情報を行う</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ用接続IDの削除</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>スマレジ用アクセストークンの削除</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>注文ステータスが「注文取消し」「発送済み」のスマレジ削除フラグをONに変更</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日午前4時</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+          <section class="shape-block" id="sheet-9-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（1件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="AR5"><td class="shape-ref">AR5</td><td>0103_現行機能一覧 インフラバッチ:61</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-10">
+        <div class="sheet-heading">
+          <h2>EC-CUBE 同期ディレクトリ処理バッチ</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-08-12</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-19</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-08</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>EC-CUBE 同期ディレクトリ処理バッチ</dd></div>
+            <div class="kv"><dt>概要</dt><dd>EC-CUBE内の特定ディレクトリとS3バケットの同期処理</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-10-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-10-spec-2">処理内容</a>
+            <a href="#sheet-10-shapes">図形・テキストボックス内テキスト（1件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">EC-CUBE 同期ディレクトリ処理バッチ</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">EC-CUBE内の特定ディレクトリとS3バケットの同期処理</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">ECサーバFargate</p>
+            <p class="doc-p" style="--lv:1">※ECRからECサーバFargateを読み込みFargateで実行</p>
+            <p class="doc-p" style="--lv:1">※バッチ処理用EC2インスタンスからAWS Systems Manager Run Commandを使ってバッチ起動</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-10-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-10-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ファイル同期処理スキップ</span></div>
+            <p class="doc-p" style="--lv:2">同じバッチが同時に起動しないように、ロックファイル有無チェックを行い、存在する場合には処理を終了する。</p>
+            <p class="doc-p" style="--lv:2">存在しない場合には、ロックファイルを作成し、バッチが終了(強制終了・異常終了含む)した場合にファイル削除を行う。</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>S3バケットとEC-CUBE特定ディレクトリの同期処理</span></div>
+            <p class="doc-p" style="--lv:2">下記S3パスおよびディレクトリおよびファイルの同期処理を行う</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>S3パス :  s3://[S3バケット名]/app/template/default　→　EC-CUBE 同期ディレクトリ : /var/ec-cube/app/template/default</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>S3パス :  s3://[S3バケット名]/app/template/user_data　→　EC-CUBE 同期ディレクトリ : /var/ec-cube/app/template/user_data</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>S3パス :  s3://[S3バケット名]/html/user_data　→　EC-CUBE 同期ディレクトリ : /var/ec-cube/html/user_data</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">★</span><span>S3パス :  s3://[S3バケット名]/html/sitemap.xml　→　EC-CUBE 同期ディレクトリ : /var/ec-cube/html/sitemap.xml</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">※</span><span>カスタマイズ時にサイトマップ同期も当スクリプトに追加</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">※</span><span>S3バケット名は環境設定で指定します</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>同期条件および処理は以下の通り</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>S3内ファイルに新しいファイルがある場合、ファイルダウンロードを行う</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>S3内ファイルと同期ディレクトリ内ファイルの更新タイムスタンプが違っている場合、ファイルダウンロードする(exact-timestampsオプション)</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>S3内にあったファイルが削除された場合、同期ディレクトリ内にあるファイルも削除する(deleteオプション)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>同期対象のファイルがあった場合、下記の処理を行う</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>同期ログをCloudWatchへ送信</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>ファイル権限の再設定</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>EC-CUBEのキャッシュクリア</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　起動直後・EC2経由の実行(AWS Systems Manager Run Command)　実行タイミング　毎分</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　S3　出力先(フォーマット)　-</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+          <section class="shape-block" id="sheet-10-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（1件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="D10"><td class="shape-ref">D10</td><td>Enterprise版Dockerイメージに同期cronが既に存在するため、実装しない</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-11">
+        <div class="sheet-heading">
+          <h2>サイトマップ生成処理</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-19</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-09</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>サイトマップ生成</dd></div>
+            <div class="kv"><dt>概要</dt><dd>フロント側のサイトマップを作成し、S3バケットにアップロードを行う</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-11-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-11-spec-2">処理内容</a>
+            <a href="#sheet-11-shapes">図形・テキストボックス内テキスト（1件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">晴れる屋フロント側のサイトマップを作成し、S3バケットにアップロードを行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">晴れる屋トップページからリンクを辿りながらアクセス可能なURLのリストからサイトマップファイルを作成し、S3にファイルをアップロードする、</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">バッチ処理用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-11-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">前提条件</h4>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>EC-CUBEの標準機能ではなく、公開されているコード(オープンソース)を利用</span></div>
+            <p class="doc-p" style="--lv:2">(現在のEC-CUBEシステムでも利用していることを確認済み)</p>
+            <p class="doc-p" style="--lv:2">Sitemap-Generator-Crawler</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-11-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>Sitemap-Generator-Crawlerを使ったサイトマップ作成</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>晴れる屋トップページ(https://www.hareruyamtg.com/)にアクセスし、取得ページを解析しアクセス可能なリンクURLを抽出</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>抽出したリンクURLにアクセスにして更にリンクURLを取得してそのURLにアクセスする処理を繰り返す</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>抽出するリンク先がなくなり次第、今までアクセスしたURLリストを使い、サイトマップファイルを作成する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">※</span><span>全部のリンクを取得するように設定(階層設定なし)</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>但し、以下のページおよびそれ以降のページは取得しない</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>管理ページ</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>商品検索ページ(日本語・英語)</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>カードリスト購入ページ(日本語・英語)</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>デッキ検索ページ(日本語・英語)</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>イベント情報(日本語・英語)</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>前回(昨日)のサイトマップと今回作成したサイトマップを比較し、差異がある場合はS3にアップロードする</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>カスタマイズ前に使用していたバッチで行っていた「サイトマップの ping エンドポイント」は2023年にサービス終了しているため</span></div>
+            <p class="doc-p" style="--lv:2">カスタマイズ後のバッチには含めない</p>
+            <p class="doc-p" style="--lv:2">https://developers.google.com/search/blog/2023/06/sitemaps-lastmod-ping?hl=ja#sitemap-ping</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　Eventbridge+Lamdba　実行タイミング　毎日4:00</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　晴れる屋サイト(https://www.hareruyamtg.com/)　出力先(フォーマット)　S3</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+          <section class="shape-block" id="sheet-11-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（1件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="AR5"><td class="shape-ref">AR5</td><td>0103_現行機能一覧 インフラバッチ:74</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-12">
+        <div class="sheet-heading">
+          <h2>ステージングデータベース保守バッチ</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-19</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-10</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>ステージングデータベース保守バッチ</dd></div>
+            <div class="kv"><dt>概要</dt><dd>定期的にステージング環境を最新の本番環境に近い状態に保つためのメンテナンス処理を行う</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-12-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-12-spec-2">処理内容</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">定期的にステージング環境を最新の本番環境に近い状態に保つためのメンテナンス処理を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">本番データベースのスナップショットからステージング用にカスタマイズし、ステージングデータベースを作成する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">バッチ処理用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-12-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-12-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>本番データベースのスナップショットを取得する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>テンポラリデータベースを作成し、本番データベースのスナップショットを挿入する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>テンポラリデータベースからスマレジIDおよびスマレジトークンを削除する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>テンポラリデータベースのスナップショットを生成する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>現在のステージング用データベースを削除する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>新規にステージングデータベースを作成し、テンポラリデータベースのスナップショットを挿入する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>テンポラリデータベースおよびスナップショットファイル削除する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ステージングデータベースにステージング用スマレジIDを追加する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>本番S3バケットにある商品画像をステージングS3バケットにある商品画像と同期を行う</span></div>
+            <p class="doc-p" style="--lv:2">S3バケット s3://filepool-resized/productのファイル内容を s3://stg-filepool-resized/product へ同期</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>本番S3バケットにある絵文字(シンボル)をステージングS3バケットにある絵文字(シンボル)と同期を行う</span></div>
+            <p class="doc-p" style="--lv:2">S3バケット s3://filepool-resized/setのファイル内容を s3://stg-filepool-resized/set へ同期</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>個人情報はマスク処理を行う</span></div>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">追記情報</h4>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>データベースのスナップショットやリストア処理が必要であり、バッチ内に処理待ち時間(インターバル)が含まれているため</span></div>
+            <p class="doc-p" style="--lv:2">起動可能時間制限がない「Fargate」で実行</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎月1日 3時</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　RDB/S3　出力先(フォーマット)　RDB/S3</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-13">
+        <div class="sheet-heading">
+          <h2>S3画像サイズチェック処理</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-19</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-11</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>S3画像サイズチェック処理</dd></div>
+            <div class="kv"><dt>概要</dt><dd>S3にアップロードされている画像内に規定している容量超過しているファイルを通知する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-13-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-13-spec-2">処理内容</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">S3にアップロードされている画像内に規定している容量超過しているファイルを通知する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">S3にアップロードされている画像(商品・バナーなど)のファイル容量が規定量を超えていた場合、メールで通知する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">バッチ処理用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-13-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-13-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>下記バケットからファイル名およびファイルサイズの一覧を取得する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ファイル一覧から、画像種別ごとに規定されたファイル容量を超えていないか確認する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>規定サイズを超えるファイルがある場合、該当ファイル一覧を作成し管理者メールアドレスに通知する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　15分毎</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　S3　出力先(フォーマット)　メール</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>下記バケットからファイル名およびファイルサイズの一覧を取得する</span></div>
+            <p class="doc-p" style="--lv:2">①　商品サムネイル</p>
+            <p class="doc-p" style="--lv:3">s3://filepool-resized/img/goods/L/</p>
+            <p class="doc-p" style="--lv:3">s3://filepool-resized/img/goods/C/</p>
+            <p class="doc-p" style="--lv:3">s3://filepool-resized/img/goods/I/</p>
+            <p class="doc-p" style="--lv:2">②　商品サムネイル(オリジナル画像)</p>
+            <p class="doc-p" style="--lv:3">s3://filepool-resized/img/goods/L/NUM/</p>
+            <p class="doc-p" style="--lv:2">③　バナー画像</p>
+            <p class="doc-p" style="--lv:3">s3://filepool-resized/banner/</p>
+            <p class="doc-p" style="--lv:2">④　商品画像</p>
+            <p class="doc-p" style="--lv:3">s3://filepool-resized/product/</p>
+            <p class="doc-p" style="--lv:2">⑤　絵文字(シンボル)</p>
+            <p class="doc-p" style="--lv:3">s3://filepool-resized/set/</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>ファイル一覧から、下記条件に該当するものを抽出する</span></div>
+            <p class="doc-p" style="--lv:2">①　商品サムネイル</p>
+            <p class="doc-p" style="--lv:3">ファイルサイズ : 250kB以上</p>
+            <p class="doc-p" style="--lv:2">②　商品サムネイル(オリジナル画像)</p>
+            <p class="doc-p" style="--lv:3">ファイルサイズ : 400kB以上</p>
+            <p class="doc-p" style="--lv:2">③　バナー画像</p>
+            <p class="doc-p" style="--lv:3">ファイルサイズ : 500kB以上</p>
+            <p class="doc-p" style="--lv:2">④　商品画像</p>
+            <p class="doc-p" style="--lv:3">ファイルサイズ : 400kB以上</p>
+            <p class="doc-p" style="--lv:2">⑤　絵文字(シンボル)</p>
+            <p class="doc-p" style="--lv:3">ファイルサイズ : 5kB以上</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:0">From：info@hareruyamtg.com</p>
+            <p class="doc-p" style="--lv:0">To：hareruya_filesize_alert@hareruyamtg.com</p>
+            <p class="doc-p" style="--lv:0">CC：it_common@hareruyamtg.com</p>
+            <p class="doc-p" style="--lv:0">BCC:r9y9k6q2h2i8d9b5@sekappy-dev.slack.com</p>
+            <p class="doc-p" style="--lv:0">件名 : 画像ファイルサイズ超過アラート</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">本文</h4>
+            <p class="doc-p" style="--lv:1">※※送信専用アドレスの為返信不可※※</p>
+            <p class="doc-p" style="--lv:1">規定サイズを超過している画像ファイルが見つかりました</p>
+            <p class="doc-p" style="--lv:1">https://files.hareruyamtg.com//img/goods/L/xxxxxxx.png 312 kb</p>
+            <p class="doc-p" style="--lv:1">https://files.hareruyamtg.com//img/goods/M/xxxxxxx.png 332 kb</p>
+            <p class="doc-p" style="--lv:1">。</p>
+            <p class="doc-p" style="--lv:1">。</p>
+            <p class="doc-p" style="--lv:1">。</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-14">
+        <div class="sheet-heading">
+          <h2>データベースデッドロック感知</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>インフラ バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-24</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B16-12</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>データベースデッドロック感知</dd></div>
+            <div class="kv"><dt>概要</dt><dd>データベース内でデッドロックを感知した場合、管理者メールアドレスに通知を行う</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-14-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-14-spec-2">処理内容</a>
+            <a href="#sheet-14-shapes">図形・テキストボックス内テキスト（1件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">データベース内でデッドロックを感知した場合、管理者メールアドレスに通知を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">注文テーブルでデッドロック発生時、管理者メールアドレスにデッドロック発生通知および詳細情報を送信する</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">※</span><span>デッドロック</span></div>
+            <p class="doc-p" style="--lv:2">デッドロックとは、複数のものが互いに相手が持っているものを待っている状態のことです。</p>
+            <p class="doc-p" style="--lv:2">この状態になると、誰も先に進むことができず、全体が停止してしまいます。</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">実行環境</h4>
+            <p class="doc-p" style="--lv:1">バッチ処理用EC2インスタンス</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-14-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-14-spec-2" style="--lv:0"><span class="spec-badge">機能仕様</span>処理内容</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>本店データベース内へ現時点でデッドロックが発生しているかの問合せを行う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>問合せ結果が「デッドロックが発生している」と判断した場合、晴れる屋管理者宛に通知を行う</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">※</span><span>このバッチではデッドロック解除処理は含まれておらず、手動で解除する必要がある</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　5分毎</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　メール</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+          <section class="shape-block" id="sheet-14-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（1件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="C6"><td class="shape-ref">C6</td><td>Auroraのパラメータグループで設定するため、実装しない</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

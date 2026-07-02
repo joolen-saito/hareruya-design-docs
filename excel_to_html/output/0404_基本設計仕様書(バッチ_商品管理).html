@@ -1,0 +1,1886 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0404_基本設計仕様書(バッチ_商品管理)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* function-design-embed:start */
+    .function-design-embed {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-header {
+      margin-bottom: 18px;
+    }
+
+    .function-design-header h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .function-design-header h4 {
+      margin: 0;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-source {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .function-design-note {
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      border-left: 3px solid #f0ad4e;
+      background: rgba(240, 173, 78, 0.10);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .function-design-body h1,
+    .function-design-body h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+    }
+
+    .function-design-body h3 {
+      margin: 22px 0 10px;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-body h4 {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .function-design-body p {
+      margin: 9px 0;
+    }
+
+    .function-design-body ul,
+    .function-design-body ol {
+      margin: 9px 0;
+      padding-left: 26px;
+    }
+
+    .function-design-body li {
+      margin: 3px 0;
+    }
+
+    .function-design-body code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--band);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .function-design-body pre {
+      overflow-x: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      white-space: pre-wrap;
+    }
+
+    .function-design-body pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .function-design-body .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .function-design-body table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .function-design-body th,
+    .function-design-body td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .function-design-body th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .function-design-body tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* function-design-embed:end */
+</style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0404_基本設計仕様書(バッチ_商品管理)</p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">期間別販売数集計</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">入荷通知キャンセル</a></li>
+                  <li><a href="#sheet-5" data-sheet="sheet-5">期間別入庫数集計</a></li>
+                  <li><a href="#sheet-6" data-sheet="sheet-6">商品部門未設定チェック</a></li>
+                  <li><a href="#sheet-7" data-sheet="sheet-7">お気に入り商品セール通知</a></li>
+                  <li><a href="#sheet-8" data-sheet="sheet-8">在庫初期化</a></li>
+                  <li><a href="#sheet-9" data-sheet="sheet-9">ユニサーチフィード作成</a></li>
+                  <li><a href="#sheet-10" data-sheet="sheet-10">ユニサーチフィードTSV</a></li>
+                  <li><a href="#sheet-11" data-sheet="sheet-11">ユニサーチフィード送信</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">サイトリニューアル</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+            <p class="doc-p" style="--lv:0">商品管理バッチ機能</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>高久</td><td>2025-06-27</td></tr>
+                <tr><td>0.2</td><td>期間別入庫集計の取得期間を修正</td><td>高久</td><td>2025-09-19</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">バッチ設計</h4>
+            <p class="doc-p" style="--lv:1">B02-01 期間別販売数集計</p>
+            <p class="doc-p" style="--lv:1">B02-02 入荷通知キャンセル</p>
+            <p class="doc-p" style="--lv:1">B02-03 期間別入荷数集計</p>
+            <p class="doc-p" style="--lv:1">B02-04 商品部門未設定チェック</p>
+            <p class="doc-p" style="--lv:1">B02-05 お気に入り商品セール通知</p>
+            <p class="doc-p" style="--lv:1">B02-06 在庫初期化</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>期間別販売数集計</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>商品管理バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-06-27</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-10-15</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B02-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>期間別販売数集計</dd></div>
+            <div class="kv"><dt>概要</dt><dd>商品マスターの一覧画面に表示する販売数(前日〜90日間)を集計する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">商品マスターの一覧画面に表示する販売数(前日〜365日間)を集計する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">現行システムをベースに下記カスタマイズを行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">集計対象について</h4>
+            <p class="doc-p" style="--lv:2">本店のほか、支店やスマレジの販売情報も集計対象として取り扱う</p>
+            <p class="doc-p" style="--lv:2">閉店した店舗は集計の対象外とする</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>定時処理で実行されて日付から下記期間範囲ごとの商品販売数を本店を含む店舗ごとに行う</span></div>
+            <p class="doc-p" style="--lv:1">昨日の販売数,3日間の販売数,1週間の販売数,1か月の販売数,90日間の販売数,180日間の販売数,365日間の販売数</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>閉店した店舗は集計の対象外とする</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>本店の支店IDは0として処理する</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>スマレジの取引データも集計対象とし、それぞれ店舗ごとにECCUBEとスマレジで分けて販売数を集計する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日0:00</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>集計について、支店の注文データとスマレジ注文データも集計対象とする。</span></div>
+            <p class="doc-p" style="--lv:1">閉店した店舗の注文データは集計対象外とする</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">受注データ.受注日時　366日間の期間内</p>
+            <p class="doc-p" style="--lv:0">受注データ.ステータス　キャンセルを除外</p>
+            <p class="doc-p" style="--lv:0">店舗情報.店舗閉店管理　店舗閉店管理が閉店でない</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:0">商品規格ID,支店ID,昨日の販売数,3日間の販売数,1週間の販売数,1か月の販売数,90日間の販売数,180日間の販売数,365日間の販売数</p>
+            <p class="doc-p" style="--lv:0">以上の情報を販売数集計データへ更新を行う</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      <!-- function-design-embed:start b02-01-b02-01_batch_product_product_sales_period_summary -->
+      <section class="function-design-embed" id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary" data-source="functions/pf-eccube3/b02-01_batch_product_product_sales_period_summary.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b02-01_batch_product_product_sales_period_summary.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B02-01 期間別販売数集計 / バッチ 商品管理 — 期間別販売数集計</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-概要">概要</h2>
+          <p>商品マスターの一覧画面に表示する販売数を、期間別（前日・直近3日・週・月・90日・180日・365日）に集計し、商品規格サブの販売数列へ反映するバッチである。コマンドライン（コンソールコマンド）から実行する。集計は受注詳細の数量を受注日と受注ステータスで絞り込んで行う。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの商品バッチ（販売数集計処理）、受注詳細・商品規格サブを扱うリポジトリを正とする。本機能のカスタマイズ区分はカスタマイズであり、現行挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>受注詳細から期間別販売数を集計する条件</li><li>商品規格サブの販売数列への反映</li><li>対象が無い場合の挙動</li></ul>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能・運用の設計を正とする。</p>
+          <ul><li>受注・受注詳細そのものの作成（受注処理を正とする）</li><li>商品一覧画面での販売数の表示（商品管理画面の設計を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3）と移行先（ec-cube-enterprise）でDBスキーマが次のとおり異なる。挙動は現行を踏襲し、DB関連の記述は移行先を正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>受注詳細テーブル</td><td><code>dtb_order_detail</code></td><td><code>dtb_order_item</code>（列 <code>product_class_id</code>・<code>quantity</code> は同名）</td></tr><tr><td>受注ステータス列</td><td><code>dtb_order.status</code></td><td><code>dtb_order.order_status_id</code>（受注日 <code>order_date</code> は同名）</td></tr><tr><td>販売数の反映先</td><td>商品規格サブ <code>dtb_product_sub_class</code> の販売数列</td><td>補助表を設けず商品規格 <code>dtb_product_class</code> の <code>order_quantity_01</code>〜<code>order_quantity_08</code> に統合（列名は同じだが保持テーブルが異なる）</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>販売数</td><td>受注詳細の数量を期間別に合計した値。</td></tr><tr><td>商品規格サブ</td><td>商品規格ごとの集計値（販売数・入庫数など）を保持する拡張テーブル。</td></tr><tr><td>受注ステータス除外</td><td>キャンセル・処理中の受注を集計から除く扱い。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>product:batch updateProductSummary</code></td><td>受注詳細から期間別の販売数を集計し、商品規格サブの販売数列を更新する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-期間別販売数集計を実行する-product-batch-updateProductSummary">期間別販売数集計を実行する（<code>product:batch updateProductSummary</code>）</h3>
+          <ol><li>実行時間制限を解除し、SQLロガーを無効化する。</li><li>受注詳細を商品規格単位で集計し、期間別販売数（前日・3日・週・月・90日・180日・365日）の一覧を取得する。</li><li>対象が無い場合は更新を行わずに終了する。</li><li>集計結果の行ごとに、商品規格サブの販売数列を更新する。</li><li>100件ごとに変更を反映しキャッシュをクリアしながら処理する。</li><li>残りの変更を反映して終了する。</li></ol>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>集計単位</td><td>商品規格単位（商品規格ID）。</td></tr><tr><td>集計値</td><td>受注詳細の数量の合計。</td></tr><tr><td>除外条件</td><td>受注ステータスがキャンセル・処理中の受注は各期間の合計から除外する。</td></tr><tr><td>反映先</td><td>商品規格サブの販売数列（前日・3日・週・月・90日・180日・365日）。当日相当の列は0で初期化する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象データ</td><td>受注詳細と受注を結合し、受注日が当日から366日前以降の受注詳細に限定して集計する。</td></tr><tr><td>結合</td><td>受注詳細と受注を受注IDで結合する。</td></tr><tr><td>除外</td><td>受注ステータスがキャンセル・処理中の受注を各期間合計から除く。</td></tr><tr><td>集計期間</td><td>当日基準で前日・直近3日・7日・28日・90日・180日・365日の各区間。</td></tr><tr><td>一意化</td><td>商品規格IDでグループ化する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-API・バッチ結果">API・バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。引数は取らない。</td></tr><tr><td>実行条件</td><td>集計対象期間内に受注詳細が存在すること。</td></tr><tr><td>成功結果</td><td>商品規格サブの販売数列が最新の集計値で更新される。</td></tr><tr><td>失敗結果</td><td>途中失敗時は反映済みの行のみ更新が残る。</td></tr><tr><td>再実行時</td><td>実行時点のデータで再集計し、対象商品規格の販売数列を上書きする。重複加算は起きない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>商品規格サブの販売数列の更新。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。途中で止まった場合は反映済みの行のみ更新が残る。</td></tr><tr><td>副作用</td><td>商品規格サブの更新。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>多重実行</td><td>ロックは持たない。同時実行時は同一行を上書きするため最後の更新値が残る。</td></tr><tr><td>途中失敗・再実行</td><td>上書き更新のため再実行で正しい集計値に収束する。部分反映は次回実行で回収される。</td></tr><tr><td>参照時点</td><td>実行時点の受注・受注詳細を対象とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order_item</code>（現行 <code>dtb_order_detail</code>）</td><td><code>product_class_id</code>・<code>quantity</code></td><td>集計の集計単位・集計値。</td></tr><tr><td><code>dtb_order</code></td><td><code>order_date</code>・<code>order_status_id</code>（現行 <code>status</code>）</td><td>期間判定・除外判定に使用する。</td></tr><tr><td><code>dtb_product_class</code>（現行は商品規格サブ <code>dtb_product_sub_class</code>）</td><td><code>order_quantity_01</code>〜<code>order_quantity_08</code></td><td>期間別販売数の反映先。<code>order_quantity_01</code>は0で初期化する。移行先では商品規格に統合する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_detail / dtb_order_item / dtb_product_class / dtb_product_sub_class</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>対象なし</td><td>更新を行わず完了する。</td></tr><tr><td>処理中の例外</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>パスワード</li><li>トークン・接続秘密値</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-b02-01-b02-01_batch_product_product_sales_period_summary-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>ロックファイルによる多重起動防止は持たない。長時間処理に備えて実行時間制限を解除し、100件ごとに変更を反映しキャッシュをクリアしてメモリを管理する。本バッチは楽観ロック・悲観ロックの対象を持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b02-01-b02-01_batch_product_product_sales_period_summary -->
+</section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>入荷通知キャンセル</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>商品管理バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-06-27</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-19</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B02-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>入荷通知キャンセル</dd></div>
+            <div class="kv"><dt>概要</dt><dd>商品・商品規格が削除された入荷通知リクエストの削除</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-4-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">商品・商品規格が削除された入荷通知リクエストの削除</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">現行システムをベースに下記カスタマイズを行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">商品単位の通知キャンセルについて</h4>
+            <p class="doc-p" style="--lv:2">商品規格単位および商品単位の入荷通知キャンセル処理が行えるようにする</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">商品公開ステータス変更に伴う通知キャンセル削除条件について</h4>
+            <p class="doc-p" style="--lv:2">商品データに設定されている「商品公開ステータス」が非公開・廃止に変更された場合、入荷通知キャンセル扱いとする</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>入荷通知リクエストデータに「商品ID」を追加</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>商品データもしくは商品規格データの商品公開ステータスが非公開・廃止の場合、入荷通知キャンセル処理を行う</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日3:00</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <p class="doc-p" style="--lv:0">起動時に以下の条件に当てはまった場合、入荷通知キャンセル扱いとする</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>「商品データ」の商品公開フラグが非公開もしくは廃止に設定</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>「商品規格データ」の商品公開フラグが非公開もしくは廃止に設定</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">商品規格データ.公開フラグ　非公開 または 廃止</p>
+            <p class="doc-p" style="--lv:0">商品データ.公開フラグ　非公開 または 廃止</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:1">対象する入荷通知リクエストデータの削除日時に実行日時を追加し、削除済み扱いとする(論理削除)</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      <!-- function-design-embed:start b02-02-b02-02_batch_product_product_arrival_notification_cancel -->
+      <section class="function-design-embed" id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel" data-source="functions/pf-eccube3/b02-02_batch_product_product_arrival_notification_cancel.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b02-02_batch_product_product_arrival_notification_cancel.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B02-02 入荷通知キャンセル / バッチ 商品管理 — 入荷通知キャンセル</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-概要">概要</h2>
+          <p>商品または商品規格がすでに削除されている入荷通知リクエストを論理削除するバッチである。コマンドライン（コンソールコマンド）から実行する。会員が入荷を待っている商品が削除された場合に、対応する入荷通知リクエストを残さないための整理処理である。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの商品バッチ（入荷通知リクエスト削除処理）、入荷通知リクエストを扱うリポジトリを正とする。本機能のカスタマイズ区分はカスタマイズであり、現行挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>削除済み商品・商品規格に対応する入荷通知リクエストの抽出条件</li><li>入荷通知リクエストの論理削除</li><li>対象が無い場合の挙動</li></ul>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能・運用の設計を正とする。</p>
+          <ul><li>入荷通知リクエストの登録（会員の入荷通知申込処理を正とする）</li><li>商品・商品規格の削除そのもの（商品管理処理を正とする）</li><li>入荷時の通知メール送信（入荷通知処理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動は現行（pf-eccube3）を踏襲し、DB関連の記述は移行先（ec-cube-enterprise）を正とする。入荷通知リクエストの本体は現行・移行先とも同一スキーマだが、商品・商品規格の削除表現が異なる。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>入荷通知リクエスト</td><td><code>dtb_product_request</code>（<code>product_class_id</code>・<code>deleted_at</code>）</td><td>同一スキーマ（<code>dtb_product_request</code>、<code>product_class_id</code>・<code>deleted_at</code>）</td></tr><tr><td>商品規格の削除表現</td><td><code>dtb_product_class.del_flg</code>（削除フラグ）</td><td><code>dtb_product_class.visible</code>（表示可否の真偽値。<code>del_flg</code>は無い）</td></tr><tr><td>商品の削除表現</td><td><code>dtb_product.del_flg</code>（削除フラグ）</td><td>商品に<code>del_flg</code>は無く、公開ステータス <code>dtb_product.product_status_id</code> で公開可否を表す</td></tr></tbody></table></div>
+          <p>商品規格・商品の削除条件は、現行の削除フラグに相当する判定が移行先では表示可否・公開ステータスへ置き換わる。移行後の具体的な抽出条件はec-cube-enterprise実装で要確認とする。</p>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>入荷通知リクエスト</td><td>入荷時に通知を希望する会員の申込レコード。</td></tr><tr><td>論理削除</td><td>削除日時を設定し、有効レコードから除外する扱い。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>product:batch deleteProductRequest</code></td><td>削除済み商品・商品規格に対応する入荷通知リクエストを論理削除する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-入荷通知キャンセルを実行する-product-batch-deleteProductRequest">入荷通知キャンセルを実行する（<code>product:batch deleteProductRequest</code>）</h3>
+          <ol><li>未削除の入荷通知リクエストのうち、対応する商品規格が削除済み、または商品が存在しない・削除済みのものを対象に、削除日時を一括設定する。</li><li>対象が無い場合は更新件数が0件のまま完了する。</li></ol>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象</td><td>削除日時が未設定の入荷通知リクエスト。</td></tr><tr><td>削除条件</td><td>商品規格が削除フラグ済み、または紐づく商品が存在しない、または商品が削除フラグ済みのいずれか。</td></tr><tr><td>反映</td><td>対象の入荷通知リクエストへ実行時点の日時を削除日時として設定する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-API・バッチ結果">API・バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。引数は取らない。</td></tr><tr><td>実行条件</td><td>削除済み商品・商品規格に紐づく未削除の入荷通知リクエストが存在すること。</td></tr><tr><td>成功結果</td><td>対象の入荷通知リクエストに削除日時が設定される。</td></tr><tr><td>失敗結果</td><td>一括更新が失敗した場合は更新が反映されない。</td></tr><tr><td>再実行時</td><td>削除日時が未設定の行のみを対象とするため、すでに論理削除済みの行は再対象にならず重複削除は起きない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>入荷通知リクエストの削除日時の設定（一括更新）。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>入荷通知リクエストの論理削除。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>多重実行</td><td>ロックは持たない。一括更新は削除日時未設定の行のみを対象とするため重複削除は起きない。</td></tr><tr><td>途中失敗・再実行</td><td>一括更新は単一の更新として実行する。再実行しても残った対象のみが処理される。</td></tr><tr><td>参照時点</td><td>実行時点の商品・商品規格の削除状態を対象とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_product_request</code></td><td><code>deleted_at</code></td><td>削除日時。未設定の行を対象に設定する。現行・移行先で同名。</td></tr><tr><td><code>dtb_product_request</code></td><td><code>product_class_id</code></td><td>商品規格との結合キー。現行・移行先で同名。</td></tr><tr><td><code>dtb_product_class</code></td><td><code>visible</code>（現行 <code>del_flg</code>）</td><td>移行先は表示可否の真偽値で削除相当を表す。</td></tr><tr><td><code>dtb_product</code></td><td><code>id</code>・<code>product_status_id</code>（現行 <code>product_id</code>・<code>del_flg</code>）</td><td>移行先は商品が存在しない、または公開ステータスで公開対象外であることを条件とする。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_product / dtb_product_class / dtb_product_request</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>対象なし</td><td>更新件数0件で完了する。</td></tr><tr><td>一括更新時の例外</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>パスワード</li><li>トークン・接続秘密値</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-b02-02-b02-02_batch_product_product_arrival_notification_cancel-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>ロックファイルによる多重起動防止は持たない。論理削除は削除日時未設定の行を対象とする一括更新で行う。本バッチは楽観ロック・悲観ロックの対象を持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b02-02-b02-02_batch_product_product_arrival_notification_cancel -->
+</section>
+      <section class="sheet-panel" id="sheet-5">
+        <div class="sheet-heading">
+          <h2>期間別入庫数集計</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>商品管理バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-06-27</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-10-15</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B02-03</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>期間別入庫数集計</dd></div>
+            <div class="kv"><dt>概要</dt><dd>入庫数（前日〜365日間）を集計する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-5-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">入庫数（前日〜365日間）を集計する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">現行システムをベースに下記カスタマイズを行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">集計対象について</h4>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>支店と統合するため、支店ごとの入庫数も集計する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>閉店した店舗は集計の対象外とする</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-5-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>定時処理で実行されて日付から下記期間範囲ごとの商品入庫数を本店を含む店舗ごとに行う</span></div>
+            <p class="doc-p" style="--lv:1">昨日の入庫数,3日間の入庫数,1週間の入庫数,1か月の入庫数,90日間の入庫数,180日間の入庫数,365日間の入庫数</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>閉店した店舗は集計の対象外とする</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>本店の支店IDは0として処理する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日 0:00</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>商品の入庫ステータスが入庫もしくマスタ更新の状況で366日の入庫数を集計</span></div>
+            <p class="doc-p" style="--lv:1">閉店した店舗は集計の対象外とする</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">在庫履歴データ.入庫日時　366日間の期間内</p>
+            <p class="doc-p" style="--lv:0">在庫履歴データ.入庫ステータス　入庫もしくはマスター更新</p>
+            <p class="doc-p" style="--lv:0">店舗情報.店舗閉店管理　店舗閉店管理が閉店でない</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:0">商品規格ID,支店ID,昨日の入庫数,3日間の入庫数,1週間の入庫数,1か月の入庫数,90日間の入庫数,180日間の入庫数,365日間の入庫数</p>
+            <p class="doc-p" style="--lv:0">以上の情報を入庫数集計データへ更新を行う</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      <!-- function-design-embed:start b02-03-b02-03_batch_product_product_storage_period_summary -->
+      <section class="function-design-embed" id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary" data-source="functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B02-03 期間別入庫数集計 / バッチ 商品管理 — 期間別入庫数集計</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-概要">概要</h2>
+          <p>在庫履歴から入庫数を期間別（前日・直近3日・週・2週・3週・月・90日・180日・365日）に集計し、商品規格サブの入庫数列へ反映するバッチである。コマンドライン（コンソールコマンド）から実行する。入庫数は在庫履歴のうち在庫変動区分が入庫・マスタ更新のもので、在庫が増加した分を対象に集計する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの商品バッチ（入庫数集計処理）、在庫履歴・商品規格サブを扱うリポジトリを正とする。本機能のカスタマイズ区分はカスタマイズであり、現行挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>在庫履歴から期間別入庫数を集計する条件</li><li>商品規格サブの入庫数列への反映</li><li>対象が無い場合の挙動</li></ul>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能・運用の設計を正とする。</p>
+          <ul><li>在庫履歴の作成（入庫処理・在庫反映処理を正とする）</li><li>商品一覧画面での入庫数の表示（商品管理画面の設計を正とする）</li><li>期間別販売数集計（別バッチの設計を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動は現行（pf-eccube3）を踏襲し、DB関連の記述は移行先（ec-cube-enterprise）を正とする。在庫履歴・入庫数の保持構造が次のとおり異なる。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>在庫履歴の商品規格参照</td><td><code>dtb_stock_history.product_class_id</code>（商品規格を直接保持）</td><td><code>dtb_stock_history.product_stock_id</code> 経由で在庫 <code>dtb_product_stock.product_class_id</code> を参照（商品規格IDを直接持たない）</td></tr><tr><td>在庫変動区分</td><td><code>dtb_stock_history.stock_change_type_id</code></td><td><code>dtb_stock_history.stock_change_type_detail_id</code> と履歴登録元 <code>history_source_type</code> に分かれる</td></tr><tr><td>入庫数の反映先</td><td>商品規格サブ <code>dtb_product_sub_class</code> の入庫数列</td><td>専用表 <code>dtb_stock_up_quantity</code> の <code>stock_up_quantity_01</code>〜<code>stock_up_quantity_10</code>（列名は同じだが補助表が分離）</td></tr></tbody></table></div>
+          <p>在庫増加分（旧在庫を上回る差分）を入庫とみなす集計ロジックは現行を踏襲する。移行先の在庫変動区分による対象判定の対応はec-cube-enterprise実装で要確認とする。</p>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>入庫数</td><td>在庫履歴で在庫が増加した分を期間別に合計した値。</td></tr><tr><td>在庫変動区分</td><td>在庫履歴の変動理由の区分。入庫・マスタ更新などがある。</td></tr><tr><td>商品規格サブ</td><td>商品規格ごとの集計値（販売数・入庫数など）を保持する拡張テーブル。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>product:batch updateProductSummaryForStockUp</code></td><td>在庫履歴から期間別の入庫数を集計し、商品規格サブの入庫数列を更新する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-期間別入庫数集計を実行する-product-batch-updateProductSummaryForStockUp">期間別入庫数集計を実行する（<code>product:batch updateProductSummaryForStockUp</code>）</h3>
+          <ol><li>実行時間制限を解除し、SQLロガーを無効化する。</li><li>在庫履歴を商品規格単位で集計し、期間別入庫数（前日・3日・週・2週・3週・月・90日・180日・365日）の一覧を取得する。</li><li>対象が無い場合は更新を行わずに終了する。</li><li>集計結果の行ごとに、商品規格サブの入庫数列を更新する。</li><li>100件ごとに変更を反映しキャッシュをクリアしながら処理する。</li><li>残りの変更を反映して終了する。</li></ol>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>集計単位</td><td>商品規格単位（商品規格ID）。</td></tr><tr><td>集計値</td><td>在庫履歴で在庫が増加分（在庫が旧在庫を上回る分）の合計。</td></tr><tr><td>対象区分</td><td>在庫変動区分が入庫・マスタ更新の在庫履歴。</td></tr><tr><td>反映先</td><td>商品規格サブの入庫数列（前日・3日・週・月・90日・180日・365日・2週・3週）。当日相当の列は0で初期化する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象データ</td><td>作成日が当日から366日前以降で、在庫変動区分が入庫・マスタ更新の在庫履歴。</td></tr><tr><td>集計値</td><td>在庫が旧在庫を上回る場合にその差分を入庫数として加算する。</td></tr><tr><td>集計期間</td><td>当日基準で前日・直近3日・7日・14日・21日・28日・90日・180日・365日の各区間。</td></tr><tr><td>一意化</td><td>商品規格IDでグループ化する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-API・バッチ結果">API・バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。引数は取らない。</td></tr><tr><td>実行条件</td><td>集計対象期間内に入庫・マスタ更新の在庫履歴が存在すること。</td></tr><tr><td>成功結果</td><td>商品規格サブの入庫数列が最新の集計値で更新される。</td></tr><tr><td>失敗結果</td><td>途中失敗時は反映済みの行のみ更新が残る。</td></tr><tr><td>再実行時</td><td>実行時点のデータで再集計し、対象商品規格の入庫数列を上書きする。重複加算は起きない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>商品規格サブの入庫数列の更新。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。途中で止まった場合は反映済みの行のみ更新が残る。</td></tr><tr><td>副作用</td><td>商品規格サブの更新。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>多重実行</td><td>ロックは持たない。同時実行時は同一行を上書きするため最後の更新値が残る。</td></tr><tr><td>途中失敗・再実行</td><td>上書き更新のため再実行で正しい集計値に収束する。部分反映は次回実行で回収される。</td></tr><tr><td>参照時点</td><td>実行時点の在庫履歴を対象とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_stock_history</code></td><td><code>stock</code>・<code>old_stock</code>、商品規格は <code>product_stock_id</code> 経由（現行 <code>product_class_id</code> を直接保持）</td><td>集計単位と入庫数（在庫増加分）の算出に使用する。</td></tr><tr><td><code>dtb_stock_history</code></td><td><code>create_date</code>・<code>stock_change_type_detail_id</code>（現行 <code>stock_change_type_id</code>）</td><td>期間判定・対象区分判定に使用する。</td></tr><tr><td><code>dtb_stock_up_quantity</code>（現行は商品規格サブ <code>dtb_product_sub_class</code>）</td><td><code>stock_up_quantity_01</code>〜<code>stock_up_quantity_10</code></td><td>期間別入庫数の反映先。<code>stock_up_quantity_01</code>は0で初期化する。移行先では専用表に分離する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product_sub_class / dtb_stock_history / dtb_stock_up_quantity</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>対象なし</td><td>更新を行わず完了する。</td></tr><tr><td>処理中の例外</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>パスワード</li><li>トークン・接続秘密値</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-b02-03-b02-03_batch_product_product_storage_period_summary-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>ロックファイルによる多重起動防止は持たない。長時間処理に備えて実行時間制限を解除し、100件ごとに変更を反映しキャッシュをクリアしてメモリを管理する。本バッチは楽観ロック・悲観ロックの対象を持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b02-03-b02-03_batch_product_product_storage_period_summary -->
+</section>
+      <section class="sheet-panel" id="sheet-6">
+        <div class="sheet-heading">
+          <h2>商品部門未設定チェック</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>商品管理バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-06-27</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-10-22</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B02-04</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>商品部門未設定チェック</dd></div>
+            <div class="kv"><dt>概要</dt><dd>商品の公開ステータスが公開なのに、部門が未設定の商品があった場合、管理者にメールで通知する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-6-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-6-shapes">図形・テキストボックス内テキスト（1件）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">商品の公開ステータスが公開なのに、部門が未設定の商品があった場合、管理者にメールで通知する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">現行システムから変更なし(現行踏襲)</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-6-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>商品の公開ステータスが公開であり部門が未設定の商品データの有無を確認し、該当する商品データがある場合は</span></div>
+            <p class="doc-p" style="--lv:1">「部門未設定商品通知メール」という件名で管理者にメールで通知され、本文には検索に該当した「商品名,商品コード」の一覧が記載される。</p>
+            <p class="doc-p" style="--lv:1">（一覧は最大10,000件まで取得し、それ以降は省略)</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日 4:00</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　メール(管理者宛)</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+          <section class="shape-block" id="sheet-6-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（1件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="B6"><td class="shape-ref">B6</td><td>部門の登録が必須になったため、不要</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      <!-- function-design-embed:start b02-04-b02-04_batch_product_product_no_section_check -->
+      <section class="function-design-embed" id="function-design-b02-04-b02-04_batch_product_product_no_section_check" data-source="functions/pf-eccube3/b02-04_batch_product_product_no_section_check.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b02-04_batch_product_product_no_section_check.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B02-04 商品部門未設定チェック / バッチ 商品管理 — 商品部門未設定チェック</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-概要">概要</h2>
+          <p>公開中であるにもかかわらず部門が未設定の商品を抽出し、該当があれば管理者へアラートメールを送信するバッチである。コマンドライン（コンソールコマンド）から実行する。商品データを大量件数でも処理できるよう一定件数ずつ繰り返して確認する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの商品バッチ（部門未設定チェック処理）、部門未設定商品を抽出するリポジトリ、アラートメール送信処理を正とする。本機能のカスタマイズ区分は現行踏襲であり、現行挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>部門未設定商品の抽出条件と繰り返し処理</li><li>該当時のアラートメール送信</li><li>該当が無い場合の挙動</li></ul>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>部門の登録・編集（商品管理の部門機能を正とする）</li><li>アラートメールの本文・宛先設定（メール設定・テンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動は現行（pf-eccube3）を踏襲し、DB関連の記述は移行先（ec-cube-enterprise）を正とする。公開判定と部門参照の保持先が次のとおり対応する。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>公開中の判定</td><td>商品の公開ステータス</td><td><code>dtb_product.product_status_id</code>（公開ステータスマスタ参照）</td></tr><tr><td>部門の参照</td><td>商品（規格）の部門紐付け</td><td><code>dtb_product_class.section_id</code>（部門マスタ <code>mtb_section</code> 参照）。未設定の行を抽出対象とする</td></tr></tbody></table></div>
+          <p>公開中かつ部門未設定の商品規格を抽出する判定ロジックは現行を踏襲する。</p>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>部門</td><td>商品に設定する区分。未設定だと集計・運用に支障が出る。</td></tr><tr><td>公開中</td><td>商品の公開ステータスが公開の状態。</td></tr><tr><td>商品規格</td><td>商品に紐づく規格単位。抽出はこの単位で行う。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>product:batch checkNoSectionProduct</code></td><td>公開中かつ部門未設定の商品を抽出し、該当があれば管理者へアラートメールを送信する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-部門未設定チェックを実行する-product-batch-checkNoSectionProduct">部門未設定チェックを実行する（<code>product:batch checkNoSectionProduct</code>）</h3>
+          <ol><li>メール送信用の経路を準備する。</li><li>部門未設定の商品規格の件数を取得する。</li><li>件数の範囲で、一定件数（10000件）ずつ部門未設定の商品規格を取得することを繰り返す。</li><li>取得した部門未設定の商品規格がある場合は、その一覧で管理者へアラートメールを送信する。</li><li>全件を処理し終えたら完了する。</li></ol>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>公開中であって部門が未設定の商品規格。</td></tr><tr><td>取得単位</td><td>商品規格単位。一度に最大10000件ずつ取得して繰り返す。</td></tr><tr><td>送信判定</td><td>取得した一覧が空でない場合にアラートメールを送信する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>通知条件</td><td>公開中かつ部門未設定の商品が存在する場合にのみ通知する。</td></tr><tr><td>大量件数対応</td><td>件数が多い場合も一定件数ずつ繰り返して処理する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>対象抽出時点</td><td>バッチ実行時点で抽出条件に一致するデータを対象にする。実行後に変更されたデータは次回実行の対象判定に従う。</td></tr><tr><td>途中失敗・再実行</td><td>途中失敗時に確定済みの副作用が残るかはAPI・バッチ結果およびエラー処理の節を正とする。未処理条件に残るデータは再実行時に再抽出される。</td></tr><tr><td>同時実行</td><td>ロックファイルや行ロックの有無は排他制御・トランザクションの節を正とする。明示ロックが無い場合、多重実行時の重複検知・通知抑止は保証しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。実行条件は対象コマンドの指定。成功時は該当商品があればアラートメールを送信し、無ければメールを送らず完了する。失敗時の再実行は同一コマンドの再起動で行う（冪等な抽出であり、再実行で再通知し得る）。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>開始・完了のコンソール出力。該当時はアラートメール送信。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>アラートメール送信。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_product</code></td><td><code>product_status_id</code>（公開ステータス）</td><td>公開中の商品を対象とする。</td></tr><tr><td><code>dtb_product_class</code></td><td><code>section_id</code>（部門マスタ <code>mtb_section</code> 参照）</td><td>部門未設定の商品規格を抽出する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_product / dtb_product_class / mtb_section</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する（コンソールに不正コマンドの旨を出力）。</td></tr><tr><td>抽出・送信時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>メール送信の宛先・認証情報の機微値</li></ul>
+          <hr>
+          <h2 id="function-design-b02-04-b02-04_batch_product_product_no_section_check-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは抽出と通知が主であり、楽観ロック・悲観ロックの対象は持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b02-04-b02-04_batch_product_product_no_section_check -->
+</section>
+      <section class="sheet-panel" id="sheet-7">
+        <div class="sheet-heading">
+          <h2>お気に入り商品セール通知</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>商品管理バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-06-27</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>盛田</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2026-02-04</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B02-05</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>お気に入り商品セール通知</dd></div>
+            <div class="kv"><dt>概要</dt><dd>お気に入り登録商品がセール中になった場合に会員にメールを送信する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-7-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">会員がお気に入りに登録した商品がセール中の場合、お知らせメールを送信する。</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">現行システムから変更なし(現行踏襲)</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-7-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>会員がお気に入りに登録した商品のうち、セールフラグが立っている商品の一覧を取得する。</span></div>
+            <p class="doc-p" style="--lv:1">(セール開始日に送信ではなく、セール商品がある場合は毎日送信する)</p>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">★</span><span>仮会員と退会済み会員は対象外とする</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>会員ごとに送り先、セール商品をまとめる</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>会員住所が日本の会員には【お気に入り/日】お気に入り商品セール通知メールを送る。</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>会員住所が国外の会員には【お気に入り/英】お気に入り商品セール通知メールを送る。</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎週水曜17:30</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　メール(該当ユーザー宛)</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <p class="doc-p" style="--lv:1">お気に入り登録商品の中で、セールフラグの立っているものを取得</p>
+            <p class="doc-p" style="--lv:1">お気に入り登録している会員の会員ステータスが仮会員・退会済み会員のいずれでもない</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">お気に入り登録商品.セールフラグ　セールフラグが立っている</p>
+            <p class="doc-p" style="--lv:0">会員情報.会員ステータス　仮会員ではない かつ 退会会員ではない</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <p class="doc-p" style="--lv:1">取得したセール中のお気に入り登録商品を会員ごとに纏め、会員の住所が日本か海外かを見て、送信する言語を選択</p>
+            <p class="doc-p" style="--lv:1">セール中のお気に入り商品の一覧を会員にメール送信</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      <!-- function-design-embed:start b02-05-b02-05_batch_product_product_favorite_sale_notification -->
+      <section class="function-design-embed" id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification" data-source="functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B02-05 お気に入り商品セール通知 / バッチ 商品管理 — お気に入り商品セール通知</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-概要">概要</h2>
+          <p>会員がお気に入り登録した商品がセール中になっている場合に、対象会員へセール通知メールを送信するバッチである。コマンドライン（コンソールコマンド）から実行する。セール中のお気に入り商品を会員ごとにまとめ、会員1人につき対象商品をまとめた通知メールを送信する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの商品バッチ（お気に入り商品セール通知処理）、セール中のお気に入り商品を抽出するリポジトリ、セール通知メール送信処理を正とする。本機能のカスタマイズ区分は現行踏襲であり、現行挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>セール中のお気に入り商品の抽出と会員ごとの集約</li><li>会員ごとの通知メール送信</li><li>言語別商品名の扱い</li></ul>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>お気に入りの登録・解除（お気に入り機能を正とする）</li><li>セール価格の設定（商品価格管理を正とする）</li><li>通知メールの本文・件名（メールテンプレート管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動は現行（pf-eccube3）を踏襲し、DB関連の記述は移行先（ec-cube-enterprise）を正とする。お気に入りと会員（選手情報）の保持先は次のとおり。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>お気に入り商品</td><td>商品・言語・選手情報の組を保持するお気に入り表</td><td><code>dtb_favorite_product</code>（<code>product_id</code>・<code>player_id</code>・<code>language_id</code>）。同一スキーマ</td></tr><tr><td>会員（選手情報）</td><td>選手情報テーブル</td><td><code>dtb_player</code>（氏名 <code>first_name_jp</code>・<code>last_name_jp</code>、メール <code>email</code>）</td></tr><tr><td>通知宛先の都道府県</td><td>会員の住所情報から取得</td><td><code>dtb_player</code> に都道府県の直接列は無く、住所参照元はec-cube-enterprise実装で要確認</td></tr></tbody></table></div>
+          <p>セール中のお気に入り商品を会員単位でまとめ1通で通知する集約ロジックは現行を踏襲する。</p>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>お気に入り商品</td><td>会員が登録した商品。商品と言語の組で保持する。</td></tr><tr><td>セール中</td><td>商品がセール対象になっている状態。</td></tr><tr><td>会員</td><td>お気に入りを登録した顧客。選手情報で識別する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>product:batch saleNotification</code></td><td>セール中のお気に入り商品を会員ごとにまとめ、対象会員へセール通知メールを送信する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-お気に入り商品セール通知を実行する-product-batch-saleNotification">お気に入り商品セール通知を実行する（<code>product:batch saleNotification</code>）</h3>
+          <ol><li>セール中のお気に入り商品の情報を取得する。</li><li>会員（選手情報）ごとに、宛先（氏名・メール・都道府県）と対象商品の一覧をまとめる。</li><li>一定件数ごとに処理メモリを解放しながら集約する。</li><li>メール送信用の経路を準備する。</li><li>会員ごとに、まとめた対象商品でセール通知メールを送信する。</li></ol>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>抽出対象</td><td>セール中のお気に入り商品。</td></tr><tr><td>集約単位</td><td>会員（選手情報）単位。会員ごとに対象商品をまとめる。</td></tr><tr><td>商品情報</td><td>商品ID・言語コード・商品名・英語商品名を保持する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>通知単位</td><td>会員1人につき、その会員のセール中お気に入り商品をまとめて1通で通知する。</td></tr><tr><td>言語別</td><td>お気に入りは商品と言語の組で保持し、商品名は日本語・英語の双方を保持する。</td></tr><tr><td>大量件数対応</td><td>一定件数ごとに処理メモリを解放しながら集約する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>対象抽出時点</td><td>バッチ実行時点で抽出条件に一致するデータを対象にする。実行後に変更されたデータは次回実行の対象判定に従う。</td></tr><tr><td>途中失敗・再実行</td><td>途中失敗時に確定済みの副作用が残るかはAPI・バッチ結果およびエラー処理の節を正とする。未処理条件に残るデータは再実行時に再抽出される。</td></tr><tr><td>同時実行</td><td>ロックファイルや行ロックの有無は排他制御・トランザクションの節を正とする。明示ロックが無い場合、多重実行時の重複検知・通知抑止は保証しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-API-バッチ結果">API/バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>バッチ</td><td>入力はコマンド名。実行条件は対象コマンドの指定。成功時はセール中お気に入りを持つ会員へ通知メールを送信し、対象が無ければメールを送らず完了する。失敗時の再実行は同一コマンドの再起動で行う（再実行で再通知し得る）。</td></tr><tr><td>API</td><td>本バッチではAPIを呼び出さない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>開始・完了のコンソール出力。対象会員へのセール通知メール送信。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>セール通知メール送信。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_favorite_product</code></td><td><code>product_id</code>・<code>language_id</code>・<code>player_id</code></td><td>セール中の抽出と会員ごとの集約に使用する。</td></tr><tr><td><code>dtb_player</code></td><td><code>first_name_jp</code>・<code>last_name_jp</code>・<code>email</code></td><td>通知メールの宛先・本文に使用する。都道府県の住所参照元はec-cube-enterprise実装で要確認。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_favorite_product / dtb_player</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する（コンソールに不正コマンドの旨を出力）。</td></tr><tr><td>抽出・送信時のエラー</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>会員のメールアドレス等の機微値をログに残さない</li><li>メール送信の認証情報</li></ul>
+          <hr>
+          <h2 id="function-design-b02-05-b02-05_batch_product_product_favorite_sale_notification-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本バッチは抽出と通知が主であり、楽観ロック・悲観ロックの対象は持たない。集約処理中は一定件数ごとに処理メモリを解放する。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b02-05-b02-05_batch_product_product_favorite_sale_notification -->
+</section>
+      <section class="sheet-panel" id="sheet-8">
+        <div class="sheet-heading">
+          <h2>在庫初期化</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>商品管理バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-06-27</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>高久</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-19</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B02-06</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>在庫初期化</dd></div>
+            <div class="kv"><dt>概要</dt><dd>店舗登録時、初期在庫データ作成を行う</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-8-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">概要</h4>
+            <p class="doc-p" style="--lv:1">店舗登録時、初期在庫データ作成を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:0">機能</h4>
+            <p class="doc-p" style="--lv:1">現行システムから変更なし(現行踏襲)</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-8-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>店舗登録時、TC大阪(支店ID:1)の商品規格在庫全データを新規店舗用にカスタマイズした上で登録(複製)するバッチ</span></div>
+            <div class="doc-bullet" style="--lv:0"><span class="doc-marker">・</span><span>複製範囲は「商品規格コード」および「拡張タイプ」のみ。それ以外は初期値(在庫数0など)が設定される。</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　-　実行タイミング　-</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      <!-- function-design-embed:start b02-06-b02-06_batch_product_product_stock_initialize -->
+      <section class="function-design-embed" id="function-design-b02-06-b02-06_batch_product_product_stock_initialize" data-source="functions/pf-eccube3/b02-06_batch_product_product_stock_initialize.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b02-06_batch_product_product_stock_initialize.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B02-06 在庫初期化 / バッチ 商品管理 — 在庫初期化</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-概要">概要</h2>
+          <p>指定した受注日の範囲の受注をたどり、各受注詳細の商品規格について、受注分の在庫減算を表す在庫履歴を作成するバッチである。コマンドライン（コンソールコマンド）から実行する。在庫履歴が整っていない時点の受注について、受注前の最新在庫を基準に受注後在庫を算出し、初期の在庫履歴を作成する位置づけである。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの商品バッチ（在庫履歴作成処理）、受注・受注サブ・在庫履歴を扱うリポジトリを正とする。本機能のカスタマイズ区分はカスタマイズであり、現行挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンドと開始日・終了日の引数）</li><li>受注日範囲の受注から在庫履歴を作成する条件</li><li>すでに登録済みの在庫履歴の重複登録防止</li><li>引数不足・対象が無い場合の挙動</li></ul>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能・運用の設計を正とする。</p>
+          <ul><li>受注・受注詳細そのものの作成（受注処理を正とする）</li><li>通常の入庫・在庫反映による在庫履歴の作成（入庫処理・在庫反映処理を正とする）</li><li>期間別入庫数の集計（別バッチの設計を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動は現行（pf-eccube3）を踏襲し、DB関連の記述は移行先（ec-cube-enterprise）を正とする。受注詳細と在庫履歴のスキーマが次のとおり異なる。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>受注詳細テーブル</td><td><code>dtb_order_detail</code></td><td><code>dtb_order_item</code>（列 <code>product_class_id</code>・<code>quantity</code>・<code>price</code> は同名）</td></tr><tr><td>在庫履歴の商品規格参照</td><td><code>dtb_stock_history.product_class_id</code>（直接保持）</td><td><code>dtb_stock_history.product_stock_id</code> 経由で在庫 <code>dtb_product_stock.product_class_id</code> を参照</td></tr><tr><td>在庫変動区分</td><td><code>dtb_stock_history.stock_change_type_id</code>（受注）</td><td><code>dtb_stock_history.stock_change_type_detail_id</code> と <code>history_source_type</code> に分かれる</td></tr><tr><td>メモ列</td><td><code>dtb_stock_history.memo</code>（注文番号・価格を含む文言）</td><td><code>dtb_stock_history.stock_change_reason</code>（在庫変動理由(備考)）</td></tr></tbody></table></div>
+          <p>重複登録防止に用いるメモ文言の一致判定は、移行先では <code>stock_change_reason</code> を対象とする。在庫減算の区分への対応はec-cube-enterprise実装で要確認とする。</p>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>在庫履歴</td><td>商品規格ごとの在庫変動を記録するレコード。変動前後の在庫・変動区分・メモを持つ。</td></tr><tr><td>受注分の在庫減算</td><td>受注により在庫が減ったことを表す在庫変動。変動区分は受注。</td></tr><tr><td>最新在庫履歴</td><td>対象受注の受注日より前で最も新しい在庫履歴。基準在庫として参照する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>product:batch insertStockHistory &lt;開始日&gt; &lt;終了日&gt;</code></td><td>指定した受注日範囲の受注をたどり、受注分の在庫減算の在庫履歴を作成する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。開始日・終了日の2引数が無い場合は、その旨を出力して処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-在庫初期化を実行する-product-batch-insertStockHistory-開始日-終了日">在庫初期化を実行する（<code>product:batch insertStockHistory &lt;開始日&gt; &lt;終了日&gt;</code>）</h3>
+          <ol><li>引数が2つ未満の場合は、開始日と終了日の指定を促すメッセージを出力して終了する。</li><li>引数の開始日・終了日を日時として解釈し、その範囲の受注を受注日の昇順で取得する。</li><li>受注ごとに受注サブを取得し、受注詳細を順にたどる。</li><li>受注詳細の商品規格について、受注日より前の最新在庫履歴を取得する。</li><li>最新在庫履歴が無い商品規格は処理をスキップする。</li><li>注文番号と価格を含むメモを生成し、同じ商品規格・同じメモの在庫履歴がすでに登録済みなら、その旨を出力して次へ進む。</li><li>未登録の場合、最新在庫を基準に受注数量を減算した在庫履歴を作成し、登録結果を出力して反映する。</li></ol>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>対象</td><td>引数の開始日・終了日の受注日範囲に含まれる受注の受注詳細。</td></tr><tr><td>基準在庫</td><td>受注日より前の最新在庫履歴の在庫。これが無い商品規格はスキップする。</td></tr><tr><td>受注後在庫</td><td>基準在庫から受注詳細の数量を減算した値。</td></tr><tr><td>変動区分</td><td>受注（在庫減算）として登録する。</td></tr><tr><td>メモ</td><td>注文番号と価格を含む受注減算用の文言を設定する。</td></tr><tr><td>重複防止</td><td>同じ商品規格でメモに同一文言を含む在庫履歴が存在する場合は登録しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-API・バッチ結果">API・バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名と開始日・終了日の2引数。</td></tr><tr><td>実行条件</td><td>開始日・終了日の2引数が指定され、範囲内に受注が存在し、対象商品規格に基準となる最新在庫履歴があること。</td></tr><tr><td>成功結果</td><td>未登録の受注詳細について受注分の在庫減算の在庫履歴が作成される。</td></tr><tr><td>失敗結果</td><td>引数不足時はメッセージを出力して何もしない。途中失敗時は登録済みの行のみ残る。</td></tr><tr><td>再実行時</td><td>商品規格とメモ文言による重複判定で、すでに登録済みの在庫履歴は再登録しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名、開始日、終了日。</td></tr><tr><td>成功時出力</td><td>受注分の在庫減算の在庫履歴の作成。処理経過のコンソール出力（受注ID・受注詳細ID・商品名）。</td></tr><tr><td>失敗時出力</td><td>引数不足メッセージ、または例外時のエラーメッセージのコンソール出力。</td></tr><tr><td>副作用</td><td>在庫履歴の追加。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>多重実行</td><td>ロックは持たない。重複登録は商品規格とメモ文言の一致判定で防ぐ。</td></tr><tr><td>途中失敗・再実行</td><td>在庫履歴は受注詳細ごとに反映する。再実行しても登録済みの行は重複判定でスキップされ、未登録の行のみが回収される。</td></tr><tr><td>参照時点</td><td>基準在庫は受注日より前の最新在庫履歴を参照する。実行順は受注日の昇順。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_order</code></td><td><code>order_date</code></td><td>引数の範囲による受注抽出と基準在庫の判定に使用する。</td></tr><tr><td><code>dtb_order_item</code>（現行 <code>dtb_order_detail</code>）</td><td><code>product_class_id</code>・<code>quantity</code>・<code>price</code></td><td>対象商品規格・減算数量・メモの価格に使用する。</td></tr><tr><td><code>dtb_stock_history</code></td><td><code>stock</code>・<code>old_stock</code>・<code>sell_price</code>、商品規格は <code>product_stock_id</code> 経由（現行 <code>product_class_id</code> を直接保持）、<code>stock_change_type_detail_id</code>（現行 <code>stock_change_type_id</code>）、<code>stock_change_reason</code>（現行 <code>memo</code>）</td><td>作成する在庫履歴の各値。変動区分は受注（在庫減算）。</td></tr><tr><td><code>dtb_stock_history</code></td><td><code>create_date</code></td><td>受注日を作成日として登録する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order / dtb_order_detail / dtb_order_item / dtb_stock_history</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>開始日・終了日の引数不足</td><td>指定を促すメッセージを出力して終了する。</td></tr><tr><td>基準在庫が無い商品規格</td><td>当該商品規格をスキップする。</td></tr><tr><td>重複登録</td><td>すでに登録済みの旨を出力して次へ進む。</td></tr><tr><td>処理中の例外</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>引数不足</td><td>開始日・終了日の指定を促すメッセージのコンソール出力。</td></tr><tr><td>登録済み検知</td><td>受注ID・受注詳細ID・商品名と登録済みの旨のコンソール出力。</td></tr><tr><td>在庫履歴登録</td><td>受注ID・受注詳細ID・商品名のコンソール出力。</td></tr><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>パスワード</li><li>トークン・接続秘密値</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-b02-06-b02-06_batch_product_product_stock_initialize-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>ロックファイルによる多重起動防止は持たない。在庫履歴は受注詳細ごとに作成して反映する。重複登録は商品規格とメモ文言の一致判定で防ぐ。本バッチは楽観ロック・悲観ロックの対象を持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b02-06-b02-06_batch_product_product_stock_initialize -->
+</section>
+      <section class="sheet-panel" id="sheet-9">
+        <div class="sheet-heading">
+          <h2>ユニサーチフィード作成</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>ユニサーチ</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-11</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-11</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B02-08</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>ユニサーチフィード作成</dd></div>
+            <div class="kv"><dt>概要</dt><dd>ユニサーチ向けのフィードファイルを出力する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-9-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>フィードファイル内のカテゴリ項目をリニューアルのカテゴリに合わせる</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>買取でユニサーチの検索ができるよう、項目を追加する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>支店でユニサーチの検索ができるよう、項目を追加する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>リニューアルで新規に追加になる項目を追加する</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-9-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>詳細な連携仕様はユニサーチから提供されているフィード仕様書を参照</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>商品情報を記載したTSVファイル（gzに固める）、出力が終わったことを示すdoneファイルを指定のディレクトリ以下に出力</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>初期化処理</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>前回作成したファイルを削除</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>プロセスファイルを作成し、二重でファイルを作成するのを防ぐ</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ユニサーチに連携する対象の商品を取得する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>連携内容はユニサーチ要件質問票も参照</span></div>
+            <p class="doc-p" style="--lv:3">https://docs.google.com/spreadsheets/d/11HCPre5VJPVAQgVFKQptEEuRphYVsKhYVDkibxgGphg/edit?gid=785071458#gid=785071458</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>取得条件は以下の通り</span></div>
+            <div class="doc-bullet" style="--lv:4"><span class="doc-marker">・</span><span>販売価格が1円以上</span></div>
+            <div class="doc-bullet" style="--lv:4"><span class="doc-marker">・</span><span>（高額商品でない場合）カード状態が同一商品、同一言語の中で最も状態がよいもの</span></div>
+            <p class="doc-p" style="--lv:5">→NMのみ送信される　※在庫数はNM以外も合計して送る</p>
+            <div class="doc-bullet" style="--lv:4"><span class="doc-marker">・</span><span>（高額商品の場合）状態関係なく高額商品コードが設定されているもの</span></div>
+            <div class="doc-bullet" style="--lv:4"><span class="doc-marker">・</span><span>商品、商品規格が削除されていないもの</span></div>
+            <div class="doc-bullet" style="--lv:4"><span class="doc-marker">・</span><span>公開ステータスが公開のもの</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>出力内容は「ユニサーチフィードTSV」シートを参照</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>リニューアルでのカスタマイズポイント</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>Foilについて</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>現行ではFoilはあり、なしをフラグで持つが、リニューアル後は通常（Foilなし）、あり、特殊を持つため、連携内容も通常（Foilなし）、あり、特殊を連携する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>フラグではなくなるので名称変更を行うかどうかは要相談</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>在庫数について</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>現行では本店のみユニサーチ対応を行っているため在庫数は本店ECの在庫数となるが、リニューアル後は支店ごとのECの在庫数を持つ必要がある</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>支店の追加、廃止ごとにユニサーチのフィードの増減があるのは作業漏れの可能性があるため、在庫のカラムにすべての店舗のEC在庫数を連携する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>支店ID:在庫数[区切り文字]支店ID:在庫数の形式で指定可能であれば指定したい</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>（在庫有無のみ検索できればよいので、数量は不要か）</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>週間販売数について</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>本店ECの週間販売数を参照する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>リニューアル後は支店やスマレジの週間販売数も集計するため、本店ECの週間販売数を明示して取得する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>カテゴリについて</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>リニューアル後は現行のカテゴリとは異なり、[フォーマット＞シリーズ＞カードセット]（例: スタンダード＞エルドレインの森＞エルドレインの森ブースターファン）</span></div>
+            <p class="doc-p" style="--lv:4">の形でカテゴリを持つようになるが、現行のロジックと同様商品に紐づくカテゴリを階層で送る</p>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>リニューアル後は[フォーマット＞シリーズ＞カードセット＞レアリティ等]の形でカテゴリを持つが、レアリティ等の部分には実際には商品は紐づかないため</span></div>
+            <p class="doc-p" style="--lv:4">フィードで送るのは[フォーマット＞シリーズ＞カードセット]までとなる</p>
+            <p class="doc-p" style="--lv:4">（検索APIの方でレアリティを指定し、取得したいカテゴリとレアリティで検索可能）</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>カード状態について</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>現行では買取に対応していないためカード状態での検索を行う必要はないが、リニューアル後は買取に対応するため、買取はNMのみ取得する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>ユニサーチ側の検索対象項目としてカード状態を指定する必要がある</span></div>
+            <p class="doc-p" style="--lv:4">https://docs.google.com/spreadsheets/d/11HCPre5VJPVAQgVFKQptEEuRphYVsKhYVDkibxgGphg/edit?gid=785071458#gid=785071458</p>
+            <p class="doc-p" style="--lv:4">上記ファイル内で、絞り込みパラメータ名列にパラメータ名を指定する、パラメータ名はfq.card_conditionとする</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>支店表示フラグ</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>リニューアルで支店にもユニサーチ対応を行うため、支店表示フラグを追加する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>支店で検索を行う際は、必ず支店表示フラグを公開で指定する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>フレーム</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>リニューアルでフレームを検索条件に追加するため、連携を追加する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>買取金額</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>リニューアルで買取側もユニサーチ対応するため、買取金額を追加する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>買取側で検索を行う際は、必ず買取金額&gt;0円の条件を指定する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>カードテキスト英語</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>カードテキスト英語でキーワード検索できるよう、フィード追加と、ユニサーチ側の設定を行う</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>予約商品フラグ</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>買取では予約商品を表示しないようにする</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>予約商品であるかどうかは、商品に紐づく購入グループの予約商品フラグが立っているかどうかで判定する</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>カードセットリリース日</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>リニューアルのタイミングで新たに発売日順（降順）を実装するため、カードセットのリリース日を連携する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>管理画面から実行</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>リニューアル時、バッチ実行方法が変わる場合は修正が必要</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>二重起動で実行できないときに画面でわかるようにしたい（StepFunctionを活用する）</span></div>
+          </div>
+          <div class="image-block">
+            <figure class="sheet-image">
+              <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA1YAAAK3CAYAAACGM974AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAKpnSURBVHhe7N15eExXHwfw72STTGaykYVIECGx7xSviKBEWxSlRVWtLbXEGlpUlVpKrLUWbVE0aqtdrbVlEUuRkEU2RqJJZCYTMYl5/6jc5t4kEiZaw/fzPPd5bn7nnDszedu+880591yZWqPVg4gMYmVpIS2VWmJiIqpWrSotExEREZERMZEWiIiIiIiI6NkwWBG9QMeOHcPmzZtx7NgxaRMRERERvUIYrIhekD///BOXL19GSkoKLl++jD///FPahYiIiIheEQxWRC+AVqvFiRMnRLUTJ05Aq9WKakRERET0amCwInoB9u3bB51OJ6rpdDrs27dPVCMiIiKiVwODFVEZCwsLQ1JSkrQMAEhKSkJYWJi0TERERERGjsGKqIydP39eWhIpqZ2IiIiIjA+DFVEZ8/T0lJZESmonIiIiIuMj4wOCiQzHBwQTERERvd44Y0VERERERGSgFxasHj3S4UxIOM6EhAMAklX3sPvgUew+eFTa1WBBixZiwvhx0vK/YsWK5Rg/LgCPHj2SNhERERER0WvihQSr1L/SsffIMVy7FYNrt2Kw9/Ax4Em4Slbdk3Y3mLd3Lbi6ukrLL5xer8fVq1fR1tcXFhbPvxSMiIiIiIiMW5kHq7j4ROw5dBTahw/RtkUTdPxfS2So1fj99FlpV6OXmpoKjVqNN95oKW0iIiIiIqLXSJkGq0vXbuDA8VOws1HCp0UzhF66ilMXQtGkbh1YW1lJuz8zlUqF2rW8oFTIRUfv3r0wffq0QvXatbygUqmklykzly9fRpUqVeDk5CRtInrpzJkzB7/99pu0/K9LTU3FxIkTce9e0bPXmzZtwvr166VlIiIiopdame0K+MeFMFy5EYUqlSvBw90Nx89eELW/0bgB7qakIj7pDnxbtkBtr2ffclqv1+Px48cwNTUV1Q/s34/IyBsIGDdeVJfKy8vD48ePYW5uLm16Znq9HuMCxqJ3nz5o2bKVtJleM0XtCvjHH38gKioKmZmZsLGxgZeXF/73v/9Ju/1ruwL++OOP8PDwKPI9lCQtLQ0zZ87E/fv3pU0icrkcgYGBqF69urRJcPToUZw7dw5TpkyBmZmZqC0nJwdz585Fnz594O3tLWojIiIiepmVSbDa9/sJxCcmw9vTAwqFAmGXrki7AAAa1qmFhzk5iIyORW0vT/i2bCHt8lxKG6xSUlLQvn073I6LkzYVyc3NDceOn4SLi4u0CfG3b+OLLz7Hiu9WwsbGRtpMrxlpsNq+fTuSk5NFNQBwdXVF7969RbWyClbLly/HuXPnpGWBVquFqakpypUrJ20SeHl5YdKkSbC0tBTV79+/jzVr1mDs2LGQy+WitnxarRazZ8/Ghx9+WGwoevDgAaZMmYK7d+8Wuk6FChXQvXt3LFmyBJaWloX+gAIALVu2xGeffQY85fO2b98ely9fLjEEFvdZiYiIiJ5HmQSr3QePwqlCeWQ/fIjI6Fhps0jN6tVgbWWFlPt/oVvnDtLmUgkO/gWJCQlCkCoYrHJzczF50kT4tG2Lbt26i8bp9XpkZWlgba2ATCYTtT2r9d9/D12uDsOHfyLUNm7YgEx1JkaNGm3w9cm4FAxWf/zxB0JDQ0XtBTVr1kw0a1RWwUoqNzcXN27cQM2aNQuFqTt37kCn06FKlSqienHKIljl5uZiyZIlqFixIj744ANkZWVhwYIFGD58OFxcXHDt2jVs3rwZ77//Pho2bIjIyEjs2LEDEyZMKPT+C5K+N61Wi0WLFuGTTz5BhQoVAACbN29GlSpVhN+7dAzRi/btt9+iRo0a6Natm6i+f/9+ZGZmolevXoVmcPHk36sVK1Zg4MCBcHR0RFRUFM6fP4/+/fsX+ceH0vjuu+/wxhtvoE6dOjhy5AiaN2/OJe1ERGWgTO6x6ta5A1o2bVRiqAKAmzFxaNm00XOHqqwsDXb++is6dfaXNgEAzMzMMGZsAJYvW4bLly+L2mQyGRQKpcGhJzs7G+EXw9G5U2dRvV///kiIj8eePbtFdXq9REVFSUsiJbWXFVNTUxw7dgynT5+WNmH//v04c+YM9HqD/65SKo8fP8Yvv/wCAOjdu/eTfxcVqF+/PkJDQ2FiYoK9e/eiadOmaNCgAQDA09MT5ubmuHXrluRqJTMxKZP/tL1SNm3ahE2bNolqJ0+exJIlS0S1f0tubi6uXLmCcePG4eTJk9LmV07FihVRvnx54eecnBwsW7YMDg4OqFixInbu3Cnqny82NhYKhUL4I0FkZCS8vLyeO1QBQKVKlSCXy1GuXDm0b98eR48eRWZmprQbERE9oxf27cPVxRndOnd47gBVFL1ej7Vr1qB2nTqoVauWtFng7u6OgIBx+HbBfGRnZ0ubDXb1yhXY29vDXfLXfnNzc4weMxY//fgDEuLjRW30+ijpC0pJ7WVFJpOhU6dOOHPmDHJycoR6WloaEhIS0LlzZ4P/yFBaJiYm6NChAxISEvDRRx+hX79+6NevH3bs2IFt27ahX79+OHfuHLZu3Yr+/fujX79++OijjxAaGoo5c+agX79+GDNmDNLS0qSXNmqPHz8W/W/zIslkskIzo6ampsIX9hdJq9VCpVLh1KlTWL58OYYOHYqePXtiy5Yt6N27N5o1ayYd8kzy8vKQl5cnLb/UypUrh08//RTh4eEoX7483nvvPWkX6PV6nD9/Hp06dYJMJkNOTg4yMjJQv359addC7t+/j/79+6Njx46FjhUrVmDUqFHo2LEjunbtig0bNqBnz574448/pJchIqJnUCZLAfN9t3GzcJ4frKR1ABgxsJ/o59IKuXABi5cEYdWqNaL7moq6xyo7OxuBgZMwatRoeHrWEOqGyszMxNgxo9G1WzcolUqo1Wpcu3YNycnJuBRxEYmJicjIyMDgIUPw7beLilzaQa+egksBg4KCRG1FCQgIEM7Lcingrl27hJkhPPnC+eDBA9ja2gp/4c7JyUFOTk6hewPfe+89dO8uXj6b7/79+5gwYQIePXpUbBjT6/XQ6XSYNWtWkUsBtVotFi9ejGHDhj3zl/n79+9j9uzZ+PzzzwuNlS7r02q1mDZtGpKTk4XPLL2/LC8vD66urpg1a9a/shRw8+bN2Lhxo7QMPLmXc9GiRbCzs5M2CebMmYPjx49Ly4KBAweiX7+n/3dVuhwST5atxsfHlzjWEIcOHcKyZctgb28PT09P1K9fHw0aNIC7u3up/vs4f/58HDlyRFoupGXLlpg2bVqpNyc6cuQIEhMTMXDgwH9lhrOo339JYmNjsW/fPnz22WeQyWQICQnBl19+CZ1OJ+0KSP45uH//Pnbt2oUhQ4ZIu2H37t0oX778M70XIiIqmVEFq6JkZmbi61lfwc3dHaNGjZY2l6k5c2Zj5Xcr0LBhI1StVhW2tnZo2LAhrOXWqFO3LiwsLKBUKqDVZmPwoI8xb/6Cp86s0avjZQlWRX152717Nx4+fIg+ffoUCiF6vR56vR5nz5594V+w09LSMHv2bEyZMqVQOCpJUcEqP0Tm5eUhKysLSqUS1tbWGD16NPbu3SsKcNLfi/T38F+JjIzE7t27MX78+FKFjGdx//59jB07ttht7Yvi7OyMxYsXP/P/Ps9Cr9fjm2++QcuWLdGuXTtp83PZsGED3Nzc0KFD6VZIXL9+HatWrcLUqVOL3JzoRdi8eTMqV66Mtm3bSpuKlJOTg5kzZ0KhUGDq1KnIycnBmjVr0Lt3b6SnpyMyMrLYP4SghGD1xx9/QKvV4s0335Q2ERGRAcr0z3SuLs7CUVxd2maIrVt/RrWq7khNTUXv3n2kzWVu6tTPkZh0B3t/24dly1bg669no1ev9+DfpQvc3d3h4uICa2sFHB0dsWfvbwxV9J/LycnB1atXi11qlZmZifnz5+PBgwfSpjJnaWmJtm3bQi6XIy0tDWPGjBGWBBZ3LF++HHiyjXu7du1EIah79+7YvHkzli9fjpYtW2LdunVYu3btU7d6f9ncv38f9vb2ZR6q8GSXxU2bNuHIkSM4cuQIBg4ciBkzZgg/HzlyBDNmzMDAgQOFnzdt2iQKVTqdrszvw8uf8SztzFJJ7t27hzt37uCNN96QNhVJpVJh1apV+OSTT54aql7EZw8KCsKgQYOwf//+py5T1+v12LVrF1xdXWFtbQ0AOHjwINzd3eHsbPj/h5YvX15YkqzRaLBhwwZoNBppNyIiekZlOmNF9Lp6GWessrOzsWTJElSpUgXvv/8+ZDKZsHNfTEwMTE1NkZubi549e6JixYpISEh4oTNWBRU1AyX1xx9/4NSpU5g6daq0SUQ6+3T//n2MGzcOjx49emmWAhZn27ZtsLS0LLRT3IsgnbXDk80rVCoV+vQp+g9T27Ztw7p166TlYkmXJJZ2GV++du3alfi/d0F6vR4bN26Eh4dHqWaCUlNTMWPGDLzxxhsYMGCAtFnE0M8ulf/7r1evHnbt2oVDhw7hnXfeQY8ePQrtennw4EFERUWhffv2+P333+Hv748dO3Zg3LhxKFeuHCIjIxEYGIisrCxhTN26dTF79mzhn+eiZizzf7+pqanYsWMHhg8fjqioKJw6dQpDhw4tdpkvERGVDoMVURl4mYJVhQoVkJ6ejsOHD6Nfv37w8/Mr8QtTUffaZGZm4uuvvy7yeVz592M9fPgQ8+fPL3KnwwoVKmDGjBlwcHCQNhUZfqRycnLQuHHjEr9oS4NVUYoKFS+D7777Ds2aNSt2RrEsbd68GQqFQhTi1q1bhzp16qBly5aivvnyN9aQfvE31JIlS9CpU6ci78V7FiEhITh37hxGjhxZ4qzfjRs3sGHDBtSrVw8mJiZPDUF4AZ9d+s9gVlYW1q1bB7lcjqFDh4r6ajQaWFpaIjo6GocOHcKoUaPw+PFj4TNGRkY+81LAgj9rtVqsXbsWAwcOxN69e9GwYUPUrVtXegkiInpGZboUkIj+e9bW1nj77bexZs3fm7zk77InPZ72rC08eXSBnZ0dlixZgs2bNwvHp59+KvylPP/LnrTPkiVLYGJigsePH0svKyhfvjyWL18uGlfwCA4OLjFUSaWkpODatWvS8kspJycH6enpT920oqwVXO6Vk5ODtLS0pz7LrFy5cmUWLPJptVpkZmYW2jzlWd2+fRu//vor+vTp89RQlZOTgy1btmDnzp344osvUK1aNWmXIr2Iz16QtbU1xowZUyhUAYBCoRB9JhMTk6d+xqLcv39fNKOVnp4OrVYLPFlaa21tjdDQUKSlpRkccImI6G8MVkSvoPwvZjk5OejSpUuh0NKlS5d/bZvvf0NaWhrmzZuHOXPmQKfTFbp/Kzg4GIsXLxbV/uvt2x89eoScnBzY29tLm16I/M+d78aNG1AqlahYsaKo34umUqkgk8lEz3R6Vrdv38aKFStKvE/q/v37+OKLL+Do6IjAwECDw9zLZOPGjaIt1AMCAoTghCeBsmAwzMvLg7u7u/Czl5cXNm/ejDfffPOZQxsRERWNSwGJysDLtBSw4HKjopb4lbZfcdujF+xbXJ+S7qEqzVLAfMUtKdRqtQgLC0NwcDD0ej0GDx6MBg0aFLnsUfp5/w1arRaff/45/vzzT2lTsaS78m1+yjbtRSntPUoqlQrLli3DqFGjnhpMylpubi6WLVuGxo0bl+qeqKKEh4dj06ZNGDNmzHP9e1PUP+v/huf5ZzAyMhKHDh3CmDFjCtVLWgp4+PBhZGdno3PnzihXrhz2798PnU6Hbt26Qa/XY9++fTh48CBmz54NW1tbYYfQf2PreSKiVxX/C0r0igsODi60DDA4OFja7V9X0lLAzU+WFNra2hbaQU6v12P9+vX4448/EBAQgKVLl6Jhw4ZFhqr/ilwuR1BQkGgXvpIO6a58/fr1K9TnaUdJoerx48cICQnBggULMHDgwH81VD1+/Bhbt27F48eP0bp1a2lzibKysrBkyRLs378fM2fOfK5Q9brQ6/WIjIyEl5cXdu3ahY4dO+LXX39FixYtoNfrceDAAcTExKBz5844ePAg8GSp4IoVK4p9RhYREZWMwYroFderV69CgWXQoEFQKBTSri8lS0vLQrNaMpkMn332GaZOnYpq1aq9VIHqZRUdHY2xY8fixo0b+Oqrr1CjRtk9OL0kOTk5WLp0KTQaDT777LNnXnp2+fJljB07FrVr18bnn39ulEv6itoE5kW5e/cuHj58iGrVqqFPnz44cuQI1q1bB6VSiaVLlyI1NRUjR45Ex44dERUVhePHjyMtLQ3W1taF/ohBRESlx6WARGXgZV0KWFr79+9Henp6oaWA06ZNQ3JysijY5OTk4N133xWWAhbVJy8vDxYWFli0aJFBSwHz8vJQsWJF0TbSxUlLS8PMmTNx//59aVOh7dbzyeVyBAYGGtWzr+j18bxLAffu3Qt7e3vRfwc0Gg1++ukndO7cWbSBx19//YW5c+ciLi4OX331FWrXri20ERHRs2GwIioDL1OwcnR0xJtvviltKtLPP/+M7du3w8LCAp9//jnq168vtD148ADz589HQECAKByFhoYiOTkZ3bt3L/Yeq7S0NCxfvhyfffZZoXujUIp7sPKVth8RERHRf43BiqgMvCzBioiIiIj+G7zHioiIiIiIyEAMVkRERERERAZisCIiIiIiIjIQgxUREREREZGBGKyIiIiIiIgMxGBFRERERERkIFlcXBy3WycykJubm3DO7daJiIiIXj8yvV7PYEVkoLy8POGcwYqIiIjo9cMHBBOVAT4gmIiIiOj1xnusiIiIiIiIDMRgRUREREREZCAGKyIiIiIiIgMxWBERERERERmIwYqIiIiIiMhADFZEREREREQGYrAiIiIiIiIyEIMVERERERGRgRisiIiIiIiIDCRTa7R6aZGIno2VpYVwHhQUJGorSkBAgHCemJiIcuXKidqJiIiIyLgwWBGVAUODlZ29o6idiIiIiIxLmSwFPHUuBLsPHhUdx/44j+tR0dKu/wqVSoXhw4YiK0sjbSpW0KKFUCrkxR7Dhw2VDhHs3bMHv+3dKy3jl1+2Y8uWzdKyoKjXnDB+HGrX8ipUzz/8O3d6ps9FREREREQvXpkEqz+jbiFZdU90REbH4MS5Czh84g9p9zJTVDBRKuSo4emBLVs2w8XZqVCbUiFH0KKF0kvBxsYWp06fgVqjLXScOn0G3t7e0iEAgMzMTCxfvgwffNBH9Bpz5szGls2bMHzY0GJfP2DceKg1WmzfHozt24Oh1mgxYeIkfNC3n/DaixcvFd6X6l4KWrZqJX0LRERERET0HyuTYJWvR5c30esdf1Et+nY8jp0+J6qVlfxgkn/8unM3IqNuiWpHfz9WKDAFjBsvvVSJbGxspSXodDosWDAfc+Z8A7VGi1mzvsbvvx9HWvoDVHZ1xTvvdINao8XGH37Exh9+NOj1iYiIiIjo5VVmwcrCwhwuTo5wKu+Achb/3G8CAJExsThx7oKo9iJUr+6B5cuWIjc3FwCQlaXBtq1bUblyZWnXZ6bL1UlLuHgxHD4+bdGkaVMAQLfu3ZH9MBt//fUXrl69ig8HDAAAdOjQEY8fPxbeV0l+3rJZmN0aO3Y0fNq0hlIhh4uzE86dPSvtTkRERERE/7EyC1aPHumwacce/BS8GzmPHkmbcT0qGqfOh0rLBiu4HLBB/XpYvnwZ7O1shCCydu0aeFSrUmgZnlRm5gMhwEgPnzatEXHxonQI6tati0ULvxX61a9XF2+/1QU1PD2watVKONjbQqmQo7JrRQz6eCDs7WzwZscO0GjU0kuJcCkgEREREZFxKZNgZWFhDgDIVKuh1hS/scKfkTdxNrRwQDGE9N6o775biT17f4Nao8WkyYG4FR0LtUaLjAdqnDz1R5FL+lDEskLpsXrNWukQAEDLVq2gupdSqH9Rh+peCv7Xpg1kMhkAICIiAs5OFdC7dy/07t0Lzk4VigxwRERERET0ciuTYOVa0UVaKtalazdwPvyStFwmsrOzERYeBi+vvzeaePz4MfLy8qDX67FxwwacPHFcOqTMFLeRhlIh/zswRUQAALRZWdDp/l4S2KhRI9xLuS9sXnEv5T4aNW4suTKVlWTVPWmJiIiIiKhMlEmweqNxAzjYFT0TVJSLV68h5NIVadkg2dnZWLF8Gd54oyUqVaoEALCytIS3Vw3YKK1x4OD+QqElK0sD/86dCgWhA/v3A8WEpYLbnVtbKzB9+gxYWysAQNjZT3rMmTNX6D933nzY2dkVeBeF8R6rshdy6Qp2Hzxa5v/cERERERGhrIKVva0tOrVr80zhKuzS1TKbQYiKisSHH/ZDs+bN8f77Hwj1SZMDhXATHPwrbG0LBxrpUr7t24OFNukyw5Lucerdu1ehIKZUyDF1aqC0a7FcXFxw/UaU8JoF77FSa7Q4cPCQEOSodEIuXUHYpato2rAewi5dZbgiIiIiojJXJsEKzxGuqld1h6uLs7T8XLy8vBEc/CtsbGzh4uwoCjUFl+G9aMXNWN1LuY9GjRpJu4v89dd9BE6ehO3bt0mbyAChT0KVT8vmaN6wPnxaNme4IiIiIqIyV2bBCs8QrqpXdUcn3zbScpmYM2euKNTkL8P7NxQ3Y1VcwNPpdDh//hxWrvwOv/zyCwZ+/DF8fNqidi0vYVzBpYBKhRy1a3lBpVKJrkNFC710BaGXrqKznw/qetUAANT1qoHOfj4MV0RERERUpso0WKEU4epFhioAmDo18LmX4RmquBmr4gLels2bsXTpEixctAi79+yFt3etEpcCXr8RBReX0m8W8rrKD1XdOneAh7ubqM3D3Q3dOndA2KWrCGW4IiIiIqIyUObBCk8JVy86VFlYWGDpsuWiQPNL8A6Ud3AAAKjVmYUe9Hvu7Fm4ODsJQax3715Cm/TZViVtHvG0GauiAt5HAwdiy5atqFGjprSJDNSsYX281d632OWmri7OeKu9L5o1rC9tIiIiIiJ6Zi8kWKGIcPWiQxUA1KlTB336vC+q+fi0hY2tLdr6/A+9evZAtarVRO3SzSv27P0NllaWwDNuXmFiYoIdv+4qNFOVfxQ1Y1VQcTsUSpcCKiU7E1Lxqri5SksiJbUTEREREZWWTK3R6qXFsqTNzsafUbfQnDMD9AqzsrQQzoOCgkRtRQkICBDOExMTYWfvKGp/HjKZDHr9C/3XmYiIiOi1U9rvWC88WBG9Dv7LYJWgSpaWiIiIiOgFcHcpfsUTgxVRGfgvg5WVpQXKlTOXlomIiIioDOXk6JD98JG0LHhh91gR0Ysnk8lgZmYqLRMRERFRGSvpOxeDFZER0+v1MDXlv8ZEREREL1pJ37me3kpEREREREQlYrAiIiIiIiIyEIMVERERERGRgRisiIiIiIiIDMRgRUREREREZCAGKyIiIiIiIgMxWBERERERERmIwYqIiIiIiMhADFZEREREREQGYrAiIiIiIiIykCwuLk4vLRLRs3FzcxPOg4KCRG1FCQgIEM4TExNhZ+8oan8WdrbW0hIRERERvQAZD7KkJYFMr9czWBEZKC8vTzhnsCIiIiJ6NT01WKk1WgYrIgNZWVoI5wxWRERERK8mBiuiF+xlCFZrj9zEuchU5OY9lnYhIiIioudgZmqClt6OGNqxJlBCsOLmFUSvgLVHbiL01n2GKiIiIqIylJv3GKG37mPtkZvSpkIYrIheAeciU/Hw0T/3eRERERFR2Xj4KA/nIlOl5UIYrIheAZypIiIiInpxSvNdi8GKiIiIiIjIQAxWREREREREBmKwIiIiIiIiMhCDFRERERERkYEYrIiIiIiIiAzEYEVERERERGQgBisiIiIiIiIDvRLBaseOYBw/fkxaLlLQooVQKuRFHhMnjJd2JyIiIiIiKpFRBSuVSoXatbwKBaKBHw1A13feLlR3dqqAiIgI0TVsbGxx6vQZqDVa0XErOhbNmjcX9X1ZLPx2AYKDf5GWiYiIiIjoJWFUwcrFxQXXb0QJYejXnbuRfEcl/Hzl6p/Yt/+A8PO9lPto1KiR9DIvBZ1Oh7y8PGm5kIT4eCQkJsDf31+oaTTqUo0lIiIiIqJ/h1EFKymZTIZdO38FAOj1ehw4cACOjk7SbgbJy8uDXq+XlgvJzc2VlhAREQFnpwqFZtKUCjkc7G2xYcN66RARnU6HBd/Ox/rvv4eLs5Mw1rVSRRw9elTanYiIiIiI/iNGF6wO7N8vBIx3u3fFyJEjoFTIYaO0xuRJE9G8WROh/cD+/dLhyMx8AJ82rQsFnRqeHggNCZF2x6lTJ2FroyjUX3q4VnLBxYsXRWMbNWqEeyn3Cy07jE9IwpAhQ9GjR09R/4L0ej1WLF8GExMTpKU/EMbGxN7GhImT4OfnJx1CRERERET/EaMLVgCwfXsw1Bot0jMyMX36DCQm3cH27cFCPSb2NtZv2CgdBgAIGDe+UNDJPxZ8u1DaHW3a+IiCjfTIVGfh55+3YePGH9G4cWPp8EL0ej1++ulHtPPzg4ODg7QZeNJn3bq1uHv3LubOnQ8zMzOhvmXzJrz99jswNzcXjSnt0kIiIiIiIip7Rhms8CRk/PbbXrhWrgw7OztUqFABAwcOgFIhR58+7yFLkyUd8lzMzMyEYCOl1+sRHPwLsh9mo3OBe6CeJjwsDLdu3YS/fxdpk2D58mXISE/H17PnIDQ0BD17dEdk5A2Eh4UhS6tFw4YNpUNw5coVVHT5Z7ng046iZvKIiIiIiOj5GWWwSk1NweRJE1G+fHl88EFfAECz5s2FZXfHj5+Es7OzaIx0m/XatbygUqmKvA9q+LChorF4cq/VkiWLsWzZUuh0OmRnZ2Pp0iWwtbXDe+/1hkwmkw4pJDY2BlOnTsHIkaMKzTgVNGrUaEycNBnm5ubw8WmLH378CUGLFmHChHEYPvyTIl+rYcOGoo08nnb4dyk+1BERERER0bMzymDl6OiE+Qu+hUatgY3SulSzMdJt1j/o209omzNnrlC/FR2Ltr6+orEAYGpqitGjx6BOnToY8eknGPHpJ/jf/9rgzTfflHYtUlRUJAYN+hj+/v4YFzAWUVGR0i7FSk/PQMaDDHTq1BkzZkyHNqvwbJypqelTwxoREREREb04RhmsCsq/r0qt0WL79mBp83MpbumfTCaDn197TJg4EQ9zHsLR0VHapRC9Xo9jx37HiBGfYvXqNQgYNx4rvvsOEydMQMiFC9LuhYSHh2PcuLH45pu5CJwyFR07dsTBQwel3YiI6DXg5WqLhYOa4cN21UV1B0U5BPash5FdvGFpYSpqMwaTe9bD2K61peUXIrBnPQR0rSMtFzK5Zz38OLbNMx+DO9aQXgq9WlVFYM960rLI200rI6BrHbg6yKVNRGQkZGqNtuS9xF8i+TNS/l264MD+/ejdu5eoffv2YKEtvx8AfL9uHRo3aSI812rWrK8wdOgw3L17FxfDwzF4yBDgyUOIT506id69+xS4amEJCQn4etZXWPDtQtja2kqbAQBqdSa+mjkT9+/fx6KgxbC3txfa7t27h7FjR2PYsOFo167wDn/Z2dlYs3oV4m7HYdasr6FU2ki70EvEytJCOA8KChK1FSUgIEA4T0xMhJ19ySG9OHa21hiw+LS0TESvqK/6NsLluDTsOBcPAGheowK6tXBHeMxf8HBW4oH2EdYevikd9tLq1aoqfOo447fQRBy+dEfaXKbe8HJEr1ZVcTYyBUpLc7g7WUOVnv1Mv6/abnbo2aoKdpyNx/XEDGmzYKCfJ9rVr4jCi/eBk9dUuBB1H7q8x2jp5Yh6Ve2R91iPP67fwx/XU5CmyZEOEenewh2+dV3w44kYXIz5S9os4uogh7uTArZyc7hVsIaznRVs5eaws7ZAVHImvt31p3QIERXjx7FtkPGg8MqxfEYdrK5cuQIAqF+/PgDgzp2//4NcqVIlbNu2FTZKGyFYBS1aiOnTpwnXcXNzw7HjJ3H37l107tQRWq1WaOvbtx9Wr1kr/Pw8oqIiMXrUKIwYORJdu3Yr8r6ohIQEzJg+rVDounz5MgInT0LglCnw8Wlb5Fh6uTBYEb0aXB3kyH6UV+IX2/+SNFgBQP2q9ujzv2o4cVWFI5efL5z8F5/dr35FdG/hjlPX7iH47G1pc7HGdq0NZ1srLNj551Pfr5erLT7194KDopxQe5T7GNmPcnE/Mwdx99T443oKYu+pReMKmtyzHuq42UnLhVxLzMC8HVdFNVcHOepXc8CB8CQAwFtNKyP7UR6OXbmLwJ71UMHGEn/Gp+PUtXtPfQ9SrWs54e1mbvjpeMxTwx2ehMl3W7gjTfMISX9l4WZyJqo6K9DSywmHIpJxKCJZOoSIivFKB6uiZGVp0KtnT9y6dRP79h+Al5c3UMSM1ZLFQejbrz+SkpIKzVht3LAegVOmiq5L9DQMVkQvt6K+YBcn+q4aX227JC0XydLCFAHv1IY2Jw9LfrsubX4higpWT/OiPruUh7PymcJBK28n9G5dFdeTHmDNoShps0htNzsM6VgTEXF/4afjMRjcsQYq2FgWCjJPU7+qPbo1d8fukARcuZ0ubS5WQNc6SEjVCL/vuu726NGyCoLP3hZCTc+WVeDuqEDQnmuisZ4VlRjQzhMHLiYjIvYvTHy3Li5EpeLwpTuFrivVuHp5NPYoD1MTGeysLWAjN0c5c1PYWJlDJgMszE0LzYbl5umxLyyx2GviyQxhK28n7LoQj1PX7kmbiegpXrlgRfQyYrAiMn4u9lYY9VYtXL6dju1/xEmbizSskxe8XW2w8Vj0M31ZN8Ssvo1w+Xb6M83wlKSkz96zZRW81dQNZqbSr/L/eJT7GLsuJOC30ERpUyE+dZzRu3U1qB/qMOXHcGlzkQoGymcNVpYWpvisSy3UdLVBOXNTZOfkYn94EvaElPxeDZmxAoCRXbzxlzoHWQ9zUauyLZbuu4GHj/JKDFZNPMujxxtVkP0oD6kPHuLhozzEpaiR91gPRxtLtPRyxA+lmLEqqGerKmjl7YTdFxIYqoieA4MV0b+AwYrI+PVsWQWNPMpj+f4bUKVnS5sLyb83aNeFBBy7clfaLHjWmZySfPNhEzjbWSLrYS4u3U7DwfBkJKf9s5z9eTzrZ5fq6+OB2m522HjsFqLvPv2zvtW0Mjo1ckWmVgdTU1mpgpWXqy2GdKyB81GpzxysLC1MMdDPE7Xc7HDs8l2cvn4P77epBidbS3y59RJaejvhjZqOKGdugkMRyYiITRONlwag1rWc0LFhJaw6GCX8roqasXpaIEtO0yIj61GR7emaR1h9KOqpgelZlgLm6/O/amhR05EzVUQGYLAi+hcwWBEZN1cHOUZ08cbFmL+KnUEo6N033OHfuDLCou9jTQkbH8zu3xhuFayl5WKdvKbC90duScuC/Jmbv9Q5aF+/IpztrHApLg1bT8c99X6j4jzrZweAwR1rwMNZiYW7rqGhhwO6NKmM/eFJTw2Ylham+NjPE7Xd7XDwYjJc7K3gWdGmVMGqkYcD+vp4YNeFBJy5kVJssHr3DXeYyGTC58gPVa4OcvxwPFoIfe3quaBXq6rIe6xH9N1MHLl0BzeSHoiula+oYOVXryJmbb8s9CkqWBXk36Qyqjkp8N2Bfx61UvC6JY3Hk1m+nq2qwk5ugawcHbQ5eVh/9FapgtWgDjXQoJoDVGlauDsqILc0gwzAQ10eLsb8hY3HovHwUZ50GBFJlBSsjH67dSIiIkO997+qyNTqsO/JJgPFsbQwxZCONdG6ljNUGdnI05f8t8kfj8dgyo/hGLD4dKmOp4Wqgk78qcK0LRHYfDIW1ZwV6NvWQ9qlVEr72aUys3Vo6OEA/8auOH717lNDVds6LpjVtxHcHRVYc+gm9oU922tVcpAjN0+Pu2nFz6b1alUV7epVRHrWI6HWvYU7KhUIVZYWpviksxd6tqyKHN1jrDl0E0t/u1FsqAIAC3MTdGvhLmynPryTF2pUshFtsd6thTsszIv/SiW3MEU5c8O2wfet64Lw6PsI+D4Ef1xPkTYXyUFRDhO610Wb2s4wlcmQnvUIPxyPxvDvzmLsuhAcCE9CvSr2GNyh8BbxRPTsiv+vABER0WtgQLvqqOQgx4GLSU/9q329KvaY2qs+KjnIsepgJLJycqVdihSV/MDgpXpPc/KaChM3hmH5vhvSphKV9rNLWZqbIkf39+52EzeGPTUodWxYCT1aVsGV2+mYue0SrsY/+71odavYIzXzYbFLKge0q462dZ1xKCJZFPC2no7D9C0RiL6rhquDHBPfrQsLMxNsPxOHnNw8PC5FMJ634yrWHbmJ5ftuYMDi0zh6+Q4uxaUVCsTS2bOCz8Hq1sIdjTwcRM+6sldYIO9xya9flHLmJrCyMIWt9T+rJYrygU81VHG0xo6zt/HZmvNYdTAK56NS8fDJ7o87z/+9jNW9gjU8nJXS4UT0jBisiIjotTWgXXXUr+qAXeefvlPc283cMOTNmrh1JxPzd14t8T4iY1Dazy7lYm+FivZyJKYWvxymoCOX7mDMugv46UTMM4W3fO3rV4STrSXCou9Lm+BZUYnAnvXQsJoDfj4V99SA905zN6Spc7D0txvPHGjMTE3Qtbk7Glcvj4r2ciT9VXJQnrfjKgYsPo2vtl3CnTQtNA912B2SgAGLT2NfWBIe6/VIzXwoHVaskFv38YaXI4KGNEe9Kg7ILsXvcsX+SIxaewG/hSVhbNfa2DD6f1gzshU+9P3nAdOZWh0gkxnlg6WJXjYMVkRE9NqxtDDFZ2/VQv2qDvj1XDzORj59adVvoYkYs/b5w8HL5Fk/u1RrbyeYmcpw+bZ4k4cXoX5Ve7zVtDKikjMLbbjgbGuJse/UQTlzU3x3ILLEz1HJQS5sNnHmRgqm/BheqvuTAODYlbsIj7mPgX6ecFBY4GJM4ZBXFFcHOT7w8UDKg4eIVWlQ3VmJEf7e8KxoAwBPXdoodfBiMkasOo+PFp/G8at3oct7jHul3GikeY0KcFCUw4Kdf2Ln+QQ0qV4e7RtUhKWFKRpXLw9tTm6pfxdEVDwGKyIieq20reOCr/o2goOiHFYdLPkL+avE0M/uU8cZrWs5Iyz6rxc+a1ejkg36+Xjg5p1M/Hg8WtoMM1MTHLyYhJlbL5XqvWRkPULj6uXR0ttJqDkoyuENL0e84eVY4nO+TE1MoAdgWc4MvVpVRa3KttIuIo2rl8eILt6IT9EgPkWDvMd6LN13A1HJD1DP3Q4ZWY+KXdr4NK4OcrSo6Yik+1mlHv9QlwdzMxNUcVLgQHgSEu5noaWXE758vyEqV5Dj+NXi748jotJjsCIiotfGp/7e6P2/qrh6O90ol/R5udrC6jmXbBn62Ts2qIR336iCs5EpZfoMreLcupOJyT+GY9XBqEKzhN8fuYXRT5a4ldaekARkanUY3KGGcK/T4iHNMezNmujr44Garn/PIhXkoCiHrs3dMH9gUzT1LI8fjkVj5s+XkKnVIaBrHcz/qCkGd6yB1rWcCgWzJtXL4/T1e/jxeIxQe/goD1k5uajmosTFmL9E/UvDs6ISHz/ZaGLX+QRpc7Gu3E5HePRf6NrcDT+ObYMG1Rzg6iBHyoOHWLL3eqHZQCJ6PtxunagMcLt1IqJXS3/f6mhdywl30rQ4fe0eTvypErVbWpiitbcT6lW1R+Xy1rCRm8PMRIa4FA1W7IsUbX1fcDv10W/XguZhLtYf/Wf3x54tq6BBNQdM3xIh1KSa16iA99tUw72Mh9h0IuaFbohCREUrabt1BiuiMsBgRURERPRqKylYcSkgERERERGRgRisiIiIiIiIDCSLi4vjUkAiA7m5uQnnXApIRERE9OopaSmgTK8vxWPHieip8vL+2bGKwYqIiIjo1VNisOLmFUSG4+YVRERERK+2koIV77EiIiIiIiIyEIMVERERERGRgRisiIiIiIiIDMRgRUREREREZCAGKyIiIiIiIgMxWBERERERERmIwYqIiIiIiMhADFZEREREREQGYrAiIiIiIiIyEIMVERERERGRgRisiIiIiIiIDPRKBKsdO4Jx/PgxablIQYsWQqmQF3lMnDBe2h0oZsy2bVsBANnZ2UhPT5cOAQDo9XrMmDEdoSEhQDHX6d+vL3Jzc6VDiYiIiIjIiBhVsFKpVKhdy6tQOBn40QB0feftQnVnpwqIiIgQXcPGxhanTp+BWqMVHbeiY9GseXNR33yjRo8R+l27dgMjRozE6dOnkJaWhvXrv8ehQwelQwAA4WFhUFhb4+jRI8jMzETAuPGFXtPL2xtmZmbSoUTPxMzUqP5VJiIiIjIqpfmuVXKPl4iLiwuu34gSgsmvO3cj+Y5K+PnK1T+xb/8B4ed7KffRqFEj6WWe2c9bNmPjhg3IycnBtm1bMfKzUfh44CAMGfwxqlapip49e2HqlEDRrFlUVCR27dqJ4Z98in79P8Ssr2YiJiZaFAxreHpApVKJXovoebT0doSlham0TEREREQGsrQwRUtvR2m5EKMKVlIymQy7dv4KPFl2d+DAATg6Okm7Gaz/hwOgUCrQsYMf/Pzaw93dHY2bNMGAjwYiJjYGa9eugW87P7Rr5wcAiI2NwYb16zFpciBsbGzg7u6Ob+bOQ/XqnqJgGBZ+ES2KmSUjehZDO9ZEsxoVSvXXFCIiIiIqHTNTEzSrUQFDO9aUNhUiU2u0emnxZXZg/3707t1LWi7S9u3B8O/SRVQLWrQQ06dPE9XyffLJp1jw7UJpGcnJyZg16ys4Oztj0cJvhbpcLseYsQGIiozEnG/mwtXVVWiLiIhA504dodVqAQBffTULAePE93BFRETgYng4Bg8ZIqqT8bGytBDOg4KCRG1FCQgIEM4TExNhZ1/yX0GKY2drLS0RERER0QuQ8SBLWhIYZbACAP8uXZCbm4ugRQsxdNhwnDt7VqinpKTg5MkTUFgrCgWrZ6FWZ2LVypXIVKsxadIkKJU20i7Ak37fzJkDnU6HwClTUb58eaFt1qyvMHToMNy9e1cUtKSKCoFkPBisiIiIiF59TwtWRrtuSK/X47ff9sK1cmXY2dmhQoUKGDhwAJQKOfr0eQ9ZmuI/dGmZmpiib7/+mDXra6xbu7bQ5hj5x7q1azHnm7mYHDgFcrkcWVka+HfuBKVCjvnz5qKGpwemTgnEjcibSEt/ANW9FAweMgS34xORqc5CTOxtdPb3l748EREREREZCaMMVqmpKZg8aSLKly+PDz7oCwBo1rw57qXch1qjxfHjJ+Hs7CwaI93qvHYtL6hUKkRERMDZqYKobfiwoQAAubW1sLyvabNmRe4meOr0GdjY2AIAKlSoACsrK1hbK3Dg4CGoNVpMmhyIqJvR2LHjV8TFxmLlyu/w+PFjmMhMEBcbi4iICAQH/8It14mIiIiIjJhRBitHRyfMX/AtNGoNbJTWolCUv1RQSrrN+gd9+wltc+bMFeq3omPR1tdXNPZ57N69C+fO/b08UaVSYfXqVWjcpAmcnZ2hUqlQtVo1HD5yGMd+P4qhQ4fB3NxcegkiIiIiIjISRhmsCtq+PVgIRdu3B0ubn0tRz5UKCw2FT5vWhZYB+rRpjczMB9Lu8PCojuTkZODJLoFtfdtBJpOha9du2LJlCxLi49GhfQfUrVuPoYqIiIiIyMgZfbDq3buXEHJKu1vg8wgYNx7hFyMQHRMnBLnIqFs4dPhIod3+AMDT0xPNm7cAALRs2Qp169bFyZMnMGb0KPTq9R5q1aqNZs2bQ6VS4eTJE9LhRERERERkRIw6WLlWrowzZ88LQSfqZjQaNGwIAMhUZ4r6ZmY+EM04/bxls9A2dWqgUK/h6YHfjx4Vjc1nZmaGLZs3Qa/XQ6fTYfu2rahc2U3aDQBgaWkJhUKB5KQkDBk8CIGTJyEjIwMrV61GlSruyHucB5lMhn79+yM0JAS7du2UXoKIiIiIiIyEUQer+vXro379+sLPlSpVgq2tDfw7d8LnU6fAo7qH0Ca9x2r48E9gamoKFHGPVbVq1YAn90bVruUlhK4G9eth+vRpsFFaw8HeFtOnT0Od2t5Ce/6GGBkZGejxbjfMnDkDgwcPwZ69v2FR0GJ069Ydp06dhGulikhMTAQAmJubY8LESeje/V3hvRIRERERkXExuudYEb2M+BwrIiIiolffK/kcKyIiIiIiopcFgxUREREREZGBGKyIiIiIiIgMxGBFRERERERkIAYrIiIiIiIiAzFYERERERERGYjbrROVgf9yu3UiIiIi+u9xxoqIiIiIiMhADFZEREREREQGYrAiIiIiIiIyEIMVERERERGRgRisiIiIiIiIDCSLi4vjroBEBnJzcxPOuSsgERER0etHptfrGayIDJSXlyecM1gRERERvX74HCuiMsDnWBERERG93niPFRERERERkYEYrIiIiIiIiAzEYEVERERERGQgBisiIiIiIiIDMVgREREREREZiMGKiIiIiIjIQAxWREREREREBmKwIiIiIiIiMhCDFRERERERkYEYrIiIiIiIiAzEYEVERERERGQgBquXjEqlQu1aXlAq5MLR1ud/yMjIAACkpKQgLy9POgwAcP36dUyeNBG5ublFXsfezgbnzp2VDiMiIiIiIgO9EsFq5MgROH78mLT8rwoLDcXCbxdAp9OJ6r/8sh0Lv10gqi1a+C22bv1ZVMvn7OyMq39eh1qjRaY6CwsXBaFp02Y4dOggEhISMGvWTKSnp0uHQafTYc/uXXCvUgVHDh+Gi4sLrt+IglqjFY5vv10ES0sr6VAiIiIiIjLQKxGsrCwtYWdnLy0XafiwoaJZnILHyJEjpN1LZf++ffjzzz/hWaMGdu/eJWpTWCtgYiL+NctkMtja2Ipq+e7du4cJ48chOTkZF8PDYWpiijnfzMXVK1cwb95czJ79DeJv38aYMaOg1WqBJ6Fq5crv0LhJU4wYMRKxcbE4fPgwghYtFH2+L774HGZmZtKXJCIiIiIiA70SwcrCwgJyeelmYlavWSuaxSl4rFjxnbR7qXR56y04OTnB1tYWvXq9J21+Ji4uLpg+40uMHTsa27dvw4CPPkK5cuUwfsJEWJYrhwsXLmDP3j2YNWs25HI5AGD5sqXw9q6FN998EzKZDCNGjET79u0RMG686PMFBgbC0dFR+pJERERE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" alt="ユニサーチフィード作成 / D89 / image 1" width="400">
+              <figcaption>ユニサーチフィード作成 / D89 / image 1</figcaption>
+            </figure>
+          </div>
+          <div class="doc-flow">
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>パフォーマンス改善</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>フィードファイル作成に時間がかかっているので、今後作成時間が延びていくようならパフォーマンス改善を行う</span></div>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>SQL取得結果に対して1行づつユニサーチ向けにデータ加工処理を行いファイルに書き込みをしているところで時間がかかっているので、</span></div>
+            <p class="doc-p" style="--lv:3">並列処理を行う等の対策を検討する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)<br>管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時　実行タイミング　毎時15分</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　TSVファイルをgzに圧縮</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>取得条件を参照</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>取得したデータをTSVファイルで出力し、gzで圧縮したものを指定のディレクトリに置く</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>フィードファイルのMD5値を格納したdoneファイルを指定のディレクトリに置く</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ファイルの権限をすべてのユーザが読み取り、更新、削除できるよう変更する（バッチ、管理画面どちらからも呼ばれるため異なるユーザで作成されることがあるため）</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-10">
+        <div class="sheet-heading">
+          <h2>ユニサーチフィードTSV</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>商品管理バッチ機能</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-11</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-11</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B02-07</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>ユニサーチフィードTSV</dd></div>
+            <div class="kv"><dt>概要</dt><dd>ユニサーチフィードTSVの内容</dd></div>
+          </dl>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>ユニサーチフィードTSV</th><th></th><th></th><th>検索について</th><th></th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr><td>識別ID</td><td>項目名</td><td>備考</td><td>検索対象(販売)</td><td>検索対象(買取)</td><td>検索備考</td></tr>
+                <tr><td>1</td><td>product</td><td>商品ID</td><td></td><td></td><td></td></tr>
+                <tr><td>2</td><td>product_name</td><td>商品名</td><td>〇</td><td>〇</td><td>キーワード検索の対象</td></tr>
+                <tr><td>3</td><td>product_name_en</td><td>商品名（英）</td><td></td><td></td><td></td></tr>
+                <tr><td>4</td><td>color_sequence</td><td>色順ID（色でソートを行う際に使用）</td><td></td><td></td><td></td></tr>
+                <tr><td>5</td><td>card_name</td><td>カード名(英)</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>6</td><td>language</td><td>言語ID</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>7</td><td>price</td><td>販売価格</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>8</td><td>image_url</td><td>画像URL、複数ある場合は1枚目を取得する、S3のパスを指定する</td><td></td><td></td><td></td></tr>
+                <tr><td>9</td><td>tag</td><td>タグ、複数ある場合はユニサーチの指定通り^A(\x01)で区切る</td><td>〇</td><td>〇</td><td>キーワード検索の対象</td></tr>
+                <tr><td>10</td><td>cardset</td><td>カードセットID</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>11</td><td>cardset_name</td><td>カードセット名</td><td>〇</td><td>〇</td><td>キーワード検索の対象</td></tr>
+                <tr><td>12</td><td>cardset_name_en</td><td>カードセット名（英）</td><td>〇</td><td>〇</td><td>キーワード検索の対象</td></tr>
+                <tr><td>12</td><td>release_date</td><td>カードセットリリース日</td><td></td><td></td><td>ソートの対象</td></tr>
+                <tr><td>13</td><td>color</td><td>色ID、複数ある場合はユニサーチの指定通り^A(\x01)で区切る</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>14</td><td>mana_cost</td><td>マナ・コスト</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>15</td><td>rarity</td><td>レアリティID</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>16</td><td>card_type</td><td>カードタイプID、複数ある場合はユニサーチの指定通り^A(\x01)で区切る</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>17</td><td>subtype</td><td>サブタイプID、複数ある場合はユニサーチの指定通り^A(\x01)で区切る</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>18</td><td>format</td><td>フォーマットIDとLEGALかBANかの組み合わせ（例1LEGAL,2BANなど）、複数ある場合はユニサーチの指定通り^A(\x01)で区切る</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>19</td><td>illustrator</td><td>イラストレーターID</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>20</td><td>foil_flg</td><td>フォイルフラグ→フォイルはフラグではなく通常、フォイル、特殊の3パターンで送るようにする<br>項目名を変更するかは要相談</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>21</td><td>text_jp</td><td>ルールテキスト（日）</td><td>〇</td><td>〇</td><td>キーワード検索の対象</td></tr>
+                <tr><td>22</td><td>text_en</td><td>ルールテキスト（英）リニューアルで追加する</td><td>〇</td><td>〇</td><td>キーワード検索の対象</td></tr>
+                <tr><td>23</td><td>stock</td><td>本店ECの在庫数、リニューアル後は本店ECだけでなく店舗のEC在庫を反映する</td><td>〇</td><td>〇</td><td>在庫の有無を検索する</td></tr>
+                <tr><td>24</td><td>weekly_sales</td><td>本店ECの週間販売数</td><td></td><td></td><td></td></tr>
+                <tr><td>25</td><td>category_id</td><td>カテゴリID、カテゴリは階層を作成する、複数カテゴリの場合は階層が深い方を1番目に送る<br>リニューアルではカテゴリにカードセット等持つようになるが、フィードの送信自体は現行踏襲とする<br><br>現行<br>未開封商品 &gt; ブースターパック &gt; プレイ・ブースターパック<br><br>リニューアル後<br>スタンダード &gt; カルロフ邸殺人事件 &gt; パック・ボックス<br>※パック・ボックスの部分はリニューアル後は商品には直接紐づかないため送ることができない</td><td>〇</td><td>〇</td><td>キーワード検索の対象</td></tr>
+                <tr><td>26</td><td>category_name</td><td>カテゴリ名、カテゴリ名は階層を作成する</td><td></td><td></td><td></td></tr>
+                <tr><td>27</td><td>product_class</td><td>商品規格ID</td><td></td><td></td><td></td></tr>
+                <tr><td>28</td><td>card_condition</td><td>カード状態ID、現状はカード状態での絞り込みはユニサーチ側では設定されていないが、買取の場合はNMのみなので、カード状態でも絞り込みを可能とする（ユニサーチ側の設定が必要）</td><td></td><td>〇</td><td></td></tr>
+                <tr><td>29</td><td>sale_flg</td><td>セールフラグ</td><td>〇</td><td></td><td></td></tr>
+                <tr><td>30</td><td>high_price_code</td><td>高額商品コード</td><td></td><td>〇</td><td></td></tr>
+                <tr><td>31</td><td>belt_url</td><td>帯URL</td><td></td><td></td><td></td></tr>
+                <tr><td>32</td><td>color_identity</td><td>固有色ID、複数ある場合はユニサーチの指定通り^A(\x01)で区切る</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>33</td><td>product_code</td><td>商品コード</td><td>〇</td><td>〇</td><td>キーワード検索の対象</td></tr>
+                <tr><td>34</td><td>branch_status</td><td>支店表示フラグ</td><td>〇</td><td></td><td></td></tr>
+                <tr><td>35</td><td>frame_flg</td><td>フレーム、通常、特殊を選択可能</td><td>〇</td><td>〇</td><td></td></tr>
+                <tr><td>36</td><td>buy_price</td><td>買取金額、リニューアルで買取検索対応時追加する、買取価格のソートがあるためユニサーチでの設定はソート対象とする必要がある</td><td></td><td>〇</td><td></td></tr>
+                <tr><td>37</td><td>reservation_flg</td><td>予約商品フラグ<br>商品に紐づく購入グループの予約商品フラグの値を連携する</td><td></td><td>〇</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <!-- function-design-embed:start b02-07-b02-07_batch_product_product_weekly_stock_history_update -->
+      <section class="function-design-embed" id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update" data-source="functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B02-07 週間在庫履歴更新 / バッチ 商品管理 — 週間在庫履歴更新</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-概要">概要</h2>
+          <p>全商品規格について、1週間前から11週間前までの各週末時点の在庫数を在庫履歴からたどって集計し、CSVファイルへ出力するバッチである。コマンドライン（コンソールコマンド）から実行する。支店の在庫移動リコメンドで使うためのデータを集計する位置づけである。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの商品バッチ（週間在庫履歴CSV出力処理）、在庫履歴・商品在庫を扱うリポジトリ、出力パスの設定キーを正とする。カスタマイズ区分はカスタマイズであり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）</li><li>全商品規格の週次在庫を在庫履歴から集計する条件</li><li>集計結果のCSVファイル出力（パス・ヘッダ）</li><li>対象在庫が無い週の扱い</li></ul>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能・運用の設計を正とする。</p>
+          <ul><li>在庫履歴の作成（入庫処理・受注処理・在庫反映処理を正とする）</li><li>出力CSVを使う支店の在庫移動リコメンドそのもの（リコメンド処理・支店連携を正とする）</li><li>期間別入庫数の集計（別バッチの設計を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3）の挙動と移行先（ec-cube-enterprise）の差を記録する。挙動は現行リポを正とし、DB関連はec-cube-enterpriseを正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>出力先</td><td>集計結果をCSVファイル（<code>weekly_stock_history.csv</code>）へ出力し、DBは更新しない。</td><td>集計結果を一時テーブル<code>dtb_weekly_stock_history_temp</code>へINSERTし、本テーブル<code>dtb_weekly_stock_history</code>へコピーするDB方式。CSV出力ではない。</td></tr><tr><td>一時テーブルの形</td><td>テーブルを持たない。CSVの1行に商品規格IDと週次在庫列を並べる。</td><td><code>dtb_weekly_stock_history_temp</code>が商品在庫ID（<code>product_stock_id</code>）単位で<code>stock_01</code>〜<code>stock_11</code>（1週間前〜11週間前の在庫数）を持つ。</td></tr><tr><td>在庫履歴の関連キー</td><td>在庫履歴を商品規格ID（<code>product_class_id</code>）で参照する記述。</td><td>在庫履歴<code>dtb_stock_history</code>は商品在庫ID（<code>product_stock_id</code>）で関連づき、商品在庫<code>dtb_product_stock</code>経由で商品規格（<code>product_class_id</code>）に至る。</td></tr><tr><td>集計の刻み</td><td>商品規格ごとに在庫履歴を1件ずつ取得する。</td><td>商品在庫IDの範囲を20000件ずつ区切ってINSERTし、本テーブルへ置き換える。</td></tr><tr><td>スマレジ在庫の合算</td><td>扱わない。</td><td>基本設計では「ECとスマレジの在庫を合算して登録する」とあるが、ec-cube-enterprise実装ではスマレジ在庫の取り込みが未実装でEC在庫のみを対象とする（要確認）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>週間在庫履歴</td><td>商品規格ごとに、各週末時点の在庫数を並べた集計データ。</td></tr><tr><td>週末時点の在庫</td><td>当日から指定週数を引いた日付以前で最も新しい在庫履歴の在庫数。</td></tr><tr><td>支店在庫移動リコメンド</td><td>支店間の在庫移動を提案する処理。本CSVを入力に使う。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>product:batch exportWeeklyStockHistoryCsv</code></td><td>全商品規格の週次在庫を在庫履歴から集計し、設定された出力パスへCSVを出力する。</td></tr></tbody></table></div>
+          <p>本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-週間在庫履歴更新を実行する-product-batch-exportWeeklyStockHistoryCsv">週間在庫履歴更新を実行する（<code>product:batch exportWeeklyStockHistoryCsv</code>）</h3>
+          <ol><li>メモリ制限と実行時間制限を解除し、SQLロガーを無効化する。</li><li>商品在庫から全商品規格IDの一覧を取得する。</li><li>商品規格ごとに、1週前から11週前までの各週について、当日から対象週数を引いた日付以前で最も新しい在庫履歴の在庫を取得する。</li><li>対象の在庫履歴が無い週は在庫を0として扱う。</li><li>商品規格IDと週次在庫を1行にまとめ、集計結果に積む。</li><li>出力先のCSVファイルを書き込みモードで開き、ヘッダ行を出力する。</li><li>集計結果の各行をCSVへ書き込み、ファイルを閉じる。</li></ol>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>集計単位</td><td>商品規格単位（商品規格ID）。全商品規格を対象とする。</td></tr><tr><td>集計値</td><td>各週末時点の在庫数（その時点以前で最も新しい在庫履歴の在庫）。</td></tr><tr><td>週の範囲</td><td>1週前から11週前まで（11週分）。</td></tr><tr><td>在庫履歴なし</td><td>その週の在庫を0とする。</td></tr><tr><td>出力形式</td><td>CSV。ヘッダは商品規格IDと週ごとの在庫列。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象データ</td><td>商品在庫に存在する全商品規格ID。</td></tr><tr><td>各週の在庫</td><td>当日から対象週数を引いた日付以前で作成日が最も新しい在庫履歴の在庫を1件取得する。</td></tr><tr><td>集計期間</td><td>当日基準で1週前から11週前までの各週末。</td></tr><tr><td>欠損時</td><td>該当する在庫履歴が無い場合は0とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-API・バッチ結果">API・バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。引数は取らない。</td></tr><tr><td>実行条件</td><td>商品在庫に商品規格が登録されていること。</td></tr><tr><td>成功結果</td><td>設定された出力パスへ週間在庫履歴CSVが新規に書き出される。</td></tr><tr><td>失敗結果</td><td>出力途中で失敗した場合は不完全なCSVが残る。</td></tr><tr><td>再実行時</td><td>出力ファイルを書き込みモードで開き直すため、毎回最新の集計内容で全件上書きする。追記はしない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名。</td></tr><tr><td>成功時出力</td><td>出力パス（設定キー <code>HareruyaEc.const.weekly_stock_history.csv_path</code>、既定 <code>/html/csv/weekly_stock_history.csv</code>）へのCSV書き出し。ヘッダは商品規格IDと週次在庫列。</td></tr><tr><td>失敗時出力</td><td>エラーメッセージのコンソール出力。途中で止まった場合は不完全なCSVが残る。</td></tr><tr><td>副作用</td><td>CSVファイルの生成・上書き。DBは更新しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>多重実行</td><td>ロックは持たない。同一出力ファイルへ同時書き込みが起きると内容が壊れる可能性がある。</td></tr><tr><td>途中失敗・再実行</td><td>書き込みモードで開くため再実行で全件上書きされ、正常完了すれば最新内容に収束する。</td></tr><tr><td>参照時点</td><td>実行時点の商品規格一覧と在庫履歴を対象とする。週末時点は当日からの相対週で算出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <p>列名はec-cube-enterpriseを正とする。現行（pf-eccube3）と異なる場合は移行先名を主とし現行名を括弧で添える。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_product_stock</code></td><td><code>id</code>・<code>product_class_id</code>・<code>stock</code></td><td>集計対象の商品在庫と商品規格IDを取得する。</td></tr><tr><td><code>dtb_stock_history</code></td><td><code>product_stock_id</code>（現行は<code>product_class_id</code>参照）・<code>stock</code>・<code>create_date</code></td><td>各週末時点の在庫の取得に使用する。移行先では商品在庫IDで関連づく。</td></tr><tr><td><code>dtb_weekly_stock_history_temp</code></td><td><code>product_stock_id</code>・<code>stock_01</code>〜<code>stock_11</code></td><td>移行先の集計一時テーブル（現行はCSV出力で該当テーブルを持たない）。</td></tr><tr><td><code>dtb_weekly_stock_history</code></td><td><code>product_stock_id</code>・<code>stock_01</code>〜<code>stock_11</code></td><td>移行先の集計本テーブル（現行はCSV出力で該当テーブルを持たない）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_product_stock / dtb_stock_history / dtb_weekly_stock_history / dtb_weekly_stock_history_temp</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>週の在庫履歴なし</td><td>その週の在庫を0として扱う。</td></tr><tr><td>ファイル書き込み時の例外</td><td>エラーメッセージをコンソールに出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>開始・完了</td><td>開始・完了のコンソール出力（日時付き）。</td></tr></tbody></table></div>
+          <h3 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>パスワード</li><li>トークン・接続秘密値</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-b02-07-b02-07_batch_product_product_weekly_stock_history_update-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>ロックファイルによる多重起動防止は持たない。長時間処理に備えてメモリ制限と実行時間制限を解除し、商品規格ごとに処理しながらキャッシュをクリアしてメモリを管理する。出力はCSVファイルへの書き込みのみでDBトランザクションは持たない。本バッチは楽観ロック・悲観ロックの対象を持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b02-07-b02-07_batch_product_product_weekly_stock_history_update -->
+</section>
+      <section class="sheet-panel" id="sheet-11">
+        <div class="sheet-heading">
+          <h2>ユニサーチフィード送信</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>ユニサーチ</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>サイトリニューアル</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-09-11</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-11</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B02-09</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>ユニサーチフィード送信</dd></div>
+            <div class="kv"><dt>概要</dt><dd>ユニサーチ向けのフィードファイルを出力する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-11-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>作成されたフィードファイルをユニサーチのサーバに送信する</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-11-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>詳細な連携仕様はユニサーチから提供されているフィード仕様書を参照</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>SCPでフィードファイルとdoneファイルをユニサーチのサーバに送信する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ユニサーチサーバへの認証はあらかじめ秘密鍵ファイルを設置し、SCPコマンド実行時に指定する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>現行のCron設定は以下のとおり（シェルはリポジトリ管理なし）</span></div>
+            <p class="doc-p" style="--lv:2">*/5 * * * * sh -x /home/ec2-user/feed_upload.sh &gt; /home/ec2-user/feed.log 2&gt;&amp;1</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　5分おき</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　ファイル　出力先(フォーマット)　ユニサーチサーバ</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ユニサーチフィード作成処理で作成したTSVファイル、doneファイル</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ユニサーチフィード作成処理で作成したTSVファイル、doneファイルをSCPで送信する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API デッキビルダー — デッキ情報検索 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#認証・認可">認証・認可</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#デッキ情報を検索する-GET-decks">デッキ情報を検索する（GET `/decks`）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv3" href="#リクエスト">リクエスト</a>
+<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
+<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
+<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
+<a class="lv3" href="#副作用">副作用</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#ページネーション">ページネーション</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-api/a15-13_api_deck_builder_deck_search.md</p>
+        <h1>API デッキビルダー — デッキ情報検索</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>デッキビルダーアプリの利用者が、検索条件に一致するデッキの一覧と総件数を取得するためのAPIである。deck-api（デッキビルダー用のAPIアプリケーション）が提供するJSON APIで、フォーマット・アーキタイプ・期間・タグ・採用カードなどの条件で絞り込み、ページング付きでデッキ一覧を返す。公開検索と自分のデッキ検索の2モードを持つ。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はdeck-apiのデッキ検索処理、ルート定義（<code>config/routes.yaml</code>）、デッキ検索処理（デッキリポジトリ）、デッキを扱うエンティティ、共通の認証処理を正とする。</p>
+<p>本機能のカスタマイズ区分は現行踏襲とする。挙動はdeck-api（デッキビルダー用APIアプリケーション）の実装を確認値とし、DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseの実装を正とする。</p>
+<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>検索条件に一致するデッキ一覧と総件数の取得</li><li>公開検索（公開デッキ）と自分のデッキ検索（プレイヤー所有デッキ）のモード切り替え</li><li>フォーマット・アーキタイプ・期間・タグ・キャンペーンタグ・採用カード等による絞り込み</li><li>ページング（<code>per_page</code>・<code>page</code>・<code>total_count</code>）と結果キャッシュ</li><li>自分のデッキ検索時の認証</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
+<ul><li>デッキ1件の参照（デッキ情報参照APIの設計を正とする）</li><li>デッキの新規登録・更新・削除（デッキ情報登録・デッキ情報更新・デッキ情報削除の各APIの設計を正とする）</li><li>カード採用枚数集計・メタゲーム・直近大会等の集計系API</li><li>トークンの発行（デッキビルダー用ログインの設計を正とする）</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>デッキビルダー関連テーブルは、現行（deck-api）と移行先（ec-cube-enterprise）で同一スキーマであり、テーブル名も一致する。本機能の検索・絞り込みに関わる主な対応は次のとおり。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（deck-api）</th><th>移行先（ec-cube-enterprise）</th><th>差分・注意</th></tr></thead><tbody><tr><td>デッキ本体</td><td><code>dtb_deck</code></td><td><code>dtb_deck</code></td><td>同一テーブル名。</td></tr><tr><td>公開範囲</td><td>応答の<code>scope_id</code>。DB上は公開区分（<code>disp_id</code>）・非公開フラグ（<code>private_flg</code>）・閲覧用トークン（<code>display_token</code>）</td><td>同一</td><td>公開検索は公開区分が公開のデッキを対象とする。列名<code>scope_id</code>はDBに存在しない。</td></tr><tr><td>論理削除</td><td>削除日時（<code>deleted_at</code>）が無い行のみ対象</td><td>削除日時（<code>deleted_at</code>）が無い行のみ対象</td><td>物理削除は行わない。</td></tr><tr><td>レギュレーション違反</td><td>レギュレーション違反フラグ（<code>regulation_violation_flg</code>）</td><td>同一列</td><td>既定では違反デッキを除外する。</td></tr><tr><td>並び順</td><td>作成日時（<code>create_date</code>）の降順</td><td>同一列・同一順</td><td>キャンペーンタグの並びは<code>mtb_campaign_tag.sort_no</code>を用いる。</td></tr></tbody></table></div>
+<p>現行と移行先でスキーマに差はなく、移行時に追加・改廃する絞り込み列は本書では確認していない。</p>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>公開検索</td><td>公開デッキを対象とする検索モード（<code>mode=public</code>）。</td></tr><tr><td>自分のデッキ検索</td><td>認証プレイヤーが所有するデッキを対象とする検索モード（<code>mode=private</code>）。</td></tr><tr><td>大会デッキ・ユーザーデッキ</td><td>デッキ種別。大会由来のデッキとユーザー作成のデッキ。</td></tr><tr><td>キャンペーンタグ</td><td>デッキに付与するタグ。開催前・開催中・開催後の状態を持つ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>デッキ情報の検索</td><td><code>GET /decks</code></td><td>検索条件に一致するデッキ一覧と総件数を、ページング付きで返す。自分のデッキ検索モードでは認証を要する。</td></tr></tbody></table></div>
+<p>応答形式はJSON。呼び出し元はデッキビルダーアプリ。</p>
+<hr>
+<h2 id="認証・認可">認証・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td><code>jwt-token</code>ヘッダのJWTを検証し、ペイロード<code>aud</code>の顧客IDからプレイヤーを引く。署名方式はHS256。</td></tr><tr><td>認証の要否</td><td>公開検索（<code>mode=public</code>）は認証不要で公開デッキを返す。自分のデッキ検索（<code>mode=private</code>）は認証必須で、失敗時は認証拒否（HTTP 401）とする。</td></tr><tr><td>認可</td><td>自分のデッキ検索では認証プレイヤーが所有するデッキのみを対象とする。呼び出し可能なクライアントはデッキビルダーアプリ。</td></tr></tbody></table></div>
+<p>トークン原値・署名シークレットは本書に記載しない。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="デッキ情報を検索する-GET-decks">デッキ情報を検索する（GET <code>/decks</code>）</h3>
+<ol><li>クエリパラメータを既定値とともに受領する。</li><li>モードが自分のデッキ検索（<code>private</code>）の場合は<code>jwt-token</code>ヘッダのトークンを検証し、プレイヤーを特定する。検証できない場合は認証拒否（HTTP 401）とする。公開検索（<code>public</code>）の場合は認証を行わない。</li><li>検索条件でデッキを絞り込む。公開検索は公開デッキ、自分のデッキ検索は認証プレイヤー所有デッキを対象とする。デッキ種別フラグがいずれも対象外の場合は空の一覧と総件数0を返す。</li><li>作成日時の降順で並べ、ページング（<code>page</code>・<code>per_page</code>）で1ページ分を取得する。<code>cache_key</code>がある場合は一覧・件数の結果をキャッシュする。</li><li>デッキタグ・キャンペーンタグを各デッキに整形して付与し、総件数とともにコード200・メッセージで返す。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象データ</td><td>削除日時が無いデッキ。公開検索は公開（<code>scope_id=1</code>）デッキ、自分のデッキ検索は認証プレイヤー所有デッキ。</td></tr><tr><td>デッキ種別</td><td><code>event_deck_flag</code>で大会デッキ、<code>user_deck_flag</code>でユーザーデッキを対象に含める。いずれも対象外なら空・総件数0を返す。</td></tr><tr><td>結合</td><td>フォーマット・アーキタイプ・代表カード画像・プレイヤー・デッキタグ・キャンペーンタグを結合する。採用カード条件指定時はボード別に採用カードを結合する。</td></tr><tr><td>絞り込み</td><td>フォーマット・アーキタイプ・作成期間・更新期間・タグ・キャンペーンタグ・利用者ID・利用者名・大会名・大会期間・参加人数・優勝・上位8・レギュレーション違反・採用カードで絞り込む。</td></tr><tr><td>一意化</td><td>デッキIDで一意化する（<code>GROUP BY</code>）。</td></tr><tr><td>並び順</td><td>作成日時の降順。</td></tr><tr><td>ページング</td><td><code>page</code>・<code>per_page</code>で区切る。<code>per_page</code>は最大100に丸める。</td></tr><tr><td>総件数</td><td>同一条件で重複排除したデッキIDの件数を別途数えて返す。</td></tr><tr><td>キャッシュ</td><td><code>cache_key</code>がある場合、一覧と件数の結果を一定時間キャッシュする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="入出力">入出力</h2>
+<h3 id="リクエスト">リクエスト</h3>
+<p>クエリパラメータで受け取る。位置はいずれもクエリ。</p>
+<div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>jwt-token</code></td><td>ヘッダ</td><td>string</td><td>条件付き必須</td><td>認証用のJWTトークン。<code>mode=private</code>のとき必須。</td></tr><tr><td><code>mode</code></td><td>クエリ</td><td>string</td><td>任意（既定<code>public</code>）</td><td>検索モード。<code>public</code>（公開検索）または<code>private</code>（自分のデッキ検索）。</td></tr><tr><td><code>format</code></td><td>クエリ</td><td>array</td><td>任意</td><td>フォーマットIDの配列。配列指定時のみ絞り込む。</td></tr><tr><td><code>archetype</code></td><td>クエリ</td><td>array</td><td>任意</td><td>アーキタイプIDの配列。</td></tr><tr><td><code>event_deck_flag</code></td><td>クエリ</td><td>string</td><td>任意（既定<code>1</code>）</td><td>大会デッキを含めるか。<code>0</code>・<code>false</code>で除外。</td></tr><tr><td><code>user_deck_flag</code></td><td>クエリ</td><td>string</td><td>任意（既定<code>1</code>）</td><td>ユーザーデッキを含めるか。<code>0</code>・<code>false</code>で除外。</td></tr><tr><td><code>create_from</code></td><td>クエリ</td><td>string</td><td>任意</td><td>作成日時の下限（日付）。</td></tr><tr><td><code>create_to</code></td><td>クエリ</td><td>string</td><td>任意</td><td>作成日時の上限（日付）。</td></tr><tr><td><code>update_from</code></td><td>クエリ</td><td>string</td><td>任意</td><td>更新日時の下限（日付）。</td></tr><tr><td><code>update_to</code></td><td>クエリ</td><td>string</td><td>任意</td><td>更新日時の上限（日付）。</td></tr><tr><td><code>tag</code></td><td>クエリ</td><td>array</td><td>任意</td><td>デッキタグIDの配列。</td></tr><tr><td><code>campaign_tag_ids</code></td><td>クエリ</td><td>array</td><td>任意</td><td>キャンペーンタグIDの配列。</td></tr><tr><td><code>user_id</code></td><td>クエリ</td><td>string</td><td>任意</td><td>デッキ利用者IDの完全一致。</td></tr><tr><td><code>user_name</code></td><td>クエリ</td><td>string</td><td>任意</td><td>大会デッキのプレイヤー名の部分一致。</td></tr><tr><td><code>event_name</code></td><td>クエリ</td><td>string</td><td>任意</td><td>大会名の部分一致（日英）。</td></tr><tr><td><code>event_date_from</code></td><td>クエリ</td><td>string</td><td>任意</td><td>大会日付の下限。</td></tr><tr><td><code>event_date_to</code></td><td>クエリ</td><td>string</td><td>任意</td><td>大会日付の上限。</td></tr><tr><td><code>participants_from</code></td><td>クエリ</td><td>integer</td><td>任意</td><td>参加人数の下限。</td></tr><tr><td><code>participants_to</code></td><td>クエリ</td><td>integer</td><td>任意</td><td>参加人数の上限。</td></tr><tr><td><code>champion_flag</code></td><td>クエリ</td><td>string</td><td>任意（既定<code>0</code>）</td><td>真かつ上位8フラグが偽のとき、優勝（順位1）のみに絞る。</td></tr><tr><td><code>top8_flag</code></td><td>クエリ</td><td>string</td><td>任意（既定<code>0</code>）</td><td>真のとき順位8位以内に絞る。</td></tr><tr><td><code>regulation_violation_flag</code></td><td>クエリ</td><td>string</td><td>任意（既定<code>0</code>）</td><td>偽のときレギュレーション違反デッキを除外する。</td></tr><tr><td><code>search_decks_count</code></td><td>クエリ</td><td>integer</td><td>任意</td><td>直近のデッキID範囲に限定する件数指定。</td></tr><tr><td><code>per_page</code></td><td>クエリ</td><td>integer</td><td>任意（既定<code>20</code>、数字のみ）</td><td>1ページあたりの件数。最大100に丸める。</td></tr><tr><td><code>page</code></td><td>クエリ</td><td>integer</td><td>任意（既定<code>1</code>、数字のみ）</td><td>ページ番号。</td></tr><tr><td><code>cards</code></td><td>クエリ</td><td>array</td><td>任意</td><td>採用カード条件の配列。各要素は<code>card_id</code>・<code>board_id</code>。</td></tr><tr><td><code>cache_key</code></td><td>クエリ</td><td>string</td><td>任意</td><td>結果キャッシュのキー。指定時に一覧・件数をキャッシュする。</td></tr></tbody></table></div>
+<h3 id="レスポンス-成功">レスポンス（成功）</h3>
+<p>HTTP 200。</p>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200。</td></tr><tr><td><code>message</code></td><td>string</td><td>処理結果メッセージ。成功時は「Deck search success」。</td></tr><tr><td><code>total_count</code></td><td>integer</td><td>条件に一致するデッキの総件数（ページング前）。</td></tr><tr><td><code>decks</code></td><td>array</td><td>デッキ一覧。各要素は下記の子フィールドを持つ。</td></tr></tbody></table></div>
+<p><code>decks</code>の各要素の子フィールド。</p>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>id</code></td><td>integer</td><td>デッキID。</td></tr><tr><td><code>deck_name</code></td><td>string</td><td>デッキ名。</td></tr><tr><td><code>format_id</code></td><td>integer</td><td>フォーマットの識別子。</td></tr><tr><td><code>format_name_jp</code></td><td>string</td><td>フォーマット名（日本語）。</td></tr><tr><td><code>format_name_en</code></td><td>string</td><td>フォーマット名（英語）。</td></tr><tr><td><code>archetype_id</code></td><td>integer</td><td>アーキタイプの識別子。</td></tr><tr><td><code>archetype_name_jp</code></td><td>string</td><td>アーキタイプ名（日本語）。</td></tr><tr><td><code>archetype_name_en</code></td><td>string</td><td>アーキタイプ名（英語）。</td></tr><tr><td><code>card_id</code></td><td>integer</td><td>代表カード画像の識別子。</td></tr><tr><td><code>card_image</code></td><td>string</td><td>代表カード画像のURL。</td></tr><tr><td><code>deck_type</code></td><td>string</td><td>デッキ種別。</td></tr><tr><td><code>event_name_jp</code></td><td>string</td><td>大会名（日本語）。</td></tr><tr><td><code>event_name_en</code></td><td>string</td><td>大会名（英語）。</td></tr><tr><td><code>event_date</code></td><td>string</td><td>大会日付。</td></tr><tr><td><code>player_name</code></td><td>string</td><td>プレイヤー名（大会デッキ）。</td></tr><tr><td><code>result</code></td><td>string</td><td>成績。</td></tr><tr><td><code>ranking</code></td><td>integer</td><td>順位。</td></tr><tr><td><code>participants</code></td><td>integer</td><td>参加人数。</td></tr><tr><td><code>deck_user_id</code></td><td>string</td><td>デッキ利用者ID。</td></tr><tr><td><code>nickname</code></td><td>string</td><td>ニックネーム（ユーザーデッキ）。</td></tr><tr><td><code>scope_id</code></td><td>integer</td><td>公開範囲。</td></tr><tr><td><code>deck_private_flag</code></td><td>boolean</td><td>非公開フラグ。</td></tr><tr><td><code>create_date</code></td><td>string</td><td>作成日時。</td></tr><tr><td><code>update_date</code></td><td>string</td><td>更新日時。</td></tr><tr><td><code>display_token</code></td><td>string</td><td>限定公開トークン。自分のデッキ検索（<code>private</code>）の場合に含める。</td></tr><tr><td><code>deck_tags</code></td><td>array</td><td>デッキタグの配列。各要素は<code>id</code>・<code>name_jp</code>・<code>name_en</code>。</td></tr><tr><td><code>campaign_tags</code></td><td>array</td><td>キャンペーンタグの配列。各要素は<code>id</code>・<code>name_jp</code>・<code>name_en</code>・<code>is_during</code>（開催前0・開催中1・開催後2）。</td></tr></tbody></table></div>
+<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
+<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>401</td><td><code>mode=private</code>でトークン欠落・署名不正・該当プレイヤーなし</td><td><code>{code, message}</code>（messageは「Access Token is incorrect」「Authentication failed」）</td></tr></tbody></table></div>
+<p>公開検索は認証なしで成功し、条件不一致時は空の<code>decks</code>と<code>total_count=0</code>を返す。</p>
+<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
+<p>成功時の応答例（一部フィールドを抜粋）。</p>
+<pre><code class="language-json">{
+  "code": 200,
+  "message": "Deck search success",
+  "total_count": 2,
+  "decks": [
+    {
+      "id": 12345,
+      "deck_name": "サンプルデッキ",
+      "format_id": 1,
+      "format_name_jp": "スタンダード",
+      "archetype_id": 10,
+      "scope_id": 1,
+      "deck_private_flag": false,
+      "deck_user_id": "user0001",
+      "create_date": "2026-06-01T12:00:00+09:00",
+      "deck_tags": [
+        { "id": 1, "name_jp": "アグロ", "name_en": "Aggro" }
+      ],
+      "campaign_tags": [
+        { "id": 2, "name_jp": "キャンペーン", "name_en": "Campaign", "is_during": 1 }
+      ]
+    }
+  ]
+}</code></pre>
+<h3 id="副作用">副作用</h3>
+<p>無し（参照のみ）。<code>cache_key</code>指定時に一覧・件数の結果キャッシュを書き込むが、業務データの更新は行わない。</p>
+<p>応答はJSON応答整形を経て返す。プロパティはJSONキーに準じ、日時はISO8601、<code>serialize_null</code>は有効とする。</p>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>mode</code></td><td><code>public</code>または<code>private</code>のみを受け付ける。既定は<code>public</code>。</td></tr><tr><td><code>per_page</code>・<code>page</code></td><td>数字のみを受け付ける。既定は<code>per_page=20</code>・<code>page=1</code>。<code>per_page</code>は最大100に丸める。</td></tr><tr><td><code>format</code>・<code>archetype</code>・<code>tag</code>・<code>campaign_tag_ids</code>・<code>cards</code></td><td>配列で指定された場合のみ絞り込み条件として用いる。</td></tr><tr><td>認証</td><td><code>mode=private</code>のときのみトークンを検証し、未充足時は認証拒否（HTTP 401）とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点のデータを返す。本APIはデータを更新しない。</td></tr><tr><td>キャッシュ</td><td><code>cache_key</code>指定時は一定時間キャッシュした結果を返すため、キャッシュ有効期間内は最新内容と一致しないことがある。</td></tr><tr><td>一覧と件数</td><td>一覧（ページング後）と総件数（重複排除した全件数）は同一条件から算出するため整合する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>デッキ（<code>dtb_deck</code>）</td><td>デッキID（<code>id</code>）・デッキ名（<code>deck_name</code>）・公開区分（<code>disp_id</code>）・非公開フラグ（<code>private_flg</code>）・作成日時（<code>create_date</code>）・更新日時（<code>update_date</code>）</td><td>絞り込み・並び替え・応答に用いる。応答の<code>scope_id</code>は公開区分・非公開フラグ・閲覧用トークンから組み立てる。</td></tr><tr><td>デッキ（<code>dtb_deck</code>）</td><td>削除日時（<code>deleted_at</code>）</td><td>削除日時が無いデッキのみ対象とする。</td></tr><tr><td>デッキ（<code>dtb_deck</code>）</td><td>大会名（<code>event_name_jp</code>・<code>event_name_en</code>）・大会日付（<code>event_date</code>）・成績（<code>result</code>）・順位（<code>ranking</code>）・参加人数（<code>participants</code>）・プレイヤー名（<code>player_name</code>）・レギュレーション違反フラグ（<code>regulation_violation_flg</code>）</td><td>絞り込み・応答に用いる。</td></tr><tr><td>デッキタグ（<code>mtb_deck_tag</code>）・キャンペーンタグ（<code>mtb_campaign_tag</code>）</td><td>タグID（<code>id</code>）・名称（<code>name_jp</code>・<code>name_en</code>）・開催期間（<code>view_start_date</code>・<code>view_end_date</code>）</td><td>絞り込みとタグ配列の応答に用いる。</td></tr><tr><td>採用カード（<code>dtb_deck_card</code>）</td><td>カード（<code>card_id</code>）・ボード（<code>board_id</code>）</td><td>採用カード条件指定時の結合に用いる。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_deck / dtb_deck_card / mtb_campaign_tag / mtb_deck_tag</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>デッキ情報検索</th></tr></thead><tbody><tr><td>任意の利用者（公開検索）</td><td>公開デッキを検索できる。</td></tr><tr><td>認証済みのプレイヤー（自分のデッキ検索）</td><td>自身が所有するデッキを検索できる。</td></tr><tr><td>未認証・トークン不正（自分のデッキ検索）</td><td>認証拒否（HTTP 401）となり、検索できない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>認証不可（<code>mode=private</code>）</td><td>認証拒否（HTTP 401）とし、<code>{code, message}</code>を返す。</td></tr><tr><td>条件不一致・対象外のデッキ種別</td><td>空の<code>decks</code>と<code>total_count=0</code>を返す（HTTP 200）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>限定公開トークンの原値</li><li>Cookie値・セッションIDの完全値</li></ul>
+<hr>
+<h2 id="ページネーション">ページネーション</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td><code>page</code>（既定1）と<code>per_page</code>（既定20、数字のみ）で1ページ分を指定する。<code>per_page</code>は最大100に丸める。</td></tr><tr><td>出力</td><td><code>decks</code>に1ページ分のデッキ配列、<code>total_count</code>に条件に一致する重複排除後の総件数を返す。総件数はページングの影響を受けない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

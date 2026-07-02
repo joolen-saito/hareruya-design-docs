@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>カード管理 — 一括削除 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#一括削除を実行する-POST-m14-03-admin-card-card-bulk-delete">一括削除を実行する（POST `m14-03_admin_card_card_bulk_delete`）</a>
+<a class="lv3" href="#論理未削除商品の有無判定-削除ブロックの内訳">論理未削除商品の有無判定（削除ブロックの内訳）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#一括削除時の判定順序">一括削除時の判定順序</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
+<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m14-03_admin_card_card_bulk_delete.md</p>
+        <h1>カード管理 — 一括削除</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>HareruyaEc プラグインが管理画面の「カード管理」検索一覧から、チェックボックスで選んだカードをまとめて削除する機能である。単一カードの削除（別ルートの DELETE）とは送信方法・ CSRF の載せ方が異なるが、削除可否の判定・関連商品規格の紐付け解除・子データの再帰削除・支店連携通知の流れは同一の処理本体を通る。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とする。</p>
+<p>本機能のカスタマイズ区分は現行踏襲である。現行挙動は pf-eccube3 の HareruyaEc プラグインを参照し、永続化に関わるテーブル名・列名などのDB関連は ec-cube-enterprise を正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。</p>
+<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>DB関連の記述は ec-cube-enterprise の実装を正とする。削除対象のカードマスタ・カード詳細・デッキ採用行は現行と移行先で同一のテーブル名（<code>mtb_card</code>、<code>mtb_card_detail</code>、<code>dtb_deck_card</code>）だが、商品との紐付け先と削除可否判定に用いる商品の削除方式が異なる。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>カード詳細と商品の紐付け列</td><td><code>dtb_product_sub.card_detail_id</code>（補助表 <code>dtb_product_sub</code> 経由）</td><td><code>dtb_product.card_detail_id</code>（商品本体 <code>dtb_product</code> の列。補助表 <code>dtb_product_sub</code> は移行先に存在しない）。削除前の <code>NULL</code> 切り離しは移行先では <code>dtb_product.card_detail_id</code> を対象とする。</td></tr><tr><td>削除可否の商品判定</td><td>論理未削除（<code>dtb_product.del_flg = 0</code>）の商品がカード詳細経由で存在するか</td><td>移行先の <code>dtb_product</code> は <code>del_flg</code> を持たず物理削除のため、紐付く商品行の存在有無で判定する（論理削除→物理削除）。</td></tr><tr><td>デッキ採用判定</td><td><code>dtb_deck_card</code></td><td>同一スキーマ（<code>dtb_deck_card</code>）。</td></tr><tr><td>カード本体・子の削除</td><td><code>mtb_card</code> ほか ORM 再帰削除</td><td>同一スキーマ。</td></tr></tbody></table></div>
+<p>削除のフロー・CSRF・支店通知の挙動は現行（pf-eccube3）を参照する。<code>dtb_product_sub</code> 経由の切り離しと <code>del_flg</code> 判定は移行先で上表のとおり読み替える。</p>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>検索結果が 1 件以上あり、一覧でカードにチェックを入れ、「一括削除」を押して確認で OK</td><td><code>POST /{admin_route}/card/delete</code></td><td>選択 ID 分の削除が順に試みられ、すべて通れば成功メッセージが付いたうえで検索一覧（またはカード一覧）へ戻る。</td></tr><tr><td>検索結果エリアが無い・件数ゼロ</td><td>（一括削除ボタンは描画されない）</td><td>一覧のチェックボックスと一括削除ボタンが無いため、この入口からは実行できない。</td></tr><tr><td>検索結果はあるがチェックを付けずに「一括削除」を押す</td><td><code>POST /{admin_route}/card/delete</code></td><td>フラッシュ無しで一覧へリダイレクトする（ページ番号は後述のセッションキーがあればそのページ）。</td></tr></tbody></table></div>
+<p>同一 HTML フォームの既定 <code>action</code> は検索用の <code>POST /{admin_route}/card/search/1</code> であるが、「一括削除」ボタンは <code>formaction</code> で <code>m14-03_admin_card_card_bulk_delete</code> に差し替えて送信する。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>「一括削除」ボタンは検索結果ヘッダ付近にあり、<code>pagination.totalItemCount &gt; 0</code> のときのみ表示される。各行に <code>name="cardIds[]"</code> のチェックボックスがある。表頭 <code>#allCheck</code> で <code>cardId</code> 属性を持つチェックを一括オンオフする（カード検索画面の共通 JS）。</td></tr><tr><td>JS 挙動</td><td>クリック時にブラウザ標準の <code>confirm</code> でメッセージを表示し、キャンセルなら送信しない。CSV 出力ボタン用の短時間無効化は一括削除には付いていない。</td></tr><tr><td>CSS・レイアウト</td><td>本機能専用の追加スタイルはない。</td></tr><tr><td>モーダル・ポップアップ</td><td>確認は <code>confirm</code> のみ。</td></tr></tbody></table></div>
+<p>検索フォーム本体は CSRF 無効の型で生成されるが、一括削除ボタン内に <code>name="_token"</code> の隠し項目を置き、コア既定のトークン名で検証する。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="一括削除を実行する-POST-m14-03-admin-card-card-bulk-delete">一括削除を実行する（POST <code>m14-03_admin_card_card_bulk_delete</code>）</h3>
+<ol><li>管理画面の認証・共通制約を通過する。</li><li>リクエストボディの <code>_token</code> を、コア既定 ID（実装では <code>Constant::TOKEN_NAME</code> と一致する文字列）として CSRF プロバイダで検証する。無効ならアクセス拒否（HTTP 403）となる例外を投げる。成功時は同プロバイダでトークンを更新する。</li><li>セッションキー <code>admin.card.search.page_no</code> を読む（互換の別画面パスでは空のときがある）。</li><li>ルートパラメータで ID が無い一括経路では、ボディの <code>cardIds</code> を ID 群とみなす。<code>cardIds</code> がリクエストに存在しない（<code>null</code>）とき、フラッシュは付けず、<code>admin.card.search.page_no</code> が空でなければ <code>m14-01_admin_card_card_search</code> の当該ページへ、空なら <code>admin_card_list</code> へリダイレクトして終了する。</li><li><code>cardIds</code> を先頭から順に走査する。要素が空文字相当、またはカードマスタが取得できないとき、HTTP 404 で打ち切る。</li><li>各 ID について、デッキ採用行（<code>deckCards</code> の件数）が 1 件でもある、または「論理未削除の商品がカード詳細経由で存在する」ネイティブ問い合わせの件数が 1 以上のとき、削除ブロックとみなす。翻訳キー <code>admin.card.delete.failed</code> にカードの合成名を埋め込んだエラーメッセージをフラッシュし、この時点までに削除完了した ID だけを支店通知へ渡してから <code>Referer</code> へリダイレクトする。</li><li>ブロックされなければ、カード用レポジトリのネイティブ更新で、当該カードにぶら下がるカード詳細に結び付いていた商品規格の <code>card_detail_id</code> を NULL に切り離す（販売商品の親子構造は維持し、印刷版参照だけ外す）。</li><li>汎用ヘルパの再帰削除で、Doctrine 上 oneToMany として子側へマッピングされたコレクションを深さ優先で <code>remove</code> し、最後に当該カードマスタを <code>remove</code> して <code>flush</code> する（ manyToMany はこの再帰の対象外。親エンティティ削除時の ORM の扱いはマッピングに従う）。</li><li>ループ内で <code>commit</code> を呼ぶ実装になっている（トランザクション境界は実装を確認値とする）。</li><li>すべての ID が成功したら再度 <code>commit</code> を呼び、翻訳キー <code>admin.delete.complete</code> を成功フラッシュする。</li><li>支店連携サービスに、リクエストで受け取った ID 配列（文字列のまま混在し得る）を渡して更新通知を送る。通知結果はログに残し、失敗時は支店連携エラーテーブルへ追記して <code>flush</code> する。</li><li><code>admin.card.search.page_no</code> が空でなければ <code>m14-01_admin_card_card_search</code> の当該ページへ、空なら <code>admin_card_list</code> へリダイレクトする。</li></ol>
+<h3 id="論理未削除商品の有無判定-削除ブロックの内訳">論理未削除商品の有無判定（削除ブロックの内訳）</h3>
+<p>実装の SQL は <code>mtb_card</code>・<code>mtb_card_detail</code>・<code>dtb_product_sub</code>・<code>dtb_product</code> を結合し、<code>dtb_product.del_flg = 0</code> の行が 1 件でもあれば「削除不可の商品が残っている」と数える。買取系テーブルはこの問い合わせに含まれない（ソース上のコメントと SQL の対応は実装を確認値とする）。</p>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<p>本機能では売上集計や件数集計は行わない。削除可否の集計はカード単位で、上記 SQL とデッキ採用件数のみである。</p>
+<hr>
+<h2 id="一括削除時の判定順序">一括削除時の判定順序</h2>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>CSRF トークン</td><td>無効なら HTTP 403（アクセス拒否）。</td></tr><tr><td>2</td><td>ボディに <code>cardIds</code> キーが存在するか</td><td>無ければリダイレクトのみ（メッセージなし）。</td></tr><tr><td>3</td><td>各 ID が非空かつ DB にカードが存在するか</td><td>満たさなければ HTTP 404。</td></tr><tr><td>4</td><td>デッキ採用があるか</td><td>あればエラーフラッシュ・部分通知・Referer へ。</td></tr><tr><td>5</td><td>論理未削除商品がカード詳細経由で存在するか</td><td>あれば同上。</td></tr><tr><td>6</td><td>上記を通り抜けた各 ID</td><td>規格紐付け解除・ORM 削除・flush。</td></tr></tbody></table></div>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<p>本機能では数量計算や料金計算は行わない。削除の順序は POST の <code>cardIds</code> 配列の反復順に依存する。</p>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>行チェック（一覧）</td><td>任意（未選択なら送信されない）</td><td>カード ID の整数表現に準ずる</td><td>未チェック</td><td>ボディキー <code>cardIds</code>（配列フィールド名 <code>cardIds[]</code>）。未送信時は <code>null</code> 扱いでリダイレクトのみ。</td></tr><tr><td>CSRF トークン（隠し）</td><td>必須</td><td>実装のトークン長</td><td>サーバが発行した現行値</td><td>ボディキー <code>_token</code>。コアの既定トークン ID で検証。成功後にプロバイダが更新。</td></tr></tbody></table></div>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td><code>cardIds</code> が空配列として送られる</td><td>ループが 0 回になり、成功フラッシュと支店通知（空配列に近いパラメータ組み立て）に至り得る。実装を確認値とする。</td></tr><tr><td>複数 ID のうち途中でブロック</td><td>その時点までに flush 済みの削除は残る。フラッシュは 1 件分のエラーのみ。支店には削除済み ID のみ通知。</td></tr><tr><td>支店 API 失敗</td><td>画面は成功メッセージのままリダイレクトし得る。失敗内容はログと支店連携エラーテーブル側に残る。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との関係</td><td>削除直後はリダイレクトで一覧を再取得する。別タブの古い一覧とは一致しない場合がある。</td></tr><tr><td>商品マスタ</td><td>カード削除前に <code>dtb_product_sub.card_detail_id</code> が NULL に更新されるため、商品行は残りカード参照だけ失われる。</td></tr><tr><td>支店</td><td>通知は HTTP クライアントで非同期に近い呼び出しであり、支店側反映と管理 DB 削除の厳密な同一トランザクションは保証しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能は画面 POST の一次処理であり、画面からバッチを起動しない。支店更新通知は内部で HTTP POST を行う。失敗時も画面フローは成功リダイレクトし得るため、利用者は支店連携エラー画面やログではなくフラッシュだけでは判別できない場合がある。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>POST ボディ: <code>cardIds[]</code>、<code>_token</code>。検索条件は同じフォームの他フィールドも載るが、当ルートでは参照しない。</td></tr><tr><td>成功時出力</td><td>302 で <code>m14-01_admin_card_card_search</code>（ページ番号付き可）または <code>admin_card_list</code>。成功フラッシュ <code>admin.delete.complete</code>。</td></tr><tr><td>失敗時出力</td><td>CSRF 失敗は HTTP 403。カード未存在は HTTP 404。削除ブロックはエラーフラッシュと 302 で Referer。</td></tr><tr><td>副作用</td><td><code>mtb_card</code> 周辺の物理削除（ORM）、<code>dtb_product_sub</code> の NULL 更新、支店通知、ログ、支店エラー表の追記。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>当機能が直接触れる主な列は以下。型の細部はスキーマを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_card</code></td><td>主キー</td><td>行ごと削除。移行先（ec-cube-enterprise）も同一スキーマ。</td></tr><tr><td><code>mtb_card_detail</code></td><td><code>card_id</code> ほか</td><td>親カード削除に伴い ORM で子から削除される。移行先も同一スキーマ。</td></tr><tr><td><code>dtb_product.card_detail_id</code>（現行は <code>dtb_product_sub.card_detail_id</code>）</td><td><code>card_detail_id</code></td><td>削除前に NULL 更新で切り離す。移行先 ec-cube-enterprise では商品本体 <code>dtb_product</code> の列で、補助表 <code>dtb_product_sub</code> は存在しない。</td></tr><tr><td><code>dtb_product</code></td><td>（現行のみ <code>del_flg</code>）</td><td>削除可否判定にのみ参照（更新しない）。移行先 ec-cube-enterprise の <code>dtb_product</code> は <code>del_flg</code> を持たず物理削除のため、紐付く商品行の存在有無で判定する。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_product / dtb_product_sub / mtb_card / mtb_card_detail</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>CSRF</td><td>コアのトークン ID・値の組で検証。失敗時は例外。</td></tr><tr><td>カード ID</td><td>空または DB 不在は HTTP 404。チェックボックス未選択は <code>cardIds</code> 欠如としてリダイレクトのみ。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>一括削除（POST <code>/{admin_route}/card/delete</code>）</th></tr></thead><tbody><tr><td>管理画面にログインし当メニューに到達できる運用者</td><td>利用できる（管理画面のロール・IP 制限は共通ルールに従う）。</td></tr><tr><td>未ログインなど管理外の主体</td><td>管理画面の認可に阻まれる（本書では詳細を確定しない）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td><code>cardIds</code> 未送信</td><td><code>m14-01_admin_card_card_search</code>（<code>admin.card.search.page_no</code> あり）または <code>admin_card_list</code>（なし）。</td></tr><tr><td>削除ブロック</td><td><code>Referer</code> ヘッダの URL（無い場合のフォールバックはフレームワーク任せ）。</td></tr><tr><td>全件削除成功</td><td>同上「未送信」と同じくページ番号付き検索または一覧トップ。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>成功／未選択リダイレクト</td><td>検索条件は当機能では変更しない（セッションの検索状態は別機能の一覧が解釈する）。</td><td>フラッシュに成功または何も無し。ページ番号はセッション <code>admin.card.search.page_no</code> があれば URL に載る。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSRF 不一致</td><td>HTTP 403。</td></tr><tr><td>対象カード不在</td><td>HTTP 404。</td></tr><tr><td>デッキ採用または未削除商品あり</td><td>エラーフラッシュ、部分削除分の支店通知、Referer へリダイレクト。</td></tr><tr><td>支店 API 失敗</td><td>ログと支店連携エラー表。画面は成功扱いに終わり得る。</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>本機能では試行制限やレート制限を扱わない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>支店通知成功</td><td>情報ログにカード種別と ID 一覧の文字列。</td></tr><tr><td>支店通知失敗</td><td>情報ログに失敗と JSON メッセージ。エラー表に対象種別・ID 列・本文。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>読取</td><td>リダイレクト先のページ番号決定に <code>admin.card.search.page_no</code> を参照する。</td></tr><tr><td>更新</td><td>本ルートでは検索条件やページ番号を書き換えない。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>カード ID の選択状態はセッションに持たず、POST のみで渡す。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>本機能単体で新たな用途の Cookie を設定しない。セッション Cookie は管理画面共通の仕組みに従う（本書では詳細を確定しない）。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>楽観ロックや明示のユーザー単位排他はない。ループ内 <code>commit</code> と終盤の <code>commit</code> があり、他セッションとの競合時は先に成功した削除と DB 制約の結果としてエラーが出る可能性がある。詳細は運用再現時の実装ログを正とする。</p>
+<hr>
+<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
+<p>実装位置の手がかりとして、次を参照する。</p>
+<ul><li>ルート登録: <code>app/Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php</code>（<code>m14-03_admin_card_card_bulk_delete</code>）</li><li>画面: <code>app/Plugin/HareruyaEc/Resource/template/admin/Card/card.twig</code>（<code>bulk_delete</code> ボタン）</li><li>処理本体: <code>app/Plugin/HareruyaEc/Controller/Admin/CardController.php</code>（<code>delete</code>）</li><li>CSRF: <code>app/Plugin/HareruyaEc/Controller/FormValidHelper.php</code></li><li>再帰削除: <code>app/Plugin/HareruyaEc/Controller/FormToEntityOperationHelper.php</code></li><li>規格切り離し・削除可否 SQL: <code>app/Plugin/HareruyaEc/Repository/MtbCardRepository.php</code></li><li>支店通知: <code>app/Plugin/HareruyaEc/Service/BranchUpdateService.php</code></li></ul>
+<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
+<ul><li><code>m14-03_admin_card_card_bulk_delete</code> … <code>POST</code> … <code>/{admin_route}/card/delete</code>（一覧フォームから POST されたカード ID 群を順に削除し、成功時は検索一覧へリダイレクトする。）</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

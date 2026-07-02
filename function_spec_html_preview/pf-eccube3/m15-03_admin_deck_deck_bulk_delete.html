@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>デッキ管理 — 一括削除 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#一括削除を実行する-POST-m15-03-admin-deck-deck-bulk-delete">一括削除を実行する（POST `m15-03_admin_deck_deck_bulk_delete`）</a>
+<a class="lv3" href="#記事中-の判定の要点-実装上の入力">「記事中」の判定の要点（実装上の入力）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#一括削除時の判定順序">一括削除時の判定順序</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv3" href="#本機能におけるセッション">本機能におけるセッション</a>
+<a class="lv3" href="#セッションへ保存しない情報">セッションへ保存しない情報</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-grep-向け">調査補助（grep 向け）</a>
+<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m15-03_admin_deck_deck_bulk_delete.md</p>
+        <h1>デッキ管理 — 一括削除</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>HareruyaEc プラグインが管理画面「デッキ管理」の検索一覧から、チェックボックスで選んだデッキをまとめて削除する機能である。一覧と同一の HTML フォームにぶら下がる「一括削除」ボタンが、<code>formaction</code> で専用の POST URL に送信を切り替える。単一デッキの削除（別ルートの DELETE 相当のリンク送信）とは HTTP メソッドと CSRF の載せ方が異なるが、サーバ側の削除可否チェックやデッキ内カード削除・デッキ本体の除去の流れは同一の処理分岐として実装されている。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とする。</p>
+<p>本機能のカスタマイズ区分は現行踏襲である。挙動は現行リポ（pf-eccube3 の HareruyaEc プラグイン）を参照し、DB関連は ec-cube-enterprise を正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。</p>
+<p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<ul><li>ec-cube-enterprise にデッキ関連テーブル一式が実装されており、本機能の削除対象は移行先に存在する。</li><li>デッキ（<code>dtb_deck</code>）の主キー列名が異なる。移行先 ec-cube-enterprise では <code>id</code>、現行 pf-eccube3 では <code>deck_id</code> である。本書が <code>dtb_deck</code> の主キーを <code>deck_id</code> と記す箇所は、移行先では <code>dtb_deck.id</code> に対応する。デッキ内カード（<code>dtb_deck_card</code>）および記事との中間テーブル（<code>dtb_article_deck</code>）の外部キー列は現行・移行先とも <code>deck_id</code> のままである。</li><li>デッキの削除前に更新する <code>member_id</code> 列、および論理削除列 <code>deleted_at</code> は現行・移行先とも存在する。</li><li>削除可否判定で参照する記事とデッキの中間テーブル（<code>dtb_article_deck</code>、列 <code>deck_id</code>、<code>article_id</code>）、および親削除前に除去するデッキ内カード（<code>dtb_deck_card</code>、列 <code>deck_id</code>、<code>card_id</code>、<code>board_id</code>、<code>count</code>）は移行先に存在し同一スキーマである。</li></ul>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>検索結果が 1 件以上あり、一覧でデッキにチェックを入れ、「一括削除」を押して確認で OK</td><td><code>POST /{admin_route}/deck/delete</code></td><td>選択順に処理が進み、すべて通れば成功メッセージが付いたうえでデッキ検索（ページ番号がセッションにあればそのページ）またはデッキ一覧へ戻る。</td></tr><tr><td>検索結果エリアが無い・件数ゼロ</td><td>（一括削除ボタンは検索結果ブロックとともに描画されない）</td><td>一覧チェックボックスと一括削除ボタンが無い状態のため、この入口からは実行できない。</td></tr><tr><td>検索結果はあるがチェックを付けずに「一括削除」を押す</td><td><code>POST /{admin_route}/deck/delete</code></td><td><code>deckId</code> がボディに含まれない（<code>null</code>）扱いとなり、フラッシュ無しで <code>admin.deck.search.page_no</code> に応じた検索ページまたは一覧へリダイレクトする。</td></tr></tbody></table></div>
+<p>同一 HTML フォームの既定 <code>action</code> は一括更新用だが、「一括削除」ボタンは <code>formaction</code> で <code>m15-03_admin_deck_deck_bulk_delete</code> に差し替えて送信する。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>検索結果の件数が 1 以上のとき、結果ヘッダ付近のアコーディオン直近に CSV 出力系ボタンと並んで「一括削除」がある。一覧表に表頭チェック <code>#allCheck</code> と行ごとの <code>deckId[]</code> がある（表示ラベル列はリンクで詳細へ）。</td></tr><tr><td>JS 挙動</td><td>「一括削除」は <code>onclick</code> でブラウザ標準の <code>confirm</code> を出し、<code>admin.confirm.delete</code> を <code>format('選択されたデッキ')</code> で埋めた文言をそのまま表示する。キャンセル時は送信しない。表頭チェックは <code>deck-search.js</code> で <code>[deckId]</code> 属性を持つチェックボックス一式を連動させる。CSV 出力クリックでは未選択時に <code>alert</code> する処理があるが、一括削除側にはそれに相当する未選択ブロックが無い（実装確認値）。</td></tr><tr><td>CSS・レイアウト</td><td><code>decklist.css</code> はテンプレート集合に含まれる（本機能専用の追加だけを切り取る記述はしない）。</td></tr><tr><td>モーダル・ポップアップ</td><td>確認は <code>confirm</code> のみ。Bootstrap モーダルによる二段確認はない。</td></tr></tbody></table></div>
+<p>一括削除ボタン直下に、<code>name="_token"</code> の隠し項目を備え、<code>csrf_token()</code> の値を載せる構造がある。一覧フォームの一括編集とは別ソースのフォーム種別でも、送信時ボディへこのトークンが載ることが前提となる。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="一括削除を実行する-POST-m15-03-admin-deck-deck-bulk-delete">一括削除を実行する（POST <code>m15-03_admin_deck_deck_bulk_delete</code>）</h3>
+<ol><li>管理画面の認証・共通制約を通過する。</li><li>フォームオブジェクト無しで CSRF を検証する。ボディ直下の <code>_token</code> を、コアの既定キーと一致する ID としてトークンプロバイダで検証する。無効ならアクセス拒否（HTTP 403）となる例外を投げる。成功後、プロバイダでトークンを更新する。</li><li>セッションキー <code>admin.deck.search.page_no</code> を読む（本文中では実装確認値としてこの文字列で示す）。</li><li>単一削除用のルート引数 <code>$id</code> が無いとき、ボディの <code>deckId</code> を ID の配列とみなす。<code>deckId</code> が <code>null</code>（キー無し相当）なら、フラッシュは付けず、<code>admin.deck.search.page_no</code> が空でないときはルート <code>m15-01_admin_deck_deck_search</code> の当該 <code>page_no</code> へ、空のときは <code>admin_deck_list</code> へリダイレクトして終了する。</li><li>配列を先頭から走査する。各要素について、その主キーでデッキを取得する。取得できない場合は HTTP 404 で終了する（後続 ID は処理されない）。</li><li>当該デッキについて、記事との many-to-many コレクション件数が 0 より大きい場合、フラッシュとして翻訳キー <code>admin.deck.is_used.article</code> を積み、HTTP ステータスのままレスポンスを返せばよい状態で <code>Referer</code> ヘッダの URL にリダイレクトして終了する。この時点までに正常完了した削除は既にフラッシュ済みであり、一覧は再読込されていないので、並び順・残件との表示は一覧側のクエリタイミングに従う。</li><li>デッキに紐づくすべてのデッキ内カードを ORM で <code>remove</code> する。</li><li>デッキの更新者として、現在ログイン管理アカウントの主キーをデッキの <code>member_id</code> にセットし、<code>persist</code> のうえ一回 <code>flush</code> する。</li><li>続けてデッキ本体を <code>remove</code> し、再度 <code>flush</code> する。</li><li>すべての要素で上記ブロックなく完了した場合、フラッシュとして翻訳キー <code>admin.delete.complete</code> を積む。</li><li><code>admin.deck.search.page_no</code> が空でなければ <code>m15-01_admin_deck_deck_search</code> の当該ページへ、空なら <code>admin_deck_list</code> へリダイレクトする。</li></ol>
+<h3 id="記事中-の判定の要点-実装上の入力">「記事中」の判定の要点（実装上の入力）</h3>
+<p>処理はデッキの <code>articles</code> コレクションの <code>count()</code> を参照する。このコレクションが非空なら削除しない。</p>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<p>本機能では売上集計や一覧件数の再計算は行わない。</p>
+<hr>
+<h2 id="一括削除時の判定順序">一括削除時の判定順序</h2>
+<div class="table-wrap"><table><thead><tr><th>順序</th><th>判定</th><th>結果</th></tr></thead><tbody><tr><td>1</td><td>CSRF トークン</td><td>無効なら HTTP 403（アクセス拒否）。</td></tr><tr><td>2</td><td>ボディに <code>deckId</code> が存在するか（<code>null</code> でないか）</td><td>無ければリダイレクトのみ（フラッシュ無し）。</td></tr><tr><td>3</td><td>各要素でデッキが DB から取れるか</td><td>取れなければ HTTP 404 で打ち切り。</td></tr><tr><td>4</td><td><code>articles</code> 件数が 0 か</td><td>0 より大きければエラーフラッシュと Referer へリダイレクト。</td></tr><tr><td>5</td><td>上記を満たす各要素</td><td>デッキ内カード削除、メンバー ID 書き換え、<code>flush</code>、<code>remove</code>、<code>flush</code>。</td></tr></tbody></table></div>
+<p>同一 POST に重複した ID が含まれ、先行要素で削除が完了済みでも後続要素が同じ主キーを再度たどれば、ステップ 3 で 404 になり得る（実装上の順序依存）。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<p>本機能では数量計算や料金計算は行わない。削除順はボディで送られた <code>deckId</code> 配列の反復順に依存する。</p>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>行チェック（一覧）</td><td>任意（未選択なら送信されない）</td><td>整数のデッキ主キー表現に準ずる</td><td>未チェック</td><td>ボディキー <code>deckId</code>（複数フィールド名 <code>deckId[]</code>）。未送信時は <code>null</code> とみなされ、フラッシュ無しリダイレクト。同一キーを複数チェックしない通常操作では単純一覧になる。</td></tr><tr><td>CSRF トークン（隠し）</td><td>必須</td><td>サーバ実装が発行するトークン長</td><td>テンプレートで <code>csrf_token()</code> により埋められる</td><td>ボディキー <code>_token</code>。検証後にプロバイダ側でリフレッシュ。</td></tr></tbody></table></div>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td><code>deckId</code> が空配列として送られる（実装環境により稀）</td><td>ループが 0 回となり、その後でも成功フラッシュに至り得る。</td></tr><tr><td>複数 ID のうち途中で「記事中」に当たった</td><td>それまで削除済みの分は確定済み。エラーは 1 メッセージのみ。Referer が無いときの結果はフレームワーク側の規約に委ねる。</td></tr><tr><td>CSV 側と同様の「未選択で送信抑止」をクライアントが行わない</td><td>送信されればサーバ側の <code>null</code> 分岐または空配列入力の結果に応じて遷移する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>一覧との関係</td><td>成功時は一覧へリダイレクトし再クエリされる。処理中断時は Referer により直前一覧の再表示に戻り、一部削除のみ完了している状態があり得る。</td></tr><tr><td>デッキ内カード</td><td>親デッキの <code>remove</code> 前に子行を順に除去する実装であり、親削除時に子だけ残り続ける状態にはしない設計になっている（ORM の flush 順序は Doctrine に従う）。</td></tr><tr><td>many-to-many 付随テーブル</td><td><code>dtb_deck_deck_tag</code> のような関連は、親デッキのライフサイクルに任せ、<code>remove</code> とマッピングに従い付随関係も整理されることを期待する運用となる。細部は ORM とスキーマを参照する。</td></tr><tr><td>支店連携など外部通知</td><td>当ルート単体には、カード一括削除のような支店 API 送信ブロックが無い。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能では外部 HTTP API の入力・レスポンスを画面が直接扱わない。また画面から別バッチを起動しない。内部で呼ぶジョブは実装しない。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>POST ボディ: <code>deckId[]</code>、一括削除ボタン側の <code>_token</code>。同一フォーム内の検索項目や一括編集入力もボディに含まれ得るが、当ルートでは参照しない。</td></tr><tr><td>成功時出力</td><td>302 で <code>m15-01_admin_deck_deck_search</code>（<code>page_no</code> あり）または <code>admin_deck_list</code>。成功フラッシュ <code>admin.delete.complete</code>。</td></tr><tr><td>失敗時出力</td><td>CSRF 失敗は HTTP 403。デッキ不存在は HTTP 404。記事参照中はエラーフラッシュと 302 で Referer。</td></tr><tr><td>副作用</td><td><code>dtb_deck_card</code> の物理削除または相当する除去、<code>dtb_deck</code> の削除または論理削除に相当する状態遷移、デッキの <code>member_id</code> 更新ログに近い情報の明示は実装側のイベントに依る</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>当機能の処理が読み書き・削除対象となる主な表は以下。列の一覧と型細部はスキーマおよび Doctrine YAML を参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_deck</code></td><td>主キー <code>id</code>（現行 pf-eccube3 は <code>deck_id</code>）、<code>member_id</code>、削除日時列 <code>deleted_at</code>（マッピング上あり）ほか</td><td>削除前に <code>member_id</code> を更新し、その後親行をオブジェクト削除。</td></tr><tr><td><code>dtb_deck_card</code></td><td><code>deck_id</code> を含む</td><td>親削除前に子行を順にオブジェクト削除。</td></tr><tr><td>（中間）<code>dtb_article_deck</code></td><td>記事とデッキの対応</td><td>記事側コレクション件数でのブロックにより、参照が残っている限り削除しない。削除成功時には ORM とマッピングに応じ関連が整理される。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_article_deck / dtb_deck / dtb_deck_card</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>CSRF</td><td>既定 ID と値の組で検証。失敗時は HTTP 403。</td></tr><tr><td>デッキ ID</td><td>DB 不在は HTTP 404。チェック未選択により <code>deckId</code> が欠ける場合はリダイレクトのみでメッセージなし（実装確認値）。</td></tr><tr><td>記事参照</td><td>コレクション件数チェックのみ。詳細文言はメッセージファイルの <code>admin.deck.is_used.article</code> に従う。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>一括削除（POST <code>/{admin_route}/deck/delete</code>）</th></tr></thead><tbody><tr><td>管理画面にログインし当メニューに到達できる運用者</td><td>利用できる（管理画面のロール・IP 制限は共通ルールに従う）。</td></tr><tr><td>管理外の主体</td><td>管理画面の認可に阻まれる（詳細は本書では確定しない）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td><code>deckId</code> 未送信（<code>null</code>）</td><td><code>m15-01_admin_deck_deck_search</code>（<code>admin.deck.search.page_no</code> あり）または <code>admin_deck_list</code>（なし）。フラッシュ無し。</td></tr><tr><td>記事参照によりブロック</td><td><code>Referer</code>。</td></tr><tr><td>全件処理成功、<code>deckId</code> 配列だけが空であった場合を含む成功系</td><td><code>admin.deck.search.page_no</code> に応じた <code>m15-01_admin_deck_deck_search</code>、または <code>admin_deck_list</code>。成功フラッシュ。</td></tr><tr><td>デッキ不在（404）</td><td>エラー画面相当（フレームワークのエラーページ）。続行しない。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<div class="table-wrap"><table><thead><tr><th>起点</th><th>遷移前の処理</th><th>遷移後の初期状態</th></tr></thead><tbody><tr><td>成功および <code>deckId</code> 欠如でのリダイレクト</td><td>検索条件は当ルートでは書き換えない。読むのは <code>admin.deck.search.page_no</code> のみ。</td><td>フラッシュは成功または無し。ページ番号はセッションの値があるときのみ URL に反映。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSRF 不一致</td><td>HTTP 403。</td></tr><tr><td>対象デッキ不在（配列要素ごとに最初の不一致で打ち切り）</td><td>HTTP 404。</td></tr><tr><td>記事で参照中のデッキ</td><td>フラッシュ <code>admin.deck.is_used.article</code>。Referer へリダイレクト。</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>本機能では試行制限やレート制限を扱わない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<p>当ルート処理本体は、フラッシュとリダイレクトが主なユーザー向け帰結であり、このメソッド内だけを見ても支店サービス級の送信や専用の監査テーブル追記があるとは限らない。一般的なウェブ／アクセスログはインフラ設定に依存する。</p>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<h3 id="本機能におけるセッション">本機能におけるセッション</h3>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>読取</td><td>リダイレクト先のページ番号決定に <code>admin.deck.search.page_no</code> を参照する（キー構造は <code>SearchControllerTrait</code> と <code>deck</code> の <code>sessionKey</code> による実装確認値）。</td></tr><tr><td>更新</td><td>本ルートでは検索ビューの保存キーを書き換えない。</td></tr></tbody></table></div>
+<h3 id="セッションへ保存しない情報">セッションへ保存しない情報</h3>
+<p>一覧で選んだチェック状態はボディのみで運び、当ルートではセッションに保持しない。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>本機能単体で新たな用途の Cookie を設定しない。セッション Cookie は管理画面共通に従う。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>楽観ロックやユーザー単位の明示排他キーは当メソッド内に無い。配列順に順次 <code>flush</code> するため、他セッションが同一デッキを同時編集していた場合は、取得・削除競合により 404、制約エラー、その他 Doctrine エラーになり得る。境界の詳細は再現ログを正とする。</p>
+<hr>
+<h2 id="調査補助-grep-向け">調査補助（grep 向け）</h2>
+<p>実装位置の手がかりとして、次を参照する。</p>
+<ul><li>ルート登録: <code>app/Plugin/HareruyaEc/ServiceProvider/Admin/DeckServiceProvider.php</code>（<code>m15-03_admin_deck_deck_bulk_delete</code>、<code>admin_deck_delete</code>）</li><li>画面: <code>app/Plugin/HareruyaEc/Resource/template/admin/Deck/deck.twig</code>（<code>bulk_delete</code>、<code>deckId[]</code>）</li><li>JS: <code>app/Plugin/HareruyaEc/Resource/template/admin/assets/js/deck-search.js</code>（チェック連動、<code>#allCheck</code>）</li><li>CSRF と削除本丸: <code>app/Plugin/HareruyaEc/Controller/Admin/DeckController.php</code> の <code>delete</code>、および <code>FormValidHelper</code></li><li>マッピング: <code>app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbDeck.dcm.yml</code>（記事との many-to-many、ソフト削除関連）</li></ul>
+<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
+<ul><li><code>m15-03_admin_deck_deck_bulk_delete</code> … <code>POST</code> … <code>/{admin_route}/deck/delete</code>（一覧フォームから POST されたデッキ ID 群を順に削除し、成功時はデッキ検索一覧またはデッキ一覧へリダイレクトする。）</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

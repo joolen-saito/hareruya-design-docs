@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M04-10（在庫移動・振替情報CSV出力） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#文書情報">文書情報</a>
+<a class="lv2" href="#改訂履歴">改訂履歴</a>
+<a class="lv2" href="#1-在庫移動・振替情報CSV出力">1. 在庫移動・振替情報CSV出力</a>
+<a class="lv3" href="#機能の目的と役割">機能の目的と役割</a>
+<a class="lv3" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv3" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv3" href="#利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</a>
+<a class="lv3" href="#対象データの決定">対象データの決定</a>
+<a class="lv3" href="#出力列-CSVヘッダ">出力列（CSVヘッダ）</a>
+<a class="lv3" href="#プロセスフロー">プロセスフロー</a>
+<a class="lv3" href="#状態・データ更新">状態・データ更新</a>
+<a class="lv3" href="#出力ファイル・レスポンス">出力ファイル・レスポンス</a>
+<a class="lv3" href="#例外処理">例外処理</a>
+<a class="lv3" href="#関連設計への接続点">関連設計への接続点</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/m04-10_admin_stock_stock_move_transfer_csv_export.md</p>
+        <h1>M04-10（在庫移動・振替情報CSV出力）</h1>
+      </header>
+      <h2 id="文書情報">文書情報</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>在庫移動・振替情報CSV出力</td></tr><tr><td>機能分類</td><td>管理画面 / 在庫管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise（<code>StockMoveTransferController::exportMoveTransferCsv</code> / <code>StockMoveTransferListCsvExportService</code> / <code>DtbStockMoveTransferRepository::getQueryBuilderBySearchData</code> / <code>DtbStockMoveTransferDetailRepository::getAggregatesByStockMoveTransferIds</code>）</td></tr></tbody></table></div>
+<h2 id="改訂履歴">改訂履歴</h2>
+<div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr><tr><td>2026-06-12</td><td>ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、出力列・整形・ファイル名等を実装確認値で具体化。</td></tr></tbody></table></div>
+<h2 id="1-在庫移動・振替情報CSV出力">1. 在庫移動・振替情報CSV出力</h2>
+<h3 id="機能の目的と役割">機能の目的と役割</h3>
+<p>在庫移動・振替検索/一覧（M04-08）の検索条件に一致する在庫移動・振替情報を、全件CSV出力する管理画面機能。出力は14列固定で、各行に在庫移動振替ID・移動指示ID・移動タイプ・出庫元/入庫先の店舗と在庫区分・移動点数・基準価格合計・ステータス・各日付・登録者・登録日を出力する。</p>
+<p>本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。出力項目の業務要件は基本設計仕様書（在庫管理機能）を正とし、URLエンドポイント・出力整形・処理順序はリニューアル先 ec-cube-enterprise 実装を正とする。</p>
+<h3 id="本書で扱うこと">本書で扱うこと</h3>
+<ul><li>CSV出力の入口（エンドポイント）と対象データの決定方法</li><li>出力列（ヘッダ）・各列の整形・対象件数</li><li>ファイル名・Content-Type・処理方式（ストリーミング）</li></ul>
+<h3 id="本書で扱わないこと">本書で扱わないこと</h3>
+<ul><li>検索条件そのもの（M04-08 在庫移動・振替検索/一覧を正とする）</li><li>文字コード変換・CSV囲み等の共通整形（<code>CsvExportService</code> の共通設計を正とする）</li><li>戻しリストCSV（M04-33）・バーコード貼替リストCSV（M04-30）など別CSVの列仕様</li></ul>
+<h3 id="利用者視点の入口-エンドポイント">利用者視点の入口（エンドポイント）</h3>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント（ルート名）</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>在庫移動振替CSV出力</td><td><code>GET /%admin%/product/stock/move_transfer/csv_export</code>（<code>admin_stock_move_transfer_csv_export</code>）</td><td>一覧（M04-08）のセッション検索条件で一致する全件をCSVストリーム出力する。</td></tr></tbody></table></div>
+<p><code>%admin%</code> は管理画面ルートプレフィックス（<code>eccube_admin_route</code>）。管理画面ログインを要する。<code>set_time_limit(0)</code> で時間制限を解除して実行する。</p>
+<h3 id="対象データの決定">対象データの決定</h3>
+<p><code>exportMoveTransferCsv()</code> はセッション <code>eccube.admin.stock.move_transfer.search</code> の検索ビューデータを <code>SearchStockMoveTransferType</code> に submit して検索データへ復元する（空の場合はフォーム既定値＝条件なし）。復元した検索データで <code>DtbStockMoveTransferRepository::getQueryBuilderBySearchData()</code> を組み立て、ページングせず全件を <code>StockMoveTransferListCsvExportService::exportBySearchData()</code> に渡す。並びは登録日降順 → ID降順（一覧と同一）。</p>
+<h3 id="出力列-CSVヘッダ">出力列（CSVヘッダ）</h3>
+<p><code>StockMoveTransferListCsvExportService::CSV_HEADER</code> の14列。出力順・ヘッダ名は以下のとおり（Excel CSV出力項目の識別ID 1〜14に対応）。</p>
+<div class="table-wrap"><table><thead><tr><th>#</th><th>内部キー</th><th>ヘッダ</th><th>値・整形</th></tr></thead><tbody><tr><td>1</td><td><code>stock_move_transfer_id</code></td><td>在庫移動振替ID</td><td>ID</td></tr><tr><td>2</td><td><code>move_instruction_id</code></td><td>移動指示ID</td><td>登録済みのみ出力、未登録は空</td></tr><tr><td>3</td><td><code>move_transfer_type</code></td><td>移動タイプ</td><td><code>admin.stock.move.type_move</code>／<code>type_transfer</code> を翻訳（1:在庫移動／2:在庫振替）</td></tr><tr><td>4</td><td><code>move_from_base_info</code></td><td>出庫元店舗</td><td>出庫元店舗名（<code>BaseInfo::getShopName</code>）</td></tr><tr><td>5</td><td><code>move_from_stock_location</code></td><td>出庫元在庫区分</td><td><code>ProductStock::STOCK_LOCATION_ID_TO_NAME</code>（1:EC-CUBE／2:スマレジ）</td></tr><tr><td>6</td><td><code>move_to_base_info</code></td><td>入庫先店舗</td><td>入庫先店舗名（振替時は出庫元と同一）</td></tr><tr><td>7</td><td><code>move_to_stock_location</code></td><td>入庫先在庫区分</td><td>在庫区分名（振替時は出庫元と同一）</td></tr><tr><td>8</td><td><code>move_quantity</code></td><td>移動点数</td><td>明細集計の移動点数合計（既定0）</td></tr><tr><td>9</td><td><code>standard_total_price</code></td><td>基準価格合計</td><td>明細集計の基準価格合計を四捨五入した整数</td></tr><tr><td>10</td><td><code>move_transfer_status</code></td><td>ステータス</td><td><code>MtbStockMoveTransferStatus::getStatusName</code></td></tr><tr><td>11</td><td><code>move_from_stock_at</code></td><td>出庫日</td><td>出庫日時を <code>Y/m/d H:i</code>（NULLは空）</td></tr><tr><td>12</td><td><code>move_to_stock_at</code></td><td>入庫日</td><td>入庫日時を <code>Y/m/d H:i</code>（NULLは空）</td></tr><tr><td>13</td><td><code>registered_member</code></td><td>登録者</td><td>登録者氏名（<code>RegisteredMember::getName</code>）</td></tr><tr><td>14</td><td><code>create_date</code></td><td>登録日</td><td>作成日時を <code>Y/m/d H:i</code></td></tr></tbody></table></div>
+<p>&gt; 出力列はExcel設計の列定義（13列＝登録者／14列＝登録日）を正とし、実装も同一（13列＝登録者氏名、14列＝作成日時）で一致する。Excel識別ID 13/14 の備考（説明文）が「登録者＝新規作成日時／登録日＝登録ユーザ」と入れ替わって記載されているのはExcel側の備考の記載ゆれであり、列定義（=正）とは矛盾しない。</p>
+<p>移動点数・基準価格合計は <code>DtbStockMoveTransferDetailRepository::getAggregatesByStockMoveTransferIds()</code> でチャンク単位に集計して埋める。</p>
+<h3 id="プロセスフロー">プロセスフロー</h3>
+<ol><li><code>set_time_limit(0)</code>。検索フォーム生成 → セッション検索条件を復元（空なら既定値）。</li><li><code>getQueryBuilderBySearchData()</code> でクエリを生成。</li><li><code>StreamedResponse</code> のコールバック内で <code>CsvExportService::fopen()</code> → ヘッダ行を出力。</li><li>クエリ結果を <code>toIterable()</code> で逐次取得し、100件チャンク（<code>EXPORT_CHUNK_SIZE</code>）ごとに集計・行出力 → <code>EntityManager::clear()</code> でメモリ解放。</li><li>端数チャンクを出力後、<code>fclose()</code>。</li></ol>
+<h3 id="状態・データ更新">状態・データ更新</h3>
+<div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>**参照のみ**。業務データの更新は行わない。</td></tr><tr><td>参照テーブル</td><td>在庫移動振替 <code>dtb_stock_move_transfer</code>（店舗・ステータス・登録者を結合参照）、明細 <code>dtb_stock_move_transfer_detail</code>（移動点数・基準価格合計の集計）。</td></tr><tr><td>ログ</td><td>出力完了時に <code>log_info('在庫移動・振替一覧CSV出力完了. ファイル名: …')</code>。</td></tr></tbody></table></div>
+<h3 id="出力ファイル・レスポンス">出力ファイル・レスポンス</h3>
+<ul><li>ファイル名: <code>stock_move_transfer_list_{YmdHis}.csv</code>（実行時刻）。</li><li>Content-Type: <code>application/octet-stream</code>、<code>Content-Disposition: attachment; filename=…</code>。</li><li>文字コード・囲み等は共通の <code>CsvExportService</code> に従う（本サービスでは個別指定なし）。</li></ul>
+<p>既存テスト <code>StockMoveTransferControllerTest::testExportMoveTransferCsvSuccess</code> が <code>StreamedResponse</code>・<code>application/octet-stream</code>・<code>attachment</code>・<code>stock_move_transfer_list_</code> 接頭辞を確認している。</p>
+<h3 id="例外処理">例外処理</h3>
+<ul><li>**検索未実行**: セッションに検索条件が無い場合はフォーム既定値（条件なし）で全件を対象とする。エラーにはならない。</li><li>**対象なし**: 一致データが0件の場合はヘッダ行のみのCSVを出力する。</li></ul>
+<h3 id="関連設計への接続点">関連設計への接続点</h3>
+<ul><li>出力項目順・項目名の業務要件は参照元Excel設計書（在庫移動・振替情報CSV出力シート）を正とする。</li><li>URLエンドポイント・出力整形・処理順序は <code>../ec-cube-enterprise</code> の <code>StockMoveTransferListCsvExportService</code> 実装を正とする。</li><li>検索条件は M04-08（在庫移動・振替検索/一覧）を正とする。</li></ul>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<ul><li>本機能は新規実装であり、対応する現行（pf-eccube3）の同等機能は存在しない。出力項目順は基本設計仕様書（CSV出力項目）を正とする。</li><li>CSV出力の対象は M04-08 の検索結果（セッション検索条件）であり、移行先 ec-cube-enterprise では在庫移動振替（<code>dtb_stock_move_transfer</code>）と明細（<code>dtb_stock_move_transfer_detail</code>）を参照する。移動点数・基準価格合計は明細集計で算出する。</li><li>出力対象テーブル・列の対応、整形（日時 <code>Y/m/d H:i</code>、基準価格合計の整数化、店舗/在庫区分/ステータスの表示名解決）は移行先 ec-cube-enterprise 実装を正とする。</li></ul>
+<details>
+<summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+<pre><code class="language-text">在庫移動・振替情報CSV出力
+ドキュメント名
+在庫管理 基本設計
+セクション
+—
+プロジェクト名
+サイトリニューアル
+作成者
+堀部
+作成日
+2025-08-25
+更新者
+石川
+更新日
+2026-01-27
+機能No
+M04-10
+機能名
+在庫移動・振替情報CSV出力
+概要
+—
+処理概要（★はカスタマイズ項目）
+CSV出力項目
+識別ID項目名備考
+1在庫移動振替ID在庫移動振替情報のID
+2移動指示ID移動指示が登録済みの場合に表示する、未登録の場合は何も表示しない
+3移動タイプ在庫移動のタイプ 1:在庫移動 2:在庫振替
+4出庫元店舗出庫元の店舗名
+5出庫元在庫区分出庫元の在庫区分名 1:ECCUBE 2:スマレジ
+6入庫先店舗入庫先の店舗名、振替の時は出庫元と同一となる
+7入庫先在庫区分入庫先の在庫区分名 1:ECCUBE 2:スマレジ、振替の時は出庫元と同一となる
+8移動点数移動または振替する商品の点数の合計
+9基準価格合計移動または振替する商品の基準価格の合計
+10ステータス在庫移動振替情報の現在のステータス名
+11出庫日移動の場合はステータスが移動中になった日時
+振替の場合はステータスが出庫承認済みになった日時
+12入庫日ステータスが入庫完了になった日時
+13登録者在庫移動振替情報が新規作成された日時
+14登録日在庫移動振替情報を新規登録した管理画面ユーザ
+カスタマイズ説明
+・カスタマイズ要件
+・在庫移動振替検索した結果をCSVとして出力する
+機能仕様処理概要（★はカスタマイズ項目）
+・在庫移動振替検索一覧の結果をCSV出力する</code></pre>
+</details>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

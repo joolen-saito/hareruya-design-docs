@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>M08-10（オンライン本人確認） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#用語">用語</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#オンライン本人確認モーダルを表示する-会員編集画面内">オンライン本人確認モーダルを表示する（会員編集画面内）</a>
+<a class="lv3" href="#確認済へ変更する-POST-admin-route-customer-id-identification-complete">確認済へ変更する（POST `/{admin_route}/customer/{id}/identification/complete`）</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
+<a class="lv3" href="#常時表示-モーダル内">常時表示（モーダル内）</a>
+<a class="lv3" href="#エラー・警告-フラッシュ">エラー・警告（フラッシュ）</a>
+<a class="lv3" href="#フラッシュ・トースト">フラッシュ・トースト</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-grep">調査補助（grep）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m08-10_admin_customer_customer_online_identification.md</p>
+        <h1>M08-10（オンライン本人確認）</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>管理画面「会員管理」の会員編集画面で、会員がマイページからオンライン申請した本人確認情報を管理者が確認し、本人確認ステータスを確認済みに変更する機能である。会員編集画面のオンライン本人確認モーダルに、会員の個人情報（お名前・フリガナ・住所・生年月日・職業等）と、撮影・送信された本人写真・身分証画像（顔写真・オモテ・ウラ・斜め）を表示し、身分証有効期限を入力したうえで確認済への変更を実行する。身分証画像の閲覧は本人確認の閲覧権限を持つ管理者に限定する。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの本人確認ステータス変更処理、会員編集テンプレートのオンライン本人確認モーダル（<code>Customer/edit.twig</code>）、身分証画像・身分証画像種別を扱うリポジトリ、本人確認の閲覧権限判定を正とする。</p>
+<p>本機能のカスタマイズ区分はカスタマイズであり、挙動はpf-eccube3を参照し、DB関連はec-cube-enterpriseを正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。会員がマイページから行うオンライン本人確認の申請（フロントのオンライン本人確認を正とする）、会員の登録・編集の入力項目全般（M08-04を正とする）、身分証画像のオブジェクトストレージ保存の内部仕様は別機能とする。</p>
+<p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスはコア設定<code>admin_route</code>で決まり、環境により変わる。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でルートbind名が必要なときだけ「調査補助」へ書く。</p>
+<p>本機能は個人情報・身分証画像を扱う。本書では取り扱いの方針のみを記し、実在の個人情報・画像URL・トークン等の具体値は記載しない。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>会員編集画面のオンライン本人確認モーダルでの個人情報・身分証画像の確認</li><li>身分証画像の閲覧権限による表示制御</li><li>身分証有効期限の入力と、確認済への変更操作</li><li>確認済への変更時の本人確認ステータス更新と身分証有効期限の保存</li><li>本機能で扱う個人情報・画像のログ取り扱い方針</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+<ul><li>会員によるオンライン本人確認の申請・撮影・画像送信（フロントのオンライン本人確認を正とする）</li><li>身分証画像のオブジェクトストレージ保存・配信の内部仕様</li><li>本人確認ステータスマスタの値の運用ルール（未確認・確認中・確認済み・簡易書留確認済み）</li><li>本人確認用情報変更時に確認済から未確認へ戻す判定（M08-04の会員編集を正とする）</li><li>簡易書留による本人確認の運用</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>挙動はpf-eccube3を参照し、永続化先の記述はec-cube-enterpriseを正とする。本機能が触れるテーブル・列は現行と移行先で同一スキーマである。</p>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>選手情報</td><td>プレイヤー情報（<code>dtb_player</code>）</td><td>プレイヤー情報（<code>dtb_player</code>）。同一スキーマ。</td></tr><tr><td>本人確認ステータス</td><td><code>dtb_player.identity_confirm_status_id</code>（本人確認ステータスマスタ<code>mtb_identity_confirm_status</code>参照）</td><td>同一。</td></tr><tr><td>身分証有効期限</td><td><code>dtb_player.id_expiration_date</code></td><td>同一。</td></tr><tr><td>身分証画像</td><td>身分証画像（<code>dtb_identification_image</code>、列<code>player_id</code>・<code>identification_image_type_id</code>・<code>identification_id</code>・<code>url</code>）</td><td>同一スキーマ。</td></tr><tr><td>身分証画像種別</td><td>身分証画像種別マスタ（<code>mtb_identification_image_type</code>）</td><td>同一。</td></tr></tbody></table></div>
+<p>選手情報・身分証画像・各マスタのテーブル名と列名は現行と移行先で一致するため、移行に伴う列名・テーブル名の差は無い。</p>
+<hr>
+<h2 id="用語">用語</h2>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>選手情報</td><td>会員に紐づく拡張情報。本人確認ステータス・身分証有効期限を持つ。</td></tr><tr><td>本人確認ステータス</td><td>会員の本人確認の状態。未確認・確認中・確認済み・簡易書留確認済みのいずれか。</td></tr><tr><td>身分証画像</td><td>会員が申請時に送信した本人写真・身分証画像。種別は顔写真・オモテ・ウラ・斜め。</td></tr><tr><td>身分証画像種別</td><td>身分証画像の種類区分。種別ごとに名称を持つ。</td></tr><tr><td>本人確認の閲覧権限</td><td>身分証画像を閲覧できる管理者の権限。権限が無い場合は画像を表示しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>会員編集画面のオンライン本人確認ボタン</td><td><code>GET /{admin_route}/customer/{id}/edit</code>（編集画面内のモーダル）</td><td>会員の個人情報と身分証画像（閲覧権限がある場合）、身分証有効期限の入力を表示する。</td></tr><tr><td>確認済に変更する</td><td><code>POST /{admin_route}/customer/{id}/identification/complete</code></td><td>身分証有効期限を保存し、本人確認ステータスを確認済みに更新して会員編集画面へ戻す。</td></tr></tbody></table></div>
+<p>管理画面プレフィックスはコア設定<code>admin_route</code>で決まり、環境により変わるためプレースホルダで示す。オンライン本人確認は会員編集画面のモーダルとして表示し、確認済への変更はプラグインの専用ルートへ送信する。会員に紐づく選手情報が無い場合・会員IDが無い場合はページが見つからない扱い（404）とする。</p>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>モーダル見出し「オンライン本人確認」。会員の個人情報（お名前・お名前（フリガナ）・国・郵便番号・海外用郵便番号・都道府県・住所・生年月日・職業）。身分証画像区分（顔写真・オモテ・ウラ・斜め）ごとのサムネイル。身分証有効期限の日付入力。取消ボタンと「確認済に変更する」ボタン。</td></tr><tr><td>JS挙動</td><td>「確認済に変更する」押下時、身分証有効期限の入力値となりすまし対策トークンを隠しフォームに載せてPOST送信する。身分証画像のサムネイル押下で拡大表示モーダルを開く。</td></tr><tr><td>CSS・レイアウト</td><td>サムネイルは縮小表示、拡大モーダルは大きめ表示。</td></tr><tr><td>モーダル・ポップアップ</td><td>オンライン本人確認モーダルと、画像種別ごとの拡大表示モーダルを編集時のみ表示する。</td></tr></tbody></table></div>
+<p>身分証画像は閲覧権限がある場合のみ表示する。権限が無い場合は各画像枠に閲覧不可の文言を表示する。画像が未登録の場合は登録データなしの文言を表示する。身分証有効期限は単一日付入力（textareaではない）。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="オンライン本人確認モーダルを表示する-会員編集画面内">オンライン本人確認モーダルを表示する（会員編集画面内）</h3>
+<ol><li>会員編集画面を表示する（M08-04）。会員IDがある編集時のみオンライン本人確認ボタンとモーダルを表示する。</li><li>モーダルに会員の個人情報を表示する。</li><li>本人確認の閲覧権限を判定する。権限がある場合のみ、当該会員の現在の身分証画像を種別ごとに取得して表示する。権限が無い場合は各画像枠に閲覧不可の文言を表示する。</li><li>身分証画像が未登録の種別は登録データなしの文言を表示する。</li><li>身分証有効期限の入力欄を表示する。</li></ol>
+<h3 id="確認済へ変更する-POST-admin-route-customer-id-identification-complete">確認済へ変更する（POST <code>/{admin_route}/customer/{id}/identification/complete</code>）</h3>
+<ol><li>なりすまし対策トークンを検証する。</li><li>会員ID指定が無い場合はページが見つからない扱い（404）とする。</li><li>会員IDから選手情報を取得する。存在しない場合はページが見つからない扱い（404）とする。</li><li>身分証有効期限の入力がある場合は日付として解釈する。解釈できない場合はエラーを表示して会員編集画面へ戻す。入力が無い場合は身分証有効期限を未設定にする。</li><li>本人確認ステータスを確認済みに更新し、選手情報を保存する。</li><li>保存成功を表示し、会員編集画面へ戻す。</li></ol>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>表示対象</td><td>会員編集画面の編集時（会員IDあり）にのみオンライン本人確認モーダルを表示する。</td></tr><tr><td>身分証画像の閲覧制御</td><td>本人確認の閲覧権限がある管理者にのみ身分証画像を表示する。権限が無い場合は閲覧不可の文言を表示し、画像は表示しない。</td></tr><tr><td>確認済への変更</td><td>「確認済に変更する」操作で本人確認ステータスを確認済みに更新する。</td></tr><tr><td>身分証有効期限</td><td>入力があれば日付として保存する。空なら未設定にする。日付として解釈できない値はエラーとし、ステータスを更新しない。</td></tr><tr><td>確認済からの降格</td><td>確認済み・簡易書留確認済みの会員で本人確認用情報を変更すると未確認へ戻す判定は会員編集側で行う（M08-04を正とする）。</td></tr></tbody></table></div>
+<p>本機能は会員の選手情報（本人確認ステータス・身分証有効期限）を更新する。金額計算は行わない。</p>
+<h3 id="入力項目">入力項目</h3>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>身分証有効期限</td><td>任意</td><td>単一日付</td><td>選手情報の現行値（無ければ未設定）</td><td>確認済への変更時に送信する隠しパラメータ<code>id_expiration_date</code>。日付として解釈できれば選手情報（<code>dtb_player</code>）の<code>id_expiration_date</code>へ保存、空なら未設定。会員編集フォームのフォームキー<code>idExpirationDate</code>の入力値を流用する。</td></tr></tbody></table></div>
+<p>身分証有効期限の入力欄は会員編集フォームの日付項目を流用し、確認済への変更時に隠しパラメータとして同時送信する。会員の個人情報・身分証画像は表示のみで、本操作では更新しない。</p>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>会員ID指定なし</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>選手情報なし</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>身分証有効期限が日付として不正</td><td>エラーを表示し、ステータスを更新せず会員編集画面へ戻す。</td></tr><tr><td>身分証有効期限が空</td><td>身分証有効期限を未設定にして確認済みへ更新する。</td></tr><tr><td>本人確認の閲覧権限なし</td><td>身分証画像を表示せず閲覧不可の文言を表示する。確認済への変更操作自体の可否は権限設計に従う。</td></tr><tr><td>身分証画像が未登録の種別</td><td>登録データなしの文言を表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示と保存</td><td>モーダルに表示する個人情報・身分証画像は表示時点の永続化済みデータを読む。確認済への変更は選手情報の本人確認ステータスと身分証有効期限のみを更新する。</td></tr><tr><td>画像の保存元</td><td>身分証画像はオブジェクトストレージに保存され、保存先を参照して表示する。本機能は画像を新規保存しない。</td></tr><tr><td>会員情報変更との関係</td><td>確認済みに変更した後で本人確認用情報を変更すると未確認へ戻り得る（M08-04を正とする）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能ではバッチ実行を扱わない。身分証画像はオブジェクトストレージから配信経路を通じて表示する。配信経路の内部仕様はオブジェクトストレージ連携・画像配信を正とする。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>会員ID、身分証有効期限（隠しパラメータ）、なりすまし対策トークン。</td></tr><tr><td>成功時出力</td><td>本人確認ステータスの確認済みへの更新、身分証有効期限の保存、保存成功フラッシュ、会員編集画面への再表示。</td></tr><tr><td>失敗時出力</td><td>会員ID無し・選手情報無しは404。身分証有効期限不正はエラー表示で会員編集画面へ戻す。</td></tr><tr><td>副作用</td><td>選手情報の本人確認ステータス・身分証有効期限の更新。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_player</code>（選手情報）</td><td><code>identity_confirm_status_id</code>（本人確認ステータス）</td><td>確認済への変更時に確認済みへ更新する。本人確認ステータスマスタ<code>mtb_identity_confirm_status</code>を参照する。</td></tr><tr><td><code>dtb_player</code>（選手情報）</td><td><code>id_expiration_date</code>（身分証有効期限）</td><td>入力があれば保存、空なら未設定。</td></tr><tr><td><code>dtb_identification_image</code>（身分証画像）</td><td><code>player_id</code>（選手参照）・<code>identification_image_type_id</code>（画像種別）・<code>identification_id</code>・<code>url</code>（保存先）</td><td>種別ごとの現在画像を表示に用いる。<code>url</code>の具体値は設計書に書かない。</td></tr><tr><td><code>mtb_identification_image_type</code>（身分証画像種別マスタ）</td><td><code>name</code>（種別名）</td><td>顔写真・オモテ・ウラ・斜めの区分名称。</td></tr><tr><td><code>dtb_customer</code></td><td>氏名・住所・生年月日・職業等</td><td>モーダルの個人情報表示（M08-04の会員情報を正とする）。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_customer / dtb_identification_image / dtb_player / mtb_identification_image_type / mtb_identity_confirm_status</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>身分証有効期限</td><td>入力があれば日付として解釈できること。解釈できない値はエラー。</td></tr><tr><td>なりすまし対策トークン</td><td>確認済への変更POSTで検証する。</td></tr><tr><td>本人確認の閲覧権限</td><td>身分証画像の表示可否を権限で判定する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>オンライン本人確認モーダル</th><th>身分証画像の閲覧</th><th>確認済への変更</th></tr></thead><tbody><tr><td>未ログイン管理者</td><td>アクセス不可</td><td>不可</td><td>不可</td></tr><tr><td>ログイン済み管理者（閲覧権限なし）</td><td>個人情報の表示は可能</td><td>不可（閲覧不可の文言を表示）</td><td>アクセス制御リストに従う</td></tr><tr><td>ログイン済み管理者（閲覧権限あり）</td><td>表示可能</td><td>可能</td><td>アクセス制御リストに従う</td></tr></tbody></table></div>
+<p>身分証画像の閲覧は本人確認の閲覧権限で制御する。会員編集画面自体の権限はM08-04を正とする。</p>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>会員編集画面のオンライン本人確認ボタン</td><td>オンライン本人確認モーダル（会員編集画面内）</td></tr><tr><td>身分証画像サムネイル押下</td><td>画像種別ごとの拡大表示モーダル</td></tr><tr><td>確認済に変更する（成功）</td><td>会員登録・編集（<code>m08-04_admin_customer_customer_edit</code>、M08-04）</td></tr><tr><td>身分証有効期限が不正</td><td>会員登録・編集（エラー表示、<code>m08-04_admin_customer_customer_edit</code>）</td></tr><tr><td>取消</td><td>モーダルを閉じる（同一画面）</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>会員ID指定なし・選手情報なし</td><td>ページが見つからない扱い（404）。</td></tr><tr><td>身分証有効期限が日付として不正</td><td>エラーを表示し、ステータスを更新せず会員編集画面へ戻す。</td></tr><tr><td>本人確認の閲覧権限なし</td><td>身分証画像を表示せず閲覧不可の文言を表示する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<h3 id="常時表示-モーダル内">常時表示（モーダル内）</h3>
+<div class="table-wrap"><table><thead><tr><th>種別</th><th>表示文言（日本語）</th><th>条件</th></tr></thead><tbody><tr><td>閲覧不可</td><td>閲覧不可</td><td>本人確認の閲覧権限が無いとき、各身分証画像枠に表示</td></tr><tr><td>登録データなし</td><td>登録データなし</td><td>身分証画像が未登録の種別の枠に表示</td></tr></tbody></table></div>
+<h3 id="エラー・警告-フラッシュ">エラー・警告（フラッシュ）</h3>
+<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件（利用者視点）</th><th>表示位置</th><th>備考</th></tr></thead><tbody><tr><td>身分証有効期限の値が不正です</td><td>確認済への変更で身分証有効期限が日付として解釈できないとき</td><td>会員編集画面のフラッシュ</td><td>ステータスは更新しない</td></tr></tbody></table></div>
+<h3 id="フラッシュ・トースト">フラッシュ・トースト</h3>
+<div class="table-wrap"><table><thead><tr><th>表示文言（日本語）</th><th>表示条件</th></tr></thead><tbody><tr><td>会員情報を保存しました。</td><td>確認済への変更が成功したとき</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>確認済への変更</td><td>本人確認ステータス・身分証有効期限の更新。記録には個人情報・身分証画像の値を含めない。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>会員の個人情報（お名前・住所・生年月日・職業等）の値</li><li>身分証画像のデータ・画像URL・配信トークン</li><li>なりすまし対策トークン・Cookie値・セッションIDの完全値</li></ul>
+<p>身分証画像のURLや個人情報の値はアプリの動作ログへ出さない。確認操作の事実のみを記録対象とする。</p>
+<hr>
+<h2 id="セッション">セッション</h2>
+<p>本機能はセッションへ個人情報・身分証画像を保存しない。身分証有効期限は確認済への変更時のリクエストパラメータとして送信する。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>確認済への変更は選手情報の更新のみを行う。本機能では楽観ロック・悲観ロックの対象は持たない。</p>
+<hr>
+<h2 id="調査補助-grep">調査補助（grep）</h2>
+<p>論理説明と切り離し、ソース照合用。</p>
+<pre><code>app/Plugin/HareruyaEc/Controller/Admin/CustomerController.php
+app/Plugin/HareruyaEc/ServiceProvider/Admin/CustomerServiceProvider.php
+app/Plugin/HareruyaEc/Resource/template/admin/Customer/edit.twig
+app/Plugin/HareruyaEc/Entity/MtbIdentityConfirmStatus.php
+app/Plugin/HareruyaEc/Entity/MtbIdentificationImageType.php
+app/Plugin/HareruyaEc/config.yml</code></pre>
+<p>bind名: <code>admin_customer_identification_complete</code>、<code>m08-04_admin_customer_customer_edit</code>。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

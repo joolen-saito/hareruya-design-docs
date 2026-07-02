@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0406_基本設計仕様書(バッチ_店頭買取管理) </title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* function-design-embed:start */
+    .function-design-embed {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-header {
+      margin-bottom: 18px;
+    }
+
+    .function-design-header h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .function-design-header h4 {
+      margin: 0;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-source {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .function-design-note {
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      border-left: 3px solid #f0ad4e;
+      background: rgba(240, 173, 78, 0.10);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .function-design-body h1,
+    .function-design-body h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+    }
+
+    .function-design-body h3 {
+      margin: 22px 0 10px;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-body h4 {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .function-design-body p {
+      margin: 9px 0;
+    }
+
+    .function-design-body ul,
+    .function-design-body ol {
+      margin: 9px 0;
+      padding-left: 26px;
+    }
+
+    .function-design-body li {
+      margin: 3px 0;
+    }
+
+    .function-design-body code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--band);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .function-design-body pre {
+      overflow-x: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      white-space: pre-wrap;
+    }
+
+    .function-design-body pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .function-design-body .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .function-design-body table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .function-design-body th,
+    .function-design-body td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .function-design-body th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .function-design-body tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* function-design-embed:end */
+</style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0406_基本設計仕様書(バッチ_店頭買取管理) </p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">【新規】買取自動入庫バッチ</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">買取集計バッチ</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">店頭買取管理機能</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>石川</td><td>2025-09-06</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">バッチ設計</h4>
+            <p class="doc-p" style="--lv:1">B06-01 買取自動入庫バッチ</p>
+            <p class="doc-p" style="--lv:1">B06-02 買取集計バッチ</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>【新規】買取自動入庫バッチ</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>店頭買取管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>店頭買取管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-07-17</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-06</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B06-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>買取自動入庫バッチ</dd></div>
+            <div class="kv"><dt>概要</dt><dd>買取を行った商品を入庫する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ステータスが入庫待ちの店頭買取情報を対象に、実在庫情報を買取を行った店舗のECCUBE在庫に登録する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ステータスが入庫待ちのネット買取情報を対象に、実在庫情報を買取を本店のECCUBE在庫に登録する</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>１．店頭買取の自動入庫</span></div>
+            <p class="doc-p" style="--lv:2">①ステータスが入庫待ちの店頭買取情報を取得する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">②ステータスが入庫待ちの店頭買取情報の実在庫情報を、店頭買取を行った店舗のECCUBE在庫に登録する</h4>
+            <p class="doc-p" style="--lv:3">総在庫、総原価、原価単価の更新を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">③在庫履歴を登録する</h4>
+            <p class="doc-p" style="--lv:3">仕入単価＝買取単価で登録</p>
+            <p class="doc-p" style="--lv:3">登録元機能は「買取自動入庫バッチ」、登録元IDは査定ID、操作者は「システム」の文字列を固定で登録</p>
+            <p class="doc-p" style="--lv:2">④店頭買取情報のステータスを「入庫済み」にする</p>
+            <p class="doc-p" style="--lv:2">※店頭買取情報の最終更新者は更新しない</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">⑤入荷通知処理を実行する</h4>
+            <p class="doc-p" style="--lv:3">入荷通知処理の詳細は「0202_基本設計仕様書(在庫管理機能).xlsx」の共通処理シート内の「3.入荷通知処理」参照</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>２．ネット買取の自動入庫</span></div>
+            <p class="doc-p" style="--lv:2">①ステータスが入庫待ちのネット買取情報を取得する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">②ステータスが入庫待ちのネット買取情報の実在庫情報を、本店のECCUBE在庫に登録する</h4>
+            <p class="doc-p" style="--lv:3">総在庫、総原価、原価単価の更新を行う</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">③在庫履歴を登録する</h4>
+            <p class="doc-p" style="--lv:3">仕入単価＝買取単価で登録</p>
+            <p class="doc-p" style="--lv:3">登録元機能は「買取自動入庫バッチ」、登録元IDは買取番号、操作者は「システム」の文字列を固定で登録</p>
+            <p class="doc-p" style="--lv:2">④ネット買取情報のステータスを「入庫済み」にする</p>
+            <p class="doc-p" style="--lv:2">※ネット買取情報の最終更新者は更新しない</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">⑤入荷通知処理を実行する</h4>
+            <p class="doc-p" style="--lv:3">入荷通知処理の詳細は「0202_基本設計仕様書(在庫管理機能).xlsx」の共通処理シート内の「3.入荷通知処理」参照</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日15:00</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ステータスが入庫待ちの店頭買取情報</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ステータスが入庫待ちのネット買取情報</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">店頭買取情報.ステータス　12: 入庫待ち</p>
+            <p class="doc-p" style="--lv:0">ネット買取情報.ステータス　16: 入庫待ち</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>店頭買取情報のステータスを入庫済みにする</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>ネット買取情報のステータスを入庫済みにする</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>在庫情報を更新する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>在庫履歴を登録する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+          </div>
+        </div>
+      <!-- function-design-embed:start b06-01-b06-01_batch_purchase_purchase_auto_stock -->
+      <section class="function-design-embed" id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock" data-source="functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B06-01 買取自動入庫バッチ / B06-01（買取自動入庫バッチ）</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-文書情報">文書情報</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>機能名</td><td>買取自動入庫バッチ</td></tr><tr><td>機能分類</td><td>バッチ / 買取管理</td></tr><tr><td>カスタマイズ区分</td><td>新規実装</td></tr><tr><td>作成日</td><td>2026-06-11</td></tr><tr><td>参照元</td><td>excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html</td></tr><tr><td>実装確認</td><td>../ec-cube-enterprise</td></tr></tbody></table></div>
+          <h2 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-改訂履歴">改訂履歴</h2>
+          <div class="table-wrap"><table><thead><tr><th>日付</th><th>内容</th></tr></thead><tbody><tr><td>2026-06-11</td><td>新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。</td></tr></tbody></table></div>
+          <h2 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-TODO-未確定項目">TODO（未確定項目）</h2>
+          <ul><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。</li><li>Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。</li></ul>
+          <h2 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-1-買取自動入庫バッチ">1. 買取自動入庫バッチ</h2>
+          <h3 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-機能の目的と役割">機能の目的と役割</h3>
+          <p>買取成立した商品に対して自動入庫処理を行う。</p>
+          <h3 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-入出力仕様">入出力仕様</h3>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>バッチ起動条件、設定値、DB上の対象データ。</td></tr><tr><td>出力</td><td>CSVファイル、DB更新結果、ログ。</td></tr><tr><td>副作用</td><td>対象データの更新、CSV出力、処理ログの記録。</td></tr></tbody></table></div>
+          <h3 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-開始条件-終了条件">開始条件、終了条件</h3>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>開始条件</td><td>バッチ起動時刻または手動起動により処理が開始される。</td></tr><tr><td>終了条件</td><td>対象データの処理と出力、ログ記録が完了する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-判定条件">判定条件</h3>
+          <ul><li>Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。</li><li>Excel設計書に未記載のURLエンドポイント、DBカラム、実処理順序は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。</li></ul>
+          <h3 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-プロセスフロー">プロセスフロー</h3>
+          <ol><li>利用者または外部システムが対象機能を開始する。</li><li>入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。</li><li>Excel設計書に定義された対象データを取得し、実装側の検証・権限・状態条件を適用する。</li><li>登録・更新・出力・連携のいずれかの主処理を実行する。</li><li>成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。</li></ol>
+          <h3 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-ビジネスロジック">ビジネスロジック</h3>
+          <ul><li>**Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は <code>excel_to_html/output</code> の設計書を正とする。</li><li>**実装補完**: Excel設計に書かれていないURLエンドポイント、DBカラム、トランザクション、サービス分割、非同期処理は <code>../ec-cube-enterprise</code> の実装を正とする。</li><li>**対象機能の要点**: 買取成立した商品に対して入庫処理を行う</li><li>**実装確認値**: BuyOrderAutoStockCommand / BatchAutoStockAction を実装確認値とする。</li></ul>
+          <h3 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-状態・データ更新">状態・データ更新</h3>
+          <div class="table-wrap"><table><thead><tr><th>対象</th><th>内容</th></tr></thead><tbody><tr><td>主データ</td><td>バッチ対象の在庫・買取・履歴データを参照し、必要に応じて更新する。</td></tr><tr><td>履歴・ログ</td><td>必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。</td></tr><tr><td>DB関連実装確認値</td><td>対象テーブル: dtb_buy_order_stock, dtb_buy_order_stock_history 明示列: dtb_product_class.stock, dtb_product_stock.stock 列詳細は <code>../ec-cube-enterprise</code> の Entity / Repository / Migration を正とする。</td></tr></tbody></table></div>
+          <h3 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-例外処理">例外処理</h3>
+          <ul><li>**入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。</li><li>**対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。</li><li>**状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。</li><li>**外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。</li></ul>
+          <h3 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-関連設計への接続点">関連設計への接続点</h3>
+          <ul><li>画面項目、CSV列、PDFレイアウト、APIリクエスト/レスポンスの詳細は、参照元Excel設計書の該当シートを正とする。</li><li>URLエンドポイントとDBカラムは <code>../ec-cube-enterprise</code> の Controller Route、Entity、Repository、Migration、Service 実装を正とする。</li></ul>
+          <h2 id="function-design-b06-01-b06-01_batch_purchase_purchase_auto_stock-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>本機能は新規実装であり、現行（pf-eccube3）に対応するバッチは存在しない。仕様は基本設計仕様書（店頭買取管理 基本設計、機能No B06-01）を正とし、DB関連はec-cube-enterpriseの実装を正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>自動入庫バッチ</td><td>対応機能なし（新規実装）。</td><td>買取自動入庫バッチを新設する（実装確認値: BuyOrderAutoStockCommand / BatchAutoStockAction）。</td></tr><tr><td>対象データと判定</td><td>—</td><td>入庫待ちの店頭買取（ステータス12）・ネット買取（ステータス16）の買取情報を入庫済みへ更新する。</td></tr><tr><td>入庫・在庫履歴の永続化先</td><td>—</td><td>ネット買取は <code>dtb_buy_order_stock</code>・<code>dtb_buy_order_stock_history</code>、店頭買取は <code>dtb_otc_buy_order_stock</code>・<code>dtb_otc_buy_order_stock_history</code>。在庫数は <code>dtb_product_class.stock</code>・<code>dtb_product_stock.stock</code> を更新する。</td></tr></tbody></table></div>
+          <p>列詳細はec-cube-enterpriseのEntity / Repository / Migrationを正とする。</p>
+          <details>
+          <summary>Excel設計書からの抽出（原典・テスト網羅の根拠）</summary>
+          <pre><code class="language-text">【新規】買取自動入庫バッチ
+          ドキュメント名
+          店頭買取管理 基本設計
+          セクション
+          —
+          プロジェクト名
+          店頭買取管理機能
+          作成者
+          石川
+          作成日
+          2025-07-17
+          更新者
+          石川
+          更新日
+          2025-09-06
+          機能No
+          B06-01
+          機能名
+          買取自動入庫バッチ
+          概要
+          買取を行った商品を入庫する
+          処理概要（★はカスタマイズ項目）
+          カスタマイズ説明
+          ・ステータスが入庫待ちの店頭買取情報を対象に、実在庫情報を買取を行った店舗のECCUBE在庫に登録する
+          ・ステータスが入庫待ちのネット買取情報を対象に、実在庫情報を買取を本店のECCUBE在庫に登録する
+          機能仕様処理概要（★はカスタマイズ項目）
+          ★１．店頭買取の自動入庫
+          ①ステータスが入庫待ちの店頭買取情報を取得する
+          ②ステータスが入庫待ちの店頭買取情報の実在庫情報を、店頭買取を行った店舗のECCUBE在庫に登録する
+          総在庫、総原価、原価単価の更新を行う
+          ③在庫履歴を登録する
+          仕入単価＝買取単価で登録
+          登録元機能は「買取自動入庫バッチ」、登録元IDは査定ID、操作者は「システム」の文字列を固定で登録
+          ④店頭買取情報のステータスを「入庫済み」にする
+          ※店頭買取情報の最終更新者は更新しない
+          ⑤入荷通知処理を実行する
+          入荷通知処理の詳細は「0202_基本設計仕様書(在庫管理機能).xlsx」の共通処理シート内の「3.入荷通知処理」参照
+          ★２．ネット買取の自動入庫
+          ①ステータスが入庫待ちのネット買取情報を取得する
+          ②ステータスが入庫待ちのネット買取情報の実在庫情報を、本店のECCUBE在庫に登録する
+          総在庫、総原価、原価単価の更新を行う
+          ③在庫履歴を登録する
+          仕入単価＝買取単価で登録
+          登録元機能は「買取自動入庫バッチ」、登録元IDは買取番号、操作者は「システム」の文字列を固定で登録
+          ④ネット買取情報のステータスを「入庫済み」にする
+          ※ネット買取情報の最終更新者は更新しない
+          ⑤入荷通知処理を実行する
+          入荷通知処理の詳細は「0202_基本設計仕様書(在庫管理機能).xlsx」の共通処理シート内の「3.入荷通知処理」参照
+          実行トリガー スケジュール起動(Step Functions) 実行タイミング 毎日15:00
+          入力データ元 DB 出力先(フォーマット) DB
+          入力データ詳細
+          ・ステータスが入庫待ちの店頭買取情報
+          ・ステータスが入庫待ちのネット買取情報
+          入力データ検索条件
+          項目名 条件 備考
+          店頭買取情報.ステータス 12: 入庫待ち
+          ネット買取情報.ステータス 16: 入庫待ち
+          実行結果詳細 ※主にDBの登録・更新結果について記載
+          ・店頭買取情報のステータスを入庫済みにする
+          ・ネット買取情報のステータスを入庫済みにする
+          ・在庫情報を更新する
+          ・在庫履歴を登録する
+          エラーハンドリング</code></pre>
+          </details>
+        </div>
+      </section>
+      <!-- function-design-embed:end b06-01-b06-01_batch_purchase_purchase_auto_stock -->
+</section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>買取集計バッチ</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>店頭買取管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>店頭買取管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-07-17</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>石川</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>2025-09-06</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>B06-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>買取集計バッチ</dd></div>
+            <div class="kv"><dt>概要</dt><dd>店頭買取を部門ごとに集計する</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-4-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>新しく追加された買取ステータスを買取集計対象にする</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>店舗ごと、買取成立日ごと、部門ごとに店頭買取情報を集計する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>集計対象日はバッチの引数があれば引数の日付、なければバッチ実行日の前日の00:00:00から23:59:59</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>集計対象のステータスは「買取成立」「入庫済み」「未登録在庫あり」「入庫待ち」とする</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>店頭買取注文詳細の金額、店頭買取注文個別入力商品の金額、買取合計金額から店頭買取注文詳細と店頭買取注文個別入力商品の金額をマイナスした端数の金額を集計する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>集計対象日の集計データがすでにある場合は集計データを削除する</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>集計データを登録する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行トリガー　スケジュール起動(Step Functions)　実行タイミング　毎日3時</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ元　DB　出力先(フォーマット)　DB</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ詳細</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>買取成立日が指定日またはバッチ実行日前日の00:00:00から23:59:59の店頭買取情報</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">入力データ検索条件</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">項目名　条件　備考</h3>
+            <p class="doc-p" style="--lv:0">店頭買取情報.買取成立日　指定日またはバッチ実行日前日の00:00:00から23:59:59</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">実行結果詳細  ※主にDBの登録・更新結果について記載</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>集計データの削除</span></div>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>集計データの登録</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エラーハンドリング</h3>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">・</span><span>部門が登録されていない商品が存在する場合は、エラーメールを送信する</span></div>
+          </div>
+        </div>
+      <!-- function-design-embed:start b06-02-b06-02_batch_purchase_purchase_summary -->
+      <section class="function-design-embed" id="function-design-b06-02-b06-02_batch_purchase_purchase_summary" data-source="functions/pf-eccube3/b06-02_batch_purchase_purchase_summary.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/b06-02_batch_purchase_purchase_summary.md</p>
+          <h3>詳細設計書</h3>
+          <h4>B06-02 買取集計バッチ / バッチ 買取管理 — 買取集計バッチ</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-概要">概要</h2>
+          <p>店頭買取の取引データを集計日単位で集計し、店舗・部門ごとの買取金額・売価金額を買取集計テーブルへ登録するバッチである。コマンドライン（コンソールコマンド）から実行する。集計日の店頭買取データを店舗・部門単位で合算し、同じ集計日の既存集計を削除してから当日分を登録し直す。集計対象の中に部門が未設定の商品がある場合は、その一覧を管理者へ通知メールで送る。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの買取集計バッチ、店頭買取・買取集計を扱うリポジトリ、通知メール送信処理を正とする。</p>
+          <p>カスタマイズ区分はカスタマイズであり、挙動はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>対象はコンソールコマンドであり、ブラウザ経由の画面を持たない。</p>
+          <p>本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う。</p>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>バッチの起動方法（コンソールコマンド）と集計日引数</li><li>集計日の店頭買取データの店舗・部門単位の集計</li><li>既存集計の削除と当日分の登録</li><li>部門未設定商品がある場合の管理者通知メール</li><li>集計中エラー時のロールバックとエラー通知メール</li></ul>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能・運用の設計を正とする。</p>
+          <ul><li>店頭買取の受付・査定・ステータス遷移そのもの（買取管理を正とする）</li><li>集計結果を参照する管理画面の買取集計表示（画面側の設計を正とする）</li><li>通知メールの宛先設定・本文テンプレート（メール設定・オプション管理を正とする）</li><li>バッチの起動スケジュール（運用・ジョブ設定を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>集計・登録の挙動は現行pf-eccube3を踏襲し、DB関連の永続化先はec-cube-enterpriseを正とする。店舗参照キーが現行と移行先で異なる。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>集計・登録の挙動</td><td>集計日の店頭買取を店舗・部門単位で集計し、当日分の既存集計を入れ替える。</td><td>同等の挙動を踏襲する（挙動はpf-eccube3を正とする）。</td></tr><tr><td>店舗参照キー</td><td>独自店舗マスタ参照の <code>shop_id</code>（<code>dtb_otc_buy_order</code>・<code>dtb_otc_buy_order_summary</code>）。</td><td><code>base_info_id</code>（店舗基本情報 <code>dtb_base_info</code> 参照）。<code>dtb_otc_buy_order</code>・<code>dtb_otc_buy_order_summary</code> とも <code>shop_id</code> から <code>base_info_id</code> へ変わる。</td></tr><tr><td>集計結果の永続化先</td><td><code>dtb_otc_buy_order_summary</code>。</td><td>同名テーブル。店舗参照キーのみ <code>base_info_id</code> へ変わる。</td></tr><tr><td>明細・個別入力商品の集計元</td><td><code>dtb_otc_buy_order_detail</code>・<code>dtb_otc_buy_order_indivisual_input_product</code>。</td><td>同名・同等スキーマ（<code>section_id</code>・<code>price</code>・<code>original_quantity</code>／<code>quantity</code>・<code>sell_price</code> 等）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>店頭買取</td><td>店頭で商品を買い取る取引。店頭買取テーブルと明細に記録する。</td></tr><tr><td>集計日</td><td>集計対象とする1日。引数で指定するか、未指定なら前日を用いる。</td></tr><tr><td>部門</td><td>商品を分類する区分。集計の単位の一つ。</td></tr><tr><td>買取金額</td><td>買い取った金額。単価と数量から算出する。</td></tr><tr><td>売価金額</td><td>販売予定の金額。単価と数量から算出する。</td></tr><tr><td>買取集計</td><td>店舗・部門・集計日ごとに買取金額・売価金額を合算した結果。買取集計テーブルへ登録する。</td></tr><tr><td>部門未設定商品</td><td>集計対象の明細のうち部門が設定されていない商品。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>実行方法</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>コンソールのバッチコマンド</td><td><code>otcBuyOrder:batch updateSummary [YYYY-MM-DD]</code></td><td>集計日の店頭買取データを店舗・部門単位で集計し、当日分の既存集計を入れ替える。部門未設定商品があれば管理者へ通知メールを送る。</td></tr></tbody></table></div>
+          <p>引数に集計日（<code>YYYY-MM-DD</code>形式）を1つ指定できる。引数を省略した場合は前日を集計日とする。本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。</p>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-処理フロー">処理フロー</h2>
+          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-買取集計を実行する-otcBuyOrder-batch-updateSummary">買取集計を実行する（<code>otcBuyOrder:batch updateSummary</code>）</h3>
+          <ol><li>実行時間制限を解除し、メール送信用の経路を準備し、トランザクションを開始する。</li><li>集計日を決める。引数が指定されていればその日付、無ければ前日を用いる。いずれも当日0時0分0秒を起点とする。</li><li>集計日の店頭買取データを店舗・部門単位で集計し、買取金額・売価金額の合計を得る。</li><li>同じ集計日の既存の買取集計を削除する。</li><li>集計結果を買取集計テーブルへ一括登録する。集計結果が0件の場合は登録を行わない。</li><li>集計日の店頭買取の中から部門未設定商品の一覧を取得する。</li><li>部門未設定商品がある場合は、その一覧を管理者へ通知メールで送る。</li><li>トランザクションをコミットする。</li></ol>
+          <p>集計または登録の途中で例外が発生した場合は、登録をロールバックし、エラー内容を添えた集計エラー通知メールを管理者へ送る。</p>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>集計日の起点</td><td>引数指定時はその日付の0時0分0秒。未指定時は前日の0時0分0秒。</td></tr><tr><td>集計区間</td><td>集計日の0時0分0秒から23時59分59秒まで。完了日が区間内の店頭買取を対象とする。</td></tr><tr><td>対象ステータス</td><td>完了・ダブルチェック済み・入力済みの店頭買取を対象とする。</td></tr><tr><td>買取金額</td><td>明細・個別入力商品それぞれで単価と数量を掛けて算出し合算する。</td></tr><tr><td>売価金額</td><td>明細・個別入力商品それぞれで売価単価と数量を掛けて算出し合算する。</td></tr><tr><td>端数調整分</td><td>査定合計金額の1の位切り上げ分を、オプションで指定した特定部門の買取金額として加える。当該分の売価金額は0とする。</td></tr><tr><td>集計単位</td><td>店舗と部門の組み合わせごとに合算する。</td></tr><tr><td>数量条件</td><td>明細は元数量が0より大きい行、個別入力商品は数量が0より大きい行を集計対象とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象データ</td><td>集計区間内に完了日を持つ店頭買取の明細と個別入力商品。</td></tr><tr><td>結合</td><td>店頭買取と明細・個別入力商品を結合する。部門未設定判定では明細から商品・商品規格・商品マスタを結合する。</td></tr><tr><td>ステータス条件</td><td>完了・ダブルチェック済み・入力済みの店頭買取に限定する。</td></tr><tr><td>除外条件</td><td>明細は元数量が0以下の行、個別入力商品は数量が0以下の行を除外する。端数調整分は買取金額が0より大きい取引のみを加算する。</td></tr><tr><td>集計期間</td><td>集計日の0時0分0秒から23時59分59秒までの1日。</td></tr><tr><td>集計単位</td><td>店舗ID・部門IDの組み合わせ。買取金額・売価金額をそれぞれ合計する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-API・バッチ結果">API・バッチ結果</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名と任意の集計日引数（<code>YYYY-MM-DD</code>）。</td></tr><tr><td>実行条件</td><td>集計対象の店頭買取が無い場合も実行できる。</td></tr><tr><td>成功結果</td><td>同じ集計日の既存集計を削除し、当日分の集計を登録する。部門未設定商品があれば管理者へ通知メールを送る。</td></tr><tr><td>失敗結果</td><td>集計・登録途中の例外時は登録をロールバックし、エラー内容を添えた集計エラー通知メールを管理者へ送る。</td></tr><tr><td>再実行時</td><td>同じ集計日で再実行すると既存の当日分集計を削除してから登録し直すため、当日分が重複しない。冪等である。</td></tr></tbody></table></div>
+          <p>外部システムへの連携は行わない。</p>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-入出力">入出力</h2>
+          <div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>コマンド名と任意の集計日引数。</td></tr><tr><td>成功時出力</td><td>集計日の既存集計の削除と当日分集計の買取集計テーブルへの登録。部門未設定商品がある場合の管理者通知メール。</td></tr><tr><td>失敗時出力</td><td>登録のロールバックと集計エラー通知メールの送信。</td></tr><tr><td>副作用</td><td>買取集計テーブルの当日分レコードの入れ替え、通知メール送信。</td></tr></tbody></table></div>
+          <p>集計結果はファイルではなく買取集計テーブル（<code>dtb_otc_buy_order_summary</code>）へ登録する。部門未設定商品の通知メールには商品名・商品コードの一覧を本文に載せる。</p>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>多重実行</td><td>ロックファイル等による多重起動防止は行わない。同じ集計日を同時に実行すると、双方が削除と登録を行い当日分が重複し得る。</td></tr><tr><td>途中失敗・再実行</td><td>削除と登録を1トランザクションで行い、例外時はロールバックする。再実行で同じ集計日の集計を入れ替えるため重複しない。</td></tr><tr><td>参照時点</td><td>実行時点の店頭買取データを集計対象とする。</td></tr><tr><td>削除と登録の範囲</td><td>削除・登録の対象は指定集計日の当日分に限る。他日の集計は変更しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>dtb_otc_buy_order</code></td><td><code>base_info_id</code>（現行 <code>shop_id</code>）・<code>otc_buy_order_status_id</code>・<code>complete_date</code>・<code>total_price</code></td><td>集計対象の抽出条件と店舗単位・端数調整分の算出に使用する。</td></tr><tr><td><code>dtb_otc_buy_order_detail</code></td><td><code>section_id</code>・<code>price</code>・<code>original_quantity</code>・<code>sell_price</code>・<code>product_class_id</code></td><td>明細の部門・買取金額・売価金額の集計と部門未設定判定に使用する。</td></tr><tr><td><code>dtb_otc_buy_order_indivisual_input_product</code></td><td><code>section_id</code>・<code>price</code>・<code>quantity</code>・<code>sell_price</code>・<code>name</code></td><td>個別入力商品の集計と部門未設定判定に使用する。</td></tr><tr><td><code>dtb_otc_buy_order_summary</code></td><td><code>base_info_id</code>（現行 <code>shop_id</code>）・<code>section_id</code>・<code>sell_price</code>・<code>buy_price</code>・<code>summary_date</code></td><td>集計結果の登録先。集計日で削除・登録する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_otc_buy_order / dtb_otc_buy_order_detail / dtb_otc_buy_order_indivisual_input_product / dtb_otc_buy_order_summary</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>コマンド名が未指定・不一致</td><td>処理を行わずに終了する。</td></tr><tr><td>集計対象が0件</td><td>既存の当日分集計を削除し、登録は行わず完了する。</td></tr><tr><td>集計・登録中の例外</td><td>登録をロールバックし、エラー内容を添えた集計エラー通知メールを管理者へ送る。</td></tr><tr><td>通知メール宛先が未設定</td><td>メールを送らずに当該メール処理を終了する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-ログ・監査">ログ・監査</h2>
+          <div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>起動</td><td>バッチコマンドの起動時に日時付きのコンソール出力を行う。</td></tr><tr><td>部門未設定商品通知メール</td><td>送信開始・送信完了・件数、宛先未設定時の送信せず終了をログに記録する。</td></tr><tr><td>集計エラー通知メール</td><td>送信開始・送信完了、宛先未設定時の送信せず終了をログに記録する。</td></tr></tbody></table></div>
+          <h3 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>パスワード</li><li>トークン・接続秘密値</li><li>メール送信の認証情報</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-通知">通知</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>送信条件</td><td>集計対象に部門未設定商品があるとき部門未設定商品通知メールを送る。集計・登録途中で例外が発生したとき集計エラー通知メールを送る。</td></tr><tr><td>宛先</td><td>オプションに設定された買取集計通知用メールアドレス（カンマ区切り）を宛先とする。宛先が未設定の場合は送信しない。宛先の決まり方はオプション管理を正とする。</td></tr><tr><td>本文</td><td>部門未設定商品通知メールは商品名・商品コードの一覧を載せる。集計エラー通知メールは例外メッセージを載せる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-b06-02-b06-02_batch_purchase_purchase_summary-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>ロックファイル等による多重起動防止は行わない。集計結果の削除と登録は1トランザクションで囲み、例外時はロールバックする。長時間処理に備えて実行時間制限を解除する。本バッチは楽観ロック・悲観ロックの対象を持たない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end b06-02-b06-02_batch_purchase_purchase_summary -->
+</section>
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1950 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>0505_基本設計仕様書(API_受注管理)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      /* 標準配色（2アクセント）: 暖色ニュートラル + clay / olive */
+      --bg: #ffffff;
+      --panel: #fffdf8;
+      --text: #2b2a26;
+      --muted: #7a756a;
+      --line: #d6cdbd;
+      --line-soft: #ebe2d3;
+      --band: #f3ede1;
+      --clay: #c25a37;
+      --clay-soft: #f4e6dd;
+      --olive: #5f7048;
+      --olive-soft: #e9ecdf;
+      --accent: var(--clay);
+      --accent-soft: var(--clay-soft);
+      /* 既存コンポーネントCSS互換のための旧トークン名エイリアス */
+      --page-bg: var(--bg);
+      --surface: var(--panel);
+      --surface-soft: var(--band);
+      --border: var(--line);
+      --border-strong: #c4b8a2;
+      --heading-bg: var(--band);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .sheet-panel {
+      display: none;
+    }
+
+    .sheet-panel.is-active {
+      display: block;
+    }
+
+    .sheet-heading {
+      margin-bottom: 14px;
+    }
+
+    .sheet-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+
+    /* Document body ---------------------------------------------------- */
+    .sheet-doc {
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .doc-empty {
+      color: var(--muted);
+    }
+
+    /* Document-control header card */
+    .doc-card {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1px;
+      margin: 0;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .doc-card .kv {
+      display: flex;
+      gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface);
+    }
+
+    .doc-card dt {
+      flex: 0 0 6.5em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .doc-card dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    /* Flowing text: headings, paragraphs, bullets */
+    .doc-flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+
+    .doc-flow > * {
+      margin: 0;
+      padding-left: calc(var(--lv, 0) * 1.5em);
+    }
+
+    .doc-flow > * + * {
+      margin-top: 6px;
+    }
+
+    .doc-h {
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-h-section {
+      margin-top: 4px;
+      padding-top: 8px;
+      padding-bottom: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .doc-flow > .doc-h-section + * {
+      margin-top: 8px;
+    }
+
+    /* Functional-spec section headings stand apart from the item table. */
+    .doc-h-spec {
+      scroll-margin-top: 90px;
+      padding: 8px 12px;
+      background: var(--heading-bg);
+      border-bottom: none;
+      border-left: 4px solid var(--accent);
+      border-radius: 6px;
+    }
+
+    .spec-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+
+    /* In-sheet jump nav to spec sections / shape text. */
+    .sheet-jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-jump a {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .sheet-jump a:hover {
+      border-color: var(--accent);
+    }
+
+    .doc-h-sub {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .doc-p {
+      overflow-wrap: anywhere;
+    }
+
+    .doc-label {
+      font-weight: 700;
+      margin-right: 0.6em;
+    }
+
+    .cell-strike {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .doc-bullet {
+      display: flex;
+      gap: 0.5em;
+      overflow-wrap: anywhere;
+    }
+
+    .doc-marker {
+      flex: 0 0 auto;
+      color: var(--accent);
+    }
+
+    /* Real data grids (screen item definitions, CSV formats, …) */
+    .item-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .item-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .item-table th,
+    .item-table td {
+      border: 0;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+      overflow-wrap: anywhere;
+      background-clip: padding-box;
+    }
+
+    .item-table tr > :first-child {
+      border-left: 1px solid var(--border);
+    }
+
+    .item-table thead tr:first-child > *,
+    .item-table > tbody:first-child tr:first-child > * {
+      border-top: 1px solid var(--border);
+    }
+
+    .item-table thead th {
+      position: sticky;
+      top: 0;
+      background: var(--heading-bg);
+      color: var(--text);
+      font-weight: 700;
+      border-bottom-color: var(--border-strong);
+      white-space: nowrap;
+    }
+
+    .item-table tbody tr:nth-child(even) td {
+      background: #faf5ec;
+    }
+
+    .item-table .item-table-section td {
+      background: var(--olive-soft) !important;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Textbox/shape text recovered from DrawingML */
+    .shape-block {
+      scroll-margin-top: 90px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .shape-title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .shape-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .shape-table .shape-ref {
+      white-space: nowrap;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      width: 1%;
+    }
+
+    .shape-object-row td {
+      background: transparent;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+
+    .shape-object-stage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: top;
+      max-width: 100%;
+    }
+
+    .shape-object-box {
+      box-sizing: border-box;
+      padding: 18px 24px;
+      border-radius: 22px;
+      border: var(--shape-stroke-w, 1px) solid var(--shape-stroke, #385D8A);
+      background: var(--shape-fill, #4F81BD);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.65;
+      text-align: center;
+      white-space: normal;
+      word-break: break-word;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    }
+
+    /* DrawingML shape diagrams: screen transitions / flow charts */
+    .diagram-block {
+      display: block;
+    }
+
+    .diagram-frame {
+      max-width: 100%;
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .diagram-viewport {
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .diagram-stage {
+      position: relative;
+      min-width: 640px;
+      background: #ffffff;
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.26) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.26) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid var(--line-soft);
+    }
+
+    .diagram-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .diagram-node {
+      position: absolute;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      background: var(--diagram-fill, #ffffff);
+      border: var(--diagram-stroke-w, 1.5px) solid var(--diagram-stroke, var(--olive));
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+
+    .diagram-node-roundRect {
+      border-radius: 8px;
+    }
+
+    .diagram-node-ellipse {
+      border-radius: 999px;
+    }
+
+    .transition-stage {
+      background-image:
+        linear-gradient(to right, rgba(214, 205, 189, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(214, 205, 189, 0.18) 1px, transparent 1px);
+    }
+
+    .transition-node {
+      border-radius: 8px;
+      border-color: var(--olive);
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(43, 42, 38, 0.10);
+    }
+
+    .transition-list {
+      margin-top: 10px;
+    }
+
+    .transition-map {
+      margin-top: 10px;
+      padding: 10px 12px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .transition-map > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .transition-list > summary {
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .transition-list .item-table-wrap {
+      margin-top: 8px;
+    }
+
+    .diagram-frame figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Images */
+    .image-block {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-image {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: min(100%, 860px);
+      margin: 0;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .sheet-image img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .sheet-image figcaption {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .conversion-warnings {
+      margin-top: 20px;
+      padding: 16px;
+      background: #fff8e6;
+      border: 1px solid #f1d08a;
+      border-radius: 8px;
+    }
+
+    .conversion-warnings h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .conversion-warnings ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* レイアウト図のピン番号オーバーレイ（画面イメージ⇄項目定義の相互リンク） */
+    .wf-frame {
+      border: 4px solid var(--border-strong);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+      padding: 12px;
+    }
+
+    .wf-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .wf-stage img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .image-layer-stage {
+      display: block;
+      max-width: 100%;
+      overflow: visible;
+    }
+
+    .image-layer-stage .image-layer-img {
+      position: absolute;
+      display: block;
+      max-width: none;
+      object-fit: fill;
+    }
+
+    .image-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .image-stack .image-stack-img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .wf-pin {
+      position: absolute;
+      z-index: 1000;
+      transform: translate(-50%, -50%);
+      min-width: 1.6em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--clay);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 0 0 2px #fff;
+      white-space: nowrap;
+    }
+
+    .wf-pin:hover {
+      background: var(--olive);
+    }
+
+    .wf-pin-plain {
+      background: var(--olive);
+      cursor: default;
+    }
+
+    .wf-pin:target {
+      background: var(--olive);
+      box-shadow: 0 0 0 3px var(--olive-soft), 0 0 0 5px var(--olive);
+    }
+
+    .item-no {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .item-table tr:target td {
+      background: var(--clay-soft) !important;
+    }
+
+    .item-table tr:target {
+      outline: 2px solid var(--clay);
+    }
+
+    .wf-pin,
+    .item-table tr[id] {
+      scroll-margin-top: 90px;
+    }
+
+    /* === html-sidebar-color スキル: ページシェル（サイドバー位置） === */
+    /* doc-shell */
+    *, *::before, *::after { box-sizing: border-box; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 30px; max-width: 1800px; margin: 0 auto; padding: 30px 28px 64px; }
+    .sidebar { position: sticky; top: 20px; align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 0 0; }
+    main.doc-content, .doc-content { min-width: 0; max-width: none; margin: 0; padding: 0; }
+    main:not(.doc-content) { max-width: none; margin: 0; padding: 0; }
+    @media (max-width: 900px) {
+      .page { display: block; padding: 16px; }
+      .sidebar { position: static; max-height: none; overflow: visible; margin-bottom: 16px; }
+    }
+
+    /* === html-sidebar スキル: 成果物マップ（サイドバー） === */
+    .artifact-map { margin: 0 0 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map-root { margin: 0; padding: 0; border: none; }
+    .artifact-map-title { margin: 0 0 10px; padding: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; border: none; }
+    .artifact-map-root:not([open]) > summary.artifact-map-title { margin-bottom: 0; }
+    .artifact-map-root > summary.artifact-map-title { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map-root > summary.artifact-map-title::-webkit-details-marker { display: none; }
+    .artifact-map-rail { margin: 0; padding: 0 0 0 12px; border-left: 1px solid var(--line-soft, #EBE2D3); }
+    .artifact-map summary.artifact-map-title::before,
+    .artifact-map details > summary::before { content: ""; display: block; flex: none; width: 6px; height: 6px; background: var(--muted); clip-path: polygon(0 18%, 100% 50%, 0 82%); transform: rotate(0deg); transform-origin: center; transition: transform 0.15s ease; }
+    .artifact-map-root[open] > summary.artifact-map-title::before,
+    .artifact-map details[open] > summary::before { transform: rotate(90deg); }
+    .artifact-map-group { margin: 0 0 16px; padding: 0; border: none; }
+    .artifact-map-group:last-child { margin-bottom: 0; }
+    .artifact-map-label { margin: 0 0 4px; padding: 0; color: var(--text); font-size: 13px; font-weight: 600; line-height: 1.45; border: none; }
+    .artifact-map-body { margin: 0; padding: 0; border: none; }
+    .artifact-map-body > ul { margin: 0; padding: 0; list-style: none; }
+    .artifact-map-body li { margin: 6px 0; font-size: 13px; line-height: 1.45; }
+    .artifact-map-body > details { margin: 6px 0 0; padding: 0; border: none; }
+    .artifact-map details > summary { cursor: pointer; margin: 0 0 4px; padding: 0; color: var(--muted); font-size: 13px; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 7px; }
+    .artifact-map details > summary::-webkit-details-marker { display: none; }
+    .artifact-map-body > details > ul { margin: 0; padding: 0 0 0 18px; list-style: none; }
+    .artifact-map details li { margin: 6px 0; }
+    .artifact-map a { display: block; position: relative; padding: 0; color: var(--muted); font-weight: 400; text-decoration: none; }
+    .artifact-map a:hover { color: var(--text); }
+    .artifact-map a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+    .artifact-map-body > ul a[aria-current="page"]::before { content: ""; position: absolute; left: -13px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .artifact-map details ul a[aria-current="page"]::before { content: ""; position: absolute; left: -31px; top: 0.15em; bottom: 0.15em; width: 2px; background: var(--accent); }
+    .sidebar-title { margin: 0 0 14px; padding: 0; color: var(--text); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+  
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /* function-design-embed:start */
+    .function-design-embed {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px solid var(--clay);
+    }
+
+    .function-design-header {
+      margin-bottom: 18px;
+    }
+
+    .function-design-header h3 {
+      margin: 0 0 6px;
+      color: var(--text);
+      font-size: 20px;
+    }
+
+    .function-design-header h4 {
+      margin: 0;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-source {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .function-design-note {
+      margin: 6px 0 0;
+      padding: 6px 10px;
+      border-left: 3px solid #f0ad4e;
+      background: rgba(240, 173, 78, 0.10);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .function-design-body h1,
+    .function-design-body h2 {
+      margin: 28px 0 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 18px;
+    }
+
+    .function-design-body h3 {
+      margin: 22px 0 10px;
+      color: var(--olive);
+      font-size: 16px;
+    }
+
+    .function-design-body h4 {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .function-design-body p {
+      margin: 9px 0;
+    }
+
+    .function-design-body ul,
+    .function-design-body ol {
+      margin: 9px 0;
+      padding-left: 26px;
+    }
+
+    .function-design-body li {
+      margin: 3px 0;
+    }
+
+    .function-design-body code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: var(--band);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 90%;
+    }
+
+    .function-design-body pre {
+      overflow-x: auto;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      white-space: pre-wrap;
+    }
+
+    .function-design-body pre code {
+      padding: 0;
+      background: transparent;
+    }
+
+    .function-design-body .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .function-design-body table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .function-design-body th,
+    .function-design-body td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .function-design-body th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .function-design-body tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* function-design-embed:end */
+/* endpoint-supplement-style:start */
+    .endpoint-supplement .table-wrap {
+      overflow-x: auto;
+      margin: 14px 0 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+    .endpoint-supplement table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .endpoint-supplement th,
+    .endpoint-supplement td {
+      border: 1px solid var(--line-soft);
+      padding: 7px 9px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .endpoint-supplement th {
+      background: var(--band);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .endpoint-supplement tbody tr:nth-child(even) {
+      background: #fffaf0;
+    }
+    /* endpoint-supplement-style:end */
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="artifact-map" aria-label="シート一覧">
+        <details class="artifact-map-root" open>
+          <summary class="artifact-map-title">Excel HTML Export</summary>
+          <div class="artifact-map-rail">
+            <div class="artifact-map-group">
+              <p class="artifact-map-label">0505_基本設計仕様書(API_受注管理)</p>
+              <div class="artifact-map-body">
+                <ul>
+                  <li><a href="#sheet-1" data-sheet="sheet-1" aria-current="page">表紙</a></li>
+                  <li><a href="#sheet-2" data-sheet="sheet-2">目次</a></li>
+                  <li><a href="#sheet-3" data-sheet="sheet-3">注文印刷_印刷情報をプリンタへ送信</a></li>
+                  <li><a href="#sheet-4" data-sheet="sheet-4">注文印刷_該当受注のステータスを印刷済みに変更</a></li>
+                  <li><a href="#sheet-5" data-sheet="sheet-5">店頭注文番号取得</a></li>
+                  <li><a href="#sheet-6" data-sheet="sheet-6">スマレジ受信処理</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </details>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="sheet-panel is-active" id="sheet-1">
+        <div class="sheet-heading">
+          <h2>表紙</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">晴れる屋様</p>
+            <p class="doc-p" style="--lv:0">受注管理機能</p>
+            <p class="doc-p" style="--lv:0">基本設計仕様書</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>Ver</th><th>改訂内容</th><th>改訂者</th><th>改訂日</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>0.1</td><td>新規作成</td><td>緑川</td><td>2025-05-16</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-2">
+        <div class="sheet-heading">
+          <h2>目次</h2>
+        </div>
+        <div class="sheet-doc">
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">目次</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">API設計書</h4>
+            <p class="doc-p" style="--lv:1">A05-01 注文印刷_印刷情報をプリンタへ送信</p>
+            <p class="doc-p" style="--lv:1">A05-02 注文印刷_該当受注のステータスを印刷済みに変更</p>
+            <p class="doc-p" style="--lv:1">A05-03 店頭注文番号取得</p>
+            <p class="doc-p" style="--lv:1">A05-04 スマレジ受信処理</p>
+          </div>
+        </div>
+      </section>
+      <section class="sheet-panel" id="sheet-3">
+        <div class="sheet-heading">
+          <h2>注文印刷_印刷情報をプリンタへ送信</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-27</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A05-01</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>注文印刷_印刷情報をプリンタへ送信</dd></div>
+            <div class="kv"><dt>概要</dt><dd>アクセスしてきた店舗のプリンタに対して印刷情報を返す</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-3-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/order/prints/{店舗ID}</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　有　認証方式　IP制限　リクエスト書式　クエリ　レスポンス書式　XML</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <p class="doc-p" style="--lv:2">本店・支店のシステムを統合するので、注文印刷情報のAPIも処理を一本化する。</p>
+            <p class="doc-p" style="--lv:3">本店のプリンタはエンドポイントURLに店舗IDを追加する必要があるので、設定変更が必要</p>
+            <p class="doc-p" style="--lv:3">本店・支店のシステムを統合するので、支店側のプリンタに設定されているエンドポイントURLはドメインが変更となるので全て設定変更が必要</p>
+            <p class="doc-p" style="--lv:2">現状は印刷完了ステータスに更新するAPI (A05-02)と処理を受けるメソッドが共通で、クエリ「ConnectionType」で処理が分岐しているので、</p>
+            <p class="doc-p" style="--lv:2">A05-02とエンドポイントを分ける</p>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>現状</th><th>/order/print/direct?ConnectionType=GetRequest</th><th>GETで受信</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr><td></td><td>/order/print/direct?ConnectionType=SetResponse</td><td>POSTで受信</td><td>※ RoutingでGetとPostで登録を行なっているが、同じメソッドを登録している</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-3-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <p class="doc-p" style="--lv:2">★ 各店舗に設置されているプリンタから定期的(間隔:30秒)にこのAPIにアクセス(エンドポイントURL変更)</p>
+            <p class="doc-p" style="--lv:4">URLに店舗ID(shop_id)を引数として持つ</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>バーコードが印刷されていない問題が発生しないようにするため、注文データをXML形式にする前に受注データにスマレジの商品コードが存在するかどうか確認する</span></div>
+            <p class="doc-p" style="--lv:3">スマレジの商品コードが存在しない場合はスマレジコードが採番されていない可能性があるため何もしない</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>店舗IDからその店舗の未印刷の注文データを抽出し、各注文データごとに印刷できるようにプリンタ仕様に合わせてXMLの書式にして返す。</span></div>
+            <h4 class="doc-h doc-h-sub" style="--lv:3">未印刷データがなければ空文字''を返す</h4>
+            <p class="doc-p" style="--lv:5">※ プリンタのxmlの仕様 https://www2.epson.jp/support/manual/SDP_UM_JA_REVW.ZIP</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">・</span><span>印刷データXMLをログに出力する</span></div>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>店舗ID</td><td>数値(整数)</td><td>〇</td><td></td><td>123</td><td>受取店舗の店舗ID(shop_id)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">/order/prints/123</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200　正常終了</p>
+            <p class="doc-p" style="--lv:0">404　店舗ID(shop_id)が無い、整数以外の型、存在しない店舗ID(shop_id)　※支店での処理を踏襲</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>印刷データ(XML)</td><td>文字型</td><td>専用の言語(フォーマット)で記述された印刷レイアウトデータを注文データ数分出力<br>印刷データの動的変更部分については、別表「印刷レイアウトデータの動的変更箇所」参照のこと<br>印刷位置や罫線情報については、サンプルデータを参照のこと</td></tr>
+                <tr class="item-table-section"><td colspan="3">印刷レイアウトデータの動的変更箇所</td></tr>
+                <tr><td>名前</td><td>型</td><td>説明</td></tr>
+                <tr><td>受注情報ID</td><td>数値(整数)</td><td>注文詳細URLと生成と、印刷情報データを一意に定めるXML向けの情報として使用</td></tr>
+                <tr><td>店頭注文番号</td><td>文字型</td><td>店頭注文番号</td></tr>
+                <tr><td>注文詳細URL</td><td>文字型</td><td>管理画面の受注詳細情報ページのURL。QRコードにして印刷する</td></tr>
+                <tr><td>備考</td><td>文字型</td><td>受注情報の問合せに値があれば、「問い合わせ有」と表示。それ以外は空欄</td></tr>
+                <tr><td>注文日</td><td>日付（YYYY/MM/DD）</td><td>注文日</td></tr>
+                <tr><td>注文番号</td><td>数値(整数)</td><td>注文番号</td></tr>
+                <tr><td>お客様名</td><td>文字型</td><td>お客様名</td></tr>
+                <tr><td>合計金額</td><td>数値(整数)</td><td>注文の合計金額。ただしスムーズ店頭受取の場合、「スムーズ店頭受取」と表示</td></tr>
+                <tr><td>変更後金額</td><td>数値(整数)</td><td>スマレジコード。バーコードにして印刷</td></tr>
+                <tr><td>高額</td><td>文字型</td><td>固定値で「□」を出力　<br>※内部処理としてはデータを差し込んでいるが、差し込むデータが現状固定値で「□」になっている</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:2">&lt;?xml version="1.0" encoding="utf-8"?&gt;</p>
+            <p class="doc-p" style="--lv:2">&lt;PrintRequestInfo Version="3.00"&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;ePOSPrint&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;Parameter&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;devid&gt;local_printer&lt;/devid&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;timeout&gt;10000&lt;/timeout&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;printjobid&gt;{$order['order_id']}&lt;/printjobid&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;/Parameter&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;PrintData&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print"&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text lang="ja"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;page&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;area x="0" y="0" width="512" height="751"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="0" y1="0" x2="511" y2="200" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="18" y="25"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;店頭注文番号&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="0" y1="0" x2="511" y2="200" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="200" y="150"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text width="5" height="5"&gt;{$order['order_number']}&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="0" y1="200" x2="511" y2="400" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="0" y1="200" x2="175" y2="400" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="18" y="225"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text width="1" height="1"&gt;注文詳細URL&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="14" y="243"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;symbol type="qrcode_model_2" level="default" width="5" height="0" size="0"&gt;{$uri}admin/order/{$order['order_id']}/edit&lt;/symbol&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="179" y="230"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;備考　　{$contactText}&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="0" y1="400" x2="210" y2="450" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="25" y="434"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;注文日&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="210" y1="400" x2="511" y2="450" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="235" y="434"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;{$orderDate}&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="0" y1="450" x2="210" y2="500" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="25" y="484"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;注文番号&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="210" y1="450" x2="511" y2="500" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="235" y="484"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;{$order['order_no']}&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="0" y1="500" x2="210" y2="550" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="25" y="534"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;お客様名&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="210" y1="500" x2="511" y2="550" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="235" y="534"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;{$orderName}&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="0" y1="550" x2="210" y2="600" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="25" y="584"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;合計金額&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="210" y1="550" x2="511" y2="600" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="235" y="584"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;{$paymentTotal}&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="0" y1="600" x2="210" y2="650" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="25" y="634"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;変更後金額&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;rectangle x1="210" y1="600" x2="511" y2="650" style="thin"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="8" y="720"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;barcode type="jan13" hri="below" font="font_b" width="2" height="50"&gt;{$order['smaregi_code']}&lt;/barcode&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="225" y="684"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;高額　　{$order['expensive']}&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="370" y="684"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;サプライ □&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="225" y="734"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;欠品　　□&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;position x="370" y="734"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;text&gt;Wチェック□&lt;/text&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;/page&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;cut type="feed"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;/epos-print&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;/PrintData&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;/ePOSPrint&gt;</p>
+            <p class="doc-p" style="--lv:2">&lt;/PrintRequestInfo&gt;</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a05-01-a05-01_api_order_print_direct -->
+      <section class="function-design-embed" id="function-design-a05-01-a05-01_api_order_print_direct" data-source="functions/pf-api/a05-01_api_order_print_direct.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a05-01_api_order_print_direct.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A05-01 注文印刷_印刷情報をプリンタへ送信 / API 受注管理 — 注文印刷（印刷情報送信・印刷済み更新）</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-概要">概要</h2>
+          <p>店頭のスタック用紙プリンタ（印刷クライアント）が、印刷対象の受注からスタック用紙の印刷情報を取得し、印刷完了後に該当受注のステータスを印刷済み相当へ更新するためのAPIである。pf-api（受注・買取連携用のAPIアプリケーション）が提供するエンドポイントで、リクエストパラメータ<code>ConnectionType</code>の値によって動作が2系統に分岐する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの注文印刷処理、ルート定義（<code>config/routes.yaml</code>）、受注の印刷情報取得処理、店頭注文番号の参照、受注ステータスのマスタ定義を正とする。</p>
+          <p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-api、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>本エンドポイントの応答はJSONではなく、印刷情報を表すXML（<code>GetRequest</code>系）または空応答（<code>SetResponse</code>系）である。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+          <p>本書は次の2つの機能を1つのエンドポイントとして扱う。</p>
+          <ul><li>A05-01 注文印刷_印刷情報をプリンタへ送信（<code>ConnectionType</code>が<code>GetRequest</code>の分岐）</li><li>A05-02 注文印刷_該当受注のステータスを印刷済みに変更（<code>ConnectionType</code>が<code>SetResponse</code>の分岐）</li></ul>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>印刷対象受注の抽出と、スタック用紙の印刷情報（XML）の生成・送信（<code>GetRequest</code>）</li><li>印刷完了後の該当受注のステータス更新（<code>SetResponse</code>）</li><li>印刷情報のXMLログファイルへの書き出しという副作用</li><li>本エンドポイントの認証有無</li></ul>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
+          <ul><li>印刷クライアント側の通信制御・再送・プリンタ機種仕様（呼び出し元クライアントの仕様を正とする）</li><li>店頭注文番号そのものの採番・参照API（A05-03 店頭注文番号取得の設計を正とする）</li><li>受注ステータスの遷移ルール全般（受注管理の各設計を正とする）</li><li>まとめ買取・買取受注に関する各API（ネット買取・店頭買取の各設計を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動は現行（pf-api）を正とし、DBスキーマは移行先のec-cube-enterpriseを正とする。現行と移行先で次の差がある。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>受注補助情報の配置</td><td>注文番号・スマレジコード・ブラウザ印刷フラグ・確定日時等を補助表<code>dtb_order_sub</code>に分離して持つ。</td><td>同等の列を受注<code>dtb_order</code>へ統合する（<code>order_number</code>・<code>smaregi_code</code>・<code>browser_print_flg</code>・<code>confirm_date</code>等）。補助表は持たない。</td></tr><tr><td>印刷済み（ピック中）への更新</td><td>受注ステータスの更新と補助表の確定日時更新で印刷済み相当を表す。</td><td>受注<code>dtb_order</code>の<code>picking_date</code>・<code>pick_finish_date</code>・<code>browser_print_flg</code>で印刷・ピック状態を保持する。</td></tr><tr><td>店頭注文番号（待ち番号）</td><td>補助表<code>dtb_order_sub</code>の<code>waiting_number</code>で持つ。</td><td>店頭注文番号<code>dtb_order_number</code>の<code>value</code>（および受注<code>dtb_order</code>の<code>order_number</code>）で持つ。</td></tr><tr><td>配送方法の判別</td><td>配送<code>dtb_shipping</code>の配送方法で店頭受取・スムーズ店頭受取を判別する。</td><td>同一スキーマ。<code>dtb_shipping</code>の配送方法で判別する。</td></tr></tbody></table></div>
+          <p>応答形式（XML・空応答）とプリンタ向けレイアウトは移行後も挙動仕様としてpf-apiを正とする。</p>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>スタック用紙</td><td>店頭で受注内容を印字するロール紙。1受注ごとに1枚分の印刷情報を生成する。</td></tr><tr><td>印刷情報</td><td>プリンタが解釈するXML。<code>ePOSPrint</code>要素ごとに1受注分の印字レイアウトを持つ。</td></tr><tr><td>店頭注文番号</td><td>店頭受取の受注に紐づく待ち番号。印刷情報の店頭注文番号欄に印字する。</td></tr><tr><td>ブラウザ印刷フラグ</td><td>受注の補助情報が持つフラグ。ブラウザ経由の印刷待ち受注を印刷対象に含める判定に用いる。</td></tr><tr><td>印刷ログファイル</td><td>印刷不具合検証のために生成した印刷情報のXMLを保存するファイル。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>印刷情報をプリンタへ送信（A05-01）</td><td><code>GET /order/print/direct</code>（<code>ConnectionType</code>が<code>GetRequest</code>）</td><td>印刷対象受注のスタック用紙印刷情報をXMLで返す。対象が無い場合は空のデータを返す。</td></tr><tr><td>該当受注のステータスを印刷済みに変更（A05-02）</td><td><code>POST /order/print/direct</code>（<code>ConnectionType</code>が<code>SetResponse</code>）</td><td>印刷完了として受け取った受注のステータスをピック中へ更新し、空の本文を返す。</td></tr></tbody></table></div>
+          <p>同一パス<code>/order/print/direct</code>がGETとPOSTの両方で同じ処理に割り当てられており、分岐は<code>ConnectionType</code>の値で決まる。応答形式はXMLまたは空応答であり、JSONではない。呼び出し元は店頭のスタック用紙プリンタ（印刷クライアント）。</p>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-認証・認可">認証・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本エンドポイントは認証処理を行わない。<code>jwt-token</code>ヘッダの検証も管理ログインのプロキシも経由しない。pf-apiの他の管理系APIが用いる共通の認証処理を呼び出さず、未認証で実行できる。</td></tr><tr><td>認証失敗時</td><td>認証判定そのものを持たないため、認証失敗による拒否（HTTP 401）を返さない。</td></tr><tr><td>認可</td><td>呼び出し可能なクライアントは店頭のスタック用紙プリンタ（印刷クライアント）。アプリケーション層での利用者照合は行わない。</td></tr></tbody></table></div>
+          <p>未認証で実行できる点は本書の確認値である。トークン原値・署名シークレットは本書に記載しない。</p>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-印刷情報を送信する-GET-order-print-direct-ConnectionType-が-GetRequest">印刷情報を送信する（GET <code>/order/print/direct</code>、<code>ConnectionType</code>が<code>GetRequest</code>）</h3>
+          <ol><li>リクエストの<code>ConnectionType</code>を読み、値が<code>GetRequest</code>であることを判定する。</li><li>印刷対象の受注一覧を取得する。店頭受取で注文受領の受注、スムーズ店頭受取で所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注、ブラウザ印刷フラグが立つ受注を対象とし、最大10件を取得する。</li><li>受注ごとに、注文日・合計金額・店頭注文番号・スマレジコード・問い合わせ有無・注文詳細URLを組み立て、1受注分の印刷情報（<code>ePOSPrint</code>要素）を生成する。配送がスムーズ店頭受取の場合は合計金額欄を「スムーズ店頭受取」とする。</li><li>全受注分を束ねたスタック用紙の印刷情報XMLを生成する。対象受注が無い場合はXMLを生成せず空文字とする。</li><li>生成した印刷情報が空でない場合、印刷不具合検証のため印刷情報のXMLをログファイルへ書き出す（副作用）。</li><li>印刷情報XMLを応答本体としてストリーム送信する。応答のContent-Typeは<code>application/octet-stream</code>とする。</li></ol>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-印刷済みステータスへ更新する-POST-order-print-direct-ConnectionType-が-SetResponse">印刷済みステータスへ更新する（POST <code>/order/print/direct</code>、<code>ConnectionType</code>が<code>SetResponse</code>）</h3>
+          <ol><li>リクエストの<code>ConnectionType</code>を読み、値が<code>SetResponse</code>であることを判定する。</li><li>POSTで受け取った<code>ResponseFile</code>のXMLを解析する。解析に失敗した場合は内容とエラーを記録して更新を行わずに戻る。</li><li>XMLの直接印刷結果が偽、または印刷結果要素が1件も無い場合は内容を記録して更新を行わずに戻る。</li><li>印刷結果要素ごとに、印刷ジョブIDの先頭部分から受注IDを取り出し、対象受注を特定する。受注が見つからない場合はエラーを記録して次の要素へ進む。</li><li>対象受注の補助情報のブラウザ印刷フラグが立っている場合は、そのフラグを倒すだけに留める。立っていない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。</li><li>各受注の更新を反映する。</li><li>空の本文（HTTP 200、<code>text/xml</code>）を返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-入出力">入出力</h2>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>ConnectionType</code></td><td>クエリまたはボディ</td><td>string</td><td>必須</td><td>動作の分岐。<code>GetRequest</code>で印刷情報送信、<code>SetResponse</code>でステータス更新。いずれにも一致しない場合は処理を行わず本文を返さない。</td></tr><tr><td><code>ResponseFile</code></td><td>ボディ</td><td>string</td><td><code>SetResponse</code>時に必須</td><td>プリンタが返した印刷結果のXML文字列。直接印刷結果の真偽と印刷結果要素（印刷ジョブID）を含む。<code>SetResponse</code>の更新対象の特定に用いる。</td></tr></tbody></table></div>
+          <p><code>ConnectionType</code>はGET・POSTいずれのリクエストからも取得する。<code>ResponseFile</code>はPOST本文から取得する。</p>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-レスポンス-成功">レスポンス（成功）</h3>
+          <p>応答はJSONではない。分岐ごとに応答形式が異なる。</p>
+          <div class="table-wrap"><table><thead><tr><th>分岐</th><th>HTTPステータス</th><th>Content-Type</th><th>本体</th></tr></thead><tbody><tr><td><code>GetRequest</code>（A05-01）</td><td>200</td><td><code>application/octet-stream</code></td><td>スタック用紙の印刷情報XMLをストリーム送信する。対象受注が無い場合は空のデータ。</td></tr><tr><td><code>SetResponse</code>（A05-02）</td><td>200</td><td><code>text/xml; charset=utf-8</code></td><td>空の本文（本文長0）。</td></tr></tbody></table></div>
+          <p><code>GetRequest</code>が返すXMLの構造は次のとおり。</p>
+          <div class="table-wrap"><table><thead><tr><th>要素</th><th>説明</th></tr></thead><tbody><tr><td><code>PrintRequestInfo</code></td><td>ルート要素。バージョン属性を持ち、配下に受注ごとの<code>ePOSPrint</code>を並べる。</td></tr><tr><td><code>ePOSPrint</code></td><td>受注1件分の印刷情報。印刷先・タイムアウト・印刷ジョブID（受注ID）と印字レイアウトを持つ。</td></tr><tr><td><code>ePOSPrint/Parameter/printjobid</code></td><td>印刷ジョブID。受注IDを用いる。<code>SetResponse</code>での受注特定に対応する。</td></tr><tr><td><code>ePOSPrint/PrintData</code></td><td>印字レイアウト。店頭注文番号・注文詳細URLのQRコード・注文日・注文番号・お客様名・合計金額・スマレジコードのバーコード・各種チェック欄を含む。</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-レスポンス-失敗">レスポンス（失敗）</h3>
+          <p>本エンドポイントは認証・入力検証による明示的なエラー応答を組み立てない。異常時のふるまいは次のとおり。</p>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>200</td><td><code>GetRequest</code>で対象受注が無い</td><td>空のデータ（XML本体を持たない）</td></tr><tr><td>200</td><td><code>SetResponse</code>で<code>ResponseFile</code>の解析失敗、直接印刷結果が偽、印刷結果要素が無い、または受注が見つからない</td><td>空の本文。更新は行わず、内容とエラーをログに記録する。</td></tr><tr><td>（応答なし）</td><td><code>ConnectionType</code>が<code>GetRequest</code>・<code>SetResponse</code>のいずれにも一致しない</td><td>応答を組み立てず本文を返さない。</td></tr><tr><td>500</td><td>印刷情報生成中・データ取得中・ファイル書き出し中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-サンプルレスポンス">サンプルレスポンス</h3>
+          <p><code>GetRequest</code>時の応答本体の代表例（実装確認値に基づくXML構造。受注IDなどは代表値）。</p>
+          <pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8"?&gt;
+          &lt;PrintRequestInfo Version="3.00"&gt;
+            &lt;ePOSPrint&gt;
+              &lt;Parameter&gt;
+                &lt;devid&gt;local_printer&lt;/devid&gt;
+                &lt;timeout&gt;10000&lt;/timeout&gt;
+                &lt;printjobid&gt;1000001&lt;/printjobid&gt;
+              &lt;/Parameter&gt;
+              &lt;PrintData&gt;
+                &lt;epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print"&gt;
+                  &lt;text lang="ja"/&gt;
+                  &lt;page&gt;
+                    &lt;text&gt;店頭注文番号&lt;/text&gt;
+                    &lt;symbol type="qrcode_model_2"&gt;https://example.test/admin/order/1000001/edit&lt;/symbol&gt;
+                    &lt;text&gt;注文番号&lt;/text&gt;
+                    &lt;text&gt;20260603-0001&lt;/text&gt;
+                    &lt;text&gt;お客様名&lt;/text&gt;
+                    &lt;text&gt;テスト 太郎&lt;/text&gt;
+                    &lt;text&gt;合計金額&lt;/text&gt;
+                    &lt;text&gt;\1,500&lt;/text&gt;
+                    &lt;barcode type="jan13"&gt;4900000000000&lt;/barcode&gt;
+                  &lt;/page&gt;
+                  &lt;cut type="feed"/&gt;
+                &lt;/epos-print&gt;
+              &lt;/PrintData&gt;
+            &lt;/ePOSPrint&gt;
+          &lt;/PrintRequestInfo&gt;</code></pre>
+          <p><code>SetResponse</code>時は本文を持たない（HTTP 200、<code>text/xml</code>、本文長0）。</p>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-副作用">副作用</h3>
+          <p>本エンドポイントは参照のみではなく、次の副作用を持つ。</p>
+          <ul><li>印刷ログファイルの書き出し（<code>GetRequest</code>）。生成した印刷情報が空でない場合、印刷情報のXMLをログ保存ディレクトリ（<code>var/log/print_logs/</code>配下）にタイムスタンプと一意名を付けたファイルとして書き出す。ディレクトリが存在しない場合は作成する。</li><li>受注ステータスの更新（<code>SetResponse</code>）。印刷結果に含まれる受注について、ブラウザ印刷フラグが立つ場合はフラグを倒し、立たない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。これらはデータベースへの更新である。</li></ul>
+          <p>応答はXMLまたは空応答であり、JSON応答整形・camelCaseのプロパティ命名は適用しない。</p>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-バリデーション">バリデーション</h2>
+          <p>本エンドポイントはフォーム型やマスタ存在チェックによる入力検証を行わない。<code>ConnectionType</code>が想定値（<code>GetRequest</code>・<code>SetResponse</code>）に一致しない場合は処理を行わず応答を組み立てない。<code>SetResponse</code>では<code>ResponseFile</code>のXML解析に失敗した場合と直接印刷結果が偽・印刷結果要素なしの場合に更新を行わずログに記録して戻る。</p>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td><code>GetRequest</code>は呼び出し時点の印刷対象受注（最大10件）を取得して印刷情報を返す。</td></tr><tr><td>更新の有無</td><td><code>GetRequest</code>は受注ステータスを更新しない（印刷ログファイルの書き出しのみ）。<code>SetResponse</code>は受注ステータスと補助情報を更新する。</td></tr><tr><td>取得と更新の一致</td><td><code>GetRequest</code>で抽出した受注集合と<code>SetResponse</code>で更新される受注集合は同一トランザクションで保証されない。<code>SetResponse</code>はプリンタが返した<code>ResponseFile</code>の印刷ジョブID（受注ID）を基準に対象を特定する。</td></tr><tr><td>印刷とステータスの関係</td><td><code>GetRequest</code>は印刷情報を返した時点では受注を未印刷のまま残し、<code>SetResponse</code>を受け取って初めてピック中へ更新する。両者の呼び出しの間に受注が変化し得る。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。移行先（ec-cube-enterprise）の名称を主とし、現行（pf-api）で配置が異なる列は括弧で添える。型や一覧の細部はスキーマを参照する。</p>
+          <p>現行は注文番号・スマレジコード・ブラウザ印刷フラグ・確定日時等を補助表<code>dtb_order_sub</code>に持つが、移行先はこれらを受注<code>dtb_order</code>へ統合する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>受注<code>dtb_order</code></td><td>受注ID</td><td>印刷ジョブIDと注文詳細URLに用いる。<code>SetResponse</code>の対象特定にも用いる。</td></tr><tr><td>受注<code>dtb_order</code></td><td>受注ステータス（<code>order_status_id</code>）</td><td>印刷対象抽出の条件、および<code>SetResponse</code>でピック中へ更新する対象。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>picking_date</code>・<code>pick_finish_date</code></td><td><code>SetResponse</code>でピック中へ更新する際に設定する。</td></tr><tr><td>受注<code>dtb_order</code></td><td>注文日（<code>order_date</code>）</td><td>印刷情報の注文日欄。</td></tr><tr><td>受注<code>dtb_order</code></td><td>注文者氏名・氏名カナ</td><td>印刷情報のお客様名欄（カナを優先し、無ければ氏名）。</td></tr><tr><td>受注<code>dtb_order</code></td><td>合計金額（<code>payment_total</code>）</td><td>印刷情報の合計金額欄。スムーズ店頭受取時は文言に置換する。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>order_number</code>（現行は補助表<code>dtb_order_sub</code>の<code>order_number</code>）</td><td>印刷情報の注文番号欄。抽出条件で注文番号ありを必須とする。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>smaregi_code</code>（現行は<code>dtb_order_sub</code>）</td><td>印刷情報のバーコードに用いる。抽出条件にも用いる。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>browser_print_flg</code>（現行は<code>dtb_order_sub</code>）</td><td>印刷対象抽出の条件。<code>SetResponse</code>では立つ場合にフラグを倒すだけに留める。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>confirm_date</code>（現行は<code>dtb_order_sub</code>）</td><td><code>SetResponse</code>でステータス更新時に現在時刻を設定する。抽出条件では未設定を要求する。</td></tr><tr><td>受注<code>dtb_order</code></td><td>出荷日時・取消日時・受領日時・店頭予約日時（現行は<code>dtb_order_sub</code>の各日時列）</td><td>スムーズ店頭受取の抽出条件で未設定を要求する。</td></tr><tr><td>店頭注文番号<code>dtb_order_number</code></td><td><code>value</code>（現行は補助表<code>dtb_order_sub</code>の<code>waiting_number</code>）</td><td>印刷情報の店頭注文番号欄。受注IDで引く。</td></tr><tr><td>配送<code>dtb_shipping</code></td><td>配送方法</td><td>店頭受取・スムーズ店頭受取の判別。抽出条件と合計金額欄の文言切替に用いる。</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_number / dtb_order_sub / dtb_shipping</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>注文印刷（印刷情報送信・印刷済み更新）</th></tr></thead><tbody><tr><td>店頭のスタック用紙プリンタ（印刷クライアント）</td><td>認証なしで印刷情報の取得とステータス更新を実行できる。</td></tr><tr><td>その他のクライアント</td><td>アプリケーション層での照合を行わないため、到達できれば同様に実行できる。利用制御はネットワーク・経路側に依存する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>ConnectionType</code>が想定値に一致しない</td><td>処理を行わず応答を組み立てない。</td></tr><tr><td><code>GetRequest</code>で対象受注が無い</td><td>空のデータを返す。ログファイルの書き出しも行わない。</td></tr><tr><td><code>SetResponse</code>で<code>ResponseFile</code>の解析失敗</td><td>内容とエラーをログに記録し、更新を行わずに戻る。</td></tr><tr><td><code>SetResponse</code>で直接印刷結果が偽・印刷結果要素なし</td><td>内容をログに記録し、更新を行わずに戻る。</td></tr><tr><td><code>SetResponse</code>で受注が見つからない</td><td>該当受注IDのエラーをログに記録し、その要素を飛ばして次へ進む。</td></tr><tr><td>印刷情報生成・データ取得・ファイル書き出し中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-ログ・監査">ログ・監査</h2>
+          <p><code>SetResponse</code>では、<code>ResponseFile</code>の解析失敗・直接印刷結果が偽・印刷結果要素なし・受注が見つからない場合に、その内容やエラーをログへ記録する。<code>GetRequest</code>では、生成した印刷情報のXMLを印刷不具合検証用のログファイル（<code>var/log/print_logs/</code>配下）へ書き出す。</p>
+          <h3 id="function-design-a05-01-a05-01_api_order_print_direct-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-a05-01-a05-01_api_order_print_direct-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p><code>GetRequest</code>は受注を更新せず、ロックの対象を持たない。<code>SetResponse</code>は受注ごとに更新を反映するが、印刷結果に含まれる受注集合に対する明示的な悲観ロック・楽観ロックは設けていない。<code>GetRequest</code>で抽出した受注と<code>SetResponse</code>で更新する受注は別リクエストであり、同一トランザクション境界で保証しない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a05-01-a05-01_api_order_print_direct -->
+</section>
+      <section class="sheet-panel" id="sheet-4">
+        <div class="sheet-heading">
+          <h2>注文印刷_該当受注のステータスを印刷済みに変更</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-28</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A05-02</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>注文印刷_該当受注のステータスを印刷済みに変更</dd></div>
+            <div class="kv"><dt>概要</dt><dd>プリンタから送信されてきた受注IDに対してステータスをピック中にする</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-4-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/order/prints/status/printed</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　POST　認証の有無　有　認証方式　IP制限　リクエスト書式　XML　レスポンス書式　なし<br>(ステータスコードのみ)</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <p class="doc-p" style="--lv:1">現状はピック中ステータスに更新するAPI (A05-02)と処理を受けるメソッドが共通で、クエリ「ConnectionType」で処理が分岐しているので、A05-02とエンドポイントを分ける</p>
+            <p class="doc-p" style="--lv:1">本店・支店のシステムを統合するので、注文印刷情報のAPIも処理を一本化する。</p>
+            <p class="doc-p" style="--lv:2">本店のプリンタはエンドポイントURLを変更するので、設定変更が必要</p>
+            <p class="doc-p" style="--lv:2">本店・支店のシステムを統合するので、支店側のプリンタに設定されているエンドポイントURLはドメインが変更となるので全て設定変更が必要</p>
+            <p class="doc-p" style="--lv:1">プリンタ側でエラーがあった場合、XMLの中にエラーコードが返ってくるので、ログに追記する</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-4-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <p class="doc-p" style="--lv:1">★ 各店舗に設置されているプリンタで印刷が完了したらこのAPIにアクセスし、印刷完了した受注ID情報全てをプリンタの仕様に則ったXMLで送信(エンドポイントURL変更)</p>
+            <p class="doc-p" style="--lv:1">・送信されてきたXML情報から取引IDを全て抽出し、その受注IDのステータスをピック中にする</p>
+            <p class="doc-p" style="--lv:2">※ 受注IDを持っているので、情報として店舗IDは不要</p>
+            <p class="doc-p" style="--lv:1">★ プリンタ側でエラーがあった場合、レスポンスデータの中にエラーコードが返ってくるので、ログに追記する</p>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">※</span><span>基本書式(XML)を満たしていない、印刷結果の情報がない等、根本的な問題があった場合はログに追記する仕組みは既存にもあるが、</span></div>
+            <p class="doc-p" style="--lv:3">印刷結果の詳細を参照してエラーの有無を確認していない</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>印刷結果(XML)</td><td>文字型</td><td>〇</td><td></td><td></td><td>プリンタの仕様に沿った言語(フォーマット)で記述された印刷結果<br>何かしら印刷に失敗した場合、この印刷結果に理由が記載される<br>引数は「ResponseFile」で届く。</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">印刷結果XML概要</h3>
+            <p class="doc-p" style="--lv:2">印刷データを一意に定める値として受注情報IDを送信しているので、印刷結果も同じ値が返ってくる</p>
+            <p class="doc-p" style="--lv:2">印刷結果として、成功(true)/失敗(false)が返ってくる</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">失敗の場合のみ、失敗理由(code)が返ってくる</h4>
+            <h4 class="doc-h doc-h-sub" style="--lv:3">※エラーコードは下記の通り</h4>
+            <h3 class="doc-h doc-h-section" style="--lv:4">Code　原因</h3>
+            <p class="doc-p" style="--lv:4">EPTR_AUTOMATICAL　高密度印字の連続印刷</p>
+            <p class="doc-p" style="--lv:4">EPTR_BATTERY_LOW　バッテリーの残量が無い</p>
+            <p class="doc-p" style="--lv:4">EPTR_COVER_OPEN　カバーが開いている</p>
+            <p class="doc-p" style="--lv:4">EPTR_CUTTER　カッターに異物がある</p>
+            <p class="doc-p" style="--lv:4">EPTR_MECHANICAL　メカ駆動中のエラーなど</p>
+            <p class="doc-p" style="--lv:4">EPTR_REC_EMPTY　用紙が無い</p>
+            <p class="doc-p" style="--lv:4">EPTR_UNRECOVERABLE　低電圧</p>
+            <p class="doc-p" style="--lv:4">EX_BADPORT　・プリンターがオンライン時に強制送信モードを実行した<br>・プリンターがオフラインで印刷できない<br>・登録情報不正<br>・デバイスの電源が入っていない<br>・デバイスが接続されていない<br>・他のデバイス制御ソフトが存在</p>
+            <p class="doc-p" style="--lv:4">EX_TIMEOUT　・時間内に処理が完了できなかった<br>・1メソッドで大量のデータを送った<br>・スタイルシートに問題がある</p>
+            <p class="doc-p" style="--lv:4">SchemaError　要求メッセージが不正</p>
+            <p class="doc-p" style="--lv:4">DeviceNotFound　・出力先デバイスにアクセスできない<br>・指定したデバイスが存在しない<br>・サーバーダイレクトプリント対応プリンターの登録を確認</p>
+            <p class="doc-p" style="--lv:4">PrintSystemError　サーバーダイレクトプリント対応プリンターにアクセスできない</p>
+            <p class="doc-p" style="--lv:4">ERROR_WAIT_EJECT　用紙除去待ち</p>
+            <p class="doc-p" style="--lv:4">EX_SPOOLER　印刷キューに空き容量が無い</p>
+            <p class="doc-p" style="--lv:4">JobNotFound　指定のジョブIDが存在しない</p>
+            <p class="doc-p" style="--lv:4">Printing　印刷中</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:2">&lt;?xml version="1.0" encoding="utf-8"?&gt;</p>
+            <p class="doc-p" style="--lv:2">&lt;PrintResponseInfo Version="3.00"&gt;</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:3">&lt;ServerDirectPrint&gt;</h4>
+            <p class="doc-p" style="--lv:4">&lt;Response Success="true"/&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;/ServerDirectPrint&gt;</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:3">&lt;ePOSPrint&gt;</h4>
+            <h4 class="doc-h doc-h-sub" style="--lv:4">&lt;Parameter&gt;</h4>
+            <p class="doc-p" style="--lv:5">&lt;devid&gt;local_printer&lt;/devid&gt;</p>
+            <p class="doc-p" style="--lv:5">&lt;printjobid&gt;ABC123&lt;/printjobid&gt;</p>
+            <p class="doc-p" style="--lv:4">&lt;/Parameter&gt;</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:4">&lt;PrintResponse&gt;</h4>
+            <p class="doc-p" style="--lv:5">&lt;response xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print" success="true"</p>
+            <p class="doc-p" style="--lv:5">code="" status="251854870" battery="0"/&gt;</p>
+            <p class="doc-p" style="--lv:4">&lt;/PrintResponse&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;/ePOSPrint&gt;</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:3">&lt;ePOSPrint&gt;</h4>
+            <h4 class="doc-h doc-h-sub" style="--lv:4">&lt;Parameter&gt;</h4>
+            <p class="doc-p" style="--lv:5">&lt;devid&gt;local_printer&lt;/devid&gt;</p>
+            <p class="doc-p" style="--lv:5">&lt;printjobid&gt;ABC123_DrawerOpen_Online&lt;/printjobid&gt;</p>
+            <p class="doc-p" style="--lv:4">&lt;/Parameter&gt;</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:4">&lt;PrintResponse&gt;</h4>
+            <p class="doc-p" style="--lv:5">&lt;response xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print" success="false"</p>
+            <p class="doc-p" style="--lv:5">code="EX_BADPORT" status="1" battery="0"/&gt;</p>
+            <p class="doc-p" style="--lv:4">&lt;/PrintResponse&gt;</p>
+            <p class="doc-p" style="--lv:3">&lt;/ePOSPrint&gt;</p>
+            <p class="doc-p" style="--lv:2">&lt;/PrintResponseInfo&gt;</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200　問題の有無に関係なく値は空文字(ボディなし)。※問題がある場合、ログを追記する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">名前　型　説明</h3>
+            <p class="doc-p" style="--lv:0">なし</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a05-02-a05-02_api_order_print_direct -->
+      <section class="function-design-embed" id="function-design-a05-02-a05-02_api_order_print_direct" data-source="functions/pf-api/a05-02_api_order_print_direct.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-api/a05-02_api_order_print_direct.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A05-02 注文印刷_該当受注のステータスを印刷済みに変更 / API 受注管理 — 注文印刷（印刷情報送信・印刷済み更新）</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-概要">概要</h2>
+          <p>店頭のスタック用紙プリンタ（印刷クライアント）が、印刷対象の受注からスタック用紙の印刷情報を取得し、印刷完了後に該当受注のステータスを印刷済み相当へ更新するためのAPIである。pf-api（受注・買取連携用のAPIアプリケーション）が提供するエンドポイントで、リクエストパラメータ<code>ConnectionType</code>の値によって動作が2系統に分岐する。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの注文印刷処理、ルート定義（<code>config/routes.yaml</code>）、受注の印刷情報取得処理、店頭注文番号の参照、受注ステータスのマスタ定義を正とする。</p>
+          <p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-api、DB関連の記述はec-cube-enterpriseを正とする。</p>
+          <p>本エンドポイントの応答はJSONではなく、印刷情報を表すXML（<code>GetRequest</code>系）または空応答（<code>SetResponse</code>系）である。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+          <p>本書は次の2つの機能を1つのエンドポイントとして扱う。</p>
+          <ul><li>A05-01 注文印刷_印刷情報をプリンタへ送信（<code>ConnectionType</code>が<code>GetRequest</code>の分岐）</li><li>A05-02 注文印刷_該当受注のステータスを印刷済みに変更（<code>ConnectionType</code>が<code>SetResponse</code>の分岐）</li></ul>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>印刷対象受注の抽出と、スタック用紙の印刷情報（XML）の生成・送信（<code>GetRequest</code>）</li><li>印刷完了後の該当受注のステータス更新（<code>SetResponse</code>）</li><li>印刷情報のXMLログファイルへの書き出しという副作用</li><li>本エンドポイントの認証有無</li></ul>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
+          <ul><li>印刷クライアント側の通信制御・再送・プリンタ機種仕様（呼び出し元クライアントの仕様を正とする）</li><li>店頭注文番号そのものの採番・参照API（A05-03 店頭注文番号取得の設計を正とする）</li><li>受注ステータスの遷移ルール全般（受注管理の各設計を正とする）</li><li>まとめ買取・買取受注に関する各API（ネット買取・店頭買取の各設計を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動は現行（pf-api）を正とし、DBスキーマは移行先のec-cube-enterpriseを正とする。現行と移行先で次の差がある。</p>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>現行（pf-api）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>受注補助情報の配置</td><td>注文番号・スマレジコード・ブラウザ印刷フラグ・確定日時等を補助表<code>dtb_order_sub</code>に分離して持つ。</td><td>同等の列を受注<code>dtb_order</code>へ統合する（<code>order_number</code>・<code>smaregi_code</code>・<code>browser_print_flg</code>・<code>confirm_date</code>等）。補助表は持たない。</td></tr><tr><td>印刷済み（ピック中）への更新</td><td>受注ステータスの更新と補助表の確定日時更新で印刷済み相当を表す。</td><td>受注<code>dtb_order</code>の<code>picking_date</code>・<code>pick_finish_date</code>・<code>browser_print_flg</code>で印刷・ピック状態を保持する。</td></tr><tr><td>店頭注文番号（待ち番号）</td><td>補助表<code>dtb_order_sub</code>の<code>waiting_number</code>で持つ。</td><td>店頭注文番号<code>dtb_order_number</code>の<code>value</code>（および受注<code>dtb_order</code>の<code>order_number</code>）で持つ。</td></tr><tr><td>配送方法の判別</td><td>配送<code>dtb_shipping</code>の配送方法で店頭受取・スムーズ店頭受取を判別する。</td><td>同一スキーマ。<code>dtb_shipping</code>の配送方法で判別する。</td></tr></tbody></table></div>
+          <p>応答形式（XML・空応答）とプリンタ向けレイアウトは移行後も挙動仕様としてpf-apiを正とする。</p>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>スタック用紙</td><td>店頭で受注内容を印字するロール紙。1受注ごとに1枚分の印刷情報を生成する。</td></tr><tr><td>印刷情報</td><td>プリンタが解釈するXML。<code>ePOSPrint</code>要素ごとに1受注分の印字レイアウトを持つ。</td></tr><tr><td>店頭注文番号</td><td>店頭受取の受注に紐づく待ち番号。印刷情報の店頭注文番号欄に印字する。</td></tr><tr><td>ブラウザ印刷フラグ</td><td>受注の補助情報が持つフラグ。ブラウザ経由の印刷待ち受注を印刷対象に含める判定に用いる。</td></tr><tr><td>印刷ログファイル</td><td>印刷不具合検証のために生成した印刷情報のXMLを保存するファイル。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>印刷情報をプリンタへ送信（A05-01）</td><td><code>GET /order/print/direct</code>（<code>ConnectionType</code>が<code>GetRequest</code>）</td><td>印刷対象受注のスタック用紙印刷情報をXMLで返す。対象が無い場合は空のデータを返す。</td></tr><tr><td>該当受注のステータスを印刷済みに変更（A05-02）</td><td><code>POST /order/print/direct</code>（<code>ConnectionType</code>が<code>SetResponse</code>）</td><td>印刷完了として受け取った受注のステータスをピック中へ更新し、空の本文を返す。</td></tr></tbody></table></div>
+          <p>同一パス<code>/order/print/direct</code>がGETとPOSTの両方で同じ処理に割り当てられており、分岐は<code>ConnectionType</code>の値で決まる。応答形式はXMLまたは空応答であり、JSONではない。呼び出し元は店頭のスタック用紙プリンタ（印刷クライアント）。</p>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-認証・認可">認証・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本エンドポイントは認証処理を行わない。<code>jwt-token</code>ヘッダの検証も管理ログインのプロキシも経由しない。pf-apiの他の管理系APIが用いる共通の認証処理を呼び出さず、未認証で実行できる。</td></tr><tr><td>認証失敗時</td><td>認証判定そのものを持たないため、認証失敗による拒否（HTTP 401）を返さない。</td></tr><tr><td>認可</td><td>呼び出し可能なクライアントは店頭のスタック用紙プリンタ（印刷クライアント）。アプリケーション層での利用者照合は行わない。</td></tr></tbody></table></div>
+          <p>未認証で実行できる点は本書の確認値である。トークン原値・署名シークレットは本書に記載しない。</p>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-印刷情報を送信する-GET-order-print-direct-ConnectionType-が-GetRequest">印刷情報を送信する（GET <code>/order/print/direct</code>、<code>ConnectionType</code>が<code>GetRequest</code>）</h3>
+          <ol><li>リクエストの<code>ConnectionType</code>を読み、値が<code>GetRequest</code>であることを判定する。</li><li>印刷対象の受注一覧を取得する。店頭受取で注文受領の受注、スムーズ店頭受取で所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注、ブラウザ印刷フラグが立つ受注を対象とし、最大10件を取得する。</li><li>受注ごとに、注文日・合計金額・店頭注文番号・スマレジコード・問い合わせ有無・注文詳細URLを組み立て、1受注分の印刷情報（<code>ePOSPrint</code>要素）を生成する。配送がスムーズ店頭受取の場合は合計金額欄を「スムーズ店頭受取」とする。</li><li>全受注分を束ねたスタック用紙の印刷情報XMLを生成する。対象受注が無い場合はXMLを生成せず空文字とする。</li><li>生成した印刷情報が空でない場合、印刷不具合検証のため印刷情報のXMLをログファイルへ書き出す（副作用）。</li><li>印刷情報XMLを応答本体としてストリーム送信する。応答のContent-Typeは<code>application/octet-stream</code>とする。</li></ol>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-印刷済みステータスへ更新する-POST-order-print-direct-ConnectionType-が-SetResponse">印刷済みステータスへ更新する（POST <code>/order/print/direct</code>、<code>ConnectionType</code>が<code>SetResponse</code>）</h3>
+          <ol><li>リクエストの<code>ConnectionType</code>を読み、値が<code>SetResponse</code>であることを判定する。</li><li>POSTで受け取った<code>ResponseFile</code>のXMLを解析する。解析に失敗した場合は内容とエラーを記録して更新を行わずに戻る。</li><li>XMLの直接印刷結果が偽、または印刷結果要素が1件も無い場合は内容を記録して更新を行わずに戻る。</li><li>印刷結果要素ごとに、印刷ジョブIDの先頭部分から受注IDを取り出し、対象受注を特定する。受注が見つからない場合はエラーを記録して次の要素へ進む。</li><li>対象受注の補助情報のブラウザ印刷フラグが立っている場合は、そのフラグを倒すだけに留める。立っていない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。</li><li>各受注の更新を反映する。</li><li>空の本文（HTTP 200、<code>text/xml</code>）を返す。</li></ol>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-入出力">入出力</h2>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>ConnectionType</code></td><td>クエリまたはボディ</td><td>string</td><td>必須</td><td>動作の分岐。<code>GetRequest</code>で印刷情報送信、<code>SetResponse</code>でステータス更新。いずれにも一致しない場合は処理を行わず本文を返さない。</td></tr><tr><td><code>ResponseFile</code></td><td>ボディ</td><td>string</td><td><code>SetResponse</code>時に必須</td><td>プリンタが返した印刷結果のXML文字列。直接印刷結果の真偽と印刷結果要素（印刷ジョブID）を含む。<code>SetResponse</code>の更新対象の特定に用いる。</td></tr></tbody></table></div>
+          <p><code>ConnectionType</code>はGET・POSTいずれのリクエストからも取得する。<code>ResponseFile</code>はPOST本文から取得する。</p>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-レスポンス-成功">レスポンス（成功）</h3>
+          <p>応答はJSONではない。分岐ごとに応答形式が異なる。</p>
+          <div class="table-wrap"><table><thead><tr><th>分岐</th><th>HTTPステータス</th><th>Content-Type</th><th>本体</th></tr></thead><tbody><tr><td><code>GetRequest</code>（A05-01）</td><td>200</td><td><code>application/octet-stream</code></td><td>スタック用紙の印刷情報XMLをストリーム送信する。対象受注が無い場合は空のデータ。</td></tr><tr><td><code>SetResponse</code>（A05-02）</td><td>200</td><td><code>text/xml; charset=utf-8</code></td><td>空の本文（本文長0）。</td></tr></tbody></table></div>
+          <p><code>GetRequest</code>が返すXMLの構造は次のとおり。</p>
+          <div class="table-wrap"><table><thead><tr><th>要素</th><th>説明</th></tr></thead><tbody><tr><td><code>PrintRequestInfo</code></td><td>ルート要素。バージョン属性を持ち、配下に受注ごとの<code>ePOSPrint</code>を並べる。</td></tr><tr><td><code>ePOSPrint</code></td><td>受注1件分の印刷情報。印刷先・タイムアウト・印刷ジョブID（受注ID）と印字レイアウトを持つ。</td></tr><tr><td><code>ePOSPrint/Parameter/printjobid</code></td><td>印刷ジョブID。受注IDを用いる。<code>SetResponse</code>での受注特定に対応する。</td></tr><tr><td><code>ePOSPrint/PrintData</code></td><td>印字レイアウト。店頭注文番号・注文詳細URLのQRコード・注文日・注文番号・お客様名・合計金額・スマレジコードのバーコード・各種チェック欄を含む。</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-レスポンス-失敗">レスポンス（失敗）</h3>
+          <p>本エンドポイントは認証・入力検証による明示的なエラー応答を組み立てない。異常時のふるまいは次のとおり。</p>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>200</td><td><code>GetRequest</code>で対象受注が無い</td><td>空のデータ（XML本体を持たない）</td></tr><tr><td>200</td><td><code>SetResponse</code>で<code>ResponseFile</code>の解析失敗、直接印刷結果が偽、印刷結果要素が無い、または受注が見つからない</td><td>空の本文。更新は行わず、内容とエラーをログに記録する。</td></tr><tr><td>（応答なし）</td><td><code>ConnectionType</code>が<code>GetRequest</code>・<code>SetResponse</code>のいずれにも一致しない</td><td>応答を組み立てず本文を返さない。</td></tr><tr><td>500</td><td>印刷情報生成中・データ取得中・ファイル書き出し中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-サンプルレスポンス">サンプルレスポンス</h3>
+          <p><code>GetRequest</code>時の応答本体の代表例（実装確認値に基づくXML構造。受注IDなどは代表値）。</p>
+          <pre><code class="language-xml">&lt;?xml version="1.0" encoding="utf-8"?&gt;
+          &lt;PrintRequestInfo Version="3.00"&gt;
+            &lt;ePOSPrint&gt;
+              &lt;Parameter&gt;
+                &lt;devid&gt;local_printer&lt;/devid&gt;
+                &lt;timeout&gt;10000&lt;/timeout&gt;
+                &lt;printjobid&gt;1000001&lt;/printjobid&gt;
+              &lt;/Parameter&gt;
+              &lt;PrintData&gt;
+                &lt;epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print"&gt;
+                  &lt;text lang="ja"/&gt;
+                  &lt;page&gt;
+                    &lt;text&gt;店頭注文番号&lt;/text&gt;
+                    &lt;symbol type="qrcode_model_2"&gt;https://example.test/admin/order/1000001/edit&lt;/symbol&gt;
+                    &lt;text&gt;注文番号&lt;/text&gt;
+                    &lt;text&gt;20260603-0001&lt;/text&gt;
+                    &lt;text&gt;お客様名&lt;/text&gt;
+                    &lt;text&gt;テスト 太郎&lt;/text&gt;
+                    &lt;text&gt;合計金額&lt;/text&gt;
+                    &lt;text&gt;\1,500&lt;/text&gt;
+                    &lt;barcode type="jan13"&gt;4900000000000&lt;/barcode&gt;
+                  &lt;/page&gt;
+                  &lt;cut type="feed"/&gt;
+                &lt;/epos-print&gt;
+              &lt;/PrintData&gt;
+            &lt;/ePOSPrint&gt;
+          &lt;/PrintRequestInfo&gt;</code></pre>
+          <p><code>SetResponse</code>時は本文を持たない（HTTP 200、<code>text/xml</code>、本文長0）。</p>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-副作用">副作用</h3>
+          <p>本エンドポイントは参照のみではなく、次の副作用を持つ。</p>
+          <ul><li>印刷ログファイルの書き出し（<code>GetRequest</code>）。生成した印刷情報が空でない場合、印刷情報のXMLをログ保存ディレクトリ（<code>var/log/print_logs/</code>配下）にタイムスタンプと一意名を付けたファイルとして書き出す。ディレクトリが存在しない場合は作成する。</li><li>受注ステータスの更新（<code>SetResponse</code>）。印刷結果に含まれる受注について、ブラウザ印刷フラグが立つ場合はフラグを倒し、立たない場合は受注のステータスをピック中へ更新し、補助情報の確定日時に現在時刻を設定する。これらはデータベースへの更新である。</li></ul>
+          <p>応答はXMLまたは空応答であり、JSON応答整形・camelCaseのプロパティ命名は適用しない。</p>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-バリデーション">バリデーション</h2>
+          <p>本エンドポイントはフォーム型やマスタ存在チェックによる入力検証を行わない。<code>ConnectionType</code>が想定値（<code>GetRequest</code>・<code>SetResponse</code>）に一致しない場合は処理を行わず応答を組み立てない。<code>SetResponse</code>では<code>ResponseFile</code>のXML解析に失敗した場合と直接印刷結果が偽・印刷結果要素なしの場合に更新を行わずログに記録して戻る。</p>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td><code>GetRequest</code>は呼び出し時点の印刷対象受注（最大10件）を取得して印刷情報を返す。</td></tr><tr><td>更新の有無</td><td><code>GetRequest</code>は受注ステータスを更新しない（印刷ログファイルの書き出しのみ）。<code>SetResponse</code>は受注ステータスと補助情報を更新する。</td></tr><tr><td>取得と更新の一致</td><td><code>GetRequest</code>で抽出した受注集合と<code>SetResponse</code>で更新される受注集合は同一トランザクションで保証されない。<code>SetResponse</code>はプリンタが返した<code>ResponseFile</code>の印刷ジョブID（受注ID）を基準に対象を特定する。</td></tr><tr><td>印刷とステータスの関係</td><td><code>GetRequest</code>は印刷情報を返した時点では受注を未印刷のまま残し、<code>SetResponse</code>を受け取って初めてピック中へ更新する。両者の呼び出しの間に受注が変化し得る。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。移行先（ec-cube-enterprise）の名称を主とし、現行（pf-api）で配置が異なる列は括弧で添える。型や一覧の細部はスキーマを参照する。</p>
+          <p>現行は注文番号・スマレジコード・ブラウザ印刷フラグ・確定日時等を補助表<code>dtb_order_sub</code>に持つが、移行先はこれらを受注<code>dtb_order</code>へ統合する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>受注<code>dtb_order</code></td><td>受注ID</td><td>印刷ジョブIDと注文詳細URLに用いる。<code>SetResponse</code>の対象特定にも用いる。</td></tr><tr><td>受注<code>dtb_order</code></td><td>受注ステータス（<code>order_status_id</code>）</td><td>印刷対象抽出の条件、および<code>SetResponse</code>でピック中へ更新する対象。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>picking_date</code>・<code>pick_finish_date</code></td><td><code>SetResponse</code>でピック中へ更新する際に設定する。</td></tr><tr><td>受注<code>dtb_order</code></td><td>注文日（<code>order_date</code>）</td><td>印刷情報の注文日欄。</td></tr><tr><td>受注<code>dtb_order</code></td><td>注文者氏名・氏名カナ</td><td>印刷情報のお客様名欄（カナを優先し、無ければ氏名）。</td></tr><tr><td>受注<code>dtb_order</code></td><td>合計金額（<code>payment_total</code>）</td><td>印刷情報の合計金額欄。スムーズ店頭受取時は文言に置換する。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>order_number</code>（現行は補助表<code>dtb_order_sub</code>の<code>order_number</code>）</td><td>印刷情報の注文番号欄。抽出条件で注文番号ありを必須とする。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>smaregi_code</code>（現行は<code>dtb_order_sub</code>）</td><td>印刷情報のバーコードに用いる。抽出条件にも用いる。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>browser_print_flg</code>（現行は<code>dtb_order_sub</code>）</td><td>印刷対象抽出の条件。<code>SetResponse</code>では立つ場合にフラグを倒すだけに留める。</td></tr><tr><td>受注<code>dtb_order</code></td><td><code>confirm_date</code>（現行は<code>dtb_order_sub</code>）</td><td><code>SetResponse</code>でステータス更新時に現在時刻を設定する。抽出条件では未設定を要求する。</td></tr><tr><td>受注<code>dtb_order</code></td><td>出荷日時・取消日時・受領日時・店頭予約日時（現行は<code>dtb_order_sub</code>の各日時列）</td><td>スムーズ店頭受取の抽出条件で未設定を要求する。</td></tr><tr><td>店頭注文番号<code>dtb_order_number</code></td><td><code>value</code>（現行は補助表<code>dtb_order_sub</code>の<code>waiting_number</code>）</td><td>印刷情報の店頭注文番号欄。受注IDで引く。</td></tr><tr><td>配送<code>dtb_shipping</code></td><td>配送方法</td><td>店頭受取・スムーズ店頭受取の判別。抽出条件と合計金額欄の文言切替に用いる。</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-DB操作">DB操作</h3>
+          <p>本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>dtb_order / dtb_order_number / dtb_order_sub / dtb_shipping</td><td>検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>注文印刷（印刷情報送信・印刷済み更新）</th></tr></thead><tbody><tr><td>店頭のスタック用紙プリンタ（印刷クライアント）</td><td>認証なしで印刷情報の取得とステータス更新を実行できる。</td></tr><tr><td>その他のクライアント</td><td>アプリケーション層での照合を行わないため、到達できれば同様に実行できる。利用制御はネットワーク・経路側に依存する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>ConnectionType</code>が想定値に一致しない</td><td>処理を行わず応答を組み立てない。</td></tr><tr><td><code>GetRequest</code>で対象受注が無い</td><td>空のデータを返す。ログファイルの書き出しも行わない。</td></tr><tr><td><code>SetResponse</code>で<code>ResponseFile</code>の解析失敗</td><td>内容とエラーをログに記録し、更新を行わずに戻る。</td></tr><tr><td><code>SetResponse</code>で直接印刷結果が偽・印刷結果要素なし</td><td>内容をログに記録し、更新を行わずに戻る。</td></tr><tr><td><code>SetResponse</code>で受注が見つからない</td><td>該当受注IDのエラーをログに記録し、その要素を飛ばして次へ進む。</td></tr><tr><td>印刷情報生成・データ取得・ファイル書き出し中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-ログ・監査">ログ・監査</h2>
+          <p><code>SetResponse</code>では、<code>ResponseFile</code>の解析失敗・直接印刷結果が偽・印刷結果要素なし・受注が見つからない場合に、その内容やエラーをログへ記録する。<code>GetRequest</code>では、生成した印刷情報のXMLを印刷不具合検証用のログファイル（<code>var/log/print_logs/</code>配下）へ書き出す。</p>
+          <h3 id="function-design-a05-02-a05-02_api_order_print_direct-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-a05-02-a05-02_api_order_print_direct-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p><code>GetRequest</code>は受注を更新せず、ロックの対象を持たない。<code>SetResponse</code>は受注ごとに更新を反映するが、印刷結果に含まれる受注集合に対する明示的な悲観ロック・楽観ロックは設けていない。<code>GetRequest</code>で抽出した受注と<code>SetResponse</code>で更新する受注は別リクエストであり、同一トランザクション境界で保証しない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a05-02-a05-02_api_order_print_direct -->
+</section>
+      <section class="sheet-panel" id="sheet-5">
+        <div class="sheet-heading">
+          <h2>店頭注文番号取得</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-06-06</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A05-03</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>店頭注文番号取得</dd></div>
+            <div class="kv"><dt>概要</dt><dd>ピック済みになった店頭注文番号のリストを取得</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-5-spec-1">処理概要（★はカスタマイズ項目）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/waiting_api/get_waiting/{店舗ID}</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　GET　認証の有無　有　認証方式　IP制限　リクエスト書式　クエリ　レスポンス書式　JSON</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <p class="doc-p" style="--lv:2">本店・支店のシステムを統合するので、本店の店舗IDを渡すように修正</p>
+            <p class="doc-p" style="--lv:2">支店側のエンドポイントURLが変更</p>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-5-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <div class="doc-bullet" style="--lv:2"><span class="doc-marker">★</span><span>店頭注文番号一覧ページから非同期に定期的に(10秒間隔)アクセス　※ 支店側の実装を移植</span></div>
+            <p class="doc-p" style="--lv:2">店舗IDに紐づく受注データで、かつ店頭PC購入の「ピック済み」になっている店頭注文番号と店頭注文番号札管理(M05-27)で登録されている番号のリストを取得し、</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">JSON配列で返す</h4>
+            <p class="doc-p" style="--lv:3">データが存在しない場合は、空のJSON配列を返す</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>店舗ID</td><td>数値(整数)</td><td>〇</td><td></td><td>123</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">/waiting_api/get_waiting/123</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200　正常終了</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>注文番号のJSON配列</td><td>文字型</td><td>ピックアップ済みの受注データの注文番号、もしくは管理画面で登録された店頭注文番号のJSON配列</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:2">["AA","BB","ABB"]</p>
+          </div>
+        </div>
+      <!-- function-design-embed:start a05-03-a05-03_api_order_order_store_call_number -->
+      <section class="function-design-embed" id="function-design-a05-03-a05-03_api_order_order_store_call_number" data-source="functions/pf-eccube3/a05-03_api_order_order_store_call_number.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/a05-03_api_order_order_store_call_number.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A05-03 店頭注文番号取得 / API 受注管理 — 店頭注文番号取得</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-概要">概要</h2>
+          <p>店内モニター（店頭注文番号表示画面）が、ピック済みになった店頭注文番号のリストを取得するためのAPIである。pf-eccube3のHareruyaEcプラグインが提供するJSON APIで、ピック完了ステータスの注文に紐づく注文番号札（数字）と、注文番号札（アルファベット）を1つの配列にまとめて返す。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はHareruyaEcプラグインの店頭注文番号取得処理、フロントのルート登録（ControllerProvider）、注文番号テーブル・注文番号札テーブル・受注ステータスを正とする。</p>
+          <p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-eccube3（HareruyaEcプラグイン）とする。DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>ピック完了ステータスの注文に紐づく注文番号札（数字）の取得</li><li>注文番号札（アルファベット）の取得と連結</li><li>画面表示最大件数を超える場合の出荷完了番号の補完</li></ul>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>店頭注文番号表示画面そのものの描画と定期取得（フロント画面の設計を正とする）</li><li>注文番号札（数字）の発番・登録、注文番号札（アルファベット）の管理（店頭注文番号札管理の設計を正とする）</li><li>注文番号テーブルの初期化（店頭注文番号初期化バッチの設計を正とする）</li><li>受注ステータスの遷移そのもの（受注管理の設計を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>現行（pf-eccube3）と移行先（ec-cube-enterprise）でDBスキーマは同一である。</p>
+          <div class="table-wrap"><table><thead><tr><th>区分</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>注文番号テーブル</td><td>dtb_waiting_number（id、order_id、waiting_number＝店舗販売用整理番号）</td><td>同一スキーマ（dtb_waiting_number、同名列）</td></tr><tr><td>注文番号札テーブル</td><td>dtb_waiting_tag（id、waiting_tag）</td><td>同一スキーマ（dtb_waiting_tag、同名列）</td></tr><tr><td>受注ステータス</td><td>受注（dtb_order）のステータス列で判定</td><td>同一スキーマ（受注のステータス列）</td></tr></tbody></table></div>
+          <p>抽出条件・補完ロジック・本APIのエンドポイント自体のリニューアル後仕様はec-cube-enterprise実装で要確認とし、本書は現行（pf-eccube3）の挙動を正とする。永続化に関わるテーブル・列名は上記のとおり移行先と同一であるため、現行名をそのまま用いる。</p>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>注文番号札（数字）</td><td>注文ごとに採番した数値の呼び出し番号。注文番号テーブルが注文IDと対で保持する。</td></tr><tr><td>注文番号札（アルファベット）</td><td>数値とは別に管理する英字の呼び出し番号。注文番号札テーブルが保持する。</td></tr><tr><td>ピック完了</td><td>受注ステータスのうちピック済みを指す状態。</td></tr><tr><td>出荷完了</td><td>受注ステータスのうち出荷を終えた状態。表示件数超過時の補完判定に用いる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>店頭注文番号リストの取得</td><td><code>GET /{_locale}/waiting_api/get_waiting</code></td><td>ピック完了の注文番号札（数字）と注文番号札（アルファベット）を1配列にまとめて返す。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。呼び出し元は店内モニター（店頭注文番号表示画面）からの定期取得。フロントのルートは言語識別子<code>{_locale}</code>配下にマウントされる。</p>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-認証・認可">認証・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本APIは認証トークンを要求しない。フロントのファイアウォールは匿名アクセスを許可し、本パスにはログイン必須のアクセス制御を設定していない。</td></tr><tr><td>認証失敗時</td><td>認証判定を行わないため、未認証でも取得できる。</td></tr><tr><td>認可</td><td>呼び出し元は店内モニターの表示画面。利用者の資格情報による絞り込みは行わない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-店頭注文番号リストを取得する-GET-locale-waiting-api-get-waiting">店頭注文番号リストを取得する（GET <code>/{_locale}/waiting_api/get_waiting</code>）</h3>
+          <ol><li>ピック完了ステータスの注文に紐づく注文番号札（数字）の一覧を取得する。注文番号テーブルと受注を注文IDで結合し、受注ステータスがピック完了の行に限定する。</li><li>注文番号札（アルファベット）の一覧をID昇順で取得する。</li><li>数字の件数とアルファベットの件数の合計が画面表示最大件数を超える場合は、出荷完了ステータスの注文番号札（数字）も取得し、欠番の補完を行う。直前に追加した番号の次から対象番号の手前までの連番がすべて出荷完了であれば、その間の番号を配列に加える。超えない場合は補完を行わない。</li><li>ピック完了の注文番号札（数字）を配列へ順に追加する。</li><li>注文番号札（アルファベット）を配列の末尾へ順に追加する。</li><li>数字と英字を含む1つの配列をJSONで返す（HTTP 200）。</li></ol>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-集計条件">集計条件</h2>
+          <div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>ピック完了の注文番号札（数字）</td><td>注文番号テーブルと受注を注文IDで結合し、受注ステータスがピック完了の行のみを対象とする。並び順は注文番号テーブルの既定（主キー順）。</td></tr><tr><td>注文番号札（アルファベット）</td><td>注文番号札テーブルの全件をID昇順で取得する。</td></tr><tr><td>出荷完了の補完</td><td>ピック完了と英字の合計件数が画面表示最大件数（既定25）を超える場合のみ、ピック完了番号の間にある欠番を、その区間がすべて出荷完了のときに補完する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-入出力">入出力</h2>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-リクエスト">リクエスト</h3>
+          <p>本APIはリクエストパラメータを持たない。パスパラメータ<code>{_locale}</code>は言語識別子であり、取得対象の絞り込みには用いない。</p>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。応答本体はラッパオブジェクトを持たず、注文番号を要素とする1次元配列である。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td>（応答本体）</td><td>array</td><td>注文番号の配列。先頭側にピック完了の注文番号札（数字、表示件数超過時は間の出荷完了番号を含む）、末尾側に注文番号札（アルファベット）を連結する。数字要素はinteger、英字要素はstringとなる。</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>500</td><td>取得処理中の例外</td><td>標準例外ハンドラに委ねる</td></tr></tbody></table></div>
+          <p>入力検証・認証判定を行わないため、400・401は発生しない。該当データが無い場合は空配列を200で返す。</p>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（代表値）。</p>
+          <pre><code class="language-json">[101, 102, 103, "A", "B"]</code></pre>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-副作用">副作用</h3>
+          <p>無し（参照のみ）。本APIはデータを更新しない。</p>
+          <p>応答はJSON応答整形を経て返す。応答本体は配列であり、<code>Content-Type</code>は<code>application/json</code>を明示する。</p>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-バリデーション">バリデーション</h2>
+          <p>本APIは入力パラメータを持たないため、入力検証を行わない。</p>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-業務ルール・計算">業務ルール・計算</h2>
+          <ul><li>本機能の判定・集計・表示条件は既存実装のリポジトリ、サービス、フォーム定義を正とする。</li><li>金額・ポイント・数量・ステータス・日時は永続化済み値または既存サービスの計算結果を使用し、画面・API層で独自補正しない。</li><li>条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。</li></ul>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点でピック完了・出荷完了の受注ステータスを持つ注文番号、および注文番号札（アルファベット）を返す。本APIはデータを更新しない。</td></tr><tr><td>補完の前提</td><td>出荷完了番号の補完は表示件数超過時のみ行い、超えない場合はピック完了番号と英字のみを返す。</td></tr><tr><td>数字と英字の順序</td><td>数字を先に、英字を後に連結する。数字はピック完了の取得順、英字はID昇順とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>注文番号テーブル</td><td>注文番号</td><td>応答に用いる数字の呼び出し番号。</td></tr><tr><td>注文番号テーブル</td><td>注文ID</td><td>受注との結合キー。受注ステータスの判定に用いる。</td></tr><tr><td>受注</td><td>受注ステータス</td><td>ピック完了・出荷完了の判定に用いる。</td></tr><tr><td>注文番号札テーブル</td><td>注文番号札</td><td>応答に連結する英字の呼び出し番号。</td></tr><tr><td>注文番号札テーブル</td><td>ID</td><td>英字の取得順（昇順）に用いる。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>店頭注文番号取得</th></tr></thead><tbody><tr><td>任意のクライアント（未認証含む）</td><td>取得できる。本APIは認証・利用者状態による制御を行わない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>取得処理中の例外</td><td>明示的な<code>try-catch</code>は持たず、標準例外ハンドラに委ねる（HTTP 500相当）。</td></tr><tr><td>該当データなし</td><td>エラーとせず、空配列を200で返す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-ログ・監査">ログ・監査</h2>
+          <p>本APIは参照のみであり、固有のログ・監査出力を持たない。</p>
+          <h3 id="function-design-a05-03-a05-03_api_order_order_store_call_number-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-a05-03-a05-03_api_order_order_store_call_number-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは参照のみであり、楽観ロック・悲観ロックの対象を持たない。トランザクションを張ってデータを更新しない。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->
+</section>
+      <section class="sheet-panel" id="sheet-6">
+        <div class="sheet-heading">
+          <h2>スマレジ受信処理</h2>
+        </div>
+        <div class="sheet-doc">
+          <dl class="doc-card">
+            <div class="kv"><dt>ドキュメント名</dt><dd>受注管理　基本設計</dd></div>
+            <div class="kv"><dt>セクション</dt><dd>—</dd></div>
+            <div class="kv"><dt>プロジェクト名</dt><dd>受注管理機能</dd></div>
+            <div class="kv"><dt>作成者</dt><dd>堀部</dd></div>
+            <div class="kv"><dt>作成日</dt><dd>2025-05-30</dd></div>
+            <div class="kv"><dt>更新者</dt><dd>—</dd></div>
+            <div class="kv"><dt>更新日</dt><dd>—</dd></div>
+            <div class="kv"><dt>機能No</dt><dd>A05-04</dd></div>
+            <div class="kv"><dt>機能名</dt><dd>スマレジ受信処理</dd></div>
+            <div class="kv"><dt>概要</dt><dd>スマレジで取引完了時(決済完了時)のwebhookの受信処理</dd></div>
+          </dl>
+          <nav class="sheet-jump" aria-label="シート内ジャンプ">
+            <a href="#sheet-6-spec-1">処理概要（★はカスタマイズ項目）</a>
+            <a href="#sheet-6-shapes">図形・テキストボックス内テキスト（7件）</a>
+          </nav>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:0">GET　POST　PUT　DELETE　PATCH　OPTIONS　HEAD　有　無　〇</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">エンドポイントURL</h3>
+            <p class="doc-p" style="--lv:0">/smaregi/transaction</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">プロトコル　HTTP　メソッド　POST　認証の有無　有　認証方式　IP制限　リクエスト書式　JSON　レスポンス書式　なし<br>(ステータスコードのみ)</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">カスタマイズ説明</h3>
+            <p class="doc-p" style="--lv:1">Webhookの仕様が廃止予定のスマレジAPIからプラットフォームAPIに変更</p>
+            <p class="doc-p" style="--lv:2">Webhookでの返値が取引IDのみになるので,別途APIを叩いて取引詳細を取得する</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">本店・支店の処理を統合</h4>
+            <p class="doc-p" style="--lv:2">本店側でスマレジのwebhookを受けて、その後さらに支店側にデータをAPIで送っている処理を廃止し、webhookからの受信のみで本店・支店のデータ連携を実行する</p>
+            <p class="doc-p" style="--lv:1">ポイントの更新情報以外の取引情報もECCUBEと連携するように改修する</p>
+            <p class="doc-p" style="--lv:2">新規連携項目はリクエストパラメータに記載(★が追加項目)</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">取引状態によって連携方法が分岐</h4>
+            <p class="doc-p" style="--lv:3">・スムーズ店頭受取 or 店頭受取　・会員状態　・ついで買いの有無　・店頭PC購入かどうか</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:1">実装時の注意点</h4>
+            <p class="doc-p" style="--lv:2">API利用時の注意事項一般　https://developers.smaregi.dev/apidoc/common/#section/Webhook</p>
+            <p class="doc-p" style="--lv:2">APIレート制限(スロットリング)　https://developers.smaregi.dev/apidoc/common/#section/%E3%83%AC%E3%83%BC%E3%83%88%E5%88%B6%E9%99%90</p>
+            <div class="doc-bullet" style="--lv:6"><span class="doc-marker">※</span><span>秒間50回が上限になりますが、理論上1秒間にレジ25台(在庫・受注処理で2回として仮定)が同時決済まで対応可能</span></div>
+            <div class="doc-bullet" style="--lv:6"><span class="doc-marker">※</span><span>レート制限を超えた場合もエラーレスポンスで待機時間が返ってくるのでリトライ処理が可能</span></div>
+            <h3 class="doc-h doc-h-section doc-h-spec" id="sheet-6-spec-1" style="--lv:0"><span class="spec-badge">機能仕様</span>処理概要（★はカスタマイズ項目）</h3>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">★1. スマレジで取引完了をhookにwebhook発動</h4>
+          </div>
+          <div class="diagram-block">
+            <figure class="diagram-frame" data-diagram-layout="excel" data-diagram-connectors="5" data-diagram-nodes="4" data-transition-edges="2">
+              <div class="diagram-viewport">
+                <div class="diagram-stage diagram-stage-excel" style="width:570px;height:277px">
+                  <svg class="diagram-lines" viewBox="0 0 570 277" preserveAspectRatio="none" aria-hidden="true">
+                    <defs>
+                      <marker id="diagram-arrow-sheet-6-1" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#5F7048"></path>
+                      </marker>
+                    </defs>
+                    <path d="M 94.6 62.2 L 94.6 258.7" fill="none" stroke="#70AD47" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M 399.5 62.2 L 399.5 258.7" fill="none" stroke="#70AD47" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M 96.1 101.2 L 398.3 101.2" fill="none" stroke="#70AD47" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#diagram-arrow-sheet-6-1)"></path>
+                    <path d="M 96.1 158.9 L 398.3 158.9" fill="none" stroke="#70AD47" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-start="url(#diagram-arrow-sheet-6-1)" marker-end="url(#diagram-arrow-sheet-6-1)"></path>
+                    <path d="M 96.1 215.6 L 398.3 215.6" fill="none" stroke="#70AD47" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#diagram-arrow-sheet-6-1)"></path>
+                  </svg>
+                  <div class="diagram-node" style="left:59.7px;top:18.0px;width:69.5px;height:39.5px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">スマレジ</div>
+                  <div class="diagram-node" style="left:366.0px;top:18.0px;width:67.0px;height:38.1px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">ECCUBE</div>
+                  <div class="diagram-node" style="left:141.5px;top:66.5px;width:215.4px;height:39.3px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">A. ★スマレジ取引IDを送信</div>
+                  <div class="diagram-node" style="left:120.1px;top:124.3px;width:249.7px;height:38.1px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">B. ★スマレジ取引IDで取引詳細を要求</div>
+                  <div class="diagram-node" style="left:130.1px;top:181.0px;width:222.6px;height:39.3px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">C. ★スマレジ取引情報を返す</div>
+                  <div class="diagram-node" style="left:18.0px;top:66.5px;width:84.4px;height:38.1px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">取引完了</div>
+                  <div class="diagram-node" style="left:397.4px;top:196.7px;width:154.3px;height:38.5px;--diagram-fill:#FFFFFF;--diagram-stroke:#5F7048;--diagram-stroke-w:1.5px">スマレジ取引情報取得</div>
+                </div>
+              </div>
+              <figcaption>画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）</figcaption>
+              <details class="transition-list">
+                <summary>遷移一覧（2件）</summary>
+                <div class="item-table-wrap">
+                  <table class="item-table">
+                    <thead><tr><th>遷移元</th><th>遷移先</th></tr></thead>
+                    <tbody>
+                      <tr><td>取引完了</td><td>B. ★スマレジ取引IDで取引詳細を要求</td></tr>
+                      <tr><td>C. ★スマレジ取引情報を返す</td><td>スマレジ取引情報取得</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            </figure>
+          </div>
+          <div class="doc-flow">
+            <p class="doc-p" style="--lv:2"><span class="doc-label">2. 通常処理かキャンセル処理か返品処理かの場合を判定し、ポイント関連を増減処理</span>※既存踏襲</p>
+            <p class="doc-p" style="--lv:3">購入・キャンセル・返品で処理を分岐し、それぞれポイントの増減処理を実行</p>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">★3. スマレジの取引詳細をECCUBEに登録</h4>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">主要購入パターン</h4>
+            <p class="doc-p" style="--lv:3">店舗で通常発生しやすい購入パターン</p>
+            <p class="doc-p" style="--lv:3">基本ルール</p>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>ECCUBEにすでに存在している受注データがあれば、スマレジの商品IDからECCUBE上の受注データを検索する</span></div>
+            <div class="doc-bullet" style="--lv:5"><span class="doc-marker">※</span><span>スマレジに「購入商品が纏まっている１点もの(ユニークな)商品」として登録されているので、そのスマレジの商品IDで検索可能</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>スムーズ店頭受取以外のスマレジにある取引データはECCUBEに新規受注データとして新規作成する。この新規データは出荷完了で登録し、</span></div>
+            <p class="doc-p" style="--lv:4">配送情報は使用用途がないので未登録とする</p>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>ECCUBEの既存受注データはそのデータのステータスを、スムーズ店頭受取であれば「出荷完了」それ以外の店頭受取は「引き渡し済み」にする</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>ついで買いが発生した場合は、「既存の受注データ + ついで購入」の受注データを新規作成する。既存の受注データには移行先の新規受注データIDを登録する。</span></div>
+            <div class="doc-bullet" style="--lv:5"><span class="doc-marker">※</span><span>既存の受注データはスマレジ上では「複数の商品(カードA,カードB,カードC等)の入った一つの商品(部門カラムに6:店頭受取)」として登録されているので、</span></div>
+            <p class="doc-p" style="--lv:6">複数のカード情報を解いた上で一つずつ明細(子データ)として紐づけて新規受注データとする</p>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>会員状態も登録する。非会員であれば、「非会員」として登録・更新する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>カスタマイズ対象の追加連携項目をECCUBEの受注データに登録する</span></div>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th></th><th>購入パターン</th><th>ECCUBE<br>購入</th><th>店頭PC<br>購入</th><th>ついで買い</th><th>受取方法</th><th>会員<br>状態</th><th>連携方法</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>ECCUBE購入<br>(スムーズ店頭受取)</td><td>〇</td><td>-</td><td>-</td><td>スムーズ店頭受取</td><td>〇</td><td>取引に対応する受注データのステータスを出荷完了にする</td></tr>
+                <tr><td>2</td><td>ECCUBE購入<br>(店頭受取)</td><td>〇</td><td>-</td><td>×</td><td>店頭受取</td><td>〇</td><td>取引に対応する受注データのステータスを引き渡し済みにする<br>スマレジの受注レコードをECCUBEに新規作成する。既存の受注データには移行先の新規受注データIDを登録する。</td></tr>
+                <tr><td>3</td><td>ECCUBE購入(店頭受取)<br>ついで買い有</td><td>〇</td><td>-</td><td>〇</td><td>店頭受取</td><td>〇</td><td>店頭受取分の取引に対応する受注データのステータスを引き渡し済みにし、ついで買い分 + 店頭受取分の受注レコードを新規作成。既存の受注データには移行先の新規受注データIDを登録する。</td></tr>
+                <tr><td>4</td><td>店頭PC購入(会員)</td><td>×</td><td>〇</td><td>×</td><td>-</td><td>〇</td><td>店頭PC購入分の取引に対応する受注データのステータスを引き渡し済みにする<br>スマレジの受注レコードをECCUBEに新規作成する。既存の受注データには移行先の新規受注データIDを登録する。</td></tr>
+                <tr><td>5</td><td>店頭PC購入(会員)<br>ついで買い有</td><td>×</td><td>〇</td><td>〇</td><td>-</td><td>〇</td><td>店頭PC購入分の取引に対応する受注データのステータスを引き渡し済みにし、ついで買い分 + 店頭PC購入分の受注レコードを新規作成。既存の受注データには移行先の新規受注データIDを登録する</td></tr>
+                <tr><td>6</td><td>店頭PC購入(非会員)</td><td>×</td><td>〇</td><td>×</td><td>-</td><td>×</td><td>店頭PC購入分の取引に対応する受注データのステータスを引き渡し済みにする<br>スマレジの受注レコードをECCUBEに新規作成する。既存の受注データには移行先の新規受注データIDを登録する。<br>会員状態は非会員で登録</td></tr>
+                <tr><td>7</td><td>店頭PC購入(非会員)<br>ついで買い有</td><td>×</td><td>〇</td><td>〇</td><td>-</td><td>×</td><td>店頭PC購入分の取引に対応する受注データのステータスを引き渡し済みにし、ついで買い分 + 店頭PC購入分の受注レコードを新規作成。既存の受注データには移行先の新規受注データIDを登録する<br>会員状態は非会員で登録</td></tr>
+                <tr><td>8</td><td>店頭購入(会員)</td><td>×</td><td>×</td><td>-</td><td>-</td><td>〇</td><td>取引に対応する受注データをECCUBEに新規登録する</td></tr>
+                <tr><td>9</td><td>店頭購入(非会員)</td><td>×</td><td>×</td><td>-</td><td>-</td><td>×</td><td>取引に対応する受注データをECCUBEに新規登録する<br>会員状態は非会員で登録</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h4 class="doc-h doc-h-sub" style="--lv:2">複数受注購入パターン</h4>
+            <p class="doc-p" style="--lv:3">ECCUBEにすでに存在する受注を複数同時に店頭に持ってきた時</p>
+            <p class="doc-p" style="--lv:4">ex)　店頭PC購入を複数回行い、レジに来る　店頭受取の会員が店頭PC購入でついで買いをする</p>
+            <p class="doc-p" style="--lv:3">基本ルール</p>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>ECCUBE上の受注レコードを全て、ステータスを「引き渡し済み」にする</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>全ての受注データを統合した新規受注データを新規作成する。既存の受注データには移行先の新規受注データIDを登録する。</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>この組合せに加え、店舗内でのついで買いも同時に発生している場合は、そのデータも統合する。</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>会員状態も登録する。非会員であれば、「非会員」として登録・更新する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>カスタマイズ対象の追加連携項目をECCUBEの受注データに登録する</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>配送方法は店頭受取とする</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>注文日に店頭受取注文の注文日を設定する。複数の店頭受取受注データが存在する場合は一番若いものを注文日とする。</span></div>
+            <h4 class="doc-h doc-h-sub" style="--lv:2">返品</h4>
+            <p class="doc-p" style="--lv:3">購入後、返品される</p>
+            <p class="doc-p" style="--lv:3">基本ルール</p>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>一部返金の想定は不要。</span></div>
+            <div class="doc-bullet" style="--lv:3"><span class="doc-marker">・</span><span>対象の受注データのステータスを「キャンセル」にする</span></div>
+            <p class="doc-p" style="--lv:5">ただし、取消(cancelDivision)が1の場合と、打消し(disposeDivision)が1の場合で処理が分岐する</p>
+            <p class="doc-p" style="--lv:5">disposeDivisionが1の場合、打消元取引IDから検索</p>
+            <p class="doc-p" style="--lv:5">cancelDivisionが1の場合、取引IDから検索</p>
+            <div class="doc-bullet" style="--lv:1"><span class="doc-marker">★</span><span>支払方法について</span></div>
+            <p class="doc-p" style="--lv:3">スマレジの詳細な支払方法を取得することはできないため、スマレジで取り込んだ取引情報の支払方法はすべて「店頭支払」とする</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">A. Webhook受信データ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>契約ID</td><td>文字型</td><td>〇</td><td></td><td></td><td>スマレジの契約ID</td></tr>
+                <tr><td>イベント名</td><td>文字型</td><td>〇</td><td></td><td>pos:transactions</td><td>取引のイベント名固定 [pos:transactions]</td></tr>
+                <tr><td>アクション</td><td>文字型</td><td>〇</td><td></td><td>created</td><td>取引種別 created: 登録 edited: 更新 canceled: 取消 disposed: 打消取消<br> bulk-update: 一括更新 bulk-deleted: 一括削除</td></tr>
+                <tr><td>取引IDリスト</td><td>文字型</td><td>〇</td><td></td><td></td><td>スマレジの取引IDの配列</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">A. レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:0">{<br>    "contractId": "hogehogehoge",<br>    "event": "pos:transactions",<br>    "action": "created",<br>    "transactionHeadIds": [<br>        "1",<br>        "10",<br>        "12"<br>    ]<br>}</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">A. Webhook受信時に返すステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200　レスポンスデータは空を返す　https://developers.smaregi.dev/apidoc/common/#section/Webhook</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">B. 取引情報取得API リクエストパラメータ（★はカスタマイズ項目）</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>項目名</th><th>型</th><th>必須</th><th>最大文字数<br>または最大値</th><th>入力例</th><th>備考</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>契約ID</td><td>文字型</td><td>〇</td><td></td><td></td><td>スマレジの契約ID</td></tr>
+                <tr><td>取引ID</td><td>文字型</td><td>〇</td><td></td><td></td><td>情報取得する取引ID</td></tr>
+                <tr><td>取引明細情報フラグ</td><td>文字型</td><td>〇</td><td></td><td>all</td><td>allで固定。その他支払方法情報を付加するか(付加する場合はall, しない場合はnone)</td></tr>
+                <tr><td>その他支払い方法情報フラグ</td><td>文字型</td><td>〇</td><td></td><td>none</td><td>allで固定。その他支払方法情報を付加するか(付加する場合はall, しない場合はnone)</td></tr>
+                <tr><td>小計情報フラグ</td><td>文字型</td><td>〇</td><td></td><td>all</td><td>allで固定。その他支払方法情報を付加するか(付加する場合はall, しない場合はnone)</td></tr>
+                <tr><td>店舗情報フラグ</td><td>文字型</td><td>〇</td><td></td><td>all</td><td>allで固定。その他支払方法情報を付加するか(付加する場合はall, しない場合はnone)</td></tr>
+                <tr><td>会員情報フラグ</td><td>文字型</td><td>〇</td><td></td><td>all</td><td>allで固定。その他支払方法情報を付加するか(付加する場合はall, しない場合はnone)</td></tr>
+                <tr><td>スタッフ情報フラグ</td><td>文字型</td><td>〇</td><td></td><td>all</td><td>allで固定。その他支払方法情報を付加するか(付加する場合はall, しない場合はnone)</td></tr>
+                <tr><td>店舗情報フラグ</td><td>文字型</td><td>〇</td><td></td><td>all</td><td>allで固定。その他支払方法情報を付加するか(付加する場合はall, しない場合はnone)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">B. 取引情報取得API リクエストパラメータサンプル</h3>
+            <p class="doc-p" style="--lv:1">https://api.smaregi.dev/{contract_id}/pos/transactions/{transaction_id}?with_details=all&amp;with_deposit_others=all&amp;</p>
+            <p class="doc-p" style="--lv:1">with_discounts=all&amp;with_store=all&amp;with_customer=all&amp;with_store=all&amp;with_staff</p>
+            <p class="doc-p" style="--lv:1">※長いため改行しているが、本来は改行はなし</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">B. 取引情報取得API ステータスコード</h3>
+            <h3 class="doc-h doc-h-section" style="--lv:0">コード　説明</h3>
+            <p class="doc-p" style="--lv:0">200　正常取得</p>
+            <p class="doc-p" style="--lv:0">400　条件取得フラグに不整合が存在する</p>
+            <h3 class="doc-h doc-h-section" style="--lv:0">C. 取引情報取得API レスポンスデータ</h3>
+          </div>
+          <div class="item-table-wrap">
+            <table class="item-table">
+              <thead>
+                <tr><th>名前</th><th>型</th><th>説明</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>取引ID</td><td>文字型</td><td>取引毎に付与するID。</td></tr>
+                <tr><td>★ 店舗ID</td><td>文字型</td><td>店舗毎に付与するID。</td></tr>
+                <tr><td>★ 会員ID</td><td>文字型</td><td>会員毎に付与するID。数字10桁以内。非会員の取引もありうるので、必須項目ではない</td></tr>
+                <tr><td>★ 取引日時</td><td>文字型</td><td>取引日時。サーバーに送信された日時。販売日時は端末取引日時を参照。[YYYY-MM-DDThh:mm:ssTZD]</td></tr>
+                <tr><td>★ 取引区分</td><td>文字型</td><td>取引を識別する区分。 （1:通常、2:入金、3:出金、4:預かり金、 5:預かり金返金、6:ポイント加算、7:ポイント減算、8:ポイント失効、9:回数券、10:取置き、11:チップ、13:マイル加算、14:マイル減算、15:バリューカード入金、16:領収証）</td></tr>
+                <tr><td>取消区分</td><td>文字型</td><td>取引の取消を識別する区分。 (0:通常、1：取消）</td></tr>
+                <tr><td>★ 小計</td><td>文字型</td><td>取引明細の値引き後小計の合計。</td></tr>
+                <tr><td>★ 小計値引き</td><td>文字型</td><td>小計の値引き金額を設定。 単品割引率が設定された場合、その割合から値引き金額を設定。（切捨て）</td></tr>
+                <tr><td>★ 小計値引き/割引区分</td><td>文字型</td><td>小計値引き/割引時に指定された区分を設定。</td></tr>
+                <tr><td>★ ポイント値引き</td><td>文字型</td><td>使用ポイント * ポイント還元率。<br>※消費税含む</td></tr>
+                <tr><td>★ クーポン値引き</td><td>文字型</td><td>クーポン値引き：その取引で使用された各クーポンの値引き・割引額の合計値。</td></tr>
+                <tr><td>★ 合計</td><td>文字型</td><td>小計 - 小計値引き - ポイント値引き - クーポン値引き + 端数値引額 + 外税額 + 手数料 + 送料 - 免税額 を設定</td></tr>
+                <tr><td>★ 内税額</td><td>文字型</td><td>内税商品計 / 110 * 10。<br>※税率が10%の場合<br>※小数点以下は税の丸め方式で指定の通り<br>※内税商品の税額</td></tr>
+                <tr><td>付与ポイント</td><td>文字型</td><td>取引で付与されるポイント。 合計 * ポイント付与率</td></tr>
+                <tr><td>使用ポイント</td><td>文字型</td><td>取引で使用したポイント。</td></tr>
+                <tr><td>★ 販売員ID</td><td>文字型</td><td>販売員ID。（スタッフID）</td></tr>
+                <tr><td>★ メモ</td><td>文字型</td><td>入出金時のメモなどを設定。 1000文字以内。</td></tr>
+                <tr><td>★ 内税商品の一般品免税額</td><td>文字型</td><td>内税商品の一般品免税額。</td></tr>
+                <tr><td>★ 取消日時</td><td>文字型</td><td>取消したサーバー日時を設定。[YYYY-MM-DDThh:mm:ssTZD]</td></tr>
+                <tr><td>★ 更新日時</td><td>文字型</td><td>取引履歴の更新日時。作成時／修正時に日付が設定されます。[YYYY-MM-DDThh:mm:ssTZD]</td></tr>
+                <tr><td>打消区分</td><td>文字型</td><td>打消を識別する区分。(0：通常、1：打消元レコード、2：打消レコード)</td></tr>
+                <tr><td>★ 打消元取引ID</td><td>文字型</td><td>打消元取引ID、打消先取引ID。</td></tr>
+                <tr><td>★ 取引明細ID</td><td>文字型</td><td>取引明細ID (details内に子データの配列として取得)</td></tr>
+                <tr><td>★ 商品ID</td><td>文字型</td><td>商品ID：数字15桁以内 (details内に子データの配列として取得)</td></tr>
+                <tr><td>★ 商品コード</td><td>文字型</td><td>商品コード：半角英数記号64文字以内(2段バーコード利用時は最大64桁、それ以外は20桁) (details内に子データの配列として取得)</td></tr>
+                <tr><td>★ 商品名</td><td>文字型</td><td>商品名：85文字以内。 (details内に子データの配列として取得)</td></tr>
+                <tr><td>★ 販売単価</td><td>文字型</td><td>販売単価：販売時の単価を設定。デフォルトは商品単価。 (details内に子データの配列として取得)</td></tr>
+                <tr><td>★ 原価</td><td>文字型</td><td>原価：数字8桁以内(少数5桁まで)。未設定の場合0を設定。 (details内に子データの配列として取得)</td></tr>
+                <tr><td>★ 数量</td><td>文字型</td><td>数量：数値型。 (details内に子データの配列として取得)</td></tr>
+                <tr><td>★ 部門ID</td><td>文字型</td><td>部門ID：数字9桁以内。 (details内に子データの配列として取得)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-flow">
+            <h3 class="doc-h doc-h-section" style="--lv:0">レスポンスデータサンプル</h3>
+            <p class="doc-p" style="--lv:1">※ 右記URLを参照　https://www1.smaregi.dev/apidoc/#operation/getTransactionsTransactionId</p>
+          </div>
+          <section class="shape-block" id="sheet-6-shapes">
+            <h3 class="shape-title">図形・テキストボックス内テキスト（7件）</h3>
+            <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
+            <div class="item-table-wrap">
+              <table class="item-table shape-table">
+                <thead>
+                  <tr><th>位置</th><th>テキスト</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-shape-index="1" data-shape-ref="D37"><td class="shape-ref">D37</td><td>スマレジ</td></tr>
+                  <tr data-shape-index="2" data-shape-ref="D37"><td class="shape-ref">D37</td><td>ECCUBE</td></tr>
+                  <tr data-shape-index="3" data-shape-ref="D37"><td class="shape-ref">D37</td><td>A. ★スマレジ取引IDを送信</td></tr>
+                  <tr data-shape-index="4" data-shape-ref="D37"><td class="shape-ref">D37</td><td>B. ★スマレジ取引IDで取引詳細を要求</td></tr>
+                  <tr data-shape-index="5" data-shape-ref="D37"><td class="shape-ref">D37</td><td>C. ★スマレジ取引情報を返す</td></tr>
+                  <tr data-shape-index="6" data-shape-ref="D37"><td class="shape-ref">D37</td><td>取引完了</td></tr>
+                  <tr data-shape-index="7" data-shape-ref="D37"><td class="shape-ref">D37</td><td>スマレジ取引情報取得</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+</section>
+
+
+<!-- endpoint-supplement:start -->
+<section class="endpoint-supplement">
+  <div class="sheet-doc">
+    <hr>
+    <h1>実装差分追補</h1>
+    <p>この節は Controller の本番利用 route と既存の「利用者視点の入口」を突合し、利用者が画面操作・ファイル出力・外部API呼び出しとして到達する入口を追補したものである。Block内部描画や CORS 用 OPTIONS は含めない。</p>
+    <h2 id="endpoint-supplement-user-entry">利用者視点の入口</h2>
+    <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>サーバダイレクト印刷APIを実行する</td><td>`POST /api/order/prints/direct/{base_info_id}`</td><td>リクエスト内容を処理し、JSON等のレスポンスで結果を返す。</td></tr></tbody></table></div>
+  </div>
+      <!-- function-design-embed:start a05-04-a05-04_api_order_order_smaregi_receive -->
+      <section class="function-design-embed" id="function-design-a05-04-a05-04_api_order_order_smaregi_receive" data-source="functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md">
+        <header class="function-design-header">
+          <p class="function-design-source">Source:<br>functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md</p>
+          <h3>詳細設計書</h3>
+          <h4>A05-04 スマレジ受信処理 / API 受注管理 — スマレジ受信処理（ポイント履歴取得）</h4>
+        </header>
+        <div class="function-design-body">
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-概要">概要</h2>
+          <p>スマレジが送信する取引情報の通知を受け取り、対象会員のポイントとポイント履歴を更新するためのAPIである。pf-eccube3のHareruyaEcプラグインが提供するJSON APIで、通知の区分（通常・取消・打消）に応じて会員ポイントの加減算、ポイント履歴の登録または取消、店頭注文の出荷完了反映を行い、支店コードの明細は支店システムのスマレジ受信APIへ転送する。取消・打消の処理では取引IDからポイント履歴を取得して巻き戻す。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はHareruyaEcプラグインのスマレジ取引取込処理、フロントのルート登録（ControllerProvider）、ポイント履歴テーブル・会員（プレイヤー）・注文サブ・オプションマスタ・ポイント区分マスタを正とする。</p>
+          <p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-eccube3（HareruyaEcプラグイン）とする。DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>
+          <p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-本書で扱うこと">本書で扱うこと</h2>
+          <ul><li>スマレジ取引通知の受信と、取引区分（通常・取消・打消）の判定</li><li>会員ポイントの加減算とポイント履歴の登録・取消</li><li>取消・打消時の、取引IDによるポイント履歴の取得と巻き戻し</li><li>対象店舗の明細による店頭注文の出荷完了反映</li><li>支店コードの明細の、支店システムのスマレジ受信APIへの転送と更新件数の合算</li></ul>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-本書で扱わないこと">本書で扱わないこと</h2>
+          <p>以下は本書では仕様確定せず、実装または別機能の設計を正とする。</p>
+          <ul><li>スマレジ側の取引登録・通知送信そのもの（外部システムの仕様を正とする）</li><li>出荷完了反映後の付与ポイントのスマレジ連携（スマレジ連携サービスの設計を正とする）</li><li>支店システム側のスマレジ受信API本体（支店システムの設計を正とする）</li><li>ポイント履歴の閲覧画面（管理画面・フロントのポイント履歴の設計を正とする）</li></ul>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+          <p>挙動は現行（pf-eccube3）を正とし、永続化に関わる記述は移行先（ec-cube-enterprise）を正とする。</p>
+          <div class="table-wrap"><table><thead><tr><th>区分</th><th>現行（pf-eccube3）</th><th>移行先（ec-cube-enterprise）</th></tr></thead><tbody><tr><td>会員（プレイヤー）</td><td>dtb_player。スマレジ会員ID・保有ポイントを保持</td><td>dtb_player。スマレジ会員ID＝smaregi_id、保有ポイント＝point（ポイント残高）、顧客との関連＝customer_id。列名は移行先を正とする</td></tr><tr><td>ポイント履歴</td><td>dtb_point_history。ポイント増減・摘要・発生日・ポイント区分・取引IDを保持</td><td>dtb_point_history。ポイント増減＝point_change、摘要＝note、発生日＝issue_date、ポイント区分＝point_type_id、取引ID＝transaction_id。取消・打消はtransaction_idで特定</td></tr><tr><td>オプションマスタ</td><td>mtb_option</td><td>同一スキーマ（mtb_option）</td></tr><tr><td>ポイント区分マスタ</td><td>mtb_point_type</td><td>同一スキーマ（mtb_point_type。移行先のpoint_type_idはポイント属性IDの呼称）</td></tr><tr><td>注文サブ（出荷完了反映先）</td><td>dtb_order_sub。スマレジコード・出荷日・担当者・付与ポイント等を保持</td><td>ec-cube-enterpriseには注文サブ（dtb_order_sub）に対応するエンティティが見当たらない。出荷完了反映の永続化先はec-cube-enterprise実装で要確認とする</td></tr></tbody></table></div>
+          <p>ポイント加減算・取消・打消の取引ID基準の巻き戻しと、店舗コードによる支店転送の挙動は現行（pf-eccube3）を正とする。出荷完了反映の対象表が移行先で変わる場合があるため、永続化先はec-cube-enterprise実装で要確認とする。</p>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-用語">用語</h2>
+          <div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>取引情報</td><td>スマレジから送信される売上の取引データ。取引ヘッダと取引明細を含む。</td></tr><tr><td>取引区分</td><td>通知の種別。通常取引・取消・打消レコードを区別する。</td></tr><tr><td>会員（プレイヤー）</td><td>スマレジ会員IDで照合する晴れる屋会員。ポイントの加減算対象。</td></tr><tr><td>ポイント履歴</td><td>会員のポイント増減を記録する明細。取引IDを保持し、取消・打消の特定に用いる。</td></tr><tr><td>支店コード</td><td>商品コードの一部に含まれる店舗識別。自店舗以外は支店システムへ転送する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-利用者視点の入口">利用者視点の入口</h2>
+          <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>スマレジ取引通知の受信</td><td><code>POST /{_locale}/smaregi/transaction</code></td><td>取引情報を受け取り、会員ポイントとポイント履歴を更新し、対象注文を出荷完了に反映し、更新件数を返す。</td></tr></tbody></table></div>
+          <p>応答形式はJSON。呼び出し元はスマレジ（および支店システムへの転送経路）。フロントのルートは言語識別子<code>{_locale}</code>配下にマウントされる。</p>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-認証・認可">認証・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本APIは認証トークンを要求しない。フロントのファイアウォールは匿名アクセスを許可し、本パスにはログイン必須のアクセス制御を設定していない。</td></tr><tr><td>連携用ヘッダ</td><td>支店システムへの転送時に、受信したリクエストの<code>X_contract_id</code>・<code>X_access_token</code>ヘッダを転送先へ引き継ぐ。これらは本APIの呼び出し元認証ではなく、転送先のスマレジ受信APIに渡す資格情報として用いる。</td></tr><tr><td>認証失敗時</td><td>認証判定を行わないため、未認証でも処理を実行する。</td></tr><tr><td>認可</td><td>呼び出し元はスマレジおよび転送経路。利用者の資格情報による絞り込みは行わない。</td></tr></tbody></table></div>
+          <p>連携用ヘッダの値は本書に記載しない。</p>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-処理フロー">処理フロー</h2>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-スマレジ取引通知を取り込む-POST-locale-smaregi-transaction">スマレジ取引通知を取り込む（POST <code>/{_locale}/smaregi/transaction</code>）</h3>
+          <ol><li>リクエストボディの<code>params</code>をJSONとして解釈し、<code>data</code>配下のうち取引ヘッダと取引明細を抽出する。</li><li>オプションマスタからスマレジ店舗IDを取得し、3桁ゼロ埋めの店舗コードに整形する。</li><li>取引区分を判定する。</li></ol>
+          <ul><li>取消の場合は、会員ポイントを取消方向に補正し、取引IDに一致するポイント履歴を取得して削除する。</li><li>打消レコードの場合は、付与・利用ポイントの正負を反転したうえで取消と同様に補正し、対象履歴を削除する。</li><li>通常取引の場合は、会員ポイントを加減算し、付与・利用それぞれのポイント履歴を登録する。続いて取引明細の各行を処理し、商品コードの店舗コードが自店舗と一致する行は対象注文を出荷完了に反映する。一致しない行は支店分として記録する。</li></ul>
+          <ol><li>支店分の明細がある場合は、受信ヘッダの連携用ヘッダを引き継ぎ、支店システムのスマレジ受信APIへ明細を転送する。転送結果に更新件数が含まれる場合は合算し、含まれない場合は転送エラーをログに記録する。</li><li>取引ヘッダの更新件数を合算した値を、更新件数として応答に組み立てて返す（HTTP 200）。</li></ol>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-業務ルール・計算">業務ルール・計算</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>更新対象</td><td>リクエストで指定されたID・入力値に対応する業務データを対象にする。対象特定、入力不正、認証・認可の判定順序は処理フローとバリデーションの各節を正とする。</td></tr><tr><td>更新方法</td><td>入力値を対象データへ上書きまたは追加登録する。履歴登録や関連データ更新がある場合は入出力の副作用およびDBカラムの節を正とする。</td></tr><tr><td>計算処理</td><td>本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。ステータスやコメント等の更新は、実装で定義された遷移・存在確認・担当者判定に従う。</td></tr><tr><td>応答値</td><td>成功時は処理結果コードまたは更新後に取得した値を返す。レスポンス値は本API内で独自集計せず、保存結果または取得結果をJSON応答へ整形する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-入出力">入出力</h2>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-リクエスト">リクエスト</h3>
+          <div class="table-wrap"><table><thead><tr><th>パラメータ</th><th>位置</th><th>型</th><th>必須／任意</th><th>説明</th></tr></thead><tbody><tr><td><code>params</code></td><td>ボディ（フォーム値）</td><td>string</td><td>必須</td><td>JSON文字列。<code>data</code>配列に取引ヘッダ（<code>TransactionHead</code>）と取引明細（<code>TransactionDetail</code>）を含む。取引ヘッダは会員ID・付与ポイント・利用ポイント・取引ヘッダID・取消区分・打消区分等を持つ。</td></tr><tr><td><code>proc_name</code></td><td>ボディ（フォーム値）</td><td>string</td><td>任意</td><td>スマレジの処理名。支店システムへの転送時にそのまま引き継ぐ。</td></tr><tr><td><code>X_contract_id</code></td><td>ヘッダ</td><td>string</td><td>任意</td><td>支店転送時に転送先へ引き継ぐ契約ID。</td></tr><tr><td><code>X_access_token</code></td><td>ヘッダ</td><td>string</td><td>任意</td><td>支店転送時に転送先へ引き継ぐアクセストークン。</td></tr><tr><td><code>{_locale}</code></td><td>パス</td><td>string</td><td>必須</td><td>言語識別子。処理対象の絞り込みには用いない。</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-レスポンス-成功">レスポンス（成功）</h3>
+          <p>HTTP 200。</p>
+          <div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>result</code></td><td>array</td><td>更新結果の配列。要素はオブジェクト1件。</td></tr><tr><td><code>result[].TransactionHead</code></td><td>integer</td><td>更新件数。会員ポイント・ポイント履歴・出荷完了反映の処理件数と、支店転送の結果件数を合算した値。</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-レスポンス-失敗">レスポンス（失敗）</h3>
+          <div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>500</td><td><code>params</code>の解釈不可、取引ヘッダの不足、処理中の例外</td><td>標準例外ハンドラに委ねる</td></tr></tbody></table></div>
+          <p>入力検証・認証判定を明示的に行わないため、400・401は発生しない。会員が見つからない・対象履歴が無い・対象注文が無い場合はその処理の更新件数を0として継続し、200を返す。</p>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-サンプルレスポンス">サンプルレスポンス</h3>
+          <p>成功時の応答例（代表値）。</p>
+          <pre><code class="language-json">{
+            "result": [
+              {
+                "TransactionHead": 1
+              }
+            ]
+          }</code></pre>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-副作用">副作用</h3>
+          <p>会員（プレイヤー）の保有ポイントの更新。ポイント履歴の登録（通常取引）または削除（取消・打消）。対象注文の出荷完了反映（受注ステータス・出荷確定日・コミット日・注文サブの出荷日・担当者の更新、ポイント付与処理）。支店システムのスマレジ受信APIへの明細転送。これらはデータベースへ反映する。</p>
+          <p>応答はJSON応答整形を経て返す。<code>result</code>配列を持つ連想配列を返し、<code>Content-Type</code>に<code>application/json;charset=UTF-8</code>、キャッシュ抑止と<code>Access-Control-Allow-Origin: *</code>を明示する。</p>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-バリデーション">バリデーション</h2>
+          <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td><code>params</code></td><td>JSON文字列として解釈する。形式や必須項目の明示的な検証は行わず、解釈不可・取引ヘッダ不足時は処理中の例外として標準例外ハンドラに委ねる（HTTP 500相当）。</td></tr><tr><td>取引区分</td><td>取消区分・打消区分の値で処理経路を分岐する。いずれにも該当しない場合は通常取引として扱う。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-データ整合性">データ整合性</h2>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>更新の有無</td><td>本APIは参照だけでなく、会員ポイント・ポイント履歴・受注を更新する。</td></tr><tr><td>ポイントと履歴</td><td>通常取引では会員ポイントの加減算とポイント履歴の登録を同一処理内で行う。取消・打消では取引IDに一致するポイント履歴を取得して削除し、会員ポイントを逆方向へ補正する。会員または対象履歴が無い場合は更新しない。</td></tr><tr><td>出荷完了反映</td><td>自店舗の明細に対し、注文サブを商品コードで特定して出荷完了へ反映する。対象注文が無い場合は反映しない。</td></tr><tr><td>支店転送</td><td>自店舗以外の明細は支店システムへ転送し、結果件数を更新件数に合算する。転送に件数が含まれない場合はログに記録し、件数は合算しない。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-DBカラム">DBカラム</h2>
+          <p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+          <div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>会員（プレイヤー）（dtb_player）</td><td>スマレジ会員ID（smaregi_id）</td><td>取引ヘッダの会員IDで会員を特定する結合キー。</td></tr><tr><td>会員（プレイヤー）（dtb_player）</td><td>保有ポイント（point）</td><td>付与・利用・取消に応じて加減算する。</td></tr><tr><td>ポイント履歴テーブル（dtb_point_history）</td><td>ポイント増減（point_change）・摘要（note）・発生日（issue_date）・ポイント区分（point_type_id）・取引ID（transaction_id）</td><td>通常取引で登録、取消・打消で取引IDをキーに削除する。</td></tr><tr><td>オプションマスタ（mtb_option）</td><td>スマレジ店舗ID</td><td>自店舗の店舗コード判定に用いる。</td></tr><tr><td>ポイント区分マスタ（mtb_point_type）</td><td>購入区分</td><td>登録するポイント履歴の区分に用いる。</td></tr><tr><td>注文サブ（dtb_order_sub。ec-cube-enterprise 実装で要確認）</td><td>スマレジコード・出荷日・担当者・付与ポイント・連携エラー</td><td>出荷完了反映の対象特定と更新に用いる。移行先の対応表は要確認。</td></tr><tr><td>受注</td><td>受注ステータス・コミット日・出荷確定日</td><td>出荷完了への反映に用いる。</td></tr></tbody></table></div>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-DB操作">DB操作</h3>
+          <p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+          <div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>dtb_order_sub / dtb_player / dtb_point_history / mtb_option / mtb_point_type</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-権限・認可">権限・認可</h2>
+          <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>スマレジ受信処理</th></tr></thead><tbody><tr><td>任意のクライアント（未認証含む）</td><td>処理を実行できる。本APIは呼び出し元の認証・利用者状態による制御を行わない。</td></tr><tr><td>支店システムへの転送</td><td>受信した連携用ヘッダを引き継いで転送先のスマレジ受信APIを呼び出す。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-エラー処理">エラー処理</h2>
+          <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>params</code>の解釈不可・取引ヘッダ不足・処理中の例外</td><td>明示的な<code>try-catch</code>は持たず、標準例外ハンドラに委ねる（HTTP 500相当）。</td></tr><tr><td>会員が見つからない・対象履歴が無い・対象注文が無い</td><td>エラーとせず、その処理の更新件数を0として継続し、200を返す。</td></tr><tr><td>支店転送の結果に件数が含まれない</td><td>転送エラーとしてログに記録し、件数を合算しない。処理は継続する。</td></tr></tbody></table></div>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-ログ・監査">ログ・監査</h2>
+          <p>支店転送の結果に件数が含まれない場合に、転送エラーである旨と転送結果をログ出力する。</p>
+          <h3 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-ログに出してはいけないもの">ログに出してはいけないもの</h3>
+          <ul><li>連携用ヘッダ（契約ID・アクセストークン）の値</li><li>Cookie値・セッションIDの完全値</li></ul>
+          <hr>
+          <h2 id="function-design-a05-04-a05-04_api_order_order_smaregi_receive-排他制御・トランザクション">排他制御・トランザクション</h2>
+          <p>本APIは会員ポイント・ポイント履歴・受注を更新する。各処理の末尾で永続化を確定する。明示的な悲観ロック・楽観ロックの取得は行わない。同一取引の重複受信時の整合は、取消・打消が取引IDを基準にポイント履歴を特定して巻き戻す前提に依存する。</p>
+        </div>
+      </section>
+      <!-- function-design-embed:end a05-04-a05-04_api_order_order_smaregi_receive -->
+</section>
+<!-- endpoint-supplement:end -->
+
+    </main>
+  </div>
+  <script>
+    const sheetLinks = document.querySelectorAll(".artifact-map a[data-sheet]");
+    sheetLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const target = link.dataset.sheet;
+        sheetLinks.forEach((item) => {
+          if (item === link) {
+            item.setAttribute("aria-current", "page");
+          } else {
+            item.removeAttribute("aria-current");
+          }
+        });
+        document.querySelectorAll(".sheet-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === target);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

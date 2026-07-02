@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>デッキ管理 — 直近の大会管理（編集） - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#フロント挙動">フロント挙動</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#編集画面を表示する-GET-admin-latest-event-deck-list">編集画面を表示する（GET `admin_latest_event_deck_list`）</a>
+<a class="lv3" href="#一括更新する-POST-admin-latest-event-deck-list-update">一括更新する（POST `admin_latest_event_deck_list_update`）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv3" href="#入力項目">入力項目</a>
+<a class="lv3" href="#エッジケース">エッジケース</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#API-バッチ結果">API/バッチ結果</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#画面遷移">画面遷移</a>
+<a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#試行制限">試行制限</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#セッション">セッション</a>
+<a class="lv2" href="#Cookie">Cookie</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a>
+<a class="lv2" href="#調査補助-実装パスのみ">調査補助（実装パスのみ）</a>
+<a class="lv3" href="#HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/m15-11_admin_deck_deck_latest_event.md</p>
+        <h1>デッキ管理 — 直近の大会管理（編集）</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>HareruyaEc プラグインが管理画面の「デッキ管理」配下に提供する、<code>mtb_latest_event_deck</code> に保持する「直近の大会」スロット（複数行）のイベント開催日時・フォーマット・イベント名・参加人数を、一覧形式で編集し一括保存する機能である。初期データのマイグレーションでは固定件数の空行が投入される。画面から行の追加・削除は行わない。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。カスタマイズ区分は「現行踏襲」。画面・挙動は pf-eccube3 配下 HareruyaEc のソース、プラグイン <code>config.yml</code> の <code>HareruyaEc.const.deck</code> および <code>HareruyaEc.const.format</code>、マイグレーション <code>Version20180709123206</code> を確認値とし、DB関連（テーブル・列・型・制約・関連）は ec-cube-enterprise の実装を正とする。</p>
+<p>対象はブラウザ経由の管理画面に限定する。コントローラの処理名単位の解剖は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<ul><li>DB関連は移行先 ec-cube-enterprise を正とする。直近の大会スロット <code>mtb_latest_event_deck</code> は現行 pf-eccube3 と移行先 ec-cube-enterprise で同一スキーマである。主キー <code>id</code>、<code>event_date</code>（NULL 可日時）、<code>format_id</code>（フォーマットマスタ <code>mtb_format</code> 参照、NULL 可）、<code>event_name_jp</code>／<code>event_name_en</code>（varchar 255、NULL 可）、<code>participants</code>（integer、NULL 可）のテーブル名・列名・型が一致する。</li><li>既定値に差がある。現行 pf-eccube3 はスキーマ上 <code>event_date</code> にゼロ日付、<code>participants</code> に 0 のカラム既定を持つが、移行先 ec-cube-enterprise は両列とも NULL 可で当該既定を持たない。運用値はいずれもアプリが設定する。</li><li>画面・挙動は現行（pf-eccube3）の確認値。移行先 ec-cube-enterprise では直近の大会管理がコア（管理画面「デッキ管理」配下）に存在する。現行はプラグイン提供、移行先はコア提供である。</li><li>現行と移行先で上記既定値以外のスキーマ差は確認されていない。差が生じた場合のみ本節に追記する。</li></ul>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>デッキ管理メニューから「直近の大会管理」を開く</td><td><code>GET /{admin_route}/latest_event_deck</code></td><td>登録済みスロットごとに入力表が縦に並び、既存値がフォームに載る。</td></tr><tr><td>「直近の大会設定」ボタンで送信</td><td><code>POST /{admin_route}/latest_event_deck/update</code></td><td>検証が通れば全スロットが更新され、成功メッセージ表示のうえ同一画面の GET に戻る。</td></tr><tr><td>各表の「消去」ボタン</td><td>（クライアントのみ。該当する表内の入力値を空にする。サーバ送信しない）</td><td>同一表内の入力欄をクリアする。送信前に他欄へ入力があれば HTML5 必須が付くため、空のまま送信するとブラウザの検証で止まる場合がある。</td></tr></tbody></table></div>
+<hr>
+<h2 id="フロント挙動">フロント挙動</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>ページタイトルは「直近の大会管理」。ブロックタイトル・サブタイトルは未設定（空）。フォーム名は <code>search_form</code>。CSRF は <code>form._token</code> のみ明示。各スロットは 5 行の表（見出しセルにラベル、データセルにウィジェット）。表右列に「消去」ボタン。ページ上下に同一文言の送信ボタン「直近の大会設定」。</td></tr><tr><td>JS 挙動</td><td><code>latest-event-deck.js</code>: ID が <code>latest_event_deck_</code> で始まる入力に対し、いずれかに文字があれば同一表内の該当入力に <code>required</code> を付け、すべて空なら <code>required</code> を外す（keydown 等および日時ピッカーの <code>dp.change</code> のたびに再計算）。「消去」は同一表内の上記 ID 付き要素の値を空文字にする。日時欄（<code>latest_event_deck_eventDate_*</code>）に moment（<code>ja</code> ロケール、<code>dow: 1</code>）連携の <code>bootstrap-datetimepicker</code> を付与。形式は <code>YYYY-MM-DD HH:mm</code>、今日ボタンあり、<code>useCurrent: false</code>。<code>required.js</code> は <code>required</code> 属性付き要素のラベルへ赤色の「※必須」装飾を付ける。</td></tr><tr><td>CSS・レイアウト</td><td>管理共通に加え <code>bootstrap-datetimepicker.min.css</code>。表クラス <code>table with-border marT20</code>、ボタンエリアは <code>btn_area</code> と Bootstrap グリッド。</td></tr><tr><td>モーダル・ポップアップ</td><td>本機能専用のモーダルはない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="編集画面を表示する-GET-admin-latest-event-deck-list">編集画面を表示する（GET <code>admin_latest_event_deck_list</code>）</h3>
+<ol><li>管理画面の共通制約を通過する。</li><li>フォーム型名 <code>latest_event_deck</code> でフォームビルダを生成する。ビルド時にリポジトリから全件を読み、行 ID ごとにフィールド名 <code>eventDate_{id}</code>・<code>format_{id}</code>・<code>eventNameJp_{id}</code>・<code>eventNameEn_{id}</code>・<code>participants_{id}</code> を追加する。ソース上の読み出しは <code>findAll([], ['id' =&gt; 'ASC'])</code> と記述されているが、<code>mtb_latest_event_deck</code> 用リポジトリはこのメソッドを上書きしておらず、Doctrine 標準の親実装との関係は実行環境のクラス解決に依存する。意図は主キー昇順の全行取得である。</li><li>同じリポジトリ経路で取得したコレクションを Twig に <code>eventList</code> として渡し、テンプレートで各行を表として描画する。</li></ol>
+<h3 id="一括更新する-POST-admin-latest-event-deck-list-update">一括更新する（POST <code>admin_latest_event_deck_list_update</code>）</h3>
+<ol><li>管理画面の共通制約を通過する。</li><li>同一フォーム型でリクエストをバインドする。</li><li>共通トレイトの処理で CSRF を検証する。検証に失敗した場合はアクセス拒否（HTTP 403）となる。</li><li>フォーム全体が無効な場合、フラッシュに <code>admin.register.failed</code> を積み、<code>GET admin_latest_event_deck_list</code> へリダイレクトする（フィールドエラーを再表示する処理はない）。</li><li>フォームが有効な場合、リポジトリから再度全件を <code>id</code> 昇順で取得する。</li><li>取得した各行について、同名サフィックスのフォーム項目から値を読み取り、行のセッターで上書きする。すべて <code>persist</code> のうえ <code>flush</code> する。</li><li>フラッシュに <code>admin.register.complete</code> を積み、<code>GET admin_latest_event_deck_list</code> へリダイレクトする。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<p>本機能では件数集計や画面用の合算を行わない。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<p>本機能では数値の合算や順位計算などの業務計算を行わない。入力の検証・保存のみである。</p>
+<h3 id="入力項目">入力項目</h3>
+<p>各スロット（<code>mtb_latest_event_deck</code> の 1 行）について同じラベルの項目が繰り返される。以下は 1 スロット分の論理項目である。フォーム上の項目キーは <code>{論理名}_{行の id}</code>。</p>
+<div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>イベント開催日</td><td>任意（同一表内の他欄に入力があると JS により HTML5 必須になる）</td><td>日時形式は <code>HareruyaEc.const.format.datetime</code>（既定 <code>yyyy-MM-dd HH:mm</code>）。Symfony <code>datetime</code> 型、ウィジェットは単一行テキスト</td><td>当該行の <code>event_date</code> 列の現行値（無ければ未入力相当）</td><td><code>mtb_latest_event_deck.event_date</code>。キー <code>eventDate_{id}</code>。未入力は Symfony 上も任意。</td></tr><tr><td>フォーマット</td><td>任意（同上）</td><td>選択肢はフォーマットマスタ（<code>mtb_format</code> 相当）の一覧。プレースホルダは翻訳キー <code>form.deck.format.empty_value</code></td><td>当該行の <code>format_id</code> に紐づくマスタ（無ければ未選択）</td><td><code>mtb_latest_event_deck.format_id</code>（関連エンティティ経由）。キー <code>format_{id}</code>。</td></tr><tr><td>イベント名（日）</td><td>任意（同上）</td><td>255 文字。Symfony <code>Length</code> max および <code>maxlength</code> 属性は <code>HareruyaEc.const.deck.length.name</code>（既定 255）</td><td>当該行の <code>event_name_jp</code></td><td><code>mtb_latest_event_deck.event_name_jp</code>。キー <code>eventNameJp_{id}</code>。</td></tr><tr><td>イベント名（英）</td><td>任意（同上）</td><td>同上</td><td>当該行の <code>event_name_en</code></td><td><code>mtb_latest_event_deck.event_name_en</code>。キー <code>eventNameEn_{id}</code>。</td></tr><tr><td>イベント参加人数</td><td>任意（同上）</td><td>整数。0 以上 <code>HareruyaEc.const.deck.max.number</code>（既定 99999999）以下。HTML の <code>min</code>/<code>max</code> 属性も同じ</td><td>当該行の <code>participants</code></td><td><code>mtb_latest_event_deck.participants</code>。キー <code>participants_{id}</code>。</td></tr></tbody></table></div>
+<hr>
+<h3 id="エッジケース">エッジケース</h3>
+<div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>データベース上にスロット行が 0 件</td><td>フォームは CSRF トークンのみ相当になり、表ブロックは描画されない。送信しても更新対象のループが回らず、<code>flush</code> のみで実質変化はない想定である。</td></tr><tr><td>検証エラー（文字長超過・参加人数範囲外など）</td><td><code>admin.register.failed</code> のみ表示し、入力値は再表示されない（同 GET では DB の旧値が再度載る）。</td></tr><tr><td>一部の表だけ入力した状態で送信</td><td>値の入った表では HTML5 <code>required</code> が付くため、ブラウザの制約で送信が止まる場合がある。サーバ側の Symfony は原則すべて任意のため、空欄と値ありが混在した送信が届いた場合は、空欄に対応する列は NULL に近い形で永続化される。</td></tr><tr><td>複数管理者が同時に保存</td><td>最後に成功した <code>flush</code> が全行を上書きする。楽観的排他はない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>管理画面の再表示</td><td>保存後は常に <code>GET</code> で全件読み直すため、当画面で表示する値と DB の内容は一致する。</td></tr><tr><td>店舗側「直近の大会」表示</td><td>リポジトリの表示用抽出は「イベント日時が非 NULL」「日本語イベント名が空文字でない」「英語イベント名が空文字でない」のすべてを満たす行のみである。管理画面では空のスロットも一覧に出るため、店舗側に出る行集合と一致しない。</td></tr><tr><td>行数</td><td>マイグレーションでは 5 件の初期行を想定した投入がある。アプリ上は「全件」を編集対象とし、行数固定の検証はしない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="API-バッチ結果">API/バッチ結果</h2>
+<p>本機能では API 呼び出し・バッチ実行を扱わない。</p>
+<hr>
+<h2 id="入出力">入出力</h2>
+<div class="table-wrap"><table><thead><tr><th>種類</th><th>内容</th></tr></thead><tbody><tr><td>入力</td><td>POST ボディのフォーム項目（行 ID ごとの5項目）と CSRF。</td></tr><tr><td>成功時出力</td><td>HTTP 302 で <code>GET /{admin_route}/latest_event_deck</code> へ。フラッシュで登録完了メッセージ。</td></tr><tr><td>失敗時出力</td><td>検証失敗時も 302 で同 URL へ。フラッシュで登録失敗メッセージ。CSRF 失敗時は 403 応答。</td></tr><tr><td>副作用</td><td><code>mtb_latest_event_deck</code> の全行が、送信時点のフォーム内容で上書き保存される。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td><code>mtb_latest_event_deck</code></td><td><code>id</code></td><td>主キー。フォーム項目名のサフィックスに使う。</td></tr><tr><td><code>mtb_latest_event_deck</code></td><td><code>event_date</code></td><td>nullable datetime。スキーマ上の既定はゼロ日付相当の記述があるが、運用値はアプリが設定する。</td></tr><tr><td><code>mtb_latest_event_deck</code></td><td><code>format_id</code></td><td>外部キー。フォーマットマスタ。nullable。</td></tr><tr><td><code>mtb_latest_event_deck</code></td><td><code>event_name_jp</code></td><td>varchar 255。nullable。</td></tr><tr><td><code>mtb_latest_event_deck</code></td><td><code>event_name_en</code></td><td>varchar 255。nullable。</td></tr><tr><td><code>mtb_latest_event_deck</code></td><td><code>participants</code></td><td>integer。nullable。スキーマコメント上の既定 0。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>永続化の正は ec-cube-enterprise（テーブル名・操作は ec-cube-enterprise を正典）。当ドメインは承認ワークフローを介さず persist/flush で直接確定する（承認ワークフローは在庫機能固有）。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>登録/更新</td><td>mtb_latest_event_deck</td><td>当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>イベント名（日・英）</td><td>Symfony <code>Length</code> で最大 255。設定 <code>deck.length.name</code> に追従。</td></tr><tr><td>イベント参加人数</td><td><code>Range</code> で 0 以上 <code>deck.max.number</code> 以下。</td></tr><tr><td>CSRF</td><td>フォーム名 <code>latest_event_deck</code> のトークン。検証後にトークンを更新する実装である。</td></tr><tr><td>イベント開催日・フォーマット</td><td>Symfony 上は必須指定なし。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>直近の大会管理画面の表示・更新</th></tr></thead><tbody><tr><td>管理画面の認証を通過した運用者（当プラグインの管理ルートへ到達できる者）</td><td>本機能の GET・POST を利用できる。本ルート専用の追加ロール制約はサービスプロバイダにない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="画面遷移">画面遷移</h2>
+<div class="table-wrap"><table><thead><tr><th>条件</th><th>遷移先</th></tr></thead><tbody><tr><td>メニューから開く</td><td><code>GET /{admin_route}/latest_event_deck</code> で同一画面。</td></tr><tr><td>送信成功</td><td><code>POST</code> 処理後、<code>GET /{admin_route}/latest_event_deck</code> へリダイレクト。</td></tr><tr><td>送信失敗（フォーム無効）</td><td>同上。</td></tr><tr><td>CSRF 不正</td><td>HTTP 403（共通の例外処理）。</td></tr></tbody></table></div>
+<h3 id="遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</h3>
+<p>検索条件やセッションに一覧状態を保存する処理はない。フラッシュメッセージのみ次の GET で表示される。</p>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>CSRF トークン不正</td><td>アクセス拒否（HTTP 403）。</td></tr><tr><td>フォーム検証エラー</td><td><code>admin.register.failed</code> をフラッシュし、一覧 URL へリダイレクト。フィールド別メッセージは当画面では表示しない。</td></tr></tbody></table></div>
+<hr>
+<h2 id="試行制限">試行制限</h2>
+<p>本機能では試行制限を扱わない。</p>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<div class="table-wrap"><table><thead><tr><th>タイミング</th><th>記録内容</th></tr></thead><tbody><tr><td>本画面のコントローラ単体</td><td>専用の業務ログ出力は実装されていない。</td></tr></tbody></table></div>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>パスワード</li><li>なりすまし対策トークン</li><li>Cookie 値</li><li>セッション ID の完全値</li><li>Remember Me トークンの原値</li></ul>
+<hr>
+<h2 id="セッション">セッション</h2>
+<p>本機能の GET・POST では検索条件やフォーム内容をセッションに保存しない。管理画面のセッション維持そのものはコアの仕組みに依存する。</p>
+<hr>
+<h2 id="Cookie">Cookie</h2>
+<p>本機能特有の Cookie 操作はない。セッション Cookie は管理画面の共通動作に従う。</p>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>データベースの楽観ロック・悲観ロックは用いない。更新処理は単一リクエスト内で <code>flush</code> により一括コミットされる。同時更新は最後勝ちである。</p>
+<hr>
+<h2 id="調査補助-実装パスのみ">調査補助（実装パスのみ）</h2>
+<p>grep やコード検索のためのファイルパスを示す。ふるまいの定義は本文を正とする。</p>
+<ul><li>ルート: <code>app/Plugin/HareruyaEc/ServiceProvider/Admin/LatestEventDeckServiceProvider.php</code></li><li>コントローラ: <code>app/Plugin/HareruyaEc/Controller/Admin/LatestEventDeckController.php</code></li><li>フォーム型: <code>app/Plugin/HareruyaEc/Form/Type/Admin/Deck/LatestEventDeckType.php</code></li><li>Twig: <code>app/Plugin/HareruyaEc/Resource/template/admin/Deck/latest_event_deck.twig</code></li><li>クライアント JS: <code>app/Plugin/HareruyaEc/Resource/template/admin/assets/js/latest-event-deck.js</code></li><li>エンティティマッピング: <code>app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.MtbLatestEventDeck.dcm.yml</code></li><li>リポジトリ（店舗側抽出）: <code>app/Plugin/HareruyaEc/Repository/MtbLatestEventDeckRepository.php</code></li></ul>
+<h3 id="HTTPルート名とパス-コード探索用・旧入口節より退避">HTTPルート名とパス（コード探索用・旧入口節より退避）</h3>
+<ul><li><code>admin_latest_event_deck_list</code> … <code>GET</code> … <code>/{admin_route}/latest_event_deck</code>（全スロット分の編集フォームを表示する。）</li><li><code>admin_latest_event_deck_list_update</code> … <code>POST</code> … <code>/{admin_route}/latest_event_deck/update</code>（送信内容で全スロット行を上書き更新し、フラッシュメッセージのうえ一覧 URL へリダイレクトする。）</li></ul>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>

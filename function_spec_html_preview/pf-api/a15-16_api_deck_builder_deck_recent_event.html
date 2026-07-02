@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API デッキビルダー — 直近大会情報取得 - 機能仕様書</title>
+  <style>
+:root {
+  --bg: #ffffff;
+  --panel: #fffdf8;
+  --text: #2b2a26;
+  --muted: #7a756a;
+  --line: #d6cdbd;
+  --line-soft: #ebe2d3;
+  --band: #f3ede1;
+  --clay: #c25a37;
+  --clay-soft: #f4e6dd;
+  --olive: #5f7048;
+  --olive-soft: #e9ecdf;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic", Meiryo, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.page {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 28px 28px 64px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding-right: 12px;
+  border-right: 1px solid var(--line-soft);
+}
+.sidebar-title {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.toc a {
+  display: block;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--line-soft);
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover { color: var(--clay); border-left-color: var(--clay); }
+.toc .lv3 { padding-left: 24px; font-size: 13px; }
+.doc-content { min-width: 0; }
+header.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.crumb {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+h1 { margin: 0; font-size: 28px; line-height: 1.3; }
+h2 {
+  margin: 34px 0 12px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+}
+h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
+h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+p { margin: 9px 0; }
+a { color: var(--clay); }
+code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--band);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 90%;
+}
+pre {
+  overflow-x: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+pre code { padding: 0; background: transparent; }
+hr { margin: 26px 0; border: 0; border-top: 1px solid var(--line); }
+ul, ol { margin: 9px 0; padding-left: 26px; }
+li { margin: 3px 0; }
+.table-wrap {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--line-soft);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: var(--band);
+  font-weight: 700;
+  white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: #fffaf0; }
+.screen-item-table table { min-width: 1120px; }
+.section-row td {
+  background: var(--olive-soft);
+  color: var(--olive);
+  font-weight: 700;
+}
+.tabbed-note {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-left: 3px solid var(--olive);
+  background: var(--panel);
+}
+details {
+  margin: 34px 0 12px;
+}
+details > summary {
+  cursor: pointer;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--clay);
+  font-size: 21px;
+  font-weight: 700;
+  list-style: revert;
+}
+details[open] > summary { margin-bottom: 12px; }
+footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .page { display: block; padding: 20px 16px 48px; }
+  .sidebar {
+    position: static;
+    max-height: none;
+    margin-bottom: 24px;
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 16px;
+  }
+  h1 { font-size: 23px; }
+}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <p class="sidebar-title">On this page</p>
+      <nav class="toc"><a class="lv2" href="#概要">概要</a>
+<a class="lv2" href="#本書で扱うこと">本書で扱うこと</a>
+<a class="lv2" href="#本書で扱わないこと">本書で扱わないこと</a>
+<a class="lv2" href="#リニューアル移行時の扱い">リニューアル移行時の扱い</a>
+<a class="lv2" href="#利用者視点の入口">利用者視点の入口</a>
+<a class="lv2" href="#認証・認可">認証・認可</a>
+<a class="lv2" href="#処理フロー">処理フロー</a>
+<a class="lv3" href="#直近大会情報を取得する-GET-recent-event">直近大会情報を取得する（GET `/recent_event`）</a>
+<a class="lv2" href="#集計条件">集計条件</a>
+<a class="lv2" href="#入出力">入出力</a>
+<a class="lv3" href="#リクエスト">リクエスト</a>
+<a class="lv3" href="#レスポンス-成功">レスポンス（成功）</a>
+<a class="lv3" href="#レスポンス-失敗">レスポンス（失敗）</a>
+<a class="lv3" href="#サンプルレスポンス">サンプルレスポンス</a>
+<a class="lv3" href="#副作用">副作用</a>
+<a class="lv2" href="#バリデーション">バリデーション</a>
+<a class="lv2" href="#業務ルール・計算">業務ルール・計算</a>
+<a class="lv2" href="#データ整合性">データ整合性</a>
+<a class="lv2" href="#DBカラム">DBカラム</a>
+<a class="lv3" href="#DB操作">DB操作</a>
+<a class="lv2" href="#権限・認可">権限・認可</a>
+<a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#ログ・監査">ログ・監査</a>
+<a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
+<a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
+    </aside>
+    <main class="doc-content">
+      <header class="page-header">
+        <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-api/a15-16_api_deck_builder_deck_recent_event.md</p>
+        <h1>API デッキビルダー — 直近大会情報取得</h1>
+      </header>
+      <h2 id="概要">概要</h2>
+<p>デッキビルダーアプリが、直近に開催された大会の一覧情報を取得するためのAPIである。deck-api（デッキビルダー用のAPIアプリケーション）が提供するJSON APIで、最新大会デッキのマスタから、大会日・フォーマット・大会名・参加者数を一覧で返す。</p>
+<p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はdeck-apiの直近大会取得処理、ルート定義（<code>config/routes.yaml</code>）、最新大会デッキを扱うリポジトリを正とする。</p>
+<p>本機能のカスタマイズ区分は現行踏襲とする。挙動はdeck-api（デッキビルダー用APIアプリケーション）の実装を確認値とし、DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseの実装を正とする。</p>
+<p>対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない。本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。「利用者視点の入口」にHTTPメソッドとパスパターンを書く。</p>
+<hr>
+<h2 id="本書で扱うこと">本書で扱うこと</h2>
+<ul><li>直近大会の一覧（大会日・フォーマット・大会名・参加者数）の取得</li><li>大会日・大会名が有効な行のみを返すこと</li></ul>
+<hr>
+<h2 id="本書で扱わないこと">本書で扱わないこと</h2>
+<p>以下は本書では仕様確定せず、実装または別APIの設計を正とする。</p>
+<ul><li>大会に紐づく個々のデッキ内容・順位の参照（デッキ関連APIの設計を正とする）</li><li>大会情報そのものの登録・更新（最新大会デッキマスタの生成バッチ・管理機能の設計を正とする）</li><li>メタゲームの集計（メタゲーム情報参照APIの設計を正とする）</li></ul>
+<hr>
+<h2 id="リニューアル移行時の扱い">リニューアル移行時の扱い</h2>
+<p>デッキビルダー関連テーブルは、現行（deck-api）と移行先（ec-cube-enterprise）で同一スキーマであり、テーブル名も一致する。本機能の参照に関わる主な対応は次のとおり。</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>現行（deck-api）</th><th>移行先（ec-cube-enterprise）</th><th>差分・注意</th></tr></thead><tbody><tr><td>最新大会デッキマスタ</td><td><code>mtb_latest_event_deck</code>。大会日（<code>event_date</code>）・大会名（<code>event_name_jp</code>・<code>event_name_en</code>）・参加人数（<code>participants</code>）</td><td>同一テーブル・列名</td><td>大会日が設定済みかつ大会名が空でない行のみを対象とする。</td></tr><tr><td>フォーマットマスタ</td><td><code>mtb_format</code>。識別子（<code>id</code>）・名称（<code>name_jp</code>・<code>name_en</code>）</td><td>同一テーブル・列名</td><td>結合してフォーマット名を取得する。</td></tr></tbody></table></div>
+<p>現行と移行先でスキーマに差はなく、移行時に追加・改廃する列は本書では確認していない。</p>
+<div class="table-wrap"><table><thead><tr><th>用語</th><th>説明</th></tr></thead><tbody><tr><td>直近大会</td><td>最新大会デッキのマスタに記録された大会。大会日・大会名が設定されているものを対象とする。</td></tr><tr><td>フォーマット</td><td>大会の構築ルール区分。識別子と名称（日本語・英語）を返す。</td></tr><tr><td>参加者数</td><td>大会の参加者の人数。</td></tr></tbody></table></div>
+<hr>
+<h2 id="利用者視点の入口">利用者視点の入口</h2>
+<div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>直近大会情報取得</td><td><code>GET /recent_event</code></td><td>最新大会デッキのマスタから、大会日・大会名が有効な大会の一覧をコード200のJSONで返す。</td></tr></tbody></table></div>
+<p>応答形式はJSON。呼び出し元はデッキビルダーアプリ。</p>
+<hr>
+<h2 id="認証・認可">認証・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>認証方式</td><td>本APIは認証を行わない。<code>jwt-token</code>ヘッダの検証・プレイヤーの特定をいずれも行わず、誰でも呼び出せる参照系である。</td></tr><tr><td>認証失敗時</td><td>認証処理を持たないため、認証起因のHTTP 401は返さない。</td></tr><tr><td>認可</td><td>公開向けの一覧であり、利用者状態によらず同一の結果を返す。呼び出し可能なクライアントはデッキビルダーアプリ。</td></tr></tbody></table></div>
+<p>トークン原値・署名シークレットは本書に記載しない。</p>
+<hr>
+<h2 id="処理フロー">処理フロー</h2>
+<h3 id="直近大会情報を取得する-GET-recent-event">直近大会情報を取得する（GET <code>/recent_event</code>）</h3>
+<ol><li>リクエストパラメータを受け取らない。</li><li>最新大会デッキのマスタから、大会日が設定済みかつ大会名（日本語・英語）が空でない行を抽出し、識別子の昇順で並べる。</li><li>大会日・フォーマット識別子・フォーマット名（日本語・英語）・大会名（日本語・英語）・参加者数を一覧（<code>events</code>）にまとめ、コード200のJSONで返す。</li></ol>
+<hr>
+<h2 id="集計条件">集計条件</h2>
+<div class="table-wrap"><table><thead><tr><th>指標</th><th>集計の要点</th></tr></thead><tbody><tr><td>対象データ</td><td>最新大会デッキのマスタの行を対象とする。大会日が設定済みで、大会名（日本語・英語）がいずれも空でない行に限る。</td></tr><tr><td>結合</td><td>フォーマットマスタと結合し、フォーマット名を取得する。</td></tr><tr><td>並び順</td><td>マスタの識別子の昇順で並べる。</td></tr><tr><td>件数制限</td><td>上限件数の指定はなく、条件に合致する全行を返す。</td></tr><tr><td>キャッシュ</td><td>一覧は結果キャッシュする。</td></tr></tbody></table></div>
+<hr>
+<h2 id="入出力">入出力</h2>
+<h3 id="リクエスト">リクエスト</h3>
+<p>本APIはリクエストパラメータを持たない。認証用の<code>jwt-token</code>ヘッダも必要としない。</p>
+<h3 id="レスポンス-成功">レスポンス（成功）</h3>
+<p>HTTP 200。応答本体はラッパオブジェクトで、JSONキーはsnake_caseで組み立てる。</p>
+<div class="table-wrap"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>code</code></td><td>integer</td><td>処理結果コード。成功時は200。</td></tr><tr><td><code>events</code></td><td>array</td><td>直近大会の一覧。識別子の昇順。</td></tr><tr><td><code>events[].event_date</code></td><td>string</td><td>大会日。日時文字列（ISO8601形式）。</td></tr><tr><td><code>events[].format_id</code></td><td>integer</td><td>フォーマット識別子。</td></tr><tr><td><code>events[].format_name_jp</code></td><td>string</td><td>フォーマットの日本語名。</td></tr><tr><td><code>events[].format_name_en</code></td><td>string</td><td>フォーマットの英語名。</td></tr><tr><td><code>events[].event_name_jp</code></td><td>string</td><td>大会の日本語名。</td></tr><tr><td><code>events[].event_name_en</code></td><td>string</td><td>大会の英語名。</td></tr><tr><td><code>events[].participants</code></td><td>integer</td><td>参加者数。</td></tr></tbody></table></div>
+<h3 id="レスポンス-失敗">レスポンス（失敗）</h3>
+<div class="table-wrap"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>500</td><td>一覧取得処理中の例外</td><td>共通例外処理に委ねる</td></tr></tbody></table></div>
+<p>条件に合致する大会が無い場合も失敗とはせず、<code>events</code>を空配列としたコード200のJSONを返す。</p>
+<h3 id="サンプルレスポンス">サンプルレスポンス</h3>
+<p>成功時の応答例（実装確認値に基づく代表値）。</p>
+<pre><code class="language-json">{
+  "code": 200,
+  "events": [
+    {
+      "event_date": "2026-05-30T00:00:00+09:00",
+      "format_id": 1,
+      "format_name_jp": "スタンダード",
+      "format_name_en": "Standard",
+      "event_name_jp": "サンプル選手権",
+      "event_name_en": "Sample Championship",
+      "participants": 128
+    }
+  ]
+}</code></pre>
+<h3 id="副作用">副作用</h3>
+<p>無し（参照のみ）。一覧は結果キャッシュするが、業務データの更新は行わない。</p>
+<p>応答はJSON応答整形を経て返す。本APIは連想配列を組み立てて返すため、JSONキーは実装で記述したsnake_case（<code>code</code>・<code>events</code>・<code>event_date</code>・<code>format_name_jp</code>等）となる。日時はISO8601文字列とし、<code>serialize_null</code>は有効とする。</p>
+<hr>
+<h2 id="バリデーション">バリデーション</h2>
+<p>本APIは入力パラメータを持たないため、入力検証を行わない。</p>
+<hr>
+<h2 id="業務ルール・計算">業務ルール・計算</h2>
+<ul><li>検索・一覧・取得条件はリクエストパラメータ、ログイン状態、公開状態、店舗・支店条件、既存リポジトリの絞り込み順序を正とする。</li><li>件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。</li><li>金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。</li><li>条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。</li></ul>
+<h2 id="データ整合性">データ整合性</h2>
+<div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>参照時点</td><td>呼び出し時点の最新大会デッキのマスタの内容を返す。本APIはデータを更新しない。結果キャッシュの有効期間内は同一結果を返す場合がある。</td></tr><tr><td>一覧と詳細</td><td>本APIは大会の概要一覧のみを返し、大会に紐づくデッキ詳細は別APIで参照する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="DBカラム">DBカラム</h2>
+<p>機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。</p>
+<div class="table-wrap"><table><thead><tr><th>テーブル</th><th>列</th><th>メモ</th></tr></thead><tbody><tr><td>最新大会デッキマスタ（<code>mtb_latest_event_deck</code>）</td><td>識別子（<code>id</code>）・大会日（<code>event_date</code>）・大会名（<code>event_name_jp</code>・<code>event_name_en</code>）・参加者数（<code>participants</code>）</td><td>抽出条件・並び順・応答内容に用いる。</td></tr><tr><td>フォーマットマスタ（<code>mtb_format</code>）</td><td>識別子（<code>id</code>）・名称（<code>name_jp</code>・<code>name_en</code>）</td><td>結合してフォーマット名を取得する。</td></tr></tbody></table></div>
+<h3 id="DB操作">DB操作</h3>
+<p>本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。</p>
+<div class="table-wrap"><table><thead><tr><th>操作種別</th><th>対象テーブル</th><th>契機・条件</th></tr></thead><tbody><tr><td>検索</td><td>mtb_format / mtb_latest_event_deck</td><td>検索条件に合致するレコードを抽出する。</td></tr></tbody></table></div>
+<hr>
+<h2 id="権限・認可">権限・認可</h2>
+<div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>直近大会情報取得</th></tr></thead><tbody><tr><td>任意のクライアント</td><td>認証なしで一覧を取得できる。公開向けの一覧であり利用者によらず同一結果となる。</td></tr></tbody></table></div>
+<hr>
+<h2 id="エラー処理">エラー処理</h2>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>該当大会なし</td><td>エラーとせず、<code>events</code>を空配列としたコード200を返す。</td></tr><tr><td>取得処理中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="ログ・監査">ログ・監査</h2>
+<h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
+<ul><li>JWTトークンの原値</li><li>署名シークレット（<code>auth_magic</code>）</li><li>パスワード</li><li>Cookie値・セッションIDの完全値</li></ul>
+<hr>
+<h2 id="排他制御・トランザクション">排他制御・トランザクション</h2>
+<p>本APIは参照のみであり、楽観ロック・悲観ロックの対象は持たない。</p>
+      <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
+    </main>
+  </div>
+</body>
+</html>
