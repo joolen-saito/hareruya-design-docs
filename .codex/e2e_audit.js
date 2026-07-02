@@ -82,10 +82,26 @@ const ITEMS = [
   { id: 'b01_03_batch_data_stock_warning', designMd: 'functions/ec-cube-enterprise/b01-03_batch_data_stock_warning.md', designHtml: 'function_spec_html_preview/ec-cube-enterprise/b01-03_batch_data_stock_warning.html', itCases: 'integration_test/b01_03_batch_data_stock_warning_it_cases.md', repo: 'ec-cube-enterprise', module: 'b01', type: 'batch' },
 ]
 
+// Ph2（フェーズ2以降で対応）機能はE2E対象外（Excel設計書の図形注記が根拠）。
+const EXCLUDED_STEMS = new Set([
+  'm03_43_admin_product_product_simple_low_price_csv_export',
+  'm04_06_admin_stock_stock_shortage_csv_export',
+  'm04_07_admin_stock_stock_warning_csv_export',
+  'm06_13_admin_store_purchase_purchase_store_product_cancel_csv_export',
+  'm08_11_admin_customer_customer_analysis_tag_master',
+  'm08_15_admin_customer_customer_analysis_tag_csv_export',
+  'm08_16_admin_customer_customer_analysis_tag_csv_import',
+  'a06_14_api_store_purchase_otc_buy_order_partial_cancel_sync',
+  'b01_02_batch_data_stock_shortage',
+  'b01_03_batch_data_stock_warning',
+  'f02_05_front_global_nav_global_nav_notification',
+])
+const RUN_ITEMS = ITEMS.filter((i) => !EXCLUDED_STEMS.has(i && i.id))
+
 phase('CoverageAudit')
-log(`網羅監査 ${ITEMS.length}機能: ` + ITEMS.map((i) => i.id).join(', '))
+log(`網羅監査 ${RUN_ITEMS.length}機能: ` + RUN_ITEMS.map((i) => i.id).join(', '))
 const out = await pipeline(
-  ITEMS,
+  RUN_ITEMS,
   (d) => agent(prompt(d), { label: `audit:${d.id}`, phase: 'CoverageAudit', schema: AUDIT_SCHEMA }),
 )
 return out.filter(Boolean)
