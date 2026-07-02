@@ -44,19 +44,20 @@ async function loginToAdmin(page: Page) {
 }
 
 /**
- * 想定ヘッダ（1行目の論理キー列）。設計書「CSV 列（論理キー）一覧」
- * (functions/pf-eccube3/m14-05_admin_card_card_csv_import.md:173-213) の順序定義由来の上位オラクル。
- * 実装の雛形DL(admin_card_csv_template)から取得すると実装出力にテストが追従し、
- * ヘッダ列・必須列・除外列の仕様乖離を吸収してしまうため、設計書の固定値を用いる（オラクル独立性）。
- * ヘッダ完全一致照合(判定順序#3)で実装の除外列差(付帯表4#4)があれば、本値との不一致として表面化する。
+ * 実装ヘッダ（1行目の論理キー列）。ec-cube-enterprise の実装を正とする（ユーザ指示: 実装=正）。
+ * 出典: CardCsv::getCsvHeader() のキー順（全35キー）から、ヘッダ照合の除外キー
+ *   getNotRequiredCsvHeaderKeys()=[card_detail_id, keyword_ability] を除いた 33 キー。
+ * ヘッダ完全一致照合(判定順序#3)を通過させ、後続の #4/#5/#6 に到達させるために実ヘッダを用いる。
+ * 旧設計(pf-eccube3)ヘッダとの差（列名 promotion→promotion_type / foil_flg→foil / 追加列 等）は
+ * e2e/seed/DIVERGENCES.md に記録済み（付帯表4相当）。
  */
 const CANONICAL_HEADER = [
   "name_jp", "name_en", "arena_format_name_jp", "arena_format_name_en",
   "text_jp", "text_en", "mana_cost", "cmc", "power", "toughness", "loyalty",
-  "color", "cardtype", "subtype", "specialtype", "keyword_ability", "format",
-  "set", "rarity", "illustrator", "layout", "flavor_jp", "flavor_en", "card_no",
-  "promotion", "foil_flg", "promotion_flg", "image_jp", "image_en",
-  "card_detail_id", "back_card_detail_id", "color_sequence", "color_identity",
+  "cardtype", "color", "color_identity", "subtype", "specialtype", "format",
+  "restriction_format", "ban_format", "set", "rarity", "illustrator", "layout",
+  "flavor_jp", "flavor_en", "card_no", "promotion_type", "foil", "frame",
+  "image_jp", "image_en", "back_card_detail_id", "color_sequence",
 ].join(",");
 
 /** メモリ上のCSVをアップロードする（一時ファイル不要）。 */
@@ -104,9 +105,9 @@ test.describe(
       await loginToAdmin(page);
       const target = new CardCardCsvImportPage(page);
       await target.goto();
-      // 設計書「CSV 列（論理キー）一覧」の必須論理キー(:213 name_en,cmc,rarity,layout,promotion_flg,image_en)が
-      // フォーマット表に並ぶこと（上位オラクル）。実装の必須集合差(付帯表4#3)は本キー欠落として表面化する。
-      for (const key of ["name_en", "cmc", "rarity", "layout", "promotion_flg", "image_en"]) {
+      // 実装(CardCsv::getRequiredCsvHeaderKeys)の必須論理キー name_en,rarity,layout,image_en が
+      // フォーマット表に並ぶこと（実装=正）。旧設計の cmc/promotion_flg 併記との差は DIVERGENCES.md に記録。
+      for (const key of ["name_en", "rarity", "layout", "image_en"]) {
         await expect(target.formatTable, `論理キー ${key} がフォーマット表に表示される`).toContainText(key);
       }
       await expect(target.requiredBadge.first()).toBeVisible(); // 必須キーに必須バッジ
@@ -144,8 +145,15 @@ test.describe(
       const target = new CardCardCsvImportPage(page);
       await target.goto();
       await target.submitWithoutFile();
-      await expect(target.errorFlash).toBeVisible(); // 判定順序#1 ファイル必須
+      // 実装: import_file は FileType required:true（HTML5 required 属性）。未選択では
+      // クライアント側の制約検証でPOSTが抑止され、サーバflash(.alert-danger)は出ず同画面に留まる。
+      // よって判定順序#1(ファイル必須)は「取込されない＝POST不発・同画面滞留・input が valueMissing」で観測する。
       await expect(page).toHaveURL(UPLOAD_RE); // 取込されずアップロード画面に留まる
+      await expect(target.uploadForm).toBeVisible();
+      const valueMissing = await target.fileInput.evaluate(
+        (el) => (el as HTMLInputElement).validity.valueMissing
+      );
+      expect(valueMissing, "ファイル未選択で required 制約違反(valueMissing)").toBe(true);
     });
 
     test("E2E-M14-05-030 ヘッダ不一致CSV→フォーマット不一致メッセージで滞留", async ({ page }) => {
