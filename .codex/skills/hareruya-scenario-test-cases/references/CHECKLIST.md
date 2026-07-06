@@ -26,3 +26,9 @@
 - No output contains `設計どおり`, `設計書に記載のとおり`, or `UI標準`.
 - Existing scenario files are not overwritten unless `--overwrite` was used.
 - `01_シナリオ一覧.md` and `02_トレーサビリティ.md` contain every generated scenario ID.
+- `05_設計書カバレッジ.md` exists and classifies every `functions/**/*.md` feature-No as covered / area-covered-feature-uncovered / out-of-scope:* / excluded-ph2 / source-backed-uncovered.
+- `05_設計書カバレッジ.md` lists the `source-backed-uncovered`（要判定）features explicitly so genuine gaps are visible, not hidden behind a self-consistent dictionary.
+- `03_カバレッジ表.md` has `非EC-CUBE作業` and `番号重複警告` columns.
+- Non-EC-CUBE patterns (`メーラーでのみ` / `EC-CUBEを使わない` / `Thunderbirdでのみ`, or name contains メーラー) do NOT auto-assign EC-CUBE screens/function-Nos; their observation points are mail/phone/external-app (no EC-CUBE update).
+- Business-specific edge cases from `PATTERN_EDGE_CASES` take priority over generic ones for barcode re-labeling, zero-stock counting, SPLINKS refunds, and reservations.
+- Duplicate flow-pattern numbers within the same source file are flagged via `番号重複警告`, and traceability uses the source-qualified flow key.

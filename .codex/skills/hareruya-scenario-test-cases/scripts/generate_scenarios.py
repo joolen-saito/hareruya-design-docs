@@ -40,11 +40,16 @@ EXPECTED_FUNCTIONS: dict[str, list[tuple[str, tuple[str, ...]]]] = {
         ("", ("M05-01", "M05-08", "M05-11", "M05-14", "M05-27", "A05-03", "A05-04", "B05-05")),
     ],
     "店頭買取": [
+        # 顧客のフロント査定申込（otcbuy/tc/entry, 06/07 R22 受付・R26）。作業概要「受付」で発火し、
+        # 仕入作業/手動入庫パターンには付与しない（要判定 F08-* の解消）。
+        ("受付", ("F08-01", "F08-02", "F08-03")),
         ("仕入", ("M06-01", "M06-10", "M06-11", "M06-12", "M04-21")),
         ("手動入庫", ("M06-01", "M06-12", "M04-21", "M04-01")),
         ("", ("M06-01", "M06-03", "M06-04", "M06-05", "M06-06", "M06-07", "A06-02", "A06-03", "A06-05", "A06-13", "A06-14", "A06-15", "A06-16", "B06-01", "O01-01")),
     ],
     "イベント管理": [
+        # イベント受付～実施のポイント付与ステップ（08 R180 ポイントグランター）。要判定 A17-03 の解消。
+        ("ポイント付与", ("A17-03",)),
         ("受付", ("M13-06", "M13-07", "M13-10", "M13-11", "M13-12", "F07-01", "F07-02", "F07-03", "F07-04", "B13-01", "B13-02")),
         ("デッキ", ("M13-08", "F06-16", "F06-17", "M15-01", "M15-05")),
         ("バナー", ("M13-14", "M13-15")),
@@ -60,11 +65,18 @@ EXPECTED_FUNCTIONS: dict[str, list[tuple[str, tuple[str, ...]]]] = {
     ],
     "価格管理": [
         ("セール", ("M03-05", "M03-31", "M03-34", "M09-02")),
+        # セールバナー差し替え（11 R51「セールバナー差し替え対応」＝人手工程）はトップ回転バナー M16-01/02。
+        # Claude Codeレビューで、従来 M03-01 誤割当・M16-01/02 未トレースだったと指摘（要判定→covered の是正）。
+        ("バナー", ("M16-01", "M16-02")),
         ("分析", ("M12-01", "M12-02", "M12-03", "M12-04", "M12-07", "M12-08", "M12-09", "M12-10")),
         ("", ("M03-01", "M03-05", "M03-23", "M03-24", "M03-30", "M03-31", "M03-32", "M03-33", "M03-36")),
     ],
     "在庫管理": [
-        ("リコメンド", ("M04-16", "M04-01", "M04-08", "M04-09", "M04-24", "M04-25", "M04-26", "M04-27", "M04-29")),
+        # B02-07 週間在庫履歴更新＝在庫リコメンドの起点データ（12/13 在庫リコメンド対応・週1回）。
+        # 在庫リコメンド対応シナリオが R197「リコメンドが登録されているか確認」で実際に観測するためTRACE-IN。
+        # B02-01(販売数集計)/B02-03(入庫数集計)は、産物のCSV列が参照されるだけでシナリオが集計値を観測しないため
+        # Claude Codeレビューの指摘に基づき out-of-scope へ降格（台帳寄せ回避）。B02-07 のみ残す。
+        ("リコメンド", ("M04-16", "M04-01", "M04-08", "M04-09", "M04-24", "M04-25", "M04-26", "M04-27", "M04-29", "B02-07")),
         ("棚卸", ("M04-31", "M04-01", "M04-17", "M04-18")),
         ("欠品", ("M04-17", "M04-18", "M04-06", "M04-07", "M04-20")),
         ("貼替", ("M04-30",)),
@@ -82,6 +94,9 @@ EXPECTED_FUNCTIONS: dict[str, list[tuple[str, tuple[str, ...]]]] = {
         ("", ("M06-12", "M07-06", "M03-01", "M03-05", "M03-24", "M04-01", "M04-21")),
     ],
     "通販受注管理": [
+        # お客様EC購入フローはフロント導線（トップ→商品一覧/詳細→カート→注文完了）。
+        # 従来は汎用 F04 のみに割り当てて F01/F03 が未トレースだった（codexレビュー指摘）。
+        ("EC購入", ("F01-01", "F03-01", "F03-02", "F03-04", "F04-01", "F04-02", "F04-03", "F04-04", "M05-01", "M05-02")),
         ("返金", ("M05-01", "M05-11", "M05-15", "F06-19")),
         ("予約", ("M05-01", "M05-18", "M05-21", "M05-22", "M05-23", "M05-24", "M05-26")),
         ("入金", ("M05-01", "M05-11", "B05-08", "B05-09")),
@@ -107,6 +122,54 @@ EXPECTED_HTML: dict[str, tuple[str, ...]] = {
     "通販受注管理": ("0203", "0304", "0405", "0505"),
     "デッキ登録": ("0212", "0515"),
 }
+
+# 業務フロー準拠のシステムテストとして「対象外」と誠実に判定できる機能領域。
+# 未トレース=網羅漏れではないことを 05_設計書カバレッジ.md で説明するための分類辞書。
+# キーは prefix（例 "M10"）または完全ID（例 "A17-03"）。値は (カテゴリ, 理由)。
+# ここに無く、かつどのシナリオからも参照されない機能は
+# `source-backed-uncovered`（＝要判定の真の穴候補）として可視化される。
+OUT_OF_SCOPE_FEATURES: dict[str, tuple[str, str]] = {
+    "M01": ("platform-base", "ログイン・二要素認証基盤。全業務の共通前提で単独業務フローなし"),
+    "M02": ("platform-base", "管理画面ホーム/ダッシュボード。共通前提"),
+    "M10": ("platform-base", "店舗・基本設定マスタ（配送/税/決済/メール/CSV等）。設定作業で単独業務フローなし"),
+    "M11": ("platform-base", "システム設定・権限・ログイン履歴・マスタ管理。管理基盤"),
+    "A02": ("front-display", "商品ポップアップ等フロントAPI。表示系は機能テスト層で担保"),
+    "A08": ("front-display", "TOPバナー取得API。フロント表示"),
+    "A14": ("front-display", "カード検索フロントAPI。フロント表示"),
+    "A16": ("front-display", "TOPバナーAPI。フロント表示"),
+    "F02": ("front-display", "グローバルナビ共通部品。フロント表示（一部Ph2）"),
+    "A01": ("integration-tested", "スマレジ在庫連携API。連携単体は integration_test 層で担保"),
+    "B08": ("platform-base", "会員・ポイント定常バッチ。顧客戦略の基盤処理で単独業務フローなし"),
+    "B17": ("platform-base", "最新記事一覧生成バッチ。表示基盤"),
+    # --- 要判定23件の disposition（Exploreエビデンス＋Claude Codeレビューに基づく） ---
+    # A17系: A17-03(ポイントグランター)は イベント管理 でtrace-in済み。残りは対象外。
+    "A17-01": ("front-display", "フロント記事表示API（記事本体はWordPress）。表示系は機能テスト層で担保"),
+    "A17-02": ("front-display", "フロント関連記事表示API。表示系は機能テスト層で担保"),
+    "A17-04": ("integration-tested", "外部連携（任意門）向け商品詳細API。連携層で担保・人手工程なし"),
+    "A17-05": ("integration-tested", "買取アプリ（MTGバイヤー）向け商品検索API。連携層で担保・人手工程なし"),
+    # B02系: B02-07(週間在庫履歴→在庫リコメンド)のみ trace-in（traced判定が優先）。
+    # 残り(販売数/入庫数集計・入荷通知整理・部門未設定監視・お気に入りセール通知・在庫初期化)は集計/保守バッチ。
+    # 産物のCSV/集計値は業務で参照されるが、バッチ自体の人手操作工程はなく機能/バッチテスト層で担保。
+    "B02": ("platform-base", "商品管理の集計/保守バッチ（販売数・入庫数集計、入荷通知整理、部門未設定監視、お気に入りセール通知、在庫初期化）。産物のCSV/集計値は業務で参照されるが、バッチ自体の人手操作工程はなく機能/バッチテスト層で担保"),
+    # M16系: M16-01/02(トップ回転バナー)は 価格管理「セールバナー差し替え」で trace-in済み。残りはマスタ設定で単独業務フローなし。
+    "M16": ("platform-base", "管理画面データマスタ（祝日/MTGマスタ/割引率/買取価格・減額率対応表）。閲覧・設定基盤で単独業務フローなし"),
+}
+
+# パターン全体がEC-CUBEを使わない非システム作業であることを示す「強い」マーカー。
+# 検出時のみ機能No自動割当を抑止し、観測点をメール/電話/外部アプリ側
+# （EC-CUBE更新なし）として生成する（codexレビュー指摘#2）。
+# 注意: 「手動で対応」「外部アプリ」等の弱い語は、EC-CUBE中心フローの一工程として
+# 出てくるため誤検出の原因になる。ここには含めず、パターン全体を非EC-CUBEと断じられる
+# 表現（EC-CUBEを使わない/メーラーでのみ/Thunderbirdでのみ）に限定する。
+NON_ECCUBE_MARKERS = (
+    "EC-CUBEを使わない",
+    "メーラーでのみ",
+    "Thunderbirdでのみ",
+)
+
+# パターン名単位の業務固有エッジケース。業務単位の BUSINESS_EDGE_CASES より優先し、
+# 汎用ケース偏重（codexレビュー指摘#4）を是正する。キーはパターン名の部分一致。
+PATTERN_EDGE_CASES: dict[str, list["EdgeCase"]] = {}
 
 
 @dataclass(frozen=True)
@@ -136,6 +199,8 @@ class Scenario:
     html_docs: list[DesignDoc]
     coverage: dict[str, bool]
     edge_cases: list["EdgeCase"]
+    non_eccube: bool = False
+    dup_number: bool = False
 
 
 @dataclass(frozen=True)
@@ -231,7 +296,20 @@ def related_docs(flow_text: str, pattern: Pattern, docs: list[DesignDoc], max_do
     return selected, html_selected
 
 
+def is_non_eccube_pattern(pattern: Pattern) -> bool:
+    """メール/電話/外部アプリ等、EC-CUBE画面を割り当てるべきでない非システム作業か。"""
+    # パターン名が「メーラーでのみ」等を含む、または本文に強いマーカーがある場合のみ。
+    if "メーラー" in pattern.name:
+        return True
+    haystack = pattern.name + " " + " ".join(pattern.rows)
+    return any(marker in haystack for marker in NON_ECCUBE_MARKERS)
+
+
 def expected_features(business_title: str, pattern: Pattern) -> list[str]:
+    # 非EC-CUBE作業（メーラーのみ等）はEC-CUBE機能を自動割当せず、参照のみ M05-01 に限定する
+    # （codexレビュー指摘#2：キーワード類似でEC-CUBE画面を誤割当しない）。
+    if is_non_eccube_pattern(pattern):
+        return ["M05-01"] if any(m in (business_title) for m in ("通販", "受注")) else []
     rules = EXPECTED_FUNCTIONS.get(business_title, [])
     selected: list[str] = []
     haystack = pattern.name + " " + " ".join(pattern.rows)
@@ -261,7 +339,11 @@ def related_docs_with_dictionary(
 ) -> tuple[list[DesignDoc], list[DesignDoc]]:
     by_feature = feature_index(docs)
     expected = [by_feature[f] for f in expected_features(business_title, pattern) if f in by_feature]
-    ranked, html_selected = related_docs(flow_text, pattern, docs, max_docs)
+    # 非EC-CUBE作業はキーワード類似でEC-CUBE画面を拾わない。参照用の expected のみを採用する。
+    if is_non_eccube_pattern(pattern):
+        ranked, html_selected = [], []
+    else:
+        ranked, html_selected = related_docs(flow_text, pattern, docs, max_docs)
     selected: list[DesignDoc] = []
     for doc in expected + ranked:
         # Ph2機能はキーワードスコアで拾われた ranked 経由でも混入しないよう除外する。
@@ -406,10 +488,37 @@ def is_branch_row(row: str, pattern_name: str) -> bool:
     return not any(word in pattern_name for word in BRANCH_KEYWORDS)
 
 
+# 業務フロー図の判断ノード/継続断片で、正常系ステップとして意味を持たない作業概要。
+# 例: 「キャンペーン対象」「有無」「次へ」は分岐/継続の見出しであり操作ではない
+# （codexレビュー中程度指摘：正常系に意味不明な行が残る）。
+STRUCTURAL_CONCEPTS = {"有無", "次へ", "連絡", "分岐", "キャンペーン対象", "キャンペーン対象 有無"}
+
+
+def row_concept(row: str) -> str:
+    value = re.sub(r"^-?\s*R\d+:\s*", "", row).strip()
+    value = re.sub(r"^\d+(?:-\d+)?\s*", "", value).strip()
+    value = value.replace("｜", " ")
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def is_structural_row(row: str) -> bool:
+    concept = row_concept(row)
+    if not concept:
+        return True
+    if concept in STRUCTURAL_CONCEPTS:
+        return True
+    # 「〜有無」「〜分岐」のみの判断ノード（作業内容を伴わない短い見出し）
+    return bool(re.fullmatch(r".{0,10}(有無|分岐)", concept))
+
+
 def normal_flow_rows(pattern: Pattern) -> list[str]:
-    rows = [row for row in pattern.rows if not is_branch_row(row, pattern.name)]
+    rows = [
+        row
+        for row in pattern.rows
+        if not is_branch_row(row, pattern.name) and not is_structural_row(row)
+    ]
     if not rows:
-        rows = pattern.rows or [pattern.name]
+        rows = [row for row in pattern.rows if not is_structural_row(row)] or pattern.rows or [pattern.name]
     return rows
 
 
@@ -417,16 +526,71 @@ def branch_flow_rows(pattern: Pattern) -> list[str]:
     return [row for row in pattern.rows if is_branch_row(row, pattern.name)]
 
 
-def step_rows(business_title: str, pattern: Pattern, docs: list[DesignDoc]) -> list[tuple[str, str, str, str]]:
+NON_ECCUBE_SCREEN = "非EC-CUBE作業（メール/電話/Thunderbird・外部アプリ／EC-CUBE参照のみ）"
+NON_ECCUBE_EXPECT = "メール/電話/外部アプリ側で対応が記録され、EC-CUBEの受注・在庫は更新されない（更新が要る場合は別業務フローへ）"
+
+
+def triggered_keyword_features(business_title: str, pattern: Pattern) -> list[tuple[str, str]]:
+    """パターンで実際に発火したキーワードと機能Noの (keyword, feature) 一覧。
+    キーワードが業務フロー本文（作業概要/パターン名）に実在するもののみ返す。"""
+    haystack = pattern.name + " " + " ".join(pattern.rows)
+    pairs: list[tuple[str, str]] = []
+    for keyword, features in EXPECTED_FUNCTIONS.get(business_title, []):
+        if keyword and keyword in haystack:
+            for f in features:
+                pairs.append((keyword, f.upper()))
+    return pairs
+
+
+def assign_step_docs(business_title: str, pattern: Pattern, docs: list[DesignDoc]) -> list[DesignDoc | None]:
+    """各正常系ステップ行に設計書を割り当てる。位置ベースではなく、キーワードで発火した
+    機能Noを、そのキーワードを含む作業概要行に束ね直す（codex/Claude Codeレビュー指摘：
+    機能Noが無関係な行にピン留めされる問題の是正）。残りの行は未使用docを位置順で埋める。"""
     rows = normal_flow_rows(pattern)
-    result: list[tuple[str, str, str, str]] = []
+    if not docs:
+        return [None] * len(rows)
+    by_feature = {d.feature_no.upper(): d for d in docs}
+    kw_feats = triggered_keyword_features(business_title, pattern)
+    result: list[DesignDoc | None] = [None] * len(rows)
+    used: set = set()
+    # 1st pass: キーワード発火機能を、その語を含む行へ束ねる
+    for i, row in enumerate(rows):
+        concept = row_concept(row)
+        for keyword, feature in kw_feats:
+            if keyword in concept and feature in by_feature and feature not in EXCLUDED_FEATURE_IDS:
+                doc = by_feature[feature]
+                if doc.path not in used:
+                    result[i] = doc
+                    used.add(doc.path)
+                    break
+    # 2nd pass: 残り行を未使用doc→全docの位置順で埋める（全docが必ずどこかに出るように）
+    fill = [d for d in docs if d.path not in used] + [d for d in docs if d.path in used]
+    fi = 0
+    for i in range(len(rows)):
+        if result[i] is None:
+            result[i] = fill[min(fi, len(fill) - 1)]
+            fi += 1
+    return result
+
+
+def step_rows(business_title: str, pattern: Pattern, docs: list[DesignDoc]) -> list[tuple[str, str, str, str, str]]:
+    rows = normal_flow_rows(pattern)
+    result: list[tuple[str, str, str, str, str]] = []
     main_actor = actor_meta(business_title)[0]
+    non_eccube = is_non_eccube_pattern(pattern)
+    step_docs = assign_step_docs(business_title, pattern, docs)
     for idx, row in enumerate(rows, 1):
-        screen = docs[min(idx - 1, len(docs) - 1)].title if docs else "業務フロー該当画面"
         actor = infer_actor(row, main_actor)
         action = business_action_from_row(row, pattern.name)
-        expect = expected_from_operation(action)
-        result.append((actor, action, screen, expect))
+        doc = step_docs[idx - 1]
+        feature = doc.feature_no if doc else "-"
+        if non_eccube:
+            screen = NON_ECCUBE_SCREEN
+            expect = NON_ECCUBE_EXPECT
+        else:
+            screen = doc.title if doc else "業務フロー該当画面"
+            expect = expected_from_operation(action)
+        result.append((actor, action, screen, feature, expect))
     return result
 
 
@@ -607,10 +771,15 @@ def concrete_confirmation(expect: str, seed: dict[str, str]) -> str:
 
 def render_execution_steps(s: Scenario, seed: dict[str, str]) -> str:
     rows = []
-    for idx, (actor, action, screen, expect) in enumerate(step_rows(s.business_title, s.pattern, s.docs), 1):
+    for idx, (actor, action, screen, feature, expect) in enumerate(step_rows(s.business_title, s.pattern, s.docs), 1):
         target = primary_target(seed)
-        operation = f"{screen}を開き、{target} を検索して「{action}」を実行する"
-        rows.append(f"| {idx} | {actor} | {operation} | {target} | {concrete_confirmation(expect, seed)} |")
+        if s.non_eccube:
+            operation = f"メール/電話/外部アプリ（Thunderbird等）で {target} の顧客に「{action}」を実施する（EC-CUBEは参照のみ）"
+            confirmation = expect
+        else:
+            operation = f"{screen}を開き、{target} を検索して「{action}」を実行する"
+            confirmation = concrete_confirmation(expect, seed)
+        rows.append(f"| {idx} | {actor} | {operation} | {target} | {confirmation} |")
     return "\n".join(rows)
 
 
@@ -641,8 +810,7 @@ def render_scenario(s: Scenario, repo: Path) -> str:
     if not trace_rows:
         trace_rows.append("  | UNRESOLVED_FUNCTION_SPEC | - | - | - |")
     step_lines = []
-    for idx, (actor, action, screen, expect) in enumerate(step_rows(s.business_title, s.pattern, s.docs), 1):
-        feature = s.docs[min(idx - 1, len(s.docs) - 1)].feature_no if s.docs else "-"
+    for idx, (actor, action, screen, feature, expect) in enumerate(step_rows(s.business_title, s.pattern, s.docs), 1):
         step_lines.append(f"| {idx} | {actor} | {action} | {screen}（{feature}） | {expect} |")
     alt_lines = render_edge_case_rows(s.edge_cases)
     coverage_lines = "\n".join(
@@ -657,13 +825,25 @@ def render_scenario(s: Scenario, repo: Path) -> str:
         f"| {len(s.edge_cases)} | {html_escape_br(case.condition for case in s.edge_cases[:4])} | "
         f"{html_escape_br(case.observation for case in s.edge_cases[:4])} |"
     )
+    non_eccube_note = (
+        "\n- **非EC-CUBE作業**: この業務はメール/電話/外部アプリ中心で、EC-CUBE画面の更新を伴わない"
+        "（観測点はメーラー/外部アプリ側の対応記録。EC-CUBE更新が要る場合は別業務フローで実施）。"
+        if s.non_eccube
+        else ""
+    )
+    dup_note = (
+        f"\n- **番号重複注意**: 出典 `{s.flow_path}` 内でパターン番号 {s.pattern.number} が別業務と重複している。"
+        "トレースは業務フローキー（出典＋番号＋作業概要）で識別する。"
+        if s.dup_number
+        else ""
+    )
     return f"""{GENERATED_MARKER}
 # {s.sid} {s.title}
 
 ## 概要
 - **目的**: {s.pattern.name}を、関連画面・外部システムを横断して業務完了状態まで確認する。
 - **分類**: 正常系 / 代替系 / 異常系
-- **優先度**: {priority}
+- **優先度**: {priority}{non_eccube_note}{dup_note}
 - **業務トリガー**: {s.pattern.name}が必要になったとき。
 - **トレース元要件**:
   - 業務フロー番号: {s.business_title} / パターン{s.pattern.number}
@@ -872,6 +1052,30 @@ BUSINESS_EDGE_CASES: dict[str, list[EdgeCase]] = {
     ],
 }
 
+# パターン名部分一致で優先適用する業務固有エッジケース（codexレビュー指摘#4）。
+PATTERN_EDGE_CASES.update({
+    "バーコード": [
+        EdgeCase("E", "旧バーコードと新バーコードが混在した商品をスキャンする", "旧バーコードでは対象商品を特定できず、貼替後は新バーコードで在庫特定できる状態にする", "スキャン結果、対象商品特定、在庫紐づけ"),
+        EdgeCase("E", "貼替対象の店舗または対象期間が指定と異なる", "対象外店舗/期間の在庫を更新せず、対象範囲を確認できる状態にする", "対象店舗、対象期間、更新対象件数"),
+        EdgeCase("E", "貼替後のバーコードでスキャンできない/重複発行される", "貼替を完了扱いにせず、再発行または重複を検知できる状態にする", "バーコード発行結果、スキャン可否、重複有無"),
+    ],
+    "在庫0枚": [
+        EdgeCase("E", "公開/非公開・言語・Foil/状態・価格帯の条件で集計対象がずれる", "条件別に0枚種類数が集計され、条件指定と結果件数が一致する", "集計条件、0枚種類数、条件別内訳件数"),
+        EdgeCase("E", "集計結果の反映先（分析/集計先）に件数が反映されない", "集計を完了扱いにせず、反映先件数と集計元件数の一致を確認できる状態にする", "集計元件数、反映先件数、反映日時"),
+    ],
+    "SPLINKS": [
+        EdgeCase("E", "SPLINKS側の減額/取消が実行できない", "EC-CUBE側を返金完了にせず、報告のみで各部署対応へ委譲する状態にする", "SPLINKS処理結果、返金ステータス、委譲先の記録"),
+        EdgeCase("E", "同一受注に対して二重返金/二重減額を実行する", "二重処理を防止し、既存の返金結果を確認できる状態にする", "返金履歴、決済状態、処理回数"),
+        EdgeCase("A", "一部返金（減額）と全額返金を取り違える", "対象金額を取り違えず、依頼内容と処理金額の一致を確認できる状態にする", "依頼金額、減額/返金額、決済状態"),
+        EdgeCase("E", "依頼チャネル（ラインワークス/Gメール/依頼フォーム）ごとに依頼内容に不備がある", "不備依頼を処理へ進めず、依頼元チャネルと不備内容を確認できる状態にする", "依頼チャネル、依頼内容、不備理由"),
+    ],
+    "予約": [
+        EdgeCase("E", "発売日前日チェックで予約数と引当在庫が一致しない", "出荷確定へ進めず、予約数と在庫の差異を確認できる状態にする", "予約数、引当在庫、差異件数"),
+        EdgeCase("A", "予約キャンセル分を発売日集荷/出荷インポート対象から除外できない", "キャンセル分を出荷対象に含めず、除外件数を確認できる状態にする", "キャンセル件数、出荷対象件数、出荷インポート結果"),
+        EdgeCase("E", "発売日集荷・出荷インポートの取込に失敗する", "出荷完了にせず、取込エラー行と対象件数を確認できる状態にする", "取込結果、エラー行、出荷ステータス"),
+    ],
+})
+
 
 def edge_case_matches(case: EdgeCase, text: str, systems: str) -> bool:
     haystack = text + " " + systems
@@ -897,10 +1101,21 @@ def edge_case_matches(case: EdgeCase, text: str, systems: str) -> bool:
     return False
 
 
+def pattern_specific_edge_cases(pattern: Pattern) -> list[EdgeCase]:
+    """パターン名部分一致で業務固有エッジケースを最優先で採用する。"""
+    cases: list[EdgeCase] = []
+    for key, entries in PATTERN_EDGE_CASES.items():
+        if key in pattern.name:
+            cases.extend(entries)
+    return cases
+
+
 def edge_cases_for(business_title: str, pattern: Pattern) -> list[EdgeCase]:
     text = pattern.name + " " + " ".join(pattern.rows)
     systems = actor_meta(business_title)[2]
+    # 業務フロー本文由来の分岐 → パターン固有 → 業務単位 → 共通、の優先順で採用する。
     selected: list[EdgeCase] = edge_cases_from_branch_rows(pattern)
+    selected.extend(pattern_specific_edge_cases(pattern))
     for case in BUSINESS_EDGE_CASES.get(business_title, []):
         if edge_case_matches(case, text, systems) or len(selected) < 2:
             selected.append(case)
@@ -994,6 +1209,11 @@ def generate(repo: Path, only: str | None, max_docs: int) -> list[Scenario]:
         for pattern in parse_patterns(text):
             candidates.append((flow_path, flow_title, business_title, text, pattern))
     candidates = dedupe_patterns(candidates)
+    # 同一業務フローファイル内で「同じ番号だが別名」のパターンを検出（在庫管理 #7 等）。
+    # codexレビュー指摘#5：番号の欠落/重複で追跡が曖昧になる問題を可視化する。
+    number_names: dict[tuple[Path, str], set[str]] = {}
+    for flow_path, _flow_title, _business_title, _text, pattern in candidates:
+        number_names.setdefault((flow_path, pattern.number), set()).add(normalize_name(pattern.name))
     scenarios: list[Scenario] = []
     counters: dict[str, int] = {}
     for flow_path, _flow_title, business_title, text, pattern in candidates:
@@ -1004,8 +1224,130 @@ def generate(repo: Path, only: str | None, max_docs: int) -> list[Scenario]:
         rel_docs, html_docs = related_docs_with_dictionary(business_title, text, pattern, docs, max_docs)
         coverage = coverage_for(business_title, pattern, rel_docs)
         edge_cases = edge_cases_for(business_title, pattern)
-        scenarios.append(Scenario(sid, title, business_title, flow_path, pattern, rel_docs, html_docs, coverage, edge_cases))
+        non_eccube = is_non_eccube_pattern(pattern)
+        dup_number = len(number_names.get((flow_path, pattern.number), set())) > 1
+        scenarios.append(Scenario(sid, title, business_title, flow_path, pattern, rel_docs, html_docs, coverage, edge_cases, non_eccube, dup_number))
     return scenarios
+
+
+def all_feature_index(repo: Path) -> dict[str, tuple[Path, str]]:
+    """functions/**/*.md に実在する全機能No -> (相対パス, タイトル)。"""
+    index: dict[str, tuple[Path, str]] = {}
+    for path in sorted((repo / "functions").glob("**/*.md")):
+        fno = feature_no_from_path(path)
+        if fno == "-":
+            continue
+        fno = fno.upper()
+        if fno not in index:
+            index[fno] = (path.relative_to(repo), title_from_markdown(read_text(path), path.stem))
+    return index
+
+
+def traced_feature_ids(scenarios: list[Scenario]) -> set[str]:
+    traced: set[str] = set()
+    for s in scenarios:
+        for d in s.docs:
+            if d.feature_no != "-":
+                traced.add(d.feature_no.upper())
+    return traced
+
+
+def classify_feature(fno: str, traced_ids: set[str], traced_prefixes: set[str]) -> tuple[str, str]:
+    """全機能Noを誠実に分類する（covered / excluded-ph2 / out-of-scope / area-covered / 要判定）。"""
+    prefix = fno.split("-")[0]
+    if fno in EXCLUDED_FEATURE_IDS:
+        return ("excluded-ph2", "Ph2対応（Ph1では実装対象外）")
+    if fno in traced_ids:
+        return ("covered", "シナリオがトレースしている")
+    oos = OUT_OF_SCOPE_FEATURES.get(fno) or OUT_OF_SCOPE_FEATURES.get(prefix)
+    if oos:
+        return (f"out-of-scope:{oos[0]}", oos[1])
+    if prefix in traced_prefixes:
+        return ("area-covered-feature-uncovered", "同一業務領域はシナリオ化済み。個別機能は機能テスト層(integration_test)で担保")
+    return ("source-backed-uncovered", "業務フロー領域に接点があり得るが未トレース（要判定：カバー要否を人手で判断）")
+
+
+def write_feature_ledger(repo: Path, scenarios: list[Scenario], dry_run: bool) -> None:
+    """05_設計書カバレッジ.md: 全機能Noのトレース状態を分類付きで可視化する誠実な台帳。"""
+    out = repo / "scenario_test" / "scenario"
+    feats = all_feature_index(repo)
+    traced_ids = traced_feature_ids(scenarios)
+    traced_prefixes = {f.split("-")[0] for f in traced_ids}
+    classified: dict[str, tuple[str, str]] = {
+        fno: classify_feature(fno, traced_ids, traced_prefixes) for fno in feats
+    }
+    counts: dict[str, int] = {}
+    for cat, _ in classified.values():
+        counts[cat] = counts.get(cat, 0) + 1
+    total = len(feats)
+
+    lines = [
+        "# 設計書カバレッジ台帳（自動生成）",
+        "",
+        "業務フロー準拠のシステムテストとして、`functions/**/*.md` に実在する全機能Noが",
+        "シナリオからトレースされているかを誠実に分類する。`covered` 以外＝網羅漏れではなく、",
+        "業務フロー対象外（設定/フロント表示/連携単体）や機能テスト層で担保する領域を含む。",
+        "`source-backed-uncovered`（要判定）が、業務フロー接点があり得るのに未トレースの真の穴候補。",
+        "",
+        "## サマリ",
+        "",
+        "| 分類 | 件数 | 意味 |",
+        "|---|---|---|",
+        f"| covered | {counts.get('covered', 0)} | シナリオがトレース |",
+        f"| area-covered-feature-uncovered | {counts.get('area-covered-feature-uncovered', 0)} | 業務領域はカバー済み・個別機能は機能テスト層で担保 |",
+        f"| out-of-scope:platform-base | {counts.get('out-of-scope:platform-base', 0)} | ログイン/ホーム/設定/マスタ等の管理基盤 |",
+        f"| out-of-scope:front-display | {counts.get('out-of-scope:front-display', 0)} | フロント表示・共通部品（機能テスト層で担保） |",
+        f"| out-of-scope:integration-tested | {counts.get('out-of-scope:integration-tested', 0)} | 外部連携API（integration_test層で担保） |",
+        f"| excluded-ph2 | {counts.get('excluded-ph2', 0)} | Ph2対応（Ph1対象外） |",
+        f"| **source-backed-uncovered（要判定）** | **{counts.get('source-backed-uncovered', 0)}** | **業務フロー接点があり得るが未トレース。要人手判断** |",
+        f"| 合計 | {total} | functions/ 実在機能No |",
+        "",
+        "## 要判定リスト（source-backed-uncovered）",
+        "",
+        "業務フロー準拠を保ったまま、カバー要否を人手で判断する対象。",
+        "",
+        "| 機能No | タイトル | 機能仕様 | 判定メモ |",
+        "|---|---|---|---|",
+    ]
+    uncovered = sorted(fno for fno, (cat, _) in classified.items() if cat == "source-backed-uncovered")
+    for fno in uncovered:
+        path, title = feats[fno]
+        lines.append(f"| {fno} | {table_cell(title)} | `{path}` | {classified[fno][1]} |")
+    if not uncovered:
+        lines.append("| - | （要判定の未トレース機能なし） | - | - |")
+
+    lines += [
+        "",
+        "## プレフィックス別ロールアップ",
+        "",
+        "| プレフィックス | 実在 | covered | area-covered | out-of-scope | excluded-ph2 | 要判定 |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    prefixes = sorted({fno.split("-")[0] for fno in feats})
+    for pref in prefixes:
+        group = [classified[fno][0] for fno in feats if fno.split("-")[0] == pref]
+        n = len(group)
+        cov = sum(1 for c in group if c == "covered")
+        area = sum(1 for c in group if c == "area-covered-feature-uncovered")
+        oos = sum(1 for c in group if c.startswith("out-of-scope"))
+        ph2 = sum(1 for c in group if c == "excluded-ph2")
+        req = sum(1 for c in group if c == "source-backed-uncovered")
+        lines.append(f"| {pref} | {n} | {cov} | {area} | {oos} | {ph2} | {req} |")
+
+    lines += [
+        "",
+        "## out-of-scope 明細（対象外の根拠）",
+        "",
+        "| キー | カテゴリ | 理由 |",
+        "|---|---|---|",
+    ]
+    for key, (cat, reason) in sorted(OUT_OF_SCOPE_FEATURES.items()):
+        lines.append(f"| {key} | {cat} | {reason} |")
+
+    if dry_run:
+        print(f"would write {out / '05_設計書カバレッジ.md'} (要判定={counts.get('source-backed-uncovered', 0)}/{total})")
+        return
+    (out / "05_設計書カバレッジ.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def write_index(repo: Path, scenarios: list[Scenario], dry_run: bool) -> None:
@@ -1027,8 +1369,8 @@ def write_index(repo: Path, scenarios: list[Scenario], dry_run: bool) -> None:
     coverage = [
         "# システムテストカバレッジ表（自動生成）",
         "",
-        "| 業務 | 業務フローキー | シナリオID | 正常系 | 代替系 | 異常系 | 外部連携 | データ更新 | CSV/帳票 | メール/通知 | 正常系手順数 | 代替/異常手順数 | 期待機能不足 | HTML不足 | エッジケース数 | 主なエッジケース | 確認対象 |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| 業務 | 業務フローキー | シナリオID | 正常系 | 代替系 | 異常系 | 外部連携 | データ更新 | CSV/帳票 | メール/通知 | 正常系手順数 | 代替/異常手順数 | 期待機能不足 | HTML不足 | エッジケース数 | 主なエッジケース | 確認対象 | 非EC-CUBE作業 | 番号重複警告 |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for s in scenarios:
         c = s.coverage
@@ -1047,16 +1389,19 @@ def write_index(repo: Path, scenarios: list[Scenario], dry_run: bool) -> None:
             f"{len(step_rows(s.business_title, s.pattern, s.docs))} | {len(s.edge_cases)} | "
             f"{feature_gap} | {html_gap} | "
             f"{len(s.edge_cases)} | {html_escape_br(case.condition for case in s.edge_cases[:3])} | "
-            f"{html_escape_br(case.observation for case in s.edge_cases[:3])} |"
+            f"{html_escape_br(case.observation for case in s.edge_cases[:3])} | "
+            f"{coverage_mark(s.non_eccube)} | {coverage_mark(s.dup_number)} |"
         )
     if dry_run:
         print(f"would write {out / '01_シナリオ一覧.md'}")
         print(f"would write {out / '02_トレーサビリティ.md'}")
         print(f"would write {out / '03_カバレッジ表.md'}")
+        write_feature_ledger(repo, scenarios, dry_run)
         return
     (out / "01_シナリオ一覧.md").write_text("\n".join(rows) + "\n", encoding="utf-8")
     (out / "02_トレーサビリティ.md").write_text("\n".join(trace) + "\n", encoding="utf-8")
     (out / "03_カバレッジ表.md").write_text("\n".join(coverage) + "\n", encoding="utf-8")
+    write_feature_ledger(repo, scenarios, dry_run)
 
 
 def ensure_support_files(repo: Path, dry_run: bool) -> None:

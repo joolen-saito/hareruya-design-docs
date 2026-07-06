@@ -46,7 +46,8 @@ The generator writes:
 - `scenario_test/scenario/SCN-*.md`
 - `scenario_test/scenario/01_シナリオ一覧.md`
 - `scenario_test/scenario/02_トレーサビリティ.md`
-- `scenario_test/scenario/03_カバレッジ表.md`
+- `scenario_test/scenario/03_カバレッジ表.md`（`非EC-CUBE作業` / `番号重複警告` 列を含む）
+- `scenario_test/scenario/05_設計書カバレッジ.md`（全機能Noのトレース状態を分類する誠実な台帳）
 - `scenario_test/scenario/00_アクター一覧.md` when missing
 - `scenario_test/scenario/README.md` when missing
 
@@ -70,6 +71,19 @@ The generator writes:
 - Prefer function design Markdown paths in traceability; include HTML paths as design-source evidence.
 - Do not leave unresolved placeholders in generated system-test scenarios. `> [要確認]`, `UNRESOLVED_FUNCTION_SPEC`, and `UNRESOLVED_HTML_DESIGN_DOC` must fail strict validation.
 - Generated scenarios must include `確認対象` for every alternative/error branch, executable branch steps, expected/linked function numbers, and `## エッジケース要約`.
+
+## Design-Doc Coverage Honesty (誠実な網羅可視化)
+
+- `03_カバレッジ表.md` の `期待機能不足` は辞書との差分のみを示すため、辞書に載らない機能は不可視になる。網羅性を過大評価しないため、`05_設計書カバレッジ.md` で `functions/**/*.md` の**全機能No**を分類して出す。
+- 分類は `covered`（シナリオがトレース）／`area-covered-feature-uncovered`（業務領域はカバー済み・個別機能は機能テスト層で担保）／`out-of-scope:*`（`OUT_OF_SCOPE_FEATURES` 辞書で管理・理由付き）／`excluded-ph2`（`EXCLUDED_FEATURE_IDS`）／`source-backed-uncovered`（要判定＝業務フロー接点があり得るのに未トレースの真の穴候補）。
+- 業務フロー準拠を維持する。`source-backed-uncovered` を機械的にシナリオ化せず、要判定として人手レビューに回す。業務フローが実際に触れる機能が誤割当・欠落している場合のみ `EXPECTED_FUNCTIONS` を補正する。
+- 要判定の disposition（解消）は次の2択のみ。台帳を埋めるためだけの機能No追加（ledger-gaming）は禁止。
+  - **TRACE-IN**（`EXPECTED_FUNCTIONS` へ追補）: (1) 命名した業務フロー行が実在し、(2) 対象シナリオがその機能を**実際に行使/観測**する場合に限る。keyword は**必ず実在する作業概要（`**[＃]**` 行）またはパターン名に一致**させること。作業内容の継続行は `pattern.rows` に入らず keyword が発火しないため、継続行の語をkeywordにしてはならない。追補後は対象シナリオの `期待/紐づけ機能No` に実際に出ることを検証する。
+  - **OUT-OF-SCOPE**（`OUT_OF_SCOPE_FEATURES` へ理由付きで追加）: 業務フローに人手工程が無い（フロント表示/連携API/定常バッチ/管理マスタ設定/Ph2）。prefixが1カテゴリなら prefix キー、分裂するなら完全IDキー＋prefix既定を併用（`classify_feature` は traced→exact→prefix の順で、trace-in と out-of-scope を同一prefix内で両立できる）。
+- 正常系ステップへの機能No割当は位置ベースではなく `assign_step_docs` によるキーワード束ね（発火したキーワードを含む作業概要行へ機能Noを対応付け、残りは位置順で充当）。同一キーワードに複数機能がある場合は業務中核機能を優先する。
+- 非EC-CUBE作業（`EC-CUBEを使わない`／`メーラーでのみ`／`Thunderbirdでのみ`、またはパターン名に「メーラー」）は EC-CUBE 画面/機能Noを自動割当しない。観測点はメール/電話/外部アプリ側（EC-CUBE更新なし）とし、`03_カバレッジ表.md` の `非EC-CUBE作業` に印を付ける。弱い語（`手動で対応` 等）は EC-CUBE 中心フローの一工程なので非EC-CUBE判定に使わない。
+- 同一業務フローファイル内でパターン番号が別名と重複する場合（在庫管理 #7/#8 等）は `番号重複警告` に印を付け、トレースは業務フローキー（出典＋番号＋作業概要）で識別する。
+- 業務固有エッジケースは `PATTERN_EDGE_CASES`（パターン名部分一致）を最優先し、汎用ケース偏重を避ける（バーコード貼替＝旧バーコード混在、在庫0枚集計＝条件別集計、SPLINKS返金＝減額不可/二重返金/一部返金、予約＝発売日集荷/出荷インポート 等）。
 
 ## Useful Script Options
 

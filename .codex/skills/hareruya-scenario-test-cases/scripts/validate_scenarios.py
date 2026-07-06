@@ -128,7 +128,7 @@ def validate_coverage_table(repo: Path, scenario_files: list[Path]) -> list[str]
         return ["missing coverage table: scenario_test/scenario/03_カバレッジ表.md"]
     text = read(coverage_path)
     errors: list[str] = []
-    required_columns = ("正常系", "代替系", "異常系", "外部連携", "データ更新", "正常系手順数", "代替/異常手順数", "期待機能不足", "HTML不足", "エッジケース数", "主なエッジケース", "確認対象")
+    required_columns = ("正常系", "代替系", "異常系", "外部連携", "データ更新", "正常系手順数", "代替/異常手順数", "期待機能不足", "HTML不足", "エッジケース数", "主なエッジケース", "確認対象", "非EC-CUBE作業", "番号重複警告")
     for column in required_columns:
         if column not in text:
             errors.append(f"coverage table missing column: {column}")
@@ -159,6 +159,21 @@ def validate_coverage_table(repo: Path, scenario_files: list[Path]) -> list[str]
     return errors
 
 
+def validate_feature_ledger(repo: Path) -> list[str]:
+    ledger = repo / "scenario_test" / "scenario" / "05_設計書カバレッジ.md"
+    if not ledger.exists():
+        return ["missing feature ledger: scenario_test/scenario/05_設計書カバレッジ.md"]
+    text = read(ledger)
+    errors: list[str] = []
+    for section in ("## サマリ", "## 要判定リスト", "## プレフィックス別ロールアップ", "## out-of-scope 明細"):
+        if section not in text:
+            errors.append(f"feature ledger missing section: {section}")
+    for label in ("covered", "source-backed-uncovered", "excluded-ph2"):
+        if label not in text:
+            errors.append(f"feature ledger missing classification: {label}")
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default=".")
@@ -185,6 +200,10 @@ def main() -> int:
     for error in validate_coverage_table(repo, files):
         failed += 1
         print(f"NG scenario_test/scenario/03_カバレッジ表.md")
+        print(f"  - {error}")
+    for error in validate_feature_ledger(repo):
+        failed += 1
+        print(f"NG scenario_test/scenario/05_設計書カバレッジ.md")
         print(f"  - {error}")
     print(f"checked={len(files)} failed={failed}")
     return 1 if failed else 0
