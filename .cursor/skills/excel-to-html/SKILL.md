@@ -45,7 +45,7 @@ Excelの基本設計仕様書（`.xlsx/.xlsm/.xltx/.xltm`）を、見た目の�
 
 1. Excelを更新した場合は `cd excel_to_html && uv run python convert.py` でExcel HTMLを再生成する。
 2. リポジトリルートで `python3 .cursor/skills/function-spec-html-render/scripts/integrate_function_docs_into_excel_html.py` を実行する。
-3. `cd excel_to_html && uv run python verify.py` で既存Excel由来の検証を実行する。
+3. `cd excel_to_html && uv run python verify.py` で既存Excel由来の検証を実行する。この検証には、Excel基本設計が廃止を宣言した仕様の明示（[[superseded-spec]]）も含まれる。台帳に載る機能設計書の埋め込み節・プレビューに「刷新後は実装不要」バナーが無い場合、台帳とMarkdownの記述が同期していない場合、未判定の新規廃止指示がある場合はNGになる。
 
 追記対象は `functions/todo-list.md` の機能No、区分、分類、機能名、Markdownリンクを基準に特定し、対象シート末尾へ入れる。別タブ化や `index.html` への統合一覧追加は行わない。追記ブロックは `<!-- function-design-embed:start ... -->` / `<!-- function-design-embed:end ... -->` のマーカーで差し替え、再実行時に重複させない。
 

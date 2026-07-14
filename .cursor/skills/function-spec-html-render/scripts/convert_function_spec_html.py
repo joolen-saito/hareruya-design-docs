@@ -17,6 +17,9 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import superseded_specs  # noqa: E402  Excel基本設計により廃止された仕様のバナー
+
 
 CODE_TOKEN = "\x00CODE{}\x00"
 LINK_RE = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
@@ -322,6 +325,7 @@ def render_document(markdown: str, source: Path, screen_sources: list[Path] | No
     source_label = "<br>".join(html.escape(str(path), quote=False) for path in source_paths)
     title_html = render_inline(title)
     html_title = html.escape(f"{title} - 機能仕様書", quote=False)
+    superseded = render_superseded_notice(source)
 
     return f"""<!doctype html>
 <html lang="ja">
@@ -331,6 +335,7 @@ def render_document(markdown: str, source: Path, screen_sources: list[Path] | No
   <title>{html_title}</title>
   <style>
 {CSS}
+    {superseded_specs.SUPERSEDED_CSS}
   </style>
 </head>
 <body>
@@ -344,6 +349,7 @@ def render_document(markdown: str, source: Path, screen_sources: list[Path] | No
         <p class="crumb">Source:<br>{source_label}</p>
         <h1>{title_html}</h1>
       </header>
+      {superseded}
       {body_html}
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>
     </main>
@@ -351,6 +357,20 @@ def render_document(markdown: str, source: Path, screen_sources: list[Path] | No
 </body>
 </html>
 """
+
+
+def render_superseded_notice(source: Path, href_prefix: str = superseded_specs.HREF_FROM_PREVIEW) -> str:
+    """Excel基本設計により廃止された記述への「刷新後は実装不要」バナー。
+
+    既定の href_prefix は単体プレビュー（`function_spec_html_preview/<repo>/x.html`）用。
+    excel_to_html/output へ直接書き出す文書（orphan group）は空文字を渡す。
+    台帳外の md では空文字を返すので、呼び出し側で分岐する必要はない。
+    """
+    try:
+        key = superseded_specs.doc_key(source)
+    except ValueError:
+        return ""  # リポジトリ外の md（テスト等）は対象外
+    return superseded_specs.render_notice(key, href_prefix)
 
 
 def render_toc(headings: Iterable[tuple[int, str, str]]) -> str:

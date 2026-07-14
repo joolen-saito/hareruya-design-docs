@@ -8,13 +8,20 @@
 入口 / URLエンドポイント / 期待されるふるまい の3列表として描画する。
 追補節の他の小節（調査補助・処理フロー等の手書き内容）には触れない。
 
+convert.py の再変換は追補節を丸ごと落とす。節が消えたファイルは入口テーブルだけでは
+再構成できない（手書き小節を含むため）ので、`extract` は入口行に加えて**節そのもの**を
+sections JSON へスナップショットし、`build` はそれを使って節ごと復元する。
+
 サブコマンド:
-  extract  現行 output HTML から入口行をスナップショットし data JSON へ保存する（忠実な正本化）。
-  build    data JSON を読み、各 HTML の入口テーブルを <table> で冪等に差し替える。
-  verify   全 output HTML の追補「利用者視点の入口」が <table> であることを検査する（CIガード）。
+  extract  現行 output HTML から入口行を data JSON へ、追補節全文を sections JSON へ保存する（忠実な正本化）。
+  build    節が消えていれば sections JSON から復元し、入口テーブルを <table> で冪等に差し替える。
+  verify   追補節の欠落と、入口が <table> でないことを検査する（CIガード）。
   rows     recheck CSV の1行から (入口ラベル / URL / ふるまい) を規約どおり導出して表示する（新規追加の確認用）。
 
-設計上の不変条件: 「利用者視点の入口」は決して箇条書き・段落で出力しない。常に3列の表。
+設計上の不変条件:
+  - 「利用者視点の入口」は決して箇条書き・段落で出力しない。常に3列の表。
+  - data JSON に載っているファイルは追補節を必ず持つ。欠落は verify で NG とする
+    （黙って読み飛ばすと、再変換で全ファイルから節が消えても検知できない）。
 """
 from __future__ import annotations
 
@@ -29,6 +36,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[4]  # hareruya-design-docs/
 OUTPUT_DIR = BASE_DIR / "excel_to_html" / "output"
 DATA_JSON = BASE_DIR / "endpoint_reports" / "endpoint_supplement_data.json"
+# 追補節の全文スナップショット（手書き小節を含む）。convert.py 再変換で節ごと消えたときの復元元。
+SECTIONS_JSON = BASE_DIR / "endpoint_reports" / "endpoint_supplement_sections.json"
 RECHECK_CSV = BASE_DIR / "endpoint_reports" / "html_entry_missing_endpoints_recheck.csv"
 
 ENTRY_ANCHOR = 'endpoint-supplement-user-entry'
@@ -77,6 +86,45 @@ SUPPLEMENT_STYLE = f"""{STYLE_START}
 STYLE_BLOCK_RE = re.compile(
     re.escape(STYLE_START) + r".*?" + re.escape(STYLE_END), re.S
 )
+
+# 追補節そのもの（マーカー込み）。extract のスナップショットと build の復元判定に使う。
+SECTION_RE = re.compile(
+    re.escape(SUPPLEMENT_START) + r".*?" + re.escape(SUPPLEMENT_END), re.S
+)
+
+
+# 機能設計書の埋め込みブロック。追補節の中に紛れ込むことがあり（integrate が最後のシートの
+# パネル範囲を追補節まで伸ばしていた既存バグ）、そのままスナップショットすると復元のたびに
+# 古い詳細設計書の複製が増える。スナップショット時に必ず落とす。
+EMBED_BLOCK_RE = re.compile(
+    r"\n?\s*<!-- function-design-embed:start.*?<!-- function-design-embed:end[^>]*-->",
+    re.S,
+)
+
+
+def section_of(text: str) -> str | None:
+    """HTML から追補節の全文（マーカー込み）を取り出す。無ければ None。
+
+    追補節は本スキルの所有物であり、機能設計書の埋め込みブロックを含まない。
+    紛れ込んでいたら取り除いてから正本化する（混入したまま保存すると、復元のたびに
+    古い埋め込みの複製が増える）。
+    """
+    m = SECTION_RE.search(text)
+    if not m:
+        return None
+    return EMBED_BLOCK_RE.sub("", m.group(0))
+
+
+def restore_section(text: str, section: str) -> str:
+    """消えた追補節を </main> 直前へ戻す。節は本文の最後（main の末尾）に置く。
+
+    convert.py が生成する HTML の </main> は1個。見つからない・複数ある場合は
+    位置を推測せず ValueError とし、誤った場所へ挿入しない。
+    """
+    if text.count("</main>") != 1:
+        raise ValueError("</main> が1個ではないため追補節の挿入位置を特定できません")
+    idx = text.index("</main>")
+    return f"{text[:idx].rstrip()}\n\n\n{section}\n\n    {text[idx:]}"
 
 
 def ensure_supplement_style(text: str) -> tuple[str, bool]:
@@ -210,6 +258,7 @@ def extract_rows(text: str) -> list[dict] | None:
 
 def cmd_extract(args) -> int:
     data = {}
+    sections = {}
     for path in iter_output_files():
         text = path.read_text(encoding="utf-8")
         if ENTRY_ANCHOR not in text:
@@ -218,13 +267,22 @@ def cmd_extract(args) -> int:
         if rows is None:
             print(f"  WARN 入口テーブル未検出（表組でない可能性）: {path.name}", file=sys.stderr)
             continue
+        section = section_of(text)
+        if section is None:
+            print(f"  WARN 追補節のマーカーが無い: {path.name}", file=sys.stderr)
+            continue
         data[path.name] = rows
+        sections[path.name] = section
     DATA_JSON.parent.mkdir(parents=True, exist_ok=True)
     DATA_JSON.write_text(
         json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
+    SECTIONS_JSON.write_text(
+        json.dumps(sections, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     total = sum(len(v) for v in data.values())
     print(f"extracted: {len(data)} files, {total} entry rows -> {DATA_JSON.relative_to(BASE_DIR)}")
+    print(f"           {len(sections)} 追補節 -> {SECTIONS_JSON.relative_to(BASE_DIR)}")
     return 0
 
 
@@ -236,41 +294,89 @@ def cmd_build(args) -> int:
         print(f"data JSON がありません: {DATA_JSON}\n先に `extract` を実行してください。", file=sys.stderr)
         return 2
     data = json.loads(DATA_JSON.read_text(encoding="utf-8"))
+    sections = (
+        json.loads(SECTIONS_JSON.read_text(encoding="utf-8"))
+        if SECTIONS_JSON.exists()
+        else {}
+    )
     changed = 0
+    restored = 0
+    failed = 0
     for name, rows in data.items():
         path = OUTPUT_DIR / name
         if not path.exists():
             print(f"  WARN output が存在しません: {name}", file=sys.stderr)
             continue
-        text = path.read_text(encoding="utf-8")
+        original = path.read_text(encoding="utf-8")
+        text = original
+
+        # convert.py 再変換で節ごと消えたケース。入口テーブルだけでは手書き小節を
+        # 再現できないため、sections JSON のスナップショットから節ごと戻す。
+        if SUPPLEMENT_START not in text:
+            section = sections.get(name)
+            if section is None:
+                print(
+                    f"  NG 追補節が消えているがスナップショットがありません: {name}"
+                    "（節を持つHTMLが健全なうちに `extract` を実行してください）",
+                    file=sys.stderr,
+                )
+                failed += 1
+                continue
+            try:
+                text = restore_section(text, section)
+            except ValueError as e:
+                print(f"  NG 追補節を復元できません: {name}: {e}", file=sys.stderr)
+                failed += 1
+                continue
+            restored += 1
+            print(f"  restored: {name}（追補節を復元）")
+
         if ENTRY_ANCHOR not in text:
-            print(f"  WARN 追補アンカー未検出（convert再変換で消えた可能性）: {name}", file=sys.stderr)
+            print(f"  NG 追補節に「利用者視点の入口」見出しがありません: {name}", file=sys.stderr)
+            failed += 1
             continue
         table = render_user_entry_table(rows)
         new_text, n = ENTRY_BLOCK_RE.subn(lambda mm: mm.group(1) + table, text, count=1)
         if n == 0:
-            print(f"  WARN 入口テーブルを差し替えできません: {name}", file=sys.stderr)
+            print(f"  NG 入口テーブルを差し替えできません: {name}", file=sys.stderr)
+            failed += 1
             continue
         # 本文テーブルと同じ装飾を追補テーブルへ適用する。
         new_text, _ = ensure_supplement_style(new_text)
-        if new_text != text:
+        # 比較対象はファイルの現物（original）。節を復元した分も確実に書き戻す。
+        if new_text != original:
             path.write_text(new_text, encoding="utf-8")
             changed += 1
-    print(f"build: {changed} files updated（差分なしは冪等で据え置き）")
+    print(
+        f"build: {changed} files updated（うち追補節の復元 {restored} 件 / 差分なしは冪等で据え置き）"
+    )
+    if failed:
+        print(f"NG: {failed} files を処理できませんでした", file=sys.stderr)
+        return 1
     return 0
 
 
 # --------------------------------------------------------------------------- #
-# verify: 入口が <table> であることを保証
+# verify: 追補節の存在と、入口が <table> であることを保証
 # --------------------------------------------------------------------------- #
 def cmd_verify(args) -> int:
     failures = []
     checked = 0
+    # data JSON に載っているファイルは追補節を必ず持つ。ここを「節が無ければ skip」に
+    # すると、convert.py 再変換で全ファイルから節が消えても OK: 0 files で素通りする。
+    expected = set(json.loads(DATA_JSON.read_text(encoding="utf-8"))) if DATA_JSON.exists() else set()
+
     for path in iter_output_files():
         text = path.read_text(encoding="utf-8")
-        if SUPPLEMENT_START not in text:
+        has_section = SUPPLEMENT_START in text
+        if not has_section and path.name not in expected:
             continue
         checked += 1
+        if not has_section:
+            failures.append(
+                f"{path.name}: 実装差分追補が消えている（convert.py 再変換後の復元漏れ。build で復元してください）"
+            )
+            continue
         if ENTRY_ANCHOR not in text:
             failures.append(f"{path.name}: 実装差分追補はあるが「利用者視点の入口」見出しが無い")
             continue
@@ -280,12 +386,17 @@ def cmd_verify(args) -> int:
             failures.append(
                 f"{path.name}: 追補テーブルの装飾CSS(.endpoint-supplement)が未適用（build で適用してください）"
             )
+
+    missing_files = sorted(n for n in expected if not (OUTPUT_DIR / n).exists())
+    for name in missing_files:
+        failures.append(f"{name}: 追補節を持つはずの output HTML が存在しない")
+
     if failures:
-        print("NG: 実装差分追補「利用者視点の入口」表組チェック", file=sys.stderr)
+        print("NG: 実装差分追補チェック", file=sys.stderr)
         for f in failures:
             print(f"  - {f}", file=sys.stderr)
         return 1
-    print(f"OK: {checked} files、全ての追補「利用者視点の入口」が表組(<table>)です")
+    print(f"OK: {checked} files、追補節が揃い、全ての「利用者視点の入口」が表組(<table>)です")
     return 0
 
 

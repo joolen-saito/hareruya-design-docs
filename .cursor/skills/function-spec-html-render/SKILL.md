@@ -14,6 +14,7 @@ description: 機能仕様書Markdownを、内容を変更せずHTML閲覧版へ�
 - Markdown正本の文言、順序、見出し、表、箇条書き、コード、注記を変更しない。
 - Markdown正本の内容は、`functions/todo-list.md` のカスタマイズ区分（標準／現行踏襲／カスタマイズ／新規実装）に応じた参照リポに基づく（標準＝ec-cube-enterprise、現行踏襲・カスタマイズ＝現行リポ pf-eccube3／pf-api／ec-cube ＋ ec-cube-enterprise で移行後の扱いを確認 ＋ 該当基本設計仕様書、新規実装＝基本設計仕様書を正）。詳細は `reverse-design` スキルの手順 1a を正とする。本スキルはこの前提で作られたMarkdownをHTML化する派生工程であり、HTML側で正典を変えない。
 - Markdown正本とExcel基本設計仕様書に同一機能・同一仕様の内容が重複して書かれている場合、Excel基本設計仕様書を正とする。統合HTML上のMarkdown由来ブロックはExcel由来本文を上書きしない。食い違いを見つけた場合はHTMLだけで調整せず、Markdown正本をExcelに合わせて更新するか、差分を移行後の扱い・実装確認値として分離してから再変換する。
+- Excel基本設計が廃止を宣言した項目・画面・機能は、`functions/superseded_specs.json`（台帳）に基づき、埋め込み節と単体プレビューの冒頭へ「刷新後は実装不要」バナーを描画する。バナーは `render_block()` / `render_document()` が台帳を読んで**描画の一部として**出す（後段注入にしてはならない。`strip_existing_embeds()` が埋め込みブロックを毎回作り直すため、ブロック内部への注入は integrate 単独実行でも消える）。台帳・定型句・検証は [[superseded-spec]] を正とする。
 - HTML側だけに要約、補足、推測、仕様説明を追加しない。
 - 機能仕様書内に混在する画面項目定義TSVは、同じ位置にHTML表として表示する。
 - 外部の画面項目定義Markdownが存在する場合は、`--screen-source` で指定し、機能仕様書HTMLの末尾に同一ファイル内セクションとして統合する。

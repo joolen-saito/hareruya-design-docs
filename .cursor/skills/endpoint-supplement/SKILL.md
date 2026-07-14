@@ -29,6 +29,9 @@ description: 基本設計仕様書HTMLの末尾に「実装差分追補」節を
   `/* endpoint-supplement-style:start/end */` で自己完結注入する。CSS変数（`--line` 等）は
   convert.py 基底 `:root` で常に定義されるため埋め込みの有無に依存しない。
 - 正本はあくまで route 突合データ（`endpoint_reports/`）であり、HTML側で入口を創作しない。
+- **`endpoint_supplement_data.json` に載っているHTMLは追補節を必ず持つ。** 節の欠落は `verify` が
+  NG とする。convert.py の再変換は追補節を丸ごと落とすため、「節が無ければ検査対象外」と
+  すると全ファイルから節が消えても素通りしてしまう（実際に25ファイル全部で消失を見逃した）。
 
 ## データソース
 
@@ -37,6 +40,10 @@ description: 基本設計仕様書HTMLの末尾に「実装差分追補」節を
   `section == Block内部` と `method == OPTIONS` は追補対象外。
 - `endpoint_reports/endpoint_supplement_data.json`
   各HTMLの「利用者視点の入口」行スナップショット（正本化された表セル）。`extract` で生成する。
+- `endpoint_reports/endpoint_supplement_sections.json`
+  各HTMLの**追補節の全文**スナップショット（手書き小節を含む）。`extract` で生成し、
+  再変換で節ごと消えたときの復元元になる。入口テーブルだけでは手書き小節を再現できないため、
+  節そのものを正本化しておく必要がある。
 
 ## 表セルの導出規約
 
@@ -68,34 +75,45 @@ json/ajax/api→JSON-API、それ以外→画面）。
 ```bash
 S=.cursor/skills/endpoint-supplement/scripts/build_endpoint_supplement.py
 
-# 1) 現行HTMLの入口行を正本JSONへスナップショット（初回・行を確定したとき）
+# 1) 現行HTMLの入口行と追補節全文を正本JSONへスナップショット
+#    （初回・行を確定したとき・節の手書き小節を編集したとき。HTMLが健全なうちに実行する）
 python3 "$S" extract
 
-# 2) 入口テーブルを各HTMLへ冪等に再適用（表組崩れの修復／convert再変換後の復元）
+# 2) 追補節を各HTMLへ冪等に再適用（節ごと消えていれば復元／表組崩れの修復／CSS注入）
 python3 "$S" build
 
-# 3) 全HTMLの追補「利用者視点の入口」が表組であることを検査
+# 3) 追補節の欠落と、入口が表組でないことを検査
 python3 "$S" verify
 
 # 補助: recheck.csv の1行から入口行の導出結果を確認（新規route追加時）
 python3 "$S" rows --grep customer/customer_group
 ```
 
-- `build` は入口見出し直後の本文ブロックが表でも崩れた `ul`/`ol`/`p`/`pre` でも掴んで
-  表組へ置き換え、さらに追補テーブルの装飾CSSを `<style>` へ冪等注入する。
-  正常系（既に表＋CSS適用済み）では差分ゼロで冪等。
+- `build` は次を冪等に行う。正常系（節あり＋表＋CSS適用済み）では差分ゼロ。
+  1. 追補節が丸ごと消えていれば `endpoint_supplement_sections.json` から節を復元し、
+     `</main>` 直前へ戻す（手書き小節ごと復元される）。
+  2. 入口見出し直後の本文ブロックが表でも崩れた `ul`/`ol`/`p`/`pre` でも掴んで表組へ置き換える。
+  3. 追補テーブルの装飾CSSを `<style>` へ注入する。
+- 節を復元できない・入口テーブルを差し替えられないファイルがあれば `build` は非ゼロ終了する
+  （黙って落とさない）。
 - 入口行を増減するときは正本JSON `endpoint_reports/endpoint_supplement_data.json` を編集して
   `build` する。新規 route は `rows` で導出した行を貼り、`build` で反映する。
+- 追補節の手書き小節を編集したら、**必ず `extract` でスナップショットを更新する**。
+  更新しないと次の再変換で古い節に巻き戻る。
 
 ## convert.py 再変換との関係
 
 `excel-to-html` / `function-spec-html-render` で Excel HTML を再生成すると、後段で
-注入した追補節は失われる。再変換後は本スキルの `build` を実行して追補節の入口テーブルを
+注入した追補節は**丸ごと失われる**。再変換後は本スキルの `build` を実行して追補節を
 復元すること。順序は「convert → 各種統合 → endpoint-supplement build → verify」。
+
+`build` は入口テーブルだけでなく節そのものを復元する（復元元は `extract` が作った
+`endpoint_supplement_sections.json`）。したがって再変換のたびに `build` → `verify` を
+必ず通すこと。`verify` は data JSON に載るHTMLで節が欠けていれば NG を出す。
 
 ## 確認
 
-- `python3 "$S" verify` が OK（全ファイルで入口が `<table>`）。
+- `python3 "$S" verify` が OK（節が揃い、全ファイルで入口が `<table>`）。
 - `cd excel_to_html && uv run python verify.py` の追補チェックが NG を出さないこと
   （`verify.py` に「利用者視点の入口」表組チェックを内蔵済み）。
 - 追補の入口列が常に 入口 / URLエンドポイント / 期待されるふるまい の3列であること。

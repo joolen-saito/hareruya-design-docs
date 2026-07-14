@@ -81,13 +81,16 @@ def build_group_html(converter, title: str, members: list[tuple[str, str, Path]]
         source_rel = md_path.relative_to(ROOT).as_posix()
         label = f"{html.escape(feature_no)} {html.escape(feature_name)}"
         sidebar_links.append(f'<a class="lv1" href="#{slug}">{label}</a>')
+        # この文書は excel_to_html/output へ直接書き出すので、根拠リンクの接頭辞は空。
+        superseded = converter.render_superseded_notice(md_path, href_prefix="")
         sections.append(
             f'<section class="doc-section" id="{slug}">\n'
             f'  <header class="page-header">\n'
             f'    <p class="crumb">Source:<br>{html.escape(source_rel, quote=False)}</p>\n'
             f"    <h1>{label} ／ {converter.render_inline(doc_title)}</h1>\n"
             f"  </header>\n"
-            f"  {body_html}\n"
+            + (f"  {superseded}\n" if superseded else "")
+            + f"  {body_html}\n"
             f"</section>"
         )
 
@@ -102,6 +105,7 @@ def build_group_html(converter, title: str, members: list[tuple[str, str, Path]]
   <title>{html_title}</title>
   <style>
 {converter.CSS}
+    {converter.superseded_specs.SUPERSEDED_CSS}
   </style>
 </head>
 <body>

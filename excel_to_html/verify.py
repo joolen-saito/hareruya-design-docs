@@ -16,6 +16,11 @@ For each workbook in the input folder and its HTML in the output folder, checks:
                          actionable sheet/cell diagnostics when missing.
 7. Hidden sheet exclusion - hidden and veryHidden sheets do not appear in the
                             sidebar or sheet-panel headings.
+8. Superseded-spec notices - every ledger entry in functions/superseded_specs.json is
+                             rendered as a "刷新後は実装不要" banner in the embedded
+                             function-design section and its standalone preview, is
+                             written into the source Markdown, and no newly-detected
+                             abolition instruction is left untriaged.
 
 Run: uv run python verify.py [--input-dir DIR] [--output-dir DIR]
 Exit code is non-zero if any hard check fails.
@@ -36,6 +41,14 @@ from openpyxl import load_workbook
 import convert
 
 BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR.parent
+SKILL_SCRIPTS = REPO_ROOT / ".cursor" / "skills" / "function-spec-html-render" / "scripts"
+sys.path.insert(0, str(SKILL_SCRIPTS))
+import superseded_specs  # noqa: E402
+import detect_superseded_specs  # noqa: E402
+
+PREVIEW_ROOT = REPO_ROOT / "function_spec_html_preview"
+BANNER_MARK = '<span class="superseded-badge">'
 MAX_DIAGNOSTICS = 10
 
 
@@ -606,6 +619,99 @@ def verify_workbook(xlsx: Path, html_path: Path) -> tuple[list[str], list[str]]:
     return failures, notes
 
 
+EMBED_SECTION_RE = re.compile(
+    r'<section class="function-design-embed"[^>]*data-source="([^"]+)"[^>]*>(.*?)</section>',
+    re.S,
+)
+
+
+def _superseded_failures(output_dir: Path) -> tuple[list[str], list[str]]:
+    """Excel基本設計により廃止された仕様の明示が、生成物と正本から欠けていないか。
+
+    (a) 台帳に載る機能設計書の埋め込み節・単体プレビューにバナーが出ていること。
+        「バナーが無いファイルは検査対象外」にすると、レンダラが壊れて全部から
+        バナーが消えても素通りする（endpoint-supplement 消失事故と同型）ので、
+        台帳を起点に「在るべきものが在るか」を検査する。
+    (b) 廃止の明記が機能設計書Markdown（人間用の記述正本）にあること。
+        台帳とMarkdownの二重管理が腐るのを機械で止める。
+    (c) 新規の廃止指示が未判定のまま残っていないこと（ベースライン ratchet）。
+    """
+    failures: list[str] = []
+    notes: list[str] = []
+
+    failures.extend(superseded_specs.assert_unique_markers())
+
+    entries_by_doc = superseded_specs._entries_by_doc()
+    ledger_docs = {
+        doc for doc, entries in entries_by_doc.items()
+        if any(e.get("verdict") in superseded_specs.RENDER_VERDICTS for e in entries)
+    }
+
+    # (a) Excel由来HTMLの埋め込み節
+    embedded_docs: set[str] = set()
+    for path in sorted(output_dir.glob("*.html")):
+        document = path.read_text(encoding="utf-8")
+        for doc, section in EMBED_SECTION_RE.findall(document):
+            if doc not in ledger_docs:
+                continue
+            embedded_docs.add(doc)
+            if BANNER_MARK not in section:
+                failures.append(
+                    f"{path.name}: {doc} の埋め込み節に「刷新後は実装不要」バナーが無い"
+                    "（integrate_function_docs_into_excel_html.py を再実行してください）"
+                )
+
+    # (a) 単体プレビュー
+    for doc in sorted(ledger_docs):
+        preview = PREVIEW_ROOT / Path(doc).parent.name / (Path(doc).stem + ".html")
+        if not preview.exists():
+            failures.append(f"プレビューHTMLが未生成: {preview.relative_to(REPO_ROOT)}")
+        elif BANNER_MARK not in preview.read_text(encoding="utf-8"):
+            failures.append(
+                f"{preview.name}: 「刷新後は実装不要」バナーが無い"
+                "（integrate_function_docs_into_excel_html.py を再実行してください）"
+            )
+        if doc not in embedded_docs:
+            notes.append(f"埋め込み先シートなし（プレビューのみで明示）: {doc}")
+
+    # (b) 台帳 ⇔ Markdown の同期
+    for doc, entries in sorted(entries_by_doc.items()):
+        source = REPO_ROOT / doc
+        if not source.exists():
+            failures.append(f"台帳が参照する機能設計書が存在しない: {doc}")
+            continue
+        text = source.read_text(encoding="utf-8")
+        for entry in entries:
+            if entry.get("verdict") not in superseded_specs.RENDER_VERDICTS:
+                continue
+            marker = superseded_specs.md_marker(entry)
+            if marker not in text:
+                failures.append(
+                    f"{doc}: 廃止の明記が無い（台帳 {entry.get('id')}）。"
+                    f"本文へ「{marker}。刷新後は実装しない」を書いてください"
+                )
+
+    # (c) 新規の廃止指示が未判定で残っていないか
+    rows = detect_superseded_specs.scan()
+    baseline = detect_superseded_specs.read_keys(detect_superseded_specs.BASELINE_TSV)
+    fresh = [
+        r for r in detect_superseded_specs.open_candidates(rows)
+        if (r["book"], r["sheetId"], r["identifierId"], r["line"]) not in baseline
+    ]
+    for r in fresh[:MAX_DIAGNOSTICS]:
+        failures.append(
+            f"未判定の廃止指示: [{r['book']} {r['sheetName']} 識別ID:{r['identifierId'] or '-'}] "
+            f"{r['line'][:60]} → functions/superseded_specs.json へ判定を記録してください"
+        )
+    if len(fresh) > MAX_DIAGNOSTICS:
+        failures.append(f"未判定の廃止指示: ほか {len(fresh) - MAX_DIAGNOSTICS} 件")
+
+    triage_left = len(detect_superseded_specs.open_candidates(rows))
+    notes.append(f"台帳エントリ: {sum(len(v) for v in entries_by_doc.values())}（機能設計書 {len(entries_by_doc)} 本）")
+    notes.append(f"要トリアージの廃止指示: {triage_left}（うち新規 {len(fresh)}／残りはベースライン退避済み）")
+    return failures, notes
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input-dir", default=BASE_DIR / "input", type=Path)
@@ -638,6 +744,17 @@ def main() -> int:
                 print(f"  NG: {f}")
         else:
             print("  OK: 全チェック合格")
+
+    print("\n=== 廃止仕様の明示（superseded-spec） ===")
+    sup_failures, sup_notes = _superseded_failures(args.output_dir)
+    for note in sup_notes:
+        print(f"  - {note}")
+    if sup_failures:
+        ok = False
+        for f in sup_failures:
+            print(f"  NG: {f}")
+    else:
+        print("  OK: 台帳の全エントリがバナー・Markdownに反映され、未判定の新規廃止指示なし")
 
     print("\n" + ("VERIFY OK" if ok else "VERIFY FAILED"))
     return 0 if ok else 1

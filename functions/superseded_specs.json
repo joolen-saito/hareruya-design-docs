@@ -1,0 +1,207 @@
+{
+  "policy": "Excel基本設計（顧客合意済みの刷新後仕様）が、現行実装からリバースした機能設計書の記述を上書き・無効化している非対称（design-supersedes-source）だけを扱う台帳。現行ソース由来の記述は削除せず残し、『刷新後は実装不要』と明示するために使う。フェーズ延期（Ph2/フェーズ2）は design_impl_drift_report/phase2_excluded_functions.json の領分であり、ここには入れない。",
+  "schema": {
+    "id": "書番-識別ID（識別IDが無い指示は 書番-シートID-スラッグ）。HTMLの行番号は再生成で動くため正キーにしない。",
+    "verdict": "deleted（削除） | replaced（A→Bへ変更。replacement必須） | restructured（画面再編） | not-superseded（検出したが廃止ではない偽陽性。reason必須） | needs-triage（未判定）",
+    "scope": "FUNCTION_SCOPE（機能・画面まるごと） | ITEM_SCOPE（項目単位）",
+    "affects": "この廃止が波及する機能設計書。doc に書いた md には、廃止の明記が必要（verify が同期を強制する）。",
+    "render": "verdict が deleted / replaced / restructured のエントリだけがHTMLバナーへ描画される。"
+  },
+  "verifiedAt": "2026-07-14",
+  "verifiedBy": "Excel由来HTMLの該当シート・識別ID行と、現行実装（pf-eccube3）・刷新先（ec-cube-enterprise）のソースを突き合わせて判定",
+  "entries": [
+    {
+      "id": "0214-1-12",
+      "book": "0214",
+      "bookTitle": "イベント管理",
+      "identifierId": "1-12",
+      "sheets": [
+        { "sheetId": "sheet-5", "sheetName": "イベント編集", "anchor": "item-sheet-5-1-12" },
+        { "sheetId": "sheet-9", "sheetName": "複製新規", "anchor": "item-sheet-9-1-12" }
+      ],
+      "verdict": "replaced",
+      "scope": "ITEM_SCOPE",
+      "target": "チーム人数",
+      "replacement": "チーム戦フラグ（dtb_event.is_team_battle、真偽）",
+      "designQuote": "現行の「チーム人数」を削除し、「チーム戦」チェックボックスを追加する",
+      "impliedUnneeded": [
+        "チームメンバーのメールアドレス・席次の入力",
+        "メールのみの仮選手（dtb_player）の作成",
+        "チームメンバー招待メールの送信",
+        "未承認（confirm_flg=UNCONFIRMED）での申込選手登録",
+        "招待リンクからのチームプレイヤー認証（events_team_player_activate）"
+      ],
+      "affects": [
+        { "featureNo": "M13-02", "doc": "functions/pf-eccube3/m13-02_admin_event_event_edit_delete.md" },
+        { "featureNo": "M13-05", "doc": "functions/pf-eccube3/m13-05_admin_event_event_duplicate_register.md" },
+        { "featureNo": "M13-12", "doc": "functions/pf-eccube3/m13-12_admin_event_event_entry_register.md" },
+        { "featureNo": "F07-04", "doc": "functions/pf-eccube3/f07-04_front_event_event_entry_complete.md" }
+      ],
+      "currentImpl": "pf-eccube3 app/Plugin/HareruyaEc/Controller/EventController.php:475-545（チーム人数分のメール検証・仮選手作成・未承認登録・招待メール送信）、Service/MailService.php:175-203（招待メールと events_team_player_activate へのリンク生成）",
+      "renewalImpl": "ec-cube-enterprise に該当実装なし。DtbEvent は team_member_count を持たず is_team_battle(bool) のみで、申込処理（Service/Front/Event/EventEntryRegisterAction.php）から参照されない。招待メール送信メソッドも activate ルートも存在しない。",
+      "evidenceStrength": "strong",
+      "reason": "人数（整数）が真偽フラグに変わるため、メンバー人数を前提とする「ログイン会員以外のN-1人分のメール入力」が成立しない。招待の相手を特定できないため、招待メール・未承認登録・承認導線がまとめて不要になる。"
+    },
+    {
+      "id": "0214-4-1",
+      "book": "0214",
+      "bookTitle": "イベント管理",
+      "identifierId": "4-1",
+      "sheets": [
+        { "sheetId": "sheet-15", "sheetName": "イベント申込詳細・編集", "anchor": "item-sheet-15-4-1" },
+        { "sheetId": "sheet-18", "sheetName": "イベント新規申込登録", "anchor": "item-sheet-18-4-1" }
+      ],
+      "verdict": "deleted",
+      "scope": "ITEM_SCOPE",
+      "target": "席順（席次）",
+      "designQuote": "識別ID:4-1「席順」は削除する",
+      "impliedUnneeded": [
+        "参加プレイヤー表の席順セレクトと、席順アルファベット一覧による検証",
+        "申込選手への席次（seat_order）設定"
+      ],
+      "affects": [
+        { "featureNo": "M13-10", "doc": "functions/pf-eccube3/m13-10_admin_event_event_entry_edit.md" },
+        { "featureNo": "M13-12", "doc": "functions/pf-eccube3/m13-12_admin_event_event_entry_register.md" },
+        { "featureNo": "F07-04", "doc": "functions/pf-eccube3/f07-04_front_event_event_entry_complete.md" }
+      ],
+      "currentImpl": "pf-eccube3 EventController.php:530-541（seat_order の設定）、admin/Entry テンプレートの席順セレクト",
+      "renewalImpl": "ec-cube-enterprise の DtbEntryPlayer に seat_order 列は残るが既定値1のまま。申込処理から席次を設定するコードは無い。",
+      "evidenceStrength": "strong",
+      "reason": "刷新後の申込画面から席順の入力自体が無くなる。"
+    },
+    {
+      "id": "0214-4-2",
+      "book": "0214",
+      "bookTitle": "イベント管理",
+      "identifierId": "4-2",
+      "sheets": [
+        { "sheetId": "sheet-15", "sheetName": "イベント申込詳細・編集", "anchor": "item-sheet-15-4-2" },
+        { "sheetId": "sheet-18", "sheetName": "イベント新規申込登録", "anchor": "item-sheet-18-4-2" }
+      ],
+      "verdict": "deleted",
+      "scope": "ITEM_SCOPE",
+      "target": "DCIナンバー（参加プレイヤー表）",
+      "designQuote": "識別ID:4-2「DCIナンバー」は削除する",
+      "affects": [
+        { "featureNo": "M13-10", "doc": "functions/pf-eccube3/m13-10_admin_event_event_entry_edit.md" },
+        { "featureNo": "M13-12", "doc": "functions/pf-eccube3/m13-12_admin_event_event_entry_register.md" }
+      ],
+      "currentImpl": "pf-eccube3 admin/Entry テンプレートの参加プレイヤー表（DCIナンバー列）",
+      "renewalImpl": "ec-cube-enterprise の申込画面に DCIナンバー列なし。",
+      "evidenceStrength": "strong",
+      "reason": "識別ID:8「DCIナンバー」の削除指示も同一シートにあり、申込画面からDCIナンバーが全面的に無くなる。"
+    },
+    {
+      "id": "0214-4-3",
+      "book": "0214",
+      "bookTitle": "イベント管理",
+      "identifierId": "4-3",
+      "sheets": [
+        { "sheetId": "sheet-15", "sheetName": "イベント申込詳細・編集", "anchor": "item-sheet-15-4-3" },
+        { "sheetId": "sheet-18", "sheetName": "イベント新規申込登録", "anchor": "item-sheet-18-4-3" }
+      ],
+      "verdict": "deleted",
+      "scope": "ITEM_SCOPE",
+      "target": "チームメンバー確認済み（承認フラグ）",
+      "designQuote": "識別ID:4-3「チームメンバー確認済み」は削除する",
+      "impliedUnneeded": [
+        "参加プレイヤー表のチームメンバー確認済チェックと、その更新",
+        "承認フラグ（dtb_entry_player.confirm_flg）の運用",
+        "招待リンクからのチームプレイヤー認証（events_team_player_activate）"
+      ],
+      "affects": [
+        { "featureNo": "M13-10", "doc": "functions/pf-eccube3/m13-10_admin_event_event_entry_edit.md" },
+        { "featureNo": "M13-12", "doc": "functions/pf-eccube3/m13-12_admin_event_event_entry_register.md" },
+        { "featureNo": "F07-04", "doc": "functions/pf-eccube3/f07-04_front_event_event_entry_complete.md" }
+      ],
+      "currentImpl": "pf-eccube3 EventController.php:536-545（UNCONFIRMED での登録と招待メール送信）、MailService.php:175-203",
+      "renewalImpl": "ec-cube-enterprise の DtbEntryPlayer.confirm_flg は既定 CONFIRMED のままで、未承認をセットするコードが無い。MailTemplate::TEAM_MEMBER_INVITATION_JP/EN 定数と招待メールtwigは残存するが、送信するコードは存在しない。",
+      "evidenceStrength": "strong",
+      "reason": "承認フラグの運用そのものが画面から消えるため、未承認状態を作る招待フローと、それを承認する認証導線が不要になる。"
+    },
+    {
+      "id": "0214-3-1",
+      "book": "0214",
+      "bookTitle": "イベント管理",
+      "identifierId": "3-1",
+      "sheets": [
+        { "sheetId": "sheet-10", "sheetName": "イベント申込一覧(検索入力)", "anchor": "item-sheet-10-3-1" }
+      ],
+      "verdict": "deleted",
+      "scope": "ITEM_SCOPE",
+      "target": "DCIナンバー（検索条件）",
+      "designQuote": "識別ID:3-1 「DCIナンバー」を削除",
+      "affects": [
+        { "featureNo": "M13-06", "doc": "functions/pf-eccube3/m13-06_admin_event_event_entry_management_search.md" }
+      ],
+      "currentImpl": "pf-eccube3 イベント申込検索フォームの複数行入力（検索条件キー dci_no）",
+      "renewalImpl": "ec-cube-enterprise の申込検索に DCIナンバー条件なし。",
+      "evidenceStrength": "strong",
+      "reason": "検索条件からDCIナンバーが削除される。"
+    },
+    {
+      "id": "0214-5",
+      "book": "0214",
+      "bookTitle": "イベント管理",
+      "identifierId": "5",
+      "sheets": [
+        { "sheetId": "sheet-13", "sheetName": "デッキ表示", "anchor": "item-sheet-13-5" }
+      ],
+      "verdict": "deleted",
+      "scope": "ITEM_SCOPE",
+      "target": "DCIナンバー（デッキ表示）",
+      "designQuote": "識別ID:5「DCIナンバー」の項目を削除する",
+      "affects": [
+        { "featureNo": "M13-08", "doc": "functions/pf-eccube3/m13-08_admin_event_event_deck_view.md" }
+      ],
+      "currentImpl": "pf-eccube3 デッキ表示のプレイヤー情報（DCIナンバー）",
+      "renewalImpl": "ec-cube-enterprise のデッキ表示に DCIナンバーなし。",
+      "evidenceStrength": "strong",
+      "reason": "デッキ表示の項目からDCIナンバーが削除される。"
+    },
+    {
+      "id": "0303-sheet-5-detail-search-screen",
+      "book": "0303",
+      "bookTitle": "フロント_商品",
+      "identifierId": null,
+      "sheets": [
+        { "sheetId": "sheet-5", "sheetName": "商品詳細検索", "anchor": null }
+      ],
+      "verdict": "restructured",
+      "scope": "FUNCTION_SCOPE",
+      "target": "商品詳細検索画面（独立画面）",
+      "replacement": "商品一覧上のモーダル（モーダル外またはフッターの詳細検索ボタンで閉じる）",
+      "designQuote": "現行で表示していた商品詳細検索画面は削除となる",
+      "impliedUnneeded": [
+        "独立した詳細検索画面の表示とその画面遷移"
+      ],
+      "affects": [
+        { "featureNo": "F03-03", "doc": "functions/pf-eccube3/f03-03_front_product_product_detail_search.md" }
+      ],
+      "currentImpl": "pf-eccube3 商品検索フォーム種別 front_product_search とテンプレート Product/search.twig（独立画面）",
+      "renewalImpl": "ec-cube-enterprise 実装で要確認（モーダル化の実装有無）。",
+      "evidenceStrength": "strong",
+      "reason": "画面そのものが廃止され、商品一覧上のモーダルへ再編される。検索条件の受け渡し（F03-01へのクエリ）自体は残る。"
+    },
+    {
+      "id": "0303-sheet-5-cardset",
+      "book": "0303",
+      "bookTitle": "フロント_商品",
+      "identifierId": null,
+      "sheets": [
+        { "sheetId": "sheet-5", "sheetName": "商品詳細検索", "anchor": null }
+      ],
+      "verdict": "deleted",
+      "scope": "ITEM_SCOPE",
+      "target": "カードセット（検索条件）",
+      "designQuote": "カードセットは新しいカテゴリ構造と重複するため削除とする",
+      "affects": [
+        { "featureNo": "F03-03", "doc": "functions/pf-eccube3/f03-03_front_product_product_detail_search.md" }
+      ],
+      "currentImpl": "pf-eccube3 詳細検索のカードセット選択（mtb_cardset をリリース日降順で提示、クエリ cardset）",
+      "renewalImpl": "ec-cube-enterprise 実装で要確認（新カテゴリ構造への統合）。",
+      "evidenceStrength": "strong",
+      "reason": "新しいカテゴリ構造と重複するため、検索条件としてのカードセットが削除される。"
+    }
+  ]
+}

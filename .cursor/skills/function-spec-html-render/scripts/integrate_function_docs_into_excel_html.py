@@ -13,6 +13,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import superseded_specs  # noqa: E402  Excel基本設計により廃止された仕様のバナー
 
 ROOT = Path(__file__).resolve().parents[4]
 TODO = ROOT / "functions" / "todo-list.md"
@@ -164,6 +166,8 @@ EMBED_CSS = f"""
     .function-design-body tbody tr:nth-child(even) {{
       background: #fffaf0;
     }}
+
+    {superseded_specs.SUPERSEDED_CSS}
     {CSS_END}
 """.strip("\n")
 
@@ -515,13 +519,19 @@ def render_block(converter, row: TodoRow, key: str, note: str | None = None) -> 
         if note
         else ""
     )
+    # Excel基本設計により廃止された記述は、消さずに残したうえで「刷新後は実装不要」と明示する。
+    # 後段注入ではなく描画に含める（strip_existing_embeds が毎回ブロックを作り直すため）。
+    superseded = superseded_specs.render_notice(
+        source_rel, superseded_specs.HREF_FROM_EXCEL_OUTPUT
+    )
+    superseded_html = f"\n        {superseded}" if superseded else ""
     return f"""      {BLOCK_BEGIN_PREFIX} {key} -->
       <section class="function-design-embed" id="function-design-{html.escape(key, quote=True)}" data-source="{html.escape(source_rel, quote=True)}">
         <header class="function-design-header">
           <p class="function-design-source">Source:<br>{source_label}</p>
           <h3>詳細設計書</h3>
           <h4>{html.escape(row.feature_no, quote=False)} {html.escape(row.feature_name, quote=False)} / {title_html}</h4>{note_html}
-        </header>
+        </header>{superseded_html}
         <div class="function-design-body">
 {body}
         </div>
@@ -557,11 +567,27 @@ def integrate_html(html_path: Path, items: list[tuple[TodoRow, SheetRef, str]]) 
     html_path.write_text(document, encoding="utf-8")
 
 
+def body_limit(document: str) -> int:
+    """シートパネルが及ぶ範囲の終端。
+
+    最後のパネルの終端を文書末尾にすると、範囲が「実装差分追補」節（`</main>` 直前の
+    `<section class="endpoint-supplement">`）まで届く。挿入位置は範囲内の最後の
+    `</section>` なので、最後のシートの詳細設計書が追補節の中へ埋め込まれてしまう。
+    本文の終わり（追補節の開始、無ければ `</main>`）で必ず打ち切る。
+    """
+    limits = [
+        i for i in (document.find("<!-- endpoint-supplement:start -->"), document.find("</main>"))
+        if i != -1
+    ]
+    return min(limits) if limits else len(document)
+
+
 def build_sheet_index_for_document(html_path: Path, document: str) -> dict[str, list[SheetRef]]:
     index: dict[str, list[SheetRef]] = defaultdict(list)
     starts = list(SECTION_RE.finditer(document))
+    limit = body_limit(document)
     for pos, match in enumerate(starts):
-        end = starts[pos + 1].start() if pos + 1 < len(starts) else len(document)
+        end = starts[pos + 1].start() if pos + 1 < len(starts) else max(limit, match.end())
         section = document[match.start() : end]
         feature_no = extract_kv(FEATURE_NO_RE, section)
         if not feature_no:
@@ -594,9 +620,11 @@ def strip_existing_embeds(document: str) -> str:
         document,
         flags=re.DOTALL,
     )
+    # CSSブロックは手前の改行・インデントごと落として改行1つに畳む。残骸を残すと
+    # ensure_css が毎回入れ直すぶんだけ空行が増え、逆に消しすぎると直前の行に貼り付く。
     document = re.sub(
-        re.escape(CSS_BEGIN) + r".*?" + re.escape(CSS_END) + r"\n?",
-        "",
+        r"\n?[ \t]*" + re.escape(CSS_BEGIN) + r".*?" + re.escape(CSS_END) + r"[ \t]*\n?",
+        "\n",
         document,
         flags=re.DOTALL,
     )
@@ -604,10 +632,16 @@ def strip_existing_embeds(document: str) -> str:
 
 
 def ensure_css(document: str) -> str:
+    """埋め込み用CSSを `</style>` の直前へ置く。
+
+    挿入位置と前後の空白を毎回同じ形に正規化する。strip との組み合わせで
+    「実行のたびに位置がずれる／空行が増える」ことがないようにするため、
+    直前の空白は落として組み直す。
+    """
     style_end = document.find("</style>")
     if style_end == -1:
         return document
-    return document[:style_end] + "\n" + EMBED_CSS + "\n" + document[style_end:]
+    return document[:style_end].rstrip() + "\n" + EMBED_CSS + "\n" + document[style_end:]
 
 
 def write_report(
