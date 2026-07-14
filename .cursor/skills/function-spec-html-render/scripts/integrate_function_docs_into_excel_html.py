@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import phase2_specs  # noqa: E402  フェーズ2対応（フェーズ1では実装しない）仕様のバナー
 import superseded_specs  # noqa: E402  Excel基本設計により廃止された仕様のバナー
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -168,6 +169,8 @@ EMBED_CSS = f"""
     }}
 
     {superseded_specs.SUPERSEDED_CSS}
+
+    {phase2_specs.PHASE2_CSS}
     {CSS_END}
 """.strip("\n")
 
@@ -519,12 +522,14 @@ def render_block(converter, row: TodoRow, key: str, note: str | None = None) -> 
         if note
         else ""
     )
-    # Excel基本設計により廃止された記述は、消さずに残したうえで「刷新後は実装不要」と明示する。
-    # 後段注入ではなく描画に含める（strip_existing_embeds が毎回ブロックを作り直すため）。
-    superseded = superseded_specs.render_notice(
-        source_rel, superseded_specs.HREF_FROM_EXCEL_OUTPUT
-    )
-    superseded_html = f"\n        {superseded}" if superseded else ""
+    # Excel基本設計により廃止された記述、およびフェーズ2対応の記述は、消さずに残したうえで
+    # 「実装不要」であることを明示する。後段注入ではなく描画に含める
+    #（strip_existing_embeds が毎回ブロックを作り直すため、注入では integrate のたびに消える）。
+    notices = [
+        phase2_specs.render_notice(source_rel, superseded_specs.HREF_FROM_EXCEL_OUTPUT),
+        superseded_specs.render_notice(source_rel, superseded_specs.HREF_FROM_EXCEL_OUTPUT),
+    ]
+    superseded_html = "".join(f"\n        {n}" for n in notices if n)
     return f"""      {BLOCK_BEGIN_PREFIX} {key} -->
       <section class="function-design-embed" id="function-design-{html.escape(key, quote=True)}" data-source="{html.escape(source_rel, quote=True)}">
         <header class="function-design-header">

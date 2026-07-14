@@ -16,6 +16,12 @@
 
 買取詳細が更新する店頭買取系テーブルは、現行（pf-eccube3のHareruyaEcプラグイン）と移行先（ec-cube-enterprise）でテーブル名・主要列名が一致し、概ね同一スキーマである。`dtb_otc_buy_order`の`free_comment`・`update_date`、`dtb_otc_buy_order_stock`、`dtb_otc_buy_order_stock_history`、`dtb_otc_buy_order_indivisual_input_product`はいずれも同名である。確認できた差分は次のとおりで、DB関連はec-cube-enterpriseを正とする。
 
+### フェーズ2対応（フェーズ1では実装不要）
+
+本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計がフェーズ2対応としている。フェーズ1では実装・テストの対象外とする。
+
+- 一部キャンセル（※Excel基本設計 0205「一部キャンセル」はフェーズ2対応。フェーズ1では実装しない）。フェーズ2対応。Excel原文: 「一部キャンセルはPh2の要件となるためPh1では実装しない」（0205 買取詳細）
+
 | 観点 | 現行（pf-eccube3のHareruyaEcプラグイン） | 移行先（ec-cube-enterprise） |
 |------|------|------|
 | 在庫・履歴・個別入力テーブル | 同名（同一スキーマ） | 同名（同一スキーマ） |

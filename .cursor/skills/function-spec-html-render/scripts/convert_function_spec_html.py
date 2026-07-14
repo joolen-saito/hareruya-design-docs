@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import phase2_specs  # noqa: E402  フェーズ2対応（フェーズ1では実装しない）仕様のバナー
 import superseded_specs  # noqa: E402  Excel基本設計により廃止された仕様のバナー
 
 
@@ -336,6 +337,7 @@ def render_document(markdown: str, source: Path, screen_sources: list[Path] | No
   <style>
 {CSS}
     {superseded_specs.SUPERSEDED_CSS}
+    {phase2_specs.PHASE2_CSS}
   </style>
 </head>
 <body>
@@ -360,7 +362,7 @@ def render_document(markdown: str, source: Path, screen_sources: list[Path] | No
 
 
 def render_superseded_notice(source: Path, href_prefix: str = superseded_specs.HREF_FROM_PREVIEW) -> str:
-    """Excel基本設計により廃止された記述への「刷新後は実装不要」バナー。
+    """実装不要であることを示すバナー（フェーズ2対応、およびExcel基本設計による廃止）。
 
     既定の href_prefix は単体プレビュー（`function_spec_html_preview/<repo>/x.html`）用。
     excel_to_html/output へ直接書き出す文書（orphan group）は空文字を渡す。
@@ -370,7 +372,12 @@ def render_superseded_notice(source: Path, href_prefix: str = superseded_specs.H
         key = superseded_specs.doc_key(source)
     except ValueError:
         return ""  # リポジトリ外の md（テスト等）は対象外
-    return superseded_specs.render_notice(key, href_prefix)
+    return "\n      ".join(
+        n for n in (
+            phase2_specs.render_notice(key, href_prefix),
+            superseded_specs.render_notice(key, href_prefix),
+        ) if n
+    )
 
 
 def render_toc(headings: Iterable[tuple[int, str, str]]) -> str:

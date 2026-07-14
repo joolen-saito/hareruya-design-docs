@@ -106,6 +106,7 @@ def build_group_html(converter, title: str, members: list[tuple[str, str, Path]]
   <style>
 {converter.CSS}
     {converter.superseded_specs.SUPERSEDED_CSS}
+    {converter.phase2_specs.PHASE2_CSS}
   </style>
 </head>
 <body>

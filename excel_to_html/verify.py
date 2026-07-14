@@ -45,10 +45,18 @@ REPO_ROOT = BASE_DIR.parent
 SKILL_SCRIPTS = REPO_ROOT / ".cursor" / "skills" / "function-spec-html-render" / "scripts"
 sys.path.insert(0, str(SKILL_SCRIPTS))
 import superseded_specs  # noqa: E402
+import phase2_specs  # noqa: E402
 import detect_superseded_specs  # noqa: E402
+import detect_phase2_specs  # noqa: E402
 
 PREVIEW_ROOT = REPO_ROOT / "function_spec_html_preview"
 BANNER_MARK = '<span class="superseded-badge">'
+PHASE2_MARK = '<span class="phase2-badge">'
+# フェーズ2の機能単位の除外は、テスト生成側でもハードコードされている。台帳と食い違うと
+# 「設計書ではPh2なのにテストは作られる」状態になるため、同期を機械で検査する。
+SCENARIO_EXCLUSION_SOURCE = (
+    REPO_ROOT / ".codex" / "skills" / "hareruya-scenario-test-cases" / "scripts" / "generate_scenarios.py"
+)
 MAX_DIAGNOSTICS = 10
 
 
@@ -623,6 +631,70 @@ EMBED_SECTION_RE = re.compile(
     r'<section class="function-design-embed"[^>]*data-source="([^"]+)"[^>]*>(.*?)</section>',
     re.S,
 )
+CELL_RE = re.compile(r"<t[dh][^>]*>(.*?)</t[dh]>", re.S)
+# 画面項目定義の備考欄が廃止を意味する語。deleted 判定はここで裏を取る。
+ABOLITION_WORDS = re.compile(r"削除|除去|廃止|不要|踏襲しない|表示しない")
+
+
+def _cells_of_item_row(document: str, anchor: str) -> list[str] | None:
+    m = re.search(r'<tr id="' + re.escape(anchor) + r'">(.*?)</tr>', document, re.S)
+    if not m:
+        return None
+    return [
+        html.unescape(re.sub(r"<[^>]+>", " ", c)).strip() for c in CELL_RE.findall(m.group(1))
+    ]
+
+
+def _ledger_vs_excel_failures(output_dir: Path) -> list[str]:
+    """台帳の判定が Excel の記述と矛盾していないか。
+
+    最も危険な誤りは逆方向、すなわち **Excel が刷新後も要求している機能を「不要」と
+    表示してしまうこと**。これを機械で防ぐ。
+
+    - 指示原文（designQuote）が Excel由来HTMLに実在すること。根拠のない廃止判定を作らせない。
+    - verdict=deleted で画面項目定義のアンカーがある場合、その行の備考欄が廃止を意味して
+      いること。Excelが「任意→必須へ変更」等と書いている項目を削除扱いにすると、
+      ここで NG になる。
+    """
+    failures: list[str] = []
+    cache: dict[str, str] = {}
+
+    for entry in superseded_specs.load_ledger().get("entries", []):
+        if entry.get("verdict") not in superseded_specs.RENDER_VERDICTS:
+            continue
+        book = entry.get("book", "")
+        if book not in cache:
+            matches = sorted(output_dir.glob(f"{book}_*.html"))
+            if not matches:
+                failures.append(f"台帳 {entry.get('id')}: 書番 {book} のHTMLが見つからない")
+                continue
+            cache[book] = matches[0].read_text(encoding="utf-8")
+        document = cache[book]
+
+        quote = (entry.get("designQuote") or "").strip()
+        if quote and quote not in html.unescape(re.sub(r"<[^>]+>", " ", document)):
+            failures.append(
+                f"台帳 {entry.get('id')}: 指示原文がExcel由来HTMLに見つからない"
+                f"（designQuote=「{quote[:40]}」）。根拠を確認してください"
+            )
+
+        if entry.get("verdict") != "deleted":
+            continue
+        for sheet in entry.get("sheets") or []:
+            anchor = sheet.get("anchor")
+            if not anchor:
+                continue
+            cells = _cells_of_item_row(document, anchor)
+            if cells is None:
+                failures.append(f"台帳 {entry.get('id')}: 画面項目定義の行 {anchor} が存在しない")
+                continue
+            if not ABOLITION_WORDS.search(" ".join(cells)):
+                failures.append(
+                    f"台帳 {entry.get('id')}: Excelの画面項目定義 {anchor} が廃止と読めない"
+                    f"（{' | '.join(c for c in cells if c)[:80]}）。"
+                    "Excelが刷新後も要求している項目を削除扱いにしていないか確認してください"
+                )
+    return failures
 
 
 def _superseded_failures(output_dir: Path) -> tuple[list[str], list[str]]:
@@ -640,6 +712,8 @@ def _superseded_failures(output_dir: Path) -> tuple[list[str], list[str]]:
     notes: list[str] = []
 
     failures.extend(superseded_specs.assert_unique_markers())
+    # (0) 判定そのものがExcelと矛盾していないか（Excelが要求する機能を不要と書いていないか）
+    failures.extend(_ledger_vs_excel_failures(output_dir))
 
     entries_by_doc = superseded_specs._entries_by_doc()
     ledger_docs = {
@@ -712,6 +786,110 @@ def _superseded_failures(output_dir: Path) -> tuple[list[str], list[str]]:
     return failures, notes
 
 
+def _scenario_excluded_feature_ids() -> set[str]:
+    """テスト生成側にハードコードされた Ph2 除外機能No（EXCLUDED_FEATURE_IDS）。"""
+    if not SCENARIO_EXCLUSION_SOURCE.exists():
+        return set()
+    text = SCENARIO_EXCLUSION_SOURCE.read_text(encoding="utf-8")
+    m = re.search(r"EXCLUDED_FEATURE_IDS\s*=\s*\{(.*?)\}", text, re.S)
+    return set(re.findall(r'"([A-Z]\d{2}-\d{2})"', m.group(1))) if m else set()
+
+
+def _phase2_failures(output_dir: Path) -> tuple[list[str], list[str]]:
+    """フェーズ2対応（フェーズ1では実装しない）の明示が、生成物と正本から欠けていないか。
+
+    廃止（superseded）と同じ構造で検査する。加えて、機能まるごとPh2のものが
+    テスト生成側の除外リストに載っているかも見る。台帳とリストが食い違うと
+    「設計書ではPh2なのにテストは作られる」状態になる。
+    """
+    failures: list[str] = []
+    notes: list[str] = []
+
+    failures.extend(phase2_specs.assert_unique_markers())
+
+    entries_by_doc = phase2_specs._entries_by_doc()
+    ledger_docs = {
+        doc for doc, entries in entries_by_doc.items()
+        if any(e.get("verdict") in phase2_specs.RENDER_VERDICTS for e in entries)
+    }
+
+    embedded_docs: set[str] = set()
+    for path in sorted(output_dir.glob("*.html")):
+        document = path.read_text(encoding="utf-8")
+        for doc, section in EMBED_SECTION_RE.findall(document):
+            if doc not in ledger_docs:
+                continue
+            embedded_docs.add(doc)
+            if PHASE2_MARK not in section:
+                failures.append(
+                    f"{path.name}: {doc} の埋め込み節に「フェーズ1では実装不要」バナーが無い"
+                    "（integrate_function_docs_into_excel_html.py を再実行してください）"
+                )
+
+    for doc in sorted(ledger_docs):
+        preview = PREVIEW_ROOT / Path(doc).parent.name / (Path(doc).stem + ".html")
+        if not preview.exists():
+            failures.append(f"プレビューHTMLが未生成: {preview.relative_to(REPO_ROOT)}")
+        elif PHASE2_MARK not in preview.read_text(encoding="utf-8"):
+            failures.append(f"{preview.name}: 「フェーズ1では実装不要」バナーが無い")
+        if doc not in embedded_docs:
+            notes.append(f"埋め込み先シートなし（プレビューのみで明示）: {doc}")
+
+    # 台帳 ⇔ Markdown の同期
+    for doc, entries in sorted(entries_by_doc.items()):
+        source = REPO_ROOT / doc
+        if not source.exists():
+            failures.append(f"Ph2台帳が参照する機能設計書が存在しない: {doc}")
+            continue
+        text = source.read_text(encoding="utf-8")
+        for entry in entries:
+            if entry.get("verdict") not in phase2_specs.RENDER_VERDICTS:
+                continue
+            marker = phase2_specs.md_marker(entry)
+            if marker not in text:
+                failures.append(
+                    f"{doc}: フェーズ2対応の明記が無い（Ph2台帳 {entry.get('id')}）。"
+                    f"本文へ「{marker}。フェーズ1では実装しない」を書いてください"
+                )
+
+    # 機能まるごとPh2 ⊆ テスト生成側の除外リスト
+    excluded = _scenario_excluded_feature_ids()
+    if excluded:
+        for entry in phase2_specs.load_ledger().get("entries", []):
+            if entry.get("verdict") not in phase2_specs.RENDER_VERDICTS:
+                continue
+            if entry.get("scope") != "FUNCTION_SCOPE":
+                continue  # 項目単位のPh2は機能ごと除外してはならない
+            for feature_no in entry.get("featureNos") or []:
+                if feature_no not in excluded:
+                    failures.append(
+                        f"Ph2台帳 {entry.get('id')}: {feature_no} が機能まるごとPh2なのに、"
+                        "テスト生成側の EXCLUDED_FEATURE_IDS に無い"
+                        f"（{SCENARIO_EXCLUSION_SOURCE.relative_to(REPO_ROOT)}）。"
+                        "設計書ではPh2なのにテストが作られてしまいます"
+                    )
+
+    # 新規のPh2注記が未判定で残っていないか
+    rows = detect_phase2_specs.scan()
+    baseline = detect_phase2_specs.read_keys(detect_phase2_specs.BASELINE_TSV)
+    fresh = [
+        r for r in detect_phase2_specs.open_candidates(rows)
+        if (r["book"], r["sheetId"], r["line"]) not in baseline
+    ]
+    for r in fresh[:MAX_DIAGNOSTICS]:
+        failures.append(
+            f"未判定のPh2注記: [{r['book']} {r['sheetName']} {r['featureNo'] or '-'}] "
+            f"{r['line'][:60]} → functions/phase2_specs.json へ判定を記録してください"
+        )
+    if len(fresh) > MAX_DIAGNOSTICS:
+        failures.append(f"未判定のPh2注記: ほか {len(fresh) - MAX_DIAGNOSTICS} 件")
+
+    triage = [e for e in phase2_specs.load_ledger().get("entries", []) if e.get("verdict") == "needs-triage"]
+    notes.append(f"Ph2台帳エントリ: {len(phase2_specs.load_ledger().get('entries', []))}（機能設計書 {len(entries_by_doc)} 本）")
+    notes.append(f"対象が特定できず要判定のPh2注記: {len(triage)} 件")
+    return failures, notes
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input-dir", default=BASE_DIR / "input", type=Path)
@@ -755,6 +933,17 @@ def main() -> int:
             print(f"  NG: {f}")
     else:
         print("  OK: 台帳の全エントリがバナー・Markdownに反映され、未判定の新規廃止指示なし")
+
+    print("\n=== フェーズ2対応の明示（phase2-spec） ===")
+    ph2_failures, ph2_notes = _phase2_failures(args.output_dir)
+    for note in ph2_notes:
+        print(f"  - {note}")
+    if ph2_failures:
+        ok = False
+        for f in ph2_failures:
+            print(f"  NG: {f}")
+    else:
+        print("  OK: Ph2台帳の全エントリがバナー・Markdownに反映され、テスト除外リストとも同期")
 
     print("\n" + ("VERIFY OK" if ok else "VERIFY FAILED"))
     return 0 if ok else 1
