@@ -42,6 +42,12 @@
 
 現行（pf-eccube3）と移行先（ec-cube-enterprise）で、編集・保存対象の永続化スキーマに次の差がある。画面の挙動は現行を正とし、DB列名・保存先は移行先を正とする。
 
+### Excel基本設計により廃止された仕様（刷新後は実装不要）
+
+本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。
+
+- 複製ボタン（※Excel基本設計 0204 識別ID:26 により廃止。刷新後は実装しない）。削除。
+
 | 対象 | 現行（pf-eccube3） | 移行先（ec-cube-enterprise） |
 |------|----------------------|--------------------------------|
 | 商品付加情報 | 別テーブル `dtb_product_sub`（商品名（英）・各説明（英・買取）・カード詳細参照・購入グループ・略称タグ・割引率・買取減額率・販売制限・サイズ・重量など）に分離 | `dtb_product` 本体へ統合。`name_en`・`description_detail_en`・`buy_description_detail`・`buy_description_detail_en`・`card_detail_id`・`sell_group_id`・`storage_code_id`・`discount_id`・`buy_discount_id`・`region_restriction_id`・`size`・`weight`・`cardset_id` を商品本体が直接保持し、`dtb_product_sub` は存在しない |

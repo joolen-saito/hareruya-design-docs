@@ -38,6 +38,12 @@
 
 DB関連の記述はec-cube-enterpriseを正とする。入荷通知依頼テーブル（`dtb_product_request`）は移行先（ec-cube-enterprise）にも存在し、`player_id`（選手情報）・`product_class_id`（商品規格）で会員の依頼を保持する。選手情報テーブル（`dtb_player`）の`customer_id`からログイン会員を特定する点も移行先と現行で同じである。
 
+### Excel基本設計により廃止された仕様（刷新後は実装不要）
+
+本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。
+
+- 画面上部のログインユーザ名表示（入荷待ち商品一覧）（※Excel基本設計 0306 入荷待ち商品一覧 識別ID:2 により廃止。刷新後は実装しない）。削除。
+
 商品の状態（コンディション）・言語の保持先が現行と移行先で異なる。現行は補助テーブル`dtb_product_sub_class`に`product_id`・`product_class_id`・`card_condition_id`・`language_id`を保持して集約する。移行先（ec-cube-enterprise）では補助テーブルを持たず、商品規格テーブル（`dtb_product_class`）が`card_condition_id`・`language_id`を直接保持する。本書のDB記述は移行先の保持先（`dtb_product_class`の同名列）を主とし、現行の補助テーブル名（`dtb_product_sub_class`）を括弧で添える。価格は商品規格の`price02`で表示する。
 
 移行先の入荷通知依頼は論理削除（`deleted_at`）を持つ。一覧表示は参照のみで業務データを更新しないため、移行に伴う保存処理の差分は生じない。

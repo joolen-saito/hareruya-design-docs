@@ -124,16 +124,36 @@ def md_marker(entry: dict) -> str:
     識別IDがある指示は「Excel基本設計 0214 識別ID:4-3 により廃止」。
     識別IDが無い指示（★注記など）はシート名だけでは同一シート内の複数指示を区別できないため、
     対象名を添えて「Excel基本設計 0303 商品詳細検索「カードセット（検索条件）」により廃止」とする。
+    同じ識別IDが複数シートに別々に出る場合（0306 マイページの各サブ画面の識別ID:2 など）は、
+    書番＋識別IDだけでは衝突するのでシート名を添える。
     エントリごとに一意でなければならない（`assert_unique_markers()` が保証する）。
     """
     book = entry.get("book", "")
     ident = entry.get("identifierId")
-    if ident:
-        return f"Excel基本設計 {book} 識別ID:{ident} により廃止"
     sheets = entry.get("sheets") or [{}]
     sheet_name = sheets[0].get("sheetName", "")
+    if ident:
+        base = f"Excel基本設計 {book} 識別ID:{ident}"
+        if _ident_used_by_multiple_entries(book, ident):
+            base = f"Excel基本設計 {book} {sheet_name} 識別ID:{ident}"
+        return f"{base} により廃止"
     # 鉤括弧のあとに空白を置くと日本語として不自然なので、ここだけ空白を入れない。
     return f"Excel基本設計 {book} {sheet_name}「{entry.get('target', '')}」により廃止"
+
+
+@lru_cache(maxsize=256)
+def _ident_used_by_multiple_entries(book: str, ident: str) -> bool:
+    """同じ (書番, 識別ID) を持つエントリが複数あるか。
+
+    1つのエントリが複数シートに跨る（同じ削除が編集画面と複製画面の両方に出る）のは
+    「別々の指示」ではないので曖昧化しない。別エントリで同じ識別IDが再登場する
+    （0306 マイページ各サブ画面の識別ID:2 など）ときだけシート名で区別する。
+    """
+    count = sum(
+        1 for entry in load_ledger().get("entries", [])
+        if entry.get("book") == book and entry.get("identifierId") == ident
+    )
+    return count > 1
 
 
 def assert_unique_markers() -> list[str]:

@@ -38,6 +38,12 @@
 
 DB関連はec-cube-enterpriseを正とする。現行（pf-eccube3）と移行先（ec-cube-enterprise）のスキーマ差を次のとおり記録する。
 
+### Excel基本設計により廃止された仕様（刷新後は実装不要）
+
+本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。
+
+- 画面上部のログインユーザ名表示（ポイント履歴）（※Excel基本設計 0306 ポイント履歴 識別ID:2 により廃止。刷新後は実装しない）。削除。
+
 | 観点 | 現行（pf-eccube3） | 移行先（ec-cube-enterprise） |
 |------|---------------------|------------------------------|
 | ポイント履歴テーブル | `dtb_point_history`（列 `customer_id`・`order_id`・`point_type_id`・`point_change`・`note`・`issue_date`・`create_date`・`transaction_id`） | 同一スキーマ（`dtb_point_history`、同列構成）。 |

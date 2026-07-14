@@ -18,6 +18,12 @@
 
 登録・編集フォームが書き込む `dtb_category` の列は、移行先 ec-cube-enterprise ですべて実在を確認した。現行 pf-eccube3 では一部の拡張列を補助表に分離している。
 
+### Excel基本設計により廃止された仕様（刷新後は実装不要）
+
+本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。
+
+- 商品コード（優先表示商品）（※Excel基本設計 0204 識別ID:12 により廃止。刷新後は実装しない）。削除。
+
 | 観点 | 現行（pf-eccube3） | 移行先（ec-cube-enterprise） |
 |------|--------------------|------------------------------|
 | 英語名・拡張列 | 補助表 `dtb_category_sub`（英語名は `name_en`、非表示フラグ等） | `dtb_category` に統合（`category_name_en`・`front_search_hide_flg`・`branch_hide_flg`・`banner_image`・`icon_image`・`html_ja`・`html_en`・`search_parameters` を実在確認） |

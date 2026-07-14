@@ -37,6 +37,12 @@
 
 DB関連はec-cube-enterpriseを正とする。現行（pf-eccube3）と移行先（ec-cube-enterprise）のスキーマ差を次のとおり記録する。
 
+### Excel基本設計により廃止された仕様（刷新後は実装不要）
+
+本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。
+
+- 画面上部のログインユーザ名表示（お気に入り商品一覧）（※Excel基本設計 0306 お気に入り商品一覧 識別ID:2 により廃止。刷新後は実装しない）。削除。
+
 | 観点 | 現行（pf-eccube3） | 移行先（ec-cube-enterprise） |
 |------|---------------------|------------------------------|
 | お気に入り商品テーブル | `dtb_favorite_product`（列 `player_id`・`product_id`・`language_id`・`create_date`） | 同一スキーマ（`dtb_favorite_product`、同列構成）。 |

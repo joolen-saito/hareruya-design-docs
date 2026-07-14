@@ -16,6 +16,13 @@
 
 買取詳細が更新する店頭買取系テーブルは、現行（pf-eccube3のHareruyaEcプラグイン）と移行先（ec-cube-enterprise）でテーブル名・主要列名が一致し、概ね同一スキーマである。`dtb_otc_buy_order`の`free_comment`・`update_date`、`dtb_otc_buy_order_stock`、`dtb_otc_buy_order_stock_history`、`dtb_otc_buy_order_indivisual_input_product`はいずれも同名である。確認できた差分は次のとおりで、DB関連はec-cube-enterpriseを正とする。
 
+### Excel基本設計により廃止された仕様（刷新後は実装不要）
+
+本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。
+
+- ダブルチェック＆保存ボタン（※Excel基本設計 0205 識別ID:15 により廃止。刷新後は実装しない）。削除。 これに伴い実装不要: ダブルチェック済みステータス（STATUS_DOUBLE_CHECKED=3）／ダブルチェック日時（double_check_date）／買取集計・CSV出力のダブルチェック済み前提の絞り込み。
+- ダブルチェック日時（※Excel基本設計 0205 識別ID:9 により廃止。刷新後は実装しない）。削除。
+
 ### フェーズ2対応（フェーズ1では実装不要）
 
 本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計がフェーズ2対応としている。フェーズ1では実装・テストの対象外とする。

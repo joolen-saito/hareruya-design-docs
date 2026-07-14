@@ -18,6 +18,12 @@
 
 現行（pf-eccube3）と移行先（ec-cube-enterprise）で、CSV列の取得元となる永続化スキーマに次の差がある。出力挙動・列構成は現行を正とし、DB列名・参照元は移行先を正とする。
 
+### Excel基本設計により廃止された仕様（刷新後は実装不要）
+
+本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。
+
+- カード商品CSVの4列（カード名(英)・カードセット名(英)・Foilフラグ・プロモーション名(日)）（※Excel基本設計 0204 カード商品CSV出力「カード商品CSVの4列（カード名(英)・カードセット名(英)・Foilフラグ・プロモーション名(日)）」により廃止。刷新後は実装しない）。削除。
+
 | 対象 | 現行（pf-eccube3） | 移行先（ec-cube-enterprise） |
 |------|----------------------|--------------------------------|
 | 商品名(英)・各説明(英・買取)・略称タグ・割引率・買取減額率・販売制限・サイズ・重量・購入グループ | 別テーブル `dtb_product_sub` から取得 | `dtb_product` 本体へ統合（`name_en`・`description_detail_en`・`buy_description_detail`・`buy_description_detail_en`・`storage_code_id`・`discount_id`・`buy_discount_id`・`region_restriction_id`・`size`・`weight`・`sell_group_id`）。`dtb_product_sub` は存在しない |
