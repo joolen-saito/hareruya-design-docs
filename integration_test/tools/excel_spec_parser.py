@@ -34,8 +34,14 @@ def doc_lines(path):
     return masked.splitlines()
 
 
+_INDEX_CACHE = None
+
+
 def build_index():
-    """{機能ID: [(doc, line)...]}。機能Noマーカーの位置を記録。"""
+    """{機能ID: [(doc, line)...]}。機能Noマーカーの位置を記録。索引はプロセス内キャッシュ。"""
+    global _INDEX_CACHE
+    if _INDEX_CACHE is not None:
+        return _INDEX_CACHE
     idx = {}
     for doc in sorted(glob.glob(f"{EXCEL_DIR}/*.html")):
         for i, l in enumerate(doc_lines(doc), 1):
@@ -43,6 +49,7 @@ def build_index():
             m = FUNC_MARK.search(t)
             if m:
                 idx.setdefault(m.group(1), []).append((doc, i))
+    _INDEX_CACHE = idx
     return idx
 
 

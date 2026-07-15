@@ -20,6 +20,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import spec_parser as sp
 import judge_viewpoints as jv
+import oracle_router as orr
+import excel_spec_parser as ex
 
 EXEC_CODES = {"EXEC", "EXEC-UI", "EXEC-UI:DDT", "EXEC-UI+EXEC-MAN", "CONTRACT", "DELEG-STATIC"}
 
@@ -79,21 +81,42 @@ def generate(html_path: Path, it_path: Path, inv_path: Path):
         code, root = jv.judge_stub(itid, vp, parsed, externals, hn, layer)
         stubs.append({"itid": itid, "vp": vp, "pri": pri, "code": code, "root": root})
 
+    # オラクル・ルーティング（機能区分→正しいオラクル源）
+    rt = orr.route(fid, html_path)
+
     out = []
     ap = out.append
     ap(f"# {fid} — 自動再生成ケース（Phase3ジェネレータ出力・prose未整形）\n")
-    ap(f"正本: `{html_path}`")
-    ap(f"> 本ファイルは spec_parser＋judge_viewpoints＋generate_cases が機械生成した**土台**。")
-    ap(f"> 各実施ケースの期待は判定根拠 file:line の**正本verbatim**。prose整形と SEED 具体化は後段（人手/LLM）で行う。\n")
+    ap(f"詳細設計HTML(ナビ): `{html_path}`")
+    ap(f"## オラクル源（機能区分ルーティング）")
+    ap(f"- **機能区分**: {rt['kubun']} → **オラクル={rt['oracle']}**"
+       + (f"／Excel=`excel_to_html/output/{rt['excel_doc']}`（{rt['excel_key']}）" if rt['excel_ok'] else ""))
+    if rt['kubun'] == '新規実装':
+        ap(f"- ⚠ **新規実装＝Excelのみがオラクル**。下の期待verbatimは詳細設計HTML由来で不可（総称の恐れ）。"
+           f"**prose整形は Excel（{rt['excel_key']}）から**行い、実ソースは付帯表4の乖離検出のみ。")
+        blk = ex.extract(rt['excel_key']) if rt['excel_ok'] else None
+        if blk:
+            ap(f"- Excelオラクル素材（{Path(blk['doc']).name} L{blk['start']}-{blk['end']}・先頭抜粋）:")
+            for b in blk['body'][:12]:
+                ap(f"    - {Path(blk['doc']).name}:{b['line']} {b['text'][:90]}")
+    elif rt['kubun'] == '標準':
+        ap(f"- ⚠ **標準＝実ソースがオラクル**（../ の該当リポジトリ）。詳細設計HTML由来の期待は使わず、実ソース挙動を正とする。")
+    elif rt['kubun'] in ('現行踏襲', 'カスタマイズ'):
+        ap(f"- 詳細設計HTML（Excel沈黙部の現行踏襲/カスタマイズ挙動）＋ Excel（{rt['excel_key']}）優先。"
+           f"同一/類似仕様がExcelにあればExcelが正。実ソースは裏取り＋乖離検出。")
+    else:
+        ap(f"- ⚠ 機能区分不明＝オラクル源を人手判定（詳細設計HTMLのカスタマイズ区分を確認）。")
+    ap(f"> 各実施ケースの期待は判定根拠 file:line の**詳細設計HTML verbatim**（ナビ）。"
+       f"**正しいオラクルは上記ルーティング**に従い、prose整形時に期待をオラクル源へ差し替える。\n")
 
     # §0 除外
     ap("## §0. テスト対象外（Phase2・廃止＝正本が明示）")
-    ex = parsed["excluded"]
-    if not ex["phase2"] and not ex["superseded"]:
+    exc = parsed["excluded"]
+    if not exc["phase2"] and not exc["superseded"]:
         ap("（なし）")
-    for it in ex["phase2"]:
+    for it in exc["phase2"]:
         ap(f"- [Phase2] {it['text'][:80]}（{hn}:{it['line']}）")
-    for it in ex["superseded"]:
+    for it in exc["superseded"]:
         ap(f"- [廃止] {it['text'][:80]}（{hn}:{it['line']}）")
 
     # §1 SEED雛形（権限・DBカラムから）
