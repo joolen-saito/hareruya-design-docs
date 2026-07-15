@@ -25,15 +25,15 @@ EXEC_CODES = {"EXEC", "EXEC-UI", "EXEC-UI:DDT", "EXEC-UI+EXEC-MAN", "CONTRACT", 
 
 
 def spec_text_at(raw, line, maxlen=220):
-    """正本の該当行から始まる verbatim テキスト（期待結果の唯一の源）。
-    根拠が見出し行のときは、直後の実内容行（>=20字）まで前進して充当する。"""
+    """正本の該当行から始まる verbatim テキストと、実際に採用した行番号を返す。
+    根拠が見出し行のときは直後の実内容行（>=20字）まで前進する（→根拠も内容行を指す）。"""
     if not line or line < 1 or line > len(raw):
-        return ""
+        return "", line
     for i in range(line, min(line + 4, len(raw) + 1)):
         t = sp.strip_tags(raw[i - 1])
         if len(t) >= 20:  # 実質的な内容行
-            return t[:maxlen]
-    return sp.strip_tags(raw[line - 1])[:maxlen]
+            return t[:maxlen], i
+    return sp.strip_tags(raw[line - 1])[:maxlen], line
 
 
 def root_line(root: str):
@@ -127,8 +127,10 @@ def generate(html_path: Path, it_path: Path, inv_path: Path):
             continue
         n += 1
         ln = root_line(s["root"])
-        exp = spec_text_at(raw, ln) or "（根拠行のテキスト取得不可＝要確認）"
-        ap(f"RG-{fid}-{n:03d}\t{s['code']}\t{s['vp']}\t{s['pri']}\t{exp}\t{s['root']}")
+        exp, used = spec_text_at(raw, ln)
+        exp = exp or "（根拠行のテキスト取得不可＝要確認）"
+        root = re.sub(r":\d+", f":{used}", s["root"]) if used else s["root"]
+        ap(f"RG-{fid}-{n:03d}\t{s['code']}\t{s['vp']}\t{s['pri']}\t{exp}\t{root}")
     ap("```")
 
     # §4 台帳（OUT/NO_IF/MERGE/要判定）
