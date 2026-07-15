@@ -129,36 +129,86 @@ def table_for_section(heads, tables, title):
     return None
 
 
+# 入力面を持たないことが明らかな表（拡張マッチの誤検出を防ぐ）。
+# 応答/レスポンス/出力スキーマ・DBカラム・権限などは入力ではない。
+_NONINPUT_HDR = re.compile(
+    r"カラム|テーブル定義|権限|ロール|ステータス遷移|画面遷移|"
+    r"レスポンス|応答|出力項目|戻り値|返却|APIレスポンス|リクエストヘッダ|"
+    r"エラーコード|区分一覧|変更履歴")
+# 応答スキーマ表の行に現れる印（API機能で型表を入力と誤認しないため）
+_RESPONSE_ROW = re.compile(r"応答本体|result\[\]|レスポンス|戻り値")
+
+
+def _is_input_header(hdr: str) -> bool:
+    """入力/検索フォームの項目表ヘッダか（別形式も許容・応答/非入力表は除外）。"""
+    if _NONINPUT_HDR.search(hdr):
+        return False
+    # 明示的な入力項目表
+    if "項目名" in hdr and ("必須" in hdr or "最大長" in hdr):
+        return True
+    # 別形式の入力/検索フォーム表（ヘッダ語で判定）
+    if re.search(r"検索条件|検索項目|入力欄|入力項目|登録項目|編集項目|フォーム項目", hdr):
+        return True
+    # 「項目/フィールド」列＋入力固有の列の組（型/値は応答表にも出るので採らない）
+    if re.search(r"項目|フィールド", hdr) and re.search(r"入力|必須|任意|チェック|バリ|最大長|文字数|桁", hdr):
+        return True
+    return False
+
+
+# 入力面の存在を示す本文シグナル（項目表が無くても入力があることの傍証）
+_INPUT_TAG = re.compile(r"<(input|select|textarea)\b", re.I)
+_INPUT_WORD = re.compile(r"検索フォーム|検索条件|入力チェック|バリデーション|必須項目|入力して|"
+                          r"選択して|入力欄|フォームに|モーダルで入力|登録ボタン|チェックボックス")
+
+
 def parse_input_fields(text, lm, body_off, tables):
-    """入力項目表（ヘッダに『項目名』『必須』or『最大長』）から入力項目を構造化。"""
-    tbl = None
+    """入力項目表から入力項目を構造化。『項目名＋必須/最大長』に加え、検索条件・入力欄・
+    登録/編集項目など別形式のフォーム表も拾う（D1偽陰性対策）。合致表は全てマージ。"""
+    fields = []
+    seen_names = set()
     for t in tables:
         hdr = " ".join(t["rows"][0]) if t["rows"] else ""
-        if "項目名" in hdr and ("必須" in hdr or "最大長" in hdr):
-            tbl = t
-            break
-    if not tbl:
-        return []
-    fields = []
-    for c in tbl["rows"][1:]:
-        joined = " ".join(c)
-        name = c[0] if c else ""
-        req = "必須" in (c[1] if len(c) > 1 else "")
-        nolimit = bool(re.search(r"上限は?無|上限なし|制約は?無|制限は?無|追加制約は?無", joined))
-        flags = {
-            "required": req,
-            "has_len": bool(re.search(r"最大長|文字数|桁", joined)) and not nolimit,
-            "has_num": bool(re.search(r"数値|整数|number|金額|数量", joined)),
-            "nolimit": nolimit,
-        }
-        fields.append({
-            "name": name,
-            "required": "必須" if req else "任意",
-            "raw": joined[:200],
-            "line": tbl["line"],
-            "flags": flags,
-        })
+        if not _is_input_header(hdr):
+            continue
+        for c in t["rows"][1:]:
+            joined = " ".join(c)
+            if _RESPONSE_ROW.search(joined):  # 応答スキーマ行は入力でない
+                continue
+            name = (c[0] if c else "").strip()
+            if not name or name in seen_names:
+                continue
+            seen_names.add(name)
+            req = "必須" in joined
+            nolimit = bool(re.search(r"上限は?無|上限なし|制約は?無|制限は?無|追加制約は?無", joined))
+            flags = {
+                "required": req,
+                "has_len": bool(re.search(r"最大長|文字数|桁", joined)) and not nolimit,
+                "has_num": bool(re.search(r"数値|整数|number|金額|数量|個数|点数", joined)),
+                "nolimit": nolimit,
+            }
+            fields.append({
+                "name": name,
+                "required": "必須" if req else "任意",
+                "raw": joined[:200],
+                "line": t["line"],
+                "flags": flags,
+            })
     return fields
+
+
+def detect_input_signal(raw_text, tables):
+    """項目表を抽出できなくても入力面が実在する傍証があるか（NO_INPUT二段判定用）。"""
+    reasons = []
+    if _INPUT_TAG.search(raw_text):
+        reasons.append("input/select/textareaタグ")
+    if _INPUT_WORD.search(strip_tags(raw_text)):
+        reasons.append("入力/検索/モーダル語")
+    for t in tables:
+        hdr = " ".join(t["rows"][0]) if t["rows"] else ""
+        if _is_input_header(hdr):
+            reasons.append("入力性ヘッダの表")
+            break
+    return reasons
 
 
 def parse_negations(text, lm, body_off):
@@ -199,11 +249,14 @@ def parse_html(path: Path):
     m = re.search(r"Source:\s*(\S+)", text)
     if m:
         src = m.group(1)
+    input_fields = parse_input_fields(text, lm, body_off, tables)
     result = {
         "meta": {"id": fid_from_path(path), "title": title, "source_md": src, "html": str(path), "lines": len(raw)},
         "excluded": parse_notices(text, lm),
         "sections": [{"title": h["title"], "line": h["line"]} for h in heads],
-        "input_fields": parse_input_fields(text, lm, body_off, tables),
+        "input_fields": input_fields,
+        # 項目表を抽出できないが入力面シグナルが在る＝NO_INPUTに落とさず要判定へ（D1二段判定）
+        "input_signal": [] if input_fields else detect_input_signal("\n".join(raw), tables),
         "negations": parse_negations(text, lm, body_off),
         "tables": {},
     }

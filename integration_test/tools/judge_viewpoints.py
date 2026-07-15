@@ -175,10 +175,14 @@ def judge_stub(itid, vp, parsed, externals, html_name, layer=""):
     ifc = if_class_of_viewpoint(vp)
     if ifc and not any(t in externals for t in IF_TOKENS[ifc]):
         return "NO_IF", f"externals={externals or '(なし)'}（{ifc} I/F非保有）"
-    # 1.5 NO_INPUT: 入力フォーム項目が無い＆API層でない機能のバリデーション観点は非該当。
-    #     API層はパス/クエリのパラメータ検証があり得るため除外（偽陰性回避）。
+    # 1.5 NO_INPUT（二段判定・D1偽陰性対策）: 入力項目表が無く＆API層でないバリデーション観点。
+    #     ただし本文に入力面シグナル（別形式フォーム表/入力語/inputタグ）が在れば
+    #     項目表の取りこぼしを疑い NO_INPUT に落とさず「要判定」へ（バリデーション全項目網羅の担保）。
     if vp in VALIDATION_VP and not parsed["input_fields"] and layer != "api":
-        return "NO_INPUT", f"{html_name}: 正本に入力フォーム項目なし（該当バリデーション非該当）"
+        sig = parsed.get("input_signal") or []
+        if sig:
+            return "要判定", f"{html_name}: 入力項目表を抽出できないが入力面シグナル有（{'/'.join(sig)}）＝要人手確認（NO_INPUTにしない）"
+        return "NO_INPUT", f"{html_name}: 正本に入力フォーム項目・入力面シグナルなし（該当バリデーション非該当）"
     # 2. OUT（明示的否定文がある時のみ）
     if vp in OUT_NEGATION:
         pat = re.compile(OUT_NEGATION[vp])
