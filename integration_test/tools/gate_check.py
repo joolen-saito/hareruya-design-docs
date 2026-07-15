@@ -48,7 +48,19 @@ def line_nums(cell):
     return [int(x) for x in re.findall(r"(?:L|:)(\d+)", cell)]
 
 
-def run(md_path: Path, html_override=None):
+def excel_refs(cell):
+    """セル内の Excel 引用 '0203:L1152' → [(prefix, line)...]。"""
+    return [(m.group(1), int(m.group(2))) for m in re.finditer(r"(\d{4}):L(\d+)", cell)]
+
+
+def excel_path_of(md, override):
+    if override:
+        return Path(override)
+    m = re.search(r"`(excel_to_html/output/[^`]+\.html)`", md)
+    return Path(m.group(1)) if m else None
+
+
+def run(md_path: Path, html_override=None, excel_override=None):
     md = md_path.read_text(encoding="utf-8")
     header, rows = extract_tsv(md)
     viol = []
@@ -58,6 +70,10 @@ def run(md_path: Path, html_override=None):
     hp = html_path_of(md, html_override)
     raw = hp.read_text(encoding="utf-8").splitlines() if hp and hp.exists() else None
     parsed = sp.parse_html(hp) if hp and hp.exists() else None
+    # Excelオラクル（多オラクル機能の 'NNNN:Lxxx' 照合用）
+    ep = excel_path_of(md, excel_override)
+    excel_raw = ep.read_text(encoding="utf-8").splitlines() if ep and ep.exists() else None
+    excel_prefix = re.match(r"(\d{4})", ep.name).group(1) if ep and re.match(r"(\d{4})", ep.name) else None
     neg_lines = {n["line"] for n in parsed["negations"]} if parsed else set()
     STOP = {"買取詳細", "識別ID", "フェーズ", "実装不要", "基本設計", "原文", "要件",
             "対応", "本節", "記述", "刷新後", "これに伴い"}
@@ -115,6 +131,14 @@ def run(md_path: Path, html_override=None):
             if g in exp:
                 viol.append({"gate": "G6", "row": rid, "msg": "期待が総称テンプレ文＝具体オラクル化にExcel設計書源が必要"})
                 break
+        # G7 Excel引用の実在（期待/根拠セル内の 'NNNN:Lxxx' をExcel文書の実行行と照合）
+        if excel_raw and excel_prefix:
+            for pfx, en in excel_refs(exp) + excel_refs(root):
+                if pfx == excel_prefix:
+                    if en < 1 or en > len(excel_raw):
+                        viol.append({"gate": "G7", "row": rid, "msg": f"存在しないExcel行 {pfx}:L{en}（Excel {len(excel_raw)}行）"})
+                    elif len(sp.strip_tags(excel_raw[en - 1])) < 6:
+                        viol.append({"gate": "G7", "row": rid, "msg": f"Excel空/極短行の引用 {pfx}:L{en}"})
     return viol
 
 
@@ -128,16 +152,17 @@ GENERIC_ORACLE = (
 
 # ハードゲート（違反ならCI失敗）: TSV整合・根拠の実在・OUTの否定文照合。
 # 助言（warning・失敗にしない）: G3 見出し引用・G5 逆捏造の疑い（機能名の偶発一致が多く人手確認向き）。
-HARD = {"G1", "G2", "G4"}
+HARD = {"G1", "G2", "G4", "G7"}
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("md")
     ap.add_argument("--html", help="正本HTML（省略時はmdヘッダから）")
+    ap.add_argument("--excel", help="Excelオラクル文書（省略時はmdヘッダの excel_to_html/output/... から）")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
-    viol = run(Path(args.md), args.html)
+    viol = run(Path(args.md), args.html, args.excel)
     hard = [v for v in viol if v["gate"] in HARD]
     warn = [v for v in viol if v["gate"] not in HARD]
     if args.json:
