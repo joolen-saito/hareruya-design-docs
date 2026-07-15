@@ -63,6 +63,7 @@ def generate(html_path: Path, it_path: Path, inv_path: Path):
     jv.parsed_text_cache[html_path.name] = html_path.read_text(encoding="utf-8")
     raw = html_path.read_text(encoding="utf-8").splitlines()
     externals = jv.load_externals(inv_path, parsed["meta"]["id"])
+    layer = jv.load_layer(inv_path, parsed["meta"]["id"])
     fid = parsed["meta"]["id"]
     hn = html_path.name
 
@@ -75,7 +76,7 @@ def generate(html_path: Path, it_path: Path, inv_path: Path):
         if len(p) < 5:
             continue
         itid, vp, pri = p[2].strip(), p[3].strip(), p[4].strip()
-        code, root = jv.judge_stub(itid, vp, parsed, externals, hn)
+        code, root = jv.judge_stub(itid, vp, parsed, externals, hn, layer)
         stubs.append({"itid": itid, "vp": vp, "pri": pri, "code": code, "root": root})
 
     out = []

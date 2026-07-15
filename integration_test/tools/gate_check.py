@@ -59,10 +59,16 @@ def run(md_path: Path, html_override=None):
     raw = hp.read_text(encoding="utf-8").splitlines() if hp and hp.exists() else None
     parsed = sp.parse_html(hp) if hp and hp.exists() else None
     neg_lines = {n["line"] for n in parsed["negations"]} if parsed else set()
+    STOP = {"買取詳細", "識別ID", "フェーズ", "実装不要", "基本設計", "原文", "要件",
+            "対応", "本節", "記述", "刷新後", "これに伴い"}
     excluded_words = []
     if parsed:
         for it in parsed["excluded"]["phase2"] + parsed["excluded"]["superseded"]:
-            excluded_words += [w for w in re.split(r"[ 　（）\(\)]", it["text"]) if len(w) >= 3][:3]
+            for w in re.split(r"[ 　。、：:／/（）\(\)]", it["text"]):  # ＆は割らず複合語を保つ
+                w = w.strip()
+                if len(w) >= 5 and not re.fullmatch(r"[0-9A-Za-z_]+", w) and w not in STOP:
+                    excluded_words.append(w)
+    excluded_words = list(dict.fromkeys(excluded_words))[:8]
 
     i_id = col_index(header, "テストID")
     i_code = col_index(header, "判定コード")
@@ -104,7 +110,25 @@ def run(md_path: Path, html_override=None):
             if w and w in exp:
                 viol.append({"gate": "G5", "row": rid, "msg": f"廃止/Ph2の語『{w}』を期待に含む"})
                 break
+        # G6 総称オラクル検出（正本が汎用テンプレ＝Excel設計書源が必要）
+        for g in GENERIC_ORACLE:
+            if g in exp:
+                viol.append({"gate": "G6", "row": rid, "msg": "期待が総称テンプレ文＝具体オラクル化にExcel設計書源が必要"})
+                break
     return viol
+
+
+# 正本が汎用テンプレのとき期待に現れる総称文（具体オラクルになっていない印）。
+GENERIC_ORACLE = (
+    "利用者または外部システムが対象機能を開始する",
+    "いずれかの主処理を実行する",
+    "対象機能を実行する",
+)
+
+
+# ハードゲート（違反ならCI失敗）: TSV整合・根拠の実在・OUTの否定文照合。
+# 助言（warning・失敗にしない）: G3 見出し引用・G5 逆捏造の疑い（機能名の偶発一致が多く人手確認向き）。
+HARD = {"G1", "G2", "G4"}
 
 
 def main():
@@ -114,18 +138,22 @@ def main():
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
     viol = run(Path(args.md), args.html)
+    hard = [v for v in viol if v["gate"] in HARD]
+    warn = [v for v in viol if v["gate"] not in HARD]
     if args.json:
-        print(json.dumps(viol, ensure_ascii=False, indent=2))
+        print(json.dumps({"hard": hard, "warn": warn}, ensure_ascii=False, indent=2))
     else:
-        if not viol:
-            print("✅ 捏造ゼロ・ゲート: 違反なし")
+        from collections import Counter
+        if not hard:
+            print("✅ 捏造ゼロ・ゲート(ハード): 違反なし" +
+                  (f"／助言 {len(warn)}件" if warn else ""))
         else:
-            from collections import Counter
-            c = Counter(v["gate"] for v in viol)
-            print(f"❌ 違反 {len(viol)}件: " + " ".join(f"{k}:{n}" for k, n in sorted(c.items())))
-            for v in viol[:40]:
-                print(f"  [{v['gate']}] {v['row']}: {v['msg']}")
-    sys.exit(1 if viol else 0)
+            c = Counter(v["gate"] for v in hard)
+            print(f"❌ ハード違反 {len(hard)}件: " + " ".join(f"{k}:{n}" for k, n in sorted(c.items())))
+        for v in (hard + warn)[:40]:
+            tag = "❌" if v["gate"] in HARD else "⚠"
+            print(f"  {tag}[{v['gate']}] {v['row']}: {v['msg']}")
+    sys.exit(1 if hard else 0)
 
 
 if __name__ == "__main__":
