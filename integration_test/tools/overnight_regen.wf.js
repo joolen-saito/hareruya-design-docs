@@ -9,7 +9,10 @@ export const meta = {
 }
 
 // args = バッチ配列 [{fid, detail, it, kubun, oracle, excel_doc, excel_key, excel_ok, title, cat}]
-const BATCH = Array.isArray(args) ? args : []
+// 背景実行では args が JSON文字列で届くことがあるためパースを許容。
+let _a = args
+if (typeof _a === 'string') { try { _a = JSON.parse(_a) } catch (e) { _a = [] } }
+const BATCH = Array.isArray(_a) ? _a : []
 if (!BATCH.length) { log('args にバッチが無い'); return { error: 'no batch' } }
 log(`overnight-regen 開始: ${BATCH.length}機能（リスク順）`)
 
