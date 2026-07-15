@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない機能仕様（記事内ポップアップ用商品情報を返すJSON API・GET参照系）であり、**両レイヤで網羅**する。本APIはブラウザ向け画面を持たず（正本md「対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない」）、結果が管理画面に現れる範囲も無いため、**UIレイヤ＝0、API/統合レイヤ中心**で分類する。API/統合レイヤ＝Playwright `request`（APIRequestContext）でエンドポイントへGET送信し、HTTPステータス・レスポンス構造・データ整合・該当なし時の404で判定する。
 
-**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装のレスポンス形・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。pf-apiの正本mdは現行（旧システム）のリバース設計であり、刷新先 ec-cube-enterprise との乖離（エンドポイントパス・言語コード値・404本文形・応答型・画像フィールド等）は**設計書/観点表を上位オラクル**として扱い、付帯表4（不具合候補／要確認）に出す。実装からは位置情報（APIパス・メソッド）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。送信先パスは実装の実効パス `GET /api/popup/product/{lang}/{productId}`（App/ProductController.php:150-151）に統一し（テストが実在経路へ届くため）、合否は設計書の意味（正常取得＝商品情報JSON＋200／該当なし＝404 Not Found／不正パラメータ＝404）で判定する。設計⇔実装のパス・本文・型の差異は付帯表4でのみ一元管理し、TSV期待値に実装の現挙動を固定しない。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装のレスポンス形・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。pf-apiの正本mdは現行（旧システム）のリバース設計であり、刷新先 ec-cube-enterprise との乖離（エンドポイントパス・言語コード値・404本文形・応答型・画像フィールド等）は**設計書/観点表を上位オラクル**として扱い、付帯表4（不具合候補／要確認）に出す。実装からは位置情報（APIパス・メソッド）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。送信先パスは実装の実効パス `GET /api/popup/product/{lang}/{productId}`（App/ProductController.php:150-151）に統一し（テストが実在経路へ届くため）、合否は設計書の意味（正常取得＝商品情報JSON＋200／該当なし＝404 Not Found／不正パラメータ＝404）で判定する。設計⇔実装のパス・本文・型の差異は付帯表4でのみ一元管理し、TSV期待値に実装の現挙動を固定しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -22,59 +22,59 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-001	IT-09	リクエスト	P1	正常な商品ID・言語の指定で200と商品情報JSONが返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	"有効な言語コード（jp/en）と実在する商品ID"	"1. GET /api/popup/product/{lang}/{productId} を送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200が返り、当該商品ID・言語に対応するポップアップ用商品情報がJSONで1件返ること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-002	IT-09	実行結果	P2	正常取得時に取得時点の商品情報が加工されず返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	有効な言語コードと実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. レスポンス本文の値を確認する"	価格・在庫等が再計算・丸めされず、DB／リポジトリ取得時点の値がそのまま返ること（業務ルール「計算処理を行わない」）。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-003	IT-09	HTTPステータス	P2	正常取得時のHTTPステータスが200である	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	有効な言語コードと実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-004	IT-09	外部取得	P1	商品ID・言語で該当する商品規格を1件取得する	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	有効な言語コードと実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. レスポンスの件数と内容を確認する"	条件に合致する商品規格が一件返り、productId・productClassId が指定条件と整合すること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-005	IT-32	資格情報	P1	記事サイト等クライアントからの呼び出しで応答が処理結果と一致する	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	クライアントからの正常リクエスト	"1. 対象エンドポイントへGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	クライアントからの呼び出しが許可され、HTTPステータスとレスポンス本文が処理結果（正常取得＝200）と一致すること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-008	IT-32	資格情報	P2	異常な資格情報での呼び出しが許可されず正常取得とならない	SEED-A02-01-API-ACCESS／SEED-A02-01-PRODUCT-KNOWN	無効または欠落した資格情報と実在する商品ID（認可方式は pf-api 方針＝要確認）	"1. 異常な資格情報（無効・欠落）で対象エンドポイントへGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	無効・欠落した資格情報での呼び出しは許可されず、商品情報JSON（正常取得＝200）を返さないこと（権限・認可「認可方式はpf-apiの方針に従う」。認可方式が未確定のため拒否時の具体ステータスは要実機確認＝付帯表4#2）。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-006	IT-32	レスポンス	P2	成功レスポンスが仕様のフィールド構成と一致する	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	有効な言語コードと実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. レスポンス本文のフィールドを確認する"	"レスポンスに仕様の成功フィールド（productId・name・productClassId・price01・price02・stock・nameEn・subFileName・fileName・code・conditionCode・foilFlg・weeklySold）が含まれ、各フィールドが仕様の型契約と一致すること：price01・price02・stock・weeklySold は数値文字列（string）、name・nameEn・code・conditionCode は string、productId・productClassId は integer、foilFlg は真偽値（boolean）、subFileName/fileName は string（該当無し時null）。型・画像・追加フィールドの実装差異は付帯表4#6/#7/#8で管理する。"
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-007	IT-32	必須条件	P2	パス変数（lang・productId）欠落で取得されず404／ルート不一致となる	SEED-A02-01-API-ACCESS	lang または productId を欠いたパス	"1. lang もしくは productId を欠いたパスへGET送信する
-2. HTTPステータスを確認する"	必須パス変数を欠いたリクエストは商品情報を返さず、ルート不一致または404となること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-010	IT-32	データなし	P1	該当する商品規格が無い場合に404 Not Found が返る	SEED-A02-01-API-ACCESS／SEED-A02-01-PRODUCT-NONE	有効な言語コードと存在しない商品ID	"1. 存在しない商品IDでGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス404が返り、本文が仕様の {code, message}（message=\"Not Found\"）形式であること（実装の本文形差異は付帯表4#3）。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-011	IT-32	リクエスト	P2	異常なパラメータ値（productId≦0）で404となる	SEED-A02-01-API-ACCESS	有効な言語コードと0以下の商品ID	"1. productId=0 もしくは負値でGET送信する
-2. HTTPステータスを確認する"	異常なパラメータ値では商品情報を返さず、404が返ること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-012	IT-10	形式不正	P2	非数値（型不正）の商品IDで404となる	SEED-A02-01-API-ACCESS	有効な言語コードと非数値の商品ID（例 abc）	"1. 非数値 productId でGET送信する
-2. HTTPステータスを確認する"	productId が integer 型でない場合は商品情報を返さず、404となること（productId は型integer・必須）。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-013	IT-32	受信検証	P2	想定外の言語コードで404となる	SEED-A02-01-API-ACCESS／SEED-A02-01-PRODUCT-KNOWN	想定外の言語コード（jp/en 以外）と実在する商品ID	"1. 想定外 lang（例 fr）でGET送信する
-2. HTTPステータスを確認する"	言語が想定値（jp/en）以外の場合は対応する商品情報が無く、404となること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-014	IT-32	リクエスト	P3	想定外のクエリ項目を加えてもサーバエラーで停止しない（無視可否は要実機確認）	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	正常なパス＋想定外クエリ項目（項目名と値のセット）	"1. 想定外クエリ項目を付与してGET送信する
-2. HTTPステータスとレスポンスを確認する"	未知のクエリ項目があってもサーバエラー（5xx）で停止しないことのみを判定する。想定外クエリ項目の扱いは正本に明記が無いため期待値を固定せず、200で無視され正常取得と同一内容となるかは要実機確認とする。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-015	IT-10	エラー	P2	エラー発生時に仕様のエラー応答（404 Not Found 本文）が返る	SEED-A02-01-API-ACCESS／SEED-A02-01-PRODUCT-NONE	該当商品情報なしを誘発するリクエスト	"1. 該当なしリクエストでGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	該当商品情報なしのエラーで、コード404・メッセージ「Not Found」のJSONが返ること（エラー処理「該当商品情報なし」）。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-016	IT-10	HTTPステータス	P1	異常（該当なし）時のHTTPステータスが仕様の404と一致する	SEED-A02-01-API-ACCESS／SEED-A02-01-PRODUCT-NONE	該当なしリクエスト	"1. 該当なしリクエストでGET送信する
-2. HTTPステータスを確認する"	HTTPステータスが該当なしを示す404であること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-017	IT-10	通信	P1	正常通信で200応答が返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	有効な言語コードと実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-018	IT-10	正常	P2	対象条件に該当する正常値で200と商品情報が返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	対象条件に該当する正常な言語コード・商品ID	"1. 正常値でGET送信する
-2. HTTPステータスとレスポンスを確認する"	正常取得としてHTTPステータス200で商品情報が返ること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-019	IT-10	異常系	P2	異常系（不正値）受信時のHTTPステータスが仕様通り404となる	SEED-A02-01-API-ACCESS	不正な言語コードまたは商品IDのリクエスト	"1. 不正値でGET送信する
-2. HTTPステータスを確認する"	HTTPステータスが異常（該当なし・不正パラメータ）を示す404であること。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-020	IT-10	重複・順序	P2	同一GETの重複呼び出しで同一レスポンス（冪等参照）となる	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	同一の言語コード・商品IDを2回送信	"1. 同一リクエストを1回目GET送信する
-2. 同一リクエストを2回目GET送信する
-3. 2回のレスポンスを比較する"	参照系のため2回の呼び出しで同一のHTTPステータス・レスポンス本文が返り、副作用（DB更新）が発生しないこと（副作用「無し（参照のみ）」）。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-030	IT-10	エラー	P3	タイムアウト時に未捕捉例外で停止せず参照系としてDB不整合が残らない	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してGET送信する
-2. 応答とDB状態を確認する"	タイムアウト時の応答仕様は正典に定義が無いため期待値を固定せず（未定義挙動を仕様化しない）、参照系のため呼び出しでDBに不整合が残らないことのみを判定する。タイムアウト時の具体応答とその実再現は要実機確認。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-031	IT-10	障害	P2	DB接続障害時に未捕捉エラーで停止しない（代替応答仕様は要実機確認）	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	DB接続障害・読み取り失敗を誘発するシナリオ	"1. 接続障害を誘発してGET送信する
-2. 応答を確認する"	DB接続障害時の代替応答仕様は正典に定義が無いため期待値を固定せず（未定義挙動を仕様化しない）、未捕捉例外（500）でプロセス停止せずエラー応答へ分岐することのみを判定する。具体応答・障害実再現は要実機確認。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-040	IT-09	リクエスト	P2	言語コード jp 指定で日本語の商品情報が返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	"言語コード jp と実在する商品ID（日本語規格あり）"	"1. lang=jp でGET送信する
-2. HTTPステータスとレスポンスを確認する"	HTTPステータス200で、言語 jp に対応する商品情報（code＝言語コード）が返ること（正本md 入出力 lang「jpまたはen」。言語コード値の実装差異は付帯表4#4で管理）。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-041	IT-09	リクエスト	P2	言語コード en 指定で英語の商品情報が返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	言語コード en と実在する商品ID（英語規格あり）	"1. lang=en でGET送信する
-2. HTTPステータスとレスポンスを確認する"	HTTPステータス200で、言語 en に対応する商品情報（nameEn・code 等）が返ること（データ整合性「指定言語に対応する商品情報を返す」）。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-042	IT-32	レスポンス	P3	weeklySold が週間販売数の集計（SUM）値として返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	週間販売実績がある実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. レスポンスの weeklySold を確認する"	weeklySold が週間販売数の集計（SUM）結果として、仕様型の数値文字列（string）で返ること（応答フィールド定義 weeklySold「集計（SUM）結果のため数値文字列で返す」。応答型の実装差異は付帯表4#7で管理）。
-a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-043	IT-09	実行結果	P3	参照のみで副作用が無い（再取得で対象データ不変）	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	有効な言語コードと実在する商品ID	"1. 対象商品の現在値を取得する
-2. 対象エンドポイントへGET送信する
-3. 対象商品の値を再取得し比較する"	API呼び出し前後で対象商品規格の値（price01・price02・stock 等）が変化しないこと（副作用「無し（参照のみ）」・DB操作は参照系のみ）。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-001	IT-09	リクエスト	P1	正常な商品ID・言語の指定で200と商品情報JSONが返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001（SEED-A02-01-PRODUCT-KNOWN・付帯表3-1）	"1. GET /api/popup/product/jp/900001 を送信する
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200。本文が1件で、productId=900001・name=「テスト商品Ａ（日本語）」・price01=800・price02=1000・stock=3（価格/在庫は数値文字列）・conditionCode=A・foilFlg=false が SEED-A02-01-PRODUCT-KNOWN 固定値（付帯表3-1）と一致すること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-002	IT-09	実行結果	P2	正常取得時に取得時点の商品情報が加工されず返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001（SEED固定：price01=800・price02=1000・stock=3）	"1. GET /api/popup/product/jp/900001 を送信する
+2. レスポンス本文の price01・price02・stock を確認する"	price01=800・price02=1000・stock=3 が再計算・丸めなしで SEED 固定値（付帯表3-1）どおり返ること（業務ルール「計算処理を行わない」。数値文字列型は付帯表4#7）。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-003	IT-09	HTTPステータス	P2	正常取得時のHTTPステータスが200である	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001（SEED-A02-01-PRODUCT-KNOWN）	"1. GET /api/popup/product/jp/900001 を送信する
+2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-004	IT-09	外部取得	P1	商品ID・言語で該当する商品規格を1件取得する	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001（SEED固定：productClassId=900101）	"1. GET /api/popup/product/jp/900001 を送信する
+2. レスポンスの件数と productId/productClassId を確認する"	該当規格が1件返り、productId=900001・productClassId=900101（SEED-A02-01-PRODUCT-KNOWN固定値・付帯表3-1）と整合すること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-005	IT-32	資格情報	P1	記事サイト等クライアントからの呼び出しで応答が処理結果と一致する	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	SEED-A02-01-API-ACCESS の有効な資格情報＋ lang=jp, productId=900001	"1. 有効な資格情報で GET /api/popup/product/jp/900001 を送信する
+2. HTTPステータスとレスポンス本文を確認する"	呼び出しが許可され、HTTPステータス200・本文が SEED-A02-01-PRODUCT-KNOWN 固定値（付帯表3-1）どおりの処理結果と一致すること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-008	IT-32	資格情報	P2	異常な資格情報での呼び出しが許可されず正常取得とならない	SEED-A02-01-API-ACCESS／SEED-A02-01-PRODUCT-KNOWN	SEED-A02-01-API-ACCESS の無効・欠落資格情報＋ lang=jp, productId=900001	"1. 無効・欠落した資格情報で GET /api/popup/product/jp/900001 を送信する
+2. HTTPステータスとレスポンス本文を確認する"	呼び出しが許可されず、商品情報JSON（正常取得＝200・SEED固定値）を返さないこと（権限・認可「認可方式はpf-apiの方針に従う」。認可方式が未確定のため拒否時の具体ステータス〔401/403等〕は要実機確認＝付帯表4#2）。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-006	IT-32	レスポンス	P2	成功レスポンスが仕様のフィールド構成と一致する	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001（SEED-A02-01-PRODUCT-KNOWN・全フィールド固定）	"1. GET /api/popup/product/jp/900001 を送信する
+2. レスポンス本文の各フィールドと型を確認する"	レスポンスに仕様の13フィールド（productId・name・productClassId・price01・price02・stock・nameEn・subFileName・fileName・code・conditionCode・foilFlg・weeklySold）が含まれ、各値が SEED-A02-01-PRODUCT-KNOWN 固定値（付帯表3-1：name=「テスト商品Ａ（日本語）」・price01=800・stock=3・conditionCode=A・foilFlg=false・subFileName=900001_class.jpg・fileName=900001_product.jpg 等）と一致すること。型契約：price01・price02・stock・weeklySold は数値文字列（string）、name・nameEn・code・conditionCode は string、productId・productClassId は integer、foilFlg は真偽値（boolean）、subFileName/fileName は string（該当無し時null）。型・画像・追加フィールドの実装差異は付帯表4#6/#7/#8で管理する。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-007	IT-32	必須条件	P2	パス変数（lang・productId）欠落で取得されず404／ルート不一致となる	SEED-A02-01-API-ACCESS	lang を欠いたパス（/api/popup/product/900001）／productId を欠いたパス（/api/popup/product/jp）	"1. lang もしくは productId を欠いたパス（例 /api/popup/product/900001, /api/popup/product/jp）へGET送信する
+2. HTTPステータスを確認する"	必須パス変数を欠いたリクエストは商品情報を返さず、ルート不一致または404となること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-010	IT-32	データなし	P1	該当する商品規格が無い場合に404 Not Found が返る	SEED-A02-01-API-ACCESS／SEED-A02-01-PRODUCT-NONE	lang=jp, productId=999999（SEED-A02-01-PRODUCT-NONE：DBに存在しない）	"1. GET /api/popup/product/jp/999999 を送信する
+2. HTTPステータスとレスポンス本文を確認する"	"HTTPステータス404。本文が仕様の {code, message}（message=""Not Found""）形式であること（実装の本文形差異は付帯表4#3）。"				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-011	IT-32	リクエスト	P2	異常なパラメータ値（productId≦0）で404となる	SEED-A02-01-API-ACCESS	lang=jp, productId=0（または負値 -1）	"1. GET /api/popup/product/jp/0 を送信する
+2. HTTPステータスを確認する"	異常なパラメータ値では商品情報を返さず、404が返ること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-012	IT-10	形式不正	P2	非数値（型不正）の商品IDで404となる	SEED-A02-01-API-ACCESS	lang=jp, productId=abc（非数値）	"1. GET /api/popup/product/jp/abc を送信する
+2. HTTPステータスを確認する"	productId が integer 型でない場合は商品情報を返さず、404となること（productId は型integer・必須）。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-013	IT-32	受信検証	P2	想定外の言語コードで404となる	SEED-A02-01-API-ACCESS／SEED-A02-01-PRODUCT-KNOWN	lang=fr（想定外）, productId=900001	"1. GET /api/popup/product/fr/900001 を送信する
+2. HTTPステータスを確認する"	言語が想定値（jp/en）以外の場合は対応する商品情報が無く、404となること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-014	IT-32	リクエスト	P3	想定外のクエリ項目を加えてもサーバエラーで停止しない（無視可否は要実機確認）	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001 ＋想定外クエリ（例 ?foo=bar）	"1. GET /api/popup/product/jp/900001?foo=bar を送信する
+2. HTTPステータスとレスポンスを確認する"	未知のクエリ項目があってもサーバエラー（5xx）で停止しないことのみを判定する。想定外クエリ項目の扱いは正本に明記が無いため期待値を固定せず、200で無視され正常取得（SEED固定値と同一内容）となるかは要実機確認とする。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-015	IT-10	エラー	P2	エラー発生時に仕様のエラー応答（404 Not Found 本文）が返る	SEED-A02-01-API-ACCESS／SEED-A02-01-PRODUCT-NONE	lang=jp, productId=999999（SEED-A02-01-PRODUCT-NONE）	"1. GET /api/popup/product/jp/999999 を送信する
+2. HTTPステータスとレスポンス本文を確認する"	該当商品情報なしのエラーで、コード404・メッセージ「Not Found」のJSONが返ること（エラー処理「該当商品情報なし」）。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-016	IT-10	HTTPステータス	P1	異常（該当なし）時のHTTPステータスが仕様の404と一致する	SEED-A02-01-API-ACCESS／SEED-A02-01-PRODUCT-NONE	lang=jp, productId=999999（SEED-A02-01-PRODUCT-NONE）	"1. GET /api/popup/product/jp/999999 を送信する
+2. HTTPステータスを確認する"	HTTPステータスが該当なしを示す404であること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-017	IT-10	通信	P1	正常通信で200応答が返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001（SEED-A02-01-PRODUCT-KNOWN）	"1. GET /api/popup/product/jp/900001 を送信する
+2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-018	IT-10	正常	P2	対象条件に該当する正常値で200と商品情報が返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001（SEED-A02-01-PRODUCT-KNOWN）	"1. GET /api/popup/product/jp/900001 を送信する
+2. HTTPステータスとレスポンスを確認する"	正常取得としてHTTPステータス200で、SEED-A02-01-PRODUCT-KNOWN 固定値（付帯表3-1）どおりの商品情報が返ること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-019	IT-10	異常系	P2	異常系（不正値）受信時のHTTPステータスが仕様通り404となる	SEED-A02-01-API-ACCESS	lang=jp, productId=abc（不正値）／または lang=fr, productId=900001	"1. GET /api/popup/product/jp/abc を送信する
+2. HTTPステータスを確認する"	HTTPステータスが異常（該当なし・不正パラメータ）を示す404であること。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-020	IT-10	重複・順序	P2	同一GETの重複呼び出しで同一レスポンス（冪等参照）となる	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001 を2回（SEED-A02-01-PRODUCT-KNOWN）	"1. GET /api/popup/product/jp/900001 を1回目送信する
+2. 同一リクエストを2回目送信する
+3. 2回のレスポンスを比較する"	参照系のため2回の呼び出しで同一のHTTPステータス200・レスポンス本文（SEED固定値どおり）が返り、副作用（DB更新）が発生しないこと（副作用「無し（参照のみ）」）。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-030	IT-10	エラー	P3	タイムアウト時に未捕捉例外で停止せず参照系としてDB不整合が残らない	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001 ＋タイムアウト誘発（SEED-A02-01-PRODUCT-KNOWN）	"1. タイムアウトを誘発して GET /api/popup/product/jp/900001 を送信する
+2. 応答とDB状態を確認する"	タイムアウト時の応答仕様は正典に定義が無いため期待値を固定せず（未定義挙動を仕様化しない）、参照系のため呼び出しでDBに不整合が残らないことのみを判定する。タイムアウト時の具体応答とその実再現は要実機確認。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-031	IT-10	障害	P2	DB接続障害時に未捕捉エラーで停止しない（代替応答仕様は要実機確認）	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001 ＋DB接続障害・読み取り失敗を誘発（SEED-A02-01-PRODUCT-KNOWN）	"1. DB接続障害を誘発して GET /api/popup/product/jp/900001 を送信する
+2. 応答を確認する"	DB接続障害時の代替応答仕様は正典に定義が無いため期待値を固定せず（未定義挙動を仕様化しない）、未捕捉例外（500）でプロセス停止せずエラー応答へ分岐することのみを判定する。具体応答・障害実再現は要実機確認。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-040	IT-09	リクエスト	P2	言語コード jp 指定で日本語の商品情報が返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001（SEED固定：jp規格 productClassId=900101・name=「テスト商品Ａ（日本語）」）	"1. GET /api/popup/product/jp/900001 を送信する
+2. HTTPステータスとレスポンスを確認する"	HTTPステータス200で、name=「テスト商品Ａ（日本語）」・code=jp（SEED固定値・付帯表3-1）の日本語商品情報が返ること（正本md 入出力 lang「jpまたはen」。言語コード値の実装差異は付帯表4#4で管理）。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-041	IT-09	リクエスト	P2	言語コード en 指定で英語の商品情報が返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=en, productId=900001（SEED固定：en規格 productClassId=900102・nameEn=Test Product A）	"1. GET /api/popup/product/en/900001 を送信する
+2. HTTPステータスとレスポンスを確認する"	HTTPステータス200で、nameEn=Test Product A・code=en（SEED固定値・付帯表3-1）の英語商品情報が返ること（データ整合性「指定言語に対応する商品情報を返す」）。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-042	IT-32	レスポンス	P3	weeklySold が週間販売数の集計（SUM）値として返る	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001（SEED固定：当該週の販売明細を合計5件相当で投入・weeklySold=5）	"1. GET /api/popup/product/jp/900001 を送信する
+2. レスポンスの weeklySold を確認する"	weeklySold が週間販売数の集計（SUM）結果として weeklySold=5（SEED固定値・付帯表3-1）で、仕様型の数値文字列（string）で返ること（応答フィールド定義 weeklySold「集計（SUM）結果のため数値文字列で返す」。応答型の実装差異は付帯表4#7で管理）。				
+a02-01_api_product_popup_product（API_ポップアップ用商品情報取得）	E2E-A02-01-043	IT-09	実行結果	P3	参照のみで副作用が無い（再取得で対象データ不変）	SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-API-ACCESS	lang=jp, productId=900001（SEED-A02-01-PRODUCT-KNOWN）	"1. 対象商品(900001)の現在値を取得する
+2. GET /api/popup/product/jp/900001 を送信する
+3. 対象商品の値を再取得し比較する"	API呼び出し前後で対象商品規格(900001)の値（price01=800・price02=1000・stock=3 等のSEED固定値）が変化しないこと（副作用「無し（参照のみ）」・DB操作は参照系のみ）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）
@@ -184,6 +184,29 @@ a02-01_api_product_popup_product（API_ポップアップ用商品情報取得�
 | SEED-A02-01-API-ACCESS | API呼び出し資格情報／アクセス許可 | pf-apiの認可方式（正本md 権限・認可「認可方式はpf-apiの方針に従う」）を満たす呼び出し元・資格情報。負例008用に**無効・欠落した資格情報**も用意する（拒否を確認）。**実装のApp APIエンドポイントの認可方式は要確認（付帯表4#2）** | fixture／env（環境ガード `test.skip`） | 環境隔離・撤去可。資格情報の原値（正常・異常とも）はログ・設計書に書かない（ログ・監査「認証情報を出さない」） | 全API/統合ケース＋008（負例＝無効/欠落資格情報・要実機確認） |
 
 注: 商品サブ規格・カード詳細・カードコンディション・言語・商品サブ規格画像は現行（pf-api）のテーブル名で、ec-cube-enterpriseに対応実装が見当たらないため推測でスキーマ化せず要確認（正本md リニューアル移行時の扱い・付帯表4#5）。`migration` を充てる場合のDB対応は ec-cube-enterprise 正典（dtb_product_class 等）に従う。本APIは参照系のため更新系シード・後始末は不要。API資格情報は環境変数で供給する。
+
+## 付帯表3-1：SEED固定値（合成の既知値・期待オラクル）
+
+実施者はこの表の固定値で入力を組み立て、応答をこの固定値と**等値照合**して合否を判定する。値は合成（実カード非依存）だが、**仕様どおりの期待値を先に固定したオラクル**であり、実装がこの値と異なれば落として検出する（型・画像・言語コードの実装乖離は付帯表4で管理）。テスト帯IDは他機能と衝突しない専用帯（90xxxx）から採番し、テスト後は同値へべき等復元する（参照系のため値変動なし）。
+
+| SEEDキー | フィールド | 固定値（jp規格） | 固定値（en規格） | 備考 |
+|----------|-----------|------------------|------------------|------|
+| PRODUCT-KNOWN | productId | 900001 | 900001（同一商品） | 公開状態・テスト帯の専用ID |
+| PRODUCT-KNOWN | productClassId | 900101 | 900102 | 言語別の商品規格 |
+| PRODUCT-KNOWN | name | テスト商品Ａ（日本語） | － | jp規格の名称 |
+| PRODUCT-KNOWN | nameEn | － | Test Product A | en規格の名称 |
+| PRODUCT-KNOWN | code | jp | en | code＝言語コード（付帯表4#4：実装は ja/en 受理・jp 未受理） |
+| PRODUCT-KNOWN | price01 | "800" | "800" | 数値文字列（付帯表4#7：実装のint化を検出） |
+| PRODUCT-KNOWN | price02 | "1000" | "1000" | 数値文字列 |
+| PRODUCT-KNOWN | stock | "3" | "3" | 数値文字列 |
+| PRODUCT-KNOWN | conditionCode | A | A | カードコンディション |
+| PRODUCT-KNOWN | foilFlg | false | false | 真偽値 |
+| PRODUCT-KNOWN | weeklySold | "5" | "5" | 週間販売数の集計(SUM)・数値文字列。対象週の販売明細を合計5件相当で投入 |
+| PRODUCT-KNOWN | subFileName | 900001_class.jpg | 900001_class.jpg | 商品規格画像（付帯表4#6：fileNameと別ソース＝別値） |
+| PRODUCT-KNOWN | fileName | 900001_product.jpg | 900001_product.jpg | 商品画像（subFileNameと別値であること） |
+| PRODUCT-NONE | productId | 999999 | 999999 | 未登録＝該当なし(404誘発)。DBに存在させない |
+
+補足: jp/en は同一 productId=900001 の言語別規格（productClassId 900101/900102）として持たせる。この固定値は付帯表3のシードセット（SEED-A02-01-PRODUCT-KNOWN／SEED-A02-01-PRODUCT-NONE）を具体化したもので、TSVの各ケースはこの値を参照して入力・期待を確定する。
 
 ## 付帯表4：不具合候補（仕様乖離）／要確認
 
