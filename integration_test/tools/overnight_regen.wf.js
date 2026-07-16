@@ -83,7 +83,10 @@ function genPrompt(f) {
    - **付帯表4（仕様乖離＝バグ候補）**: Excel/詳細設計 vs 実ソースの差を file:line で（実バグ検出が目的）
 4. gate: \`python3 integration_test/tools/gate_check.py integration_test/_poc2_${f.fid}.md --html "${f.detail}"${f.excel_ok ? ` --excel "excel_to_html/output/${f.excel_doc}"` : ''}\` がハード違反0になるまで直す。
 
-## 厳守（捏造ゼロ）
+${f.kubun === '新規実装' ? `## ⚠新規実装の特別厳守（オラクルは ${f.excel_key} 自身のExcelのみ）
+- **薄いExcelを超えて断定しない**。次はExcelが明示しない限り**期待に断定せず「要実機確認」**へ: HTTPステータス(200/302/400/500)・DBテーブル/カラム名・応答クラス名(StreamedResponse等)・ログ出力・CSV/PDFの列順や項目・From/Toレンジの絞り込み方向・トランザクション原子性・セッション/route実装param(resume等)・空結果時挙動。
+- **姉妹機能(別機能ID)のExcelや詳細設計HTML・実ソースをオラクルにしない**。実装事実は付帯表4(実ソース file:line・期待に使わない)へ。
+` : ''}## 厳守（捏造ゼロ）
 - 期待結果は**オラクル（Excel優先・沈黙部は詳細設計）由来**で実装から独立。実装値をオラクル化しない。
 - オラクルに書かれていない挙動を断定しない（「要実機確認」にする）。限定（「〜の場合のみ」）を落とさない。
 - SEEDの合成固定値は捏造でない。行はオラクルに追跡可能であること。
