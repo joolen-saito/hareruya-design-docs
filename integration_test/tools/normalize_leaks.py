@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+"""期待欄の実装値混入の定型を要実機確認へ正規化。使い方: normalize_leaks.py <fid...>"""
+import re, sys
+from pathlib import Path
+REPL = [
+ # 実ソース正典化
+ (r'(?:※)?(?:テーブル名の?表記基準について設計自身が「)?テーブル名は ec-cube-enterprise を正典とする(?:」\(L\d+の設計記[^)]*\))?',
+  'テーブル名の具体は実ソースのDB構造でありオラクルにしない＝要実機確認'),
+ (r'テーブル・列名は ?ec-cube-enterprise ?を正典とする', 'テーブル・列名の具体は実ソース依存でありオラクルにしない＝要実機確認'),
+ (r'DB関連\(テーブル・列・型・制約\)は ec-cube-enterprise を正とする旨は L\d+',
+  'DB関連(テーブル・列・型・制約)の具体は実ソース依存でありオラクルにしない＝要実機確認'),
+ (r'DB ?= ?ec-cube-enterprise ?を正典とする', '保存先テーブルの具体名は実ソース依存＝要実機確認'),
+ (r'ec-cube-enterprise ?を正典とする', '具体は実ソース依存＝要実機確認'),
+ (r'ec-cube-enterprise ?を正とする', '具体は実ソース依存＝要実機確認'),
+ # 実装観察
+ (r'はソース上読み取っておらず', 'の有無はオラクル未規定＝要実機確認であり'),
+ (r'はソース上読み取れない', 'の有無はオラクル未規定＝要実機確認'),
+ (r'はコード上は設けていない', 'の有無はオラクル未規定＝要実機確認'),
+ (r'はソース上確認されておらず', 'の有無はオラクル未規定＝要実機確認であり'),
+ (r'はソース上目立たず', 'の有無はオラクル未規定＝要実機確認であり'),
+ (r'はソース上付されていない確認である', 'の有無はオラクル未規定＝要実機確認'),
+ (r'はソース上は確認しない', 'の有無はオラクル未規定＝要実機確認'),
+]
+for fid in sys.argv[1:]:
+    p = Path(f'integration_test/_poc2_{fid}.md')
+    if not p.exists(): print(f'{fid}: 無'); continue
+    s = p.read_text(encoding='utf-8'); o = s
+    for a, b in REPL: s = re.sub(a, b, s)
+    if s != o: p.write_text(s, encoding='utf-8'); print(f'{fid}: 正規化')
+    else: print(f'{fid}: 該当なし')
