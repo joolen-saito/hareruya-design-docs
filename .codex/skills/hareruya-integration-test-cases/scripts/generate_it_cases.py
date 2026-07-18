@@ -13,7 +13,7 @@ import csv
 import hashlib
 import html
 import re
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from io import StringIO
@@ -245,6 +245,16 @@ def sanitize_sentence(value: str) -> str:
         result = re.sub(pattern, "期待される結果", result)
     result = result.replace("または", "もしくは")
     return clean_space(result)
+
+
+# テスト層: 結合層のみを機能×観点のクロス積対象とする。他層は各行き先で担保。
+ALLOWED_LAYER_VALUES = {"結合", "UT", "委譲", "e2e", "非機能", "対象外"}
+DEFAULT_XPROD_LAYERS = {"結合"}
+
+
+def filter_viewpoints(viewpoints: list["Viewpoint"], allowed: set[str]) -> list["Viewpoint"]:
+    """クロス積対象をテスト層で絞る唯一の入口。make_rows がこれを通す。"""
+    return [vp for vp in viewpoints if vp.layer in allowed]
 
 
 def read_viewpoints(path: Path) -> list[Viewpoint]:
@@ -681,7 +691,16 @@ def expected_result(vp: Viewpoint, flags: dict[str, bool], cue: tuple[str, str] 
     return sanitize_sentence(s)
 
 
-def make_rows(doc: HtmlDoc, viewpoints: list[Viewpoint], max_cases: int) -> tuple[list[list[str]], list[Viewpoint], dict[str, bool]]:
+def make_rows(
+    doc: HtmlDoc,
+    viewpoints: list[Viewpoint],
+    max_cases: int,
+    allowed_layers: set[str] | None = None,
+) -> tuple[list[list[str]], list[Viewpoint], dict[str, bool]]:
+    # テスト層フィルタの唯一のチョークポイント。make_rows を直接呼ぶ全スクリプト
+    # (promote_it_cases_by_rules / promote_drift / export_unexpanded) もここで結合層に絞られる。
+    allowed = allowed_layers if allowed_layers is not None else DEFAULT_XPROD_LAYERS
+    viewpoints = filter_viewpoints(viewpoints, allowed)
     flags = context_flags(doc)
     matched = [vp for vp in viewpoints if viewpoint_matches(vp, flags)]
     ordered = limit_viewpoints(matched, flags, len(matched))
@@ -735,8 +754,14 @@ def related_summary(selected: list[Viewpoint]) -> str:
 def out_of_scope(viewpoints: list[Viewpoint], selected: list[Viewpoint], flags: dict[str, bool]) -> str:
     selected_nos = {vp.no for vp in selected}
     groups: OrderedDict[str, tuple[str, set[str]]] = OrderedDict()
+    capped: list[Viewpoint] = []  # viewpoint_matches=True だが上限/重複でTSV未収載（＝「非該当」ではない）
     for vp in viewpoints:
         if vp.no in selected_nos:
+            continue
+        if viewpoint_matches(vp, flags):
+            # 本機能に該当するが、max_cases上限または実行キー重複で今回は収載されなかった観点。
+            # これを「非該当」と報告すると事実と異なる（捏造）ため分離する。
+            capped.append(vp)
             continue
         key = f"{vp.category} / {vp.large} / {vp.middle}"
         reason = reason_for(vp, flags)
@@ -748,6 +773,13 @@ def out_of_scope(viewpoints: list[Viewpoint], selected: list[Viewpoint], flags: 
         lines.append(f"| {key}（{', '.join(sorted(ids))}） | {reason} |")
     if len(groups) > 80:
         lines.append(f"| その他 | 同種の対象外観点 {len(groups) - 80} 件は上記分類と同じ理由で対象外 |")
+    if capped:
+        nos = ", ".join(f"No.{vp.no}" for vp in sorted(capped, key=lambda v: int(v.no)))
+        lines.append("")
+        lines.append(
+            f"> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で"
+            f"今回未収載の結合観点 {len(capped)}件 — {nos}。上限緩和または個別ケース化で収載可能。"
+        )
     return "\n".join(lines)
 
 
@@ -778,6 +810,7 @@ def reason_for(vp: Viewpoint, flags: dict[str, bool]) -> str:
 
 
 LAYER_DEST = {
+    "結合": "結合テスト母集合（機能×観点のクロス積対象）。",
     "UT": "単体テスト粒度（単項目境界値・単機能ロジック）→単体テストで担保。表内に保持しマーク。",
     "委譲": "期待値を設計書へ委譲（「記載通り」）→機能別チェックリストへ降格。per機能で設計書の具体値を引用してケース化。",
     "e2e": "見た目／ブラウザ挙動→e2e（Playwright）＋手動で担保。",
@@ -787,15 +820,16 @@ LAYER_DEST = {
 
 
 def layer_exclusion(viewpoints: list[Viewpoint], allowed: set[str]) -> str:
-    from collections import Counter
-
     counts: Counter[str] = Counter(vp.layer for vp in viewpoints if vp.layer not in allowed)
     if not counts:
         return "（テスト層による母集合除外なし）"
     lines = ["| テスト層 | 除外観点数 | 行き先 |", "|---|---:|---|"]
-    for layer in ["UT", "委譲", "e2e", "非機能", "対象外"]:
+    # 既知層を定義順で先に、未知層（typo等）も必ず表示する＝暗黙の切り捨てを作らない。
+    known = ["結合", "UT", "委譲", "e2e", "非機能", "対象外"]
+    for layer in known + sorted(set(counts) - set(known)):
         if counts.get(layer):
-            lines.append(f"| {layer} | {counts[layer]} | {LAYER_DEST.get(layer, '')} |")
+            dest = LAYER_DEST.get(layer, "⚠ 未知のテスト層。観点マスタの値を確認すること。")
+            lines.append(f"| {layer} | {counts[layer]} | {dest} |")
     return "\n".join(lines)
 
 
@@ -806,9 +840,11 @@ def render_markdown(
     max_cases: int,
     allowed_layers: set[str] | None = None,
 ) -> tuple[str, list[list[str]]]:
-    allowed = allowed_layers or {"結合"}
-    xprod_vps = [vp for vp in viewpoints if vp.layer in allowed]
-    rows, selected, flags = make_rows(doc, xprod_vps, max_cases)
+    allowed = allowed_layers or DEFAULT_XPROD_LAYERS
+    # make_rows がテスト層フィルタのチョークポイント。ここでも xprod_vps を作るのは out_of_scope 報告用。
+    rows, selected, flags = make_rows(doc, viewpoints, max_cases, allowed)
+    xprod_vps = filter_viewpoints(viewpoints, allowed)
+    layer_label = "結合層" if allowed == {"結合"} else "／".join(sorted(allowed)) + "層"
     rel_doc = doc.path.relative_to(repo).as_posix()
     tsv = write_tsv(rows)
     body = f"""# {doc.title} 結合試験テストケース
@@ -843,11 +879,11 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 
 ## テスト層による母集合除外（結合テスト対象外）
 
-結合テスト観点マスタは各観点に「テスト層」を付与し、**結合層のみ**を機能×観点のクロス積対象とする。以下の層は本結合テストの母集合から除外し、それぞれの行き先で担保する（fable5+codex監査済み・commit `ddc4302`）。
+結合テスト観点マスタは各観点に「テスト層」を付与し、**{layer_label}のみ**を機能×観点のクロス積対象とする。以下の層は本結合テストの母集合から除外し、それぞれの行き先で担保する（除外の根拠はマスタ `integration_test/integration-test-viewpoints.md` のテスト層列）。
 
 {layer_exclusion(viewpoints, allowed)}
 
-## 対象外観点（結合層のうち本機能に非該当）
+## 対象外観点（{layer_label}のうち本機能に非該当）
 
 {out_of_scope(xprod_vps, selected, flags)}
 """
@@ -919,14 +955,21 @@ def main() -> int:
     parser.add_argument("--max-cases-per-file", type=int, default=90)
     parser.add_argument("--limit", type=int, default=0, help="Generate only first N HTML files.")
     parser.add_argument("--only", type=str, default="", help="Only process HTML files whose path contains this substring (e.g. m01-0).")
-    parser.add_argument("--layers", type=str, default="結合", help="Comma-separated テスト層 to cross-product (default: 結合). UT/委譲/e2e/非機能/対象外 are excluded from the integration master.")
+    parser.add_argument("--layers", type=str, default="結合", help=f"Comma-separated テスト層 to cross-product (default: 結合). Valid values: {'/'.join(sorted(ALLOWED_LAYER_VALUES))}. Non-結合 layers are normally excluded from the integration master.")
     args = parser.parse_args()
 
     allowed_layers = {s.strip() for s in args.layers.split(",") if s.strip()}
+    unknown = allowed_layers - ALLOWED_LAYER_VALUES
+    if unknown:
+        parser.error(f"--layers に未知のテスト層: {', '.join(sorted(unknown))}（有効値: {'/'.join(sorted(ALLOWED_LAYER_VALUES))}）")
+    if not allowed_layers:
+        parser.error("--layers が空です。少なくとも1層（既定: 結合）を指定してください。")
     repo = args.repo.resolve()
     viewpoints_path = repo / "integration_test" / "integration-test-viewpoints.md"
     output_dir = repo / "integration_test"
     viewpoints = read_viewpoints(viewpoints_path)
+    if not filter_viewpoints(viewpoints, allowed_layers):
+        parser.error(f"指定層 {sorted(allowed_layers)} に該当する観点が0件です。観点マスタのテスト層列を確認してください。")
     html_files = discover_html(repo)
     if args.only:
         needle = args.only.lower()
