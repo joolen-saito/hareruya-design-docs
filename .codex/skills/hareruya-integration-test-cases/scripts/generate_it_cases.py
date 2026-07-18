@@ -88,6 +88,7 @@ class Viewpoint:
     middle: str
     small: str
     text: str
+    layer: str = "結合"
 
     @property
     def label(self) -> str:
@@ -261,6 +262,7 @@ def read_viewpoints(path: Path) -> list[Viewpoint]:
                 middle=row.get("中項目", ""),
                 small=row.get("小項目", ""),
                 text=sanitize_sentence(row.get("観点", "")),
+                layer=(row.get("テスト層") or "結合").strip() or "結合",
             )
         )
     return viewpoints
@@ -775,8 +777,38 @@ def reason_for(vp: Viewpoint, flags: dict[str, bool]) -> str:
     return "元設計HTMLに該当する処理・I/Fがないため"
 
 
-def render_markdown(repo: Path, doc: HtmlDoc, viewpoints: list[Viewpoint], max_cases: int) -> tuple[str, list[list[str]]]:
-    rows, selected, flags = make_rows(doc, viewpoints, max_cases)
+LAYER_DEST = {
+    "UT": "単体テスト粒度（単項目境界値・単機能ロジック）→単体テストで担保。表内に保持しマーク。",
+    "委譲": "期待値を設計書へ委譲（「記載通り」）→機能別チェックリストへ降格。per機能で設計書の具体値を引用してケース化。",
+    "e2e": "見た目／ブラウザ挙動→e2e（Playwright）＋手動で担保。",
+    "非機能": "方式／性能／基盤（ロック方式・リトライ間隔・MQクラスタ・レート制限等）→非機能・障害試験へ分離。",
+    "対象外": "合否オラクルを持たない管理・スコーピング指示→テスト観点ではないため除外。",
+}
+
+
+def layer_exclusion(viewpoints: list[Viewpoint], allowed: set[str]) -> str:
+    from collections import Counter
+
+    counts: Counter[str] = Counter(vp.layer for vp in viewpoints if vp.layer not in allowed)
+    if not counts:
+        return "（テスト層による母集合除外なし）"
+    lines = ["| テスト層 | 除外観点数 | 行き先 |", "|---|---:|---|"]
+    for layer in ["UT", "委譲", "e2e", "非機能", "対象外"]:
+        if counts.get(layer):
+            lines.append(f"| {layer} | {counts[layer]} | {LAYER_DEST.get(layer, '')} |")
+    return "\n".join(lines)
+
+
+def render_markdown(
+    repo: Path,
+    doc: HtmlDoc,
+    viewpoints: list[Viewpoint],
+    max_cases: int,
+    allowed_layers: set[str] | None = None,
+) -> tuple[str, list[list[str]]]:
+    allowed = allowed_layers or {"結合"}
+    xprod_vps = [vp for vp in viewpoints if vp.layer in allowed]
+    rows, selected, flags = make_rows(doc, xprod_vps, max_cases)
     rel_doc = doc.path.relative_to(repo).as_posix()
     tsv = write_tsv(rows)
     body = f"""# {doc.title} 結合試験テストケース
@@ -809,9 +841,15 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 {tsv}
 ```
 
-## 対象外観点
+## テスト層による母集合除外（結合テスト対象外）
 
-{out_of_scope(viewpoints, selected, flags)}
+結合テスト観点マスタは各観点に「テスト層」を付与し、**結合層のみ**を機能×観点のクロス積対象とする。以下の層は本結合テストの母集合から除外し、それぞれの行き先で担保する（fable5+codex監査済み・commit `ddc4302`）。
+
+{layer_exclusion(viewpoints, allowed)}
+
+## 対象外観点（結合層のうち本機能に非該当）
+
+{out_of_scope(xprod_vps, selected, flags)}
 """
     return sanitize_markdown(body), rows
 
@@ -881,8 +919,10 @@ def main() -> int:
     parser.add_argument("--max-cases-per-file", type=int, default=90)
     parser.add_argument("--limit", type=int, default=0, help="Generate only first N HTML files.")
     parser.add_argument("--only", type=str, default="", help="Only process HTML files whose path contains this substring (e.g. m01-0).")
+    parser.add_argument("--layers", type=str, default="結合", help="Comma-separated テスト層 to cross-product (default: 結合). UT/委譲/e2e/非機能/対象外 are excluded from the integration master.")
     args = parser.parse_args()
 
+    allowed_layers = {s.strip() for s in args.layers.split(",") if s.strip()}
     repo = args.repo.resolve()
     viewpoints_path = repo / "integration_test" / "integration-test-viewpoints.md"
     output_dir = repo / "integration_test"
@@ -903,7 +943,7 @@ def main() -> int:
         out_path = output_dir / f"{stem}_it_cases.md"
         if out_path.exists() and not args.overwrite:
             continue
-        body, rows = render_markdown(repo, doc, viewpoints, args.max_cases_per_file)
+        body, rows = render_markdown(repo, doc, viewpoints, args.max_cases_per_file, allowed_layers)
         out_path.write_text(body, encoding="utf-8")
         all_rows.extend(rows)
         generated += 1
