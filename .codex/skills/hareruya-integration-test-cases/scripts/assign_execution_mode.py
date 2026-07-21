@@ -157,20 +157,27 @@ def main() -> int:
     pri_by_mode: dict[str, Counter[str]] = {}
     unresolved = 0
 
+    ambiguous = 0
     for r in data:
         ch = channel_of(r[1])
-        vp = vp_index.get((r[2].strip(), r[3].strip()))
-        if vp is None:
+        cands = vp_index.get((r[2].strip(), r[3].strip())) or []
+        if not cands:
             unresolved += 1
-        mode = classify(vp, ch)
-        sanc = "1" if is_sanctuary(vp) else "0"
-        vpno = vp[0] if vp else ""
+            mode, sanc, vpno, amb = "manual", "1", "", "1"
+        else:
+            # 衝突時は悲観側へ倒す。行順に依存しない(最大値/OR)ので決定的。
+            mode = max((classify(v, ch) for v in cands), key=lambda m: MODE_SEVERITY[m])
+            sanc = "1" if any(is_sanctuary(v) for v in cands) else "0"
+            vpno = ";".join(sorted((v[0] for v in cands), key=int))
+            amb = "1" if len(cands) > 1 else "0"
+        if amb == "1":
+            ambiguous += 1
         mode_c[mode] += 1
         sanc_c[sanc] += 1
         pri_by_mode.setdefault(mode, Counter())[r[4]] += 1
-        out_rows.append(r + [mode, sanc, ch, vpno])
+        out_rows.append(r + [mode, sanc, ch, vpno, amb])
 
-    new_header = header + ["実行区分", "聖域", "チャネル", "観点No"]
+    new_header = header + ["実行区分", "聖域", "チャネル", "観点No", "逆引き曖昧"]
     dest = src if args.inplace else it_dir / "execution_assignment.tsv"
     with dest.open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f, delimiter="\t", lineterminator="\n")
@@ -187,6 +194,8 @@ def main() -> int:
         print(f"  {v:6d}  ({v/total*100:5.1f}%)  {k}")
     print(f"\n手動: {manual} ({manual/total*100:.1f}%)  / 自動化可能: {auto} ({auto/total*100:.1f}%)")
     print(f"聖域(全数必須): {sanc_c['1']}  通常: {sanc_c['0']}")
+    print(f"逆引き曖昧(悲観側へ倒した行): {ambiguous} ({ambiguous/total*100:.1f}%)"
+          " ← 対外見積から除外し、解消をリリースゲートにすること")
     print("\n--- 実行区分×優先度 ---")
     for m in mode_c:
         c = pri_by_mode[m]
