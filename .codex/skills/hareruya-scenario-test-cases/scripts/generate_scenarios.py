@@ -505,7 +505,7 @@ WORK_UNKNOWN = "unknown"     # ノード表に対応が無い → 推測せず�
 # 「手作業」ノードのうち、外部システム/ツールで行うもの（物理作業ではない）。
 EXTERNAL_TOOL_WORDS = (
     "スマレジ", "backlog", "バックログ", "スプレッドシート", "エクセル", "excel",
-    "メール", "メーラー", "thunderbird", "wordpress", "gmo", "ラインワークス",
+    "メール", "メーラー", "thunderbird", "wordpress", "ラインワークス",
     "line", "gメール", "コンパニオン", "splinks", "電話", "slack", "チャット", "フォーム",
     "海外発送管理アプリ", "mtgバイヤー", "ポイントグランター",
 )
@@ -577,6 +577,8 @@ NON_STEP_NODE_KINDS = (
 # 照合キー（同一案件性を担保する識別子）は原典に定義が無いため創作しない。
 # ---------------------------------------------------------------------------
 DATA_NODE_KINDS = ("データ/DB", "帳票/書類", "flowChartPunchedCard")
+# 工程（実行主体が作業する図形）ではないもの。データ/帳票のほか、注釈・ラベル・区切りを含む。
+NON_WORK_NODE_KINDS = DATA_NODE_KINDS + ("注釈(吹き出し)", "処理/ラベル", "フェーズ区切り")
 FREE_END = "(自由端)"
 
 
@@ -677,33 +679,69 @@ class FlowGraph:
         node = self.nodes.get(number)
         return node is not None and node.kind in DATA_NODE_KINDS
 
+    def _is_work(self, number: str) -> bool:
+        node = self.nodes.get(number)
+        return node is not None and node.kind not in NON_WORK_NODE_KINDS
+
+    def _reach_work(self, start: str, forward: bool, depth: int = 3) -> list[FlowNode]:
+        """データ/帳票から点線を辿り、最初に到達する『工程』ノードを返す。
+
+        原典には `#20 受注*2 → #21 受注*2` のようなデータ→データ（図形上の複製・転記）が
+        あり、これを「消費工程」として出すとオラクルにならない。工程に当たるまで透過する。
+        """
+        seen = {start}
+        frontier = [start]
+        for _ in range(depth):
+            found: list[FlowNode] = []
+            nxt: list[str] = []
+            for cur in frontier:
+                edges = self._out(cur) if forward else self._in(cur)
+                for e in edges:
+                    other = e.dst_no if forward else e.src_no
+                    if not other or other in seen:
+                        continue
+                    seen.add(other)
+                    node = self.nodes.get(other)
+                    if node is None:
+                        continue
+                    if self._is_work(other):
+                        found.append(node)
+                    else:
+                        nxt.append(other)
+            if found:
+                return found
+            frontier = nxt
+        return []
+
     def data_links(self, number: str) -> list[DataLink]:
-        """工程 number に接続するデータ遷移線を、産出側・参照側の両方向から返す。"""
+        """工程 number に接続するデータ遷移線を、産出側・参照側の両方向から返す。
+
+        消費/産出の相手は必ず『工程』ノードにする（データ→データの複製は工程ではない）。
+        相手が原典に無い場合は空文字にし、推測で補完しない。
+        """
         step = self.nodes.get(number)
-        if step is None:
+        if step is None or not self._is_work(number):
             return []
         links: list[DataLink] = []
-        # (1) 産出: 工程 → データ/帳票（→ さらに先の消費先）
+        # (1) 産出: 工程 → データ/帳票 →（透過）→ 消費工程
         for edge in self._out(number):
             if not edge.dst_no or not self._is_artifact(edge.dst_no):
                 continue
             artifact = self.nodes[edge.dst_no]
-            downstream = [e for e in self._out(artifact.number) if e.dst_no and self.nodes.get(e.dst_no)]
-            if not downstream:
+            consumers = [n for n in self._reach_work(artifact.number, forward=True) if n.number != number]
+            if not consumers:
                 links.append(DataLink(number, step.text, artifact.number, artifact.text, "", ""))
-            for cons in downstream:
-                target = self.nodes[cons.dst_no]
+            for target in consumers:
                 links.append(DataLink(number, step.text, artifact.number, artifact.text, target.number, target.text))
-        # (2) 参照: データ/帳票 → 工程（産出元が原典にあれば併記）
+        # (2) 参照: 産出工程 →（透過）→ データ/帳票 → 工程
         for edge in self._in(number):
             if not self._is_artifact(edge.src_no):
                 continue
             artifact = self.nodes[edge.src_no]
-            upstream = [e for e in self._in(artifact.number) if self.nodes.get(e.src_no)]
-            if not upstream:
+            origins = [n for n in self._reach_work(artifact.number, forward=False) if n.number != number]
+            if not origins:
                 links.append(DataLink("", "", artifact.number, artifact.text, number, step.text))
-            for prod in upstream:
-                origin = self.nodes[prod.src_no]
+            for origin in origins:
                 links.append(DataLink(origin.number, origin.text, artifact.number, artifact.text, number, step.text))
         return links
 
@@ -1873,13 +1911,22 @@ def data_chain_rows(s: Scenario) -> str:
         return empty
     lines: list[str] = []
     seen: set[tuple[str, str, str]] = set()
+    ambiguous: set[str] = set()
     for row in s.route.rows:
         summary = ROW_SUMMARY.get(primary_text(row), "") or row_title(row)
         detail = row_detail(row)
         node = lookup_node(summary, graph.norm_nodes) or lookup_node_by_body(detail, graph.norm_nodes)
         if node is None:
             continue
-        for number in graph.node_numbers(node[2]):
+        numbers = graph.node_numbers(node[2])
+        # 同名図形が複数ある場合、どれが当該経路の工程かを原典から特定できない。
+        # 全件辿ると別パターンの点線を当該シナリオへ帰属させてしまう（codex指摘）。
+        # 原典に無い辺は作らないが、経路に属さない辺を載せるのも捏造と同じなので出さない。
+        if len(numbers) != 1:
+            if numbers:
+                ambiguous.add(node[2])
+            continue
+        for number in numbers:
             for link in graph.data_links(number):
                 key = (link.producer_no, link.artifact_no, link.consumer_no)
                 if key in seen:
@@ -1908,6 +1955,12 @@ def data_chain_rows(s: Scenario) -> str:
                     f"| DL-{len(lines) + 1:02d} | {producer} | {artifact} | {consumer} | {expected} | "
                     f"原典上の照合キー未定義（要業務確認） | {verdict} |"
                 )
+    for name in sorted(ambiguous):
+        lines.append(
+            f"| DL-{len(lines) + 1:02d} | 図形「{name}」が原典に複数存在 | - | - | "
+            "同名図形が複数あり、この経路に属するデータ遷移線を原典から特定できない。 | "
+            "原典上の照合キー未定義（要業務確認） | 要確認（原典未記載） |"
+        )
     return "\n".join(lines) if lines else empty
 
 
@@ -1959,9 +2012,9 @@ def edge_case_screen(case: "EdgeCase", docs: list[DesignDoc], actor: str = "") -
     # 「本人確認書類の不備対応」を `F05-01（ネット買取トップページ）` で実行する等の
     # 観測不能な手順を防ぐ。フロントは業務語が広く一致しやすく、誤マップの主因になる。
     if actor and "お客様" not in actor:
-        internal = [d for d in docs if not d.feature_no.startswith("F")]
-        if internal:
-            candidates = internal
+        # 社内画面が候補に無い場合、フロントへフォールバックしない。根拠のある画面が
+        # 無いなら「要確認」と書くほうが、観測不能な手順を出すより正しい。
+        candidates = [d for d in docs if not d.feature_no.startswith("F")]
     best, best_score = "", 0
     for doc in candidates:
         title = doc.title
@@ -2699,7 +2752,7 @@ def coverage_for(business_title: str, pattern: Pattern, docs: list[DesignDoc], r
         "正常系": True,
         "代替系": route.kind == "主要代替" or "A" in kinds,
         "異常系": route.kind == "業務異常" or "E" in kinds,
-        "外部連携": any(word in text + systems for word in ("スマレジ", "GMO", "MTG", "Wordpress", "ポイント", "AWS", "Backlog", "メール", "海外発送", "S3")),
+        "外部連携": any(word in text + systems for word in ("スマレジ", "SPLINKS", "MTG", "Wordpress", "ポイント", "AWS", "Backlog", "メール", "海外発送", "S3")),
         "データ更新": any(word in text for word in ("登録", "更新", "変更", "入庫", "出庫", "承認", "成立", "公開", "削除", "取込", "インポート", "在庫", "決済", "返金", "出金")),
         "CSV/帳票": any(word in text for word in ("CSV", "PDF", "印刷", "出力", "帳票", "納品書", "送り状", "リスト")),
         "メール/通知": any(word in text for word in ("メール", "通知", "連絡")),
