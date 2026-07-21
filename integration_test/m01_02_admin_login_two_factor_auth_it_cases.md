@@ -10,14 +10,18 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、UI部品、URL、操作起点、確認ダイアログ、送信可否制御 |
-| IT-03 | 外部画面、画面遷移 |
-| IT-13 | URL直接アクセス |
-| IT-22 | DBとの相関バリデーション、その他のバリデーション、必須バリデーション、必須制御、数値バリデーション、文字列長バリデーション、文字種バリデーション、相関バリデーション |
-| IT-23 | 実行結果、検索条件、登録内容 |
-| IT-26 | 登録内容 |
+| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
+| IT-23 | 実行結果、検索条件 |
+| IT-26 | 実行結果、更新内容、登録内容 |
+| IT-05 | 実行結果 |
+| IT-02 | 初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-07 | 排他制御 |
+| IT-06 | ロールバック |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -53,272 +57,266 @@ m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-A
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-006	IT-15	状態変化	P1	状態変化の結合確認	初回設定画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で初回設定画面の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	QR コードを表示し、6 桁トークンで秘密鍵を確定すること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-007	IT-25	UI部品	P3	UI部品の操作結果確認	本人の再設定画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で本人の再設定画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	本人の再設定画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で本人の再設定画面の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 本人の再設定画面を確認する
 3. 画面表示と後続状態を確認する"	ヘッダー等から開く想定であり、認証済み Cookie があるユーザーにのみ到達しやすいであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-008	IT-25	UI部品	P3	UI部品の操作結果確認	メンバー編集を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でメンバー編集の確認に必要な条件を指定する	"1. 対象画面を表示する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	メンバー編集を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でメンバー編集の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メンバー編集を確認する
 3. 画面表示と後続状態を確認する"	別の管理者による他メンバー編集であること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-009	IT-25	操作起点	P1	操作起点の操作結果確認	表示要素を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-009	IT-25	URL	P2	URLの操作結果確認	表示要素を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	追加認証画面では 6 桁トークン入力欄と送信ボタンを表示すること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-010	IT-25	確認ダイアログ	P1	確認ダイアログの操作結果確認	CSS・レイアウトを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. CSS・レイアウトを確認する
-3. 画面表示と後続状態を確認する"	管理画面共通のフォーム、警告、成功メッセージ、QR 表示領域を用いること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-011	IT-25	確認ダイアログ	P2	確認ダイアログの操作結果確認	モーダル・ポップアップを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	本機能は二段階認証の確認に専用モーダル、ポップアップ、トーストを使わないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-012	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	入力項目を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	入力項目を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力項目
 3. 画面表示と後続状態を確認する"	追加認証・初回設定・本人再設定は 6 桁トークン（text）と送信ボタンであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-013	IT-25	送信可否制御	P3	送信可否制御の操作結果確認	ブラウザのタブ（<title>）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でブラウザのタブ（<title>）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	ブラウザのタブ（<title>）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. ブラウザのタブ（<title>）を確認する
-3. 画面表示と後続状態を確認する"	追加認証画面もしくは初回設定画面を表示したときであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-014	IT-03	外部画面	P2	外部画面の操作結果確認	見出し（h5）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で見出し（h5）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	見出し（h5）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 見出し（h5）を確認する
-3. 画面表示と後続状態を確認する"	追加認証画面もしくは初回設定画面を表示したときであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-015	IT-03	画面遷移	P2	画面遷移の操作結果確認	ページ下部（著作権）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でページ下部（著作権）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	ページ下部（著作権）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. ページ下部（著作権）を確認する
-3. 画面表示と後続状態を確認する"	同上であること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-016	IT-03	画面遷移	P2	画面遷移の操作結果確認	トークン入力欄のプレースホルダを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でトークン入力欄のプレースホルダの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	トークン入力欄のプレースホルダを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. トークン入力欄のプレースホルダ
-3. 画面表示と後続状態を確認する"	追加認証画面を表示したときであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-017	IT-03	画面遷移	P2	画面遷移の操作結果確認	トークン入力欄直下（フォーム検証）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でトークン入力欄直下（フォーム検証）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	トークン入力欄直下（フォーム検証）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. トークン入力欄直下（フォーム検証）
-3. 画面表示と後続状態を確認する"	POST でトークンが空のとき、Symfony Form の検証エラーとして併せて出る場合があること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-018	IT-03	画面遷移	P2	画面遷移の操作結果確認	QR コード説明文を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でQR コード説明文の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	QR コード説明文を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. QR コード説明文を確認する
-3. 画面表示と後続状態を確認する"	初回設定画面を表示したときであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-019	IT-03	画面遷移	P2	画面遷移の操作結果確認	ブラウザのタブ（<title>）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でブラウザのタブ（<title>）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-019	IT-22	部分入力	P2	部分入力の入力検証	ブラウザのタブ（<title>）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でブラウザのタブ（<title>）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ブラウザのタブ（<title>）を確認する
 3. 画面表示と後続状態を確認する"	本人の再設定画面を表示したときであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-020	IT-03	画面遷移	P2	画面遷移の操作結果確認	画面上部アラート（警告）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で画面上部アラート（警告）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 画面上部アラート（警告）を確認する
-3. 画面表示と後続状態を確認する"	GET で秘密鍵が既に DB にあるとき（本人の再設定画面のみ）であること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-021	IT-13	URL直接アクセス	P2	URL直接アクセスの操作結果確認	ヘッダーユーザーメニュー内リンクを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でヘッダーユーザーメニュー内リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ヘッダーユーザーメニュー内リンクを確認する
-3. 画面表示と後続状態を確認する"	ログイン中の管理者の個別 2FA が ON のときのみ表示すること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-022	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	一覧列見出しを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で一覧列見出しの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧列見出しを確認する
-3. 画面表示と後続状態を確認する"	メンバー一覧を表示したときであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-023	IT-25	URL	P2	URLの操作結果確認	設定状態アイコンのツールチップ（完了）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で設定状態アイコンのツールチップ（完了）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 設定状態アイコンのツールチップ（完了）を確認する
-3. 画面表示と後続状態を確認する"	当該メンバーの個別 2FA が ON かつ秘密鍵が登録済みのときであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-024	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	設定状態アイコンのツールチップ（未完了）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 設定状態アイコンのツールチップ（未完了）を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-025	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	エラー応答を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. エラー応答を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-026	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	追加認証成功を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で文字列長バリデーションの対象項目に最大長の値を指定する	"1. 対象画面を表示する
-2. 追加認証成功を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-027	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	メンバー管理で個別 2FA の ON/OFF を保存を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で文字列長バリデーションの対象項目に最大長+1の値を指定する	"1. 対象画面を表示する
-2. メンバー管理で個別 2FA の ON/OFF を保存
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-028	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	初回設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で文字列長バリデーションの対象項目に最小長の値を指定する	"1. 対象画面を表示する
-2. 初回設定を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-029	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	本人の再設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で文字列長バリデーションの対象項目に最小長-1の値を指定する	"1. 対象画面を表示する
-2. 本人の再設定を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-030	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	認証済み状態を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で認証済み状態の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 認証済み状態を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-031	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	メンバー管理を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でメンバー管理の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. メンバー管理を確認する
-3. 画面表示と後続状態を確認する"	個別 2FA の ON/OFF は管理者レコードに保存すること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-032	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	秘密鍵候補（hidden）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で秘密鍵候補（hidden）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 秘密鍵候補（hidden）を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-033	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	個別 2FA の ON/OFF（メンバー管理）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で個別 2FA の ON/OFF（メンバー管理）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 個別 2FA の ON/OFF（メンバー管理）を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-034	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	個別 2FA が ON で秘密鍵が未設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で個別 2FA が ON で秘密鍵が未設定の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 個別 2FA が ON で秘密鍵が未設定を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-035	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	同一管理者が複数ブラウザを使うを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 同一管理者が複数ブラウザを使うを確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-036	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	秘密鍵と Cookieを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 秘密鍵と Cookieを確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-037	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	DB 更新とレスポンスを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. DB 更新とレスポンスを確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-038	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	時刻との整合性を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 時刻との整合性を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-039	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	成功時を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で成功時の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-040	IT-22	文字種バリデーション	P2	文字種バリデーションの入力検証	失敗時を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時を確認する
-3. 画面表示と後続状態を確認する"	文字種バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-041	IT-22	文字種バリデーション	P2	文字種バリデーションの入力検証	デバイス トークンを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でデバイス トークンの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. デバイス トークンを確認する
-3. 画面表示と後続状態を確認する"	文字種バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-042	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	初回設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 初回設定を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-043	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	認証済み Cookieを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 認証済み Cookieを確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-044	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	本人の再設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 本人の再設定を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-045	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	追加認証画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でその他のバリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 追加認証画面を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-046	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	初回設定画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で初回設定画面の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 初回設定画面を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-047	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	本人の再設定画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で本人の再設定画面の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 本人の再設定画面を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-048	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	メンバー編集を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. メンバー編集を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-049	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	表示要素を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でその他のバリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-050	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-051	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入力項目を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 入力項目
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-052	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	ブラウザのタブ（<title>）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. ブラウザのタブ（<title>）を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-053	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	見出し（h5）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 見出し（h5）を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-054	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	ページ下部（著作権）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. ページ下部（著作権）を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-055	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	トークン入力欄のプレースホルダを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. トークン入力欄のプレースホルダ
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-056	IT-22	必須制御	P1	必須制御の入力検証	トークン入力欄直下（フォーム検証）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で必須制御の対象項目を未入力にする	"1. 対象画面を表示する
-2. トークン入力欄直下（フォーム検証）
-3. 画面表示と後続状態を確認する"	POST でトークンが空のとき、Symfony Form の検証エラーとして併せて出る場合があること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-057	IT-23	検索条件	P2	検索時の検索条件確認	ブラウザのタブ（<title>）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-020	IT-23	検索条件	P2	検索時の検索条件確認	画面上部アラート（警告）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-058	IT-23	検索条件	P2	検索時の検索条件確認	画面上部アラート（警告）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-021	IT-23	検索条件	P2	検索時の検索条件確認	ヘッダーユーザーメニュー内リンクを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-059	IT-23	検索条件	P2	検索時の検索条件確認	ヘッダーユーザーメニュー内リンクを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でヘッダーユーザーメニュー内リンクの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ログイン中の管理者の個別 2FA が ON のときのみ表示すること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-060	IT-23	検索条件	P2	検索時の検索条件確認	一覧列見出しを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-022	IT-23	検索条件	P2	検索時の検索条件確認	一覧列見出しを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-061	IT-23	検索条件	P2	検索時の検索条件確認	設定状態アイコンのツールチップ（完了）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-023	IT-23	検索条件	P2	検索時の検索条件確認	設定状態アイコンのツールチップ（完了）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-062	IT-23	検索条件	P2	検索時の検索条件確認	設定状態アイコンのツールチップ（未完了）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-024	IT-23	検索条件	P2	検索時の検索条件確認	設定状態アイコンのツールチップ（未完了）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-063	IT-23	検索条件	P2	検索時の検索条件確認	エラー応答を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-025	IT-23	検索条件	P2	検索時の検索条件確認	エラー応答を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-064	IT-23	検索条件	P2	検索時の検索条件確認	追加認証成功を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-026	IT-23	検索条件	P2	検索時の検索条件確認	追加認証成功を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-065	IT-23	検索条件	P2	検索時の検索条件確認	メンバー管理で個別 2FA の ON/OFF を保存を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-027	IT-23	検索条件	P2	検索時の検索条件確認	メンバー管理で個別 2FA の ON/OFF を保存を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-066	IT-23	検索条件	P2	検索時の検索条件確認	初回設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で初回設定の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-028	IT-23	検索条件	P2	検索時の検索条件確認	初回設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で初回設定の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-067	IT-23	検索条件	P2	検索時の検索条件確認	本人の再設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で本人の再設定の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-029	IT-23	検索条件	P2	検索時の検索条件確認	本人の再設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で本人の再設定の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-068	IT-23	検索条件	P2	検索時の検索条件確認	認証済み状態を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で認証済み状態の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-030	IT-23	検索条件	P2	検索時の検索条件確認	認証済み状態を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で認証済み状態の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-069	IT-23	検索条件	P2	検索時の検索条件確認	メンバー管理を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でメンバー管理の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-031	IT-23	検索条件	P2	検索時の検索条件確認	メンバー管理を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でメンバー管理の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-070	IT-23	検索条件	P2	検索時の検索条件確認	秘密鍵候補（hidden）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で秘密鍵候補（hidden）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検証成功時に dtb_member.two_factor_auth_key へ保存する値の元であること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-071	IT-23	検索条件	P2	検索時の検索条件確認	個別 2FA の ON/OFF（メンバー管理）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で個別 2FA の ON/OFF（メンバー管理）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-032	IT-23	検索条件	P2	検索時の検索条件確認	秘密鍵候補（hidden）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で秘密鍵候補（hidden）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-072	IT-23	検索条件	P2	検索時の検索条件確認	個別 2FA が ON で秘密鍵が未設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で個別 2FA が ON で秘密鍵が未設定の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-033	IT-23	検索条件	P2	検索時の検索条件確認	個別 2FA の ON/OFF（メンバー管理）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で個別 2FA の ON/OFF（メンバー管理）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-073	IT-23	実行結果	P2	検索時の実行結果確認	同一管理者が複数ブラウザを使うを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で同一管理者が複数ブラウザを使うの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-034	IT-23	実行結果	P2	検索時の実行結果確認	個別 2FA が ON で秘密鍵が未設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で個別 2FA が ON で秘密鍵が未設定の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-074	IT-23	実行結果	P2	検索時の実行結果確認	秘密鍵と Cookieを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で秘密鍵と Cookieの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	認証済み Cookie は管理者 ID と秘密鍵から検証されるであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-075	IT-23	実行結果	P2	検索時の実行結果確認	DB 更新とレスポンスを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でDB 更新とレスポンスの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-035	IT-23	実行結果	P2	検索時の実行結果確認	同一管理者が複数ブラウザを使うを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で同一管理者が複数ブラウザを使うの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-076	IT-23	実行結果	P2	検索時の実行結果確認	時刻との整合性を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で時刻との整合性の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-036	IT-23	実行結果	P2	検索時の実行結果確認	秘密鍵と Cookieを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で秘密鍵と Cookieの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-077	IT-23	実行結果	P2	検索時の実行結果確認	成功時を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で成功時の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-037	IT-23	実行結果	P2	検索時の実行結果確認	DB 更新とレスポンスを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でDB 更新とレスポンスの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-078	IT-26	登録内容	P1	登録時の登録内容確認	失敗時を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で失敗時の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-038	IT-26	登録内容	P1	登録時の登録内容確認	時刻との整合性を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で時刻との整合性の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-079	IT-26	登録内容	P1	登録時の登録内容確認	デバイス トークンを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でデバイス トークンの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-039	IT-26	登録内容	P1	登録時の登録内容確認	成功時を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で成功時の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-080	IT-26	登録内容	P1	登録時の登録内容確認	初回設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で初回設定の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-040	IT-26	登録内容	P1	登録時の登録内容確認	失敗時を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で失敗時の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-081	IT-26	登録内容	P1	登録時の登録内容確認	認証済み Cookieを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で認証済み Cookieの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-041	IT-26	登録内容	P1	登録時の登録内容確認	デバイス トークンを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でデバイス トークンの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	トークン検証もしくは秘密鍵登録成功後に付与され、一定期間追加認証を省略する HTTPOnly Cookieであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-082	IT-26	登録内容	P1	登録時の登録内容確認	本人の再設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で本人の再設定の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	認証アプリが表示する 6 桁のワンタイムコードとして入力される値であること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-042	IT-26	登録内容	P1	登録時の登録内容確認	初回設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で初回設定の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	既に秘密鍵がある状態で、新しい秘密鍵に付け替える操作であること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-083	IT-23	登録内容	P1	登録時の登録内容確認	追加認証画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で追加認証画面の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-043	IT-26	登録内容	P1	登録時の登録内容確認	認証済み Cookieを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	6 桁トークンを入力し、成功するとホーム画面相当へ遷移し、認証済み Cookie が付与されるであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-084	IT-26	登録内容	P1	登録時の登録内容確認	初回設定画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で初回設定画面の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-044	IT-26	登録内容	P1	登録時の登録内容確認	本人の再設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	QR コードを表示し、6 桁トークンで秘密鍵を確定すること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-085	IT-26	登録内容	P1	登録時の登録内容確認	本人の再設定画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で本人の再設定画面の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-045	IT-26	登録内容	P1	登録時の登録内容確認	追加認証画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ヘッダー等から開く想定であり、認証済み Cookie があるユーザーにのみ到達しやすいであること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-086	IT-26	登録内容	P1	登録時の登録内容確認	メンバー編集を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でメンバー編集の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-046	IT-26	登録内容	P1	登録時の登録内容確認	初回設定画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	別の管理者による他メンバー編集であること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-087	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で表示要素の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-047	IT-26	登録内容	P1	登録時の登録内容確認	本人の再設定画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で本人の再設定画面の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-048	IT-26	実行結果	P1	登録時の実行結果確認	メンバー編集を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でメンバー編集の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-049	IT-23	実行結果	P1	登録時の実行結果確認	表示要素を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	追加認証画面では 6 桁トークン入力欄と送信ボタンを表示すること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-088	IT-26	登録内容	P1	登録時の登録内容確認	CSS・レイアウトを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でCSS・レイアウトの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-050	IT-26	更新内容	P1	更新時の更新内容確認	CSS・レイアウトを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でCSS・レイアウトの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理画面共通のフォーム、警告、成功メッセージ、QR 表示領域を用いること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-089	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-051	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-090	IT-26	登録内容	P1	登録時の登録内容確認	入力項目を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-052	IT-26	更新内容	P1	更新時の更新内容確認	入力項目を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で入力項目の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-053	IT-26	更新内容	P1	更新時の更新内容確認	ブラウザのタブ（<title>）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でブラウザのタブ（<title>）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	追加認証画面もしくは初回設定画面を表示したときであること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-054	IT-26	更新内容	P1	更新時の更新内容確認	見出し（h5）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で見出し（h5）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-055	IT-26	更新内容	P1	更新時の更新内容確認	ページ下部（著作権）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-056	IT-26	更新内容	P1	更新時の更新内容確認	トークン入力欄のプレースホルダを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-057	IT-26	更新内容	P1	更新時の更新内容確認	トークン入力欄直下（フォーム検証）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-058	IT-26	更新内容	P1	更新時の更新内容確認	QR コード説明文を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-059	IT-26	更新内容	P1	更新時の更新内容確認	ブラウザのタブ（<title>）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でブラウザのタブ（<title>）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-060	IT-05	実行結果	P1	更新時の実行結果確認	画面上部アラート（警告）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で画面上部アラート（警告）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-061	IT-05	実行結果	P1	更新時の実行結果確認	ヘッダーユーザーメニュー内リンクを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でヘッダーユーザーメニュー内リンクの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ログイン中の管理者の個別 2FA が ON のときのみ表示すること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-062	IT-02	初期行数	P2	初期行数の結合確認	一覧列見出しを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で一覧列見出しの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧列見出しを確認する
+3. 画面表示と後続状態を確認する"	メンバー一覧を表示したときであること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-063	IT-02	表示順	P2	表示順の結合確認	設定状態アイコンのツールチップ（完了）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で設定状態アイコンのツールチップ（完了）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 設定状態アイコンのツールチップ（完了）を確認する
+3. 画面表示と後続状態を確認する"	当該メンバーの個別 2FA が ON かつ秘密鍵が登録済みのときであること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-064	IT-25	更新抑止	P1	更新抑止の結合確認	設定状態アイコンのツールチップ（未完了）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で設定状態アイコンのツールチップ（未完了）の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	当該メンバーの個別 2FA が ON かつ秘密鍵が未登録のときであること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-065	IT-12	内部情報	P1	内部情報の結合確認	エラー応答を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でエラー応答の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	追加認証画面への POST がユーザー単位 5 回 / 30 分の上限を超えたとき（本番向けレート制限設定）であること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-066	IT-15	機密情報	P1	機密情報の結合確認	追加認証成功を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で追加認証成功の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	成功メッセージなしであること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-067	IT-07	排他制御	P1	排他制御の結合確認	メンバー管理で個別 2FA の ON/OFF を保存を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でメンバー管理で個別 2FA の ON/OFF を保存の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能専用の成功・失敗メッセージなしであること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-068	IT-07	排他制御	P1	排他制御の結合確認	初回設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で初回設定の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	個別 2FA が ON で秘密鍵が未設定の場合、秘密鍵候補と 6 桁トークンが一致したときに秘密鍵を DB に保存し、認証済み Cookie を付与すること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-069	IT-06	ロールバック	P3	ロールバックの結合確認	本人の再設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で本人の再設定の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	認証済み Cookie が有効な利用者だけが秘密鍵を付け替えるであること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	認証済み状態を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で認証済み状態の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 認証済み状態を確認する
+3. 画面表示と後続状態を確認する"	トークン検証もしくは秘密鍵登録に成功した後、認証済み Cookie を付与し、有効期間内は追加認証を省略すること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	メンバー管理を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でメンバー管理の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. メンバー管理を確認する
+3. 画面表示と後続状態を確認する"	個別 2FA の ON/OFF は管理者レコードに保存すること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	秘密鍵候補（hidden）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で秘密鍵候補（hidden）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 秘密鍵候補（hidden）を確認する
+3. 画面表示と後続状態を確認する"	検証成功時に dtb_member.two_factor_auth_key へ保存する値の元であること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-073	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	個別 2FA の ON/OFF（メンバー管理）を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で個別 2FA の ON/OFF（メンバー管理）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 個別 2FA の ON/OFF（メンバー管理）を確認する
+3. 画面表示と後続状態を確認する"	dtb_member.two_factor_auth_enabled を更新すること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	個別 2FA が ON で秘密鍵が未設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で個別 2FA が ON で秘密鍵が未設定の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 個別 2FA が ON で秘密鍵が未設定を確認する
+3. 画面表示と後続状態を確認する"	初回設定画面へ誘導し、秘密鍵登録完了まで保護された管理画面を利用できないこと。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	同一管理者が複数ブラウザを使うを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で同一管理者が複数ブラウザを使うの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 同一管理者が複数ブラウザを使うを確認する
+3. 画面表示と後続状態を確認する"	認証済み状態はブラウザの Cookie と管理者の秘密鍵に依存すること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	秘密鍵と Cookieを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で秘密鍵と Cookieの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 秘密鍵と Cookieを確認する
+3. 画面表示と後続状態を確認する"	認証済み Cookie は管理者 ID と秘密鍵から検証されるであること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-077	IT-25	一覧	P2	一覧の結合確認	DB 更新とレスポンスを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でDB 更新とレスポンスの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. DB 更新とレスポンスを確認する
+3. 画面表示と後続状態を確認する"	初回設定もしくは本人再設定では、秘密鍵保存と認証済み Cookie 付与が成功時の副作用になること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-078	IT-12	画面表示データ	P2	画面表示データの結合確認	時刻との整合性を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で時刻との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 時刻との整合性を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-079	IT-25	画面表示データ	P2	画面表示データの結合確認	成功時を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で成功時の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時を確認する
+3. 画面表示と後続状態を確認する"	追加認証成功、初回設定成功、本人再設定成功のいずれも、認証済み Cookie の付与もしくは秘密鍵更新を伴い、ホーム画面相当へ遷移すること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-080	IT-12	画面表示データ	P2	画面表示データの結合確認	失敗時を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-081	IT-25	画面表示データ	P2	画面表示データの結合確認	デバイス トークンを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）でデバイス トークンの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. デバイス トークンを確認する
+3. 画面表示と後続状態を確認する"	認証アプリが表示する 6 桁のワンタイムコードとして入力される値であること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-082	IT-25	フォーム送信	P1	フォーム送信の結合確認	初回設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で初回設定の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 初回設定を確認する
+3. 画面表示と後続状態を確認する"	個別 2FA が ON だが秘密鍵が未設定のときに、QR 等を用いて秘密鍵を登録する画面・処理であること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-083	IT-16	ファイル選択	P2	ファイル選択の結合確認	認証済み Cookieを試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で認証済み Cookieの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 認証済み Cookieを確認する
+3. 画面表示と後続状態を確認する"	トークン検証もしくは秘密鍵登録成功後に付与され、一定期間追加認証を省略する HTTPOnly Cookieであること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-084	IT-12	非同期更新	P1	非同期更新の結合確認	本人の再設定を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で本人の再設定の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 本人の再設定を確認する
+3. 画面表示と後続状態を確認する"	既に秘密鍵がある状態で、新しい秘密鍵に付け替える操作であること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-085	IT-12	エラー継続	P3	エラー継続の結合確認	追加認証画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で追加認証画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 追加認証画面を確認する
+3. 画面表示と後続状態を確認する"	6 桁トークンを入力し、成功するとホーム画面相当へ遷移し、認証済み Cookie が付与されるであること。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-ADMIN-LOGIN-TWO-FACTOR-AUTH-086	IT-25	件数上限	P2	件数上限の結合確認	初回設定画面を試験できる状態である	m01-02_admin_login_two_factor_auth（管理画面_二段階認証）（m01_02_admin_login_two_factor_auth）で初回設定画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 初回設定画面を確認する
+3. 画面表示と後続状態を確認する"	QR コードを表示し、6 桁トークンで秘密鍵を確定すること。
 ```
 
-## 対象外観点
+## テスト層による母集合除外（結合テスト対象外）
+
+結合テスト観点マスタは各観点に「テスト層」を付与し、**結合層のみ**を機能×観点のクロス積対象とする。以下の層は本結合テストの母集合から除外し、それぞれの行き先で担保する（除外の根拠はマスタ `integration_test/integration-test-viewpoints.md` のテスト層列）。
+
+| テスト層 | 除外観点数 | 行き先 |
+|---|---:|---|
+| UT | 108 | 単体テスト粒度（単項目境界値・単機能ロジック）→単体テストで担保。表内に保持しマーク。 |
+| 委譲 | 143 | 期待値を設計書へ委譲（「記載通り」）→機能別チェックリストへ降格。per機能で設計書の具体値を引用してケース化。 |
+| e2e | 33 | 見た目／ブラウザ挙動→e2e（Playwright）＋手動で担保。 |
+| 非機能 | 5 | 方式／性能／基盤（ロック方式・リトライ間隔・MQクラスタ・レート制限等）→非機能・障害試験へ分離。 |
+| 対象外 | 1 | 合否オラクルを持たない管理・スコーピング指示→テスト観点ではないため除外。 |
+| 統合 | 6 | 他観点に統合吸収済み（冗長削除）。統合先が同一バグクラスを検出するため重複クロス積を回避。行は監査用に保持しクロス積からのみ除外（codex+fable5承認）。 |
+
+## 対象外観点（結合層のうち本機能に非該当）
 
 | 分類・範囲 | 理由 |
 |-----------|------|
-| バリデーション / バリデーション / 単項目バリデーション（IT-22） | 元設計HTMLに該当する処理・I/Fがないため |
-| バリデーション / 管理画面 / バリデーション（IT-22） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 登録（IT-23, IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 更新（IT-05, IT-23, IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / DB操作 / 削除（IT-05） | 本機能に削除処理がないため |
-| データベースアクセス / DB制御 / 更新順序（IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / 排他制御（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / ロールバック（IT-06） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 数量 / 更新結果（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 増加処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 減少処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
@@ -333,23 +331,19 @@ m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-A
 | データベースアクセス / 移動・振替 / 例外処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 移動・振替 / 区分変更（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 分割・結合 / 結合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / 分割・結合 / 分割（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 分割・結合 / 承認・棄却（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 実数反映 / 不足（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 実数反映 / 超過（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / バッチ / DB影響（IT-26） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / 管理画面 / 同時更新（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| ファイル処理 / ファイル取込 / 実行結果（IT-16） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルアップロードを含む / 実行結果（IT-16, IT-24） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルアップロードを含む / バリデーション（IT-17, IT-24） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルアップロードを含む / 実行結果（IT-16） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルアップロードを含む / バリデーション（IT-17） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / ファイル出力 / 実行結果（IT-27） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルダウンロードを含む / 実行結果（IT-24, IT-27） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルダウンロードを含む / データ出力（IT-18, IT-24） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルダウンロードを含む / 実行結果（IT-27） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルダウンロードを含む / データ出力（IT-24） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / ファイル操作 / 実行結果（IT-27） | 本機能は対象の外部I/Fを扱わないため |
-| ファイル処理 / 数量・金額影響機能 / 対象機能（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ファイル処理 / 数量・金額影響機能 / 対象機能（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 数量 / 更新結果（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 増加・調整 / ファイル登録（IT-33） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / 参照・非更新 / 参照系機能（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 参照・非更新 / ファイル出力（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / バッチ / ファイル出力（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ / 再実行（IT-27） | 本機能はバッチ処理を起動しないため |
@@ -358,37 +352,50 @@ m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	IT-M01-02-A
 | ファイル処理 / バッチ-フロント / JSON連携（IT-27） | 本機能はバッチ処理を起動しないため |
 | メール処理 / メール処理 / 実行結果（IT-11, IT-28） | 本機能はメール送信を扱わないため |
 | メール処理 / メール処理 / メール編集（IT-28） | 本機能はメール送信を扱わないため |
-| 電文処理 / 受信処理 / 実行結果（IT-29） | 本機能は対象の外部I/Fを扱わないため |
-| 電文処理 / 受信処理 / バリデーション（IT-29） | 本機能は対象の外部I/Fを扱わないため |
 | 電文処理 / 送信処理 / 実行結果（IT-29） | 本機能は対象の外部I/Fを扱わないため |
 | 電文処理 / 送信処理 / 電文編集（IT-29） | 本機能は対象の外部I/Fを扱わないため |
-| ログ出力 / ログ出力 / ログ編集（IT-20） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 画面表示 / 表示結果（IT-12, IT-14, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 画面操作 / イベント実行結果（IT-01, IT-12, IT-14, IT-16, IT-21, IT-25, IT-27） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / データベースアクセス / DB操作（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / ログ出力 / ブラウザ（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / ウェブサービス呼出 / リトライ制御（IT-12, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 通知 / WebSocket（IT-11, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / ウェブサービス呼出 / リトライ制御（IT-12） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 通知 / WebSocket（IT-11） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 金額・単価 / 戻し処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 履歴 / 登録元追跡（IT-33） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブアプリケーション / 数量・金額 / フロント更新（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 数量減（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 数量増（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 欠落登録（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 数量・金額 / 取消（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / フロント / 表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 管理画面-公開側 / 反映（IT-02） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / API-公開側 / キャッシュ（IT-25） | 本機能は対象の外部I/Fを扱わないため |
-| ウェブアプリケーション / 管理画面 / 初期表示（IT-02） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / バッチアプリケーション機能 / 実行結果（IT-12, IT-30） | 本機能はバッチ処理を起動しないため |
-| バッチアプリケーション / ファイル取込 / 実行結果（IT-16） | 本機能はバッチ処理を起動しないため |
-| バッチアプリケーション / ファイル出力 / 実行結果（IT-27） | 本機能はバッチ処理を起動しないため |
 | バッチアプリケーション / バッチ / 正常終了（IT-30） | 本機能はバッチ処理を起動しないため |
 | バッチアプリケーション / バッチ / 異常終了（IT-12） | 本機能はバッチ処理を起動しないため |
 | メッセージング / メッセージング機能 / 実行結果（IT-31） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブサービス / ウェブサービス機能 / 実行結果（IT-09, IT-10, IT-19, IT-32） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / ウェブサービス機能 / 実行結果（IT-09, IT-10, IT-32） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 数量 / 区分整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 数量 / エラー（IT-33） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブサービス / 金額・単価 / 外部取引（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 外部連携 / 自動加算（IT-33） | 本機能は対象の外部I/Fを扱わないため |
-| その他 | 同種の対象外観点 19 件は上記分類と同じ理由で対象外 |
+| ウェブサービス / 外部連携 / 実数更新（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 外部連携 / 売上・返品（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / バッチ / 正常終了（IT-09） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / バッチ / 異常終了（IT-10） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / フロント / 外部キャッシュ（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / フロント / 外部取得（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 抽出条件（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 正常応答（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 認証・認可（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 決済連携 / 外部決済（IT-10） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 決済連携 / 二重実行（IT-08） | 本機能はバッチ処理を起動しないため |
+| ウェブアプリケーション / 決済連携 / 状態表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
+| データベースアクセス / 決済連携 / 金額整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / 外部連携 / Webhook・外部通知（IT-10, IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 外部連携 / 下流転送（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| データベースアクセス / 在庫引当 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 在庫引当 / 競合（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 注文・決済・在庫 / 原子性（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 状態遷移 / 遷移可否（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / 買取・査定 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
+| その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。

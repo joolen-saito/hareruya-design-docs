@@ -10,14 +10,18 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、UI部品、URL、操作起点、確認ダイアログ、送信可否制御 |
-| IT-03 | 外部画面、画面遷移 |
-| IT-13 | URL直接アクセス |
-| IT-22 | DBとの相関バリデーション、その他のバリデーション、必須バリデーション、必須制御、数値バリデーション、文字列長バリデーション、文字種バリデーション、相関バリデーション |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
-| IT-23 | 実行結果、更新内容、登録内容 |
+| IT-23 | 実行結果 |
+| IT-05 | 削除条件、実行結果 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-07 | 排他制御 |
+| IT-06 | ロールバック |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -53,272 +57,248 @@ f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカ�
 f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-006	IT-15	状態変化	P1	状態変化の結合確認	マスク表示を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でマスク表示の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	画面に出すカード番号を、先頭を伏字にして末尾4桁だけ見せる表示であること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-007	IT-25	UI部品	P3	UI部品の操作結果確認	カード編集画面を開くを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード編集画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	カード編集画面を開くを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード編集画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カード編集画面を開く
 3. 画面表示と後続状態を確認する"	会員ログイン済みなら、決済代行へ会員照会し、登録済みカードがあればマスク表示と有効期限を表示し、カード入力フォームを表示すること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-008	IT-25	UI部品	P3	UI部品の操作結果確認	カード登録・差し替えを送信を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード登録・差し替えを送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	カード登録・差し替えを送信を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード登録・差し替えを送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カード登録・差し替えを送信
 3. 画面表示と後続状態を確認する"	画面で生成したトークンを送信し、決済代行の会員枠へカードを登録もしくは差し替えるであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-009	IT-25	操作起点	P1	操作起点の操作結果確認	カード削除を送信を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード削除を送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-009	IT-25	URL	P2	URLの操作結果確認	カード削除を送信を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード削除を送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カード削除を送信
 3. 画面表示と後続状態を確認する"	削除指示として送信し、決済代行の会員枠を無効化すること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-010	IT-25	確認ダイアログ	P1	確認ダイアログの操作結果確認	未ログイン・簡易認証のみを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で未ログイン・簡易認証のみの確認に必要な条件を指定する	"1. 対象画面を表示する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	未ログイン・簡易認証のみを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 未ログイン・簡易認証のみを確認する
-3. 画面表示と後続状態を確認する"	カード編集画面を表示せず、マイページ入口へ誘導すること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-011	IT-25	確認ダイアログ	P2	確認ダイアログの操作結果確認	会員登録機能が無効な店舗を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で会員登録機能が無効な店舗の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	会員登録機能が無効な店舗を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 会員登録機能が無効な店舗を確認する
-3. 画面表示と後続状態を確認する"	カード会員登録を使わない設定のとき、ページを表示せず未検出（HTTP404）として扱うこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-012	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	表示要素を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	表示要素を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	画面見出しは「マイページ/登録済クレジットカード」であること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-013	IT-25	送信可否制御	P3	送信可否制御の操作結果確認	JS挙動を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS挙動を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	カード情報登録ボタン押下時に、入力欄ごとのクライアント側チェックを順に実行すること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-014	IT-03	外部画面	P2	外部画面の操作結果確認	削除挙動を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で削除挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	削除挙動を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 削除挙動
-3. 画面表示と後続状態を確認する"	カード情報削除ボタン押下時に、トークン隠し欄へ削除を表す固定文字列を入れてフォームを送信すること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-015	IT-03	画面遷移	P2	画面遷移の操作結果確認	CSS・レイアウトを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	CSS・レイアウトを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. CSS・レイアウトを確認する
-3. 画面表示と後続状態を確認する"	マイページ共通の枠とフォームレイアウトを使い、入力補助文（本人名義の利用、セキュリティコードの位置、生月日や電話番号の説明）を各欄に添えるであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-016	IT-03	画面遷移	P2	画面遷移の操作結果確認	モーダル・ポップアップを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	専用モーダルは持たないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-017	IT-03	画面遷移	P2	画面遷移の操作結果確認	見出しを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で見出しの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	見出しを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 見出しを確認する
-3. 画面表示と後続状態を確認する"	画面表示時であること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-018	IT-03	画面遷移	P2	画面遷移の操作結果確認	登録済みカードを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録済みカードの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	登録済みカードを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 登録済みカードを確認する
-3. 画面表示と後続状態を確認する"	決済代行の会員枠が有効で登録済みカードがあるときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-019	IT-03	画面遷移	P2	画面遷移の操作結果確認	入力補助を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で入力補助の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-019	IT-22	部分入力	P2	部分入力の入力検証	入力補助を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で入力補助の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力補助
 3. 画面表示と後続状態を確認する"	各欄が設定により表示されているときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-020	IT-03	画面遷移	P2	画面遷移の操作結果確認	カード名義/姓を入力してくださいほかカタカナ指定の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード名義/姓を入力してくださいほかカタカナ指定の案内の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. カード名義/姓を入力してくださいほかカタカナ指定の案内
-3. 画面表示と後続状態を確認する"	カード名義欄を表示する設定のときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-021	IT-13	URL直接アクセス	P2	URL直接アクセスの操作結果確認	セキュリティコードを入力してくださいほか数字・桁数の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でセキュリティコードを入力してくださいほか数字・桁数の案内の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. セキュリティコードを入力してくださいほか数字・桁数の案内
-3. 画面表示と後続状態を確認する"	セキュリティコード欄を表示する設定のときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-022	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	生月日を入力してくださいほか数字・4桁の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で生月日を入力してくださいほか数字・4桁の案内の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 生月日を入力してくださいほか数字・4桁の案内
-3. 画面表示と後続状態を確認する"	生月日欄を表示する設定のときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-023	IT-25	URL	P2	URLの操作結果確認	電話番号を入力してくださいほか数字・桁数の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で電話番号を入力してくださいほか数字・桁数の案内の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 電話番号を入力してくださいほか数字・桁数の案内
-3. 画面表示と後続状態を確認する"	電話番号欄を表示する設定のときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-024	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	生月日を正しく入力くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 生月日を正しく入力ください
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-025	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	入力項目を再度ご確認くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 入力項目を再度ご確認ください
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-026	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	システムと通信中のため少々お待ちくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で文字列長バリデーションの対象項目に最大長の値を指定する	"1. 対象画面を表示する
-2. システムと通信中のため少々お待ちくださいを確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-027	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	カード情報削除処理中ため少々お待ちくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で文字列長バリデーションの対象項目に最大長+1の値を指定する	"1. 対象画面を表示する
-2. カード情報削除処理中ため少々お待ちください
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-028	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	カード情報を更新しましたを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で文字列長バリデーションの対象項目に最小長の値を指定する	"1. 対象画面を表示する
-2. カード情報を更新しましたを確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-029	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	入力項目をご確認くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で文字列長バリデーションの対象項目に最小長-1の値を指定する	"1. 対象画面を表示する
-2. 入力項目をご確認ください
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-030	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	通信エラーが発生しました、後ほどお試しくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で通信エラーが発生しました、後ほどお試しくださいの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 通信エラーが発生しました、後ほどお試しくださいを確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-031	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	決済処理上のエラー内容（例: カード登録失敗の理由を含む文言）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で決済処理上のエラー内容（例: カード登録失敗の理由を含む文言）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 決済処理上のエラー内容（例: カード登録失敗の理由を含む文言）を確認する
-3. 画面表示と後続状態を確認する"	決済代行とのやり取りで業務エラーが出たときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-032	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	未ログイン・簡易認証のみを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で未ログイン・簡易認証のみの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 未ログイン・簡易認証のみを確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-033	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	カード会員登録を使わない設定を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード会員登録を使わない設定の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. カード会員登録を使わない設定を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-034	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	登録・差し替えの分岐を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録・差し替えの分岐の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録・差し替えの分岐を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-035	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	削除の扱いを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 削除の扱い
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-036	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	カード情報の非保持を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. カード情報の非保持を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-037	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	カード番号を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. カード番号を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-038	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	カード有効期限（月）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. カード有効期限（月）を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-039	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	カード有効期限（年）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード有効期限（年）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. カード有効期限（年）を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-040	IT-22	文字種バリデーション	P2	文字種バリデーションの入力検証	カード名義（姓）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード名義（姓）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. カード名義（姓）を確認する
-3. 画面表示と後続状態を確認する"	文字種バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-041	IT-22	文字種バリデーション	P2	文字種バリデーションの入力検証	カード編集画面を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード編集画面の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. カード編集画面を確認する
-3. 画面表示と後続状態を確認する"	文字種バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-042	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	決済代行を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 決済代行を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-043	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	会員枠を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 会員枠を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-044	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	トークンを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. トークンを確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-045	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	登録状況を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でその他のバリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 登録状況を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-046	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	マスク表示を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でマスク表示の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. マスク表示を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-047	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	カード編集画面を開くを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード編集画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. カード編集画面を開く
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-048	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	カード登録・差し替えを送信を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. カード登録・差し替えを送信
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-049	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	カード削除を送信を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でその他のバリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. カード削除を送信
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-050	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	会員登録機能が無効な店舗を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 会員登録機能が無効な店舗を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-051	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示要素を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-052	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS挙動を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-053	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	削除挙動を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 削除挙動
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-054	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	CSS・レイアウトを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. CSS・レイアウトを確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-055	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-056	IT-22	必須制御	P1	必須制御の入力検証	見出しを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で必須制御の対象項目を未入力にする	"1. 対象画面を表示する
-2. 見出しを確認する
-3. 画面表示と後続状態を確認する"	画面表示時であること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-057	IT-26	登録内容	P1	登録時の登録内容確認	入力補助を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で入力補助の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-020	IT-26	登録内容	P1	登録時の登録内容確認	カード名義/姓を入力してくださいほかカタカナ指定の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード名義/姓を入力してくださいほかカタカナ指定の案内の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-058	IT-26	登録内容	P1	登録時の登録内容確認	カード名義/姓を入力してくださいほかカタカナ指定の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード名義/姓を入力してくださいほかカタカナ指定の案内の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-021	IT-26	登録内容	P1	登録時の登録内容確認	セキュリティコードを入力してくださいほか数字・桁数の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でセキュリティコードを入力してくださいほか数字・桁数の案内の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-059	IT-26	登録内容	P1	登録時の登録内容確認	セキュリティコードを入力してくださいほか数字・桁数の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でセキュリティコードを入力してくださいほか数字・桁数の案内の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-022	IT-26	登録内容	P1	登録時の登録内容確認	生月日を入力してくださいほか数字・4桁の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で生月日を入力してくださいほか数字・4桁の案内の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-060	IT-26	登録内容	P1	登録時の登録内容確認	生月日を入力してくださいほか数字・4桁の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で生月日を入力してくださいほか数字・4桁の案内の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	生月日欄を表示する設定のときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-061	IT-26	登録内容	P1	登録時の登録内容確認	電話番号を入力してくださいほか数字・桁数の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で電話番号を入力してくださいほか数字・桁数の案内の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-023	IT-26	登録内容	P1	登録時の登録内容確認	電話番号を入力してくださいほか数字・桁数の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で電話番号を入力してくださいほか数字・桁数の案内の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	電話番号欄を表示する設定のときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-062	IT-23	登録内容	P1	登録時の登録内容確認	生月日を正しく入力くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で生月日を正しく入力くださいの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	サーバ側の送信後チェックであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-063	IT-26	登録内容	P1	登録時の登録内容確認	入力項目を再度ご確認くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で入力項目を再度ご確認くださいの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送信前に止めるであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-064	IT-26	登録内容	P1	登録時の登録内容確認	システムと通信中のため少々お待ちくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でシステムと通信中のため少々お待ちくださいの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送信を止めるであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-065	IT-26	登録内容	P1	登録時の登録内容確認	カード情報削除処理中ため少々お待ちくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード情報削除処理中ため少々お待ちくださいの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	二重送信防止であること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-066	IT-26	登録内容	P1	登録時の登録内容確認	カード情報を更新しましたを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード情報を更新しましたの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カード登録・差し替え・削除が成功したときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-067	IT-26	登録内容	P1	登録時の登録内容確認	入力項目をご確認くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で入力項目をご確認くださいの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	サーバ側のフォーム検証に失敗したときであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-068	IT-26	登録内容	P1	登録時の登録内容確認	通信エラーが発生しました、後ほどお試しくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で通信エラーが発生しました、後ほどお試しくださいの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-024	IT-26	登録内容	P1	登録時の登録内容確認	生月日を正しく入力くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で生月日を正しく入力くださいの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-069	IT-26	登録内容	P1	登録時の登録内容確認	決済処理上のエラー内容（例: カード登録失敗の理由を含む文言）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-025	IT-26	登録内容	P1	登録時の登録内容確認	入力項目を再度ご確認くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-070	IT-26	登録内容	P1	登録時の登録内容確認	未ログイン・簡易認証のみを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-026	IT-26	登録内容	P1	登録時の登録内容確認	システムと通信中のため少々お待ちくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-071	IT-26	登録内容	P1	登録時の登録内容確認	カード会員登録を使わない設定を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-027	IT-26	登録内容	P1	登録時の登録内容確認	カード情報削除処理中ため少々お待ちくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-072	IT-26	登録内容	P1	登録時の登録内容確認	登録・差し替えの分岐を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-028	IT-26	登録内容	P1	登録時の登録内容確認	カード情報を更新しましたを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-073	IT-26	登録内容	P1	登録時の登録内容確認	削除の扱いを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で削除の扱いの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-029	IT-26	登録内容	P1	登録時の登録内容確認	入力項目をご確認くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で入力項目をご確認くださいの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-074	IT-26	実行結果	P1	登録時の実行結果確認	カード情報の非保持を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード情報の非保持の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-030	IT-26	実行結果	P1	登録時の実行結果確認	通信エラーが発生しました、後ほどお試しくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で通信エラーが発生しました、後ほどお試しくださいの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-075	IT-23	実行結果	P1	登録時の実行結果確認	カード番号を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード番号の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-031	IT-23	実行結果	P1	登録時の実行結果確認	決済処理上のエラー内容（例: カード登録失敗の理由を含む文言）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で決済処理上のエラー内容（例: カード登録失敗の理由を含む文言）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	自社保存なしであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-076	IT-26	更新内容	P1	更新時の更新内容確認	カード有効期限（月）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード有効期限（月）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	決済代行とのやり取りで業務エラーが出たときであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-032	IT-26	更新内容	P1	更新時の更新内容確認	未ログイン・簡易認証のみを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で未ログイン・簡易認証のみの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-077	IT-26	更新内容	P1	更新時の更新内容確認	カード有効期限（年）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード有効期限（年）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-033	IT-26	更新内容	P1	更新時の更新内容確認	カード会員登録を使わない設定を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード会員登録を使わない設定の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-078	IT-26	更新内容	P1	更新時の更新内容確認	カード名義（姓）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード名義（姓）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-034	IT-26	更新内容	P1	更新時の更新内容確認	登録・差し替えの分岐を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録・差し替えの分岐の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-079	IT-26	更新内容	P1	更新時の更新内容確認	カード編集画面を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード編集画面の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-035	IT-26	更新内容	P1	更新時の更新内容確認	削除の扱いを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で削除の扱いの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	マイページ配下の「登録済クレジットカード」画面であること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-080	IT-26	更新内容	P1	更新時の更新内容確認	決済代行を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で決済代行の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除は決済代行の会員枠の無効化として行い、成功時に自社側の会員枠識別子の枝番を進めるであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-036	IT-26	更新内容	P1	更新時の更新内容確認	カード情報の非保持を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード情報の非保持の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カード情報を預かり、与信・会員枠管理を行う外部の決済サービスであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-081	IT-23	更新内容	P1	更新時の更新内容確認	会員枠を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で会員枠の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-037	IT-26	更新内容	P1	更新時の更新内容確認	カード番号を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-038	IT-26	更新内容	P1	更新時の更新内容確認	カード有効期限（月）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-039	IT-26	更新内容	P1	更新時の更新内容確認	カード有効期限（年）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-040	IT-26	更新内容	P1	更新時の更新内容確認	カード名義（姓）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-041	IT-26	更新内容	P1	更新時の更新内容確認	カード編集画面を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード編集画面の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-042	IT-05	実行結果	P1	更新時の実行結果確認	決済代行を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で決済代行の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-043	IT-05	実行結果	P1	更新時の実行結果確認	会員枠を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で会員枠の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	決済代行側で会員ごとに作られるカード保管枠であること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-082	IT-26	更新内容	P1	更新時の更新内容確認	トークンを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でトークンの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-044	IT-05	削除条件	P1	削除時の削除条件確認	トークンを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面でカード情報から生成される一時的な値であること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-083	IT-26	更新内容	P1	更新時の更新内容確認	登録状況を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録状況の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-045	IT-05	削除条件	P1	削除時の削除条件確認	登録状況を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	決済代行への会員照会で得られる、会員枠が有効かどうかの状態であること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-084	IT-26	更新内容	P1	更新時の更新内容確認	マスク表示を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でマスク表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-046	IT-05	削除条件	P1	削除時の削除条件確認	マスク表示を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面に出すカード番号を、先頭を伏字にして末尾4桁だけ見せる表示であること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-085	IT-26	更新内容	P1	更新時の更新内容確認	カード編集画面を開くを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード編集画面を開くの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-047	IT-05	削除条件	P1	削除時の削除条件確認	カード編集画面を開くを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	会員ログイン済みなら、決済代行へ会員照会し、登録済みカードがあればマスク表示と有効期限を表示し、カード入力フォームを表示すること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-086	IT-26	更新内容	P1	更新時の更新内容確認	カード登録・差し替えを送信を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード登録・差し替えを送信の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-048	IT-05	削除条件	P1	削除時の削除条件確認	カード登録・差し替えを送信を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード登録・差し替えを送信の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面で生成したトークンを送信し、決済代行の会員枠へカードを登録もしくは差し替えるであること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-087	IT-26	更新内容	P1	更新時の更新内容確認	カード削除を送信を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード削除を送信の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-049	IT-05	実行結果	P1	削除時の実行結果確認	カード削除を送信を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード削除を送信の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-088	IT-26	更新内容	P1	更新時の更新内容確認	未ログイン・簡易認証のみを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-050	IT-05	実行結果	P1	削除時の実行結果確認	未ログイン・簡易認証のみを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で未ログイン・簡易認証のみの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-089	IT-26	更新内容	P1	更新時の更新内容確認	会員登録機能が無効な店舗を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カード編集画面を表示せず、マイページ入口へ誘導すること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-051	IT-05	実行結果	P1	削除時の実行結果確認	会員登録機能が無効な店舗を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で会員登録機能が無効な店舗の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-090	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-052	IT-05	実行結果	P1	削除時の実行結果確認	表示要素を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面見出しは「マイページ/登録済クレジットカード」であること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-053	IT-02	初期行数	P2	初期行数の結合確認	JS挙動を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	カード情報登録ボタン押下時に、入力欄ごとのクライアント側チェックを順に実行すること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-054	IT-02	表示順	P2	表示順の結合確認	削除挙動を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で削除挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 削除挙動
+3. 画面表示と後続状態を確認する"	カード情報削除ボタン押下時に、トークン隠し欄へ削除を表す固定文字列を入れてフォームを送信すること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-055	IT-25	更新抑止	P1	更新抑止の結合確認	CSS・レイアウトを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でCSS・レイアウトの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	マイページ共通の枠とフォームレイアウトを使い、入力補助文（本人名義の利用、セキュリティコードの位置、生月日や電話番号の説明）を各欄に添えるであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-056	IT-12	内部情報	P1	内部情報の結合確認	モーダル・ポップアップを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	専用モーダルは持たないこと。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-057	IT-15	機密情報	P1	機密情報の結合確認	見出しを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で見出しの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	画面表示時であること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-058	IT-07	排他制御	P1	排他制御の結合確認	登録済みカードを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録済みカードの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	決済代行の会員枠が有効で登録済みカードがあるときであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-059	IT-07	排他制御	P1	排他制御の結合確認	入力補助を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で入力補助の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	各欄が設定により表示されているときであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-060	IT-06	ロールバック	P3	ロールバックの結合確認	カード名義/姓を入力してくださいほかカタカナ指定の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード名義/姓を入力してくださいほかカタカナ指定の案内の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カード名義欄を表示する設定のときであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-061	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	セキュリティコードを入力してくださいほか数字・桁数の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でセキュリティコードを入力してくださいほか数字・桁数の案内の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. セキュリティコードを入力してくださいほか数字・桁数の案内
+3. 画面表示と後続状態を確認する"	セキュリティコード欄を表示する設定のときであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-062	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	生月日を入力してくださいほか数字・4桁の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で生月日を入力してくださいほか数字・4桁の案内の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 生月日を入力してくださいほか数字・4桁の案内
+3. 画面表示と後続状態を確認する"	生月日欄を表示する設定のときであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-063	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	電話番号を入力してくださいほか数字・桁数の案内を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で電話番号を入力してくださいほか数字・桁数の案内の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 電話番号を入力してくださいほか数字・桁数の案内
+3. 画面表示と後続状態を確認する"	電話番号欄を表示する設定のときであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-064	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	生月日を正しく入力くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で生月日を正しく入力くださいの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 生月日を正しく入力ください
+3. 画面表示と後続状態を確認する"	サーバ側の送信後チェックであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-065	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力項目を再度ご確認くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で入力項目を再度ご確認くださいの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力項目を再度ご確認ください
+3. 画面表示と後続状態を確認する"	送信前に止めるであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-066	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	システムと通信中のため少々お待ちくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でシステムと通信中のため少々お待ちくださいの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. システムと通信中のため少々お待ちくださいを確認する
+3. 画面表示と後続状態を確認する"	送信を止めるであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-067	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	カード情報削除処理中ため少々お待ちくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード情報削除処理中ため少々お待ちくださいの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. カード情報削除処理中ため少々お待ちください
+3. 画面表示と後続状態を確認する"	二重送信防止であること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-068	IT-25	一覧	P2	一覧の結合確認	カード情報を更新しましたを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード情報を更新しましたの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. カード情報を更新しましたを確認する
+3. 画面表示と後続状態を確認する"	カード登録・差し替え・削除が成功したときであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-069	IT-12	画面表示データ	P2	画面表示データの結合確認	入力項目をご確認くださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で入力項目をご確認くださいの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力項目をご確認ください
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-070	IT-25	画面表示データ	P2	画面表示データの結合確認	通信エラーが発生しました、後ほどお試しくださいを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で通信エラーが発生しました、後ほどお試しくださいの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 通信エラーが発生しました、後ほどお試しくださいを確認する
+3. 画面表示と後続状態を確認する"	想定外の通信などの例外が出たときであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-071	IT-12	画面表示データ	P2	画面表示データの結合確認	決済処理上のエラー内容（例: カード登録失敗の理由を含む文言）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で決済処理上のエラー内容（例: カード登録失敗の理由を含む文言）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 決済処理上のエラー内容（例: カード登録失敗の理由を含む文言）を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-072	IT-25	画面表示データ	P2	画面表示データの結合確認	未ログイン・簡易認証のみを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で未ログイン・簡易認証のみの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 未ログイン・簡易認証のみを確認する
+3. 画面表示と後続状態を確認する"	専用メッセージなしであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-073	IT-25	フォーム送信	P1	フォーム送信の結合確認	カード会員登録を使わない設定を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード会員登録を使わない設定の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. カード会員登録を使わない設定を確認する
+3. 画面表示と後続状態を確認する"	専用メッセージなしであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-074	IT-16	ファイル選択	P2	ファイル選択の結合確認	登録・差し替えの分岐を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で登録・差し替えの分岐の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録・差し替えの分岐を確認する
+3. 画面表示と後続状態を確認する"	決済代行への会員照会で得た登録状況により、会員枠のカード変更・無効解除後の変更・会員枠の新規作成を選ぶであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-075	IT-12	非同期更新	P1	非同期更新の結合確認	削除の扱いを試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）で削除の扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 削除の扱い
+3. 画面表示と後続状態を確認する"	削除は決済代行の会員枠の無効化として行い、成功時に自社側の会員枠識別子の枝番を進めるであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-076	IT-12	エラー継続	P3	エラー継続の結合確認	カード情報の非保持を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード情報の非保持の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. カード情報の非保持を確認する
+3. 画面表示と後続状態を確認する"	カード原番号・有効期限・セキュリティコード・トークンは、画面入力と決済代行への送信のためだけに一時的に扱うこと。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-077	IT-25	件数上限	P2	件数上限の結合確認	カード番号を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード番号の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. カード番号を確認する
+3. 画面表示と後続状態を確認する"	自社保存なしであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-078	IT-25	欠損値	P2	欠損値の結合確認	カード有効期限（月）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード有効期限（月）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. カード有効期限（月）を確認する
+3. 画面表示と後続状態を確認する"	自社保存なしであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-079	IT-25	データなし	P2	データなしの結合確認	カード有効期限（年）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード有効期限（年）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. カード有効期限（年）を確認する
+3. 画面表示と後続状態を確認する"	自社保存なしであること。
+f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）	IT-F06-19-FRONT-MEMBER-MYPAGE-CREDIT-CARD-080	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	カード名義（姓）を試験できる状態である	f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカード情報登録・変更）（f06_19_front_member_mypage_credit_card）でカード名義（姓）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. カード名義（姓）を確認する
+3. 画面表示と後続状態を確認する"	自社保存なしであること。
 ```
 
-## 対象外観点
+## テスト層による母集合除外（結合テスト対象外）
+
+結合テスト観点マスタは各観点に「テスト層」を付与し、**結合層のみ**を機能×観点のクロス積対象とする。以下の層は本結合テストの母集合から除外し、それぞれの行き先で担保する（除外の根拠はマスタ `integration_test/integration-test-viewpoints.md` のテスト層列）。
+
+| テスト層 | 除外観点数 | 行き先 |
+|---|---:|---|
+| UT | 108 | 単体テスト粒度（単項目境界値・単機能ロジック）→単体テストで担保。表内に保持しマーク。 |
+| 委譲 | 143 | 期待値を設計書へ委譲（「記載通り」）→機能別チェックリストへ降格。per機能で設計書の具体値を引用してケース化。 |
+| e2e | 33 | 見た目／ブラウザ挙動→e2e（Playwright）＋手動で担保。 |
+| 非機能 | 5 | 方式／性能／基盤（ロック方式・リトライ間隔・MQクラスタ・レート制限等）→非機能・障害試験へ分離。 |
+| 対象外 | 1 | 合否オラクルを持たない管理・スコーピング指示→テスト観点ではないため除外。 |
+| 統合 | 6 | 他観点に統合吸収済み（冗長削除）。統合先が同一バグクラスを検出するため重複クロス積を回避。行は監査用に保持しクロス積からのみ除外（codex+fable5承認）。 |
+
+## 対象外観点（結合層のうち本機能に非該当）
 
 | 分類・範囲 | 理由 |
 |-----------|------|
-| バリデーション / バリデーション / 単項目バリデーション（IT-22） | 元設計HTMLに該当する処理・I/Fがないため |
-| バリデーション / 管理画面 / バリデーション（IT-22） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / DB操作 / 検索（IT-23） | 本機能に検索処理がないため |
-| データベースアクセス / DB操作 / 更新（IT-05, IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 削除（IT-05） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / 更新順序（IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / 排他制御（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / ロールバック（IT-06） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 数量 / 更新結果（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 増加処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 減少処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
@@ -333,23 +313,19 @@ f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカ�
 | データベースアクセス / 移動・振替 / 例外処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 移動・振替 / 区分変更（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 分割・結合 / 結合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / 分割・結合 / 分割（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 分割・結合 / 承認・棄却（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 実数反映 / 不足（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 実数反映 / 超過（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / バッチ / DB影響（IT-26） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / 管理画面 / 同時更新（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| ファイル処理 / ファイル取込 / 実行結果（IT-16） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルアップロードを含む / 実行結果（IT-16, IT-24） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルアップロードを含む / バリデーション（IT-17, IT-24） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルアップロードを含む / 実行結果（IT-16） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルアップロードを含む / バリデーション（IT-17） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / ファイル出力 / 実行結果（IT-27） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルダウンロードを含む / 実行結果（IT-24, IT-27） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルダウンロードを含む / データ出力（IT-18, IT-24） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルダウンロードを含む / 実行結果（IT-27） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルダウンロードを含む / データ出力（IT-24） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / ファイル操作 / 実行結果（IT-27） | 本機能は対象の外部I/Fを扱わないため |
-| ファイル処理 / 数量・金額影響機能 / 対象機能（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ファイル処理 / 数量・金額影響機能 / 対象機能（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 数量 / 更新結果（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 増加・調整 / ファイル登録（IT-33） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / 参照・非更新 / 参照系機能（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 参照・非更新 / ファイル出力（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / バッチ / ファイル出力（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ / 再実行（IT-27） | 本機能はバッチ処理を起動しないため |
@@ -358,37 +334,48 @@ f06-19_front_member_mypage_credit_card（フロント_会員_クレジットカ�
 | ファイル処理 / バッチ-フロント / JSON連携（IT-27） | 本機能はバッチ処理を起動しないため |
 | メール処理 / メール処理 / 実行結果（IT-11, IT-28） | 本機能はメール送信を扱わないため |
 | メール処理 / メール処理 / メール編集（IT-28） | 本機能はメール送信を扱わないため |
-| 電文処理 / 受信処理 / 実行結果（IT-29） | 本機能は対象の外部I/Fを扱わないため |
-| 電文処理 / 受信処理 / バリデーション（IT-29） | 本機能は対象の外部I/Fを扱わないため |
 | 電文処理 / 送信処理 / 実行結果（IT-29） | 本機能は対象の外部I/Fを扱わないため |
 | 電文処理 / 送信処理 / 電文編集（IT-29） | 本機能は対象の外部I/Fを扱わないため |
-| ログ出力 / ログ出力 / ログ編集（IT-20） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 画面表示 / 表示結果（IT-12, IT-14, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 画面操作 / イベント実行結果（IT-01, IT-12, IT-14, IT-16, IT-21, IT-25, IT-27） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / データベースアクセス / DB操作（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / ログ出力 / ブラウザ（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / ウェブサービス呼出 / リトライ制御（IT-12, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 通知 / WebSocket（IT-11, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / ウェブサービス呼出 / リトライ制御（IT-12） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 通知 / WebSocket（IT-11） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 金額・単価 / 戻し処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 履歴 / 登録元追跡（IT-33） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブアプリケーション / 数量・金額 / フロント更新（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 数量減（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 数量増（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 欠落登録（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 数量・金額 / 取消（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / フロント / 表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 管理画面-公開側 / 反映（IT-02） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / API-公開側 / キャッシュ（IT-25） | 本機能は対象の外部I/Fを扱わないため |
-| ウェブアプリケーション / 管理画面 / 初期表示（IT-02） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / バッチアプリケーション機能 / 実行結果（IT-12, IT-30） | 本機能はバッチ処理を起動しないため |
-| バッチアプリケーション / ファイル取込 / 実行結果（IT-16） | 本機能はバッチ処理を起動しないため |
-| バッチアプリケーション / ファイル出力 / 実行結果（IT-27） | 本機能はバッチ処理を起動しないため |
 | バッチアプリケーション / バッチ / 正常終了（IT-30） | 本機能はバッチ処理を起動しないため |
 | バッチアプリケーション / バッチ / 異常終了（IT-12） | 本機能はバッチ処理を起動しないため |
 | メッセージング / メッセージング機能 / 実行結果（IT-31） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブサービス / ウェブサービス機能 / 実行結果（IT-09, IT-10, IT-19, IT-32） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / ウェブサービス機能 / 実行結果（IT-09, IT-10, IT-32） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 数量 / 区分整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 数量 / エラー（IT-33） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブサービス / 金額・単価 / 外部取引（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 外部連携 / 自動加算（IT-33） | 本機能は対象の外部I/Fを扱わないため |
-| その他 | 同種の対象外観点 19 件は上記分類と同じ理由で対象外 |
+| ウェブサービス / 外部連携 / 実数更新（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 外部連携 / 売上・返品（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / バッチ / 正常終了（IT-09） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / バッチ / 異常終了（IT-10） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / フロント / 外部キャッシュ（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / フロント / 外部取得（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 抽出条件（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 正常応答（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 認証・認可（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 決済連携 / 外部決済（IT-10） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 決済連携 / 二重実行（IT-08） | 本機能はバッチ処理を起動しないため |
+| ウェブアプリケーション / 決済連携 / 状態表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
+| データベースアクセス / 決済連携 / 金額整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / 外部連携 / Webhook・外部通知（IT-10, IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 外部連携 / 下流転送（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| データベースアクセス / 在庫引当 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 在庫引当 / 競合（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 注文・決済・在庫 / 原子性（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 状態遷移 / 遷移可否（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / 買取・査定 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
+| その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |

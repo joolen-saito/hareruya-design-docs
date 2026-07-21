@@ -10,14 +10,18 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、UI部品、URL、操作起点、確認ダイアログ、送信可否制御 |
-| IT-03 | 外部画面、画面遷移 |
-| IT-13 | URL直接アクセス |
-| IT-22 | DBとの相関バリデーション、その他のバリデーション、必須バリデーション、必須制御、数値バリデーション、文字列長バリデーション、文字種バリデーション、相関バリデーション |
-| IT-23 | 実行結果、検索条件、登録内容 |
-| IT-26 | 登録内容 |
+| IT-25 | HTTPステータス、URL、更新抑止、画面レイアウト、確認ダイアログ |
+| IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
+| IT-23 | 実行結果、検索条件 |
+| IT-26 | 実行結果、更新内容、登録内容 |
+| IT-05 | 削除条件、実行結果 |
+| IT-02 | 初期行数、表示順 |
+| IT-12 | 内部情報、画面レイアウト |
+| IT-07 | 排他制御 |
+| IT-06 | ロールバック |
+| IT-28 | 件名、実行結果、本文 |
 
 ## テストケースTSV
 
@@ -53,272 +57,277 @@ F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION
 F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-006	IT-15	状態変化	P1	状態変化の結合確認	CSS・レイアウトを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でCSS・レイアウトの確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ボタンの依頼済み・未依頼の状態を表示で区別すること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-007	IT-25	UI部品	P3	UI部品の操作結果確認	モーダル・ポップアップを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	モーダル・ポップアップを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	依頼・キャンセルの確認ダイアログを持つ（依頼・キャンセルそれぞれの見出し・本文・OK／キャンセルのボタン文言を持つ）であること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-008	IT-25	UI部品	P3	UI部品の操作結果確認	対象の商品は削除済ですを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で対象の商品は削除済ですの確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	対象の商品は削除済ですを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で対象の商品は削除済ですの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 対象の商品は削除済です
 3. 画面表示と後続状態を確認する"	状態failであること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-009	IT-25	操作起点	P1	操作起点の操作結果確認	会員限定を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で会員限定の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-009	IT-25	URL	P2	URLの操作結果確認	会員限定を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で会員限定の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 会員限定を確認する
 3. 画面表示と後続状態を確認する"	入荷通知依頼の登録・取り消しはログイン会員に限るであること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-010	IT-25	確認ダイアログ	P1	確認ダイアログの操作結果確認	重複判定（トグル）を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で重複判定（トグル）の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	重複判定（トグル）を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 重複判定（トグル）を確認する
-3. 画面表示と後続状態を確認する"	同一会員・同一商品規格の依頼が既にある場合は、再依頼で当該依頼を削除（取り消し）すること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-011	IT-25	確認ダイアログ	P2	確認ダイアログの操作結果確認	件数の数え方を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で件数の数え方の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	件数の数え方を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 件数の数え方を確認する
-3. 画面表示と後続状態を確認する"	削除済み（論理削除）でない依頼の件数を上限と比較すること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-012	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	戻り先の保存を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で戻り先の保存の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	戻り先の保存を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で戻り先の保存の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 戻り先の保存
 3. 画面表示と後続状態を確認する"	未ログインのとき、検索の戻り先（参照元）をセッションへ保存すること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-013	IT-25	送信可否制御	P3	送信可否制御の操作結果確認	商品規格を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で商品規格の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	商品規格を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 商品規格を確認する
-3. 画面表示と後続状態を確認する"	依頼・取り消しの対象商品規格であること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-014	IT-03	外部画面	P2	外部画面の操作結果確認	商品規格が特定できないを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で商品規格が特定できないの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	商品規格が特定できないを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 商品規格が特定できないを確認する
-3. 画面表示と後続状態を確認する"	対象商品が削除済みのJSONを返し、登録しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-015	IT-03	画面遷移	P2	画面遷移の操作結果確認	未ログインで依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで依頼の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	未ログインで依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 未ログインで依頼を確認する
-3. 画面表示と後続状態を確認する"	戻り先をセッション保存し、未ログインJSONを返し、登録しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-016	IT-03	画面遷移	P2	画面遷移の操作結果確認	同一商品規格を再依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で同一商品規格を再依頼の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	同一商品規格を再依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 同一商品規格を再依頼を確認する
-3. 画面表示と後続状態を確認する"	既存依頼を削除（取り消し）すること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-017	IT-03	画面遷移	P2	画面遷移の操作結果確認	依頼件数が上限以上を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼件数が上限以上の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	依頼件数が上限以上を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 依頼件数が上限以上を確認する
-3. 画面表示と後続状態を確認する"	上限超過JSONを返し、登録しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-018	IT-03	画面遷移	P2	画面遷移の操作結果確認	依頼と会員を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼と会員の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	依頼と会員を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 依頼と会員を確認する
-3. 画面表示と後続状態を確認する"	依頼は会員に紐づく選手情報に紐づくであること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-019	IT-03	画面遷移	P2	画面遷移の操作結果確認	入荷時の削除との関係を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷時の削除との関係の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-019	IT-22	部分入力	P2	部分入力の入力検証	入荷時の削除との関係を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷時の削除との関係の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入荷時の削除との関係
 3. 画面表示と後続状態を確認する"	入荷に伴う依頼の論理削除・通知メールは在庫改定の管理処理を正とすること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-020	IT-03	画面遷移	P2	画面遷移の操作結果確認	APIを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. APIを確認する
-3. 画面表示と後続状態を確認する"	登録・取り消しは非同期リクエストで、結果と表示文言をJSONで返すこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-021	IT-13	URL直接アクセス	P2	URL直接アクセスの操作結果確認	バッチを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でバッチの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. バッチを確認する
-3. 画面表示と後続状態を確認する"	本機能ではバッチを実行しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-022	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	入力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入力
-3. 画面表示と後続状態を確認する"	登録・取り消しは商品規格IDであること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-023	IT-25	URL	P2	URLの操作結果確認	成功時出力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	登録・取り消しは状態と文言のJSONであること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-024	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	失敗時出力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-025	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	副作用を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-026	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	dtb_product_requestを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で文字列長バリデーションの対象項目に最大長の値を指定する	"1. 対象画面を表示する
-2. dtb_product_requestを確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-027	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	登録/更新を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で文字列長バリデーションの対象項目に最大長+1の値を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-028	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	商品規格を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で文字列長バリデーションの対象項目に最小長の値を指定する	"1. 対象画面を表示する
-2. 商品規格を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-029	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	入荷通知ボタンを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で文字列長バリデーションの対象項目に最小長-1の値を指定する	"1. 対象画面を表示する
-2. 入荷通知ボタンを確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-030	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	未ログインで入荷通知ボタンを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで入荷通知ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 未ログインで入荷通知ボタンを確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-031	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	対象商品規格が特定できないを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で対象商品規格が特定できないの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 対象商品規格が特定できないを確認する
-3. 画面表示と後続状態を確認する"	対象商品削除済みのJSONを返すこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-032	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	未ログインで依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで依頼の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 未ログインで依頼を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-033	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	依頼件数が上限超過を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼件数が上限超過の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 依頼件数が上限超過を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-034	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	未ログインで入荷通知ボタンを押下を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで入荷通知ボタンを押下の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 未ログインで入荷通知ボタンを押下
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-035	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	依頼の登録・取り消し成功時を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 依頼の登録・取り消し成功時を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-036	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	依頼上限を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 依頼上限を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-037	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	入荷通知ボタン（商品詳細・商品一覧）を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 入荷通知ボタン（商品詳細・商品一覧）を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-038	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	入荷通知依頼一覧を開くを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 入荷通知依頼一覧を開く
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-039	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	表示要素を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-040	IT-22	文字種バリデーション	P2	文字種バリデーションの入力検証	JS挙動を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	文字種バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-041	IT-22	文字種バリデーション	P2	文字種バリデーションの入力検証	CSS・レイアウトを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. CSS・レイアウトを確認する
-3. 画面表示と後続状態を確認する"	文字種バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-042	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	モーダル・ポップアップを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-043	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	対象の商品は削除済ですを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 対象の商品は削除済です
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-044	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	会員限定を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 会員限定を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-045	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	重複判定（トグル）を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でその他のバリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 重複判定（トグル）を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-046	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	件数の数え方を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で件数の数え方の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 件数の数え方を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-047	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	戻り先の保存を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で戻り先の保存の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 戻り先の保存
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-048	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	商品規格を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 商品規格を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-049	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	商品規格が特定できないを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でその他のバリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 商品規格が特定できないを確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-050	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	同一商品規格を再依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 同一商品規格を再依頼を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-051	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	依頼件数が上限以上を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 依頼件数が上限以上を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-052	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	依頼と会員を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 依頼と会員を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-053	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入荷時の削除との関係を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 入荷時の削除との関係
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-054	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	APIを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. APIを確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-055	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	バッチを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. バッチを確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-056	IT-22	必須制御	P1	必須制御の入力検証	入力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で必須制御の対象項目を未入力にする	"1. 対象画面を表示する
-2. 入力
-3. 画面表示と後続状態を確認する"	登録・取り消しは商品規格IDであること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-057	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-020	IT-23	検索条件	P2	検索時の検索条件確認	APIを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-058	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-021	IT-23	検索条件	P2	検索時の検索条件確認	バッチを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-059	IT-23	検索条件	P2	検索時の検索条件確認	dtb_product_requestを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でdtb_product_requestの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	論理削除日時であること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-060	IT-23	検索条件	P2	検索時の検索条件確認	登録/更新を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-022	IT-23	検索条件	P2	検索時の検索条件確認	入力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-061	IT-23	検索条件	P2	検索時の検索条件確認	商品規格を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-023	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-062	IT-23	検索条件	P2	検索時の検索条件確認	入荷通知ボタンを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-024	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-063	IT-23	検索条件	P2	検索時の検索条件確認	未ログインで入荷通知ボタンを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-025	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-064	IT-23	検索条件	P2	検索時の検索条件確認	対象商品規格が特定できないを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-026	IT-23	検索条件	P2	検索時の検索条件確認	dtb_product_requestを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-065	IT-23	検索条件	P2	検索時の検索条件確認	未ログインで依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-027	IT-23	検索条件	P2	検索時の検索条件確認	登録/更新を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-066	IT-23	検索条件	P2	検索時の検索条件確認	依頼件数が上限超過を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼件数が上限超過の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-028	IT-23	検索条件	P2	検索時の検索条件確認	商品規格を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で商品規格の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-067	IT-23	検索条件	P2	検索時の検索条件確認	未ログインで入荷通知ボタンを押下を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで入荷通知ボタンを押下の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-029	IT-23	検索条件	P2	検索時の検索条件確認	入荷通知ボタンを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷通知ボタンの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-068	IT-23	検索条件	P2	検索時の検索条件確認	依頼の登録・取り消し成功時を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼の登録・取り消し成功時の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-030	IT-23	検索条件	P2	検索時の検索条件確認	未ログインで入荷通知ボタンを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで入荷通知ボタンの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-069	IT-23	検索条件	P2	検索時の検索条件確認	依頼上限を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼上限の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-031	IT-23	検索条件	P2	検索時の検索条件確認	対象商品規格が特定できないを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で対象商品規格が特定できないの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-070	IT-23	検索条件	P2	検索時の検索条件確認	入荷通知ボタン（商品詳細・商品一覧）を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷通知ボタン（商品詳細・商品一覧）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	非同期で当該商品規格の入荷通知依頼を登録すること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-071	IT-23	検索条件	P2	検索時の検索条件確認	入荷通知依頼一覧を開くを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷通知依頼一覧を開くの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-032	IT-23	検索条件	P2	検索時の検索条件確認	未ログインで依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで依頼の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-072	IT-23	検索条件	P2	検索時の検索条件確認	表示要素を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で表示要素の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-033	IT-23	検索条件	P2	検索時の検索条件確認	依頼件数が上限超過を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼件数が上限超過の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-073	IT-23	実行結果	P2	検索時の実行結果確認	JS挙動を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でJS挙動の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-034	IT-23	実行結果	P2	検索時の実行結果確認	未ログインで入荷通知ボタンを押下を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで入荷通知ボタンを押下の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-074	IT-23	実行結果	P2	検索時の実行結果確認	CSS・レイアウトを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でCSS・レイアウトの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ボタンの依頼済み・未依頼の状態を表示で区別すること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-075	IT-23	実行結果	P2	検索時の実行結果確認	モーダル・ポップアップを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-035	IT-23	実行結果	P2	検索時の実行結果確認	依頼の登録・取り消し成功時を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼の登録・取り消し成功時の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-076	IT-23	実行結果	P2	検索時の実行結果確認	対象の商品は削除済ですを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で対象の商品は削除済ですの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-036	IT-23	実行結果	P2	検索時の実行結果確認	依頼上限を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼上限の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-077	IT-23	実行結果	P2	検索時の実行結果確認	会員限定を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で会員限定の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-037	IT-23	実行結果	P2	検索時の実行結果確認	入荷通知ボタン（商品詳細・商品一覧）を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷通知ボタン（商品詳細・商品一覧）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-078	IT-26	登録内容	P1	登録時の登録内容確認	重複判定（トグル）を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で重複判定（トグル）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-038	IT-26	登録内容	P1	登録時の登録内容確認	入荷通知依頼一覧を開くを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷通知依頼一覧を開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-079	IT-26	登録内容	P1	登録時の登録内容確認	件数の数え方を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で件数の数え方の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-039	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で表示要素の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-080	IT-26	登録内容	P1	登録時の登録内容確認	戻り先の保存を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で戻り先の保存の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-040	IT-26	登録内容	P1	登録時の登録内容確認	JS挙動を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でJS挙動の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-081	IT-26	登録内容	P1	登録時の登録内容確認	商品規格を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で商品規格の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-041	IT-26	登録内容	P1	登録時の登録内容確認	CSS・レイアウトを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でCSS・レイアウトの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	依頼・取り消しの対象商品規格であること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-082	IT-26	登録内容	P1	登録時の登録内容確認	商品規格が特定できないを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で商品規格が特定できないの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ボタンの依頼済み・未依頼の状態を表示で区別すること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-042	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-043	IT-26	登録内容	P1	登録時の登録内容確認	対象の商品は削除済ですを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-044	IT-26	登録内容	P1	登録時の登録内容確認	会員限定を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-045	IT-26	登録内容	P1	登録時の登録内容確認	重複判定（トグル）を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-046	IT-26	登録内容	P1	登録時の登録内容確認	件数の数え方を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-047	IT-26	登録内容	P1	登録時の登録内容確認	戻り先の保存を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で戻り先の保存の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-048	IT-26	実行結果	P1	登録時の実行結果確認	商品規格を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で商品規格の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-049	IT-23	実行結果	P1	登録時の実行結果確認	商品規格が特定できないを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で商品規格が特定できないの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	対象商品が削除済みのJSONを返し、登録しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-083	IT-23	登録内容	P1	登録時の登録内容確認	未ログインで依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで依頼の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-050	IT-26	更新内容	P1	更新時の更新内容確認	未ログインで依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで依頼の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	戻り先をセッション保存し、未ログインJSONを返し、登録しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-084	IT-26	登録内容	P1	登録時の登録内容確認	同一商品規格を再依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で同一商品規格を再依頼の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-051	IT-26	更新内容	P1	更新時の更新内容確認	同一商品規格を再依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で同一商品規格を再依頼の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	既存依頼を削除（取り消し）すること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-085	IT-26	登録内容	P1	登録時の登録内容確認	依頼件数が上限以上を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼件数が上限以上の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-052	IT-26	更新内容	P1	更新時の更新内容確認	依頼件数が上限以上を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼件数が上限以上の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	上限超過JSONを返し、登録しないこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-086	IT-26	登録内容	P1	登録時の登録内容確認	依頼と会員を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼と会員の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-053	IT-26	更新内容	P1	更新時の更新内容確認	依頼と会員を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼と会員の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	依頼は会員に紐づく選手情報に紐づくであること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-087	IT-26	登録内容	P1	登録時の登録内容確認	入荷時の削除との関係を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷時の削除との関係の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-054	IT-26	更新内容	P1	更新時の更新内容確認	入荷時の削除との関係を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷時の削除との関係の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	入荷に伴う依頼の論理削除・通知メールは在庫改定の管理処理を正とすること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-088	IT-26	登録内容	P1	登録時の登録内容確認	APIを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でAPIの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-055	IT-26	更新内容	P1	更新時の更新内容確認	APIを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録・取り消しは非同期リクエストで、結果と表示文言をJSONで返すこと。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-089	IT-26	登録内容	P1	登録時の登録内容確認	バッチを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でバッチの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-056	IT-26	更新内容	P1	更新時の更新内容確認	バッチを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-090	IT-26	登録内容	P1	登録時の登録内容確認	入力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-057	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-058	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-059	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-060	IT-05	実行結果	P1	更新時の実行結果確認	副作用を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-061	IT-05	実行結果	P1	更新時の実行結果確認	dtb_product_requestを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でdtb_product_requestの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	論理削除日時であること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-062	IT-05	削除条件	P1	削除時の削除条件確認	登録/更新を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-063	IT-05	削除条件	P1	削除時の削除条件確認	商品規格を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	指定の商品規格が特定できることを要すること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-064	IT-05	削除条件	P1	削除時の削除条件確認	入荷通知ボタンを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面遷移せず非同期で結果を反映すること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-065	IT-05	削除条件	P1	削除時の削除条件確認	未ログインで入荷通知ボタンを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	会員ログイン後、保存した戻り先を起点に利用を続けられる（ログイン機能を正とする）であること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-066	IT-05	削除条件	P1	削除時の削除条件確認	対象商品規格が特定できないを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で対象商品規格が特定できないの確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-067	IT-05	実行結果	P1	削除時の実行結果確認	未ログインで依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで依頼の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-068	IT-05	実行結果	P1	削除時の実行結果確認	依頼件数が上限超過を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼件数が上限超過の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	上限件数を含む上限超過JSONを返すこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-069	IT-05	実行結果	P1	削除時の実行結果確認	未ログインで入荷通知ボタンを押下を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで入荷通知ボタンを押下の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-070	IT-05	実行結果	P1	削除時の実行結果確認	依頼の登録・取り消し成功時を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼の登録・取り消し成功時の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能はセッションへ機微情報を保存しないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-071	IT-02	初期行数	P2	初期行数の結合確認	依頼上限を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼上限の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 依頼上限を確認する
+3. 画面表示と後続状態を確認する"	1会員が登録できる入荷通知依頼の最大件数であること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-072	IT-02	表示順	P2	表示順の結合確認	入荷通知ボタン（商品詳細・商品一覧）を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷通知ボタン（商品詳細・商品一覧）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入荷通知ボタン（商品詳細・商品一覧）を確認する
+3. 画面表示と後続状態を確認する"	非同期で当該商品規格の入荷通知依頼を登録すること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-073	IT-25	更新抑止	P1	更新抑止の結合確認	入荷通知依頼一覧を開くを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入荷通知依頼一覧を開くの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ログイン会員自身の入荷通知依頼の対象商品を一覧表示すること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-074	IT-12	内部情報	P1	内部情報の結合確認	表示要素を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で表示要素の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	入荷通知ボタン（依頼／キャンセルの確認表示を伴う）、入荷通知依頼一覧（対象商品の一覧）であること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-075	IT-15	機密情報	P1	機密情報の結合確認	JS挙動を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でJS挙動の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	入荷通知ボタンは非同期で依頼の登録・取り消しを呼び、返却JSONの状態に応じて表示を切り替えるであること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-076	IT-07	排他制御	P1	排他制御の結合確認	CSS・レイアウトを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でCSS・レイアウトの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ボタンの依頼済み・未依頼の状態を表示で区別すること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-077	IT-07	排他制御	P1	排他制御の結合確認	モーダル・ポップアップを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	依頼・キャンセルの確認ダイアログを持つ（依頼・キャンセルそれぞれの見出し・本文・OK／キャンセルのボタン文言を持つ）であること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-078	IT-06	ロールバック	P3	ロールバックの結合確認	対象の商品は削除済ですを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で対象の商品は削除済ですの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	状態failであること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-079	IT-28	実行結果	P2	実行結果の結合確認	重複判定（トグル）を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で重複判定（トグル）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 重複判定（トグル）を確認する
+3. 画面表示と後続状態を確認する"	同一会員・同一商品規格の依頼が既にある場合は、再依頼で当該依頼を削除（取り消し）すること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-080	IT-28	実行結果	P2	実行結果の結合確認	件数の数え方を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で件数の数え方の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 件数の数え方を確認する
+3. 画面表示と後続状態を確認する"	削除済み（論理削除）でない依頼の件数を上限と比較すること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-081	IT-28	件名	P2	件名の結合確認	商品規格を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 商品規格を確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-082	IT-28	件名	P2	件名の結合確認	商品規格が特定できないを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 商品規格が特定できないを確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-083	IT-28	件名	P2	件名の結合確認	未ログインで依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で未ログインで依頼の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 未ログインで依頼を確認する
+3. 画面表示と後続状態を確認する"	戻り先をセッション保存し、未ログインJSONを返し、登録しないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-084	IT-28	本文	P2	本文の結合確認	同一商品規格を再依頼を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 同一商品規格を再依頼を確認する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-085	IT-28	本文	P2	本文の結合確認	依頼件数が上限以上を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 依頼件数が上限以上を確認する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-086	IT-28	本文	P2	本文の結合確認	依頼と会員を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で依頼と会員の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 依頼と会員を確認する
+3. 画面表示と後続状態を確認する"	依頼は会員に紐づく選手情報に紐づくであること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-087	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	APIを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. APIを確認する
+3. 画面表示と後続状態を確認する"	登録・取り消しは非同期リクエストで、結果と表示文言をJSONで返すこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-088	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	バッチを試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）でバッチの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. バッチを確認する
+3. 画面表示と後続状態を確認する"	本機能ではバッチを実行しないこと。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-089	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	入力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	登録・取り消しは商品規格IDであること。
+F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-090	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	F03-07（入荷時通知）（f03_07_front_product_product_arrival_notification）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	登録・取り消しは状態と文言のJSONであること。
 ```
 
-## 対象外観点
+## テスト層による母集合除外（結合テスト対象外）
+
+結合テスト観点マスタは各観点に「テスト層」を付与し、**結合層のみ**を機能×観点のクロス積対象とする。以下の層は本結合テストの母集合から除外し、それぞれの行き先で担保する（除外の根拠はマスタ `integration_test/integration-test-viewpoints.md` のテスト層列）。
+
+| テスト層 | 除外観点数 | 行き先 |
+|---|---:|---|
+| UT | 108 | 単体テスト粒度（単項目境界値・単機能ロジック）→単体テストで担保。表内に保持しマーク。 |
+| 委譲 | 143 | 期待値を設計書へ委譲（「記載通り」）→機能別チェックリストへ降格。per機能で設計書の具体値を引用してケース化。 |
+| e2e | 33 | 見た目／ブラウザ挙動→e2e（Playwright）＋手動で担保。 |
+| 非機能 | 5 | 方式／性能／基盤（ロック方式・リトライ間隔・MQクラスタ・レート制限等）→非機能・障害試験へ分離。 |
+| 対象外 | 1 | 合否オラクルを持たない管理・スコーピング指示→テスト観点ではないため除外。 |
+| 統合 | 6 | 他観点に統合吸収済み（冗長削除）。統合先が同一バグクラスを検出するため重複クロス積を回避。行は監査用に保持しクロス積からのみ除外（codex+fable5承認）。 |
+
+## 対象外観点（結合層のうち本機能に非該当）
 
 | 分類・範囲 | 理由 |
 |-----------|------|
-| バリデーション / バリデーション / 単項目バリデーション（IT-22） | 元設計HTMLに該当する処理・I/Fがないため |
-| バリデーション / 管理画面 / バリデーション（IT-22） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 登録（IT-23, IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 更新（IT-05, IT-23, IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 削除（IT-05） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / 更新順序（IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / 排他制御（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / ロールバック（IT-06） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 数量 / 更新結果（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 増加処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 減少処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
@@ -333,62 +342,72 @@ F03-07（入荷時通知）	IT-F03-07-FRONT-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION
 | データベースアクセス / 移動・振替 / 例外処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 移動・振替 / 区分変更（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 分割・結合 / 結合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / 分割・結合 / 分割（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 分割・結合 / 承認・棄却（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 実数反映 / 不足（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 実数反映 / 超過（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / バッチ / DB影響（IT-26） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / 管理画面 / 同時更新（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| ファイル処理 / ファイル取込 / 実行結果（IT-16） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルアップロードを含む / 実行結果（IT-16, IT-24） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルアップロードを含む / バリデーション（IT-17, IT-24） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルアップロードを含む / 実行結果（IT-16） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルアップロードを含む / バリデーション（IT-17） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / ファイル出力 / 実行結果（IT-27） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルダウンロードを含む / 実行結果（IT-24, IT-27） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルダウンロードを含む / データ出力（IT-18, IT-24） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルダウンロードを含む / 実行結果（IT-27） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルダウンロードを含む / データ出力（IT-24） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / ファイル操作 / 実行結果（IT-27） | 本機能は対象の外部I/Fを扱わないため |
-| ファイル処理 / 数量・金額影響機能 / 対象機能（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ファイル処理 / 数量・金額影響機能 / 対象機能（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 数量 / 更新結果（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 増加・調整 / ファイル登録（IT-33） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / 参照・非更新 / 参照系機能（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 参照・非更新 / ファイル出力（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / バッチ / ファイル出力（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ / 再実行（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ / 異常終了（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ-フロント / ファイル連携（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ-フロント / JSON連携（IT-27） | 本機能はバッチ処理を起動しないため |
-| メール処理 / メール処理 / 実行結果（IT-11, IT-28） | 元設計HTMLに該当する処理・I/Fがないため |
-| メール処理 / メール処理 / メール編集（IT-28） | 元設計HTMLに該当する処理・I/Fがないため |
-| 電文処理 / 受信処理 / 実行結果（IT-29） | 本機能は対象の外部I/Fを扱わないため |
-| 電文処理 / 受信処理 / バリデーション（IT-29） | 本機能は対象の外部I/Fを扱わないため |
 | 電文処理 / 送信処理 / 実行結果（IT-29） | 本機能は対象の外部I/Fを扱わないため |
 | 電文処理 / 送信処理 / 電文編集（IT-29） | 本機能は対象の外部I/Fを扱わないため |
-| ログ出力 / ログ出力 / ログ編集（IT-20） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 画面表示 / 表示結果（IT-12, IT-14, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 画面操作 / イベント実行結果（IT-01, IT-12, IT-14, IT-16, IT-21, IT-25, IT-27） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / データベースアクセス / DB操作（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / ログ出力 / ブラウザ（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / ウェブサービス呼出 / リトライ制御（IT-12, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 通知 / WebSocket（IT-11, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / ウェブサービス呼出 / リトライ制御（IT-12） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 通知 / WebSocket（IT-11） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 金額・単価 / 戻し処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 履歴 / 登録元追跡（IT-33） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブアプリケーション / 数量・金額 / フロント更新（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 数量減（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 数量増（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 欠落登録（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 数量・金額 / 取消（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / フロント / 表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 管理画面-公開側 / 反映（IT-02） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / API-公開側 / キャッシュ（IT-25） | 本機能は対象の外部I/Fを扱わないため |
-| ウェブアプリケーション / 管理画面 / 初期表示（IT-02） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / バッチアプリケーション機能 / 実行結果（IT-12, IT-30） | 本機能はバッチ処理を起動しないため |
-| バッチアプリケーション / ファイル取込 / 実行結果（IT-16） | 本機能はバッチ処理を起動しないため |
-| バッチアプリケーション / ファイル出力 / 実行結果（IT-27） | 本機能はバッチ処理を起動しないため |
 | バッチアプリケーション / バッチ / 正常終了（IT-30） | 本機能はバッチ処理を起動しないため |
 | バッチアプリケーション / バッチ / 異常終了（IT-12） | 本機能はバッチ処理を起動しないため |
 | メッセージング / メッセージング機能 / 実行結果（IT-31） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブサービス / ウェブサービス機能 / 実行結果（IT-09, IT-10, IT-19, IT-32） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / ウェブサービス機能 / 実行結果（IT-09, IT-10, IT-32） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 数量 / 区分整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 数量 / エラー（IT-33） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブサービス / 金額・単価 / 外部取引（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 外部連携 / 自動加算（IT-33） | 本機能は対象の外部I/Fを扱わないため |
-| その他 | 同種の対象外観点 19 件は上記分類と同じ理由で対象外 |
+| ウェブサービス / 外部連携 / 実数更新（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 外部連携 / 売上・返品（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / バッチ / 正常終了（IT-09） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / バッチ / 異常終了（IT-10） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / フロント / 外部キャッシュ（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / フロント / 外部取得（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 抽出条件（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 正常応答（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 認証・認可（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 決済連携 / 外部決済（IT-10） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 決済連携 / 二重実行（IT-08） | 本機能はバッチ処理を起動しないため |
+| ウェブアプリケーション / 決済連携 / 状態表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
+| データベースアクセス / 決済連携 / 金額整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / 外部連携 / Webhook・外部通知（IT-10, IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 外部連携 / 下流転送（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| データベースアクセス / 在庫引当 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 在庫引当 / 競合（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 注文・決済・在庫 / 原子性（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 状態遷移 / 遷移可否（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / 買取・査定 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
+| データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
+| その他 | 同種の対象外観点 1 件は上記分類と同じ理由で対象外 |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 19件 — No.215, No.228, No.261, No.334, No.336, No.338, No.346, No.356, No.357, No.358, No.359, No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。

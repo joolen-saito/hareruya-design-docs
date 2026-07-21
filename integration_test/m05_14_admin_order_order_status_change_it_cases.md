@@ -10,14 +10,19 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、UI部品、URL、操作起点、確認ダイアログ、送信可否制御 |
-| IT-03 | 外部画面、画面遷移 |
-| IT-13 | URL直接アクセス |
-| IT-22 | DBとの相関バリデーション、その他のバリデーション、必須バリデーション、必須制御、数値バリデーション、文字列長バリデーション、文字種バリデーション、相関バリデーション |
-| IT-23 | 実行結果、検索条件、登録内容 |
-| IT-26 | 登録内容 |
+| IT-25 | HTTPステータス、URL、更新抑止、画面レイアウト、確認ダイアログ |
+| IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
+| IT-23 | 実行結果、検索条件 |
+| IT-26 | 実行結果、更新内容、登録内容 |
+| IT-05 | 削除条件、実行結果 |
+| IT-02 | 初期行数、表示順 |
+| IT-12 | 内部情報、画面レイアウト |
+| IT-07 | 排他制御 |
+| IT-06 | ロールバック |
+| IT-11 | 実行結果 |
+| IT-28 | ヘッダ、件名、実行結果、本文 |
 
 ## テストケースTSV
 
@@ -53,272 +58,277 @@ m05-14_admin_order_order_status_change（管理画面_受注対応状況の変�
 m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-006	IT-15	状態変化	P1	状態変化の結合確認	対応状況変更操作を送信を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況変更操作を送信の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	選択した遷移先ステータスへ変更・保存し、同じ受注編集（詳細）画面へリダイレクトしてフラッシュメッセージを表示すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-007	IT-25	UI部品	P3	UI部品の操作結果確認	新規受注登録画面を開くを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で新規受注登録画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	新規受注登録画面を開くを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で新規受注登録画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 新規受注登録画面を開く
 3. 画面表示と後続状態を確認する"	新規受注では対応状況プルダウンと対応状況変更操作を表示しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-008	IT-25	UI部品	P3	UI部品の操作結果確認	未認証・管理画面へ到達できない利用者を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で未認証・管理画面へ到達できない利用者の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	未認証・管理画面へ到達できない利用者を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で未認証・管理画面へ到達できない利用者の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未認証・管理画面へ到達できない利用者を確認する
 3. 画面表示と後続状態を確認する"	受注編集（詳細）画面自体に到達できないため、本操作も利用できないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-009	IT-25	操作起点	P1	操作起点の操作結果確認	表示要素を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-009	IT-25	URL	P2	URLの操作結果確認	表示要素を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	受注情報領域に「現在のステータス」として現在の対応状況の表示名を表示し、その下に「対応状況」プルダウンを表示すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-010	IT-25	確認ダイアログ	P1	確認ダイアログの操作結果確認	対応状況プルダウンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況プルダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	対応状況プルダウンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 対応状況プルダウンを確認する
-3. 画面表示と後続状態を確認する"	単一選択のプルダウンであること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-011	IT-25	確認ダイアログ	P2	確認ダイアログの操作結果確認	対応状況変更ボタンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況変更ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	対応状況変更ボタンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 対応状況変更ボタンを確認する
-3. 画面表示と後続状態を確認する"	押下すると受注編集フォームの送信種別を status_change にし、フォームのアクションを受注編集（詳細）画面のパスへ戻したうえでフォームを送信すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-012	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	JS 挙動による確認ダイアログを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でJS 挙動による確認ダイアログの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	JS 挙動による確認ダイアログを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でJS 挙動による確認ダイアログの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS 挙動による確認ダイアログを確認する
 3. 画面表示と後続状態を確認する"	取消へ変更する場合と、取消から他ステータスへ変更する場合に、在庫・ポイントの変動内容を説明する確認ダイアログを表示すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-013	IT-25	送信可否制御	P3	送信可否制御の操作結果確認	入力項目を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入力項目を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 入力項目
-3. 画面表示と後続状態を確認する"	本操作で利用者が入力するのは対応状況プルダウンの選択のみであること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-014	IT-03	外部画面	P2	外部画面の操作結果確認	%from% から %to% にはステータス変更できませんを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で%from% から %to% にはステータス変更できませんの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	%from% から %to% にはステータス変更できませんを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. %from% から %to% にはステータス変更できませんを確認する
-3. 画面表示と後続状態を確認する"	受注編集フォームの受注ステータス検証で表示すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-015	IT-03	画面遷移	P2	画面遷移の操作結果確認	変更前後が同一ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で変更前後が同一ステータスの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	変更前後が同一ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 変更前後が同一ステータスを確認する
-3. 画面表示と後続状態を確認する"	メッセージなしで受注編集（詳細）画面を再表示すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-016	IT-03	画面遷移	P2	画面遷移の操作結果確認	受注フォームが妥当でない、または変更前後のいずれかのステータスが取得できないを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で受注フォームが妥当でない、または変更前後のいずれかのステータスが取得できないの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	受注フォームが妥当でない、または変更前後のいずれかのステータスが取得できないを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 受注フォームが妥当でない、または変更前後のいずれかのステータスが取得できないを確認する
-3. 画面表示と後続状態を確認する"	フラッシュなしで受注編集（詳細）画面を再表示すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-017	IT-03	画面遷移	P2	画面遷移の操作結果確認	遷移先の絞り込みを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で遷移先の絞り込みの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	遷移先の絞り込みを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 遷移先の絞り込みを確認する
-3. 画面表示と後続状態を確認する"	対応状況プルダウンの選択肢は、受注ステータス遷移の許可規則で現在のステータスから到達できる遷移先に限るであること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-018	IT-03	画面遷移	P2	画面遷移の操作結果確認	変更の成立条件を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で変更の成立条件の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	変更の成立条件を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 変更の成立条件を確認する
-3. 画面表示と後続状態を確認する"	変更前ステータスと変更後ステータスがともに取得でき、両者が異なり、受注フォームが妥当であることを成立条件とすること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-019	IT-03	画面遷移	P2	画面遷移の操作結果確認	日時の自動セットを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で日時の自動セットの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-019	IT-22	部分入力	P2	部分入力の入力検証	日時の自動セットを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で日時の自動セットの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 日時の自動セットを確認する
 3. 画面表示と後続状態を確認する"	出荷完了・取消・入金済み・ピック中への遷移で、それぞれ出荷日・取消日・入金日・確認日を現在日時でセットすること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-020	IT-03	画面遷移	P2	画面遷移の操作結果確認	出荷完了時のポイントを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で出荷完了時のポイントの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 出荷完了時のポイントを確認する
-3. 画面表示と後続状態を確認する"	出荷完了へ新たに遷移したときのみ、付与ポイントを会員残高へ反映し、外部在庫連携へ発生ポイントを連携すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-021	IT-13	URL直接アクセス	P2	URL直接アクセスの操作結果確認	更新者・更新日時を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で更新者・更新日時の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 更新者・更新日時を確認する
-3. 画面表示と後続状態を確認する"	変更成立時に受注の更新者を操作中の管理者、更新日時を現在日時で更新すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-022	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	対応状況を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 対応状況を確認する
-3. 画面表示と後続状態を確認する"	dtb_order.order_status_idであること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-023	IT-25	URL	P2	URLの操作結果確認	変更前と変更後が同一ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で変更前と変更後が同一ステータスの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 変更前と変更後が同一ステータスを確認する
-3. 画面表示と後続状態を確認する"	変更せず受注編集（詳細）画面へリダイレクトすること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-024	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	変更前または変更後のステータスが取得できないを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 変更前または変更後のステータスが取得できないを確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-025	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	許可されない遷移先を強制送信を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 許可されない遷移先を強制送信
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-026	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	取消日・入金日・確認日が既に設定済みを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で文字列長バリデーションの対象項目に最大長の値を指定する	"1. 対象画面を表示する
-2. 取消日・入金日・確認日が既に設定済みを確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-027	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	出荷完了へ遷移、ただし変更前が既に出荷完了を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で文字列長バリデーションの対象項目に最大長+1の値を指定する	"1. 対象画面を表示する
-2. 出荷完了へ遷移、ただし変更前が既に出荷完了を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-028	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	取消から他ステータスへ戻すを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で文字列長バリデーションの対象項目に最小長の値を指定する	"1. 対象画面を表示する
-2. 取消から他ステータスへ戻すを確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-029	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	参照時点を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で文字列長バリデーションの対象項目に最小長-1の値を指定する	"1. 対象画面を表示する
-2. 参照時点を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-030	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	変更の原子性を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で変更の原子性の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 変更の原子性を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-031	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	出荷日の整合を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で出荷日の整合の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 出荷日の整合を確認する
-3. 画面表示と後続状態を確認する"	出荷完了へ遷移したとき、受注の出荷日と各配送の出荷日に同一の現在日時をセットすること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-032	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	一覧との整合を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で一覧との整合の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧との整合を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-033	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	APIを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. APIを確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-034	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	失敗時を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-035	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	入力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 入力
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-036	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	成功時出力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-037	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	失敗時出力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-038	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	副作用を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-039	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	dtb_orderを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でdtb_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_orderを確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-040	IT-22	文字種バリデーション	P2	文字種バリデーションの入力検証	dtb_orderを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でdtb_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_orderを確認する
-3. 画面表示と後続状態を確認する"	文字種バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-041	IT-22	文字種バリデーション	P2	文字種バリデーションの入力検証	遷移先ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で遷移先ステータスの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 遷移先ステータスを確認する
-3. 画面表示と後続状態を確認する"	文字種バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-042	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	受注ステータス遷移の許可規則を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 受注ステータス遷移の許可規則を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-043	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	対応状況変更操作を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 対応状況変更操作を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-044	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	現在のステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 現在のステータスを確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-045	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	受注編集（詳細）画面を開くを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でその他のバリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 受注編集（詳細）画面を開く
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-046	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	対応状況変更操作を送信を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況変更操作を送信の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 対応状況変更操作を送信
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-047	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	新規受注登録画面を開くを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で新規受注登録画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 新規受注登録画面を開く
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-048	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	未認証・管理画面へ到達できない利用者を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 未認証・管理画面へ到達できない利用者を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-049	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	表示要素を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でその他のバリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-050	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	対応状況変更ボタンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 対応状況変更ボタンを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-051	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS 挙動による確認ダイアログを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. JS 挙動による確認ダイアログを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-052	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入力項目を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 入力項目
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-053	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	%from% から %to% にはステータス変更できませんを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. %from% から %to% にはステータス変更できませんを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-054	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	変更前後が同一ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 変更前後が同一ステータスを確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-055	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	受注フォームが妥当でない、または変更前後のいずれかのステータスが取得できないを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 受注フォームが妥当でない、または変更前後のいずれかのステータスが取得できないを確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-056	IT-22	必須制御	P1	必須制御の入力検証	遷移先の絞り込みを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で必須制御の対象項目を未入力にする	"1. 対象画面を表示する
-2. 遷移先の絞り込みを確認する
-3. 画面表示と後続状態を確認する"	対応状況プルダウンの選択肢は、受注ステータス遷移の許可規則で現在のステータスから到達できる遷移先に限るであること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-057	IT-23	検索条件	P2	検索時の検索条件確認	日時の自動セットを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-020	IT-23	検索条件	P2	検索時の検索条件確認	出荷完了時のポイントを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-058	IT-23	検索条件	P2	検索時の検索条件確認	出荷完了時のポイントを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-021	IT-23	検索条件	P2	検索時の検索条件確認	更新者・更新日時を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-059	IT-23	検索条件	P2	検索時の検索条件確認	更新者・更新日時を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で更新者・更新日時の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	変更成立時に受注の更新者を操作中の管理者、更新日時を現在日時で更新すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-060	IT-23	検索条件	P2	検索時の検索条件確認	対応状況を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-022	IT-23	検索条件	P2	検索時の検索条件確認	対応状況を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-061	IT-23	検索条件	P2	検索時の検索条件確認	変更前と変更後が同一ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-023	IT-23	検索条件	P2	検索時の検索条件確認	変更前と変更後が同一ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-062	IT-23	検索条件	P2	検索時の検索条件確認	変更前または変更後のステータスが取得できないを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-024	IT-23	検索条件	P2	検索時の検索条件確認	変更前または変更後のステータスが取得できないを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-063	IT-23	検索条件	P2	検索時の検索条件確認	許可されない遷移先を強制送信を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-025	IT-23	検索条件	P2	検索時の検索条件確認	許可されない遷移先を強制送信を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-064	IT-23	検索条件	P2	検索時の検索条件確認	取消日・入金日・確認日が既に設定済みを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-026	IT-23	検索条件	P2	検索時の検索条件確認	取消日・入金日・確認日が既に設定済みを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-065	IT-23	検索条件	P2	検索時の検索条件確認	出荷完了へ遷移、ただし変更前が既に出荷完了を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-027	IT-23	検索条件	P2	検索時の検索条件確認	出荷完了へ遷移、ただし変更前が既に出荷完了を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-066	IT-23	検索条件	P2	検索時の検索条件確認	取消から他ステータスへ戻すを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で取消から他ステータスへ戻すの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-028	IT-23	検索条件	P2	検索時の検索条件確認	取消から他ステータスへ戻すを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で取消から他ステータスへ戻すの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-067	IT-23	検索条件	P2	検索時の検索条件確認	参照時点を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で参照時点の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-029	IT-23	検索条件	P2	検索時の検索条件確認	参照時点を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で参照時点の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-068	IT-23	検索条件	P2	検索時の検索条件確認	変更の原子性を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で変更の原子性の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-030	IT-23	検索条件	P2	検索時の検索条件確認	変更の原子性を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で変更の原子性の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-069	IT-23	検索条件	P2	検索時の検索条件確認	出荷日の整合を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で出荷日の整合の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-031	IT-23	検索条件	P2	検索時の検索条件確認	出荷日の整合を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で出荷日の整合の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-070	IT-23	検索条件	P2	検索時の検索条件確認	一覧との整合を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で一覧との整合の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注一覧で表示するステータス・各日時は、本操作の保存完了後の永続化済みデータに従うであること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-071	IT-23	検索条件	P2	検索時の検索条件確認	APIを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でAPIの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-032	IT-23	検索条件	P2	検索時の検索条件確認	一覧との整合を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で一覧との整合の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-072	IT-23	検索条件	P2	検索時の検索条件確認	失敗時を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で失敗時の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-033	IT-23	検索条件	P2	検索時の検索条件確認	APIを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でAPIの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-073	IT-23	実行結果	P2	検索時の実行結果確認	入力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で入力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-034	IT-23	実行結果	P2	検索時の実行結果確認	失敗時を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で失敗時の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-074	IT-23	実行結果	P2	検索時の実行結果確認	成功時出力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注ステータスと関連日時・更新者・更新日時を保存し、受注編集（詳細）画面へリダイレクトしてフラッシュメッセージを表示すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-075	IT-23	実行結果	P2	検索時の実行結果確認	失敗時出力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-035	IT-23	実行結果	P2	検索時の実行結果確認	入力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で入力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-076	IT-23	実行結果	P2	検索時の実行結果確認	副作用を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-036	IT-23	実行結果	P2	検索時の実行結果確認	成功時出力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-077	IT-23	実行結果	P2	検索時の実行結果確認	dtb_orderを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でdtb_orderの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-037	IT-23	実行結果	P2	検索時の実行結果確認	失敗時出力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-078	IT-26	登録内容	P1	登録時の登録内容確認	dtb_orderを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でdtb_orderの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-038	IT-26	登録内容	P1	登録時の登録内容確認	副作用を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で副作用の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-079	IT-26	登録内容	P1	登録時の登録内容確認	遷移先ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で遷移先ステータスの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-039	IT-26	登録内容	P1	登録時の登録内容確認	dtb_orderを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でdtb_orderの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-080	IT-26	登録内容	P1	登録時の登録内容確認	受注ステータス遷移の許可規則を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で受注ステータス遷移の許可規則の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-040	IT-26	登録内容	P1	登録時の登録内容確認	dtb_orderを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でdtb_orderの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-081	IT-26	登録内容	P1	登録時の登録内容確認	対応状況変更操作を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況変更操作の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-041	IT-26	登録内容	P1	登録時の登録内容確認	遷移先ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で遷移先ステータスの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注編集（詳細）画面で対応状況だけを変更して保存する操作であること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-082	IT-26	登録内容	P1	登録時の登録内容確認	現在のステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で現在のステータスの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	対応状況プルダウンで選べる、現在のステータスから変更可能なステータスであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-042	IT-26	登録内容	P1	登録時の登録内容確認	受注ステータス遷移の許可規則を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で受注ステータス遷移の許可規則の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面表示時点の受注の対応状況であること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-083	IT-23	登録内容	P1	登録時の登録内容確認	受注編集（詳細）画面を開くを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で受注編集（詳細）画面を開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-043	IT-26	登録内容	P1	登録時の登録内容確認	対応状況変更操作を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注の現在の対応状況を表示名で表示し、対応状況プルダウンに遷移可能なステータスを表示すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-084	IT-26	登録内容	P1	登録時の登録内容確認	対応状況変更操作を送信を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況変更操作を送信の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-044	IT-26	登録内容	P1	登録時の登録内容確認	現在のステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	選択した遷移先ステータスへ変更・保存し、同じ受注編集（詳細）画面へリダイレクトしてフラッシュメッセージを表示すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-085	IT-26	登録内容	P1	登録時の登録内容確認	新規受注登録画面を開くを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で新規受注登録画面を開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-045	IT-26	登録内容	P1	登録時の登録内容確認	受注編集（詳細）画面を開くを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	新規受注では対応状況プルダウンと対応状況変更操作を表示しないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-086	IT-26	登録内容	P1	登録時の登録内容確認	未認証・管理画面へ到達できない利用者を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で未認証・管理画面へ到達できない利用者の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-046	IT-26	登録内容	P1	登録時の登録内容確認	対応状況変更操作を送信を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注編集（詳細）画面自体に到達できないため、本操作も利用できないこと。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-087	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で表示要素の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-047	IT-26	登録内容	P1	登録時の登録内容確認	新規受注登録画面を開くを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で新規受注登録画面を開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-048	IT-26	実行結果	P1	登録時の実行結果確認	未認証・管理画面へ到達できない利用者を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で未認証・管理画面へ到達できない利用者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-049	IT-23	実行結果	P1	登録時の実行結果確認	表示要素を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注情報領域に「現在のステータス」として現在の対応状況の表示名を表示し、その下に「対応状況」プルダウンを表示すること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-088	IT-26	登録内容	P1	登録時の登録内容確認	対応状況プルダウンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況プルダウンの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-050	IT-26	更新内容	P1	更新時の更新内容確認	対応状況プルダウンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況プルダウンの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	単一選択のプルダウンであること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-089	IT-26	登録内容	P1	登録時の登録内容確認	対応状況変更ボタンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況変更ボタンの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-051	IT-26	更新内容	P1	更新時の更新内容確認	対応状況変更ボタンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況変更ボタンの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-090	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動による確認ダイアログを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-052	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動による確認ダイアログを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でJS 挙動による確認ダイアログの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-053	IT-26	更新内容	P1	更新時の更新内容確認	入力項目を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で入力項目の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本操作で利用者が入力するのは対応状況プルダウンの選択のみであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-054	IT-26	更新内容	P1	更新時の更新内容確認	%from% から %to% にはステータス変更できませんを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で%from% から %to% にはステータス変更できませんの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-055	IT-26	更新内容	P1	更新時の更新内容確認	変更前後が同一ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-056	IT-26	更新内容	P1	更新時の更新内容確認	受注フォームが妥当でない、または変更前後のいずれかのステータスが取得できないを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-057	IT-26	更新内容	P1	更新時の更新内容確認	遷移先の絞り込みを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-058	IT-26	更新内容	P1	更新時の更新内容確認	変更の成立条件を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-059	IT-26	更新内容	P1	更新時の更新内容確認	日時の自動セットを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で日時の自動セットの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-060	IT-05	実行結果	P1	更新時の実行結果確認	出荷完了時のポイントを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で出荷完了時のポイントの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-061	IT-05	実行結果	P1	更新時の実行結果確認	更新者・更新日時を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で更新者・更新日時の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	変更成立時に受注の更新者を操作中の管理者、更新日時を現在日時で更新すること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-062	IT-05	削除条件	P1	削除時の削除条件確認	対応状況を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_order.order_status_idであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-063	IT-05	削除条件	P1	削除時の削除条件確認	変更前と変更後が同一ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	変更せず受注編集（詳細）画面へリダイレクトすること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-064	IT-05	削除条件	P1	削除時の削除条件確認	変更前または変更後のステータスが取得できないを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	変更せず受注編集（詳細）画面へリダイレクトすること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-065	IT-05	削除条件	P1	削除時の削除条件確認	許可されない遷移先を強制送信を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注フォームの受注ステータス検証でステータス変更不可のエラーを表示し、確定処理に入っても遷移適用が失敗してトランザクションを巻き戻すであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-066	IT-05	削除条件	P1	削除時の削除条件確認	取消日・入金日・確認日が既に設定済みを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で取消日・入金日・確認日が既に設定済みの確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-067	IT-05	実行結果	P1	削除時の実行結果確認	出荷完了へ遷移、ただし変更前が既に出荷完了を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で出荷完了へ遷移、ただし変更前が既に出荷完了の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-068	IT-05	実行結果	P1	削除時の実行結果確認	取消から他ステータスへ戻すを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で取消から他ステータスへ戻すの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ブラウザ側で在庫変動なしの確認ダイアログを表示すること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-069	IT-05	実行結果	P1	削除時の実行結果確認	参照時点を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で参照時点の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-070	IT-05	実行結果	P1	削除時の実行結果確認	変更の原子性を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で変更の原子性の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	日時の一部は遷移可否判定の前にメモリ上でセットするが、遷移適用・更新者更新・ポイント反映・外部連携はひとつのトランザクション内で行い、遷移適用が失敗したときは巻き戻すであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-071	IT-02	初期行数	P2	初期行数の結合確認	出荷日の整合を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で出荷日の整合の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 出荷日の整合を確認する
+3. 画面表示と後続状態を確認する"	出荷完了へ遷移したとき、受注の出荷日と各配送の出荷日に同一の現在日時をセットすること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-072	IT-02	表示順	P2	表示順の結合確認	一覧との整合を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で一覧との整合の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧との整合を確認する
+3. 画面表示と後続状態を確認する"	受注一覧で表示するステータス・各日時は、本操作の保存完了後の永続化済みデータに従うであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-073	IT-25	更新抑止	P1	更新抑止の結合確認	APIを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でAPIの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	本操作はサーバ側でフォーム送信を受けて処理すること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-074	IT-12	内部情報	P1	内部情報の結合確認	失敗時を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で失敗時の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	受注ステータス遷移の許可規則に反する遷移は遷移適用が失敗し、トランザクションを巻き戻して受注編集（詳細）画面へ戻すであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-075	IT-15	機密情報	P1	機密情報の結合確認	入力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で入力の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	受注編集（詳細）画面からの送信種別 status_change の POSTであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-076	IT-07	排他制御	P1	排他制御の結合確認	成功時出力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で成功時出力の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注ステータスと関連日時・更新者・更新日時を保存し、受注編集（詳細）画面へリダイレクトしてフラッシュメッセージを表示すること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-077	IT-07	排他制御	P1	排他制御の結合確認	失敗時出力を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で失敗時出力の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	変更せずに受注編集（詳細）画面へリダイレクトする、もしくは受注ステータス検証エラーや購入処理例外のメッセージを表示して画面を再表示すること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-078	IT-06	ロールバック	P3	ロールバックの結合確認	副作用を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で副作用の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注ステータス遷移に伴う在庫・ポイントの加減算、出荷完了時の付与ポイント反映、外部連携の呼び出し、更新者・更新日時の記録であること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-079	IT-11	実行結果	P2	実行結果の結合確認	dtb_orderを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でdtb_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_orderを確認する
+3. 画面表示と後続状態を確認する"	入金済みへ新たに遷移し未設定のときに現在日時をセットであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-080	IT-28	実行結果	P2	実行結果の結合確認	dtb_orderを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）でdtb_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_orderを確認する
+3. 画面表示と後続状態を確認する"	取消へ新たに遷移し未設定のときに現在日時をセットであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-081	IT-28	実行結果	P2	実行結果の結合確認	遷移先ステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で遷移先ステータスの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 遷移先ステータスを確認する
+3. 画面表示と後続状態を確認する"	対応状況プルダウンで選べる、現在のステータスから変更可能なステータスであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-082	IT-28	ヘッダ	P2	ヘッダの結合確認	受注ステータス遷移の許可規則を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で受注ステータス遷移の許可規則の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 受注ステータス遷移の許可規則を確認する
+3. 画面表示と後続状態を確認する"	状態遷移の定義により、現在のステータスから到達できる遷移先を限定する仕組みであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-083	IT-28	件名	P2	件名の結合確認	対応状況変更操作を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 対応状況変更操作を確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-084	IT-28	件名	P2	件名の結合確認	現在のステータスを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 現在のステータスを確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-085	IT-28	件名	P2	件名の結合確認	受注編集（詳細）画面を開くを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で受注編集（詳細）画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 受注編集（詳細）画面を開く
+3. 画面表示と後続状態を確認する"	受注の現在の対応状況を表示名で表示し、対応状況プルダウンに遷移可能なステータスを表示すること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-086	IT-28	本文	P2	本文の結合確認	対応状況変更操作を送信を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 対応状況変更操作を送信
+3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-087	IT-28	本文	P2	本文の結合確認	新規受注登録画面を開くを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 新規受注登録画面を開く
+3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-088	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	対応状況プルダウンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況プルダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 対応状況プルダウンを確認する
+3. 画面表示と後続状態を確認する"	単一選択のプルダウンであること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-089	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	対応状況変更ボタンを試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で対応状況変更ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 対応状況変更ボタンを確認する
+3. 画面表示と後続状態を確認する"	押下すると受注編集フォームの送信種別を status_change にし、フォームのアクションを受注編集（詳細）画面のパスへ戻したうえでフォームを送信すること。
+m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）	IT-M05-14-ADMIN-ORDER-ORDER-STATUS-CHANGE-090	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	入力項目を試験できる状態である	m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）（m05_14_admin_order_order_status_change）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力項目
+3. 画面表示と後続状態を確認する"	本操作で利用者が入力するのは対応状況プルダウンの選択のみであること。
 ```
 
-## 対象外観点
+## テスト層による母集合除外（結合テスト対象外）
+
+結合テスト観点マスタは各観点に「テスト層」を付与し、**結合層のみ**を機能×観点のクロス積対象とする。以下の層は本結合テストの母集合から除外し、それぞれの行き先で担保する（除外の根拠はマスタ `integration_test/integration-test-viewpoints.md` のテスト層列）。
+
+| テスト層 | 除外観点数 | 行き先 |
+|---|---:|---|
+| UT | 108 | 単体テスト粒度（単項目境界値・単機能ロジック）→単体テストで担保。表内に保持しマーク。 |
+| 委譲 | 143 | 期待値を設計書へ委譲（「記載通り」）→機能別チェックリストへ降格。per機能で設計書の具体値を引用してケース化。 |
+| e2e | 33 | 見た目／ブラウザ挙動→e2e（Playwright）＋手動で担保。 |
+| 非機能 | 5 | 方式／性能／基盤（ロック方式・リトライ間隔・MQクラスタ・レート制限等）→非機能・障害試験へ分離。 |
+| 対象外 | 1 | 合否オラクルを持たない管理・スコーピング指示→テスト観点ではないため除外。 |
+| 統合 | 6 | 他観点に統合吸収済み（冗長削除）。統合先が同一バグクラスを検出するため重複クロス積を回避。行は監査用に保持しクロス積からのみ除外（codex+fable5承認）。 |
+
+## 対象外観点（結合層のうち本機能に非該当）
 
 | 分類・範囲 | 理由 |
 |-----------|------|
-| バリデーション / バリデーション / 単項目バリデーション（IT-22） | 元設計HTMLに該当する処理・I/Fがないため |
-| バリデーション / 管理画面 / バリデーション（IT-22） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 登録（IT-23, IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 更新（IT-05, IT-23, IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 削除（IT-05） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / 更新順序（IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / 排他制御（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / ロールバック（IT-06） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 数量 / 更新結果（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 増加処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 減少処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
@@ -333,62 +343,72 @@ m05-14_admin_order_order_status_change（管理画面_受注対応状況の変�
 | データベースアクセス / 移動・振替 / 例外処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 移動・振替 / 区分変更（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 分割・結合 / 結合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / 分割・結合 / 分割（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 分割・結合 / 承認・棄却（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 実数反映 / 不足（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 実数反映 / 超過（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / バッチ / DB影響（IT-26） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / 管理画面 / 同時更新（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| ファイル処理 / ファイル取込 / 実行結果（IT-16） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルアップロードを含む / 実行結果（IT-16, IT-24） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルアップロードを含む / バリデーション（IT-17, IT-24） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルアップロードを含む / 実行結果（IT-16） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルアップロードを含む / バリデーション（IT-17） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / ファイル出力 / 実行結果（IT-27） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルダウンロードを含む / 実行結果（IT-24, IT-27） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルダウンロードを含む / データ出力（IT-18, IT-24） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルダウンロードを含む / 実行結果（IT-27） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルダウンロードを含む / データ出力（IT-24） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / ファイル操作 / 実行結果（IT-27） | 本機能は対象の外部I/Fを扱わないため |
-| ファイル処理 / 数量・金額影響機能 / 対象機能（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ファイル処理 / 数量・金額影響機能 / 対象機能（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 数量 / 更新結果（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 増加・調整 / ファイル登録（IT-33） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / 参照・非更新 / 参照系機能（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 参照・非更新 / ファイル出力（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / バッチ / ファイル出力（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ / 再実行（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ / 異常終了（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ-フロント / ファイル連携（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ-フロント / JSON連携（IT-27） | 本機能はバッチ処理を起動しないため |
-| メール処理 / メール処理 / 実行結果（IT-11, IT-28） | 元設計HTMLに該当する処理・I/Fがないため |
-| メール処理 / メール処理 / メール編集（IT-28） | 元設計HTMLに該当する処理・I/Fがないため |
-| 電文処理 / 受信処理 / 実行結果（IT-29） | 本機能は対象の外部I/Fを扱わないため |
-| 電文処理 / 受信処理 / バリデーション（IT-29） | 本機能は対象の外部I/Fを扱わないため |
 | 電文処理 / 送信処理 / 実行結果（IT-29） | 本機能は対象の外部I/Fを扱わないため |
 | 電文処理 / 送信処理 / 電文編集（IT-29） | 本機能は対象の外部I/Fを扱わないため |
-| ログ出力 / ログ出力 / ログ編集（IT-20） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 画面表示 / 表示結果（IT-12, IT-14, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 画面操作 / イベント実行結果（IT-01, IT-12, IT-14, IT-16, IT-21, IT-25, IT-27） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / データベースアクセス / DB操作（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / ログ出力 / ブラウザ（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / ウェブサービス呼出 / リトライ制御（IT-12, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 通知 / WebSocket（IT-11, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / ウェブサービス呼出 / リトライ制御（IT-12） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 通知 / WebSocket（IT-11） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 金額・単価 / 戻し処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 履歴 / 登録元追跡（IT-33） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブアプリケーション / 数量・金額 / フロント更新（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 数量減（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 数量増（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 欠落登録（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 数量・金額 / 取消（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / フロント / 表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 管理画面-公開側 / 反映（IT-02） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / API-公開側 / キャッシュ（IT-25） | 本機能は対象の外部I/Fを扱わないため |
-| ウェブアプリケーション / 管理画面 / 初期表示（IT-02） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / バッチアプリケーション機能 / 実行結果（IT-12, IT-30） | 本機能はバッチ処理を起動しないため |
-| バッチアプリケーション / ファイル取込 / 実行結果（IT-16） | 本機能はバッチ処理を起動しないため |
-| バッチアプリケーション / ファイル出力 / 実行結果（IT-27） | 本機能はバッチ処理を起動しないため |
 | バッチアプリケーション / バッチ / 正常終了（IT-30） | 本機能はバッチ処理を起動しないため |
 | バッチアプリケーション / バッチ / 異常終了（IT-12） | 本機能はバッチ処理を起動しないため |
 | メッセージング / メッセージング機能 / 実行結果（IT-31） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブサービス / ウェブサービス機能 / 実行結果（IT-09, IT-10, IT-19, IT-32） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / ウェブサービス機能 / 実行結果（IT-09, IT-10, IT-32） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 数量 / 区分整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 数量 / エラー（IT-33） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブサービス / 金額・単価 / 外部取引（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 外部連携 / 自動加算（IT-33） | 本機能は対象の外部I/Fを扱わないため |
-| その他 | 同種の対象外観点 19 件は上記分類と同じ理由で対象外 |
+| ウェブサービス / 外部連携 / 実数更新（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 外部連携 / 売上・返品（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / バッチ / 正常終了（IT-09） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / バッチ / 異常終了（IT-10） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / フロント / 外部キャッシュ（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / フロント / 外部取得（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 抽出条件（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 正常応答（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 認証・認可（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 決済連携 / 外部決済（IT-10） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 決済連携 / 二重実行（IT-08） | 本機能はバッチ処理を起動しないため |
+| ウェブアプリケーション / 決済連携 / 状態表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
+| データベースアクセス / 決済連携 / 金額整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / 外部連携 / Webhook・外部通知（IT-10, IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 外部連携 / 下流転送（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| データベースアクセス / 在庫引当 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 在庫引当 / 競合（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 注文・決済・在庫 / 原子性（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 状態遷移 / 遷移可否（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / 買取・査定 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
+| データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
+| その他 | 同種の対象外観点 1 件は上記分類と同じ理由で対象外 |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 19件 — No.255, No.261, No.332, No.334, No.336, No.338, No.346, No.356, No.357, No.358, No.359, No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。

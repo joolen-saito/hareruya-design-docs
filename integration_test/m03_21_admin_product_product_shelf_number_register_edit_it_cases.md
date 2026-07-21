@@ -10,14 +10,18 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、UI部品、URL、操作起点、確認ダイアログ、送信可否制御 |
-| IT-03 | 外部画面、画面遷移 |
-| IT-13 | URL直接アクセス |
-| IT-22 | DBとの相関バリデーション、その他のバリデーション、必須バリデーション、必須制御、数値バリデーション、文字列長バリデーション、文字種バリデーション、相関バリデーション |
-| IT-23 | 実行結果、検索条件、登録内容 |
-| IT-26 | 登録内容 |
+| IT-25 | HTTPステータス、URL、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
+| IT-23 | 実行結果、検索条件 |
+| IT-26 | 実行結果、更新内容、登録内容 |
+| IT-05 | 削除条件、実行結果 |
+| IT-02 | 初期行数、表示順 |
+| IT-12 | 内部情報、画面レイアウト、画面表示データ |
+| IT-07 | 排他制御 |
+| IT-06 | ロールバック |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -53,272 +57,277 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-006	IT-15	状態変化	P1	状態変化の結合確認	conversion の「登録」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でconversion の「登録」の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検証成功時は保存し、成功メッセージののち GET admin_product_shelf_number へリダイレクトする（同一ルートに追加パラメータを渡す実装のため、生成 URL にクエリが付く場合がある）であること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-007	IT-25	UI部品	P3	UI部品の操作結果確認	一覧の「削除」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧の「削除」の確認に必要な条件を指定する	"1. 対象画面を表示する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	一覧の「削除」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧の「削除」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧の「削除」
 3. 画面表示と後続状態を確認する"	商品規格に参照が無ければ削除し成功メッセージであること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-008	IT-25	UI部品	P3	UI部品の操作結果確認	「CSV出力」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV出力」の確認に必要な条件を指定する	"1. 対象画面を表示する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	「CSV出力」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV出力」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「CSV出力」を確認する
 3. 画面表示と後続状態を確認する"	マスタ全件の CSV をダウンロードすること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-009	IT-25	操作起点	P1	操作起点の操作結果確認	「CSV取込」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV取込」の確認に必要な条件を指定する	"1. 対象画面を表示する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-009	IT-25	URL	P2	URLの操作結果確認	「CSV取込」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV取込」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「CSV取込」を確認する
 3. 画面表示と後続状態を確認する"	マスタ CSV 用アップロード画面を表示すること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-010	IT-25	確認ダイアログ	P1	確認ダイアログの操作結果確認	上記と同一画面だが別 URL（後方互換用）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で上記と同一画面だが別 URL（後方互換用）の確認に必要な条件を指定する	"1. 対象画面を表示する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	上記と同一画面だが別 URL（後方互換用）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 上記と同一画面だが別 URL（後方互換用）を確認する
-3. 画面表示と後続状態を確認する"	上記と同一画面だが別 URL（後方互換用）であること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-011	IT-25	確認ダイアログ	P2	確認ダイアログの操作結果確認	表示要素を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	表示要素を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	タイトルは商品管理、サブタイトルは「棚番号登録/編集」に相当する翻訳であること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-012	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	モーダル・ポップアップを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	"削除リンクはアンカーに data-method=""delete"" と確認メッセージ属性があり、管理画面共通の確認後に DELETE すること。"
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-013	IT-25	送信可否制御	P3	送信可否制御の操作結果確認	一覧総件数を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧総件数の確認に必要な条件を指定する	"1. 対象画面を表示する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	一覧総件数を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 一覧総件数を確認する
-3. 画面表示と後続状態を確認する"	dtb_shelf_number 全件を sort_no 昇順で対象とし、表示件数で分割すること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-014	IT-03	外部画面	P2	外部画面の操作結果確認	二名が同じ名称をほぼ同時に送信を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で二名が同じ名称をほぼ同時に送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	二名が同じ名称をほぼ同時に送信を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 二名が同じ名称をほぼ同時に送信
-3. 画面表示と後続状態を確認する"	DB 側の一意制約で一方が捕捉され、admin.error.non_unique が積まれる場合があること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-015	IT-03	画面遷移	P2	画面遷移の操作結果確認	CSV で名称フォーマット規則外の文字列を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でCSV で名称フォーマット規則外の文字列の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	CSV で名称フォーマット規則外の文字列を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. CSV で名称フォーマット規則外の文字列を確認する
-3. 画面表示と後続状態を確認する"	画面フォーム同等の Regex 検証は取込ハンドラに無いため、規則外の名称が保存され得るであること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-016	IT-03	画面遷移	P2	画面遷移の操作結果確認	削除時に規格から参照されているを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除時に規格から参照されているの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	削除時に規格から参照されているを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 削除時に規格から参照されている
-3. 画面表示と後続状態を確認する"	DB を削除しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-017	IT-03	画面遷移	P2	画面遷移の操作結果確認	本画面と商品規格を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で本画面と商品規格の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	本画面と商品規格を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 本画面と商品規格を確認する
-3. 画面表示と後続状態を確認する"	マスタの更新・削除は規格側の自動再割当を行わないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-018	IT-03	画面遷移	P2	画面遷移の操作結果確認	入力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	入力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 入力
-3. 画面表示と後続状態を確認する"	GET は主にパスの id と page_noであること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-019	IT-03	画面遷移	P2	画面遷移の操作結果確認	成功時出力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-019	IT-22	部分入力	P2	部分入力の入力検証	成功時出力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	リダイレクトとフラッシュ、もしくは CSV のバイナリ応答であること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-020	IT-03	画面遷移	P2	画面遷移の操作結果確認	登録/更新を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-021	IT-13	URL直接アクセス	P2	URL直接アクセスの操作結果確認	管理画面にログインし当ルートへ到達できる運用者を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で管理画面にログインし当ルートへ到達できる運用者の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 管理画面にログインし当ルートへ到達できる運用者を確認する
-3. 画面表示と後続状態を確認する"	当画面および同一コントローラの CSV 入出力へ到達し得るであること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-022	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	POST 検証成功を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でPOST 検証成功の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. POST 検証成功を確認する
-3. 画面表示と後続状態を確認する"	GET admin_product_shelf_number（クエリやパラメータに保存後 ID を載せる実装）であること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-023	IT-25	URL	P2	URLの操作結果確認	POST 検証失敗を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でPOST 検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. POST 検証失敗を確認する
-3. 画面表示と後続状態を確認する"	同一 URL（POST 送信先とは別にもどるのではなく、store が再描画のため HTML は一覧付きフォームパターン）であること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-024	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	削除時の参照判定を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 削除時の参照判定
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-025	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	ナビ「棚番号登録/編集」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. ナビ「棚番号登録/編集」を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-026	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	編集時「新規登録へ戻る」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で文字列長バリデーションの対象項目に最大長の値を指定する	"1. 対象画面を表示する
-2. 編集時「新規登録へ戻る」を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-027	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	一覧ページリンク（新規時）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で文字列長バリデーションの対象項目に最大長+1の値を指定する	"1. 対象画面を表示する
-2. 一覧ページリンク（新規時）を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-028	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	表示件数セレクト変更を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で文字列長バリデーションの対象項目に最小長の値を指定する	"1. 対象画面を表示する
-2. 表示件数セレクト変更を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-029	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	conversion の「登録」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で文字列長バリデーションの対象項目に最小長-1の値を指定する	"1. 対象画面を表示する
-2. conversion の「登録」を確認する
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-030	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	一覧の「削除」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧の「削除」の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧の「削除」
-3. 画面表示と後続状態を確認する"	文字列長バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-031	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	「CSV取込」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV取込」の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 「CSV取込」を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-032	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	上記と同一画面だが別 URL（後方互換用）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で上記と同一画面だが別 URL（後方互換用）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 上記と同一画面だが別 URL（後方互換用）を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-033	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	表示要素を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-034	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-035	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	一覧総件数を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 一覧総件数を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-036	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	二名が同じ名称をほぼ同時に送信を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 二名が同じ名称をほぼ同時に送信
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-037	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	CSV で名称フォーマット規則外の文字列を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で数値バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. CSV で名称フォーマット規則外の文字列を確認する
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-038	IT-22	数値バリデーション	P2	数値バリデーションの入力検証	削除時に規格から参照されているを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除時に規格から参照されているの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 削除時に規格から参照されている
-3. 画面表示と後続状態を確認する"	数値バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-039	IT-22	文字種バリデーション	P2	文字種バリデーションの入力検証	本画面と商品規格を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で本画面と商品規格の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 本画面と商品規格を確認する
-3. 画面表示と後続状態を確認する"	文字種バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-040	IT-22	文字種バリデーション	P2	文字種バリデーションの入力検証	入力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入力
-3. 画面表示と後続状態を確認する"	文字種バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-041	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	成功時出力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-042	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	登録/更新を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-043	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	管理画面にログインし当ルートへ到達できる運用者を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 管理画面にログインし当ルートへ到達できる運用者を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-044	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	POST 検証成功を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でその他のバリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. POST 検証成功を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-045	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	POST 検証失敗を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でPOST 検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. POST 検証失敗を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-046	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	削除時の参照判定を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除時の参照判定の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 削除時の参照判定
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-047	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	ナビ「棚番号登録/編集」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でその他のバリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. ナビ「棚番号登録/編集」を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-048	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	編集時「新規登録へ戻る」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でその他のバリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 編集時「新規登録へ戻る」を確認する
-3. 画面表示と後続状態を確認する"	その他のバリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-049	IT-22	その他のバリデーション	P2	その他のバリデーションの入力検証	一覧ページリンク（新規時）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧ページリンク（新規時）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧ページリンク（新規時）を確認する
-3. 画面表示と後続状態を確認する"	セッションのページ番号が更新され、当該ページの一覧が返るであること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-050	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示件数セレクト変更を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 表示件数セレクト変更を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-051	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	conversion の「登録」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. conversion の「登録」を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-052	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	一覧の「削除」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 一覧の「削除」
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-053	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	「CSV出力」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 「CSV出力」を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-054	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	「CSV取込」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 「CSV取込」を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-055	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	上記と同一画面だが別 URL（後方互換用）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 上記と同一画面だが別 URL（後方互換用）を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-056	IT-22	必須制御	P1	必須制御の入力検証	表示要素を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で必須制御の対象項目を未入力にする	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	タイトルは商品管理、サブタイトルは「棚番号登録/編集」に相当する翻訳であること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-057	IT-23	検索条件	P2	検索時の検索条件確認	一覧総件数を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	登録/更新を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-058	IT-23	検索条件	P2	検索時の検索条件確認	二名が同じ名称をほぼ同時に送信を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	管理画面にログインし当ルートへ到達できる運用者を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-059	IT-23	検索条件	P2	検索時の検索条件確認	CSV で名称フォーマット規則外の文字列を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でCSV で名称フォーマット規則外の文字列の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面フォーム同等の Regex 検証は取込ハンドラに無いため、規則外の名称が保存され得るであること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-060	IT-23	検索条件	P2	検索時の検索条件確認	削除時に規格から参照されているを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	POST 検証成功を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-061	IT-23	検索条件	P2	検索時の検索条件確認	本画面と商品規格を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	POST 検証失敗を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-062	IT-23	検索条件	P2	検索時の検索条件確認	入力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	削除時の参照判定を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-063	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	ナビ「棚番号登録/編集」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-064	IT-23	検索条件	P2	検索時の検索条件確認	登録/更新を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	編集時「新規登録へ戻る」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-065	IT-23	検索条件	P2	検索時の検索条件確認	管理画面にログインし当ルートへ到達できる運用者を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	一覧ページリンク（新規時）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-066	IT-23	検索条件	P2	検索時の検索条件確認	POST 検証成功を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でPOST 検証成功の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-028	IT-23	検索条件	P2	検索時の検索条件確認	表示件数セレクト変更を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で表示件数セレクト変更の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-067	IT-23	検索条件	P2	検索時の検索条件確認	POST 検証失敗を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でPOST 検証失敗の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-029	IT-23	検索条件	P2	検索時の検索条件確認	conversion の「登録」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でconversion の「登録」の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-068	IT-23	検索条件	P2	検索時の検索条件確認	削除時の参照判定を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除時の参照判定の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-030	IT-23	検索条件	P2	検索時の検索条件確認	一覧の「削除」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧の「削除」の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-069	IT-23	検索条件	P2	検索時の検索条件確認	ナビ「棚番号登録/編集」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でナビ「棚番号登録/編集」の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-031	IT-23	検索条件	P2	検索時の検索条件確認	「CSV出力」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV出力」の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-070	IT-23	検索条件	P2	検索時の検索条件確認	編集時「新規登録へ戻る」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で編集時「新規登録へ戻る」の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	新規モードに戻ること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-071	IT-23	検索条件	P2	検索時の検索条件確認	一覧ページリンク（新規時）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧ページリンク（新規時）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-032	IT-23	検索条件	P2	検索時の検索条件確認	「CSV取込」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV取込」の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-072	IT-23	検索条件	P2	検索時の検索条件確認	表示件数セレクト変更を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で表示件数セレクト変更の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-033	IT-23	検索条件	P2	検索時の検索条件確認	上記と同一画面だが別 URL（後方互換用）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で上記と同一画面だが別 URL（後方互換用）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-073	IT-23	実行結果	P2	検索時の実行結果確認	conversion の「登録」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でconversion の「登録」の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-034	IT-23	実行結果	P2	検索時の実行結果確認	表示要素を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-074	IT-23	実行結果	P2	検索時の実行結果確認	一覧の「削除」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧の「削除」の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品規格に参照が無ければ削除し成功メッセージであること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-075	IT-23	実行結果	P2	検索時の実行結果確認	「CSV出力」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV出力」の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-035	IT-23	実行結果	P2	検索時の実行結果確認	モーダル・ポップアップを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-076	IT-23	実行結果	P2	検索時の実行結果確認	「CSV取込」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV取込」の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-036	IT-23	実行結果	P2	検索時の実行結果確認	一覧総件数を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧総件数の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-077	IT-23	実行結果	P2	検索時の実行結果確認	上記と同一画面だが別 URL（後方互換用）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で上記と同一画面だが別 URL（後方互換用）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-037	IT-23	実行結果	P2	検索時の実行結果確認	二名が同じ名称をほぼ同時に送信を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で二名が同じ名称をほぼ同時に送信の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-078	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で表示要素の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	CSV で名称フォーマット規則外の文字列を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でCSV で名称フォーマット規則外の文字列の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-079	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	削除時に規格から参照されているを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除時に規格から参照されているの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-080	IT-26	登録内容	P1	登録時の登録内容確認	一覧総件数を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧総件数の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	本画面と商品規格を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で本画面と商品規格の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-081	IT-26	登録内容	P1	登録時の登録内容確認	二名が同じ名称をほぼ同時に送信を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で二名が同じ名称をほぼ同時に送信の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	DB 側の一意制約で一方が捕捉され、admin.error.non_unique が積まれる場合があること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-082	IT-26	登録内容	P1	登録時の登録内容確認	CSV で名称フォーマット規則外の文字列を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でCSV で名称フォーマット規則外の文字列の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面フォーム同等の Regex 検証は取込ハンドラに無いため、規則外の名称が保存され得るであること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-083	IT-23	登録内容	P1	登録時の登録内容確認	削除時に規格から参照されているを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除時に規格から参照されているの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	DB を削除しないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-084	IT-26	登録内容	P1	登録時の登録内容確認	本画面と商品規格を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で本画面と商品規格の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	マスタの更新・削除は規格側の自動再割当を行わないこと。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-085	IT-26	登録内容	P1	登録時の登録内容確認	入力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で入力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-041	IT-26	登録内容	P1	登録時の登録内容確認	入力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で入力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET は主にパスの id と page_noであること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-086	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で成功時出力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-042	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で成功時出力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-043	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-044	IT-26	登録内容	P1	登録時の登録内容確認	管理画面にログインし当ルートへ到達できる運用者を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-045	IT-26	登録内容	P1	登録時の登録内容確認	POST 検証成功を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-046	IT-26	登録内容	P1	登録時の登録内容確認	POST 検証失敗を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-047	IT-26	登録内容	P1	登録時の登録内容確認	削除時の参照判定を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除時の参照判定の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-048	IT-26	実行結果	P1	登録時の実行結果確認	ナビ「棚番号登録/編集」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でナビ「棚番号登録/編集」の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-049	IT-23	実行結果	P1	登録時の実行結果確認	編集時「新規登録へ戻る」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で編集時「新規登録へ戻る」の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	新規モードに戻ること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-050	IT-26	更新内容	P1	更新時の更新内容確認	一覧ページリンク（新規時）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧ページリンク（新規時）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-051	IT-26	更新内容	P1	更新時の更新内容確認	表示件数セレクト変更を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で表示件数セレクト変更の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-052	IT-26	更新内容	P1	更新時の更新内容確認	conversion の「登録」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でconversion の「登録」の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-053	IT-26	更新内容	P1	更新時の更新内容確認	一覧の「削除」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧の「削除」の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品規格に参照が無ければ削除し成功メッセージであること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	「CSV出力」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV出力」の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	「CSV取込」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	上記と同一画面だが別 URL（後方互換用）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-059	IT-26	更新内容	P1	更新時の更新内容確認	一覧総件数を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧総件数の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	二名が同じ名称をほぼ同時に送信を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で二名が同じ名称をほぼ同時に送信の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-061	IT-05	実行結果	P1	更新時の実行結果確認	CSV で名称フォーマット規則外の文字列を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でCSV で名称フォーマット規則外の文字列の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面フォーム同等の Regex 検証は取込ハンドラに無いため、規則外の名称が保存され得るであること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-062	IT-05	削除条件	P1	削除時の削除条件確認	削除時に規格から参照されているを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	DB を削除しないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-063	IT-05	削除条件	P1	削除時の削除条件確認	本画面と商品規格を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	マスタの更新・削除は規格側の自動再割当を行わないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-064	IT-05	削除条件	P1	削除時の削除条件確認	入力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET は主にパスの id と page_noであること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-065	IT-05	削除条件	P1	削除時の削除条件確認	成功時出力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	リダイレクトとフラッシュ、もしくは CSV のバイナリ応答であること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-087	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で登録/更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-066	IT-05	削除条件	P1	削除時の削除条件確認	登録/更新を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で登録/更新の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-088	IT-26	登録内容	P1	登録時の登録内容確認	管理画面にログインし当ルートへ到達できる運用者を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で管理画面にログインし当ルートへ到達できる運用者の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-067	IT-05	実行結果	P1	削除時の実行結果確認	管理画面にログインし当ルートへ到達できる運用者を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で管理画面にログインし当ルートへ到達できる運用者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当画面および同一コントローラの CSV 入出力へ到達し得るであること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-089	IT-26	登録内容	P1	登録時の登録内容確認	POST 検証成功を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でPOST 検証成功の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-068	IT-05	実行結果	P1	削除時の実行結果確認	POST 検証成功を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でPOST 検証成功の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-090	IT-26	登録内容	P1	登録時の登録内容確認	POST 検証失敗を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET admin_product_shelf_number（クエリやパラメータに保存後 ID を載せる実装）であること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-069	IT-05	実行結果	P1	削除時の実行結果確認	POST 検証失敗を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でPOST 検証失敗の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-070	IT-05	実行結果	P1	削除時の実行結果確認	削除時の参照判定を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除時の参照判定の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	移行先は商品規格（dtb_product_class）の参照有無で判定すること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-071	IT-02	初期行数	P2	初期行数の結合確認	ナビ「棚番号登録/編集」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でナビ「棚番号登録/編集」の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ナビ「棚番号登録/編集」を確認する
+3. 画面表示と後続状態を確認する"	新規用フォームと一覧（既定は 1 ページ目）を表示すること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-072	IT-02	表示順	P2	表示順の結合確認	編集時「新規登録へ戻る」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で編集時「新規登録へ戻る」の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 編集時「新規登録へ戻る」を確認する
+3. 画面表示と後続状態を確認する"	新規モードに戻ること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-073	IT-25	更新抑止	P1	更新抑止の結合確認	一覧ページリンク（新規時）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧ページリンク（新規時）の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	セッションのページ番号が更新され、当該ページの一覧が返るであること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-074	IT-12	内部情報	P1	内部情報の結合確認	表示件数セレクト変更を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で表示件数セレクト変更の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	セッションの表示件数が N に更新され、同一画面構成が再描画されるであること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-075	IT-15	機密情報	P1	機密情報の結合確認	conversion の「登録」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でconversion の「登録」の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検証成功時は保存し、成功メッセージののち GET admin_product_shelf_number へリダイレクトする（同一ルートに追加パラメータを渡す実装のため、生成 URL にクエリが付く場合がある）であること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-076	IT-07	排他制御	P1	排他制御の結合確認	一覧の「削除」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧の「削除」の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品規格に参照が無ければ削除し成功メッセージであること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-077	IT-07	排他制御	P1	排他制御の結合確認	「CSV出力」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV出力」の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	マスタ全件の CSV をダウンロードすること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-078	IT-06	ロールバック	P3	ロールバックの結合確認	「CSV取込」を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で「CSV取込」の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	マスタ CSV 用アップロード画面を表示すること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	上記と同一画面だが別 URL（後方互換用）を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で上記と同一画面だが別 URL（後方互換用）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 上記と同一画面だが別 URL（後方互換用）を確認する
+3. 画面表示と後続状態を確認する"	上記と同一画面だが別 URL（後方互換用）であること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-080	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	タイトルは商品管理、サブタイトルは「棚番号登録/編集」に相当する翻訳であること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	一覧総件数を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で一覧総件数の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧総件数を確認する
+3. 画面表示と後続状態を確認する"	dtb_shelf_number 全件を sort_no 昇順で対象とし、表示件数で分割すること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	二名が同じ名称をほぼ同時に送信を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で二名が同じ名称をほぼ同時に送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 二名が同じ名称をほぼ同時に送信
+3. 画面表示と後続状態を確認する"	DB 側の一意制約で一方が捕捉され、admin.error.non_unique が積まれる場合があること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSV で名称フォーマット規則外の文字列を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でCSV で名称フォーマット規則外の文字列の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. CSV で名称フォーマット規則外の文字列を確認する
+3. 画面表示と後続状態を確認する"	画面フォーム同等の Regex 検証は取込ハンドラに無いため、規則外の名称が保存され得るであること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	削除時に規格から参照されているを試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で削除時に規格から参照されているの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 削除時に規格から参照されている
+3. 画面表示と後続状態を確認する"	DB を削除しないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-085	IT-25	一覧	P2	一覧の結合確認	本画面と商品規格を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で本画面と商品規格の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 本画面と商品規格を確認する
+3. 画面表示と後続状態を確認する"	マスタの更新・削除は規格側の自動再割当を行わないこと。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-086	IT-12	画面表示データ	P2	画面表示データの結合確認	入力を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-087	IT-12	画面表示データ	P2	画面表示データの結合確認	登録/更新を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-088	IT-25	画面表示データ	P2	画面表示データの結合確認	管理画面にログインし当ルートへ到達できる運用者を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）で管理画面にログインし当ルートへ到達できる運用者の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 管理画面にログインし当ルートへ到達できる運用者を確認する
+3. 画面表示と後続状態を確認する"	当画面および同一コントローラの CSV 入出力へ到達し得るであること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-089	IT-25	フォーム送信	P1	フォーム送信の結合確認	POST 検証成功を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でPOST 検証成功の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. POST 検証成功を確認する
+3. 画面表示と後続状態を確認する"	GET admin_product_shelf_number（クエリやパラメータに保存後 ID を載せる実装）であること。
+商品管理 — 棚番号登録/編集	IT-M03-21-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-REGISTER-EDIT-090	IT-16	ファイル選択	P2	ファイル選択の結合確認	POST 検証失敗を試験できる状態である	商品管理 — 棚番号登録/編集（m03_21_admin_product_product_shelf_number_register_edit）でPOST 検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. POST 検証失敗を確認する
+3. 画面表示と後続状態を確認する"	同一 URL（POST 送信先とは別にもどるのではなく、store が再描画のため HTML は一覧付きフォームパターン）であること。
 ```
 
-## 対象外観点
+## テスト層による母集合除外（結合テスト対象外）
+
+結合テスト観点マスタは各観点に「テスト層」を付与し、**結合層のみ**を機能×観点のクロス積対象とする。以下の層は本結合テストの母集合から除外し、それぞれの行き先で担保する（除外の根拠はマスタ `integration_test/integration-test-viewpoints.md` のテスト層列）。
+
+| テスト層 | 除外観点数 | 行き先 |
+|---|---:|---|
+| UT | 108 | 単体テスト粒度（単項目境界値・単機能ロジック）→単体テストで担保。表内に保持しマーク。 |
+| 委譲 | 143 | 期待値を設計書へ委譲（「記載通り」）→機能別チェックリストへ降格。per機能で設計書の具体値を引用してケース化。 |
+| e2e | 33 | 見た目／ブラウザ挙動→e2e（Playwright）＋手動で担保。 |
+| 非機能 | 5 | 方式／性能／基盤（ロック方式・リトライ間隔・MQクラスタ・レート制限等）→非機能・障害試験へ分離。 |
+| 対象外 | 1 | 合否オラクルを持たない管理・スコーピング指示→テスト観点ではないため除外。 |
+| 統合 | 6 | 他観点に統合吸収済み（冗長削除）。統合先が同一バグクラスを検出するため重複クロス積を回避。行は監査用に保持しクロス積からのみ除外（codex+fable5承認）。 |
+
+## 対象外観点（結合層のうち本機能に非該当）
 
 | 分類・範囲 | 理由 |
 |-----------|------|
-| バリデーション / バリデーション / 単項目バリデーション（IT-22） | 元設計HTMLに該当する処理・I/Fがないため |
-| バリデーション / 管理画面 / バリデーション（IT-22） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 登録（IT-23, IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 更新（IT-05, IT-23, IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB操作 / 削除（IT-05） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / 更新順序（IT-26） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / 排他制御（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / ロールバック（IT-06） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 数量 / 更新結果（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 増加処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 減少処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
@@ -333,23 +342,19 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | データベースアクセス / 移動・振替 / 例外処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 移動・振替 / 区分変更（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 分割・結合 / 結合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / 分割・結合 / 分割（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 分割・結合 / 承認・棄却（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 実数反映 / 不足（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 実数反映 / 超過（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / バッチ / DB影響（IT-26） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / 管理画面 / 同時更新（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| ファイル処理 / ファイル取込 / 実行結果（IT-16） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルアップロードを含む / 実行結果（IT-16, IT-24） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルアップロードを含む / バリデーション（IT-17, IT-24） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルアップロードを含む / 実行結果（IT-16） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルアップロードを含む / バリデーション（IT-17） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / ファイル出力 / 実行結果（IT-27） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルダウンロードを含む / 実行結果（IT-24, IT-27） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / ※ファイルダウンロードを含む / データ出力（IT-18, IT-24） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルダウンロードを含む / 実行結果（IT-27） | 本機能はファイル入出力を扱わないため |
+| ファイル処理 / ※ファイルダウンロードを含む / データ出力（IT-24） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / ファイル操作 / 実行結果（IT-27） | 本機能は対象の外部I/Fを扱わないため |
-| ファイル処理 / 数量・金額影響機能 / 対象機能（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ファイル処理 / 数量・金額影響機能 / 対象機能（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 数量 / 更新結果（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 増加・調整 / ファイル登録（IT-33） | 本機能はファイル入出力を扱わないため |
-| ファイル処理 / 参照・非更新 / 参照系機能（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / 参照・非更新 / ファイル出力（IT-33） | 本機能はファイル入出力を扱わないため |
 | ファイル処理 / バッチ / ファイル出力（IT-27） | 本機能はバッチ処理を起動しないため |
 | ファイル処理 / バッチ / 再実行（IT-27） | 本機能はバッチ処理を起動しないため |
@@ -358,37 +363,51 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ファイル処理 / バッチ-フロント / JSON連携（IT-27） | 本機能はバッチ処理を起動しないため |
 | メール処理 / メール処理 / 実行結果（IT-11, IT-28） | 本機能はメール送信を扱わないため |
 | メール処理 / メール処理 / メール編集（IT-28） | 本機能はメール送信を扱わないため |
-| 電文処理 / 受信処理 / 実行結果（IT-29） | 本機能は対象の外部I/Fを扱わないため |
-| 電文処理 / 受信処理 / バリデーション（IT-29） | 本機能は対象の外部I/Fを扱わないため |
 | 電文処理 / 送信処理 / 実行結果（IT-29） | 本機能は対象の外部I/Fを扱わないため |
 | 電文処理 / 送信処理 / 電文編集（IT-29） | 本機能は対象の外部I/Fを扱わないため |
-| ログ出力 / ログ出力 / ログ編集（IT-20） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 画面表示 / 表示結果（IT-12, IT-14, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 画面操作 / イベント実行結果（IT-01, IT-12, IT-14, IT-16, IT-21, IT-25, IT-27） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / データベースアクセス / DB操作（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / ログ出力 / ブラウザ（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / ウェブサービス呼出 / リトライ制御（IT-12, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 通知 / WebSocket（IT-11, IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / ウェブサービス呼出 / リトライ制御（IT-12） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 通知 / WebSocket（IT-11） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 金額・単価 / 戻し処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 履歴 / 登録元追跡（IT-33） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブアプリケーション / 数量・金額 / フロント更新（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 数量減（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 数量増（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 数量・金額 / 欠落登録（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 数量・金額 / 取消（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / フロント / 表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 管理画面-公開側 / 反映（IT-02） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / API-公開側 / キャッシュ（IT-25） | 本機能は対象の外部I/Fを扱わないため |
-| ウェブアプリケーション / 管理画面 / 初期表示（IT-02） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / バッチアプリケーション機能 / 実行結果（IT-12, IT-30） | 本機能はバッチ処理を起動しないため |
-| バッチアプリケーション / ファイル取込 / 実行結果（IT-16） | 本機能はバッチ処理を起動しないため |
-| バッチアプリケーション / ファイル出力 / 実行結果（IT-27） | 本機能はバッチ処理を起動しないため |
 | バッチアプリケーション / バッチ / 正常終了（IT-30） | 本機能はバッチ処理を起動しないため |
 | バッチアプリケーション / バッチ / 異常終了（IT-12） | 本機能はバッチ処理を起動しないため |
 | メッセージング / メッセージング機能 / 実行結果（IT-31） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブサービス / ウェブサービス機能 / 実行結果（IT-09, IT-10, IT-19, IT-32） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / ウェブサービス機能 / 実行結果（IT-09, IT-10, IT-32） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 数量 / 区分整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 数量 / エラー（IT-33） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブサービス / 金額・単価 / 外部取引（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 外部連携 / 自動加算（IT-33） | 本機能は対象の外部I/Fを扱わないため |
-| その他 | 同種の対象外観点 19 件は上記分類と同じ理由で対象外 |
+| ウェブサービス / 外部連携 / 実数更新（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 外部連携 / 売上・返品（IT-33） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / バッチ / 正常終了（IT-09） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / バッチ / 異常終了（IT-10） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / フロント / 外部キャッシュ（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / フロント / 外部取得（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 抽出条件（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 正常応答（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / API / 認証・認可（IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 決済連携 / 外部決済（IT-10） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 決済連携 / 二重実行（IT-08） | 本機能はバッチ処理を起動しないため |
+| ウェブアプリケーション / 決済連携 / 状態表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
+| データベースアクセス / 決済連携 / 金額整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / 外部連携 / Webhook・外部通知（IT-10, IT-32） | 本機能は対象の外部I/Fを扱わないため |
+| ウェブサービス / 外部連携 / 下流転送（IT-10） | 本機能は対象の外部I/Fを扱わないため |
+| データベースアクセス / 在庫引当 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 在庫引当 / 競合（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 注文・決済・在庫 / 原子性（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブアプリケーション / 状態遷移 / 遷移可否（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| ウェブサービス / 買取・査定 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
+| ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
+| データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.332, No.357, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
