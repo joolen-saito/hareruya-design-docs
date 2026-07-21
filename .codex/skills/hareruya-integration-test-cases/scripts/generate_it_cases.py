@@ -248,7 +248,7 @@ def sanitize_sentence(value: str) -> str:
 
 
 # テスト層: 結合層のみを機能×観点のクロス積対象とする。他層は各行き先で担保。
-ALLOWED_LAYER_VALUES = {"結合", "UT", "委譲", "e2e", "非機能", "対象外"}
+ALLOWED_LAYER_VALUES = {"結合", "UT", "委譲", "e2e", "非機能", "対象外", "統合"}
 DEFAULT_XPROD_LAYERS = {"結合"}
 
 
@@ -816,6 +816,7 @@ LAYER_DEST = {
     "e2e": "見た目／ブラウザ挙動→e2e（Playwright）＋手動で担保。",
     "非機能": "方式／性能／基盤（ロック方式・リトライ間隔・MQクラスタ・レート制限等）→非機能・障害試験へ分離。",
     "対象外": "合否オラクルを持たない管理・スコーピング指示→テスト観点ではないため除外。",
+    "統合": "他観点に統合吸収済み（冗長削除）。統合先が同一バグクラスを検出するため重複クロス積を回避。行は監査用に保持しクロス積からのみ除外（codex+fable5承認）。",
 }
 
 
@@ -825,7 +826,7 @@ def layer_exclusion(viewpoints: list[Viewpoint], allowed: set[str]) -> str:
         return "（テスト層による母集合除外なし）"
     lines = ["| テスト層 | 除外観点数 | 行き先 |", "|---|---:|---|"]
     # 既知層を定義順で先に、未知層（typo等）も必ず表示する＝暗黙の切り捨てを作らない。
-    known = ["結合", "UT", "委譲", "e2e", "非機能", "対象外"]
+    known = ["結合", "UT", "委譲", "e2e", "非機能", "対象外", "統合"]
     for layer in known + sorted(set(counts) - set(known)):
         if counts.get(layer):
             dest = LAYER_DEST.get(layer, "⚠ 未知のテスト層。観点マスタの値を確認すること。")
