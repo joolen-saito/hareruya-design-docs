@@ -27,6 +27,8 @@ python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_standard_
 5. Implement `e2e/pages/...page.ts` and `e2e/spec/...spec.ts` following the existing local pattern:
    - Use `@playwright/test` directly.
    - Use `AdminLoginPage` and `ECCUBE_ADMIN_USER` / `ECCUBE_ADMIN_PASS` for admin authenticated cases.
+   - When a matching seed exists in `e2e/seed/manifest.json`, apply it before execution and read its contract from `e2e/config/seed.config.ts` instead of leaving the case as `test.fixme`.
+   - Run seed-backed specs with `eval "$(e2e/seed/lib/seed-env.sh)"` (from the repo root) or equivalent exported env vars so `M01_*`, `ORDER_ID`, and other manifest values are available.
    - Guard credential-dependent cases with `test.skip(!HAS_CREDS, "...")`.
    - Keep unauthenticated and non-destructive cases runnable without credentials.
    - Mark cases that require unavailable seeds or unsafe shared-environment mutation with `test.fixme` and a concrete reason.
@@ -35,6 +37,8 @@ python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_standard_
 
 ```bash
 python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_standard_playwright.py --repo .
+e2e/seed/lib/apply.sh <needed SEED ids>
+eval "$(e2e/seed/lib/seed-env.sh)"
 cd e2e && npx playwright test --list
 ```
 
@@ -45,6 +49,7 @@ cd e2e && npx playwright test --list
 - If a test fails because the implementation violates the design, keep the test expectation and report the implementation mismatch.
 - If the design is ambiguous, add a `test.fixme` with the missing prerequisite instead of encoding an implementation guess.
 - Do not silently drop destructive or seed-dependent cases. Represent them in case Markdown and, when automation is intended, in spec with `test.fixme`.
+- Once the blocking seed is present and non-destructive, convert the matching `test.fixme` to a live test and keep the expected result unchanged.
 
 ## File Mapping
 
@@ -58,3 +63,10 @@ cd e2e && npx playwright test --list
 
 - `scripts/audit_standard_playwright.py`: coverage harness for standard functions.
 - `references/IMPLEMENTATION_RULES.md`: concise implementation checklist and naming rules.
+
+## E2E Case TSV Format
+
+- `integration_test/e2e/*_e2e_cases.md` uses a 14-column TSV in the first ```tsv fence.
+- The first 10 columns match the integration-test case grain: `機能名`, `テストID`, `I/FID`, `テスト観点`, `優先度`, `テスト項目名`, `前提条件`, `入力データ/リクエスト内容`, `操作手順/実行方法`, `期待結果／レスポンス`.
+- The last 4 columns are execution-management fields: `実施者`, `実施日`, `結果`, `失敗理由`.
+- When creating or regenerating E2E case Markdown, include the last 4 columns and leave their data cells empty.

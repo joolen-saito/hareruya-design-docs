@@ -171,3 +171,17 @@
 ## 排他制御・トランザクション
 
 本機能はファイル出力が主であり、楽観ロック・悲観ロックの対象は持たない。
+
+---
+
+## 表示メッセージ
+
+本書本体はpf-eccube3のバッチ実装（`product:batch ExportPopularProductRecommendCsv`）を記載する。ec-cube-enterprise では在庫リコメンドCSV出力は在庫一覧画面のGETリンク（ルート `admin_stock_list_recommend_csv` / `StockListController::downloadRecommendCsv`）として実装され、UIメッセージは以下（文言は実ソース由来）。
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M04-16-MSG-005 | 管理画面上部フラッシュ | 検索条件を指定してからCSV出力してください。 | 在庫リコメンドCSV出力リンク押下時に検索条件がセッションに無い、またはセッションの検索条件が不正なとき。在庫一覧へリダイレクトする（StockListController.php:253,264; messages.ja.yaml:4715） |
+| M04-16-MSG-001 | 入力項目直下 | 上限金額は、下限金額より大きく設定してください | 在庫一覧検索フォーム（`SearchStockListType`）のPOST検索で基準価格の下限が上限より大きいとき。共有フォームのバリデーションで、在庫一覧検索画面で発火しCSV出力リンクでは発火しない（SearchStockListType.php:459-463; messages.ja.yaml:1613） |
+| M04-16-MSG-002 | 入力項目直下 | 上限金額は、下限金額より大きく設定してください | 在庫一覧検索フォームのPOST検索で販売価格の下限が上限より大きいとき（SearchStockListType.php:465-469; messages.ja.yaml:1613） |
+| M04-16-MSG-003 | 入力項目直下 | 上限金額は、下限金額より大きく設定してください | 在庫一覧検索フォームのPOST検索で在庫数の下限が上限より大きいとき（SearchStockListType.php:471-475; messages.ja.yaml:1613） |
+| M04-16-MSG-004 | 要ソース確認 | 終了日時は、開始日時より大きく設定してください | 在庫一覧検索フォームのフォームデータで更新日時の開始が終了より大きいとき（SearchStockListType.php:477-481; messages.ja.yaml:1611）。※表示位置は要ソース確認: stock_list_index.twig に update_date_from/to の描画・form_errors・form_rest が無く、エラー文言が画面に表示される箇所を確認できない |

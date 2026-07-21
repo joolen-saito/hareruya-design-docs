@@ -117,7 +117,8 @@
 
 ### 分岐・例外
 
-- **CSRF不正 / フォーム未submit・無効**: フォームのエラーメッセージを `addError(..., 'admin')` で表示し、`admin_stock_barcode_replacement_list` へリダイレクト（既存テスト `testCsvExportWithInvalidFormRedirectsToIndex`）。
+- **CSRF不正（`isTokenValid()`）**: リクエストの `Constant::TOKEN_NAME` トークンが不正な場合、`AccessDeniedHttpException`（403）を送出する（`AbstractController.php:252-263`）。addError・リダイレクトは行われない。
+- **フォーム未submit・無効（フォーム `_token` 不正含む）**: フォームのエラーメッセージを `addError(..., 'admin')` で表示し、`admin_stock_barcode_replacement_list` へリダイレクト（既存テスト `testCsvExportWithInvalidFormRedirectsToIndex`）。
 - **From > To**: フォーム POST_SUBMIT で `price_change_period_to` にエラー付与 → 上記リダイレクト経路でエラー表示。
 - **必須未入力（店舗/期間）**: `NotBlank` 違反 → 同上。
 - **対象0件**: 条件に該当する規格が無い場合はヘッダ行のみのCSVを出力する。
@@ -136,6 +137,19 @@
 - 出力列・出力対象・商品名トリム規則・出力順の業務要件はExcel設計書（バーコード貼替リストCSV出力シート）を正とする。
 - URLエンドポイント・抽出条件・整形・並び順・ファイル名・文字コードは `BarcodeReplacementListController` / `BarcodeReplacementListCsvExportService` / `BarcodeReplacementListCsvRowFormatter` / `DtbPriceHistoryRepository` を正とする。
 - スマレジバーコード仕様（`22` + 商品コード6桁 + 価格7桁）は資料（バーコード関連資料）を出典とし、実装で確定。
+
+## 表示メッセージ
+
+CSV出力（`csvExport`）でフォームが未submitまたは不正なとき、`$form->getErrors(true)` の各エラーメッセージを `addError(..., 'admin')` で管理画面上部のフラッシュに表示し、`admin_stock_barcode_replacement_list` へリダイレクトする（`BarcodeReplacementListController.php:70-75`）。表示される文言はフォーム制約由来で、以下が該当する。
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M04-30-MSG-001 | 管理画面上部フラッシュ（エラー） | 入力されていません。 | 出力対象店舗・価格変更発生期間（開始日/終了日）が未入力など `NotBlank` 制約に違反したとき（`validators.ja.yaml:17`、制約 `BarcodeReplacementListType.php:54,64,73`） |
+| M04-30-MSG-002 | 管理画面上部フラッシュ（エラー） | 価格変更発生期間の終了日は開始日以降を指定してください。 | 価格変更発生期間の終了日が開始日より前のとき（POST_SUBMIT で `price_change_period_to` にエラー付与、`messages.ja.yaml:4843` / `BarcodeReplacementListType.php:91`） |
+| — | 管理画面上部フラッシュ（エラー） | 日付形式の検証エラー（Symfony `DateType` 既定 `invalid_message`） | 期間フィールドに不正な日付を入力したとき。日本語ロケール文言は本一覧のソース（EE locale）に未定義のため確定不可（要確認） |
+| — | 管理画面上部フラッシュ（エラー） | フォームCSRFトークン不正エラー（Symfony Form 既定 `csrf_message`） | フォームの `_token` が不正なとき（`csrf_protection: true`、`BarcodeReplacementListType.php:101`）。同じ `getErrors(true)`→`addError` 経路で表示される。日本語ロケール文言は本一覧のソース（EE locale）に未定義のため確定不可（要確認） |
+
+> 上記フラッシュは `$error->getMessage()` の逐次表示であり、文言はフォーム制約・ロケール由来のもののみ。固定の成功メッセージは無く、正常時は `StreamedResponse` でCSVをダウンロードする（フラッシュ表示なし）。
 
 ## リニューアル移行時の扱い
 

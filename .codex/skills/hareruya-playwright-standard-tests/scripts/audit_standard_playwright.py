@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,6 +13,24 @@ from pathlib import Path
 
 TODO_RE = re.compile(r"^\|\s*-\s*\[[ xX]\]\s*\|")
 MD_LINK_RE = re.compile(r"\[md\]\(([^)]+)\)")
+TSV_FENCE_RE = re.compile(r"```tsv\n(.*?)\n```", re.S)
+E2E_TSV_HEADER = [
+    "機能名",
+    "テストID",
+    "I/FID",
+    "テスト観点",
+    "優先度",
+    "テスト項目名",
+    "前提条件",
+    "入力データ/リクエスト内容",
+    "操作手順/実行方法",
+    "期待結果／レスポンス",
+    "実施者",
+    "実施日",
+    "結果",
+    "失敗理由",
+]
+SEED_RE = re.compile(r"SEED-[A-Z0-9-]+")
 
 
 @dataclass(frozen=True)
@@ -69,10 +88,54 @@ def find_many(root: Path, pattern: str) -> list[str]:
     return [str(path) for path in sorted(root.glob(pattern))]
 
 
-def status_for(row: FunctionRow, repo: Path) -> dict[str, str]:
+def validate_e2e_cases_tsv(path: str) -> str:
+    if not path:
+        return "missing"
+    text = Path(path).read_text(encoding="utf-8")
+    match = TSV_FENCE_RE.search(text)
+    if not match:
+        return "missing_tsv_fence"
+    try:
+        rows = list(csv.reader(io.StringIO(match.group(1)), delimiter="\t"))
+    except csv.Error as exc:
+        return f"invalid_tsv:{exc}"
+    if not rows:
+        return "empty_tsv"
+    if rows[0] != E2E_TSV_HEADER:
+        return "invalid_header"
+    for line_no, row in enumerate(rows[1:], start=2):
+        if len(row) != len(E2E_TSV_HEADER):
+            return f"invalid_width:{line_no}:{len(row)}"
+    return "ok"
+
+
+def read_seed_ids(repo: Path) -> set[str]:
+    manifest = repo / "e2e" / "seed" / "manifest.json"
+    if not manifest.exists():
+        return set()
+    import json
+
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    return {str(s.get("id", "")) for s in data.get("sets", []) if s.get("id")}
+
+
+def validate_seed_refs(path: str, known_seed_ids: set[str]) -> str:
+    if not path:
+        return "missing"
+    text = Path(path).read_text(encoding="utf-8")
+    refs = sorted(set(SEED_RE.findall(text)))
+    if not refs:
+        return "ok"
+    missing = [ref for ref in refs if ref not in known_seed_ids]
+    return "ok" if not missing else "missing_seed_refs:" + ",".join(missing)
+
+
+def status_for(row: FunctionRow, repo: Path, known_seed_ids: set[str]) -> dict[str, str]:
     n = row.normalized
     e2e_cases = find_one(repo, f"integration_test/e2e/{n}_*_e2e_cases.md")
     it_cases = find_one(repo, f"integration_test/{n}_*_it_cases.md")
+    e2e_tsv = validate_e2e_cases_tsv(e2e_cases)
+    seed_refs = validate_seed_refs(e2e_cases, known_seed_ids)
 
     if n == "m01_01":
         specs = [str(repo / "e2e/spec/admin/login.spec.ts")]
@@ -89,6 +152,8 @@ def status_for(row: FunctionRow, repo: Path) -> dict[str, str]:
         missing.append("it_cases")
     if not e2e_cases:
         missing.append("e2e_cases")
+    elif e2e_tsv != "ok":
+        missing.append("e2e_tsv_columns")
     if not specs or not Path(specs[0]).exists():
         missing.append("spec")
     if not pages or not Path(pages[0]).exists():
@@ -103,6 +168,8 @@ def status_for(row: FunctionRow, repo: Path) -> dict[str, str]:
         "md_path": row.md_path,
         "it_cases": rel(repo, it_cases),
         "e2e_cases": rel(repo, e2e_cases),
+        "e2e_tsv": e2e_tsv,
+        "seed_refs": seed_refs,
         "spec": rel(repo, specs[0]) if specs else "",
         "page": rel(repo, pages[0]) if pages else "",
         "status": "ok" if not missing else "missing:" + ",".join(missing),
@@ -133,6 +200,8 @@ def write_reports(repo: Path, records: list[dict[str, str]]) -> None:
         "status",
         "it_cases",
         "e2e_cases",
+        "e2e_tsv",
+        "seed_refs",
         "spec",
         "page",
         "md_path",
@@ -175,7 +244,8 @@ def main() -> int:
 
     repo = Path(args.repo).resolve()
     rows = read_standard_functions(repo)
-    records = [status_for(row, repo) for row in rows]
+    known_seed_ids = read_seed_ids(repo)
+    records = [status_for(row, repo, known_seed_ids) for row in rows]
     records.sort(key=lambda r: r["normalized"])
     write_reports(repo, records)
 

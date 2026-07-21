@@ -94,7 +94,7 @@ ${layerBlock}
 4. **出力ファイル3点を書く**（既存があれば上書き再生成）:
    - ケース表: ${REPO}/${d.casesPath}
      - 冒頭: タイトル \`# <hy>（表示名） E2Eテストケース\`、元設計HTML/観点表/既存ITへのリンク、オラクル独立性の注記。
-     - **10列固定TSV**（機能名 / テストID=\`E2E-${module.toUpperCase()}-${seq}-NNN\` / I/FID / テスト観点 / 優先度(P1-3) / テスト項目名 / 前提条件 / 入力データ / 操作手順 / 期待結果）。1行1判定。改行や"を含むセルは"で囲む。機能名は全行同一。
+     - **14列固定TSV**（機能名 / テストID=\`E2E-${module.toUpperCase()}-${seq}-NNN\` / I/FID / テスト観点 / 優先度(P1-3) / テスト項目名 / 前提条件 / 入力データ / 操作手順 / 期待結果 / 実施者 / 実施日 / 結果 / 失敗理由）。1行1判定。改行や"を含むセルは"で囲む。機能名は全行同一。末尾4列は実施管理欄として空欄で出力する。
      - 付帯表をm01_02と同一構成: 付帯表1(自動化区分・対象セレクタfile:line・仕様根拠・元IT) / 付帯表2(分類サマリ IT-ID別 自動化/手動/対象外・未分類0) / **付帯表2b(既存IT cases 全行の行単位分類・対応E2EまたはJ理由・集計が付帯表2と一致)** / 付帯表3(シードデータ要件) / 付帯表4(不具合候補・要確認) / 付帯表5(設計書網羅マトリクス 節→テストID・未カバーは理由付き)。
    - Page Object: ${REPO}/${d.pagePath} （独立クラス形。\`import {Locator,Page,expect} from "@playwright/test"\`、\`import {ECCUBE_ADMIN_ROUTE} from "../../../config/default.config"\`。Locatorはコンストラクタ定義＋由来Twig file:lineコメント。expectを使うならimport必須。class名は ${d.id} のadmin以降をPascalCase ＋ Page）。
    - spec: ${REPO}/${d.specPath} （\`import {test,expect,Page} from "@playwright/test"\`、\`import {AdminLoginPage} from "../../../pages/admin/login.page"\`、生成Page Objectをimport。\`import {ECCUBE_ADMIN_ROUTE} from "../../../config/default.config"\`。env-gated test.skip(!HAS_CREDS)（ECCUBE_ADMIN_USER/PASS）。冒頭コメントに「未実行雛形・ケース表に対応・期待結果は仕様由来」。**spec に残すのは E2E自動化(実装済み)と自動化予定だが未実装/要実機の test.fixme(理由付き)のみ。手動/対象外はケース表で全量管理しspecに大量fixmeを残さない**。describe名は和名、tagは ["@admin"] 等）。${twoLayer ? `
@@ -102,7 +102,7 @@ ${layerBlock}
    - **【両レイヤ】ペイロード/ヘルパ: ${REPO}/e2e/pages/${kind}/${module}/${d.id}.${kind}.ts**（Webhookペイロード等は設計書のリクエスト仕様由来の最小構成。エンドポイントパス/コマンド名を file:line コメントで根拠付け）。
    - **【両レイヤ】UIレイヤ**: 結果が管理画面に現れる分は ${REPO}/${d.pagePath}・${REPO}/${d.specPath}（admin spec）でUIケースとして実装。` : ''}
    - 相対import: spec/<area>/${module}/ から3階層上が e2e ルート＝ \`../../../\`。
-5. CHECKLIST.md を自己照合（オラクル独立性 / 設計書網羅マトリクス未カバー0 / 観点全量分類 未分類0 / セレクタ根拠 / 正常×異常の対 / TSV10列厳守 / 相対パス）。
+5. CHECKLIST.md を自己照合（オラクル独立性 / 設計書網羅マトリクス未カバー0 / 観点全量分類 未分類0 / セレクタ根拠 / 正常×異常の対 / TSV14列厳守（末尾4列は実施者・実施日・結果・失敗理由で空欄） / 相対パス）。
 6. \`cd ${REPO}/e2e && npx playwright test --list\`（${twoLayer ? `spec/${kind}/${module}/${d.id}.${kind}.spec.ts と spec/admin 側UI spec の両方` : `spec/admin/${module}/${d.id}.spec.ts`}）でコンパイル確認（壊れていたら直す）。
 
 返り値はStructuredOutputで {id, screenExists, casesPath, pagePath, specPath, automated(自動化行数=UI+API/統合), manual, outOfScope, notes}。${twoLayer ? 'notesに両レイヤの内訳(UI/API・統合の自動化数)と生成した両レイヤspecパスを記す。' : ''}`
@@ -134,7 +134,7 @@ cd ${REPO} && timeout 560 codex exec --sandbox read-only - <<'PROMPT'
 あなたはE2Eテスト設計のレビュアです。読み取り専用で機能 ${d.id}（種別 ${kind}）の成果物をレビューし、深刻度(高/中/低)付きの指摘を簡潔に列挙してください。
 対象: integration_test/e2e/${d.id}_e2e_cases.md / e2e/pages/admin/${module}/${d.id}.page.ts / e2e/spec/admin/${module}/${d.id}.spec.ts${layerTargets}
 正典: 設計書 ${d.designHtml}（正本 ${d.designMd}）/ 観点表 integration_test/integration-test-viewpoints.md / 既存IT ${d.itCases} / 実装 ${EE}/src/Eccube。
-重点: (1)設計書の各節(入口/処理フロー/判定順序/表示メッセージ/画面遷移/権限/バリデーション/DB操作/Cookie等)が抜け漏れなくE2E(自動化(UI)/自動化(API/統合)/手動/対象外+理由)へ写像されているか・網羅マトリクス未カバー0は妥当か。(2)観点表母集合の全行が分類され未分類0で監査可能か。(3)オラクル独立性(期待結果が設計書/観点表由来か・Form制約やCookie名・レスポンス形等の実装由来オラクル混入が無いか)。(4)セレクタ/APIパス/コマンド根拠(file:line)が正しく創作が無いか。(5)正常系と異常系の対が揃うか。(6)Playwright実装の正しさ(import相対パス・skip/fixme方針・URLアサーション・request使用)。(7)不具合候補表の妥当性・テストを実装に寄せていないか。${layerPoint}
+重点: (1)設計書の各節(入口/処理フロー/判定順序/表示メッセージ/画面遷移/権限/バリデーション/DB操作/Cookie等)が抜け漏れなくE2E(自動化(UI)/自動化(API/統合)/手動/対象外+理由)へ写像されているか・網羅マトリクス未カバー0は妥当か。(2)観点表母集合の全行が分類され未分類0で監査可能か。(3)オラクル独立性(期待結果が設計書/観点表由来か・Form制約やCookie名・レスポンス形等の実装由来オラクル混入が無いか)。(4)セレクタ/APIパス/コマンド根拠(file:line)が正しく創作が無いか。(5)正常系と異常系の対が揃うか。(6)Playwright実装の正しさ(import相対パス・skip/fixme方針・URLアサーション・request使用)。(7)不具合候補表の妥当性・テストを実装に寄せていないか。(8)ケース表TSVが14列固定で、末尾4列が実施者・実施日・結果・失敗理由かつ空欄か。${layerPoint}
 抜け漏れ・誤認識・オラクル混入・セレクタ/パス創作を具体的に指摘してください。
 PROMPT
 \`\`\`

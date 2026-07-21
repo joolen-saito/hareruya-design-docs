@@ -68,7 +68,7 @@
 ### CSV を取込む（POST `admin_product_status_import`）
 
 1. ログイン利用者アカウントが履歴の作業者 ID になる前提で処理する。
-2. 送信を `CsvImportType` にバインドする。妥当でない場合は各フォームエラーを管理者向けフラッシュに積み、`GET m03-38_admin_product_product_status_csv_upload` へリダイレクトする。
+2. 送信を `CsvImportType` にバインドする。妥当でない場合はフォーム直下のエラーを管理者向けフラッシュに積み、`GET m03-38_admin_product_product_status_csv_upload` へリダイレクトする（要確認：`$form->getErrors()` は浅い走査のため `import_file` 子要素の NotBlank/File 制約エラーは含まれず、制約違反のみの場合はフラッシュ無しでリダイレクトされる可能性がある）。
 3. `import_file` が null の場合、キー `admin.common.csv_invalid_format` をフラッシュし、同様にリダイレクトする。
 4. アップロードファイル全文について、ダブルクォート内の改行を除いたあとの改行数を数え、その値が `ADMIN_CSV_IMPORT_MAX_ROWS`（5010）以上なら `admin.csv.error.upload.maxrecord`（パラメータに当該上限）をフラッシュしリダイレクトする。この上限はインポータ内部での打ち切りではなく送信前チェックのみである。
 5. 情報ログに「商品公開CSV登録開始」を出力する。
@@ -222,6 +222,18 @@
 | フォーム検証エラー・ファイル null・行数超過 | HTTP フラッシュのみ。インポータのトランザクション開始前またはインポータの早期終了のみ。 |
 | ヘッダ不備／データ無し／行検証／商品不存在 | インポータがエラー結果を返し、コントローラがフラッシュに展開する。変更はコミットされない構成を取る共通実装側の判定に従う。 |
 | インポータ内部の一般例外 | ロールバック試行後に例外を伝播させる。このコントローラは try-catch で握りつぶさない経路にある。 |
+
+---
+
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M03-38-MSG-001 | 管理画面上部フラッシュ | 要ソース確認 | POST後にフォームが無効で、親フォームの `getErrors()`（deep=false）から取得できるエラー（CSRFトークン不正等の親直下エラー）があるとき。文言は可変（`$error->getMessage()`）で単一確定不可＝`import_file` 子フォームのNotBlank/File制約違反は浅い `getErrors(deep=false)` には現れない。CSVアップロード画面へリダイレクト |
+| M03-38-MSG-002 | 管理画面上部フラッシュ | CSVのフォーマットが一致しません | フォーム有効後に `import_file` が null のとき。CSVアップロード画面へリダイレクト |
+| M03-38-MSG-003 | 管理画面上部フラッシュ | %maxRecord% 行を超えるCSVファイルは登録できません。 | `countCsvRows(import_file)` が `ADMIN_CSV_IMPORT_MAX_ROWS` 以上のとき。`%maxRecord%` は原文プレースホルダを保持。CSVアップロード画面へリダイレクト |
+| M03-38-MSG-004 | 管理画面上部フラッシュ | 要ソース確認 | `CsvImporter::import()` の結果で `hasError()` が true のとき。文言は可変（`$error['message']`／`MessageStore` 結果由来でCSV内容・行番号・列名で生成）で単一確定不可。CSVアップロード画面へリダイレクト |
+| M03-38-MSG-005 | 管理画面上部フラッシュ | 登録が完了しました。 | `CsvImporter::import()` の結果で `hasError()` が false のとき。CSV取込履歴を登録後、CSVアップロード画面へリダイレクト |
 
 ---
 

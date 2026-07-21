@@ -282,6 +282,30 @@ Symfony フォーム制約に加え、POST_SUBMIT で以下を行う。
 
 ---
 
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M05-11-MSG-001 | 画面上部フラッシュ（警告） | PurchaseFlow検証結果由来の可変文言（ProcessResult.message） | 受注編集フォーム送信で、PurchaseFlow検証結果にwarningがあるとき（EditController.php:534） |
+| M05-11-MSG-002 | 画面上部フラッシュ（エラー） | PurchaseFlow検証結果由来の可変文言（ProcessResult.message） | 受注編集フォーム送信で、PurchaseFlow検証結果にerrorがあるとき（EditController.php:541） |
+| M05-11-MSG-003 | 画面上部フラッシュ（エラー） | 例外由来の可変文言（PurchaseException::getMessage） | 登録処理のprepare/commit中にPurchaseExceptionが発生したとき（EditController.php:692） |
+| M05-11-MSG-004 | 画面上部フラッシュ（エラー） | 例外由来の可変文言（ShoppingException::getMessage） | 登録処理のprepare/commit中にShoppingExceptionが発生したとき（EditController.php:696） |
+| M05-11-MSG-005 | 画面上部フラッシュ（エラー） | %from% から %to% にはステータス変更できません | 登録処理中の受注ステータス遷移でInvalidArgumentExceptionが発生したとき（EditController.php:703 / messages.ja.yaml:2609） |
+| M05-11-MSG-006 | 画面上部フラッシュ（成功） | 全キャンセルが完了しました。 | 登録成功後、新ステータスがキャンセルのとき（EditController.php:732 / messages.ja.yaml:2612） |
+| M05-11-MSG-007 | 画面上部フラッシュ（成功） | 一部キャンセルが完了しました | 登録成功後、明細数量が減少した一部キャンセルのとき（EditController.php:734 / messages.ja.yaml:2613） |
+| M05-11-MSG-008 | 画面上部フラッシュ（成功） | 保存しました | 登録成功後、全／一部キャンセルのいずれでもないとき（EditController.php:736 / messages.ja.yaml:2614） |
+| M05-11-MSG-009 | 画面上部フラッシュ（成功） | 全キャンセルが完了しました。 | ステータス変更（status_change）成功後の新ステータスがキャンセルのとき（EditController.php:833 / messages.ja.yaml:2612） |
+| M05-11-MSG-010 | 画面上部フラッシュ（成功） | 保存しました | ステータス変更（status_change）成功後の新ステータスがキャンセル以外のとき（EditController.php:835 / messages.ja.yaml:2614） |
+| M05-11-MSG-011 | 画面上部フラッシュ（成功） | 保存しました | 対象日付をclear_dateとして正常にクリアしたとき（EditController.php:932 / messages.ja.yaml:2614） |
+| M05-11-MSG-012 | 画面上部フラッシュ（警告） | PurchaseFlow検証結果由来の可変文言（ProcessResult.message） | 出荷編集フォーム送信で、PurchaseFlow検証結果にwarningがあるとき（ShippingController.php:167） |
+| M05-11-MSG-013 | 画面上部フラッシュ（エラー） | PurchaseFlow検証結果由来の可変文言（ProcessResult.message） | 出荷編集フォーム送信で、PurchaseFlow検証結果にerrorがあるとき（ShippingController.php:173） |
+| M05-11-MSG-014 | 画面上部フラッシュ（インフォ） | 出荷に関わる情報が変更されました。送料の変更が必要な場合は、受注管理より手動で変更してください。 | 出荷登録・保存が正常終了したとき（ShippingController.php:195 / messages.ja.yaml:2465） |
+| M05-11-MSG-015 | 画面上部フラッシュ（成功） | 保存しました | 出荷登録・保存が正常終了したとき（ShippingController.php:196 / messages.ja.yaml:1591） |
+| M05-11-MSG-016 | 画面上部フラッシュ（エラー） | 要確認（キー admin.flash.register_failed はja/adminロケール未定義） | 出荷登録処理でExceptionが発生したとき（ShippingController.php:202） |
+| M05-11-MSG-017 | 画面上部フラッシュ（エラー） | 保存に失敗しました | 出荷編集の登録でPurchaseFlow検証結果にerrorがあるとき（ShippingController.php:205 / messages.ja.yaml:1592） |
+
+---
+
 ## 試行制限
 
 本機能ではフィールド単位の試行制限は設けない。管理ログインのスロットリングは管理画面ファイアウォール共通。

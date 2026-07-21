@@ -228,6 +228,41 @@
 
 成功時の主なメッセージキー: `admin.stock.split.register_complete`、`admin.stock.split.apply_approval_success`、`admin.stock.split.approval_approve_complete`、`admin.stock.move.reject_complete`、`admin.stock.join.register_complete`、`admin.stock.join.moved_to_shortage_entry`、`admin.stock.join.apply_approval_success`、`admin.stock.join.approval_approve_complete`、共通 `admin.common.save_complete` / `admin.common.delete_complete`。
 
+### 表示メッセージ（メッセージ一覧・在庫分割 `StockSplitController`）
+
+`StockSplitController`（分割系）のフラッシュメッセージをメッセージIDで一覧化する。文言は `messages.ja.yaml` 由来のロケール解決値、可変（例外・フォーム検証由来）行はその旨を明記。結合系 `StockJoinController` は別途採番。
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 種別 |
+|--------------|----------|--------------|----------|------|
+| M04-13-MSG-001 | 管理画面上部フラッシュ | 保存に失敗しました | 新規登録画面の保存ボタン／CSRFトークン不正 | エラー |
+| M04-13-MSG-002 | 管理画面上部フラッシュ | この店舗の在庫を編集する権限がありません。 | 新規登録画面の保存ボタン／ログインメンバーが対象店舗を編集不可 | エラー |
+| M04-13-MSG-003 | 管理画面上部フラッシュ | 分割数は1以上を入力してください。 | 新規登録画面の保存ボタン／split_quantityが1未満 | エラー |
+| M04-13-MSG-004 | 管理画面上部フラッシュ | 要ソース確認 | 新規登録画面の保存ボタン／StockSplitRegisterActionのLogicException（StockSplitController.php:179-184 は `$e->getMessage()` を表示。固定の表示文言に確定不可） | エラー |
+| M04-13-MSG-005 | 管理画面上部フラッシュ | 要ソース確認 | 新規登録画面の保存ボタン／登録ActionがerrorMessageを返却。分岐により単一キー由来（候補: `分割数は1以上を入力してください。` messages.ja.yaml:4992 ／ `分割数が在庫数を超えています。` messages.ja.yaml:4994）。単一の逐語連結文言は実在しない | エラー |
+| M04-13-MSG-006 | 管理画面上部フラッシュ | 在庫分割を登録しました。 | 新規登録画面の保存ボタン／在庫分割登録成功 | インフォ(成功) |
+| M04-13-MSG-007 | 管理画面上部フラッシュ | 要ソース確認 | 編集画面フォーム送信／フォームが不正（StockSplitController.php:222-227 は `$error->getMessage()` を表示。StockSplitJoinType.php:74-76 の制約由来で固定の単一文言に確定不可） | エラー |
+| M04-13-MSG-008 | 管理画面上部フラッシュ | 保存しました | 編集画面フォーム送信／フォーム送信が有効 | インフォ(成功) |
+| M04-13-MSG-009 | 管理画面上部フラッシュ | 保存に失敗しました | 承認申請ボタン／CSRFトークン不正 | エラー |
+| M04-13-MSG-010 | 管理画面上部フラッシュ | この店舗の在庫を編集する権限がありません。 | 承認申請ボタン／ログインメンバーが対象店舗を編集不可 | エラー |
+| M04-13-MSG-011 | 管理画面上部フラッシュ | 承認通知先のメンバーを1人以上選択してください。 | 承認申請ボタン／approval_notification_target_membersが空 | エラー |
+| M04-13-MSG-012 | 管理画面上部フラッシュ | 要ソース確認 | 承認申請ボタン／承認申請ActionがerrorMessageを返却。分岐により単一キー由来（候補: messages.ja.yaml:4992 `分割数は1以上を入力してください。`／4996／4997／5014 `却下済みのため、再申請はできません。新規分割から操作してください。`。`admin.stock.split_join.not_found` はlocale未定義）。単一の逐語連結文言は実在しない | エラー |
+| M04-13-MSG-013 | 管理画面上部フラッシュ | 承認申請しました。 | 承認申請ボタン／承認申請成功 | インフォ(成功) |
+| M04-13-MSG-014 | 管理画面上部フラッシュ | セッションがタイムアウトしました。もう一度やり直してください。 | 承認画面の承認／却下ボタン／CSRFトークン不正 | エラー |
+| M04-13-MSG-015 | 管理画面上部フラッシュ | 承認権限がありません。 | 承認画面の承認／却下ボタン／canApprove判定がfalse | エラー |
+| M04-13-MSG-016 | 管理画面上部フラッシュ | 保存に失敗しました | 分割先追加操作／CSRFトークン不正 | エラー |
+| M04-13-MSG-017 | 管理画面上部フラッシュ | 要ソース確認 | 分割先追加操作／対象分割データがない・対象外ステータス（StockSplitController.php:407-417 が `admin.stock.split_join.not_found` を指定するが messages.ja.yaml に当該キー未定義） | エラー |
+| M04-13-MSG-018 | 管理画面上部フラッシュ | 要ソース確認 | 分割先追加操作／destination_product_stock_idが0以下（StockSplitController.php:413-417 が `admin.stock.split_join.not_found` を指定するが messages.ja.yaml に当該キー未定義） | エラー |
+| M04-13-MSG-019 | 管理画面上部フラッシュ | 要ソース確認 | 分割先追加操作／分割元と同じ在庫を分割先に指定（StockSplitController.php:420-424 が `admin.stock.split_join.destination_already_exists` を指定するが messages.ja.yaml に当該キー未定義） | エラー |
+| M04-13-MSG-020 | 管理画面上部フラッシュ | 要ソース確認 | 分割先追加操作／同じ分割先在庫が既にSessionに存在（StockSplitController.php:427-435 が `admin.stock.split_join.destination_already_exists` を指定するが messages.ja.yaml に当該キー未定義） | エラー |
+| M04-13-MSG-021 | 管理画面上部フラッシュ | セッションがタイムアウトしました。もう一度やり直してください。 | 分割先削除ボタン／CSRFトークン不正 | エラー |
+| M04-13-MSG-022 | 管理画面上部フラッシュ | 保存に失敗しました | 分割先削除ボタン／分割ステータスがNEW以外 | エラー |
+| M04-13-MSG-023 | 管理画面上部フラッシュ | 削除しました | 分割先削除ボタン／CSRFが有効かつ分割ステータスがNEW | インフォ(成功) |
+| M04-13-MSG-024 | 管理画面上部フラッシュ | セッションがタイムアウトしました。もう一度やり直してください。 | 登録メモ保存フォーム／CSRFトークン不正 | エラー |
+| M04-13-MSG-025 | 管理画面上部フラッシュ | 保存に失敗しました | 登録メモ保存フォーム／StockSplitUpdateMemoActionがLogicException | エラー |
+| M04-13-MSG-026 | 管理画面上部フラッシュ | 保存しました | 登録メモ保存フォーム／登録メモ保存成功 | インフォ(成功) |
+| M04-13-MSG-027 | 管理画面上部フラッシュ | 要ソース確認 | 承認画面の承認／却下ボタン／承認処理結果にerrorMessageが存在。分岐により単一キー由来（候補: messages.ja.yaml:1592 `保存に失敗しました`／4692 `却下する場合は却下理由を入力してください。`／4989 `分割の承認待ちではないか、または既に処理済みです。`。`admin.stock.split.approval_invalid_status`・`admin.stock.split_join.status_not_found` はlocale未定義、例外由来値も含む）。単一の逐語連結文言は実在しない | エラー |
+| M04-13-MSG-028 | 管理画面上部フラッシュ | 要ソース確認 | 承認画面の承認／却下ボタン／承認処理結果にsuccessMessageが存在。分岐により単一キー由来（候補: messages.ja.yaml:4693 `却下しました。`／4990 `分割の承認が完了しました。`）。単一の逐語連結文言は実在しない | インフォ(成功) |
+
 ### 状態・データ更新（更新系）
 
 本機能は**更新系**であり、以下の実Entity／テーブルを更新する。

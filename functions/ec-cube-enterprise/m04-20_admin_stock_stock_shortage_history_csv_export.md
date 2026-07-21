@@ -22,7 +22,7 @@
 
 ### 機能の目的と役割
 
-欠品履歴検索一覧（M04-19）で検索・表示した欠品履歴を、画面でチェック選択した行を対象にCSVとして出力する管理画面機能。欠品（在庫変動理由区分が廃棄系＝廃棄／欠品減算（受注）／欠品減算（移動））に該当する在庫変動履歴（`dtb_stock_history`）を、本店・支店・スマレジ（実店頭）在庫を横断して1ファイルに出力する。
+欠品履歴検索一覧（M04-19）で検索・表示した欠品履歴（検索結果全件。一覧フォームが `ids[]` を自動送信し、行のチェック選択UIは無い）を対象にCSVとして出力する管理画面機能。欠品（在庫変動理由区分が廃棄系＝廃棄／欠品減算（受注）／欠品減算（移動））に該当する在庫変動履歴（`dtb_stock_history`）を、本店・支店・スマレジ（実店頭）在庫を横断して1ファイルに出力する。
 
 本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。出力対象・出力列の業務要件は基本設計仕様書（0202_基本設計仕様書(在庫管理機能) M04-20シート）を正とし、URLエンドポイント・出力列の永続化元・整形・文字コード・ファイル名はリニューアル先 ec-cube-enterprise 実装を正とする。
 
@@ -48,15 +48,15 @@
 
 | 入口 | URLエンドポイント（ルート名） | HTTPメソッド | 期待されるふるまい |
 |------|------------------------------|--------------|--------------------|
-| 欠品履歴CSV出力 | `/%admin%/product/stock/history/disposal/csv_export`（`admin_stock_history_disposal_csv_export`） | POST | リクエストの `ids[]`（選択された在庫履歴ID配列）を受け取り、該当する欠品履歴のCSVを `StreamedResponse` で返す。対象が無い場合はエラー表示して一覧へリダイレクト。 |
+| 欠品履歴CSV出力 | `/%admin%/product/stock/history/disposal/csv_export`（`admin_stock_history_disposal_csv_export`） | POST | リクエストの `ids[]`（在庫履歴ID配列。一覧フォームが検索結果全件分を hidden で自動送信する）を受け取り、該当する欠品履歴のCSVを `StreamedResponse` で返す。対象が無い場合は一覧へリダイレクト。 |
 
-（参考・本書対象外）在庫履歴CSV出力は `/%admin%/product/stock/history/csv_export`（`admin_stock_history_csv_export`、POST）。欠品履歴一覧の表示は `/%admin%/product/stock/history/new`（`admin_stock_history_new`）。
+（参考・本書対象外）在庫履歴CSV出力は `/%admin%/product/stock/history/csv_export`（`admin_stock_history_csv_export`、POST）。欠品履歴一覧の表示は `/%admin%/product/stock/history`（`admin_stock_history`。ページ送りは `admin_stock_history_page` / `admin_stock_history_page_count`）。
 
 `%admin%` は管理画面ルートプレフィックス（`eccube_admin_route`）。すべて管理画面ログインを要する。
 
 ### 起動方法（入力）
 
-- 入口は POST のみ。出力対象は検索条件ではなく、欠品履歴一覧画面でチェック選択された行の**在庫履歴ID配列** `ids[]`（`dtb_stock_history.id`）。
+- 入口は POST のみ。出力対象は**在庫履歴ID配列** `ids[]`（`dtb_stock_history.id`）。一覧画面のCSV出力フォームには検索結果全件分の `ids[]` が hidden で自動設定されて送信される（行のチェック選択UIは無い。`history.twig:595-608`、`PaginationAll`）。
 - コントローラは `ids` を `intval` 変換し、0以下を除外して有効なIDのみ採用する（`array_filter(...) fn($id) => $id > 0`）。有効IDが0件の場合はエラー応答。
 - 一覧側で「欠品検索」状態のときに表示・選択された行が対象となる前提（廃棄系の在庫変動区分に限定された一覧から選択される）。
 
@@ -111,7 +111,7 @@
 
 ### プロセスフロー
 
-1. 欠品履歴一覧（`admin_stock_history_new`、欠品検索状態）で対象行をチェックし、CSV出力を実行（POST）。`ids[]` を送信。
+1. 欠品履歴一覧（`admin_stock_history`、欠品検索状態）でCSVダウンロードを実行（POST）。フォームに hidden で自動設定された検索結果全件分の `ids[]` を送信（行のチェック選択UIは無い）。
 2. コントローラ `csvStockHistoryDispozalExport()` が `ids` を整数化し、0以下を除外。有効IDが0件なら `responseNoStockHistoryIdError()` でエラーリダイレクト（後述）。
 3. `set_time_limit(0)`・SQLロガー無効化のうえ、`StockHistoryDisposalCsv` をヘッダ定義（`getStockHistoryDisposalCsvHeader()` / 必須ヘッダ `getRequiredStockHistoryCsvHeader()`）とともに生成。
 4. `exportCsv($ids)` を実行。`getStockHistories($ids)` で対象在庫履歴を取得（前述のソート順）。
@@ -122,8 +122,8 @@
 
 | 条件 | 挙動 |
 |------|------|
-| `ids` パラメータ無し / 空配列 / 0以下のみ（有効ID0件） | `responseNoStockHistoryIdError()`：`addError('eccube.admin.error', trans('admin.stock_history.not_select'))` を表示し、`admin_stock_history_page`（セッション `eccube.admin.stock_history.search.page_no` の現在ページ、既定1）へリダイレクト。 |
-| 指定IDに該当する在庫履歴が存在しない / 変換結果が空 | `StockHistoryDisposalCsv::exportCsv()` が `RuntimeException` を送出。コントローラが `addError($e->getMessage(), 'admin')` でメッセージ表示し、リファラがあればリファラへ、無ければ `admin_stock_history_new` へリダイレクト。 |
+| `ids` パラメータ無し / 空配列 / 0以下のみ（有効ID0件） | `responseNoStockHistoryIdError()`：`addError('eccube.admin.error', trans('admin.stock_history.not_select'))` を実行し、`admin_stock_history_page`（セッション `eccube.admin.stock_history.search.page_no` の現在ページ、既定1）へリダイレクト。※第2引数=namespace 誤用によりフラッシュは `eccube.admin.stock_history.not_select.error` バッグへ格納され、`alert.twig` が購読するバッグではないため画面には表示されないと推定（要実機確認。M04-20-MSG-005 参照）。 |
+| 指定IDに該当する在庫履歴が存在しない / 変換結果が空 | `StockHistoryDisposalCsv::exportCsv()` が `RuntimeException` を送出。コントローラが `addError($e->getMessage(), 'admin')` でメッセージ表示し、リファラがあればリファラへ、無ければ `admin_stock_history` へリダイレクト。 |
 | 正常 | `StreamedResponse`（HTTP 200、`text/csv`、`attachment`）を返す。 |
 
 既存テスト `StockHistoryDisposalCsvControllerTest` で、ID無し・idsパラメータ無し・無効ID（0/-1/空）・存在しないID（999999）はいずれもリダイレクト、正常系（廃棄区分の履歴を `disposal_search=1` で検索して得たIDを送信）は HTTP 200・`text/csv`・`attachment` を返すことを確認済み。
@@ -142,7 +142,23 @@
 
 - 出力対象・出力列の業務要件は、参照元Excel設計書（欠品履歴CSV出力 M04-20、欠品履歴検索一覧 M04-19）を正とする。
 - 出力列の永続化元・整形・文字コード・ファイル名・ソート順は `../ec-cube-enterprise` の `StockHistoryController` / `StockHistoryDisposalCsv` / `AbstractCsvService` / `CsvExportService` / `DtbStockHistoryRepository` / Entity 実装を正とする。
-- 出力対象IDの供給元（一覧の選択行）は欠品履歴検索一覧（M04-19）。一覧の「欠品検索」状態が前提となる。
+- 出力対象IDの供給元（一覧フォームが自動送信する検索結果全件分の `ids[]`）は欠品履歴検索一覧（M04-19）。一覧の「欠品検索」状態が前提となる。
+
+## 表示メッセージ
+
+`StockHistoryController`（欠品履歴一覧＝欠品検索状態と同一画面）で発生するフラッシュメッセージ。文言はすべて ec-cube-enterprise 実ソース由来（`messages.ja.yaml` のロケール解決値、または例外文言）。
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M04-20-MSG-004 | 管理画面上部フラッシュ | 要ソース確認（分岐2文言・実行時はいずれか一方: 「存在しない在庫履歴IDが含まれています。」/「在庫履歴データが存在しないためエクスポートできません。」） | 欠品履歴CSV出力（`admin_stock_history_disposal_csv_export`）で `StockHistoryDisposalCsv::exportCsv()` が `RuntimeException` を送出したとき。二択のうち発生した文言のみ表示。Referer があればそこへ、無ければ `admin_stock_history` へリダイレクト。（`StockHistoryController.php:365` / `StockHistoryDisposalCsv.php:56,61` / `messages.ja.yaml:5227,5228`） |
+| M04-20-MSG-005 | 要ソース確認（実機で表示されない可能性大） | eccube.admin.error | 送信 `ids[]` を intval・正数抽出した結果が空のとき（`responseNoStockHistoryIdError()`。一覧フォームは検索結果全件分の hidden `ids[]` を自動送信するため通常UI操作では到達しない）。`addError('eccube.admin.error', trans('admin.stock_history.not_select'))` は第2引数=namespace の誤用で、フラッシュが `eccube.admin.stock_history.not_select.error` バッグへ格納される。`alert.twig` は `eccube.admin.{info,success,danger,error,warning}` のみ購読のため、この文言は画面に表示されないと推定（要実機確認）。`admin_stock_history_page`（セッション `page_no`、既定1）へリダイレクト。（`StockHistoryController.php:461` / `AbstractController.php:117-120` / `alert.twig:11-59`） |
+| M04-20-MSG-003 | 管理画面上部フラッシュ | 要ソース確認（分岐2文言・実行時はいずれか一方: 「存在しない在庫履歴IDが含まれています。」/「在庫履歴データが存在しないためエクスポートできません。」） | 在庫履歴CSV出力（`admin_stock_history_csv_export`）で `StockHistoryCsv::exportCsv()` が `RuntimeException` を送出したとき。※本ルートは在庫履歴CSV（M04-19系）由来で、m04-20（欠品履歴CSV）とは別ルート。（`StockHistoryController.php:316` / `StockHistoryCsv.php:56,61` / `messages.ja.yaml:5227,5228`） |
+| M04-20-MSG-001 | 管理画面上部フラッシュ | 保存に失敗しました | 欠品理由編集の送信で `updateDisposalReason` が `Exception` を送出したとき。※欠品理由更新は欠品履歴一覧（M04-19、`admin_stock_history_update`）側の機能。`admin_stock_history` へリダイレクト。（`StockHistoryController.php:267` / `messages.ja.yaml:1592`） |
+| M04-20-MSG-002 | 管理画面上部フラッシュ | 保存しました | 欠品理由編集で欠品理由を正常に更新したとき。※欠品理由更新は欠品履歴一覧（M04-19）側の機能。`admin_stock_history` へリダイレクト。（`StockHistoryController.php:272` / `messages.ja.yaml:1591`） |
+| M04-20-MSG-006 | 一覧カード上部（`#stockHistoryList .card-body` 先頭のインページアラート） | 保存に失敗しました | 在庫変動理由セルの編集トグル（fa-pen、在庫検索状態のみ）からの非同期更新（`admin_stock_approval_history_reason_update`）が `success=false` 応答または通信エラーのとき。画面遷移なしで編集内容を元の表示へ復元し、`response.message || saveErrorMsg` を alert-danger で表示（当該APIのエラー応答 `message` も `admin.common.save_error` で同文言）。※在庫変動理由編集は M04-19側。（`history.twig:46-54,88,143-153` / `StockApprovalController.php:148-220` / `messages.ja.yaml:1592`） |
+| M04-20-MSG-007 | 当該入力欄直下（インラインフォームエラー） | 不正な日付です。 | 検索フォームの日付項目（登録日/更新日/承認日の from/to）が 1900-01-01 より前のとき（`Assert\Range` の `minMessage=form_error.out_of_range`）。検索は実行されず、詳細検索枠を開いた一覧画面を再描画（`has_errors=true`）。※検索フォームは M04-18/19側。（`StockHistoryType.php:293,311,346,364,445,463` / `validators.ja.yaml:60` / `StockHistoryController.php:133-147`） |
+
+> 注: `M04-20-MSG-001/002` は欠品理由編集（`admin_stock_history_update`、M04-19側）、`M04-20-MSG-003` は在庫履歴CSV出力（`admin_stock_history_csv_export`、M04-19系）、`M04-20-MSG-006` は在庫変動理由の非同期編集（`admin_stock_approval_history_reason_update`、M04-19側）、`M04-20-MSG-007` は検索フォーム（M04-18/19側）のメッセージで、同一コントローラ／同一画面（`history.twig`）に属するが本CSV出力機能（M04-20）本体のトリガーではない。`M04-20-MSG-006/007` は fable5 独立レビューでの抜け漏れ補完（master 未反映）。機能再割当は master 一括反映時に要検証。
 
 ## リニューアル移行時の扱い
 

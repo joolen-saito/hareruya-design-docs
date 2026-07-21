@@ -166,6 +166,17 @@
 
 合計の英語は`Shopping/index.en.twig`の表示文言を正とする。エラー文言の日本語はコアの`message.ja.yml`を正とし、英語ロケール資源が無いキーは`-`とする。
 
+### メッセージ一覧（フラッシュ・自動採番）
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| F04-02-MSG-001 | 画面上部フラッシュ | 要ソース確認 | 注文手続き画面の送信後、`PaymentMethod::verify()` が失敗結果を返したとき。注文手続き画面（shopping）へ戻る。文言は `PaymentResult::getErrors()` の各要素（決済モジュール由来の可変文字列）で固定リテラルは実ソースに存在しない |
+| F04-02-MSG-002 | 画面上部フラッシュ | 要ソース確認 | 注文確定処理（`checkout()`。主経路は注文手続き画面からの `POST /shopping/confirm` 成功時に同一リクエストで実行。確認画面 `confirm.twig` からの `POST /shopping/checkout` 直接送信の経路もある）中に `ShoppingException` が発生したとき。購入エラー画面へ遷移する。文言は `ShoppingException::getMessage()`（例外由来の可変文字列）で固定リテラルは実ソースに存在しない |
+| F04-02-MSG-003 | 画面上部フラッシュ | 購入処理で予期しないエラーが発生しました。恐れ入りますがお問い合わせページよりご連絡ください。 | 注文確定処理（`checkout()`。主経路は注文手続き画面からの `POST /shopping/confirm` 成功時に同一リクエストで実行。確認画面 `confirm.twig` からの `POST /shopping/checkout` 直接送信の経路もある）中に `ShoppingException` 以外の例外が発生したとき。購入エラー画面へ遷移する |
+| F04-02-MSG-004 | 画面上部フラッシュ | 要ソース確認 | 注文確定処理（`checkout()`。主経路は注文手続き画面からの `POST /shopping/confirm` 成功時に同一リクエストで実行。確認画面 `confirm.twig` からの `POST /shopping/checkout` 直接送信の経路もある）後、`PaymentMethod::checkout()` が失敗結果を返したとき。購入エラー画面へ遷移する。文言は `PaymentResult::getErrors()` の各要素（決済モジュール由来の可変文字列）で固定リテラルは実ソースに存在しない |
+
+MSG-001/002/004 は決済モジュールや例外が返す文字列をそのまま表示するため、固定リテラルが実ソースに存在せず `要ソース確認`。MSG-003 はキー `front.shopping.system_error`（`messages.ja.yaml:1557`）の逐語値。
+
 ---
 
 ## 業務ルール・計算

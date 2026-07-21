@@ -4,24 +4,37 @@
 - Every generated `SCN-*.md` has `## システムテストカバレッジ`.
 - Every generated `SCN-*.md` has `## エッジケース要約`.
 - Every generated `SCN-*.md` has `## 実行用テストデータ` with fixed seed IDs.
+- Every generated `SCN-*.md` has `## データパターン` with multiple `DP-*` IDs covering normal representative, normal boundary, and branch/error data.
+- Every generated `SCN-*.md` has route metadata: `経路ID`, `経路種別`, `親業務フローパターン`, `業務経路条件`, and `最終業務状態`.
+- Every generated `SCN-*.md` has `業務フロー番号` / `カバーする業務フロー番号` that includes both parent pattern and route, such as `パターン1 / 経路2`.
+- Parent business-flow patterns with source-backed major alternatives or business-abnormal outcomes are expanded to multiple route-level `SCN` files, not collapsed into one scenario.
+- `DP-*` entries remain data-pattern variations inside one route and are not used as a substitute for route-level SCN splitting.
 - Every generated `SCN-*.md` has `## 実行手順（正常系）` with operation, input/target, and expected result.
 - Every generated `SCN-*.md` has `## 実行手順（代替系・異常系）` with operation, input/target, and expected result for each branch.
 - Every generated `SCN-*.md` has `確認対象` in the alternative/error branch table.
-- Every generated `SCN-*.md` has at least one business or common edge case.
+- Every generated `SCN-*.md` has `## 他層委譲（結合テスト）` with concrete integration-test case IDs (not viewpoint IDs) for 権限 / 必須・形式不正 / 重複実行 / 検索0件, or `未整備` when the integration-test layer has no such case.
+- Edge cases are never padded to reach a count. A route whose business flow has no branch legitimately has 0 edge cases; it must then show `代替系` / `異常系` as `-` and rely on the delegation table.
+- No generated `SCN-*.md` re-tests mechanism-level conditions (権限 / 必須・形式不正 / 重複実行 / 検索0件) that IT-15 / IT-22 / IT-08 / IT-23 already own, unless the business flow itself branches on them.
 - The trace source under `scenario_test/markdown` exists.
 - Related function specs and HTML design docs exist. `UNRESOLVED_FUNCTION_SPEC` and `UNRESOLVED_HTML_DESIGN_DOC` are validation failures.
 - `03_カバレッジ表.md` exists and covers every generated scenario.
-- `03_カバレッジ表.md` has `エッジケース数`, `主なエッジケース`, and `確認対象`.
+- `03_カバレッジ表.md` has route columns (`経路ID`, `経路種別`, `業務経路条件`, `最終業務状態`, `経路手順数`) plus `実行エッジ数`, `主なエッジケース`, `確認対象`, `他層委譲`, and `委譲未整備`.
+- `03_カバレッジ表.md` never marks `異常系=○` for a route whose `実行エッジ数` is 0.
 - Main-flow steps come from source business-flow rows, not from imagined UI details.
+- Physical work (picking, packing, mailing, barcode labelling, signatures) and external-tool work (スマレジ, Backlog, spreadsheets, mailer) carry NO EC-CUBE feature number. Their 利用画面・機能 is `該当なし（物理作業…）` / `該当なし（外部システム…）` and their 確認対象 is the physical artifact or the external system, never an EC-CUBE screen.
+- No step is given a feature number by a "leftover document" fallback. A step whose design doc cannot be identified is marked `要確認（EC-CUBE工程だが機能Noを特定できない）`, not filled with an arbitrary one.
+- Steps that the business flow marks as 手作業 but that mention CSV/インポート/画面 are marked `要確認`, not asserted to be physical.
+- Index-listed business-flow patterns with no body rows are reported as warnings (a To-Be new business would otherwise produce zero scenarios).
 - Main-flow steps are written from a business perspective: `担当者`, `業務行動`, `利用画面・機能`, and `確認する業務結果`.
 - Main-flow actions do not expose raw business-flow row IDs such as `R336:` as the primary operation text.
 - Test data must be concrete enough for a human tester: use fixed IDs such as `ST-ORDER-*`, `ST-STOCK-*`, `ST-CARD-*`, `ST-EVENT-*`, or equivalent.
 - Execution steps must not say only `対象業務が次の担当者へ引き渡せる状態`; they must identify a status, history, amount, count, file, or external result to check.
 - Expected results are observable on screen, in exported files, in mail, or in external-system state.
 - Cross-system scenarios include the external system in `関連システム`.
-- High-risk business scenarios include observable edge-case checks for data inconsistency, failed external integration, duplicate processing, or missing authorization/data.
-- Alternative/error flows are allowed only when the source business flow contains a branch, exception, cancellation, refund, shortage, mismatch, rejection, or similar condition. They must not be mixed into the normal execution route.
+- High-risk business scenarios include observable edge-case checks for data inconsistency or failed external integration. Duplicate processing and missing authorization are mechanism-level (IT-08 / IT-15) and belong to the delegation table, not to scenario edge cases, unless the business flow branches on them.
+- Alternative/error route-level scenarios are allowed only when the source business flow contains a branch, exception, cancellation, refund, shortage, mismatch, rejection, or similar condition that changes business judgment, downstream work, or final state. They must not be mixed into the normal representative route.
 - Traceability must include expected function numbers and linked function numbers. Missing expected function numbers must be visible in the coverage table.
+- Expected/linked function numbers and related HTML design docs must be scoped to the route being executed, not copied wholesale from the parent business-flow pattern.
 - Coverage table must use a source-qualified business-flow key, not only a numeric pattern number, because different source files can reuse the same number.
 - No output contains `設計どおり`, `設計書に記載のとおり`, or `UI標準`.
 - Existing scenario files are not overwritten unless `--overwrite` was used.

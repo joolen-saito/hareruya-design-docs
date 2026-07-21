@@ -142,6 +142,15 @@ POST_SUBMIT イベントでの相関バリデーション:
 - URLエンドポイント・フォーム項目・処理順序・DBカラムは `../ec-cube-enterprise` の `StockApprovalController` / `StockApprovalStoreAction` / `StockApprovalHistoryReasonUpdateAction` / `StockChangeHistoryListBuilder` / `StockApprovalType` と各 Entity・EntityManager 実装を正とする。
 - 承認確定・在庫反映は在庫承認一覧（M04 在庫承認一覧 / `StockApprovalListController`）を正とする。在庫一括編集（M04-03）は同じ承認フロー（ソース種別 STOCK_BULK_EDIT）を共有する。
 
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M04-02-MSG-001 | 管理画面上部フラッシュ | 保存に失敗しました | 登録ボタン送信後、フォームが未送信またはバリデーション不正のとき（`admin.common.save_error`、在庫承認画面を再描画） |
+| M04-02-MSG-002 | 管理画面上部フラッシュ | この店舗の在庫を編集する権限がありません。 | 登録ボタン送信後、ログインメンバーが対象店舗を編集する権限を持たないとき（`admin.stock.approval.not_editable_store`、在庫承認画面を再描画） |
+| M04-02-MSG-003 | 管理画面上部フラッシュ | 要ソース確認 | 在庫承認保存Actionまたは承認通知メール処理で例外が発生したとき（`$e->getMessage()` の実行時値を `addError` へ渡すため固定文言は実在せず逐語確定不能。在庫承認画面を再描画） |
+| M04-02-MSG-004 | 管理画面上部フラッシュ | 保存しました | 在庫承認保存Actionおよび承認通知メール送信が例外なく完了したとき（`admin.common.save_complete`、`admin_stock_approval_new` へリダイレクト） |
+
 ## リニューアル移行時の扱い
 
 本機能は新規実装であり、現行（pf-eccube3）に承認付き在庫編集の相当機能は無い。リニューアル先のec-cube-enterpriseに新規追加する。DB関連はec-cube-enterpriseを正とする。

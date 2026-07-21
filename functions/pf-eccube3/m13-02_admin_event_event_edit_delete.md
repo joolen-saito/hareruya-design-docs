@@ -205,23 +205,37 @@
 
 ### 常時表示（正常・静的）
 
-| 種別 | 表示文言（日本語） | 条件 |
-|------|-------------------|------|
-| 削除確認（イベント） | （イベント名を埋め込んだ削除確認文言） | 削除リンク押下時のダイアログ。文言テンプレートはロケールキー`admin.confirm.delete`。一覧画面の削除リンクは「このイベント情報を削除してもよろしいですか？」を用いる。 |
-| 削除確認（日程） | （開始日時を埋め込んだ削除確認文言） | 日程削除リンク押下時のダイアログ。文言テンプレートは`admin.confirm.delete`。 |
+| メッセージID | 種別 | 表示文言（日本語） | 条件 |
+| --- | ------ | ------------------- | ------ |
+| — | 削除確認（イベント） | （イベント名を埋め込んだ削除確認文言） | 削除リンク押下時のダイアログ。文言テンプレートはロケールキー`admin.confirm.delete`。一覧画面の削除リンクは「このイベント情報を削除してもよろしいですか？」を用いる。 |
+| — | 削除確認（日程） | （開始日時を埋め込んだ削除確認文言） | 日程削除リンク押下時のダイアログ。文言テンプレートは`admin.confirm.delete`。 |
 
 ### フラッシュ・トースト
 
-| 種別 | 表示文言（日本語） | 条件 |
-|------|-------------------|------|
-| 成功 | イベント情報を登録しました。 | 新規登録・更新の永続化成功時。ロケールキー`admin.event.save.complete`。 |
-| 成功 | イベント情報を削除しました。 | イベント削除成功時。ロケールキー`admin.event.delete.complete`。 |
-| 成功 | 日程情報を削除しました。 | 日程一括削除成功時。ロケールキー`admin.schedule.delete.complete`。 |
-| エラー | イベント情報を登録できませんでした。 | フォーム検証失敗時。ロケールキー`admin.event.save.failed`。 |
-| エラー | 申込済みの場合、支払方法を変更できません。 | 申込済みで支払方法に差分があるとき。ロケールキー`admin.event.save.paymenterror`。 |
-| エラー | 日程情報が存在する場合、イベント情報を削除することができません。 | 日程が残るイベントの削除時。ロケールキー`admin.event.delete.failed`。 |
-| エラー | デッキ登録済みの場合、イベント情報を削除することができません。 | デッキ登録済み日程の一括削除時。ロケールキー`admin.event.delete.deckerror`。 |
-| エラー | 申込済みの場合、イベント情報を削除することができません。 | 申込済み日程の一括削除時。ロケールキー`admin.event.delete.entryerror`。 |
+| メッセージID | 種別 | 表示文言（日本語） | 条件 |
+| --- | ------ | ------------------- | ------ |
+| — | 成功 | イベント情報を登録しました。 | 新規登録・更新の永続化成功時。ロケールキー`admin.event.save.complete`。 |
+| — | 成功 | イベント情報を削除しました。 | イベント削除成功時。ロケールキー`admin.event.delete.complete`（pf設計文言。ee実装文言は下表参照）。 |
+| — | 成功 | 日程情報を削除しました。 | 日程一括削除成功時。ロケールキー`admin.schedule.delete.complete`。 |
+| — | エラー | イベント情報を登録できませんでした。 | フォーム検証失敗時。ロケールキー`admin.event.save.failed`。 |
+| — | エラー | 申込済みの場合、支払方法を変更できません。 | 申込済みで支払方法に差分があるとき。ロケールキー`admin.event.save.paymenterror`。 |
+| — | エラー | 日程情報が存在する場合、イベント情報を削除することができません。 | 日程が残るイベントの削除時。ロケールキー`admin.event.delete.failed`。 |
+| — | エラー | デッキ登録済みの場合、イベント情報を削除することができません。 | デッキ登録済み日程の一括削除時。ロケールキー`admin.event.delete.deckerror`。 |
+| — | エラー | 申込済みの場合、イベント情報を削除することができません。 | 申込済み日程の一括削除時。ロケールキー`admin.event.delete.entryerror`。 |
+
+### フラッシュ（ee実装・メッセージ一覧 正典）
+
+ee実装（`src/Eccube/Controller/Admin/Event/EventController.php`）が実際に発火するフラッシュメッセージ。文言はソース由来（`messages.ja.yaml`）のみ。
+
+| メッセージID | 種別 | 表示文言（日本語） | 条件 |
+| --- | ------ | ------------------- | ------ |
+| M13-02-MSG-001 | インフォ(成功) | 保存しました | イベント作成フォームの「登録」ボタン押下で妥当かつ `EventCreateAction::handle` 正常終了時。作成イベントの編集画面（`admin_event_edit`）へリダイレクト。ロケール`admin.common.save_complete`。(EventController.php:224) |
+| M13-02-MSG-002 | エラー | 保存に失敗しました | イベント作成で `EventCreateAction::handle` が例外送出時。`@admin/Event/edit.twig` をrenderし作成フォームに留まる。ロケール`admin.common.save_error`。(EventController.php:228) |
+| M13-02-MSG-003 | インフォ(成功) | 保存しました | イベント編集フォームの「登録」ボタン押下で妥当かつ `EventEditAction::handle` 正常終了時。編集画面をrenderで再表示。ロケール`admin.common.save_complete`。(EventController.php:264) |
+| M13-02-MSG-004 | エラー | 保存に失敗しました | イベント編集で `EventEditAction::handle` が例外送出時。編集画面をrenderで再表示。ロケール`admin.common.save_error`。(EventController.php:266) |
+| M13-02-MSG-005 | エラー | 不正なリクエストです。 | 削除要求時、ログイン者が対象イベントの店舗を編集不可（`isEditableShop=false`）のとき。編集画面（`admin_event_edit`）へリダイレクト。ロケール`admin.common.error_invalid_request`。(EventController.php:308) |
+| M13-02-MSG-006 | エラー | 要確認（未定義キー `admin.event.delete.schedule_exists`） | 削除要求時、イベントの日程件数（`getDetails().count()`）が1件以上のとき。編集画面へリダイレクト。※controller:314 で使用されるキーが locale 未定義（定義済みは `admin.event.delete.not.schedule_exists` のみで別キー）。表示文言は未解決キー文字列となる可能性があり実機確認が必要。(EventController.php:314) |
+| M13-02-MSG-007 | インフォ(成功) | 削除しました | 削除要求時、編集可能かつ日程件数0件で remove・flush 実行時。検索結果ページ（`admin_event_index_page`、セッションのページ番号・resume=1）へリダイレクト。ロケール`admin.common.delete_complete`。(EventController.php:321) |
 
 ---
 

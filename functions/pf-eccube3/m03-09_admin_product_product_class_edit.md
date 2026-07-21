@@ -323,6 +323,16 @@
 |-------------------|------------------|----------|----------|
 | `在庫数を入力、もしくは在庫無制限を設定してください。` | `Enter stock quantity or check 'Unlimited'.` | 在庫数も在庫無制限も未設定のとき。キー`admin.product.product_class_set_stock_quantity`。 | 在庫無制限欄の直下 |
 
+### フォームバリデーション（規格マトリクス）
+
+※fable5監査（要ソース確認）: 本表の根拠 `ProductClassEditType` は `ProductClassMatrixType` 経由でのみ参照されるが、現行eeでは `ProductClassController::createMatrixForm` がどこからも呼び出されておらず（デッドコード）、規格マトリクス画面への到達ルートが実在しない。現行の商品規格登録/編集フォーム（edit.twig）は `ProductClassType` を使用する。表示位置・後続処理は根拠不足のため要ソース確認。
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M03-09-MSG-001 | 要ソース確認（本フォームを描画するテンプレートが実在しない） | 数字で入力してください。 | 登録対象チェック済み行でPOST_SUBMIT時、sale_limitが`/^\d+$/u`に一致しないとき。キー`form_error.numeric_only`。 |
+| M03-09-MSG-002 | 要ソース確認（本フォームを描画するテンプレートが実在しない） | 数字と小数点のみ入力できます。 | 登録対象チェック済み行でPOST_SUBMIT時、tax_rateが`/^\d+(\.\d+)?$/`に一致しないとき。キー`form_error.float_only`。 |
+| M03-09-MSG-003 | 要ソース確認（本フォームを描画するテンプレートが実在しない） | 要ソース確認 | 登録対象チェック済み行でPOST_SUBMIT時、sale_limit・price02・tax_rate・sale_type の各制約に違反したとき。可変（ConstraintViolation#getMessage() 由来。NotBlank/Range/Length 等の制約メッセージ）で逐語リテラル不可のため要ソース確認。`addErrors()` が違反メッセージをそのままFormErrorへ設定する。 |
+
 ---
 
 ## 試行制限

@@ -71,7 +71,7 @@
 
 ### 実行時例外が送出されたとき
 
-1. コントローラは例外メッセージをフラッシュに積む（第 2 引数は省略され、既定のフラッシュ種別に従う実装である）。
+1. コントローラは例外メッセージをフラッシュに積む（第 2 引数は省略され、既定 namespace は `front`。`eccube.front.error` に積まれるため、管理画面共通の alert 描画（`eccube.admin.error` のみ）では表示されない実装である。根拠: AbstractController.php:117-119 / admin/alert.twig:41）。
 2. `Referer` ヘッダが空でなければその URL へリダイレクトする。
 3. `Referer` が空なら `redirectToRoute('admin_product_page')` でリダイレクトする（ルート生成時の `page_no` はコントローラから渡していない）。
 
@@ -218,6 +218,17 @@
 | 有効な商品 ID が 1 件も無い | `responseNoProductIdError` で一覧へリダイレクト（ページ番号はセッション）。 |
 | 指定 ID に対応する商品が 1 件も無い | `admin.csv.error.export.not_registered`。 |
 | その他の実行時例外 | フラッシュ後、Referer または `admin_product_page` へリダイレクト。 |
+
+---
+
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M03-05-MSG-003 | 管理画面上部フラッシュ（エラー） | 1つ以上の商品を選択してください | 「セール用価格変更CSV出力」送信時、`ids[]` が未送信・非配列・正整数への正規化後に空のとき（`responseNoProductIdError`）。根拠: ProductCsvController.php:151 / messages.ja.yaml:1962 |
+| M03-05-MSG-004 | 要ソース確認（フラッシュは `eccube.front.error` に積まれ、管理画面 alert.twig:41 は `eccube.admin.error` のみ描画するため管理画面上部には表示されない。実表示先は要実機確認） | 存在しないカードIDが含まれています。 | 有効な商品ID送信後、`ProductPriceCsv::exportCsv` が Runtime“該当商品0件”例外を投げたとき（`$e->getMessage()` 由来、当該サービスの唯一の例外文言）。根拠: ProductCsvController.php:194 / ProductPriceCsv.php:49 / messages.ja.yaml:2444 / AbstractController.php:117-119 |
+
+> 補足: 一覧スライスの `M03-05-MSG-001`（カード商品CSV出力）/`M03-05-MSG-002`（グッズ商品CSV出力）、およびレビューで補完した `M03-05-MSG-005`/`M03-05-MSG-006`（カード/グッズ各ルートの商品未選択エラー。ProductCsvController.php:70-72,118-120 → responseNoProductIdError）は同一 controller の別ルート由来であり、本機能（セール用価格変更CSV出力）の画面フローでは表示されないため本表には含めない。
 
 ---
 

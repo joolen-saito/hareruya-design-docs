@@ -216,8 +216,28 @@ HTTP 200。応答はラッパオブジェクトを持つ。
 
 | エラー内容 | 処理 |
 |------------|------|
-| 公開対象でない・存在しないマスタ名 | コード404・メッセージ「Not Found」のJSONを返す。 |
+| 公開対象でない・存在しないマスタ名 | コード404・メッセージ「見つかりません」（`MasterController.php:90-92` `trans('api.deck_builder.common.not_found')` → `messages.ja.yaml:6309`）のJSONを返す。 |
 | 取得処理中の例外 | 共通例外処理に委ねる（HTTP 500相当）。 |
+
+---
+
+## 表示メッセージ
+
+本機能は参照専用API（`App/DeckBuilder/MasterController.php` GET `/master/{name}`）であり、画面フラッシュ・フォームバリデーション・JSダイアログ等の**画面UI表示メッセージは持たない**。唯一のメッセージは失敗時のJSONレスポンスボディ文言であり、メッセージ一覧の主スコープ（画面フラッシュ/バリデーション/ダイアログ）外だが参考として記録する。
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| — | APIレスポンス（JSON body・message） | 見つかりません | 公開対象でない・存在しないマスタ名のとき（HTTP 404。`MasterController.php:90-92` `trans('api.deck_builder.common.not_found')` → `messages.ja.yaml:6309`。UIフラッシュではなく本一覧の画面メッセージ対象外） |
+
+### 自動マッピング差戻し（要再マッピング）
+
+決定的抽出でa15-06へ暫定紐付けされた下記3件は、実ソース照合の結果いずれも**本API由来ではない**（別機能に帰属）。本docへは埋め込まず、正しい機能へ再マッピングする対象として記録する。
+
+| 暫定ID | 実際の帰属（実ソース） | 逐語文言 | 備考 |
+|--------|------------------------|----------|------|
+| A15-06-MSG-001 | Admin「MTGマスターデータ管理」 `MtgMasterDataController.php:379`（文言 `messages.ja.yaml:1591` admin.common.save_complete） | 保存しました | 登録成功フラッシュ |
+| A15-06-MSG-002 | Admin「MTGマスターデータ管理」 `MtgMasterDataController.php:381` | 要ソース確認 | RuntimeException捕捉時。`addError($e->getMessage())` 例外由来可変値・逐語literal確定不能 |
+| A15-06-MSG-003 | Adminカード管理 検索フォーム `SearchCardType.php:76`（文言 `validators.ja.yaml:37` form_error.numeric_only） | 数字で入力してください。 | CMC項目バリデーション |
 
 ---
 

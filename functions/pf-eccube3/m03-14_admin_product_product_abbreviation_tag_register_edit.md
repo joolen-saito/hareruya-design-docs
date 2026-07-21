@@ -35,7 +35,7 @@ ec-cube-enterprise のコア管理画面におけるルート `admin_product_sto
 | 編集中のページ送り | `GET /{admin_route}/product/storage/{id}/page/{page_no}` | 編集状態を維持したまま一覧ページだけ変える。ページャはこのルート名を使ってリンクする。 |
 | 画面下部「登録」 | `POST /{admin_route}/product/storage_code/store`（新規時）または `POST /{admin_route}/product/storage_code/store/{id}`（編集時） | フォームに載った名称・並び順・チェックの内容が検証される。妥当なら保存し、成功フラッシュのあと `GET …/product/storage` にリダイレクトされる（実装ソースは同名ルートを指し、そのルート既定に `page_no` などがあるのみで、復帰先パス末尾に編集 `{id}` を付けない）。妥当でなければ同じ一覧トップ向けへのリダイレクトであり失敗フラッシュのみとなる。一覧に新規行があるなら一覧から再度編集を開ける。 |
 | 表示件数プルダウン | `GET`（現在のパス維持）にクエリ `page_count=` を追加 | `.js-page-count` の変更でクエリのみ付いて再読込。許容リストは `[10, 50, 100, 300, 500, 1000]`。選択値はセッション `admin.product.storage.page_count`。 |
-| 行の削除（確認モーダル経由） | `DELETE /{admin_route}/product/storage_code/{id}/delete` | コアの共通トークン名で CSRF が検証される。関連商品がある略称タグは削除されずメッセージ鍵ベースで訳文がフラッシュされる。無関係な略称タグは DELETE 済みフラッシュあり。一覧トップへ戻るリダイレクト。 |
+| 行の削除（window.confirm 確認ダイアログ経由） | `DELETE /{admin_route}/product/storage_code/{id}/delete` | コアの共通トークン名で CSRF が検証される。関連商品がある略称タグは削除されずメッセージ鍵ベースで訳文がフラッシュされる。無関係な略称タグは DELETE 済みフラッシュあり。一覧トップへ戻るリダイレクト。 |
 
 ---
 
@@ -229,6 +229,24 @@ ec-cube-enterprise のコア管理画面におけるルート `admin_product_sto
 | フォーム入力不備 | フラッシュ種別エラー、`admin.register.failed`。リダイレクト先一覧トップ。フィールド側のSymfonyエラー一覧は画面上に復元されず捨てられる構造となる。|
 | DELETE 時に関連商品がある | メッセージ鍵ベースでエラーフラッシュ。一覧トップへ。データは削除されない。 |
 | DELETE 時共通CSRF が無効 | Symfony アクセス拒否（HTTP 403）。詳細応答体裁は共通実装による。|
+
+---
+
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M03-14-MSG-001 | 管理画面上部フラッシュ | 登録できませんでした。 | 略称タグ登録／編集の送信後、フォーム未送信またはバリデーション不正のとき（`admin.register.failed`）。一覧トップへリダイレクト |
+| M03-14-MSG-002 | 管理画面上部フラッシュ | 登録が完了しました。 | 略称タグの登録・更新が成功したとき（`admin.register.complete`）。一覧トップへリダイレクト |
+| M03-14-MSG-003 | 管理画面上部フラッシュ | 商品で使用されているため、「%name%」の略称タグは削除することができません。 | 削除対象の略称タグが商品で使用されている（`getProducts()>0`）とき（`admin.storage.delete.failed`）。削除中止・一覧トップへリダイレクト |
+| M03-14-MSG-004 | 管理画面上部フラッシュ | 削除しました | 関連商品0件で略称タグの削除が成功したとき（`admin.common.delete_complete`）。一覧トップへリダイレクト |
+| M03-14-MSG-005 | 管理画面上部フラッシュ | 要ソース確認 | CSVインポートフォームがバリデーション不正（`checkFormValid()` 偽）のとき。フォームエラーごとに1件フラッシュ。CSVアップロード画面へリダイレクト。文言は可変（`$error->getMessage()`：CsvImportType の import_file NotBlank／File maxSize 等。StorageCodeController.php:257-266）で単一の逐語文言に確定不可 |
+| M03-14-MSG-006 | 管理画面上部フラッシュ | CSVのフォーマットが一致しません | アップロードファイルが取得できない（null）とき（`admin.common.csv_invalid_format`）。CSVアップロード画面へリダイレクト |
+| M03-14-MSG-007 | 管理画面上部フラッシュ | CSVのフォーマットが一致しません | インポートデータ取得に失敗した（`$data===false`）とき（`admin.common.csv_invalid_format`）。CSVアップロード画面へリダイレクト |
+| M03-14-MSG-008 | 管理画面上部フラッシュ | 要ソース確認 | CSV登録処理中に例外（`\Throwable`）が発生したとき。インポート中止・CSVアップロード画面へリダイレクト。文言は可変（`$e->getMessage()`：ヘッダー不一致／データ空／並び順・名称重複／DB例外等。StorageCodeController.php:288-302）で単一の逐語文言に確定不可 |
+| M03-14-MSG-009 | 管理画面上部フラッシュ | 登録が完了しました。 | CSV登録が正常完了したとき（`admin.register.complete`）。CSVアップロード画面へリダイレクト |
+| M03-14-MSG-010 | ブラウザ確認ダイアログ（window.confirm） | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 一覧の「削除」ボタンクリック時（`admin.common.delete_modal__message` を data-message 経由で表示。function.js:161-179）。OKで DELETE 送信、キャンセルで中止 |
+| M03-14-MSG-011 | 要確認（不正時は一覧トップへリダイレクトされるため form_errors 再描画経路がソース上確認できない） | 並び順は {{ min }} から {{ max }} の間で入力してください。 | 並び順が0〜32767の範囲外（`Range` 制約 `notInRangeMessage`、StorageCodeType.php:51）。実表示は M03-14-MSG-001 のフラッシュのみとなる可能性 |
 
 ---
 
