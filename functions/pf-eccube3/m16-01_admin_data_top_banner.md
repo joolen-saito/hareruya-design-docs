@@ -235,7 +235,7 @@ HareruyaEc プラグインが管理画面「データ管理」配下に提供す
 | M16-01-MSG-005 | 管理画面上部フラッシュ | 削除しました | DELETE が CSRF 検証を通過し TopBannerDeleteAction が正常終了したとき（`#upload_wrap` 付きで303リダイレクト） |
 | M16-01-MSG-006 | 管理画面上部フラッシュ | 要ソース確認 | 削除で `admin.` 始まりの RuntimeException を捕捉し `$e->getMessage()` をそのまま addError するため単一文言に確定不能（可変）。直接送出候補は `admin.common.error_invalid_request`＝「不正なリクエストです。」／`admin.common.delete_error`＝「削除に失敗しました」（リダイレクト） |
 | M16-01-MSG-007 | 管理画面上部フラッシュ | 削除に失敗しました | 削除で捕捉した RuntimeException の message が `admin.` 始まりでないとき（リダイレクト） |
-| M16-01-MSG-008 | 店舗選択項目直下（フォームエラー） | 要ソース確認（キー `enterprise.form.type.member.tenant_not_selected` は validators.ja.yaml 未定義。constraint 違反は validators ドメイン解決のため実表示文言は要実機確認） | base_info が空で送信されたとき（NotBlank 制約違反。通常UIでは発生しにくい） |
+| M16-01-MSG-008 | 店舗選択項目直下（フォームエラー） | 要ソース確認 | base_info が空で送信されたとき（NotBlank 制約違反。通常UIでは発生しにくい）。キー `enterprise.form.type.member.tenant_not_selected` は validators.ja.yaml 未定義で messages.ja.yaml にのみ存在し、constraint 違反は validators ドメイン解決のため実表示文言は要実機確認 |
 | M16-01-MSG-009 | ファイル項目直下（フォームエラー） | 画像ファイルを選択してください。 | file 未選択のまま送信されたとき（NotBlank 制約違反。JS事前チェックを通らない直接POST等・同一画面を再表示） |
 | M16-01-MSG-010 | ファイル項目直下の `#top-banner-upload-error`（JS） | 画像ファイルを選択してください。 | file 入力が空のままアップロードフォームを submit したとき（クライアントJSが送信を中断） |
 | M16-01-MSG-011 | ファイル項目直下（フォームエラー） | ファイルがGIF・JPG・PNGではありません。 | GIF/JPG/PNG 以外の MIME タイプのファイルを選択して送信したとき（File 制約違反・同一画面を再表示） |
@@ -243,8 +243,8 @@ HareruyaEc プラグインが管理画面「データ管理」配下に提供す
 | M16-01-MSG-013 | 画像URL項目直下（フォームエラー） | 「admin.hareruyamtg.com」は指定できません。 | 画像URLに `admin.hareruyamtg.com` を含む値を入力して送信したとき（Regex 制約違反・同一画面を再表示） |
 | M16-01-MSG-014 | 並び順項目直下（フォームエラー） | 並び順が空の項目があります。 | 並び順が空の項目があるまま送信したとき（POST_SUBMIT リスナーが FormError 追加・同一画面を再表示） |
 | M16-01-MSG-015 | 並び順項目直下（フォームエラー） | 並び順が重複しています。 | 並び順の値が重複したまま送信したとき（POST_SUBMIT リスナーが重複全項目へ FormError 追加・同一画面を再表示） |
-| M16-01-MSG-016 | 確認ダイアログ（window.confirm） | 一度削除したデータは元に戻せません。削除してもよろしいですか？ | 削除リンククリック時（`data-message`。OKで `_method=delete` の隠しフォームを送信、キャンセルで中断） |
-| M16-01-MSG-017 | バナー設定フォーム上部（text-danger errormsg） | 要ソース確認（例外由来の可変文言・発生経路未特定） | 設定フォームが妥当だが storeTopBanners 内で RuntimeException が送出されたとき（`bannerError.message` を trans して同一画面に表示） |
+| M16-01-MSG-016 | 確認ダイアログ（window.confirm） | 一度削除したデータは元に戻せません。削除してもよろしいですか？ | 削除リンククリック時（`data-message`。OKで `_token`/`_method=delete` を持つ隠しフォームを生成し POST 送信、キャンセルで中断） |
+| M16-01-MSG-017 | バナー設定フォーム上部（text-danger errormsg） | 要ソース確認 | 設定フォームが妥当だが storeTopBanners 内で RuntimeException が送出されたとき（`bannerError.message` を trans して同一画面に表示）。例外由来の可変文言で、TopBannerStoreAction/TopBannerEntityManager 経路に RuntimeException の送出箇所は未特定 |
 
 ---
 

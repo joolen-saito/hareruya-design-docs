@@ -177,7 +177,7 @@
 | M04-12-MSG-049 | 管理画面上部フラッシュメッセージ | 要ソース確認 | CSVインポート中にThrowable |
 | M04-12-MSG-050 | 管理画面上部フラッシュメッセージ | 要ソース確認 | CsvImporterの行エラーあり |
 | M04-12-MSG-051 | 管理画面上部フラッシュメッセージ | 要ソース確認 | StockSplitListCsvImportHandlerのflashErrorsあり |
-| M04-12-MSG-052 | 管理画面上部フラッシュメッセージ | 要ソース確認 | StockSplitListCsvImportHandlerのflashSuccessesあり |
+| M04-12-MSG-052 | 管理画面上部フラッシュメッセージ | %count% 件の分割を登録し、承認申請まで進めました。 | StockSplitListCsvImportHandlerのflashSuccessesあり |
 | M04-12-MSG-053 | 管理画面上部フラッシュメッセージ | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
 | M04-12-MSG-054 | 管理画面上部フラッシュメッセージ | CSVファイルのアップロードに失敗しました | アップロードファイルなし又は無効 |
 | M04-12-MSG-055 | 管理画面上部フラッシュメッセージ | CSVファイルのアップロードに失敗しました | 選択店舗が存在しない |
@@ -186,7 +186,7 @@
 | M04-12-MSG-058 | 管理画面上部フラッシュメッセージ | 要ソース確認 | CSVインポート中にThrowable |
 | M04-12-MSG-059 | 管理画面上部フラッシュメッセージ | 要ソース確認 | CsvImporterの行エラーあり |
 | M04-12-MSG-060 | 管理画面上部フラッシュメッセージ | 要ソース確認 | StockJoinListCsvImportHandlerのflashErrorsあり |
-| M04-12-MSG-061 | 管理画面上部フラッシュメッセージ | 要ソース確認 | StockJoinListCsvImportHandlerのflashSuccessesあり |
+| M04-12-MSG-061 | 管理画面上部フラッシュメッセージ | %count% 件の結合を登録し、欠品入力まで進めました。 | StockJoinListCsvImportHandlerのflashSuccessesあり |
 | M04-12-MSG-062 | 管理画面上部フラッシュメッセージ | 指定の在庫が見つかりません。 | productStockIdが1未満 |
 | M04-12-MSG-063 | 管理画面上部フラッシュメッセージ | 指定の在庫が見つかりません。 | productStockIdに対応する在庫なし |
 

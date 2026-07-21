@@ -198,7 +198,7 @@
 | M05-06-MSG-004 | 画面上部フラッシュ | 注文ID %s の注文情報を取得できませんでした。 | 一括手動メール通知画面へのアクセス時、指定した配送IDのうち ShippingRepository で取得できないIDが存在するとき（%s は未取得の配送ID）。`admin_order` へリダイレクト |
 | M05-06-MSG-005 | 画面上部フラッシュ | メールを送信しました。 | 一括手動メール通知確認画面で［送信］（POST `mode=complete`）が送信済み・有効かつテンプレートが存在するとき。`admin_order` へリダイレクト |
 | EE-JS-MSG-024 | 画面中央（確認ダイアログ） | お客様にメールを送信します。よろしいですか？ | 手動メール通知確認画面・一括手動メール通知確認画面で［送信］（`#send_mail`）を押したとき（`manual_mail.js` の送信前 confirm）。OKで `mode=complete` の POST、キャンセルで送信中断 |
-| EE-JS-MSG-049 | 画面中央（警告ダイアログ） | チェックボックスが選択されていません | 受注一覧で配送行のチェックが0件のまま「メール一括通知」（`#manualMailAll`）を押したとき。遷移を中止する（他の一括操作ボタンと共有のガード） |
+| EE-JS-MSG-049 | 画面中央（警告ダイアログ） | チェックボックスが選択されていません | 受注一覧で配送行のチェックが0件のまま「その他」ドロップダウン内の「メール一括通知」（`#manualMailAll`、`a.dropdown-item`）を押したとき。遷移を中止する（共有ガード `preventIfNoCheckedBulkTarget` のため `#printDeliverySlipsJp`／`#printDeliverySlipsEn`／`#labelsExport`／`#printStack` でも同文言が発火する） |
 | M05-06-MSG-006 | 件名入力欄直下（インライン） | 入力されていません。 | メール作成画面で件名（`mail_subject`）未入力のまま `mode=confirm`／`complete` を送信したとき（NotBlank違反）。作成画面を再表示 |
 | M05-06-MSG-007 | 本文エディタ直下（インライン） | Twigのフォーマットが正しくありません。{{ error }} | メール作成画面の本文（`tpl_data`）の Twig 構文が不正なとき（TwigLint 制約違反。`{{ error }}` は Twig 例外メッセージの可変部）。作成画面を再表示 |
 | M05-06-MSG-008 | 各入力項目直下（インライン） | 入力されていません。 | 手動メール通知画面でテンプレ選択・件名・メッセージ本文のいずれかが未入力のまま `mode=confirm`／`complete` を送信したとき（NotBlank違反）。入力画面を再表示 |

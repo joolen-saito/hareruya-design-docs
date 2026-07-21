@@ -167,10 +167,22 @@ function parseFids(a) {
   }
   return []
 }
+// args は object でも JSON文字列でも渡りうる（Workflowがシリアライズする経路がある）ので正規化する。
+function parseArgs(a) {
+  if (typeof a === 'string') {
+    try {
+      return JSON.parse(a)
+    } catch {
+      return a
+    }
+  }
+  return a
+}
+const ARGS = parseArgs(args)
 // mode: 'full'(既定=resolve+fable5+codexreview) / 'review'(既存resolved.tsvに対しfable5+codexreviewのみ) / 'codexonly'(codexreviewのみ)
-const MODE = (args && typeof args === 'object' && !Array.isArray(args) && args.mode) || 'full'
+const MODE = (ARGS && typeof ARGS === 'object' && !Array.isArray(ARGS) && ARGS.mode) || 'full'
 const DEFAULT_PILOT = ['m04-31', 'm11-01', 'm08-04', 'm13-02', 'm09-10']
-const requested = parseFids(args)
+const requested = parseFids(ARGS)
 const FIDS = requested.length ? requested : DEFAULT_PILOT
 
 log(`メッセージ一覧 mode=${MODE} ${FIDS.length}機能: ${FIDS.join(', ')}`)

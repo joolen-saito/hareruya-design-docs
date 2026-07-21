@@ -238,14 +238,14 @@ DB関連の記述は ec-cube-enterprise を正とする。検索パターンの�
 | M05-01-MSG-008 | 管理画面上部フラッシュ | 保存に失敗しました | 出荷指示リスト生成で対象 OrderTypes が空のとき（OrderController.php:815。別画面由来。要検証） |
 | M05-01-MSG-009 | 管理画面上部フラッシュ | 要ソース確認 | 出荷指示リスト生成で注文タイプ未検出の `InvalidArgumentException`（`$e->getMessage()`）。例外文言は `sprintf('注文タイプが見つかりません (id: %s)。', $orderTypeId)`（GenerateShippingStandbyListAction.php:44 / OrderController.php:826）で `%s` を含む可変文言のため逐語確定不可。別画面由来。要検証 |
 | M05-01-MSG-010 | 管理画面上部フラッシュ | 保存しました | 出荷指示リスト生成が正常完了したとき（`admin.common.save_complete` / OrderController.php:831。別画面由来。要検証） |
-| M05-01-MSG-011 | 画面中央ダイアログ（スタック印刷ウィンドウのJS alert。フラッシュは非描画） | 不正なリクエストです。 | スタック用紙印刷POSTでCSRFトークンが無効のとき（`addError('admin.common.csrf_token_error')` はja.yaml未定義、応答はJSON400 message文言 / OrderController.php:867-869）。print_stack_window.twig:40-47 が `alert(jqXHR.responseJSON.message)` で表示し `window.close()` |
-| M05-01-MSG-012 | 画面中央ダイアログ（スタック印刷ウィンドウのJS alert） | 要ソース確認 | スタック用紙印刷で `UpdateStackListAction` が `InvalidArgumentException` を投げたとき、`$e->getMessage()` をJSON400本文とflash文言に用いる（OrderController.php:922-924）。print_stack_window.twig:40-47 が `alert` で表示。例外の可変文言のため逐語確定不可 |
+| M05-01-MSG-011 | 画面中央ダイアログ（スタック印刷ウィンドウのJS alert。フラッシュは非描画） | 不正なリクエストです。 | スタック印刷ウィンドウ（print_stack_window）の自動ajax POSTでCSRFトークンが無効のとき（`addError('admin.common.csrf_token_error')` はja.yaml未定義、応答はJSON400 message文言 / OrderController.php:867-869）。print_stack_window.twig:40-47 が `alert(jqXHR.responseJSON.message)` で表示し `window.close()` |
+| M05-01-MSG-012 | 画面中央ダイアログ（スタック印刷ウィンドウのJS alert） | 要ソース確認 | スタック印刷ウィンドウの自動ajax POSTで `UpdateStackListAction` が `InvalidArgumentException` を投げたとき、`$e->getMessage()` をJSON400本文とflash文言に用いる（OrderController.php:921-925）。print_stack_window.twig:40-47 が `alert` で表示。例外の可変文言のため逐語確定不可 |
 | M05-01-MSG-013 | 管理画面上部フラッシュ | 検索パターン名を入力して下さい | 検索条件保存でパターン名が空のとき（`admin.order.save_pattern.error.name_empty` / SearchOrderController.php:148） |
 | M05-01-MSG-014 | 管理画面上部フラッシュ | 検索条件を保存しました | 検索パターン保存が完了したとき（`admin.order.save_pattern.success` / SearchOrderController.php:164） |
 | M05-01-MSG-015 | 管理画面上部フラッシュ | 検索条件を削除できませんでした | 指定 pattern_id の検索パターンが存在しないとき（`admin.order.delete_pattern.error` / SearchOrderController.php:179） |
 | M05-01-MSG-016 | 管理画面上部フラッシュ | 検索条件を削除しました | 検索パターン削除が完了したとき（`admin.order.delete_pattern.success` / SearchOrderController.php:186） |
 | M05-01-MSG-017 | 画面中央ダイアログ（JS alert） | チェックボックスが選択されていません | 受注一覧のチェックボックス未選択で一括操作ボタン（スタック用紙印刷・送り状CSV出力・納品書印刷(日/英)・メール一括通知など）を押下したとき（index.twig:80-89 `preventIfNoCheckedBulkTarget`）。操作は中止される |
-| M05-01-MSG-018 | 画面中央ダイアログ（JS alert） | Update failed. | 受注一覧行の送り状番号インライン更新で `admin_shipping_update_tracking_number` のJSON応答statusがOK以外のとき（index.twig:178-201）。英語リテラル。要検証: 機能帰属は m05-13 候補（実装は m05-01 テンプレ内） |
+| M05-01-MSG-018 | 画面中央ダイアログ（JS alert） | Update failed. | 受注一覧行の送り状番号インライン更新で `admin_shipping_update_tracking_number` のJSON応答statusがOK以外のとき（index.twig:181-193、alert後 `return true` で遷移処理の記述なし）。英語リテラル。要検証: 機能帰属は m05-13 候補（実装は m05-01 テンプレ内） |
 | M05-01-MSG-019 | 画面中央ダイアログ（スタック印刷ウィンドウのJS alert） | 対象の注文が指定されていません。 | スタック用紙印刷POSTで ids が空のとき（JSON404 / OrderController.php:875-880、print_stack_window.twig:40-47 が表示後 `window.close()`） |
 | M05-01-MSG-020 | 画面中央ダイアログ（スタック印刷ウィンドウのJS alert） | 注文番号が未採番の注文があります。 | 印刷対象の受注に注文番号未採番が含まれるとき（JSON400 / OrderController.php:896-902、print_stack_window.twig:40-47） |
 | M05-01-MSG-021 | 画面中央ダイアログ（スタック印刷ウィンドウのJS alert） | 印刷予約を受け付けました。 | スタック用紙印刷の予約処理が正常完了したとき（JSON200 / OrderController.php:930-932、print_stack_window.twig:33-39 `alert(data.message)` 後 `window.close()`） |

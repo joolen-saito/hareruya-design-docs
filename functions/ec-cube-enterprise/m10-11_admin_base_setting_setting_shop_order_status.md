@@ -136,7 +136,7 @@ ec-cube-enterprise は英語ロケール資源（`messages.en.yaml`／`validator
 | --- | -------------------- | ------------------ | ------------------------ | ---------- | ------ |
 | M10-11-MSG-001 | 保存しました | Saved | 入力が検証を通り永続化に成功した後の再表示時 | 画面上部の成功フラッシュ領域 | ロケールキー `admin.common.save_complete`。 |
 | M10-11-MSG-002 | 入力されていません。 | No value found. | 必須項目を未入力で送信した | 該当フィールド下のエラー表示 | バリデーションキー「This value should not be blank.」（`NotBlank`）。`validators.ja.yaml:17` / `validators.en.yaml:17` で逐語確認済み。 |
-| M10-11-MSG-003 | 要ソース確認 | 要ソース確認 | 最大長（`eccube_stext_len`=255）を超えて送信した | 該当フィールド下のエラー表示 | Symfony `Length` 既定文言（vendor validators.ja.xlf）。`{{ limit }}` 補間があり逐語確定不可のため要ソース確認。 |
+| M10-11-MSG-003 | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | 要ソース確認 | 最大長（`eccube_stext_len`=255）を超えて送信した | 該当フィールド下のエラー表示 | Symfony `Length` 既定文言。日本語は `vendor/symfony/validator/Resources/translations/validators.ja.xlf:79` に逐語実在（ee 側 `validators.ja.yaml` に上書き無し）。`{{ limit }}` は原文プレースホルダのまま保持し実行時値へ置換しない。英語は同 `validators.en.xlf:79` が複数形分岐（`\|`）を含み単一表示文言を確定できないため要ソース確認。 |
 
 ---
 

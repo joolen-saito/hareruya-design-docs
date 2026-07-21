@@ -163,10 +163,10 @@
 | M11-01-MSG-013 | 英数字をそれぞれ1種類使用してください。 | パスワードが規定のパスワードパターンを満たさないとき | パスワード入力欄直下（登録・編集画面） | `form_error.password_pattern_invalid`。 |
 | M11-01-MSG-016 | 店舗が選択されていません。 | 権限がテナント運用者/オーナーで店舗（BaseInfo）が未選択のとき | 店舗選択欄直下（登録・編集画面） | `enterprise.form.type.member.tenant_not_selected`。 |
 | M11-01-MSG-017 | 半角英数字で入力してください。 | ログインIDが半角英数字（graph/space）以外を含むとき | ログインID入力欄直下（登録・編集画面） | `form_error.graph_only`。 |
-| M11-01-MSG-018 | 非稼働に変更することはできません。 | 稼働中のシステム権限者が自分だけの状態で稼働状態を非稼働へ変更したとき | 要確認（本エラーは編集時のみ発生するが、更新処理は検証失敗時に必ず編集画面へリダイレクトしフォームエラーを破棄するため、インライン表示の実描画根拠なし。実際にはMSG-005のフラッシュのみ表示の可能性） | `admin.setting.system.member.work_can_not_change`。編集時のみ。 |
+| M11-01-MSG-018 | 非稼働に変更することはできません。 | 稼働中のシステム権限者が自分だけの状態で稼働状態を非稼働へ変更したとき | 要ソース確認（本エラーは編集時のみ発生するが、更新処理は検証失敗時に必ず編集画面へリダイレクトしフォームエラーを破棄するため、インライン表示の実描画根拠なし。実際にはMSG-005のフラッシュのみ表示の可能性） | `admin.setting.system.member.work_can_not_change`（messages.ja.yaml:3215 / MemberType.php:246）。編集時のみ。 |
 | M11-01-MSG-019 | このログインIDは利用できません。 | 新規登録時に入力ログインIDが既存メンバーと重複するとき | ログインID入力欄直下（登録画面） | `enterprise.form.type.member_already_exists`。新規登録時のみ。 |
-| M11-01-MSG-014 | 要確認：`form_error.authority_guest`（ロケール未定義でキー文字列がそのまま表示） | 権限にゲスト権限を選択したとき（NotEqualTo制約） | 権限選択欄直下（登録・編集画面） | 翻訳キー未定義。query_builderでゲスト権限は選択肢から除外され通常UIでは到達不可。文言未確定。 |
-| M11-01-MSG-015 | 要確認：`form_error.authority_customer`（ロケール未定義でキー文字列がそのまま表示） | 権限に会員権限を選択したとき（NotEqualTo制約） | 権限選択欄直下（登録・編集画面） | 翻訳キー未定義。query_builderで会員権限は選択肢から除外され通常UIでは到達不可。文言未確定。 |
+| M11-01-MSG-014 | 要ソース確認 | 権限にゲスト権限を選択したとき（NotEqualTo制約） | 権限選択欄直下（登録・編集画面） | メッセージキー `form_error.authority_guest`（MemberType.php:108）。ec-cube-enterprise 内にロケール定義を確認できず、表示文言は未確定。表示位置の根拠は member_edit.twig:190 `form_errors(form.Authority)`。 |
+| M11-01-MSG-015 | 要ソース確認 | 権限に会員権限を選択したとき（NotEqualTo制約） | 権限選択欄直下（登録・編集画面） | メッセージキー `form_error.authority_customer`（MemberType.php:112）。ec-cube-enterprise 内にロケール定義を確認できず、表示文言は未確定。表示位置の根拠は member_edit.twig:190 `form_errors(form.Authority)`。 |
 
 ### 確認ダイアログ
 

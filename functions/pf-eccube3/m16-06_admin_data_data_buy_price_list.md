@@ -152,7 +152,7 @@ HareruyaEc プラグインが管理画面「データ管理」配下に提供す
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
 |--------------|----------|--------------|----------|
-| M16-06-MSG-001 | 管理画面上部フラッシュ | 登録が完了しました。 | 買取価格編集画面で更新フォームを送信し、送信済みかつ有効で買取価格更新処理が成功したとき（一覧 `admin_data_buy_price_list` へリダイレクト後に表示） |
+| M16-06-MSG-001 | 管理画面上部フラッシュ | 登録が完了しました。 | POSTフォームが送信済みかつ有効で、買取価格更新処理の後に `addSuccess` を実行したとき（一覧 `admin_data_buy_price_list` へリダイレクト後に表示） |
 
 > 根拠: `src/Eccube/Controller/Admin/Data/BuyPriceListController.php:113`（`addSuccess('admin.register.complete', 'admin')`）/ `src/Eccube/Resource/locale/messages.ja.yaml:1966`。
 

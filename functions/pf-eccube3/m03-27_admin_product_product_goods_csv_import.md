@@ -272,7 +272,7 @@ DB関連の記述は ec-cube-enterprise の実装を正とする。取込で書�
 | M03-27-MSG-003 | 画面上部フラッシュ | %maxRecord% 行を超えるCSVファイルは登録できません。 | CSV 行数が上限（`ADMIN_CSV_IMPORT_MAX_ROWS`）以上のとき（`admin.csv.error.upload.maxrecord`、`%maxRecord%`=`ADMIN_CSV_IMPORT_MAX_ROWS`） |
 | M03-27-MSG-005 | 画面上部フラッシュ | CSVファイルをアップロードしました | CsvImporter の取込結果にエラーがないとき（`admin.common.csv_upload_complete`） |
 | M03-27-MSG-001 | 画面上部フラッシュ | 要ソース確認 | アップロードフォームが不正のとき。各検証エラーメッセージをそのままフラッシュ（`$error->getMessage()` の可変値・逐語literal取得不可） |
-| M03-27-MSG-004 | 画面上部フラッシュ | 要ソース確認 | CsvImporter の取込結果にエラーがあるとき。各行のエラーメッセージをフラッシュ（`$error['message']` の可変値・逐語literal取得不可） |
+| M03-27-MSG-004 | 画面上部フラッシュ | 要ソース確認 | CsvImporter の取込結果にエラーがあるとき。取込結果のエラーを全件フラッシュ（`$error['message']` の可変値・逐語literal取得不可） |
 
 ---
 

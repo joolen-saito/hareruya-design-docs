@@ -346,7 +346,7 @@ DCIナンバー・MTG Companion登録本名・買取総額・買取件数等の�
 | M08-01-MSG-008 | 検索パターン名を削除できませんでした。 | 「検索条件削除」ボタンで CSRF トークン無効、または指定 patternId のパターンが存在しないとき。リダイレクトせず検索結果を再表示（admin.common.delete_pattern.error=messages.ja.yaml:1801; SearchControllerTrait.php:285,293） |
 | M08-01-MSG-009 | 既に削除されています | 会員削除で対象会員が存在しない（既に削除済み）とき。既存フラッシュをクリアして警告表示し、admin_customer_page（保持page_no）へ ?resume=1 付きでリダイレクト（admin.common.delete_error_already_deleted=messages.ja.yaml:1596; CustomerController.php:242; AbstractController.php:174-178） |
 | M08-01-MSG-010 | 削除してもよろしいですか? | 「検索条件削除」ボタン（data-method=delete）クリック時のブラウザ confirm。OKで admin_customer_delete_search_pattern へ送信、キャンセルで中断（common.delete_confirm=messages.ja.yaml:112; index.twig:19-27） |
-| M08-01-MSG-011 | 要ソース確認 | 検索パターン保存/削除/パターン検索で order が ASC/DESC/asc/desc 以外のとき。key_unknown: admin.error.sort。エラーフラッシュを表示し会員一覧を再表示（キーが messages.ja.yaml 等に未定義のため表示文言は要ソース確認。SearchControllerTrait.php:142-146; master EE-MISC-MSG-001 と同一ソース行） |
+| M08-01-MSG-011 | 要ソース確認 | 検索パターン保存または検索パターン削除で order が ASC/DESC/asc/desc 以外のとき。key_unknown: admin.error.sort。エラーフラッシュを表示し会員一覧を再表示（キーが messages.ja.yaml 等に未定義のため表示文言は要ソース確認。SearchControllerTrait.php:142-146,249,267,287,295; パターン検索は searchByPattern 経由で order 検証に到達しない: CustomerController.php:411; master EE-MISC-MSG-001 と同一ソース行） |
 
 検索パターン関連のフラッシュは会員側も admin.common.save_pattern.* / admin.common.delete_pattern.* キーを使用する（受注検索の admin.order.save_pattern.* / admin.order.delete_pattern.* とはキー・文言とも別であり、メッセージIDは共有しない）。
 

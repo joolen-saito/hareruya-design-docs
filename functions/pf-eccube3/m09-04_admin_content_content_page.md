@@ -174,9 +174,9 @@
 | M09-04-MSG-006 | 既にURLが存在しています。 | URL が既存ページと重複したとき（更新時は自身・確認ページのmasterを除外） | URL 欄直下 | ee実装（`MainEditType.php:212` `admin.content.page_url_exists`）（fable5レビュー追加） |
 | M09-04-MSG-007 | 同じファイル名のデータが存在しています。別のファイル名を入力してください。 | ファイル名が既存の利用者作成ページ、または初期投入ページと重複したとき | ファイル名欄直下 | ee実装（`MainEditType.php:233,256` `admin.content.page_file_name_exists`）（fable5レビュー追加） |
 | M09-04-MSG-008 | 入力されていません。 | 名称・URL・ファイル名（URL/ファイル名は利用者作成ページのみ必須）・ページ内容が未入力のとき | 各入力項目直下 | ee実装（`MainEditType.php:59,69,78,88` NotBlank、`validators.ja.yaml:17`）（fable5レビュー追加） |
-| M09-04-MSG-009 | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | 名称・URL・ファイル名・author・description・keyword・robots＝255文字、追加metaタグ＝上限超過のとき | 各入力項目直下 | ee実装（`MainEditType.php` Length、Symfonyデフォルト訳 `validators.ja.xlf:79`。`{{ limit }}` は実行時置換）（fable5レビュー追加） |
+| M09-04-MSG-009 | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | 名称・URL・ファイル名・author・description・keyword・robots が `eccube_stext_len`、追加metaタグが `eccube_ltext_len` の最大長を超過したとき | 各入力項目直下 | ee実装（`MainEditType.php:60-62,70,79,96-98,105-107,114-116,123-125,130-132` Length、Symfonyデフォルト訳 `validators.ja.xlf:79`。`{{ limit }}` は実行時置換）（codexレビュー是正: 旧記載「255文字」は設定値の実行時値差し替えのため設定キー名へ戻す） |
 | M09-04-MSG-010 | 有効な値ではありません。 | 利用者作成ページで URL・ファイル名が許可パターン（半角英数字と `_ - /`）に一致しないとき | URL・ファイル名欄直下 | ee実装（`MainEditType.php:71,80` Regex、Symfonyデフォルト訳 `validators.ja.xlf:102-103`）（fable5レビュー追加） |
-| M09-04-MSG-011 | Invalid twig format. {{ error }} | ページ内容（tpl_data）が Twig として構文エラーのとき | ページ内容欄直下 | ee実装（`MainEditType.php:89` TwigLint、`TwigLint.php:21`。`{{ error }}` は Twig エラーメッセージで実行時置換・未翻訳英語）（fable5レビュー追加） |
+| M09-04-MSG-011 | Twigのフォーマットが正しくありません。{{ error }} | ページ内容（tpl_data）が Twig として構文エラーのとき | ページ内容欄直下 | ee実装（`MainEditType.php:89` TwigLint → `TwigLint.php:21` の英語メッセージキーを validators ドメインで翻訳、`validators.ja.yaml:36`。`{{ error }}` は Twig エラーメッセージで実行時置換）（codexレビュー是正: 旧記載の英語キーは表示文言ではないため差し替え） |
 
 ---
 

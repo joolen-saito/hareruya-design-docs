@@ -229,13 +229,13 @@ ee実装（`src/Eccube/Controller/Admin/Event/EventController.php`）が実際�
 
 | メッセージID | 種別 | 表示文言（日本語） | 条件 |
 | --- | ------ | ------------------- | ------ |
-| M13-02-MSG-001 | インフォ(成功) | 保存しました | イベント作成フォームの「登録」ボタン押下で妥当かつ `EventCreateAction::handle` 正常終了時。作成イベントの編集画面（`admin_event_edit`）へリダイレクト。ロケール`admin.common.save_complete`。(EventController.php:224) |
-| M13-02-MSG-002 | エラー | 保存に失敗しました | イベント作成で `EventCreateAction::handle` が例外送出時。`@admin/Event/edit.twig` をrenderし作成フォームに留まる。ロケール`admin.common.save_error`。(EventController.php:228) |
-| M13-02-MSG-003 | インフォ(成功) | 保存しました | イベント編集フォームの「登録」ボタン押下で妥当かつ `EventEditAction::handle` 正常終了時。編集画面をrenderで再表示。ロケール`admin.common.save_complete`。(EventController.php:264) |
-| M13-02-MSG-004 | エラー | 保存に失敗しました | イベント編集で `EventEditAction::handle` が例外送出時。編集画面をrenderで再表示。ロケール`admin.common.save_error`。(EventController.php:266) |
-| M13-02-MSG-005 | エラー | 不正なリクエストです。 | 削除要求時、ログイン者が対象イベントの店舗を編集不可（`isEditableShop=false`）のとき。編集画面（`admin_event_edit`）へリダイレクト。ロケール`admin.common.error_invalid_request`。(EventController.php:308) |
-| M13-02-MSG-006 | エラー | 要確認（未定義キー `admin.event.delete.schedule_exists`） | 削除要求時、イベントの日程件数（`getDetails().count()`）が1件以上のとき。編集画面へリダイレクト。※controller:314 で使用されるキーが locale 未定義（定義済みは `admin.event.delete.not.schedule_exists` のみで別キー）。表示文言は未解決キー文字列となる可能性があり実機確認が必要。(EventController.php:314) |
-| M13-02-MSG-007 | インフォ(成功) | 削除しました | 削除要求時、編集可能かつ日程件数0件で remove・flush 実行時。検索結果ページ（`admin_event_index_page`、セッションのページ番号・resume=1）へリダイレクト。ロケール`admin.common.delete_complete`。(EventController.php:321) |
+| M13-02-MSG-001 | インフォ(成功) | 保存しました | イベント作成フォームの「登録」ボタン押下で妥当かつ `EventCreateAction::handle` 正常終了時。作成イベントの編集画面（`admin_event_edit`）へリダイレクト。ロケール`admin.common.save_complete`（messages.ja.yaml:1591）。(EventController.php:224) |
+| M13-02-MSG-002 | エラー | 保存に失敗しました | イベント作成で `EventCreateAction::handle` が例外送出時。`@admin/Event/edit.twig` をrenderし作成フォームに留まる。ロケール`admin.common.save_error`（messages.ja.yaml:1592）。(EventController.php:228) |
+| M13-02-MSG-003 | インフォ(成功) | 保存しました | イベント編集フォームの「登録」ボタン押下で妥当かつ `EventEditAction::handle` 正常終了時。編集画面をrenderで再表示。ロケール`admin.common.save_complete`（messages.ja.yaml:1591）。(EventController.php:264) |
+| M13-02-MSG-004 | エラー | 保存に失敗しました | イベント編集で `EventEditAction::handle` が例外送出時。編集画面をrenderで再表示。ロケール`admin.common.save_error`（messages.ja.yaml:1592）。(EventController.php:266) |
+| M13-02-MSG-005 | エラー | 不正なリクエストです。 | 削除要求時、ログイン者が対象イベントの店舗を編集不可（`isEditableShop=false`）のとき。編集画面（`admin_event_edit`）へリダイレクト。ロケール`admin.common.error_invalid_request`（messages.ja.yaml:1608）。UIでは編集不可（`isEditableBaseInfo=false`）のとき削除モーダル起動ボタンは非出力（edit.twig:483-487）。(EventController.php:307-311) |
+| M13-02-MSG-006 | エラー | 要ソース確認 | 削除要求時、イベントの日程件数（`getDetails().count()`）が1件以上のとき。編集画面へリダイレクト。※`addError('admin.event.delete.schedule_exists', 'admin')`（EventController.php:314）で使用されるキーが locale 未定義（定義済みは別キー `admin.event.delete.not.schedule_exists` のみ）。逐語文言をソースから取得できないため実機確認が必要。UIでは日程ありのときモーダルの削除ボタンが disabled（edit.twig:521-525）。 |
+| M13-02-MSG-007 | インフォ(成功) | 削除しました | 削除要求時、編集可能かつ日程件数0件で remove・flush 実行時。検索結果ページ（`admin_event_index_page`、セッションのページ番号を `max(1, pageNo)` に補正・`resume=1`）へリダイレクト。ロケール`admin.common.delete_complete`（messages.ja.yaml:1593）。(EventController.php:319-327) |
 
 ---
 

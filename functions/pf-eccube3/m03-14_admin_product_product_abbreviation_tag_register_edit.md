@@ -123,7 +123,7 @@ ec-cube-enterprise のコア管理画面におけるルート `admin_product_sto
 | 項目名 | 必須／任意 | 最大長 | 初期値 | 保存先・扱い |
 |--------|------------|--------|--------|----------------|
 | 名称 | 必須 | フォーム型にSymfony `Length` 制約無し。永続先列はDoctrineで文字列長確認値255 | 新規は未入力状態でウィジェットだけ描画される。編集は `mtb_storage_code.name`。 | Symfony `NotBlank`。キー `storage_code[name]`。列 `mtb_storage_code.name`。 |
-| 並び順 | 必須 | 整数入力。検証として `Range` 最小0最大32767。メッセージは「並び順は … の間で入力してください。」など翻訳可能なひな型。 | 編集時は現在のランク。 | キー `storage_code[rank]`。列 `mtb_storage_code.rank`（マッピング上は名前付きランクカラム）。 Symfony `IntegerType` と `NotBlank`。 |
+| 並び順 | 必須 | 整数入力。検証として `Range` 最小0最大32767。`notInRangeMessage` は StorageCodeType.php:51 の直書きリテラル `並び順は {{ min }} から {{ max }} の間で入力してください。`（翻訳キーではない。M03-14-MSG-011）。 | 編集時は現在のランク。 | キー `storage_code[rank]`。列 `mtb_storage_code.rank`（マッピング上は名前付きランクカラム）。 Symfony `IntegerType` と `NotBlank`。 |
 | アルファベット順ソートフラグ | 任意 | チェックオンオフ論理値 | `false`。編集は列の現在値。 | キー `storage_code[alphabetSortFlg]`。列 `mtb_storage_code.alphabet_sort_flg`。チェックオンで真、送信に含まれずならSymfonyチェック種の既定により偽側と解釈される。|
 
 ### エッジケース
@@ -237,16 +237,16 @@ ec-cube-enterprise のコア管理画面におけるルート `admin_product_sto
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
 |--------------|----------|--------------|----------|
 | M03-14-MSG-001 | 管理画面上部フラッシュ | 登録できませんでした。 | 略称タグ登録／編集の送信後、フォーム未送信またはバリデーション不正のとき（`admin.register.failed`）。一覧トップへリダイレクト |
-| M03-14-MSG-002 | 管理画面上部フラッシュ | 登録が完了しました。 | 略称タグの登録・更新が成功したとき（`admin.register.complete`）。一覧トップへリダイレクト |
+| M03-14-MSG-002 | 管理画面上部フラッシュ | 登録が完了しました。 | 略称タグの persist・flush が完了したとき（`admin.register.complete`）。`admin_product_storage_code` へリダイレクト（id パラメータ付き。同ルートのパスに `{id}` は無い: StorageCodeController.php:69） |
 | M03-14-MSG-003 | 管理画面上部フラッシュ | 商品で使用されているため、「%name%」の略称タグは削除することができません。 | 削除対象の略称タグが商品で使用されている（`getProducts()>0`）とき（`admin.storage.delete.failed`）。削除中止・一覧トップへリダイレクト |
 | M03-14-MSG-004 | 管理画面上部フラッシュ | 削除しました | 関連商品0件で略称タグの削除が成功したとき（`admin.common.delete_complete`）。一覧トップへリダイレクト |
-| M03-14-MSG-005 | 管理画面上部フラッシュ | 要ソース確認 | CSVインポートフォームがバリデーション不正（`checkFormValid()` 偽）のとき。フォームエラーごとに1件フラッシュ。CSVアップロード画面へリダイレクト。文言は可変（`$error->getMessage()`：CsvImportType の import_file NotBlank／File maxSize 等。StorageCodeController.php:257-266）で単一の逐語文言に確定不可 |
+| M03-14-MSG-005 | 管理画面上部フラッシュ | 要ソース確認 | CSVインポートフォームがバリデーション不正（`checkFormValid()` 偽）のとき。フォームエラーごとに1件フラッシュ。テンポラリデータ削除のうえ CSVアップロード画面へリダイレクト。文言は可変（`$error->getMessage()`：CsvImportType の import_file NotBlank／File maxSize 等。StorageCodeController.php:257-266）で単一の逐語文言に確定不可 |
 | M03-14-MSG-006 | 管理画面上部フラッシュ | CSVのフォーマットが一致しません | アップロードファイルが取得できない（null）とき（`admin.common.csv_invalid_format`）。CSVアップロード画面へリダイレクト |
 | M03-14-MSG-007 | 管理画面上部フラッシュ | CSVのフォーマットが一致しません | インポートデータ取得に失敗した（`$data===false`）とき（`admin.common.csv_invalid_format`）。CSVアップロード画面へリダイレクト |
-| M03-14-MSG-008 | 管理画面上部フラッシュ | 要ソース確認 | CSV登録処理中に例外（`\Throwable`）が発生したとき。インポート中止・CSVアップロード画面へリダイレクト。文言は可変（`$e->getMessage()`：ヘッダー不一致／データ空／並び順・名称重複／DB例外等。StorageCodeController.php:288-302）で単一の逐語文言に確定不可 |
-| M03-14-MSG-009 | 管理画面上部フラッシュ | 登録が完了しました。 | CSV登録が正常完了したとき（`admin.register.complete`）。CSVアップロード画面へリダイレクト |
+| M03-14-MSG-008 | 管理画面上部フラッシュ | 要ソース確認 | CSVヘッダー・データ件数・登録処理中に例外（`\Throwable`）が発生したとき。テンポラリデータ削除・インポート中止のうえ CSVアップロード画面へリダイレクト。文言は可変（`$e->getMessage()`：ヘッダー不一致／データ空／並び順・名称重複／DB例外等。StorageCodeController.php:288-302）で単一の逐語文言に確定不可 |
+| M03-14-MSG-009 | 管理画面上部フラッシュ | 登録が完了しました。 | CSV登録処理が例外なく完了したとき（`admin.register.complete`）。テンポラリデータ削除のうえ CSVアップロード画面へリダイレクト |
 | M03-14-MSG-010 | ブラウザ確認ダイアログ（window.confirm） | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 一覧の「削除」ボタンクリック時（`admin.common.delete_modal__message` を data-message 経由で表示。function.js:161-179）。OKで DELETE 送信、キャンセルで中止 |
-| M03-14-MSG-011 | 要確認（不正時は一覧トップへリダイレクトされるため form_errors 再描画経路がソース上確認できない） | 並び順は {{ min }} から {{ max }} の間で入力してください。 | 並び順が0〜32767の範囲外（`Range` 制約 `notInRangeMessage`、StorageCodeType.php:51）。実表示は M03-14-MSG-001 のフラッシュのみとなる可能性 |
+| M03-14-MSG-011 | 要ソース確認 | 並び順は {{ min }} から {{ max }} の間で入力してください。 | 並び順が0〜32767の範囲外で送信されたとき（`Range` 制約 `notInRangeMessage` 直書きリテラル、StorageCodeType.php:48-52）。表示位置・後続処理は要ソース確認: store() は `!isSubmitted()||!isValid()` 時に `admin_product_storage_code` へリダイレクトする（StorageCodeController.php:115-118）ため、`form_errors(form.rank)`（storage_code.twig:92）へ到達する再描画経路がソース上確認できない |
 
 ---
 

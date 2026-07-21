@@ -262,8 +262,8 @@ HareruyaEc プラグインが管理画面に提供する「カード管理」に
 | M14-01-MSG-014 | 警告ダイアログ(alert) | エラーが発生しました | カード名リスト作成の Ajax 通信が失敗（`.fail`）したとき（`index.twig:141`） |
 | M14-01-MSG-015 | 警告ダイアログ(alert) | セッションがタイムアウトしました。もう一度やり直してください。 | カード名リスト作成で CSRF トークンが不正のとき（`CardController.php:168`、`admin.common.csrf_invalid`。応答 message を alert 表示） |
 | M14-01-MSG-016 | 警告ダイアログ(alert) | 保存しました | カード名リスト生成が正常終了（`$result[0]===0`）したとき（`CardController.php:177`、`admin.common.save_complete`。応答 message を alert 表示） |
-| M14-01-MSG-017 | 警告ダイアログ(alert) | 要ソース確認（到達不能分岐: `CardNameListService::create()` は常に `[0, 'success']` を返すため `$result[1]` は表示されない） | カード名リスト生成が異常終了（`$result[0]!==0`）したとき（`CardController.php:177`、`CardNameListService.php:90`） |
-| M14-01-MSG-018 | 警告ダイアログ(alert) | 要ソース確認（例外由来の可変文言: `$e->getMessage()`） | カード名リスト生成中に Exception が発生したとき（`CardController.php:182`） |
+| M14-01-MSG-017 | 警告ダイアログ(alert) | 要ソース確認 | カード名リスト生成が異常終了（`$result[0]!==0`）したとき（`CardController.php:177` の `$result[1]` を alert 表示）。到達不能分岐: `CardNameListService::create()` は `CardNameListService.php:90` で常に `[0, 'success']` を返すため、表示文言は実ソースから確定できない |
+| M14-01-MSG-018 | 警告ダイアログ(alert) | 要ソース確認 | カード名リスト生成中に Exception が発生したとき（`CardController.php:182` の `$e->getMessage()` を alert 表示）。例外由来の可変文言のため固定リテラルは実ソースに存在しない |
 | M14-01-MSG-019 | 削除確認モーダル本文 | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 一覧行/編集画面の「削除」で削除モーダルを開いたとき（`admin.common.delete_modal__message`、%name%=対象カードの `getNameJpWithEn()`。`index.twig:434` / `edit.twig:219` → `delete_modal.twig:15`） |
 | M14-01-MSG-020 | フォーム項目直下インライン | 数字で入力してください。 | 検索フォーム「マナ・コスト」(cmc) が正規表現 `/^\d+(\.\d+)?$/` に一致しないとき（`SearchCardType.php:76`、`form_error.numeric_only`。`index.twig:209` の `form_errors` で表示） |
 

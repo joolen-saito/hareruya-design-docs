@@ -150,13 +150,13 @@ POST更新時は `StockMoveInstructionDetailUpdateAction` が `updateDate`・`Up
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
 |--------------|----------|--------------|----------|
-| M04-24-MSG-001 | 要確認（フラッシュではなく送り状No.欄のインラインフォームエラー: `form->get('trackingNo')->addError(FormError)` を `form_row` が欄直下に描画。StockMoveInstructionController.php:177-181 / stock_move_instruction_detail.twig:55） | 送り状番号を空に戻して発送状況を未に戻すことはできません。 | 詳細「登録」ボタン押下時、既存送り状No.が非空で入力送り状No.を空にした場合（同一画面を再表示） |
+| M04-24-MSG-001 | 送り状No.入力欄直下（インラインエラー） | 送り状番号を空に戻して発送状況を未に戻すことはできません。 | 詳細「登録」ボタン押下時、既存送り状No.が非空で入力送り状No.を空にした場合（フラッシュではなく `form->get('trackingNo')->addError(FormError)` を `form_row` が欄直下に描画。同一画面を再表示。StockMoveInstructionController.php:177-181 / stock_move_instruction_detail.twig:55） |
 | M04-24-MSG-002 | 管理画面上部フラッシュ | 保存しました | 詳細「登録」ボタン押下で更新完了（同詳細へリダイレクト） |
 | M04-24-MSG-003 | 管理画面上部フラッシュ | 送り状番号を空に戻して発送状況を未に戻すことはできません。 | 一覧モーダル「登録」ボタン押下時、既存送り状No.が非空で送信tracking_noが空の場合 |
-| M04-24-MSG-004 | 管理画面上部フラッシュ | 送り状No.を登録しました。 | 一覧モーダル「登録」ボタンで送り状No.登録完了（一覧resume=1へリダイレクト） |
+| M04-24-MSG-004 | 管理画面上部フラッシュ | 送り状No.を登録しました。 | 一覧の送り状No.登録モーダル「登録」ボタンで送り状No.登録完了（クエリを維持しresume=1を付けて一覧へリダイレクト。StockMoveInstructionController.php:253） |
 | M04-24-MSG-005 | 管理画面上部フラッシュ | 送り状No.登録後は削除できません。 | 削除処理時に送り状No.登録済み（StockMoveInstructionDeleteException）の場合（詳細へリダイレクト） |
-| M04-24-MSG-006 | 管理画面上部フラッシュ | 削除しました | 削除処理が例外なく完了（一覧resume=1へリダイレクト） |
-| M04-24-MSG-007 | 管理画面上部フラッシュ | ファイルが不正です。 | CSV一括登録で csv_file がUploadedFileでない、またはisValid()がfalseの場合 |
+| M04-24-MSG-006 | 管理画面上部フラッシュ | 削除しました | 削除処理が例外なく完了（一覧へresume=1のみ付けてリダイレクト。StockMoveInstructionController.php:279） |
+| M04-24-MSG-007 | 管理画面上部フラッシュ | ファイルが不正です。 | 在庫移動実績CSV登録モーダルの「登録」ボタン押下で csv_file がUploadedFileでない、またはisValid()がfalseの場合（一覧へresume=1のみ付けてリダイレクト。StockMoveInstructionController.php:373-377） |
 | M04-24-MSG-008 | 管理画面上部フラッシュ | エラーは20件まで表示されます | CSV取込結果のエラー件数が20件を超える場合 |
 | M04-24-MSG-009 | 管理画面上部フラッシュ | 要ソース確認 | CSV取込結果 getErrors() の各エラーmessageをそのままaddErrorする可変文言（行番号連結・翻訳置換を含み逐語literal確定不可）。候補: 「移動指示が見つかりません」「出庫元店舗が一致しません」「入庫先店舗が一致しません」「送り状Noが空欄です」（messages.ja.yaml:5327-5330）、MessageStore経由で「CSVのフォーマットが一致しません。」「CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。」「%s は必須項目です。 %d 行目のデータを確認してください。」「%d 行目の %s は0以上の数値を設定してください。」「%d 行目の %s ではデータを取得できません。」（messages.ja.yaml:2402-2413）。StockMoveInstructionController.php:383-390 |
 | M04-24-MSG-010 | 管理画面上部フラッシュ | 送り状No.を一括登録しました。 | CSV取込後の成功件数が1件以上の場合 |
@@ -168,9 +168,9 @@ POST更新時は `StockMoveInstructionDetailUpdateAction` が `updateDate`・`Up
 | M04-24-MSG-016 | 管理画面上部フラッシュ | アップロードに失敗しました。詳細：%detail% | CSV取込でRuntimeException以外のThrowableが発生した場合（%detail%は例外message、空なら例外クラス名＋「 (メッセージなし)」） |
 | M04-24-MSG-017 | ブラウザ標準ダイアログ（JSアラート） | 送り状CSVを出力する在庫移動指示にチェックを入れてください。 | 一覧「送り状CSVダウンロード」ボタン押下時に行チェックが0件の場合（送信中断。stock_move_instruction_index.twig:405-414） |
 | M04-24-MSG-018 | 削除確認モーダル本文 | 在庫移動指示（ID：%id%）を削除してよろしいですか？ | 送り状No.未登録時に詳細「削除」ボタン押下でモーダル表示（「削除」で削除POST、キャンセルで閉じる。stock_move_instruction_detail.twig:144-159） |
-| M04-24-MSG-019 | 各日付入力欄直下のインラインフォームエラー | 不正な日付です。 | 検索で登録日/更新日が1900-01-01より前（Assert\Range違反）の場合（SearchStockMoveInstructionType.php:76-141 / validators.ja.yaml:60） |
-| M04-24-MSG-020 | 終了日入力欄直下のインラインフォームエラー | 要確認（trans('admin.product.date_range_error')のキーがロケール未定義のためキー文字列がそのまま表示される可能性。類似キーadmin.common.date_range_error=「終了日時は、開始日時より大きく設定してください」。実装バグ疑い） | 検索で登録日/更新日の開始日が終了日より後の場合（SearchStockMoveInstructionType.php:150-162） |
-| M04-24-MSG-021 | 送り状No.入力欄直下のインラインフォームエラー | 要確認（Symfony標準Length(max:255)メッセージ。src側で未上書きのためvendor validators.ja.xlf:78-79「長すぎます。この値は{{ limit }}文字以下で入力してください。」が適用される見込み） | 詳細「登録」で送り状No.が255文字を超える場合（StockMoveInstructionDetailType.php:38-40） |
+| M04-24-MSG-019 | 登録日/更新日の日付入力欄の下（form_errors出力位置・インラインエラー） | 不正な日付です。 | 検索で登録日/更新日が1900-01-01より前（Assert\Range違反）の場合（SearchStockMoveInstructionType.php:76-141 / validators.ja.yaml:60 / stock_move_instruction_index.twig:113,122） |
+| M04-24-MSG-020 | 登録日/更新日の日付入力欄の下（form_errors出力位置・インラインエラー） | 要ソース確認 | 検索で登録日/更新日の開始日が終了日より後の場合（SearchStockMoveInstructionType.php:150-162）。`trans('admin.product.date_range_error')` のキーが全ロケールファイル未定義（実在する類似キーは `admin.common.date_range_error`=messages.ja.yaml:1611 のみ）。未定義キーはキー文字列がそのまま表示される見込みだが実機未確認のため逐語literal確定不可（実装バグ疑い） |
+| M04-24-MSG-021 | 送り状No.入力欄直下（インラインエラー） | 要ソース確認 | 詳細「登録」で送り状No.が255文字を超える場合（StockMoveInstructionDetailType.php:38-40 の `Assert\Length(['max' => 255])`）。src側でmessage未上書きのためSymfony標準訳（vendor/symfony/validator/Resources/translations/validators.ja.xlf:79）が適用される見込みだが実機未確認のため逐語literal確定不可 |
 
 ## リニューアル移行時の扱い
 
