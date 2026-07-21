@@ -13,13 +13,13 @@ from typing import Iterable
 BUSINESS_CODES = {
     "店頭受取受注管理": ("ORDER", "店舗チーム", "お客様、通販チーム、支店", "EC-CUBE（本店/支店）、スマレジ", "P1"),
     "店頭買取": ("KAITORI", "店舗チーム", "お客様、商品管理チーム、経理担当、支店", "EC-CUBE、MTGバイヤー、スマレジ", "P1"),
-    "イベント管理": ("EVENT", "店舗チーム", "お客様、顧客戦略チーム", "EC-CUBE、GMO、デッキシステム、スマレジ、ポイントグランター", "P1"),
+    "イベント管理": ("EVENT", "店舗チーム", "お客様、顧客戦略チーム", "EC-CUBE、SPLINKS、デッキシステム、スマレジ、ポイントグランター", "P1"),
     "商品登録・編集": ("PRODUCT", "トレードチーム", "ITチーム、通販チーム、デザインチーム", "EC-CUBE、AWS S3、在庫管理", "P1"),
     "価格管理": ("PRICE", "トレードチーム", "商品管理チーム、支店、セール担当者", "EC-CUBE、分析集計", "P1"),
     "在庫管理": ("ZAIKO", "トレードチーム", "店舗チーム、商品管理チーム、通販チーム、支店", "EC-CUBE、スマレジ", "P1"),
     "ネット買取": ("ONLINE-KAITORI", "通販チーム", "お客様、商品管理チーム", "EC-CUBE、MTGバイヤー、メール", "P1"),
     "仕入れ業務": ("SHIIRE", "商品管理チーム", "店舗チーム、通販チーム、トレードチーム", "EC-CUBE、MTGバイヤー、Backlog", "P1"),
-    "通販受注管理": ("TSUHAN", "通販チーム", "お客様、GMO、配送/ラベル印字アプリ", "EC-CUBE、GMO、メール、海外発送管理アプリ", "P1"),
+    "通販受注管理": ("TSUHAN", "通販チーム", "お客様、SPLINKS、配送/ラベル印字アプリ", "EC-CUBE、SPLINKS、メール、海外発送管理アプリ", "P1"),
     "デッキ登録": ("DECK", "顧客戦略チーム", "お客様、店舗チーム", "デッキ管理、デッキシステム、イベント管理", "P1"),
 }
 
@@ -534,6 +534,8 @@ def reset_generation_state() -> None:
     ROW_WORK_KIND.clear()
     ROW_SUMMARY.clear()
     MISSING_PATTERNS.clear()
+    FLOW_TEXT_BY_PATH.clear()
+    FLOW_GRAPH_BY_PATH.clear()
 
 
 def parse_flow_nodes(text: str) -> dict[str, tuple[str, str]]:
@@ -561,6 +563,165 @@ def normalize_node_text(value: str) -> str:
 NON_STEP_NODE_KINDS = (
     "処理/ラベル", "注釈(吹き出し)", "データ/DB", "帳票/書類", "flowChartPunchedCard", "フェーズ区切り",
 )
+
+# ---------------------------------------------------------------------------
+# データ連鎖（業務フロー原典の「データ遷移線(点線)」）
+#
+# シナリオテストは機能テストではなく、「データのつながりを通じて業務が完遂できるか」を
+# 見る層である。業務フロー図には作業線（実線）とは別に **データ遷移線（点線）** があり、
+# 「どの工程が、どの帳票/DBを産出し、それを次にどの工程が参照するか」が原典に描かれている。
+# 生成器はこれまで作業順（実線）しか使っておらず、工程ごとの期待結果が自己完結していた。
+# ここでは点線を解析し、産出→消費の連鎖を捏造ゼロで取り出す。
+#
+# 原典に接続先が無いもの（`(自由端)`）は、推測で結線せず「接続先未定義」として可視化する。
+# 照合キー（同一案件性を担保する識別子）は原典に定義が無いため創作しない。
+# ---------------------------------------------------------------------------
+DATA_NODE_KINDS = ("データ/DB", "帳票/書類", "flowChartPunchedCard")
+FREE_END = "(自由端)"
+
+
+@dataclass(frozen=True)
+class FlowNode:
+    number: str
+    lane: str
+    kind: str
+    text: str
+
+
+@dataclass(frozen=True)
+class FlowEdge:
+    is_data: bool   # True=データ遷移線(点線) / False=業務フロー線(実線)
+    src_no: str
+    dst_no: str     # 自由端は ""
+    dst_label: str
+
+
+EDGE_LINE_RE = re.compile(
+    r"^- \[(?P<kind>[^\]]+)\]\s*#(?P<src>\d+)\s*(?P<src_text>.*?)\s*→\s*"
+    r"(?:#(?P<dst>\d+)\s*(?P<dst_text>.*)|(?P<free>\(自由端\)))\s*$"
+)
+
+
+def parse_flow_nodes_numbered(text: str) -> dict[str, FlowNode]:
+    """ノード表から {ノード番号: FlowNode} を作る。遷移（#番号）と突き合わせるため番号を保持する。"""
+    nodes: dict[str, FlowNode] = {}
+    matched = NODE_TABLE_RE.search(text)
+    if not matched:
+        return nodes
+    for line in matched.group(1).splitlines():
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 5:
+            continue
+        number, lane, kind, node_text = cells[0], cells[2], cells[3], cells[4]
+        if not number.isdigit() or not node_text or node_text == "—":
+            continue
+        nodes.setdefault(number, FlowNode(number, lane, kind, node_text))
+    return nodes
+
+
+def parse_flow_edges(text: str) -> list[FlowEdge]:
+    """`### 遷移（コネクタ＝矢印）` の行を解析する。実線/点線とも保持する。"""
+    edges: list[FlowEdge] = []
+    for line in text.splitlines():
+        m = EDGE_LINE_RE.match(line.strip())
+        if not m:
+            continue
+        is_data = "データ遷移線" in m.group("kind")
+        if m.group("free"):
+            edges.append(FlowEdge(is_data, m.group("src"), "", FREE_END))
+        else:
+            edges.append(FlowEdge(is_data, m.group("src"), m.group("dst"), clean_cell(m.group("dst_text") or "")))
+    return edges
+
+
+@dataclass(frozen=True)
+class DataLink:
+    """原典の点線1〜2ホップ分。「産出工程 → データ/帳票 → 消費工程」を表す。
+
+    工程は産出側にも参照側にも立つ。原典では `#23 出荷指示リスト作成 → #22 発送管理台帳`
+    （工程→データ）だけでなく `#7 注文完了メール → #6 注文完了メール受領`（データ→工程）や
+    `#4 受注*1 → #7 注文完了メール`（データ→データ）も描かれるため、双方向に辿る。
+    相手側が原典に無い場合は空文字にし、推測で補完しない。
+    """
+    producer_no: str
+    producer_text: str
+    artifact_no: str
+    artifact_text: str
+    consumer_no: str        # 空文字＝消費先が原典に無い
+    consumer_text: str
+
+
+class FlowGraph:
+    """1つの業務フローファイルのノード＋遷移。データ連鎖の問い合わせに使う。"""
+
+    def __init__(self, text: str) -> None:
+        self.nodes = parse_flow_nodes_numbered(text)
+        self.edges = parse_flow_edges(text)
+        # 作業概要→図形の突合には既存の正規化テキスト辞書を使う（判定ロジックを二重化しない）。
+        self.norm_nodes = parse_flow_nodes(text)
+        # 同じ図形名が複数箇所に現れるため、番号は候補リストで持つ（先頭1件では取りこぼす）。
+        self.by_norm_text: dict[str, list[str]] = {}
+        for number, node in self.nodes.items():
+            self.by_norm_text.setdefault(normalize_node_text(node.text), []).append(number)
+
+    def node_numbers(self, norm_text: str) -> list[str]:
+        return self.by_norm_text.get(norm_text, [])
+
+    def _out(self, number: str) -> list[FlowEdge]:
+        return [e for e in self.edges if e.src_no == number and e.is_data]
+
+    def _in(self, number: str) -> list[FlowEdge]:
+        return [e for e in self.edges if e.dst_no == number and e.is_data]
+
+    def _is_artifact(self, number: str) -> bool:
+        node = self.nodes.get(number)
+        return node is not None and node.kind in DATA_NODE_KINDS
+
+    def data_links(self, number: str) -> list[DataLink]:
+        """工程 number に接続するデータ遷移線を、産出側・参照側の両方向から返す。"""
+        step = self.nodes.get(number)
+        if step is None:
+            return []
+        links: list[DataLink] = []
+        # (1) 産出: 工程 → データ/帳票（→ さらに先の消費先）
+        for edge in self._out(number):
+            if not edge.dst_no or not self._is_artifact(edge.dst_no):
+                continue
+            artifact = self.nodes[edge.dst_no]
+            downstream = [e for e in self._out(artifact.number) if e.dst_no and self.nodes.get(e.dst_no)]
+            if not downstream:
+                links.append(DataLink(number, step.text, artifact.number, artifact.text, "", ""))
+            for cons in downstream:
+                target = self.nodes[cons.dst_no]
+                links.append(DataLink(number, step.text, artifact.number, artifact.text, target.number, target.text))
+        # (2) 参照: データ/帳票 → 工程（産出元が原典にあれば併記）
+        for edge in self._in(number):
+            if not self._is_artifact(edge.src_no):
+                continue
+            artifact = self.nodes[edge.src_no]
+            upstream = [e for e in self._in(artifact.number) if self.nodes.get(e.src_no)]
+            if not upstream:
+                links.append(DataLink("", "", artifact.number, artifact.text, number, step.text))
+            for prod in upstream:
+                origin = self.nodes[prod.src_no]
+                links.append(DataLink(origin.number, origin.text, artifact.number, artifact.text, number, step.text))
+        return links
+
+
+# 業務フローファイル本文のキャッシュ（描画時に flow_path からグラフを引くため）。
+FLOW_TEXT_BY_PATH: dict[Path, str] = {}
+FLOW_GRAPH_BY_PATH: dict[Path, FlowGraph] = {}
+
+
+def flow_graph(flow_path: Path) -> FlowGraph | None:
+    if flow_path in FLOW_GRAPH_BY_PATH:
+        return FLOW_GRAPH_BY_PATH[flow_path]
+    text = FLOW_TEXT_BY_PATH.get(flow_path)
+    if text is None:
+        return None
+    graph = FlowGraph(text)
+    FLOW_GRAPH_BY_PATH[flow_path] = graph
+    return graph
 
 
 def classification_text(row: str) -> str:
@@ -1695,6 +1856,57 @@ def render_data_pattern_rows(patterns: list[DataPattern]) -> str:
     return "\n".join(rows)
 
 
+def data_chain_rows(s: Scenario) -> str:
+    """原典のデータ遷移線から「産出工程 → データ/帳票 → 消費工程」を表にする。
+
+    シナリオテストの主オラクルは画面仕様への適合ではなく、**データのつながりで業務が完遂
+    できること**である。ここは業務フロー図の点線（データ遷移線）だけを根拠にし、原典に
+    無い結線・照合キーは創作しない。接続先が無い場合は `自由端` として穴を可視化する。
+    """
+    graph = flow_graph(s.flow_path)
+    empty = "| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |"
+    if graph is None or not graph.edges:
+        return empty
+    lines: list[str] = []
+    seen: set[tuple[str, str, str]] = set()
+    for row in s.route.rows:
+        summary = ROW_SUMMARY.get(primary_text(row), "") or row_title(row)
+        detail = row_detail(row)
+        node = lookup_node(summary, graph.norm_nodes) or lookup_node_by_body(detail, graph.norm_nodes)
+        if node is None:
+            continue
+        for number in graph.node_numbers(node[2]):
+            for link in graph.data_links(number):
+                key = (link.producer_no, link.artifact_no, link.consumer_no)
+                if key in seen:
+                    continue
+                seen.add(key)
+                artifact = f"#{link.artifact_no} {link.artifact_text}"
+                if link.producer_no and link.consumer_no:
+                    producer = f"#{link.producer_no} {link.producer_text}"
+                    consumer = f"#{link.consumer_no} {link.consumer_text}"
+                    expected = (
+                        f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」を、"
+                        f"後続工程「{link.consumer_text}」が同一対象として参照できること。"
+                    )
+                    verdict = "連鎖あり"
+                elif link.producer_no:
+                    producer = f"#{link.producer_no} {link.producer_text}"
+                    consumer = "(自由端＝原典で接続先未定義)"
+                    expected = f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」が確認できること。"
+                    verdict = "要確認（消費先が原典未定義）"
+                else:
+                    producer = "(産出元が原典未定義)"
+                    consumer = f"#{link.consumer_no} {link.consumer_text}"
+                    expected = f"「{link.artifact_text}」を、工程「{link.consumer_text}」が参照できること。"
+                    verdict = "要確認（産出元が原典未定義）"
+                lines.append(
+                    f"| DL-{len(lines) + 1:02d} | {producer} | {artifact} | {consumer} | {expected} | "
+                    f"原典上の照合キー未定義（要業務確認） | {verdict} |"
+                )
+    return "\n".join(lines) if lines else empty
+
+
 def render_execution_steps(s: Scenario, seed: dict[str, str]) -> str:
     rows = []
     route_pattern = scenario_route_pattern(s)
@@ -1763,6 +1975,7 @@ def render_scenario(s: Scenario, repo: Path) -> str:
     data_pattern_rows = render_data_pattern_rows(data_patterns)
     execution_steps = render_execution_steps(s, seed)
     alt_execution_steps = render_alternative_execution_steps(s, seed)
+    data_chain_table = data_chain_rows(s)
     expected_feature_numbers = ", ".join(expected_features(s.business_title, route_pattern)) or "-"
     actual_feature_numbers = ", ".join(d.feature_no for d in s.docs if d.feature_no != "-") or "-"
     if s.route.edge_cases:
@@ -1841,6 +2054,15 @@ def render_scenario(s: Scenario, repo: Path) -> str:
 | # | 分岐ID | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|---|
 {alt_execution_steps}
+
+## データ連鎖（業務フロー原典のデータ遷移線）
+本層は機能テストではなく、**データのつながりで業務が完遂できるか**を見る。下表は業務フロー図の
+データ遷移線（点線）だけを根拠に、「どの工程が何を産出し、それを次にどの工程が参照するか」を示す。
+原典に無い結線・照合キーは創作しない。`自由端` は原典で接続先が未定義であることを示す実在の穴である。
+
+| 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
+|---|---|---|---|---|---|---|
+{data_chain_table}
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - {s.route.final_state}
@@ -2081,7 +2303,7 @@ BUSINESS_EDGE_CASES: dict[str, list[EdgeCase]] = {
     ],
     "イベント管理": [
         EdgeCase("E", "定員超過または受付期間外に申込が行われる", "受付完了にせず、受付不可理由を確認できる状態にする", "受付状態、定員、受付期間"),
-        EdgeCase("E", "GMO決済またはポイント付与に失敗する", "参加確定にせず、決済・付与結果を確認できる状態にする", "決済状態、ポイント付与結果、受付状態"),
+        EdgeCase("E", "SPLINKS決済またはポイント付与に失敗する", "参加確定にせず、決済・付与結果を確認できる状態にする", "決済状態、ポイント付与結果、受付状態"),
         EdgeCase("A", "イベント内容変更またはキャンセルが発生する", "対象参加者へ通知し、イベント状態を更新する", "イベント状態、通知結果、参加者一覧"),
     ],
     "デッキ登録": [
@@ -2127,7 +2349,7 @@ def edge_case_matches(case: EdgeCase, text: str, systems: str) -> bool:
         "重複": ("重複", "二重"),
         "入力": ("必須", "形式不正", "入力エラー"),
         "在庫": ("在庫", "入庫", "出庫", "棚卸", "移動", "欠品", "ピック"),
-        "決済": ("決済", "入金", "支払", "GMO", "返金"),
+        "決済": ("決済", "入金", "支払", "SPLINKS", "返金"),
         "返金": ("返金", "キャンセル", "取消"),
         "CSV": ("CSV", "インポート", "取込", "出力"),
         "本人確認": ("本人確認", "書留", "買取"),
@@ -2190,7 +2412,6 @@ ROUTE_ALTERNATIVE_KEYWORDS = (
 ROUTE_HIGH_RISK_KEYWORDS = (
     "外部",
     "連携",
-    "GMO",
     "スマレジ",
     "SPLINKS",
     "MTG",
@@ -2495,6 +2716,7 @@ def generate(repo: Path, only: str | None, max_docs: int) -> list[Scenario]:
         patterns_by_business.setdefault(business_title, []).extend(patterns)
         for num, name in index_pattern_entries(text):
             index_entries.setdefault(business_title, []).append((flow_path, num, name))
+        FLOW_TEXT_BY_PATH[flow_path] = text
         for pattern in patterns:
             candidates.append((flow_path, flow_title, business_title, text, pattern))
     # 索引にあるのに、その業務のどのフロー本文にも作業行が無いパターンを検出する。
