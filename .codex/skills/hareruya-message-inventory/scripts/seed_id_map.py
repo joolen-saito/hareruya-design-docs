@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+from pathlib import Path
 
 import lib_messages as L
 import build_inventory as B
@@ -31,12 +32,15 @@ ID_MAP = L.DOC_ROOT / "message_inventory" / "id_map.tsv"
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--master", help="raw と同一抽出のマスタTSV（既定: message_inventory.tsv）。"
+                                     "レビュー追記でマスタが増えている場合は増える前のスナップショットを指定")
     args = ap.parse_args()
     if ID_MAP.exists() and not args.force:
         ap.error(f"{ID_MAP} が既に存在。上書きは --force")
+    src_tsv = Path(args.master) if args.master else TSV
 
     master = []
-    with TSV.open(encoding="utf-8") as fh:
+    with src_tsv.open(encoding="utf-8") as fh:
         for r in csv.DictReader(fh, delimiter="\t"):
             master.append(r["メッセージID"].strip())
 

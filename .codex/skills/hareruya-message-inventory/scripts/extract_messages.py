@@ -268,8 +268,14 @@ def extract_form_errors(trans: dict[str, str], file_to_fids: dict[str, list[str]
 
 
 JS_RE = re.compile(r"\b(?P<fn>confirm|alert)\s*\(\s*(?P<q>['\"])(?P<msg>(?:(?!\2).)*)\2\s*\)", re.S)
-TRANS_IN_TWIG = re.compile(r"['\"]?\{\{\s*['\"]([^'\"]+)['\"]\s*\|\s*trans[^}]*\}\}['\"]?")
+# trans は引数に {...} を取りうる（trans({'%name%': x})）ため [^}]* では破綻する。
+# キー名だけを取り出し、後続の引数/フィルタは非貪欲に読み飛ばす。
+TRANS_IN_TWIG = re.compile(r"\{\{\s*['\"]([^'\"]+)['\"]\s*\|\s*trans\b.*?\}\}", re.S)
 JP_RE = re.compile(r"[぀-ヿ一-鿿]")
+HTML_TAG_RE = re.compile(r"<\s*(div|span|p|br|img|input|a|table|tr|td|ul|li|button|i|b|strong)\b", re.I)
+# 実装コメント中の記述例（data-confirm="xxxx" 等）は実メッセージではない
+COMMENT_LINE_RE = re.compile(r"^\s*(//|\*|#|\{#)")
+PLACEHOLDER_LITERAL = re.compile(r"^(x{3,}|X{3,}|…|\.{3}|hoge|foo|bar|sample|ここにメッセージ)$")
 
 # data-* 属性経由のメッセージ（ボタン→JS が confirm / modal .text() で表示）。
 # 例: data-confirm="…" / data-message="{{ 'key'|trans }}" / data-confirm-message="…"
@@ -350,10 +356,14 @@ def extract_js(trans: dict[str, str]) -> list[dict]:
                 add(m.group("fn"), "確認" if is_confirm else "警告", msg, resolved, kind,
                     "画面中央(ダイアログ)", "確認ダイアログ" if is_confirm else "警告ダイアログ", m.start())
 
+            def in_comment(pos: int) -> bool:
+                bol = text.rfind("\n", 0, pos) + 1
+                return bool(COMMENT_LINE_RE.match(text[bol:pos] or ""))
+
             # 2. data-confirm / data-message / data-confirm-message 属性
             for m in DATA_MSG_RE.finditer(text):
                 raw = m.group("msg")
-                if _SKIP_ATTR_VAL.match(raw):
+                if _SKIP_ATTR_VAL.match(raw) or PLACEHOLDER_LITERAL.match(raw.strip()) or in_comment(m.start()):
                     continue
                 resolved, kind = _resolve_js(raw, trans)
                 if kind == "other" and not resolved:
@@ -371,8 +381,10 @@ def extract_js(trans: dict[str, str]) -> list[dict]:
             # 3. モーダルへ JS で差し込む文言 (.text()/.html() に trans/和文)
             for m in DOM_INJECT_RE.finditer(text):
                 raw = m.group("arg")
+                if HTML_TAG_RE.search(raw) or in_comment(m.start()):
+                    continue  # マークアップ注入はメッセージではない
                 resolved, kind = _resolve_js(raw, trans)
-                if resolved is None:
+                if resolved is None or PLACEHOLDER_LITERAL.match(str(resolved).strip()):
                     continue
                 add(f".{m.group('fn')}()", "インフォ", raw, resolved, kind,
                     "画面中央(モーダル)", "モーダル文言", m.start())

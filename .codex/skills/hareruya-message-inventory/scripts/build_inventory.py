@@ -88,17 +88,35 @@ def trigger_element(row: dict) -> str:
 
 
 def main() -> None:
+    import argparse
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", help="出力先TSV（既定: message_inventory.tsv）。"
+                                  "確定済みマスタを壊さず差分を取る用途では一時ファイルを指定する")
+    a = ap.parse_args()
+    global OUT_TSV
+    out_override = Path(a.out) if a.out else None
+
     _f2f, _r2f, meta = L.load_function_map()
     rows = [json.loads(l) for l in RAW.read_text(encoding="utf-8").splitlines() if l.strip()]
 
     # 機能/エリア単位で採番（安定ID台帳で再生成不変・追加分のみ末尾採番）
     id_map = load_id_map()
-    # 台帳に既存の area 別 使用済み番号を先読み（再利用防止）
+    # 台帳＋現行マスタの area 別 使用済み番号を先読み（再利用防止）。
+    # マスタにはレビューで追記された抽出外メッセージも居るため、必ず両方から予約する。
     used: dict[str, set[int]] = {}
-    for mid in id_map.values():
+
+    def reserve(mid: str) -> None:
         a, _, num = mid.rpartition("-MSG-")
         if a and num.isdigit():
             used.setdefault(a, set()).add(int(num))
+
+    for mid in id_map.values():
+        reserve(mid)
+    if OUT_TSV.exists():
+        for line in OUT_TSV.read_text(encoding="utf-8").splitlines()[1:]:
+            if line:
+                reserve(line.split("\t", 1)[0])
     occ: dict[tuple, int] = {}
     out: list[list[str]] = []
     # 安定ソート: file, line
@@ -132,13 +150,14 @@ def main() -> None:
             (r.get("heuristic_fid") or "") if not fid else "",
         ])
 
-    OUT_TSV.parent.mkdir(parents=True, exist_ok=True)
-    with OUT_TSV.open("w", encoding="utf-8") as fh:
+    dest = out_override or OUT_TSV
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with dest.open("w", encoding="utf-8") as fh:
         fh.write("\t".join(COLUMNS) + "\n")
         for o in out:
             fh.write("\t".join(c.replace("\t", " ").replace("\n", "\\n") for c in o) + "\n")
     save_id_map(id_map)
-    print(f"wrote {len(out)} rows -> {OUT_TSV}  (id_map={len(id_map)})")
+    print(f"wrote {len(out)} rows -> {dest}  (id_map={len(id_map)})")
     resolved = sum(1 for o in out if not o[-1].startswith("UNRESOLVED"))
     mapped = sum(1 for o in out if o[1] and not o[1].startswith("[要機能紐付け]") and "_" not in o[0].split("-MSG")[0][:3])
     print(f"resolved content: {resolved}/{len(out)}  | rows needing codex(トリガー/後続/未解決): all rows for those 2 cols")
