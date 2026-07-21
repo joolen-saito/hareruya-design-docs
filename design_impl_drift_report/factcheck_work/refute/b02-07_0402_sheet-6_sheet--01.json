@@ -1,0 +1,26 @@
+{
+  "chunkId": "b02-07_0402_sheet-6_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0402_sheet-6_sheet.json#b02-07_0402_sheet-6_sheet-conformance-83bef25206c8",
+      "refuted": false,
+      "reason": "実装確認済み。DtbWeeklyStockHistoryTempRepository::getStockData(72-79行)の SQL は FROM dtb_stock_history sh / WHERE sh.product_stock_id BETWEEN :start AND :end / GROUP BY sh.product_stock_id で、引用は正確。出力行の母集団は dtb_stock_history のみで、履歴行が1件も無い product_stock_id はグループ自体が生成されず脱落する。ProductStock は getLastProductStockId()(148-159行)の MAX(id) 取得＝offset範囲の上限決定にしか使われず、母集団供給の LEFT JOIN/UNION は無い。rg 'ProductStock|dtb_product_stock' で対象3ファイルを横断したが ProductStock 起点の集計は皆無。別実装(StockRecommendCsvExportService 等)も出力ではなく本テーブルを読む側で、集計母集団を補完しない。DtbWeeklyStockHistoryRepository::copyDataFromTemp/replaceFromTemp(34-81行)は temp→本の単純コピーで欠落を埋めない。テストはリポジトリを mock しており SQL 母集団挙動を検証していないため反証にならない。設計 1345/1348/1350-1351 は『商品在庫に存在する全商品規格ID』を対象と明記し、Ph2/対象外/現行踏襲の除外注記も該当行近傍に無い(1330の対象外リストは在庫履歴作成等で本要求ではない)。指摘は維持。",
+      "checkedImplRefs": [
+        "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:69-79 (getStockData SQL, FROM dtb_stock_history GROUP BY product_stock_id)",
+        "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:148-159 (getLastProductStockId, ProductStock は MAX(id) のみ)",
+        "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:50-81 (handle, offset刻みだが母集団補完なし)",
+        "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryRepository.php:34-81 (copyDataFromTemp/replaceFromTemp は単純コピー)"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0402_sheet-6_sheet.json#b02-07_0402_sheet-6_sheet-conformance-9be8036c6b6a",
+      "refuted": false,
+      "reason": "実装確認済み。UpdateWeeklyStockHistoryCommand::execute(44-59行)は handle() を try 実行し、例外時 $io->error、正常時 $io->success('週間在庫履歴の更新が完了しました。')(56行)を出すのみ。引用は正確。開始時のコンソール出力は皆無、完了出力にも日時は含まれない。本コマンドは Symfony\\Console\\Command を直接 extend し、開始/完了ログを持つ独自基底クラスや trait は無い。rg 'ConsoleEvents|onConsoleCommand|onConsoleTerminate' を src/Eccube 全体で走らせたが該当 Subscriber は 0 件で、コマンド外からの日時付き開始/完了ログ注入も存在しない。BatchUpdateWeeklyStockHistoryAction 内の \\DateTime(57行)はクエリ用 dateStr('Y-m-d 00:00:00')生成専用で、開始/完了ログ出力には使われない(rg 'writeln|->text|->note|->info|DateTime|date(' で確認)。設計 1373-1374 ログ・監査は『開始・完了のコンソール出力（日時付き）』を要求。指摘は維持。",
+      "checkedImplRefs": [
+        "ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:44-59 (execute, success のみ・開始出力/日時なし)",
+        "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:57 (\\DateTime はクエリ用 dateStr 生成専用)",
+        "src/Eccube 全体 rg ConsoleEvents/onConsoleCommand/onConsoleTerminate → 0件"
+      ]
+    }
+  ]
+}

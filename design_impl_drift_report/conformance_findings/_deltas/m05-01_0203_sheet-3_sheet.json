@@ -1,0 +1,108 @@
+{
+  "functionId": "m05-01_0203_sheet-3_sheet",
+  "featureNo": "M05-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3:1015,1016,1017,1018,1028",
+      "designExpectation": "店舗のセレクトボックスはメンバー管理で設定されているデフォルト検索表示店舗が選択されている状態とし、店舗選択は必須、全店の選択項目を追加する。複数店舗はOR条件、全店または全店＋店舗選択時は開店しているすべての店舗を検索対象とする。",
+      "implRef": "src/Eccube/Controller/Admin/Order/OrderController.php:223; src/Eccube/Controller/Admin/Order/OrderController.php:233; src/Eccube/Form/Type/Admin/SearchOrderType.php:289; src/Eccube/Repository/OrderRepository.php:251; src/Eccube/Resource/template/admin/Order/index.twig:386",
+      "implementationActual": "初期GETでは店舗検索条件を空配列でセッションへ保存し、tenants は required=false の通常EntityType複数選択として描画される。全店専用選択肢や開店店舗限定条件はなく、非空時だけ s.baseInfo IN (:BaseInfo) で絞り込む。",
+      "mismatchReason": "defaultSearchBaseInfo / DefaultSearchBaseInfo / all_shops / 全店 / isOpenShop / is_open_shop を OrderController、SearchOrderController、SearchOrderType、OrderRepository、index.twig、messages.ja.yaml で再検索したが、受注検索の店舗初期値・必須化・全店選択肢・開店店舗限定に接続された実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "初期選択",
+          "design": "メンバー管理のデフォルト検索表示店舗を選択済みにする",
+          "implementation": "OrderController は初期表示で viewData=[] を作り、tenants に既定値を入れない",
+          "mismatch": "デフォルト店舗未反映"
+        },
+        {
+          "item": "必須",
+          "design": "店舗選択は必須",
+          "implementation": "SearchOrderType の tenants は required=false",
+          "mismatch": "必須制約なし"
+        },
+        {
+          "item": "全店",
+          "design": "全店選択肢を追加し、全店選択時は開店しているすべての店舗を対象にする",
+          "implementation": "全店用 choice はなく、OrderRepository は tenants 非空時の IN 条件だけを持つ",
+          "mismatch": "全店選択肢・開店店舗限定が未実装"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3:1038",
+      "designExpectation": "顧客グループは複数選択チェックボックスで、顧客グループ設定画面で定めたものをマスターとして参照して表示する。",
+      "implRef": "src/Eccube/Form/Type/Admin/SearchOrderType.php:245; src/Eccube/Resource/template/admin/Order/index.twig:475; src/Eccube/Repository/OrderRepository.php:324",
+      "implementationActual": "SearchOrderType には customer_group の EntityType 定義があるが、index.twig は「顧客グループ」ラベルだけを描画し form_widget(searchForm.customer_group) を出していない。OrderRepository も customer_group - TBD コメントのみで検索条件を組み立てない。",
+      "mismatchReason": "customer_group / CustomerGroup / DtbCustomerGroup / 顧客グループ / admin.order.customer_group を Controller、FormType、Repository、Twig、翻訳で再検索した結果、受注一覧検索UIでのチェックボックス表示と検索条件適用の実装は不在。",
+      "comparisonRows": [
+        {
+          "item": "画面表示",
+          "design": "顧客グループマスターを複数選択チェックボックスとして表示",
+          "implementation": "Twig はラベルのみで widget を描画しない",
+          "mismatch": "利用者が顧客グループを選択できない"
+        },
+        {
+          "item": "検索条件",
+          "design": "選択した顧客グループで受注検索できる",
+          "implementation": "OrderRepository は customer_group の条件追加が TODO のまま",
+          "mismatch": "検索絞り込み未実装"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3:1012",
+      "designExpectation": "引き渡し後の受注情報に引き渡し前の注文番号を紐づけておき、引き渡し前の注文番号で検索した際に、引き渡し後の受注情報が検索できるようにする。",
+      "implRef": "src/Eccube/Repository/OrderRepository.php:258; src/Eccube/Repository/OrderRepository.php:295; src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/Pattern/EccubeOtcPatternHandler.php:115; src/Eccube/Entity/Order.php:754",
+      "implementationActual": "スマレジ引き渡し処理では既存受注に next_order_id を設定するが、受注検索の注文番号条件は o.order_number LIKE :order_number のみ。旧受注の next_order_id から新受注を引く join/subquery はなく、未選択ステータスでは引渡し済み受注自体も除外される。",
+      "mismatchReason": "引き渡し前/後、next_order_id、nextOrder、order_number、previous/original order を OrderRepository、SearchOrderType、OrderController、Smaregi handler、Order entity へ翻案して再検索したが、旧注文番号入力で移行先受注を返す検索経路は確認できない。なお本要求は materialGapRows に無く extractorMissed として数えた。",
+      "comparisonRows": [
+        {
+          "item": "紐づけ",
+          "design": "引き渡し前注文番号と引き渡し後受注を検索可能な形で紐づける",
+          "implementation": "既存受注の next_order_id に新受注IDを保存するのみ",
+          "mismatch": "検索クエリへ未接続"
+        },
+        {
+          "item": "注文番号検索",
+          "design": "引き渡し前の注文番号で引き渡し後の受注情報が検索できる",
+          "implementation": "現受注 o.order_number だけを LIKE 検索する",
+          "mismatch": "旧注文番号から新受注を返さない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3:1003,1004,1005,1007,1109,1110",
+      "designExpectation": "保存した検索パターンは検索条件フォームと検索結果一覧の間にリンクとして並べて表示され、クリックするとその検索条件で受注検索を行う。また保存した検索パターン個々にリロードアイコンがあり、該当件数は更新されるまで「*」を表示する。",
+      "implRef": "src/Eccube/Resource/template/admin/Order/index.twig:1075; src/Eccube/Resource/template/admin/Order/index.twig:1078; src/Eccube/Resource/template/admin/Order/index.twig:1081",
+      "implementationActual": "検索パターン一覧は描画されるが、現在適用中のパターンは pattern_id 分岐で名前だけを出力する。リンク、該当件数「*」のspan、個別リロードボタンは未選択パターン側の else にしかない。",
+      "mismatchReason": "search_pattern / SearchPattern / reload_all_pattern / get_count_pattern / admin_order_search_pattern / admin_order_count_pattern を再検索し、非選択パターンの実装は確認した。一方で現在選択中パターンだけは設計の「保存した検索パターン個々」のリンク・件数・リロード対象から外れている。",
+      "comparisonRows": [
+        {
+          "item": "現在適用中の検索パターン",
+          "design": "保存済み検索パターンとしてリンク、件数表示、個別リロードアイコンを持つ",
+          "implementation": "名前だけのテキスト表示",
+          "mismatch": "リンク・件数「*」・リロードアイコンが欠落"
+        },
+        {
+          "item": "未選択の検索パターン",
+          "design": "リンク、件数表示、個別リロードアイコンを持つ",
+          "implementation": "aタグ、pattern_id_* span、get_count_patternボタンを描画",
+          "mismatch": "このケースは実装済み"
+        }
+      ]
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/f03_07_front_product_product_arrival_notification_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・非同期応答（JSON状態と表示文言）・URL・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（未検証雛形）。本機能のカスタマイズ区分はカスタマイズであり、画面・処理フロー・表示メッセージは pf-eccube3 を参照リポ、DB は ec-cube-enterprise を正典とする。
+期待結果は画面表示・遷移・非同期応答（JSON状態と表示文言）・URL・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（未検証雛形）。本機能のカスタマイズ区分はカスタマイズであり、画面・処理フロー・表示メッセージは pf-eccube3 を参照リポ、DB は ec-cube-enterprise を正典とする。
 
 本機能は「会員ログイン」または「在庫切れ状態の商品規格」という前提が必要な観点が多く、ブラウザ非ログインで観測可能な汎用挙動は限られる。したがって自動化ケースの多くは要ログイン/要在庫切れ/要実機の `test.fixme`（理由付き）で保留し、非ログインで観測できる誘導のみ live とする。入荷時の通知メール送信・入荷に伴う依頼の論理削除は在庫改定の管理処理を正とし本機能では扱わない（対象外）。
 
@@ -23,18 +23,18 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-021	IT-13	URL直接アクセス	P1	未ログインで入荷通知依頼一覧URLへ直接アクセスするとログイン画面へ誘導される	未ログイン	保護された会員機能URL /{_locale}/mypage/notifylist	"1. /{_locale}/mypage/notifylist へ直接アクセスする"	入荷通知依頼一覧を表示せず、会員ログイン画面へ誘導されること。
-f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-002	IT-15	未認証	P1	未ログインで入荷通知ボタンを押下すると未ログイン応答となり登録されない	未ログイン／SEED-F03-07-STOCKOUT（在庫切れ商品規格が存在）	有効な product_class_id	"1. 在庫切れ商品の入荷通知ボタンを押下する（POST /{_locale}/cart/pushReceive）"	「入荷通知を依頼する場合ログインしてください」（状態nologin）の応答となり、依頼が登録されないこと。
-f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-007	IT-25	UI部品	P2	未依頼の商品規格で依頼ボタンを押すと依頼確認ダイアログが表示される	SEED-F03-07-CUSTOMER でログイン／SEED-F03-07-STOCKOUT	—	"1. 在庫切れ商品の入荷通知（未依頼）ボタンを押下する"	「入荷通知／入荷通知依頼を行いますか?」の確認ダイアログ（見出し・本文・OK／キャンセル）が表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-021	IT-13	URL直接アクセス	P1	未ログインで入荷通知依頼一覧URLへ直接アクセスするとログイン画面へ誘導される	未ログイン	保護された会員機能URL /{_locale}/mypage/notifylist	1. /{_locale}/mypage/notifylist へ直接アクセスする	入荷通知依頼一覧を表示せず、会員ログイン画面へ誘導されること。				
+f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-002	IT-15	未認証	P1	未ログインで入荷通知ボタンを押下すると未ログイン応答となり登録されない	未ログイン／SEED-F03-07-STOCKOUT（在庫切れ商品規格が存在）	有効な product_class_id	1. 在庫切れ商品の入荷通知ボタンを押下する（POST /{_locale}/cart/pushReceive）	「入荷通知を依頼する場合ログインしてください」（状態nologin）の応答となり、依頼が登録されないこと。				
+f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-007	IT-25	UI部品	P2	未依頼の商品規格で依頼ボタンを押すと依頼確認ダイアログが表示される	SEED-F03-07-CUSTOMER でログイン／SEED-F03-07-STOCKOUT	—	1. 在庫切れ商品の入荷通知（未依頼）ボタンを押下する	「入荷通知／入荷通知依頼を行いますか?」の確認ダイアログ（見出し・本文・OK／キャンセル）が表示されること。				
 f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-009	IT-25	操作起点	P1	ログイン会員が未依頼の商品規格で依頼すると依頼成功応答となる	SEED-F03-07-CUSTOMER でログイン／SEED-F03-07-STOCKOUT（未依頼・上限未満）	product_class_id	"1. 入荷通知ボタン押下
-2. 確認ダイアログでOK（POST /cart/pushReceive）"	「入荷通知依頼しました。」（状態success）の応答となること。
+2. 確認ダイアログでOK（POST /cart/pushReceive）"	「入荷通知依頼しました。」（状態success）の応答となること。				
 f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-010	IT-25	確認ダイアログ	P1	依頼済みの商品規格で再度押下すると取り消し応答となる（トグル）	SEED-F03-07-CUSTOMER でログイン／当該商品規格を依頼済み	同一 product_class_id	"1. 依頼済みの入荷通知ボタン押下
-2. 確認ダイアログでOK（POST /cart/pushReceive）"	「入荷通知依頼をキャンセルしました。」（状態cancel）の応答となり、依頼が取り消されること。
-f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-013	IT-25	送信可否制御	P2	入荷通知ボタン押下は画面遷移せず非同期で結果を反映する	SEED-F03-07-CUSTOMER でログイン／SEED-F03-07-STOCKOUT	product_class_id	"1. 入荷通知ボタンを押下する"	ページ遷移せず、返却JSONの状態に応じてボタン表示（依頼済み／未依頼）が切り替わること。
-f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-008	IT-25	UI部品	P2	特定できない商品規格では対象商品削除済み応答となり登録されない	未ログインでも可（判定順序1が最初）	存在しない product_class_id	"1. 存在しない product_class_id で POST /{_locale}/cart/pushReceive"	「対象の商品は削除済です。」（状態fail）の応答となり、依頼が登録されないこと。
-f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-017	IT-03	画面遷移	P2	依頼件数が上限以上のとき上限超過応答となり登録されない	SEED-F03-07-CUSTOMER でログイン／SEED-F03-07-LIMIT（依頼上限到達）	新規 product_class_id	"1. 上限到達状態で入荷通知ボタン押下→OK（POST /cart/pushReceive）"	「入荷通知依頼は（上限件数）件までです。」（状態fail）の応答となり、依頼が登録されないこと。
-f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-071	IT-23	検索条件	P2	マイページ入荷通知依頼一覧に自分の依頼済み商品が表示される	SEED-F03-07-CUSTOMER でログイン／SEED-F03-07-REQUEST（依頼データあり）	—	"1. /{_locale}/mypage/notifylist を開く"	当該会員の入荷通知依頼の対象商品が一覧表示されること。
+2. 確認ダイアログでOK（POST /cart/pushReceive）"	「入荷通知依頼をキャンセルしました。」（状態cancel）の応答となり、依頼が取り消されること。				
+f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-013	IT-25	送信可否制御	P2	入荷通知ボタン押下は画面遷移せず非同期で結果を反映する	SEED-F03-07-CUSTOMER でログイン／SEED-F03-07-STOCKOUT	product_class_id	1. 入荷通知ボタンを押下する	ページ遷移せず、返却JSONの状態に応じてボタン表示（依頼済み／未依頼）が切り替わること。				
+f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-008	IT-25	UI部品	P2	特定できない商品規格では対象商品削除済み応答となり登録されない	未ログインでも可（判定順序1が最初）	存在しない product_class_id	1. 存在しない product_class_id で POST /{_locale}/cart/pushReceive	「対象の商品は削除済です。」（状態fail）の応答となり、依頼が登録されないこと。				
+f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-017	IT-03	画面遷移	P2	依頼件数が上限以上のとき上限超過応答となり登録されない	SEED-F03-07-CUSTOMER でログイン／SEED-F03-07-LIMIT（依頼上限到達）	新規 product_class_id	1. 上限到達状態で入荷通知ボタン押下→OK（POST /cart/pushReceive）	「入荷通知依頼は（上限件数）件までです。」（状態fail）の応答となり、依頼が登録されないこと。				
+f03-07_front_product_product_arrival_notification（フロント_商品_入荷時通知）	E2E-F03-07-071	IT-23	検索条件	P2	マイページ入荷通知依頼一覧に自分の依頼済み商品が表示される	SEED-F03-07-CUSTOMER でログイン／SEED-F03-07-REQUEST（依頼データあり）	—	1. /{_locale}/mypage/notifylist を開く	当該会員の入荷通知依頼の対象商品が一覧表示されること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

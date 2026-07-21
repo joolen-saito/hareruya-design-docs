@@ -1,0 +1,190 @@
+{
+  "id": "a06-05-otc-buy-order-status-extensionless-route-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a06-05_0506_sheet-7_sheet.json",
+  "sourceFindingId": "a06-05_0506_sheet-7_sheet-conformance-2064ade3b436",
+  "classification": "API店頭買取管理",
+  "feature": "店頭買取情報ステータス更新",
+  "issueCategory": "実装漏れ",
+  "issue": "店頭買取情報ステータス更新の拡張子なしPUT /admin/otcBuyOrder/{id}/statusが実装されていない",
+  "designBook": "0506_基本設計仕様書(API_店頭買取管理).xlsx",
+  "reproSteps": [
+    "JWT認証済みの状態で、PUT http://localhost:8080/api/v1/admin/otcBuyOrder/{id}/status に status をフォーム値で送信する",
+    "同じ受注ID・同じリクエストで PUT http://localhost:8080/api/v1/admin/otcBuyOrder/{id}/status.json は Controller に到達することを確認する",
+    "ec-cube-enterprise の route 定義と pf-api の routes.yaml を比較し、拡張子なし別名が enterprise 側に存在するか確認する"
+  ],
+  "expected": [
+    "店頭買取受注ステータス更新は、PUT /admin/otcBuyOrder/{id}/status.json と PUT /admin/otcBuyOrder/{id}/status の両方を同一処理として提供する",
+    "拡張子なし別名でも、受注IDの店頭買取受注のステータスと査定担当者・更新日時を保存し、変更履歴を登録して、成功時は code: 200 のJSONを返す"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、店頭買取情報ステータス更新APIの route が `/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/status.json` のみとして定義されている。`%eccube_api_v1_route%` の既定値は `api/v1` のため実URLは `/api/v1/admin/otcBuyOrder/{id}/status.json` になるが、同じ `updateStatus()` に到達する `/api/v1/admin/otcBuyOrder/{id}/status` の属性 route や YAML route は確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は status.json の属性Routeだけを定義する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php",
+          "start": 187,
+          "end": 225,
+          "language": "php",
+          "contains": [
+            "ステータスの更新",
+            "#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/status.json'",
+            "public function updateStatus",
+            "$this->updateStatusAction->handle"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise は App controller の属性Routeを読み込むだけで個別aliasを追加していない",
+          "path": "ec-cube-enterprise/app/config/eccube/routes.yaml",
+          "start": 1,
+          "end": 7,
+          "language": "yaml",
+          "contains": [
+            "app_controllers:",
+            "resource: '../../../src/Eccube/Controller/App'",
+            "type: attribute"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise のステータス更新処理本体は履歴付き更新を行うが route alias は持たない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php",
+          "start": 104,
+          "end": 118,
+          "language": "php",
+          "contains": [
+            "$this->entityManager->beginTransaction()",
+            "->setMember($input->Member)",
+            "$this->otcBuyOrderEntityManager->updateStatusWithHistory",
+            "$this->entityManager->flush()"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、`/admin/otcBuyOrder/{id}/status.json` と `/admin/otcBuyOrder/{id}/status` の2本をどちらも `OtcBuyOrderStatusController::putAction` に向けている。`putAction()` は認証、受注取得、ステータスマスタ確認、遷移制御、ステータス・担当者・更新日時の保存、ステータス変更履歴登録、code 200 応答を行うため、拡張子なし別名も `.json` 付きと同じ処理になる。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は .json と拡張子なしを同一controller/actionへ定義する",
+          "path": "pf-api/config/routes.yaml",
+          "start": 57,
+          "end": 64,
+          "language": "yaml",
+          "contains": [
+            "put_otcbuy_status_json:",
+            "path: /admin/otcBuyOrder/{id}/status.json",
+            "controller: App\\Controller\\Admin\\OtcBuyOrderStatusController::putAction",
+            "put_otcbuy_status:",
+            "path: /admin/otcBuyOrder/{id}/status"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api の同一putActionはステータス更新と履歴登録を行う",
+          "path": "pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php",
+          "start": 21,
+          "end": 97,
+          "language": "php",
+          "contains": [
+            "public function putAction(Request $request, int $id) : Response",
+            "$this->authAdminToken($request)",
+            "findOneBy(['id' => $request->get('status')])",
+            "setOtcBuyOrderStatus($putStatus)",
+            "DtbOtcBuyOrderStatusHistory",
+            "\"code\" => Response::HTTP_OK"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "基本設計は店頭買取情報ステータス更新APIのエンドポイントとステータス更新・履歴登録を示す",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 1768,
+      "end": 1798,
+      "language": "html",
+      "contains": [
+        "/api/admin/otcBuyOrder/{id}/status.json",
+        "MTGBuyerで査定を開始したり、中断した際にステータス変更を行うAPI",
+        "買取情報のステータスを更新する",
+        "買取情報のステータス更新履歴を登録する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計は pf-api のルート定義を正とし、.json と拡張子なしを同一処理として明記する",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 1843,
+      "end": 1874,
+      "language": "html",
+      "contains": [
+        "確認値はpf-apiのステータス更新処理、ルート定義",
+        "PUT /admin/otcBuyOrder/{id}/status.json",
+        "PUT /admin/otcBuyOrder/{id}/status",
+        "上と同一処理"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は status.json route のみを定義する",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php",
+      "start": 187,
+      "end": 225,
+      "language": "php",
+      "contains": [
+        "#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/status.json'",
+        "public function updateStatus",
+        "$raw = $request->request->get('status')"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "App controller は attribute import のみで、個別 YAML alias はない",
+      "path": "ec-cube-enterprise/app/config/eccube/routes.yaml",
+      "start": 1,
+      "end": 7,
+      "language": "yaml",
+      "contains": [
+        "app_controllers:",
+        "resource: '../../../src/Eccube/Controller/App'",
+        "type: attribute"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は .json と拡張子なしの両方を同じ putAction に向ける",
+      "path": "pf-api/config/routes.yaml",
+      "start": 57,
+      "end": 64,
+      "language": "yaml",
+      "contains": [
+        "path: /admin/otcBuyOrder/{id}/status.json",
+        "path: /admin/otcBuyOrder/{id}/status",
+        "App\\Controller\\Admin\\OtcBuyOrderStatusController::putAction"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "同一 putAction はステータスを保存し、履歴を登録して code 200 を返す",
+      "path": "pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php",
+      "start": 21,
+      "end": 97,
+      "language": "php",
+      "contains": [
+        "setOtcBuyOrderStatus($putStatus)",
+        "DtbOtcBuyOrderStatusHistory",
+        "\"code\" => Response::HTTP_OK"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"A06-05|status|otcBuyOrder/.*/status|店頭買取情報ステータス更新|ステータス更新|/admin/otcBuyOrder\" excel_to_html/output/0506_基本設計仕様書\\(API_店頭買取管理\\).html ../pf-api ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/app/config/eccube --glob '!vendor/**' --glob '!var/**'",
+      "rg -n \"otcBuyOrder/\\{id\\}/status|/status\\.json|api_admin_otc_buy_order_update_status|updateStatus\" ../ec-cube-enterprise/src ../ec-cube-enterprise/app/config/eccube ../ec-cube-enterprise/tests --glob '!var/**'",
+      "rg -n \"put_otcbuy_status|/admin/otcBuyOrder/\\{id\\}/status|OtcBuyOrderStatusController\" ../pf-api/config/routes.yaml ../pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php",
+      "rg -n \"app_controllers|src/Eccube/Controller/App|type: attribute|api/v1\" ../ec-cube-enterprise/app/config/eccube/routes.yaml ../ec-cube-enterprise/app/config/eccube/packages/eccube.yaml"
+    ],
+    "review": "gpt-5.5 high reviewer VERDICT: VERIFIED. 設計は /status.json と /status を同一処理として明記し、pf-api は同一 action へ2本 route を定義する。enterprise は .json route のみで、拡張子なし別名・YAML追加route・代替controllerは見当たらない。ステータス遷移・エラーメッセージ差分は別 findings として扱い、本件は route alias 欠落に限定する。A06-04/A06-13 は同種だが別 endpoint/action のため単独起票可能。"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "functionId": "m03-41_0204_sheet-58_csv",
+  "featureNo": "M03-41",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-58:13009,13011,13012,13013,13058,13150",
+      "designExpectation": "カテゴリ登録CSVアップロード画面は、/{admin_route}/product/category_csv_upload（GET/POST）で、カテゴリ登録CSVフォーマット、件数選択、インポート履歴、ページングを同一画面として提供する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:673; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2014; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_category.twig:75; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php:72; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php:118; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:113; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_import_history.twig:10",
+      "implementationActual": "設計URLの admin_product_category_csv_import は標準4列CSV画面で、件数選択・インポート履歴・ページングを持たない。これらと12列フォーマットは別URL admin_product_category_bulk_csv_upload（GET）/admin_product_category_bulk_import（POST）側に実装されている。",
+      "mismatchReason": "設計が要求する同一URL・同一画面の外部契約が、実装では標準カテゴリCSV画面とカテゴリ登録CSV一括画面に分離しており、/{admin_route}/product/category_csv_upload 単体ではシート58の画面契約を満たさない。",
+      "comparisonRows": [
+        {
+          "item": "画面URL",
+          "design": "/{admin_route}/product/category_csv_upload をGET/POSTで使用する。",
+          "implementation": "標準画面は /product/category_csv_upload、履歴付き一括画面は /product/category/category_bulk_csv_upload と /product/category/import。",
+          "mismatch": "設計対象URLに履歴付き画面契約が集約されていない。"
+        },
+        {
+          "item": "CSVフォーマット表示",
+          "design": "カテゴリ登録CSVフォーマットを画面下部に表示する。",
+          "implementation": "/product/category_csv_upload は getCategoryCsvHeader() の4列のみ。12列フォーマットは別Controllerの画面で表示する。",
+          "mismatch": "設計画面で表示されるべきフォーマット列が別画面に分離している。"
+        },
+        {
+          "item": "件数・履歴・ページング",
+          "design": "10/50/100/300/500/1000/2000/10000/12000 の件数選択、インポート履歴、ページングを表示する。",
+          "implementation": "csv_category.twig には page_count/import_histories_pagination/pager が無く、base_csv_upload.twig と csv_import_history.twig 側でのみ表示する。",
+          "mismatch": "設計URLの画面では履歴閲覧系UIが利用できない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-58:12987,12990,12991,12993; /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-59:13197",
+      "designExpectation": "カテゴリ登録CSVの新規登録では対象商品数に0を設定し、更新ではCSV側の対象商品数を無視してDB登録済み値を継続する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/CategoryCsvImportHandler.php:55; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/CategoryCsvImportHandler.php:236; /home/y-saito/Developments/ec-cube-enterprise/app/DoctrineMigrations/Version20260401120000.php:23; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/CategoryController.php:46; 不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Category.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/CategoryCsvImportHandler.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php, /home/y-saito/Developments/ec-cube-enterprise/app/DoctrineMigrations: setTargetProductCount/target_product_count保存処理）",
+      "implementationActual": "対象商品数列はCSVヘッダとバリデーションには存在するが、Categoryエンティティに保存列・setterが無い。実装コメント上もCSV列としては存在するが取込では永続化しない扱いで、dtb_csv.field_name は出力時集計列として定義されている。",
+      "mismatchReason": "設計は取込時の0設定およびDB値維持を要求しているが、実装は対象商品数をカテゴリの永続化対象にしていないため、新規0設定も更新時のDB値継続も実行されない。",
+      "comparisonRows": [
+        {
+          "item": "新規登録時の対象商品数",
+          "design": "CSV未設定項目として対象商品数を0に設定する。",
+          "implementation": "CategoryCsvImportHandler は対象商品数列を定義するだけで Category に値を設定しない。Category に target_product_count 保存先も無い。",
+          "mismatch": "0設定が実装されていない。"
+        },
+        {
+          "item": "更新時の対象商品数",
+          "design": "CSV側の対象商品数を無視し、DB登録済み値を継続する。",
+          "implementation": "DB側に継続対象のCategory項目が無く、CSV取込処理でも既存値保持処理が存在しない。",
+          "mismatch": "DB値維持の設計動作を実行できない。"
+        },
+        {
+          "item": "CSV列の扱い",
+          "design": "対象商品数は登録CSVフォーマットの項目で、取込時の補完/無視ルールを持つ。",
+          "implementation": "列定義と桁数検証はあるが、マイグレーションとControllerコメントでは出力時集計用 field_name として扱われる。",
+          "mismatch": "CSV列は存在するが、設計された取込副作用が無い。"
+        }
+      ]
+    }
+  ]
+}

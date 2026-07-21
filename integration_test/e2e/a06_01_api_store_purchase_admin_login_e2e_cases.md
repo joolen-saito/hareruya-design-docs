@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない機能仕様（買取アプリ=MTGバイヤー向けの管理ログイン中継 JSON API。`POST`）であり、**両レイヤで網羅**する。本APIの観測可能な結果はJSONレスポンス（成功＝会員情報＋JWTトークン／失敗＝認証拒否）であり、結果は管理画面に現れず買取アプリ側に返るため、主レイヤは **API/統合**（Playwright `request` でエンドポイントへPOST送信し、HTTPステータス・レスポンス本文のフィールド存在/型/既知値一致・トークン取得可否で判定）。UIレイヤは0件（本APIの結果が EC-CUBE 管理画面に現れず、中継先のログインセッション確立・管理者会員/店舗の登録編集は正本md「本書で扱わないこと」で別機能委譲のため）。
 
-**期待結果は仕様（正本md＝pf-api挙動／観点表）由来**とし、実装のレスポンス形・フレームワーク既定値・Form制約を期待値に流用しない（オラクル独立性）。正本mdはリバース設計のため、基本設計・観点表を上位オラクルとし、移行先 ec-cube-enterprise 実装からは位置情報（APIパス・メソッド・認証方式・応答組み立て元）のみを `file:line` 根拠で取得し、取れないもの・刷新先の独自挙動・正本md未定義の挙動は `要実機確認` とする。設計（pf-api 中継方式）と実装（ec-cube-enterprise 直接認証）の食い違いは付帯表4に出す。型契約（memberId＝integer、その他＝string）は正本mdの仕様型で期待値化し、実装のキャスト差異があれば付帯表4へ出す。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。送信先パスは実装の実効パスに統一し、設計パスとの差異は付帯表4でのみ管理する（本体期待値に設計パスを混在させない）。
+**期待結果は仕様（正本md＝pf-api挙動／観点表）由来**とし、実装のレスポンス形・フレームワーク既定値・Form制約を期待値に流用しない（オラクル独立性）。正本mdはリバース設計のため、基本設計・観点表を上位オラクルとし、移行先 ec-cube-enterprise 実装からは位置情報（APIパス・メソッド・認証方式・応答組み立て元）のみを `file:line` 根拠で取得し、取れないもの・刷新先の独自挙動・正本md未定義の挙動は `要実機確認` とする。設計（pf-api 中継方式）と実装（ec-cube-enterprise 直接認証）の食い違いは付帯表4に出す。型契約（memberId＝integer、その他＝string）は正本mdの仕様型で期待値化し、実装のキャスト差異があれば付帯表4へ出す。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。送信先パスは実装の実効パスに統一し、設計パスとの差異は付帯表4でのみ管理する（本体期待値に設計パスを混在させない）。
 
 ## 関連ID対応概要
 
@@ -22,53 +22,53 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-001	IT-09	リクエスト	P1	正常な資格情報で認証成功しJWTトークンを取得する	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	"正しいlogin_id・passwordを持つフォームボディ"	"1. 管理ログインAPIへPOST送信する
-2. レスポンス本文を確認する"	認証が成功し、応答本文のjwtTokenが空でない文字列で返ること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-001	IT-09	リクエスト	P1	正常な資格情報で認証成功しJWTトークンを取得する	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	正しいlogin_id・passwordを持つフォームボディ	"1. 管理ログインAPIへPOST送信する
+2. レスポンス本文を確認する"	認証が成功し、応答本文のjwtTokenが空でない文字列で返ること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-002	IT-09	HTTPステータス	P1	認証成功時のHTTPステータスが200である	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	正しいlogin_id・password	"1. 管理ログインAPIへPOST送信する
-2. HTTPステータスを確認する"	認証成功時のHTTPステータスが200であること。
+2. HTTPステータスを確認する"	認証成功時のHTTPステータスが200であること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-003	IT-09	実行結果	P2	認証成功時に会員・店舗情報フィールドが返る	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	正しいlogin_id・password	"1. 管理ログインAPIへPOST送信する
-2. レスポンス本文のフィールドを確認する"	応答本文にmemberName・memberId・shopName・shopAddr・jwtTokenの5フィールドが揃って返ること。
+2. レスポンス本文のフィールドを確認する"	応答本文にmemberName・memberId・shopName・shopAddr・jwtTokenの5フィールドが揃って返ること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-004	IT-09	外部取得	P1	レスポンス各フィールドが投入済み既知会員の値と一致する	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	正しいlogin_id・password	"1. 管理ログインAPIへPOST送信する
-2. レスポンス各フィールド値を既知レコードと突き合わせる"	memberName・memberId・shopName・shopAddrの各値が、SEEDで投入した既知の会員氏名・会員ID・店舗名・店舗住所と一致すること。
+2. レスポンス各フィールド値を既知レコードと突き合わせる"	memberName・memberId・shopName・shopAddrの各値が、SEEDで投入した既知の会員氏名・会員ID・店舗名・店舗住所と一致すること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-005	IT-32	資格情報	P1	正しい資格情報のときのみトークンを取得できる	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	正しいlogin_id・password	"1. 管理ログインAPIへPOST送信する
-2. 応答のjwtToken取得可否を確認する"	資格情報が正しい場合のみjwtTokenが発行され取得できること。
+2. 応答のjwtToken取得可否を確認する"	資格情報が正しい場合のみjwtTokenが発行され取得できること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-006	IT-32	受信検証	P1	中継認証が成立し認証済み会員情報が返る	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	正しいlogin_id・password	"1. 管理ログインAPIへPOST送信する
-2. レスポンス本文を確認する"	中継認証が成功し、認証済み会員の情報がJSONで返ること。
+2. レスポンス本文を確認する"	中継認証が成功し、認証済み会員の情報がJSONで返ること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-007	IT-32	レスポンス	P2	成功レスポンスの型契約（memberId=integer・他=string）を満たす	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	正しいlogin_id・password	"1. 管理ログインAPIへPOST送信する
-2. レスポンス各フィールドの型を確認する"	memberIdがinteger型、memberName・shopName・shopAddr・jwtTokenがstring型で返ること。
+2. レスポンス各フィールドの型を確認する"	memberIdがinteger型、memberName・shopName・shopAddr・jwtTokenがstring型で返ること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-008	IT-32	必須条件	P1	login_id未入力で認証拒否となる	SEED-A06-01-MEMBER	login_id＝空、password＝任意	"1. login_idを空にして管理ログインAPIへPOST送信する
-2. HTTPステータスとトークン取得可否を確認する"	認証拒否（HTTP401）となり、トークンが返らないこと。
+2. HTTPステータスとトークン取得可否を確認する"	認証拒否（HTTP401）となり、トークンが返らないこと。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-009	IT-32	必須条件	P1	password未入力で認証拒否となる	SEED-A06-01-MEMBER	login_id＝任意、password＝空	"1. passwordを空にして管理ログインAPIへPOST送信する
-2. HTTPステータスとトークン取得可否を確認する"	認証拒否（HTTP401）となり、トークンが返らないこと。
+2. HTTPステータスとトークン取得可否を確認する"	認証拒否（HTTP401）となり、トークンが返らないこと。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-010	IT-32	リクエスト	P2	誤ったパスワードで認証拒否となる	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	正しいlogin_id・誤ったpassword	"1. 誤ったパスワードで管理ログインAPIへPOST送信する
-2. HTTPステータスを確認する"	異常な資格情報（誤パスワード）で認証拒否（HTTP401）となること。
+2. HTTPステータスを確認する"	異常な資格情報（誤パスワード）で認証拒否（HTTP401）となること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-011	IT-32	リクエスト	P3	想定外項目を加えても無視され認証成功する	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	正しいlogin_id・passwordに想定外の項目（項目名と値のセット）を追加	"1. 想定外項目を含めて管理ログインAPIへPOST送信する
-2. HTTPステータスを確認する"	想定外項目を加えても無視され、正しい資格情報なら認証成功（HTTP200）すること。
+2. HTTPステータスを確認する"	想定外項目を加えても無視され、正しい資格情報なら認証成功（HTTP200）すること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-012	IT-32	データなし	P2	存在しないlogin_idで認証拒否となる	SEED-A06-01-MEMBER	存在しないlogin_id・任意のpassword	"1. 存在しないlogin_idで管理ログインAPIへPOST送信する
-2. HTTPステータスを確認する"	該当会員が存在しない場合、認証拒否（HTTP401）となること。
+2. HTTPステータスを確認する"	該当会員が存在しない場合、認証拒否（HTTP401）となること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-013	IT-10	エラー	P2	認証失敗時にコードとメッセージを含む本文が返る	SEED-A06-01-MEMBER	誤った資格情報	"1. 誤った資格情報で管理ログインAPIへPOST送信する
-2. レスポンス本文を確認する"	認証失敗時、本文にコード（401）とメッセージ（中継先の画面エラー文言から改行表記を除いたもの）を含むJSONが返ること。
+2. レスポンス本文を確認する"	認証失敗時、本文にコード（401）とメッセージ（中継先の画面エラー文言から改行表記を除いたもの）を含むJSONが返ること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-014	IT-10	HTTPステータス	P1	認証失敗時のHTTPステータスが401である	SEED-A06-01-MEMBER	誤った資格情報	"1. 誤った資格情報で管理ログインAPIへPOST送信する
-2. HTTPステータスを確認する"	認証失敗時のHTTPステータスが401であること。
+2. HTTPステータスを確認する"	認証失敗時のHTTPステータスが401であること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-015	IT-10	通信	P1	POST通信が成立し認証結果に応じた応答が返る	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	正しいlogin_id・password	"1. 管理ログインAPIへPOST送信する
-2. 通信成立とHTTPステータスを確認する"	POST通信が成立し、認証結果に応じたHTTPステータス（成功＝200）が返ること。
+2. 通信成立とHTTPステータスを確認する"	POST通信が成立し、認証結果に応じたHTTPステータス（成功＝200）が返ること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-016	IT-10	正常	P2	対象条件に該当する正しい資格情報で200と会員情報が返る	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO	対象条件に該当する正しいlogin_id・password	"1. 管理ログインAPIへPOST送信する
-2. HTTPステータスとレスポンス本文を確認する"	対象条件に該当する正しい資格情報でHTTP200と会員情報が返ること。
+2. HTTPステータスとレスポンス本文を確認する"	対象条件に該当する正しい資格情報でHTTP200と会員情報が返ること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-017	IT-10	異常系	P2	資格情報が誤りのときトークンを取得できない	SEED-A06-01-MEMBER	誤った資格情報	"1. 誤った資格情報で管理ログインAPIへPOST送信する
-2. HTTPステータスとトークン取得可否を確認する"	資格情報が誤りのとき認証拒否（HTTP401）となり、トークンを取得できないこと。
+2. HTTPステータスとトークン取得可否を確認する"	資格情報が誤りのとき認証拒否（HTTP401）となり、トークンを取得できないこと。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-018	IT-10	重複・順序	P1	資格情報誤りのクライアントは再送しても認証拒否となる	SEED-A06-01-MEMBER	誤った資格情報（複数回送信）	"1. 誤った資格情報で管理ログインAPIへ複数回POST送信する
-2. 各応答のHTTPステータスを確認する"	資格情報が誤りのクライアントは再送しても毎回認証拒否（HTTP401）となり、トークンを取得できないこと。
+2. 各応答のHTTPステータスを確認する"	資格情報が誤りのクライアントは再送しても毎回認証拒否（HTTP401）となり、トークンを取得できないこと。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-019	IT-10	エラー	P3	中継先到達不可・タイムアウト時の応答を確認する	SEED-A06-01-MEMBER	タイムアウト／中継先到達不可を誘発する状態	"1. タイムアウト／到達不可を誘発して管理ログインAPIへPOST送信する
-2. 応答を確認する"	中継先到達不可・タイムアウト時は正本mdが共通例外処理（HTTP500）と定めるが、タイムアウト固有の応答は正本md未定義かつ再現が外部依存のため、観測された応答を要実機確認で記録すること（合否は実機確認の結果による）。
+2. 応答を確認する"	中継先到達不可・タイムアウト時は正本mdが共通例外処理（HTTP500）と定めるが、タイムアウト固有の応答は正本md未定義かつ再現が外部依存のため、観測された応答を要実機確認で記録すること（合否は実機確認の結果による）。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-050	IT-32	レスポンス	P2	店舗未紐付け会員でshopName・shopAddrが空文字で返る	SEED-A06-01-MEMBER-NOSHOP	店舗が紐づかない会員の正しいlogin_id・password	"1. 店舗未紐付け会員で管理ログインAPIへPOST送信する
-2. レスポンスのshopName・shopAddrを確認する"	会員に店舗が紐づかない場合、shopName・shopAddrが空文字で返り、HTTP200で会員情報が返ること。
+2. レスポンスのshopName・shopAddrを確認する"	会員に店舗が紐づかない場合、shopName・shopAddrが空文字で返り、HTTP200で会員情報が返ること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-051	IT-32	資格情報	P2	JWTトークンのペイロードが発行者と利用者ID（会員ID）を持つ	SEED-A06-01-MEMBER／SEED-A06-01-BASEINFO／SEED-A06-01-JWT-SECRET	正しいlogin_id・password	"1. 管理ログインAPIへPOST送信する
-2. 取得したjwtTokenのペイロードを確認する"	発行されたjwtTokenのペイロードが、仕様どおり発行者（iss相当のクレーム）と利用者ID（＝認証した会員のmemberId）を持つこと。発行者クレームが無い場合は本ケースで不一致として検出される（利用者ID等の具体的なクレーム名・HS256署名検証はシークレット設定/実装差分のため要実機確認）。
+2. 取得したjwtTokenのペイロードを確認する"	発行されたjwtTokenのペイロードが、仕様どおり発行者（iss相当のクレーム）と利用者ID（＝認証した会員のmemberId）を持つこと。発行者クレームが無い場合は本ケースで不一致として検出される（利用者ID等の具体的なクレーム名・HS256署名検証はシークレット設定/実装差分のため要実機確認）。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-052	IT-32	資格情報	P3	非ACTIVE会員での認証可否を確認する	SEED-A06-01-MEMBER-INACTIVE	無効（非ACTIVE）会員の正しいlogin_id・password	"1. 非ACTIVE会員の資格情報で管理ログインAPIへPOST送信する
-2. 応答を確認する"	非ACTIVE（無効）会員の認証可否は正本mdが扱わず（管理ログイン機能へ委譲）未定義のため、観測された応答を要実機確認で記録すること。
+2. 応答を確認する"	非ACTIVE（無効）会員の認証可否は正本mdが扱わず（管理ログイン機能へ委譲）未定義のため、観測された応答を要実機確認で記録すること。				
 a06-01_api_store_purchase_admin_login（API_店頭仕入_管理ログイン）	E2E-A06-01-053	IT-10	エラー	P3	中継先到達不可・処理中例外でHTTP500となる	SEED-A06-01-MEMBER	中継先到達不可・処理中の例外を誘発する状態	"1. 中継先到達不可を誘発して管理ログインAPIへPOST送信する
-2. HTTPステータスを確認する"	中継先到達不可・処理中の例外時に共通例外処理に委ねられHTTP500相当となること（外部障害の再現は要実機確認）。
+2. HTTPステータスを確認する"	中継先到達不可・処理中の例外時に共通例外処理に委ねられHTTP500相当となること（外部障害の再現は要実機確認）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

@@ -1,0 +1,29 @@
+{
+  "chunkId": "b02-03_0404_sheet-5_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0404_sheet-5_sheet.json#b02-03_0404_sheet-5_sheet-conformance-70526bf53035",
+      "refuted": true,
+      "reason": "設計は区分マッピングを確定していない。詳細設計 HTML 1157 行が『移行先の在庫変動区分による対象判定の対応はec-cube-enterprise実装で要確認とする』と明記し、1143 行も『DB関連の記述はec-cube-enterpriseを正とする』とする。つまり『マスタ更新』という現行(pf-eccube3)由来のラベルを ec-cube-enterprise のどの区分に写すかは設計側で未確定＝実装を正とする建付け。マスタ mtb_stock_change_type(products.sql 1401687-1401691)に『マスタ更新』区分は存在せず(1=入庫,5=棚卸,12=スマレジ連携)、在庫を基準値へ補正する『マスタ更新』の自然な対応先は在庫調整系である INVENTORY_ADJUSTMENT(=棚卸) が妥当な解釈。実装は BE_STOCKED(1)+INVENTORY_ADJUSTMENT(5) を採用しており、設計が明示的に『要確認』とした範囲内の実装選択にすぎない。ラベル差(マスタ更新 vs 棚卸)は残るが、設計が確定要求を与えていない以上 CONFIRMED の実装違いとは言えない。指摘は過大。",
+      "examinedEvidence": "DtbStockUpQuantityRepository.php:147-148,177,109 と MtbStockChangeType.php:27,31、products.sql:1401686-1401699(マスタ実データ)、設計 HTML 1120,1125,1142,1157,1171,1174 を実読して確認。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0404_sheet-5_sheet.json#b02-03_0404_sheet-5_sheet-conformance-b95ceda89b14",
+      "refuted": false,
+      "reason": "反証できず指摘維持。B02-03 の唯一の入口は AggregateStockUpCommand(eccube:aggregate-stock-up)で、そこから BatchAggregateStockUpAction::handle() を呼ぶだけ(command 48 行)。handle() は beginTransaction(37)後に無条件で clearStockUpQuantityForAggregate()=『DELETE FROM dtb_stock_up_quantity』(39 行/repo 99-103)を実行し、その後 getStockUpForAggregate()(40)で対象取得、foreach(41-43)後 commit(44)。$stockUpData が空でも早期 return や対象なし分岐は存在せず、DELETE 済みのまま commit される。全表 DELETE は明白な DB 変更であり、設計『対象なし→更新を行わず完了する』(HTML 1168 手順3, 1193 エラー処理)と矛盾。別ルート・別 command・空配列ガードを command/action/repo 全走査したが存在せず。指摘どおり実装違い。",
+      "examinedEvidence": "BatchAggregateStockUpAction.php:34-49 全読、AggregateStockUpCommand.php:34-58 全読、DtbStockUpQuantityRepository.php:99-103,127-188 実読、rg で BatchAggregateStockUpAction/handle 呼出を全走査(単一経路)。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0404_sheet-5_sheet.json#b02-03_0404_sheet-5_sheet-conformance-8d928f658af7",
+      "refuted": false,
+      "reason": "反証できず指摘維持。handle() は connection->beginTransaction()(37)で全体を単一トランザクション化し、全 foreach 完了後 commit(44)、\\Throwable 捕捉時 rollBack(45-46)で全ロールバックする。行単位/100件単位のコミットや部分反映を残す経路は action・repo・command のいずれにも無い(単一入口で確認済み)。一方 設計は現行踏襲(HTML 1143『現行挙動はpf-eccube3を参照』)を明示したうえで『途中失敗時は反映済みの行のみ更新が残る』(1177 失敗結果, 1180 失敗時出力)『部分反映は次回実行で回収される』(1183)『100件ごとに変更を反映しキャッシュをクリア』(1168 手順5, 1201)を要求。実装は途中失敗で反映済み行も全て失われ、設計の部分反映モデルと永続化境界が逆。指摘どおり実装違い。",
+      "examinedEvidence": "BatchAggregateStockUpAction.php:36-48 実読、設計 HTML 1168,1177,1180,1183,1200-1201 実読、per-record commit の別実装を rg 全走査したが不在。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0404_sheet-5_sheet.json#b02-03_0404_sheet-5_sheet-conformance-eeddc0ecbe63",
+      "refuted": false,
+      "reason": "反証できず指摘維持。設計は★カスタマイズ項目として『本店の支店IDは0として処理する』(HTML 1116)を要求し、出力先 dtb_stock_up_quantity の支店ID列(base_info_id)へ本店=0 で登録することを含意(1128 実行結果詳細)。実装 getStockUpForAggregate は SELECT で sh.base_info_id をそのまま出力(153)、GROUP BY ps.product_class_id, sh.base_info_id(179)し、updateStockUpQuantityColumns も :base_info_id をそのまま INSERT/UPDATE(199,219,246)。本店は BaseInfo::TC_TOKYO_ID=1(BaseInfo.php 45,1645)であり、base_info_id を 0 へ変換する CASE/条件は集計クエリにも handle にも皆無(repo の CASE WHEN は全て日付判定のみ、grep で確認)。よって本店は base_info_id=1 のまま格納され、設計値 0 と不一致。指摘どおり実装違い。",
+      "examinedEvidence": "DtbStockUpQuantityRepository.php の base_info_id 全出現(50,64,91,136,153,174,179,199,205,219,246)と全 CASE WHEN(154-170=日付のみ)を grep で確認、BatchAggregateStockUpAction に base_info/本店/=0 変換なしを grep で確認、BaseInfo.php:45,1645、設計 HTML 1116,1128 実読。"
+    }
+  ]
+}

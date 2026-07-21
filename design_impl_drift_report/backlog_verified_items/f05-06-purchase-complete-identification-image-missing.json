@@ -1,0 +1,104 @@
+{
+  "id": "f05-06-purchase-complete-identification-image-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f05-06_0305_sheet-9_sheet.json",
+  "sourceFindingId": "f05-06_0305_sheet-9_sheet-conformance-b85abb812e39",
+  "classification": "フロントネット買取",
+  "feature": "買取依頼完了",
+  "issueCategory": "実装漏れ",
+  "issue": "買取依頼完了画面のオンライン本人確認案内が画像リンクではなくテキストリンクになっている",
+  "designBook": "0305_基本設計仕様書(フロント_ネット買取).xlsx",
+  "reproSteps": [
+    "http://localhost:8080/ja/purchase から買取依頼を完了し、買取依頼完了画面を表示する",
+    "完了画面のオンライン本人確認案内を確認する",
+    "案内が画像として表示され、押下時にオンライン本人確認画面へ遷移するか確認する"
+  ],
+  "expected": [
+    "買取依頼完了画面に「オンライン本人確認について」を画像として表示する",
+    "その画像を押下するとオンライン本人確認について画面へ遷移する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の買取依頼完了画面は、オンライン本人確認案内について `TODO: デザインタスク QRコード画像を表示する` というコメントを残したまま、`mypage_identification` へのテキストリンクだけを表示している。設計が要求する画像リンクは出力されない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 買取依頼完了画面のオンライン本人確認案内",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/complete.twig",
+          "start": 58,
+          "end": 68,
+          "language": "twig",
+          "contains": [
+            "TODO: デザインタスク QRコード画像を表示する",
+            "<a href=\"{{ path('mypage_identification') }}\">{{ 'front.mypage.nav__identification'|trans }}</a>"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、同じ買取依頼完了画面でオンライン本人確認の説明文を出し、`mypage_identification` へのリンク内に `img/mypage_identification.png` の画像を表示している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 買取依頼完了画面のオンライン本人確認画像リンク",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/complete.twig",
+          "start": 45,
+          "end": 58,
+          "language": "twig",
+          "contains": [
+            "recommend_online_identification_",
+            "<a href=\"{{ path('mypage_identification') }}\" class=\"recommend_online_identification--qr\">",
+            "<img src=\"{{ path('assets', {path: 'img/mypage_identification.png'}) }}\" alt=\"\" />"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "オンライン本人確認については画像部品で、押下時にオンライン本人確認について画面へ遷移する",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 3104,
+      "end": 3110,
+      "language": "html",
+      "contains": [
+        "オンライン本人確認について",
+        "<td>画像</td>",
+        "別ウィンドウでオンライン本人確認について画面に遷移する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "QRコード画像はTODOのままで、テキストリンクのみ表示している",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/complete.twig",
+      "start": 62,
+      "end": 65,
+      "language": "twig",
+      "contains": [
+        "TODO: デザインタスク QRコード画像を表示する",
+        "front.mypage.nav__identification"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3ではオンライン本人確認のQR画像リンクを表示している",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/complete.twig",
+      "start": 47,
+      "end": 57,
+      "language": "twig",
+      "contains": [
+        "recommend_online_identification--qr",
+        "img/mypage_identification.png"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f05-06_0305_sheet-9_sheet.json#f05-06_0305_sheet-9_sheet-conformance-b85abb812e39'",
+      "rg -n \"オンライン本人確認|mypage_identification|recommend_online_identification|QRコード|本人確認\" hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書\\(フロント_ネット買取\\).html ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/complete.twig ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/complete.twig",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書\\(フロント_ネット買取\\).html | sed -n '3104,3110p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/complete.twig | sed -n '58,68p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/complete.twig | sed -n '45,58p'"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。設計の別ウィンドウ指定は確認したが、ベース実装は同一リンク内画像の根拠であり、起票差分は画像リンク未表示に絞った。"
+  }
+}

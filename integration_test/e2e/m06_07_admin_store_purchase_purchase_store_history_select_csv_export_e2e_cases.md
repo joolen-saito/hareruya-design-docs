@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m06_07_admin_store_purchase_purchase_store_history_select_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・ダウンロード発火・ファイル名・HTTP応答ヘッダ・フラッシュ表示などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。設計書は現行pf-eccube3（HareruyaEcプラグイン）のリバースであり、挙動は現行リポ、DB列名・テーブルは ec-cube-enterprise を上位オラクルとする。乖離は付帯表4に出す。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・ダウンロード発火・ファイル名・HTTP応答ヘッダ・フラッシュ表示などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。設計書は現行pf-eccube3（HareruyaEcプラグイン）のリバースであり、挙動は現行リポ、DB列名・テーブルは ec-cube-enterprise を上位オラクルとする。乖離は付帯表4に出す。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 **CSVファイルの内容は Playwright の download 本文／応答本文で技術的には観測可能だが、(a) 列値・会員ID/申込者の空・買取日時 "Y年m月d日 H時i分" 形式・三位区切りなし・行の並び順はシードの決定性に依存し、(b) 12列ヘッダ・BOM・エンコーディング・区切り文字は環境設定キー（`eccube_csv_export_encoding`／`eccube_csv_export_separator`）に依存し、(c) 存在しないIDのみ→ヘッダのみは専用シード（実在しないID）が要る。よって (b)(c) の構造検査は「自動化可能だが環境固定が前提」として保留（E2E-012 fixme）、(a) の値検査は手動確認とする。これら以外（ダウンロード発火・ファイル名・応答ヘッダ・メニュー/選択UI・未選択時のフラッシュ＋リダイレクト・入口非表示）をE2E自動化する。**
 
@@ -25,33 +25,33 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-004	IT-25	入口（非表示）	P2	検索前の一覧初期表示では「選択した商品履歴取得」メニューが描画されない	管理ログイン済	—	"1. 買取商品履歴一覧を開く（検索を実行しない）"	CSV用 result_form は検索後かつ pagination が与えられたときのみ存在するため、「選択した商品履歴取得」が描画されないこと（設計書「利用者視点の入口」3行目）。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-004	IT-25	入口（非表示）	P2	検索前の一覧初期表示では「選択した商品履歴取得」メニューが描画されない	管理ログイン済	—	1. 買取商品履歴一覧を開く（検索を実行しない）	CSV用 result_form は検索後かつ pagination が与えられたときのみ存在するため、「選択した商品履歴取得」が描画されないこと（設計書「利用者視点の入口」3行目）。				
 m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-005	IT-25	入口（非表示）	P2	検索実行して結果0件のとき「選択した商品履歴取得」メニューが描画されない	管理ログイン済	査定番号に該当しない値（実在しない査定番号）	"1. 買取商品履歴一覧を開く
-2. 該当しない条件（査定番号）を指定して検索する"	「検索条件に該当するデータがありませんでした。」が表示され、CSVダウンロードメニューの「選択した商品履歴取得」が描画されないこと（結果0件＝一覧ブロックの選択CSVメニューを描画しない＝設計書「利用者視点の入口」結果0件で当メニュー非描画）。
+2. 該当しない条件（査定番号）を指定して検索する"	「検索条件に該当するデータがありませんでした。」が表示され、CSVダウンロードメニューの「選択した商品履歴取得」が描画されないこと（結果0件＝一覧ブロックの選択CSVメニューを描画しない＝設計書「利用者視点の入口」結果0件で当メニュー非描画）。				
 m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-001	IT-25	UI部品	P2	検索結果ありで「選択した商品履歴取得」メニューが表示される	管理ログイン済／SEED-M06-07-HISTORY（履歴1件以上）	—	"1. 買取商品履歴一覧を開く
 2. 条件未指定で検索する
-3. 「CSVダウンロード」ドロップダウンを開く"	ドロップダウン内に「選択した商品履歴取得」が表示されること。
-m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-002	IT-25	UI部品	P2	各履歴行の選択チェックと全選択チェックが表示される	管理ログイン済／SEED-M06-07-HISTORY	—	"1. 買取商品履歴一覧で検索し結果を表示する"	先頭列に全選択チェック#allCheck、各行に履歴選択チェック（name=otcBuyOrderHistoryIds[]）が表示されること。
+3. 「CSVダウンロード」ドロップダウンを開く"	ドロップダウン内に「選択した商品履歴取得」が表示されること。				
+m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-002	IT-25	UI部品	P2	各履歴行の選択チェックと全選択チェックが表示される	管理ログイン済／SEED-M06-07-HISTORY	—	1. 買取商品履歴一覧で検索し結果を表示する	先頭列に全選択チェック#allCheck、各行に履歴選択チェック（name=otcBuyOrderHistoryIds[]）が表示されること。				
 m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-003	IT-25	UI部品	P3	全選択チェックで全行が一括ONになる	管理ログイン済／SEED-M06-07-HISTORY	—	"1. 検索結果を表示する
-2. 全選択チェック#allCheckをONにする"	一覧の全履歴行の選択チェックがONになること。
+2. 全選択チェック#allCheckをONにする"	一覧の全履歴行の選択チェックがONになること。				
 m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-006	IT-25	UI部品	P3	全選択チェックOFFで全行が一括OFFになる	管理ログイン済／SEED-M06-07-HISTORY	—	"1. 検索結果を表示する
 2. 全選択チェック#allCheckをONにする
-3. 全選択チェック#allCheckをOFFにする"	一覧の全履歴行の選択チェックがOFFになること（#allCheckは行チェックを一括ON/OFFする＝設計書フロント挙動JS）。
+3. 全選択チェック#allCheckをOFFにする"	一覧の全履歴行の選択チェックがOFFになること（#allCheckは行チェックを一括ON/OFFする＝設計書フロント挙動JS）。				
 m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-010	IT-25	操作起点	P1	行を選択し選択出力するとCSVがダウンロードされファイル名が規約どおり	管理ログイン済／SEED-M06-07-HISTORY	export_type=check_export／otcBuyOrderHistoryIds[]＝選択行ID	"1. 検索結果で先頭行を選択する
-2. 「選択した商品履歴取得」を押す"	ファイルダウンロードが発火し、ファイル名が「otc_buy_order_history_」＋日時14桁＋「.csv」であること。
-m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-011	IT-03	画面遷移	P1	選択出力POSTがoctet-streamの添付応答を返す	管理ログイン済／SEED-M06-07-HISTORY	export_type=check_export／otcBuyOrderHistoryIds[]＝実在ID	"1. 認証済みで出力ルートへ選択IDをPOSTする"	HTTP200・Content-Type=application/octet-stream・Content-Disposition=attachment（ファイル名接頭辞 otc_buy_order_history_）であること。
+2. 「選択した商品履歴取得」を押す"	ファイルダウンロードが発火し、ファイル名が「otc_buy_order_history_」＋日時14桁＋「.csv」であること。				
+m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-011	IT-03	画面遷移	P1	選択出力POSTがoctet-streamの添付応答を返す	管理ログイン済／SEED-M06-07-HISTORY	export_type=check_export／otcBuyOrderHistoryIds[]＝実在ID	1. 認証済みで出力ルートへ選択IDをPOSTする	HTTP200・Content-Type=application/octet-stream・Content-Disposition=attachment（ファイル名接頭辞 otc_buy_order_history_）であること。				
 m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-020	IT-27	出力失敗	P1	未選択で選択出力するとエラーフラッシュが表示される	管理ログイン済／SEED-M06-07-HISTORY	otcBuyOrderHistoryIds＝未選択（空）	"1. 検索結果で行を選択しない
-2. 「選択した商品履歴取得」を押す"	エラーフラッシュ「1つ以上の商品を選択してください」が表示されること。
-m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-021	IT-13	URL直接アクセス	P1	未選択送信で保存済みページの一覧へリダイレクトし滞留する	管理ログイン済／SEED-M06-07-HISTORY	otcBuyOrderHistoryIds＝未選択（空）	"1. 検索結果で行を選択せず選択出力を押す"	買取商品履歴一覧（admin_otcbuyorder_history_page／保存済みpage_no）へリダイレクトされ、CSVは返らないこと。
-m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-030	IT-15	確認ダイアログ	P2	選択出力時に確認ダイアログを表示しない	管理ログイン済／SEED-M06-07-HISTORY	export_type=check_export／選択行あり	"1. 行を選択して「選択した商品履歴取得」を押す"	出力前の確認ダイアログ（モーダル/JSダイアログ）が表示されず、ダウンロードが発火すること。
-m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-040	IT-15	未認証	P1	未ログインで選択CSV出力ルートへ直アクセスすると管理ログイン画面へ誘導	未ログイン	—	"1. /{admin_route}/otcbuyorder/history/export へ直接アクセスする"	管理ログイン画面へ誘導されること（CSVは返らない）。
-m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-041	IT-15	未認証	P1	未ログインで買取商品履歴一覧へ直アクセスすると管理ログイン画面へ誘導	未ログイン	—	"1. /{admin_route}/otcbuyorder/history へ直接アクセスする"	管理ログイン画面へ誘導されること。
+2. 「選択した商品履歴取得」を押す"	エラーフラッシュ「1つ以上の商品を選択してください」が表示されること。				
+m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-021	IT-13	URL直接アクセス	P1	未選択送信で保存済みページの一覧へリダイレクトし滞留する	管理ログイン済／SEED-M06-07-HISTORY	otcBuyOrderHistoryIds＝未選択（空）	1. 検索結果で行を選択せず選択出力を押す	買取商品履歴一覧（admin_otcbuyorder_history_page／保存済みpage_no）へリダイレクトされ、CSVは返らないこと。				
+m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-030	IT-15	確認ダイアログ	P2	選択出力時に確認ダイアログを表示しない	管理ログイン済／SEED-M06-07-HISTORY	export_type=check_export／選択行あり	1. 行を選択して「選択した商品履歴取得」を押す	出力前の確認ダイアログ（モーダル/JSダイアログ）が表示されず、ダウンロードが発火すること。				
+m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-040	IT-15	未認証	P1	未ログインで選択CSV出力ルートへ直アクセスすると管理ログイン画面へ誘導	未ログイン	—	1. /{admin_route}/otcbuyorder/history/export へ直接アクセスする	管理ログイン画面へ誘導されること（CSVは返らない）。				
+m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-041	IT-15	未認証	P1	未ログインで買取商品履歴一覧へ直アクセスすると管理ログイン画面へ誘導	未ログイン	—	1. /{admin_route}/otcbuyorder/history へ直接アクセスする	管理ログイン画面へ誘導されること。				
 m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-050	IT-22	その他のバリデーション	P3	export_typeが不正値／欠損で選択CSV出力すると例外応答になる	管理ログイン済	export_type＝check_export/all_export以外（不正値）／export_typeキーなし（欠損）	"1. 認証済みで出力ルートへ不正なexport_typeをPOSTする
-2. 認証済みで出力ルートへexport_type欠損でPOSTする"	いずれも引数不正（match のデフォルト）として例外送出され、CSVが返らないこと（応答はフレームワーク・環境設定に依存＝要実機確認）。
-m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-012	IT-16	出力内容（構造）	P3	出力CSVの構造（12列ヘッダ順・BOM・存在しないIDのみ→ヘッダのみ）	管理ログイン済／SEED-M06-07-HISTORY＋実在しないID	export_type=check_export／otcBuyOrderHistoryIds[]＝実在ID（ヘッダ順用）・実在しないID（ヘッダのみ用）	"1. 出力CSVをダウンロードし本文の先頭行を検査する"	先頭行が設計書「出力列とデータの対応」の12列日本語列順であること・UTF-8時はBOM始まり・存在しないIDのみのときヘッダ行のみ（データ行0）であること。※encoding/separator/seedに依存するため環境固定後に自動化（fixme）。
+2. 認証済みで出力ルートへexport_type欠損でPOSTする"	いずれも引数不正（match のデフォルト）として例外送出され、CSVが返らないこと（応答はフレームワーク・環境設定に依存＝要実機確認）。				
+m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-012	IT-16	出力内容（構造）	P3	出力CSVの構造（12列ヘッダ順・BOM・存在しないIDのみ→ヘッダのみ）	管理ログイン済／SEED-M06-07-HISTORY＋実在しないID	export_type=check_export／otcBuyOrderHistoryIds[]＝実在ID（ヘッダ順用）・実在しないID（ヘッダのみ用）	1. 出力CSVをダウンロードし本文の先頭行を検査する	先頭行が設計書「出力列とデータの対応」の12列日本語列順であること・UTF-8時はBOM始まり・存在しないIDのみのときヘッダ行のみ（データ行0）であること。※encoding/separator/seedに依存するため環境固定後に自動化（fixme）。				
 m06-07_admin_store_purchase_purchase_store_history_select_csv_export（管理画面_店頭買取管理_買取商品履歴_選択CSV出力）	E2E-M06-07-013	IT-20	出力内容（値・負側）	P3	CSV列値の負側（会員無し→会員ID・申込者空／買取成立日時無し→買取日時空）	管理ログイン済／SEED-M06-07-HISTORY（会員紐付け無し・買取成立日時無しの履歴を含む）	export_type=check_export／会員無し・成立日時無しの履歴IDを選択	"1. 会員紐付け無し・買取成立日時無しの履歴を選択して選択出力する
-2. ダウンロードCSVの会員ID・申込者・買取日時列を検査する"	会員が紐付かない行は会員ID・申込者列が空文字、買取成立日時が無い行は買取日時列が空文字であること（設計書「エッジケース」「出力列とデータの対応」）。CSVファイル内部検査のため手動。
+2. ダウンロードCSVの会員ID・申込者・買取日時列を検査する"	会員が紐付かない行は会員ID・申込者列が空文字、買取成立日時が無い行は買取日時列が空文字であること（設計書「エッジケース」「出力列とデータの対応」）。CSVファイル内部検査のため手動。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

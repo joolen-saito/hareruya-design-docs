@@ -1,0 +1,15 @@
+{
+  "chunkId": "b08-03_0408_sheet-5_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b08-03_0408_sheet-5_sheet.json#b08-03_0408_sheet-5_sheet-conformance-7de1c8bd0078",
+      "refuted": true,
+      "reason": "指摘は log_critical($e->getMessage()) がコンソールに到達しないとするが、prod の monolog 設定 app/config/eccube/packages/prod/monolog.yml:44-48 に `console:` ハンドラ(type: console, channels: ['!event','!doctrine'])が登録されている。バッチ実行時のデフォルトロガーは Eccube\\Log\\Logger(Logger.php:42-44 で isAdmin/isAppApi/isFront が全て偽のため '@monolog.logger'=app チャンネルへ委譲)で、console ハンドラの対象チャンネルに含まれる。Symfony の ConsoleHandler(vendor/symfony/monolog-bridge/Handler/ConsoleHandler.php:49-50)は NORMAL verbosity で WARNING 以上をコンソール(stderr)へ出力する。log_critical は CRITICAL(500) >= WARNING(300) のため、送信例外の $e->getMessage() はコマンド実行中にコンソールへ出力される。指摘者は $io->error 経路のみを見て monolog→コンソール ブリッジを見落としており、要求『送信時のエラー→エラーメッセージをコンソールに出力する』は満たされる。指摘は論破。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b08-03_0408_sheet-5_sheet.json#b08-03_0408_sheet-5_sheet-conformance-47036b7e64fe",
+      "refuted": false,
+      "reason": "PointExpireNotificationCommand.php:38 の開始出力 $io->text('ポイント有効期限通知バッチ開始') と :51 の完了出力 $io->success('ポイント有効期限通知処理が完了しました。') はいずれも固定文言で、Command 内に date()/DateTime の使用は無い(実装を全読して確認)。日時付きの変種は Action の $this->logger->info('ポイント有効期限通知処理完了')(INFO レベル)のみだが、ConsoleHandler は NORMAL verbosity で WARNING 以上しか出さないため INFO はコンソールに現れず、しかもバッチ開始側には対応するログ出力自体が存在しない。よって実際のコンソールの開始・完了出力に日時は付かず、要求『開始・完了のコンソール出力（日時付き）』は満たされない。反証(別実装・monolog console ブリッジ)を検討したが日時付きコンソール出力は確認できず、指摘は維持。"
+    }
+  ]
+}

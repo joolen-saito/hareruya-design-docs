@@ -1,0 +1,169 @@
+{
+  "id": "f06-25-waiting-number-main-url-path-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-25_0306_sheet-21_sheet.json",
+  "sourceFindingId": "f06-25_0306_sheet-21_sheet-conformance-f888fb1b7661",
+  "classification": "フロント会員",
+  "feature": "店頭注文呼び出し番号表示",
+  "issueCategory": "実装違い",
+  "issue": "本店の店頭注文呼び出し番号URLが設計の `/ja/waiting_number_1` ではなく `/ja/waiting_number` になっている",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "本店URL `http://localhost:8080/ja/waiting_number_1` にアクセスする",
+    "店頭注文呼び出し番号表示画面が表示されるか確認する",
+    "実装上のURL `http://localhost:8080/ja/waiting_number` でのみ画面が表示されないか確認する"
+  ],
+  "expected": [
+    "本店の店頭注文呼び出し番号表示画面は `https://www.hareruyamtg.com/ja/waiting_number_1` で表示する",
+    "現行の2つ目モニターURL `https://www.hareruyamtg.com/ja/waiting_number_2` は不要のため除去する",
+    "支店URLは `https://www.hareruyamtg.com/ja/{支店名(英)}/waiting_number` 形式とする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise のフロントルートは `front_controllers` により本店では `/{_locale}` prefix が付き、`WaitingNumberController::waitingNumber()` は `#[Route(path: '/waiting_number', name: 'waiting_number')]` の1本だけを定義している。そのため本店の実URLは `/ja/waiting_number` になり、設計の `/ja/waiting_number_1` ルートは定義されていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise waiting_number は /waiting_number 1本",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/WaitingNumberController.php",
+          "start": 37,
+          "end": 47,
+          "language": "php",
+          "contains": [
+            "注文番号表示画面",
+            "#[Route(path: '/waiting_number', name: 'waiting_number', methods: ['GET'])]",
+            "#[Template(template: 'Waiting/waiting_number.twig')]",
+            "public function waitingNumber(): array"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise front_controllers は本店 /{_locale}・支店 /{_locale}/{_shop}",
+          "path": "ec-cube-enterprise/app/config/eccube/routes.yaml",
+          "start": 35,
+          "end": 48,
+          "language": "yaml",
+          "contains": [
+            "front_controllers:",
+            "本店では'/{_locale}'、支店では'/{_locale}/{_shop}'となる。",
+            "prefix: /{_locale}{_shop}",
+            "_shop: ''"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 は同じ `WaitingNumberController::waitingNumber()` を `/waiting_number_1` と `/waiting_number_2` の2ルートにbindしていた。設計はこのベース挙動を踏まえ、本店は `/waiting_number_1` を残し、2つ目モニターの `/waiting_number_2` を除去する指定になっている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は waiting_number_1 / waiting_number_2 を定義",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php",
+          "start": 277,
+          "end": 281,
+          "language": "php",
+          "contains": [
+            "注文番号表示（店内モニター:2画面）",
+            "$c->match('/waiting_number_1', '\\Plugin\\HareruyaEc\\Controller\\WaitingNumberController::waitingNumber')",
+            "->bind('waiting_number_1');",
+            "$c->match('/waiting_number_2', '\\Plugin\\HareruyaEc\\Controller\\WaitingNumberController::waitingNumber')",
+            "->bind('waiting_number_2');"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は第1・第2共通Controllerを描画",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/WaitingNumberController.php",
+          "start": 11,
+          "end": 17,
+          "language": "php",
+          "contains": [
+            "注文番号表示画面(第1・2共通)",
+            "public function waitingNumber(Application $app)",
+            "return $app->render('Waiting/waiting_number.twig');"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "本店URLは waiting_number_1、waiting_number_2 は不要、支店URLは /{支店名}/waiting_number",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 7037,
+      "end": 7043,
+      "language": "html",
+      "contains": [
+        "本店のURLは以下とする",
+        "https://www.hareruyamtg.com/ja/waiting_number_1",
+        "2つ目のモニターは不要になるため除去する",
+        "https://www.hareruyamtg.com/ja/waiting_number_2",
+        "https://www.hareruyamtg.com/ja/{支店名(英)}/waiting_number"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計でも /{_locale}/waiting_number_1 / waiting_number_2 を入口として定義",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 7117,
+      "end": 7119,
+      "language": "html",
+      "contains": [
+        "店内モニター画面（第1）",
+        "GET /{_locale}/waiting_number_1",
+        "店内モニター画面（第2）",
+        "GET /{_locale}/waiting_number_2"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "実装ルートは /waiting_number",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/WaitingNumberController.php",
+      "start": 37,
+      "end": 47,
+      "language": "php",
+      "contains": [
+        "#[Route(path: '/waiting_number', name: 'waiting_number', methods: ['GET'])]"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "front_controllers prefix により本店は /ja/waiting_number となる",
+      "path": "ec-cube-enterprise/app/config/eccube/routes.yaml",
+      "start": 35,
+      "end": 48,
+      "language": "yaml",
+      "contains": [
+        "front_controllers:",
+        "prefix: /{_locale}{_shop}",
+        "_shop: ''"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 は waiting_number_1 / waiting_number_2 を定義",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php",
+      "start": 277,
+      "end": 281,
+      "language": "php",
+      "contains": [
+        "$c->match('/waiting_number_1'",
+        "->bind('waiting_number_1');",
+        "$c->match('/waiting_number_2'",
+        "->bind('waiting_number_2');"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-25_0306_sheet-21_sheet.json#f06-25_0306_sheet-21_sheet-conformance-f888fb1b7661'",
+      "rg -n \"f888fb1b7661|waiting_number_1|waiting_number_2|本店のURL|支店のURL|/waiting_number|waiting_number\" design_impl_drift_report/findings/f06-25_0306_sheet-21_sheet.json excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"waiting_number_1|waiting_number_2|waiting_number|front_controllers|prefix: /\\{_locale\\}\\{_shop\\}|Route\\(path: '/waiting_number'\" ec-cube-enterprise/src/Eccube/Controller/Front/WaitingNumberController.php ec-cube-enterprise/app/config/eccube/routes.yaml ec-cube-enterprise/src/Eccube/Resource/template/default/Waiting/waiting_number.twig",
+      "rg -n \"waiting_number_1|waiting_number_2|waiting_number|match\\('/waiting_number|bind\\('waiting_number\" pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php pf-eccube3/app/Plugin/HareruyaEc/Controller/WaitingNumberController.php ec-cube/app/Customize/Controller/WaitingNumberController.php ec-cube/app/template/default/Waiting/waiting_number.twig",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/WaitingNumberController.php | sed -n '37,47p'",
+      "nl -ba ec-cube-enterprise/app/config/eccube/routes.yaml | sed -n '35,48p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php | sed -n '277,281p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/WaitingNumberController.php | sed -n '11,17p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '7037,7043p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '7117,7119p'"
+    ],
+    "review": "review-pack を生成し、設計の本店 waiting_number_1 要求、ec-cube-enterprise の /waiting_number 1本ルート、front_controllers prefix による本店URL、pf-eccube3 の waiting_number_1 / waiting_number_2 ルートを手動で批判的に再確認した。外部の codex gpt-5.5 high レビューはこの環境では利用できないため、同等の観点でController、routes.yaml、テンプレート、ベースControllerProviderを検索した。"
+  }
+}

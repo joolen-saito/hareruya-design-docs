@@ -1,0 +1,25 @@
+{
+  "chunkId": "a01-01_0501_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a01-01_0501_sheet-3_sheet.json#a01-01-0501-sheet-3-sheet-ab53b180e7-01",
+      "refuted": false,
+      "reason": "SmaregiStockApiClient の public は add/getStockChange/listStocks/listStockChanges の4つのみ(grep 'public function' 実測)。add() は URL '/pos/stock/{productId}/add' 固定で quantity<=0 を InvalidArgumentException で弾く正数加算専用(43-78行)であり、設計D『在庫相対値更新(負値含む)』・F『在庫一括相対値更新(postBulkUpdate)』を満たさない。src/ 全体を updateStockRelatively|postBulkUpdate|相対値|一括相対|pos/stock で横断しても更新系は add のみ。stockApiClient-> 呼出元は SmaregiStockProcessMessageHandler(getStockChange)・SmaregiStockBackfillAction(listStocks/listStockChanges)・SmaregiOtcOrderSyncService(add=店頭受取のOTC専用)のみで、管理画面の在庫編集/一括編集/CSV/移動/分割からスマレジへ押し出す経路は皆無。設計(880-895行)は当該行を webhook でなく 2:API個別/3:Patch一括 の ECCUBE→スマレジ反映として明記し、Ph2/対象外/実装しない等の除外注記はシート内(830-1353行)に無い。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a01-01_0501_sheet-3_sheet.json#a01-01_0501_sheet-3_sheet-conformance-7a53702bfc73",
+      "refuted": false,
+      "reason": "StockApprovalStoreAction は EntityManager->save の5箇所(EditApproval:56, EditApprovalDetail:68, ProductStock:95, StockHistory:105, ApprovalList:128)のみで Smaregi/StockApiClient 参照ゼロ。StockBulkApprovalStoreAction もスマレジ参照ゼロ、件数関連は ProductStockTotalCount: count(input->items):96 の記録のみで上限判定・CSV誘導エラー分岐なし。Admin/Stock 配下の smaregi 参照は STOCK_LOCATION_SMAREGI 定数(在庫場所の区別)と getProductStockBySmaregi(DB行の取得)だけで、いずれも API 押し出しではない。設計882-883行『在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映/上限超過でエラー表示しCSV登録を促す』の入口が実装に不在。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a01-01_0501_sheet-3_sheet.json#a01-01_0501_sheet-3_sheet-conformance-52d4079f412f",
+      "refuted": false,
+      "reason": "StockChangeCsvImportHandler を smaregi|s3|callback|bulk|100|分割|StockApiClient で grep しても class 宣言以外ヒットせず、CSV行→DtbStockEditApprovalDetail/DtbStockApprovalList のDB登録に留まる。Service/Smaregi 配下に在庫一括相対値更新API(postBulkUpdate)も 100件分割も無い(pos/stock URL は add/changes/list のみ)。S3 実装は S3FileAdapter/UniSearchExportService/TestS3UploadDemoCommand に存在するが在庫CSVのスマレジ連携用の保存ではない。設計★3-1(コールバックURL設定・CSVをS3保存・100件毎分割してS3・CSV履歴表示, 1088-1093行)の要求が不在。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a01-01_0501_sheet-3_sheet.json#a01-01_0501_sheet-3_sheet-conformance-63e8ff81693c",
+      "refuted": false,
+      "reason": "Controller/Smaregi のルートは #[Route('', name:'smaregi_webhook', methods:['POST'])] の1本のみで、docコメントに『検証用』『リクエスト内容をログ出力し200 OK固定レスポンス』と明記(WebhookController 38-45行)。src/Eccube/Controller・Service/Smaregi 全体を inquiryId|問合せ|callback で探しても一括API結果の非同期受信は皆無(Admin/Stock の setCallback はCSVストリーミング応答用の別物)。問合せID管理・S3ダウンロード・CSV処理履歴登録の実装なし。stock 系 MessageHandler は SmaregiStockProcessMessageHandler(スマレジ→ECCUBE の webhook取込)のみ。設計★3-3(1098-1100行 コールバック非同期受信→CSV特定→S3ダウンロード→ECCUBE更新→CSV処理履歴登録)が不在。指摘は維持。"
+    }
+  ]
+}

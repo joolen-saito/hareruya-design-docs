@@ -1,0 +1,78 @@
+{
+  "functionId": "m03-18_0204_sheet-32_sheet",
+  "featureNo": "M03-18",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-32:7449",
+      "designExpectation": "登録ボタンは画面下部に表示し、編集モードの際はボタン名が「編集」に変わる。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/section.twig:154",
+      "implementationActual": "画面下部の送信ボタンは編集モード判定をせず、常に admin.common.registration を表示する。日本語は messages.ja.yaml:1443 の「登録」。",
+      "mismatchReason": "section.twig:59 ではカード見出しを id 有無で「編集」へ切り替えているが、送信ボタン section.twig:154-155 は id を参照せず常に「登録」。設計の編集モード時ボタン名「編集」と異なる。反証として admin.common.edit は messages.ja.yaml:1446 に存在し一覧編集ボタンでは section.twig:129 で使われるが、下部送信ボタンには使われていない。",
+      "comparisonRows": [
+        {
+          "item": "編集モード時の下部送信ボタン名",
+          "design": "編集",
+          "implementation": "登録",
+          "mismatch": "編集モードでもボタン名が「編集」に変わらない。"
+        },
+        {
+          "item": "新規モード時のボタン位置",
+          "design": "ECCUBE4に合わせて画面下部",
+          "implementation": "section.twig:144-155 の c-conversionArea 下部に配置",
+          "mismatch": "位置は実装済みで、差異は編集時ラベルのみ。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-32:7451",
+      "designExpectation": "部門コードは書式・制限が「数字」、必須、最大値128である。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/ProductDepartmentType.php:51",
+      "implementationActual": "部門コードは TextType で、NotBlank と Length(max=128) のみ。数字制約の Regex、NumberType、is_numeric/ctype_digit 相当の検証は ProductDepartmentType/SectionController/MtbSection 周辺に存在しない。",
+      "mismatchReason": "設計は部門コードを数字に制限するが、実装は任意文字列のテキスト入力として保存できる。反証検索として ProductDepartmentType、SectionController、MtbSection、MtbSectionRepository、SectionMasterImportHandler を部門コード/section_code/department_code/Regex/is_numeric/ctype_digit/NumericValidator で確認したが、当画面フォームの code に数字制約は無かった。",
+      "comparisonRows": [
+        {
+          "item": "部門コードの型・書式",
+          "design": "数字",
+          "implementation": "TextType。NotBlank と Length(max=128) のみ",
+          "mismatch": "数字以外をフォーム検証で拒否しない。"
+        },
+        {
+          "item": "部門コードの必須・最大値",
+          "design": "必須、最大128",
+          "implementation": "NotBlank、Length max=128",
+          "mismatch": "必須・最大長は実装済み。数字制約のみ欠落。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-32:7428 / excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-64:13812",
+      "designExpectation": "スマレジ部門連携の新規登録では、別添資料の部門連携項目として「軽減税率ID（画面では税設定）」に null を連携する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiSectionApiClient.php:77",
+      "implementationActual": "スマレジ部門新規登録 payload は categoryCode、categoryName、displayFlag、taxDivision、pointNotApplicable のみで、軽減税率IDを null 連携する項目が無い。",
+      "mismatchReason": "sheet-32 は連携対象/API詳細を別添資料参照としており、sheet-64 は軽減税率IDを新規登録時に null 連携する指定。実装の create payload には該当フィールドがなく、SmaregiSectionApiClient/SmaregiSectionUpsertMessageHandler/SmaregiSectionUpsertMessage/src/Eccube/Service/Smaregi を reduced/taxRate/tax_rate/軽減税率 で反証検索しても部門連携での軽減税率ID送信は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "スマレジ部門新規登録 payload",
+          "design": "部門コード、部門名、軽減税率ID null、端末表示 1、税区分 0、ポイント対象 0 を連携",
+          "implementation": "categoryCode、categoryName、displayFlag=1、taxDivision=0、pointNotApplicable=0",
+          "mismatch": "軽減税率ID null の送信が欠落。"
+        },
+        {
+          "item": "スマレジAPI経路",
+          "design": "部門登録時に POST /pos/categories、更新時に PATCH /pos/categories/{id}",
+          "implementation": "SmaregiSectionUpsertMessageHandler が create/update を呼び、SmaregiSectionApiClient が POST/PATCH を実行",
+          "mismatch": "API経路自体は実装済みで、差異は新規登録 payload の軽減税率IDのみ。"
+        }
+      ]
+    }
+  ]
+}

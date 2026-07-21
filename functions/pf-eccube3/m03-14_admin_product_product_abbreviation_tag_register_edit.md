@@ -246,7 +246,8 @@ ec-cube-enterprise のコア管理画面におけるルート `admin_product_sto
 | M03-14-MSG-008 | 管理画面上部フラッシュ | 要ソース確認 | CSVヘッダー・データ件数・登録処理中に例外（`\Throwable`）が発生したとき。テンポラリデータ削除・インポート中止のうえ CSVアップロード画面へリダイレクト。文言は可変（`$e->getMessage()`：ヘッダー不一致／データ空／並び順・名称重複／DB例外等。StorageCodeController.php:288-302）で単一の逐語文言に確定不可 |
 | M03-14-MSG-009 | 管理画面上部フラッシュ | 登録が完了しました。 | CSV登録処理が例外なく完了したとき（`admin.register.complete`）。テンポラリデータ削除のうえ CSVアップロード画面へリダイレクト |
 | M03-14-MSG-010 | ブラウザ確認ダイアログ（window.confirm） | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 一覧の「削除」ボタンクリック時（`admin.common.delete_modal__message` を data-message 経由で表示。function.js:161-179）。OKで DELETE 送信、キャンセルで中止 |
-| M03-14-MSG-011 | 要ソース確認 | 並び順は {{ min }} から {{ max }} の間で入力してください。 | 並び順が0〜32767の範囲外で送信されたとき（`Range` 制約 `notInRangeMessage` 直書きリテラル、StorageCodeType.php:48-52）。表示位置・後続処理は要ソース確認: store() は `!isSubmitted()||!isValid()` 時に `admin_product_storage_code` へリダイレクトする（StorageCodeController.php:115-118）ため、`form_errors(form.rank)`（storage_code.twig:92）へ到達する再描画経路がソース上確認できない |
+| M03-14-MSG-011 | 要ソース確認 | 並び順は {{ min }} から {{ max }} の間で入力してください。 | 並び順が0〜32767の範囲外で送信されたとき（`Range` 制約 `notInRangeMessage` 直書きリテラル、StorageCodeType.php:48-52）。表示位置・後続処理は要ソース確認: store() は `!isSubmitted() \|\| !isValid()` 時に `admin_product_storage_code` へリダイレクトする（StorageCodeController.php:115-118）ため、`form_errors(form.rank)`（storage_code.twig:92）へ到達する再描画経路がソース上確認できない |
+| M03-14-MSG-012 | 画面中央(ダイアログ/モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 略称タグ一覧の行「削除」ボタンを押下したとき（data-confirm が false でないため共通JSが data-message を confirm に渡す。%name%=対象略称タグの name） |
 
 ---
 

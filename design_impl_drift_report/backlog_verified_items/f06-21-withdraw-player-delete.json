@@ -1,0 +1,166 @@
+{
+  "id": "f06-21-withdraw-player-delete",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-21_0306_sheet-17_sheet.json",
+  "sourceFindingId": "f06-21_0306_sheet-17_sheet-conformance-22fe5f511d2d",
+  "classification": "フロント会員",
+  "feature": "退会",
+  "issueCategory": "実装漏れ",
+  "issue": "退会成立時にdtb_playerの選手情報が削除されない",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "会員としてログインし、マイページの退会画面( http://localhost:8080/ja/mypage/withdraw )へ遷移する",
+    "退会確認画面で現在のパスワードを入力し、「退会する」ボタンを押下する",
+    "退会完了後、該当会員に紐づくdtb_player行が削除されているかDBで確認する"
+  ],
+  "expected": [
+    "退会成立時、会員のメールアドレスをダミー値へ置換し、削除フラグを有効にする",
+    "同じ退会処理内で、該当会員に紐づくdtb_playerの選手情報を削除する",
+    "会員の論理削除と選手情報削除を同一トランザクションで確定する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterpriseの退会確定処理はCustomerのステータス変更とメールアドレスのダミー化を行ってflushするが、DtbPlayerを取得して削除する処理がない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 退会確定処理",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/WithdrawController.php",
+          "start": 122,
+          "end": 129,
+          "language": "php",
+          "contains": [
+            "$Customer->setEmail",
+            "$this->entityManager->flush();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 退会完了イベント",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/WithdrawController.php",
+          "start": 133,
+          "end": 139,
+          "language": "php",
+          "contains": [
+            "FRONT_MYPAGE_WITHDRAW_INDEX_COMPLETE"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise CustomerとDtbPlayerの関連",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/Customer.php",
+          "start": 1014,
+          "end": 1015,
+          "language": "php",
+          "contains": [
+            "OneToOne",
+            "DtbPlayer"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では、同じ退会確定処理でPlayer Repositoryから該当Customerのdtb_playerを取得し、EntityManagerでremoveしてからflush/commitしている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 退会時のdtb_player削除",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/WithdrawController.php",
+          "start": 86,
+          "end": 96,
+          "language": "php",
+          "contains": [
+            "findOneByCustomer_id",
+            "remove($dtbPlayer)",
+            "flush()",
+            "commit()"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "退会成立時の副作用",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 6107,
+      "end": 6109,
+      "language": "html",
+      "contains": [
+        "dtb_player",
+        "退会完了画面"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "会員と選手情報のデータ整合性",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 6129,
+      "end": 6130,
+      "language": "html",
+      "contains": [
+        "会員の論理削除と選手情報の削除を同一トランザクション"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "DBカラム上のdtb_player削除要求",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 6139,
+      "end": 6141,
+      "language": "html",
+      "contains": [
+        "退会成立時に削除する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "退会確定処理",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/WithdrawController.php",
+      "start": 122,
+      "end": 129,
+      "language": "php",
+      "contains": [
+        "find(CustomerStatus::WITHDRAWING)",
+        "setStatus($CustomerStatus)",
+        "entityManager->flush()"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "CustomerとDtbPlayerの関連",
+      "path": "ec-cube-enterprise/src/Eccube/Entity/Customer.php",
+      "start": 1014,
+      "end": 1015,
+      "language": "php",
+      "contains": [
+        "DtbPlayer::class",
+        "$Player"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "退会時のdtb_player削除",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/WithdrawController.php",
+      "start": 86,
+      "end": 96,
+      "language": "php",
+      "contains": [
+        "findOneByCustomer_id",
+        "remove($dtbPlayer)",
+        "commit()"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex",
+    "commands": [
+      "rg -n \"FRONT_MYPAGE_WITHDRAW_INDEX_COMPLETE|DtbPlayer|dtbPlayer|remove\\\\(\" ec-cube-enterprise/src/Eccube/Controller/Front/Mypage ec-cube-enterprise/src/Eccube/EventSubscriber ec-cube-enterprise/app",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html | sed -n '6104,6144p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/WithdrawController.php | sed -n '116,145p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/WithdrawController.php | sed -n '82,100p'"
+    ],
+    "notes": [
+      "ec-cube-enterprise側では退会完了イベントのdispatchは確認できるが、同一検索範囲内にDtbPlayer削除の購読処理は見当たらない。",
+      "Customer::$PlayerはOneToOne mappedByのみで、退会時のcascade removeを示す指定は確認できない。"
+    ]
+  }
+}

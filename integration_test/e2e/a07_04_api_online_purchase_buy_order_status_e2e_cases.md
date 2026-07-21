@@ -7,7 +7,7 @@
 
 本機能は画面を伴わないJSON API（買取アプリ＝MTGバイヤーがネット買取受注のステータスを更新する）であり、**一次オラクルはAPI/統合レイヤに置く**。Playwright `request` でステータス更新エンドポイントへ送信し、HTTPステータス・失敗時の `{code, errors}` 本文・成功時の `{code:200}` で判定し、副作用（受注ステータス・更新担当者・更新日時・ステータス変更履歴）は永続化先テーブル（`dtb_buy_order`・`dtb_buy_order_status_histry`）のDB観測で判定する。正典が「ブラウザ向けの画面を持たない／ステータスごとの業務上の意味づけや画面表示は買取アプリの設計を正とする」と定めるため、**管理画面でのUI確認はスコープ外**とし、母集合外の補助観測（要実機確認）として付帯表に分離する（本体TSV・母集合分類には組み込まない）。
 
-**期待結果は仕様（正本md・観点表・基本設計）由来**とし、実装のレスポンス形・エラーメッセージ文言・ステータスマスタ定義・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdは基本設計・観点表を上位オラクルとし、実装からは位置情報（APIパス・メソッド・認証方式・ステータス定数・遷移判定の所在）のみを `file:line` 根拠で取得する。取れないものは `要実機確認`。正本mdと実装の食い違い（パス接頭辞・ステータスマスタの値定義・査定終了判定方式・メッセージ中の「店頭」表記）は付帯表4にのみ出し、TSV期待値・本文へ実装の現挙動を写さない。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（正本md・観点表・基本設計）由来**とし、実装のレスポンス形・エラーメッセージ文言・ステータスマスタ定義・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdは基本設計・観点表を上位オラクルとし、実装からは位置情報（APIパス・メソッド・認証方式・ステータス定数・遷移判定の所在）のみを `file:line` 根拠で取得する。取れないものは `要実機確認`。正本mdと実装の食い違い（パス接頭辞・ステータスマスタの値定義・査定終了判定方式・メッセージ中の「店頭」表記）は付帯表4にのみ出し、TSV期待値・本文へ実装の現挙動を写さない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -22,88 +22,88 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-001	IT-09	リクエスト	P1	未終了受注のステータス更新が正常応答となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE（更新前=商品到着2）／SEED-A07-04-STATUS-MASTER	"id=対象受注ID
 status=10（査定中）
 jwt-token=有効"	"1. ステータス更新エンドポイントへ status=10 をPUT送信する
-2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-002	IT-32	レスポンス	P2	成功レスポンス本文が仕様の型契約と一致する	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. ステータス更新エンドポイントへPUT送信する
-2. レスポンス本文を確認する"	成功時の本文が `{code:200}`（`code`はinteger型・値200）であること。
+2. レスポンス本文を確認する"	成功時の本文が `{code:200}`（`code`はinteger型・値200）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-003	IT-10	通信	P2	正常通信で成功ステータスが返る	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. ステータス更新エンドポイントへPUT送信する
-2. HTTPステータスを確認する"	通信が成立しHTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	通信が成立しHTTPステータスが200（成功）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-004	IT-10	正常	P2	対象条件に該当する正常値で正常更新される	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	マスタに存在する正常なstatus値（例 10:査定中）／jwt-token=有効	"1. 正常値でPUT送信する
-2. HTTPステータスを確認する"	正常更新としてHTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	正常更新としてHTTPステータスが200（成功）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-010	IT-32	受信検証	P1	jwt-tokenヘッダ欠落は認証拒否となる	SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=10／jwt-tokenヘッダ＝なし	"1. jwt-tokenヘッダを付けずにPUT送信する
-2. HTTPステータスを確認する"	認証拒否としてHTTPステータスが401であること。
+2. HTTPステータスを確認する"	認証拒否としてHTTPステータスが401であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-011	IT-32	資格情報	P1	署名不正のjwt-tokenは認証拒否となる	SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=10／jwt-token＝署名不正	"1. 署名不正のjwt-tokenでPUT送信する
-2. HTTPステータスを確認する"	認証拒否としてHTTPステータスが401であること。
+2. HTTPステータスを確認する"	認証拒否としてHTTPステータスが401であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-012	IT-09	外部取得	P1	該当する管理者会員のないトークンは認証拒否となる	SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=10／jwt-token＝署名は正当だが対応する管理者会員が存在しない	"1. 会員に紐づかないトークンでPUT送信する
-2. HTTPステータスを確認する"	認証拒否としてHTTPステータスが401であること。
+2. HTTPステータスを確認する"	認証拒否としてHTTPステータスが401であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-013	IT-10	異常系	P1	他担当者が査定中の受注を査定再開へ更新すると入力不正となる	SEED-A07-04-JWT-OTHER（会員B）／SEED-A07-04-ORDER-INPROGRESS-A（更新前=査定中10・査定担当者=会員A）／SEED-A07-04-STATUS-MASTER	status=12（査定再開）／jwt-token＝会員B	"1. 担当者本人以外（会員B）でPUT送信する
-2. HTTPステータスを確認する"	HTTPステータスが400（入力不正）であること。
+2. HTTPステータスを確認する"	HTTPステータスが400（入力不正）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-014	IT-10	エラー	P1	占有拒否時のエラーメッセージが査定担当者名を含む仕様文言となる	SEED-A07-04-JWT-OTHER（会員B）／SEED-A07-04-ORDER-INPROGRESS-A（査定担当者=会員A）／SEED-A07-04-STATUS-MASTER	status=12（査定再開）／jwt-token＝会員B	"1. 担当者本人以外（会員B）でPUT送信する
-2. レスポンス本文のerrorsを確認する"	errorsに「この受注は「（査定担当者名）」が査定中です。」が返ること。
+2. レスポンス本文のerrorsを確認する"	errorsに「この受注は「（査定担当者名）」が査定中です。」が返ること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-015	IT-10	HTTPステータス	P1	査定担当者本人は査定中の受注を査定再開へ更新できる	SEED-A07-04-JWT-MEMBER（会員A）／SEED-A07-04-ORDER-INPROGRESS-A（更新前=査定中10・査定担当者=会員A）／SEED-A07-04-STATUS-MASTER	status=12（査定再開）／jwt-token＝会員A	"1. 担当者本人（会員A）でPUT送信する
-2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-016	IT-10	異常系	P1	他担当者が査定中の受注を査定中へ更新しても占有拒否となる	SEED-A07-04-JWT-OTHER（会員B）／SEED-A07-04-ORDER-INPROGRESS-A（更新前=査定中10・査定担当者=会員A）／SEED-A07-04-STATUS-MASTER	status=10（査定中＝更新前と同区分・同値）／jwt-token＝会員B	"1. 担当者本人以外（会員B）で更新前と同値の status=10 をPUT送信する
-2. HTTPステータスを確認する"	更新前が査定中・指定先も査定中（10→10）で担当者が異なるため、占有拒否としてHTTPステータスが400（入力不正）であること。
+2. HTTPステータスを確認する"	更新前が査定中・指定先も査定中（10→10）で担当者が異なるため、占有拒否としてHTTPステータスが400（入力不正）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-017	IT-10	異常系	P1	更新前が査定再開の受注を他担当者が更新すると占有拒否となる	SEED-A07-04-JWT-OTHER（会員B）／SEED-A07-04-ORDER-RESUMED-A（更新前=査定再開12・査定担当者=会員A）／SEED-A07-04-STATUS-MASTER	status=10（査定中＝査定中・査定再開区分）／jwt-token＝会員B	"1. 担当者本人以外（会員B）で status=10 をPUT送信する
-2. HTTPステータスを確認する"	更新前が査定再開・指定先が査定中（12→10）で担当者が異なるため、占有拒否としてHTTPステータスが400（入力不正）であること。
+2. HTTPステータスを確認する"	更新前が査定再開・指定先が査定中（12→10）で担当者が異なるため、占有拒否としてHTTPステータスが400（入力不正）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-018	IT-10	異常系	P1	更新前が査定再開の受注を他担当者が査定再開へ更新すると占有拒否となる	SEED-A07-04-JWT-OTHER（会員B）／SEED-A07-04-ORDER-RESUMED-A（更新前=査定再開12・査定担当者=会員A）／SEED-A07-04-STATUS-MASTER	status=12（査定再開＝査定中・査定再開区分）／jwt-token＝会員B	"1. 担当者本人以外（会員B）で status=12 をPUT送信する
-2. HTTPステータスを確認する"	更新前が査定再開・指定先も査定再開（12→12）で担当者が異なるため、占有拒否としてHTTPステータスが400（入力不正）であること。
+2. HTTPステータスを確認する"	更新前が査定再開・指定先も査定再開（12→12）で担当者が異なるため、占有拒否としてHTTPステータスが400（入力不正）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-020	IT-10	異常系	P1	査定終了の受注を査定中へ更新すると入力不正となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-FINISHED（更新前=振込完了7＝査定終了）／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. 査定終了の受注に status=10 をPUT送信する
-2. HTTPステータスを確認する"	HTTPステータスが400（入力不正）であること。
+2. HTTPステータスを確認する"	HTTPステータスが400（入力不正）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-021	IT-10	エラー	P1	査定終了→査定中・査定再開のエラーメッセージが仕様文言となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-FINISHED（更新前=振込完了7）／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. 査定終了の受注に status=10 をPUT送信する
-2. レスポンス本文のerrorsを確認する"	errorsに「この査定はすでに終了しているため開くことができません。」が返ること。
+2. レスポンス本文のerrorsを確認する"	errorsに「この査定はすでに終了しているため開くことができません。」が返ること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-022	IT-10	エラー	P1	査定終了→それ以外のステータスのエラーメッセージが仕様文言となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-FINISHED（更新前=振込完了7）／SEED-A07-04-STATUS-MASTER	status=2（商品到着＝査定中・査定再開以外）／jwt-token=有効	"1. 査定終了の受注に status=2 をPUT送信する
-2. レスポンス本文のerrorsを確認する"	errorsに「この査定はすでに終了しているためステータスの更新に失敗しました。」が返ること。
+2. レスポンス本文のerrorsを確認する"	errorsに「この査定はすでに終了しているためステータスの更新に失敗しました。」が返ること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-023	IT-10	異常系	P1	査定終了の別ステータス（査定同意）の受注も更新拒否となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-FINISHED-AGREE（更新前=査定同意4＝査定終了）／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. 査定終了（査定同意4）の受注に status=10 をPUT送信する
-2. HTTPステータスを確認する"	査定終了集合の下限代表ID（査定同意4）でも更新不可としてHTTPステータスが400（入力不正）であること。
+2. HTTPステータスを確認する"	査定終了集合の下限代表ID（査定同意4）でも更新不可としてHTTPステータスが400（入力不正）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-024	IT-10	異常系	P1	査定終了の別ステータス（連絡済み）の受注も更新拒否となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-FINISHED-CONTACTED（更新前=連絡済み13＝査定終了）／SEED-A07-04-STATUS-MASTER	status=2（商品到着）／jwt-token=有効	"1. 査定終了（連絡済み13）の受注に status=2 をPUT送信する
-2. HTTPステータスを確認する"	査定終了集合の上限代表ID（連絡済み13）でも更新不可としてHTTPステータスが400（入力不正）であること。
+2. HTTPステータスを確認する"	査定終了集合の上限代表ID（連絡済み13）でも更新不可としてHTTPステータスが400（入力不正）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-025	IT-10	エラー	P1	査定終了→査定再開指定でも「開くことができません」分岐となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-FINISHED（更新前=振込完了7）／SEED-A07-04-STATUS-MASTER	status=12（査定再開）／jwt-token=有効	"1. 査定終了の受注に status=12 をPUT送信する
-2. レスポンス本文のerrorsを確認する"	指定先が査定再開（12）でも査定中・査定再開分岐として errorsに「この査定はすでに終了しているため開くことができません。」が返ること。
+2. レスポンス本文のerrorsを確認する"	指定先が査定再開（12）でも査定中・査定再開分岐として errorsに「この査定はすでに終了しているため開くことができません。」が返ること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-030	IT-32	データなし	P1	存在しない受注IDは該当なしとなる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-STATUS-MASTER	id=存在しない受注ID／status=10／jwt-token=有効	"1. 存在しない受注IDへPUT送信する
-2. HTTPステータスを確認する"	該当なしとしてHTTPステータスが404であること。
+2. HTTPステータスを確認する"	該当なしとしてHTTPステータスが404であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-031	IT-32	必須条件	P2	status未指定は入力不正となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	statusボディ値＝なし／jwt-token=有効	"1. statusを付けずにPUT送信する
-2. HTTPステータスを確認する"	入力不正としてHTTPステータスが400であること。
+2. HTTPステータスを確認する"	入力不正としてHTTPステータスが400であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-032	IT-32	リクエスト	P1	マスタに存在しないステータスIDは入力不正となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=999（買取ステータスマスタに存在しない）／jwt-token=有効	"1. status=999 をPUT送信する
-2. HTTPステータスを確認する"	入力不正としてHTTPステータスが400であること。
+2. HTTPステータスを確認する"	入力不正としてHTTPステータスが400であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-033	IT-32	リクエスト	P1	マスタ非存在ステータスIDのエラーメッセージが仕様文言となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=999／jwt-token=有効	"1. status=999 をPUT送信する
-2. レスポンス本文のerrorsを確認する"	errorsに「正しい店頭買取ステータスIDを入力してください」が返ること。
-a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-034	IT-10	エラー	P2	非整数・空文字のstatusは入力不正となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status="abc"（非整数）または空文字／jwt-token=有効	"1. 非整数のstatusでPUT送信する
-2. HTTPステータスを確認する"	入力不正としてHTTPステータスが400であること。
+2. レスポンス本文のerrorsを確認する"	errorsに「正しい店頭買取ステータスIDを入力してください」が返ること。				
+a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-034	IT-10	エラー	P2	非整数・空文字のstatusは入力不正となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	"status=""abc""（非整数）または空文字／jwt-token=有効"	"1. 非整数のstatusでPUT送信する
+2. HTTPステータスを確認する"	入力不正としてHTTPステータスが400であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-035	IT-32	リクエスト	P2	想定外項目を加えたときの挙動を実機確認する	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	"status=10（査定中）に想定外の項目（項目名とパラメータ値のセット）を追加
 jwt-token=有効"	"1. 想定外項目を含めてPUT送信する
-2. 応答を実機で観測する"	正本mdは想定外項目（未知フィールド）の扱いを定義せず期待挙動を規定できないため、応答を実機で観測すること（要実機確認）。
+2. 応答を実機で観測する"	正本mdは想定外項目（未知フィールド）の扱いを定義せず期待挙動を規定できないため、応答を実機で観測すること（要実機確認）。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-036	IT-32	レスポンス	P2	失敗時のレスポンス本文が仕様の型契約と一致する	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=999（マスタ非存在）／jwt-token=有効	"1. 入力不正となる値でPUT送信する
-2. レスポンス本文の構造を確認する"	失敗時の本文が `{code, errors}` 形式（`errors`に該当メッセージ）であること。
+2. レスポンス本文の構造を確認する"	失敗時の本文が `{code, errors}` 形式（`errors`に該当メッセージ）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-040	IT-09	実行結果	P1	更新後ステータスが受注テーブルに反映される	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE（更新前=商品到着2）／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. status=10 をPUT送信する
-2. 受注テーブル（dtb_buy_order）の対象受注の買取ステータスIDをDB観測で確認する"	対象受注の買取ステータスID（buy_order_status_id）が査定中（10）へ更新されていること。
+2. 受注テーブル（dtb_buy_order）の対象受注の買取ステータスIDをDB観測で確認する"	対象受注の買取ステータスID（buy_order_status_id）が査定中（10）へ更新されていること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-041	IT-10	重複・順序	P1	更新時に認証した管理者会員が更新担当者として記録される	SEED-A07-04-JWT-MEMBER（会員A）／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token＝会員A	"1. 会員Aでstatus=10をPUT送信する
-2. 受注テーブル（dtb_buy_order）の対象受注の更新担当者をDB観測で確認する"	対象受注の更新担当者（member_id）が認証会員（会員A）として記録されていること。
+2. 受注テーブル（dtb_buy_order）の対象受注の更新担当者をDB観測で確認する"	対象受注の更新担当者（member_id）が認証会員（会員A）として記録されていること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-042	IT-33	副作用	P1	更新時にステータス変更履歴が1件登録される	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE（更新前=商品到着2）／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. status=10 をPUT送信する
-2. ステータス変更履歴テーブル（dtb_buy_order_status_histry）の対象受注の行数をDB観測で確認する"	対象受注のステータス変更履歴（dtb_buy_order_status_histry）が1件追加されていること。
+2. ステータス変更履歴テーブル（dtb_buy_order_status_histry）の対象受注の行数をDB観測で確認する"	対象受注のステータス変更履歴（dtb_buy_order_status_histry）が1件追加されていること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-043	IT-33	ログ・監査	P2	登録された履歴の内容が更新内容と一致する	SEED-A07-04-JWT-MEMBER（会員A）／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token＝会員A	"1. 会員Aでstatus=10をPUT送信する
-2. 追加されたステータス変更履歴行の内容をDB観測で確認する"	履歴行の更新後ステータスID（10）・更新担当者ID（会員A）・登録日時（create_date）が更新内容と一致していること。
+2. 追加されたステータス変更履歴行の内容をDB観測で確認する"	履歴行の更新後ステータスID（10）・更新担当者ID（会員A）・登録日時（create_date）が更新内容と一致していること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-044	IT-33	区分整合	P1	ステータス更新で受注の他項目が変動しない	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. 更新前に対象受注の買取合計金額・成立日時等を控える
 2. status=10 をPUT送信する
-3. 受注テーブル（dtb_buy_order）の同項目をDB観測で確認する"	受注の他項目（買取合計金額・成立日時・明細等）が更新前と変動しないこと。
+3. 受注テーブル（dtb_buy_order）の同項目をDB観測で確認する"	受注の他項目（買取合計金額・成立日時・明細等）が更新前と変動しないこと。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-045	IT-33	エラー	P2	査定終了拒否時に受注ステータスが更新されない	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-FINISHED（更新前=振込完了7）／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. 査定終了の受注に status=10 をPUT送信し400を受ける
-2. 受注テーブル（dtb_buy_order）の対象受注の買取ステータスIDをDB観測で確認する"	対象受注の買取ステータスID（buy_order_status_id）が振込完了（7）のまま更新されていないこと。
+2. 受注テーブル（dtb_buy_order）の対象受注の買取ステータスIDをDB観測で確認する"	対象受注の買取ステータスID（buy_order_status_id）が振込完了（7）のまま更新されていないこと。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-046	IT-33	データ整合性	P2	更新が拒否された場合にステータス変更履歴が登録されない	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-FINISHED（更新前=振込完了7）／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. 査定終了の受注に status=10 をPUT送信し400を受ける
-2. ステータス変更履歴テーブル（dtb_buy_order_status_histry）をDB観測で確認する"	対象受注のステータス変更履歴に新規行が追加されないこと。
+2. ステータス変更履歴テーブル（dtb_buy_order_status_histry）をDB観測で確認する"	対象受注のステータス変更履歴に新規行が追加されないこと。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-047	IT-09	実行結果	P2	更新前後が同じステータスでも正常応答となる	SEED-A07-04-JWT-MEMBER（会員A）／SEED-A07-04-ORDER-INPROGRESS-A（更新前=査定中10・査定担当者=会員A）／SEED-A07-04-STATUS-MASTER	status=10（査定中＝更新前と同一）／jwt-token＝会員A	"1. 更新前と同一の status=10 をPUT送信する
-2. HTTPステータスを確認する"	更新前後が同一でもHTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	更新前後が同一でもHTTPステータスが200（成功）であること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-048	IT-09	実行結果	P2	更新前後が同じステータスのときは履歴が登録されない	SEED-A07-04-JWT-MEMBER（会員A）／SEED-A07-04-ORDER-INPROGRESS-A（更新前=査定中10・査定担当者=会員A）／SEED-A07-04-STATUS-MASTER	status=10（査定中＝更新前と同一）／jwt-token＝会員A	"1. 更新前と同一の status=10 をPUT送信する
-2. ステータス変更履歴テーブル（dtb_buy_order_status_histry）をDB観測で確認する"	対象受注のステータス変更履歴に新規行が追加されないこと。
+2. ステータス変更履歴テーブル（dtb_buy_order_status_histry）をDB観測で確認する"	対象受注のステータス変更履歴に新規行が追加されないこと。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-049	IT-09	副作用	P1	更新時に受注の更新日時が更新時刻へ更新される	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE（更新前=商品到着2）／SEED-A07-04-STATUS-MASTER	status=10（査定中）／jwt-token=有効	"1. 更新前に対象受注の更新日時（update_date）を控える
 2. status=10 をPUT送信する
-3. 受注テーブル（dtb_buy_order）の対象受注の更新日時をDB観測で確認する"	対象受注の更新日時（update_date）が更新前の値から更新時点の日時へ更新されていること。
+3. 受注テーブル（dtb_buy_order）の対象受注の更新日時をDB観測で確認する"	対象受注の更新日時（update_date）が更新前の値から更新時点の日時へ更新されていること。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-050	IT-10	障害	P2	保存処理中の例外が共通例外処理で500相当となる	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	保存処理中に例外を誘発する状態／status=10／jwt-token=有効	"1. 保存例外を誘発してPUT送信する
-2. HTTPステータスを確認する"	正典のエラー処理どおり、保存処理中の例外は共通例外処理に委ねられサーバ側エラー応答（HTTP500相当）となること。トランザクションのロールバックによる部分更新なしの厳密確認は保存例外の実再現が必要で、要実機確認。
+2. HTTPステータスを確認する"	正典のエラー処理どおり、保存処理中の例外は共通例外処理に委ねられサーバ側エラー応答（HTTP500相当）となること。トランザクションのロールバックによる部分更新なしの厳密確認は保存例外の実再現が必要で、要実機確認。				
 a07-04_api_online_purchase_buy_order_status（API_オンライン仕入_買取注文ステータス）	E2E-A07-04-051	IT-10	通信	P3	タイムアウト時の応答を実機確認する	SEED-A07-04-JWT-MEMBER／SEED-A07-04-ORDER-INTERMEDIATE／SEED-A07-04-STATUS-MASTER	タイムアウトを誘発する状態／status=10／jwt-token=有効	"1. タイムアウトを誘発してPUT送信する
-2. 応答と受注状態を実機で観測する"	タイムアウト時の具体応答・受注ステータス・履歴の部分更新有無は正典に定義が無く、期待挙動を規定できないため実機で観測すること（要実機確認）。
+2. 応答と受注状態を実機で観測する"	タイムアウト時の具体応答・受注ステータス・履歴の部分更新有無は正典に定義が無く、期待挙動を規定できないため実機で観測すること（要実機確認）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

@@ -1,0 +1,66 @@
+{
+  "functionId": "a06-07_0506_sheet-9_id",
+  "featureNo": "A06-07",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-9:2323",
+      "designExpectation": "0件のときは空配列を返す。カード商品以外のIDのみのときは0件を正常応答とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:80, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:123",
+      "implementationActual": "ids が空または非数値のみの場合は JsonResponse(['cards' => []]) を返し、数値ID指定後に検索0件の場合は formatter が ['cards' => new \\stdClass()] を返す。",
+      "mismatchReason": "設計は0件時の応答全体を [] とするが、実装は空配列ではなく cards キー付きのオブジェクトを返す。カード商品以外のIDのみで検索結果0件になる通常経路では {\"cards\":{}} となる。探索範囲: Controller/App/MTGBuyer/V1/Admin/BuyingController.php, Service/App/MTGBuyer/V1/BuyingCardsFormatter.php, Repository/Master/MtbCardRepository.php。",
+      "comparisonRows": [
+        {
+          "item": "0件時レスポンス",
+          "design": "応答全体が空配列 []",
+          "implementation": "ids空時は {\"cards\":[]}、検索0件時は {\"cards\":{}}",
+          "mismatch": "外部JSON契約が一致しない"
+        },
+        {
+          "item": "カード商品以外IDのみ",
+          "design": "0件を正常応答とし、空をJSONで返す",
+          "implementation": "getBuyingCardsByProductIds の結果が空なら formatter が cards に stdClass を入れる",
+          "mismatch": "正常応答ではあるが空配列ではない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-9:2307",
+      "designExpectation": "レスポンスの conditionClasses.<conditionCode> は productClassId, productCode, buyPrice, price, stock, sectionId を返す。foilFlg は boolean、price と stock は string とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:88, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:113",
+      "implementationActual": "conditionClasses 配下は productClassCode を返し、productCode は返さない。foilFlg は DTO の int をそのまま返し、price は standardPrice、stock は int として返す。",
+      "mismatchReason": "設計サンプルおよびレスポンス定義の外部フィールド名・型と、実装の formatter が生成するキー・型が一致しない。Repository は productClass.code AS productClassCode を選択し、formatter も productClassCode キーで返しているため productCode は不在。探索範囲: Service/App/MTGBuyer/V1/BuyingCardsFormatter.php, Dto/Repository/Master/GetBuyingCardsQueryResponseDto.php, Repository/Master/MtbCardRepository.php。",
+      "comparisonRows": [
+        {
+          "item": "商品コードフィールド",
+          "design": "productCode",
+          "implementation": "productClassCode",
+          "mismatch": "キー名が異なる"
+        },
+        {
+          "item": "foilFlg",
+          "design": "boolean",
+          "implementation": "int の foilFlg をそのまま返す",
+          "mismatch": "型が異なる可能性が高い"
+        },
+        {
+          "item": "price",
+          "design": "string",
+          "implementation": "int|null の standardPrice を price として返す",
+          "mismatch": "型が異なる"
+        },
+        {
+          "item": "stock",
+          "design": "string",
+          "implementation": "int の stock を返す",
+          "mismatch": "型が異なる"
+        }
+      ]
+    }
+  ]
+}

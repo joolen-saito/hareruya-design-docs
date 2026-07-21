@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_14_admin_product_product_abbreviation_tag_register_edit_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・フラッシュ・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。設計源は pf-eccube3 のリバースであり、刷新先 ec-cube-enterprise との乖離は付帯表4（不具合候補）へ分離し、テストは仕様どおりに書く。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・フラッシュ・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。設計源は pf-eccube3 のリバースであり、刷新先 ec-cube-enterprise との乖離は付帯表4（不具合候補）へ分離し、テストは仕様どおりに書く。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 ## 関連ID対応概要
 
@@ -22,56 +22,56 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-050	IT-15	未認証	P1	未ログインで略称タグ画面URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product/storage へ直接アクセス"	管理ログイン画面へ誘導されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-051	IT-13	URL直接アクセス	P2	ログイン済み運用者は略称タグ画面を表示できる	管理者ログイン済み／SEED-M03-14-ADMIN	—	"1. ログイン後 /admin/product/storage を開く"	略称タグ登録／編集画面が表示されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-001	IT-25	UI部品	P2	新規画面に名称・並び順・フラグ・登録ボタンと下部一覧が表示される	管理者ログイン済み／SEED-M03-14-ADMIN	—	"1. /admin/product/storage を開く"	上部に名称入力欄・並び順入力欄・アルファベット順ソートフラグ・登録ボタン、下部に一覧表が表示されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-002	IT-25	表示結果	P3	新規時はカード見出しが「新規追加」になる	管理者ログイン済み／SEED-M03-14-ADMIN	—	"1. /admin/product/storage を開く"	登録フォームのカード見出しが「新規追加」であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-003	IT-25	操作起点	P3	CSV出力・CSV入力リンクが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	—	"1. /admin/product/storage を開く"	「CSV出力」「CSV入力」リンクが表示されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-004	IT-25	UI部品	P3	アルファベット順ソートフラグのチェックボックスが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	—	"1. /admin/product/storage を開く"	アルファベット順ソートフラグのチェックボックス（任意項目）が表示されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-005	IT-25	HTTPステータス	P2	編集画面にカード見出し「編集」と「新規登録へ戻る」が表示される	管理者ログイン済み／SEED-M03-14-TAG	—	"1. /admin/product/storage/{既存id} を開く"	カード見出しが「編集」になり「新規登録へ戻る」リンクが表示されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-006	IT-15	対象データ	P2	編集画面で上部フォームが当該行の名称・並び順を反映する	管理者ログイン済み／SEED-M03-14-TAG	—	"1. /admin/product/storage/{既存id} を開く"	上部フォームの名称・並び順が当該行の内容になっていること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-007	IT-13	URL直接アクセス	P2	存在しないidの編集URLはHTTP404になる	管理者ログイン済み／SEED-M03-14-ADMIN	存在しない略称タグid	"1. /admin/product/storage/{存在しないid} を開く"	HTTP 404 となること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-050	IT-15	未認証	P1	未ログインで略称タグ画面URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product/storage へ直接アクセス	管理ログイン画面へ誘導されること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-051	IT-13	URL直接アクセス	P2	ログイン済み運用者は略称タグ画面を表示できる	管理者ログイン済み／SEED-M03-14-ADMIN	—	1. ログイン後 /admin/product/storage を開く	略称タグ登録／編集画面が表示されること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-001	IT-25	UI部品	P2	新規画面に名称・並び順・フラグ・登録ボタンと下部一覧が表示される	管理者ログイン済み／SEED-M03-14-ADMIN	—	1. /admin/product/storage を開く	上部に名称入力欄・並び順入力欄・アルファベット順ソートフラグ・登録ボタン、下部に一覧表が表示されること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-002	IT-25	表示結果	P3	新規時はカード見出しが「新規追加」になる	管理者ログイン済み／SEED-M03-14-ADMIN	—	1. /admin/product/storage を開く	登録フォームのカード見出しが「新規追加」であること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-003	IT-25	操作起点	P3	CSV出力・CSV入力リンクが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	—	1. /admin/product/storage を開く	「CSV出力」「CSV入力」リンクが表示されること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-004	IT-25	UI部品	P3	アルファベット順ソートフラグのチェックボックスが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	—	1. /admin/product/storage を開く	アルファベット順ソートフラグのチェックボックス（任意項目）が表示されること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-005	IT-25	HTTPステータス	P2	編集画面にカード見出し「編集」と「新規登録へ戻る」が表示される	管理者ログイン済み／SEED-M03-14-TAG	—	1. /admin/product/storage/{既存id} を開く	カード見出しが「編集」になり「新規登録へ戻る」リンクが表示されること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-006	IT-15	対象データ	P2	編集画面で上部フォームが当該行の名称・並び順を反映する	管理者ログイン済み／SEED-M03-14-TAG	—	1. /admin/product/storage/{既存id} を開く	上部フォームの名称・並び順が当該行の内容になっていること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-007	IT-13	URL直接アクセス	P2	存在しないidの編集URLはHTTP404になる	管理者ログイン済み／SEED-M03-14-ADMIN	存在しない略称タグid	1. /admin/product/storage/{存在しないid} を開く	HTTP 404 となること。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-008	IT-25	UI部品	P2	表示件数プルダウン変更でURLにpage_countが付き再読込される	管理者ログイン済み／SEED-M03-14-ADMIN	表示件数＝50	"1. /admin/product/storage を開く
-2. 表示件数プルダウンで50を選択"	URLに page_count=50 が付与され一覧が再読込されること。
+2. 表示件数プルダウンで50を選択"	URLに page_count=50 が付与され一覧が再読込されること。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-060	IT-25	確認ダイアログ	P3	CSV入力リンク押下でCSV取込画面へ遷移する	管理者ログイン済み／SEED-M03-14-ADMIN	—	"1. /admin/product/storage を開く
-2. 「CSV入力」リンクを押下"	CSV取込画面（/product/storage_code/csv）へ遷移すること。
+2. 「CSV入力」リンクを押下"	CSV取込画面（/product/storage_code/csv）へ遷移すること。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-061	IT-25	操作起点	P3	CSV出力リンク押下でCSVダウンロードが開始される	管理者ログイン済み／SEED-M03-14-ADMIN	—	"1. /admin/product/storage を開く
-2. 「CSV出力」リンクを押下"	CSV出力（/product/storage_code/export）でファイルのダウンロードが開始されること（出力内容は別機能のため対象外）。
+2. 「CSV出力」リンクを押下"	CSV出力（/product/storage_code/export）でファイルのダウンロードが開始されること（出力内容は別機能のため対象外）。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-010	IT-26	登録内容	P1	有効な名称・並び順で新規登録すると成功フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名（接頭辞E2E-）、並び順＝100	"1. /admin/product/storage を開く
 2. 名称・並び順を入力
-3. 登録ボタンを押下"	成功フラッシュ「登録が完了しました。」が表示されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-011	IT-03	画面遷移	P1	新規登録成功後は一覧トップ(/product/storage)へ遷移する	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝101	"1. 名称・並び順を入力し登録ボタンを押下"	GET /admin/product/storage（一覧トップ）へ遷移すること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-012	IT-26	登録内容	P2	新規登録後は一覧に新規行(名称)が表示される（間接DB確認）	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝1	"1. 名称・並び順を入力し登録ボタンを押下"	一覧表に登録した名称の行が表示されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-013	IT-22	必須制御	P2	並び順=0(最小境界)で登録できる	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝0	"1. 名称・並び順0を入力し登録ボタンを押下"	成功フラッシュ「登録が完了しました。」が表示されること（Range 最小0は許容）。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-014	IT-22	数値バリデーション	P2	並び順=32767(最大境界)で登録できる	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝32767	"1. 名称・並び順32767を入力し登録ボタンを押下"	成功フラッシュ「登録が完了しました。」が表示されること（Range 最大32767は許容）。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-020	IT-22	必須バリデーション	P1	名称未入力で登録すると失敗フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝空、並び順＝100	"1. 名称を空のまま並び順を入力し登録ボタンを押下"	失敗フラッシュ「登録できませんでした。」が表示されること（名称 NotBlank）。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-021	IT-03	画面遷移	P2	名称未入力で登録すると一覧トップへ遷移しフィールドエラーは復元されない	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝空、並び順＝100	"1. 名称を空のまま登録ボタンを押下"	一覧トップ(/product/storage)へ遷移し、フィールド直下のエラーは表示されないこと（失敗時は復元されずフラッシュのみ）。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-022	IT-22	必須バリデーション	P1	並び順未入力で登録すると失敗フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝空	"1. 名称を入力し並び順を空のまま登録ボタンを押下"	失敗フラッシュ「登録できませんでした。」が表示されること（並び順 NotBlank）。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-023	IT-22	数値バリデーション	P1	並び順=-1(範囲外)で登録すると失敗フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝-1	"1. 名称を入力し並び順に-1を入力し登録ボタンを押下"	失敗フラッシュ「登録できませんでした。」が表示されること（Range 0未満は範囲外）。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-024	IT-22	数値バリデーション	P2	並び順=32768(範囲外)で登録すると失敗フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝32768	"1. 名称を入力し並び順に32768を入力し登録ボタンを押下"	失敗フラッシュ「登録できませんでした。」が表示されること（Range 32767超は範囲外）。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-025	IT-22	文字種バリデーション	P2	並び順に非数値を入力して登録すると失敗フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝abc	"1. 名称を入力し並び順に非数値を入力し登録ボタンを押下"	並び順は数値入力欄（input type=number）のため非数値はブラウザ段階で入力できず、サーバ側 IntegerType 検証へ到達しない。自動E2E対象外（widget依存。詳細は付帯表1/付帯表4#4）。
+3. 登録ボタンを押下"	成功フラッシュ「登録が完了しました。」が表示されること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-011	IT-03	画面遷移	P1	新規登録成功後は一覧トップ(/product/storage)へ遷移する	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝101	1. 名称・並び順を入力し登録ボタンを押下	GET /admin/product/storage（一覧トップ）へ遷移すること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-012	IT-26	登録内容	P2	新規登録後は一覧に新規行(名称)が表示される（間接DB確認）	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝1	1. 名称・並び順を入力し登録ボタンを押下	一覧表に登録した名称の行が表示されること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-013	IT-22	必須制御	P2	並び順=0(最小境界)で登録できる	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝0	1. 名称・並び順0を入力し登録ボタンを押下	成功フラッシュ「登録が完了しました。」が表示されること（Range 最小0は許容）。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-014	IT-22	数値バリデーション	P2	並び順=32767(最大境界)で登録できる	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝32767	1. 名称・並び順32767を入力し登録ボタンを押下	成功フラッシュ「登録が完了しました。」が表示されること（Range 最大32767は許容）。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-020	IT-22	必須バリデーション	P1	名称未入力で登録すると失敗フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝空、並び順＝100	1. 名称を空のまま並び順を入力し登録ボタンを押下	失敗フラッシュ「登録できませんでした。」が表示されること（名称 NotBlank）。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-021	IT-03	画面遷移	P2	名称未入力で登録すると一覧トップへ遷移しフィールドエラーは復元されない	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝空、並び順＝100	1. 名称を空のまま登録ボタンを押下	一覧トップ(/product/storage)へ遷移し、フィールド直下のエラーは表示されないこと（失敗時は復元されずフラッシュのみ）。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-022	IT-22	必須バリデーション	P1	並び順未入力で登録すると失敗フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝空	1. 名称を入力し並び順を空のまま登録ボタンを押下	失敗フラッシュ「登録できませんでした。」が表示されること（並び順 NotBlank）。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-023	IT-22	数値バリデーション	P1	並び順=-1(範囲外)で登録すると失敗フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝-1	1. 名称を入力し並び順に-1を入力し登録ボタンを押下	失敗フラッシュ「登録できませんでした。」が表示されること（Range 0未満は範囲外）。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-024	IT-22	数値バリデーション	P2	並び順=32768(範囲外)で登録すると失敗フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝32768	1. 名称を入力し並び順に32768を入力し登録ボタンを押下	失敗フラッシュ「登録できませんでした。」が表示されること（Range 32767超は範囲外）。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-025	IT-22	文字種バリデーション	P2	並び順に非数値を入力して登録すると失敗フラッシュが表示される	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名、並び順＝abc	1. 名称を入力し並び順に非数値を入力し登録ボタンを押下	並び順は数値入力欄（input type=number）のため非数値はブラウザ段階で入力できず、サーバ側 IntegerType 検証へ到達しない。自動E2E対象外（widget依存。詳細は付帯表1/付帯表4#4）。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-030	IT-26	更新内容	P1	既存の略称タグを編集更新すると成功フラッシュが表示される	管理者ログイン済み／SEED-M03-14-TAG（使い捨て）	名称＝変更後の値、並び順＝変更後の値	"1. /admin/product/storage/{既存id} を開く
-2. 名称・並び順を変更し登録ボタンを押下"	成功フラッシュ「登録が完了しました。」が表示されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-031	IT-03	画面遷移	P2	編集更新成功後は一覧トップ(新規状態フォーム)へ遷移する	管理者ログイン済み／SEED-M03-14-TAG（使い捨て）	名称＝変更後の値、並び順＝変更後の値	"1. 編集画面で値を変更し登録ボタンを押下"	GET /admin/product/storage（一覧トップ）へ遷移し、上部フォームが新規状態で再描画されること。
+2. 名称・並び順を変更し登録ボタンを押下"	成功フラッシュ「登録が完了しました。」が表示されること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-031	IT-03	画面遷移	P2	編集更新成功後は一覧トップ(新規状態フォーム)へ遷移する	管理者ログイン済み／SEED-M03-14-TAG（使い捨て）	名称＝変更後の値、並び順＝変更後の値	1. 編集画面で値を変更し登録ボタンを押下	GET /admin/product/storage（一覧トップ）へ遷移し、上部フォームが新規状態で再描画されること。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-040	IT-26	登録内容	P1	関連商品ありの略称タグを削除しようとすると削除されずエラーフラッシュが表示される	管理者ログイン済み／SEED-M03-14-LINKED	—	"1. /admin/product/storage を開く
-2. 関連商品ありの略称タグ行の削除を実行（確認ダイアログ確定）"	「商品で使用されているため、「（名称）」の略称タグは削除することができません。」が表示され、削除されないこと。
+2. 関連商品ありの略称タグ行の削除を実行（確認ダイアログ確定）"	「商品で使用されているため、「（名称）」の略称タグは削除することができません。」が表示され、削除されないこと。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-041	IT-26	登録内容	P1	関連商品なしの略称タグを削除すると削除され成功フラッシュが表示される	管理者ログイン済み／SEED-M03-14-DELETABLE（使い捨て）	—	"1. /admin/product/storage を開く
-2. 関連商品なしの略称タグ行の削除を実行（確認ダイアログ確定）"	成功フラッシュ「削除しました」が表示され、一覧から当該行が消えること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-042	IT-25	確認ダイアログ	P3	削除リンク押下で確認ダイアログが表示される	管理者ログイン済み／SEED-M03-14-DELETABLE	—	"1. 一覧の削除リンクを押下"	削除前の確認ダイアログが表示されること（削除共通）。
+2. 関連商品なしの略称タグ行の削除を実行（確認ダイアログ確定）"	成功フラッシュ「削除しました」が表示され、一覧から当該行が消えること。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-042	IT-25	確認ダイアログ	P3	削除リンク押下で確認ダイアログが表示される	管理者ログイン済み／SEED-M03-14-DELETABLE	—	1. 一覧の削除リンクを押下	削除前の確認ダイアログが表示されること（削除共通）。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-009	IT-03	画面遷移	P3	一覧の並び順列がフラグに応じ「アルファベット」「コレクター番号」表示になる	管理者ログイン済み／SEED-M03-14-TAG	—	"1. /admin/product/storage を開く
-2. 一覧の並び順列の表示を確認"	アルファベット順ソートフラグがオンの行は「アルファベット」、オフの行は「コレクター番号」と表示されること。
+2. 一覧の並び順列の表示を確認"	アルファベット順ソートフラグがオンの行は「アルファベット」、オフの行は「コレクター番号」と表示されること。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-062	IT-25	画面遷移	P2	一覧の名称/id/「変更」リンク押下で当該行の編集画面へ遷移する	管理者ログイン済み／SEED-M03-14-TAG	—	"1. /admin/product/storage を開く
-2. 一覧で当該行の名称（または id・「変更」）リンクを押下"	編集画面(/product/storage/{id})へ遷移し、上部フォームが当該行の内容を反映すること（直接URLでなくクリック導線での入口確認）。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-063	IT-25	URL直接アクセス	P3	一覧ページ送りルートで一覧と登録フォームが再表示される	管理者ログイン済み／SEED-M03-14-ADMIN	—	"1. /admin/product/storage/page/1 を開く"	一覧ページ送りルート(/product/storage/page/{page_no})で一覧と登録フォームが再表示されること（入口「一覧ページ送り」の確認）。
+2. 一覧で当該行の名称（または id・「変更」）リンクを押下"	編集画面(/product/storage/{id})へ遷移し、上部フォームが当該行の内容を反映すること（直接URLでなくクリック導線での入口確認）。				
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-063	IT-25	URL直接アクセス	P3	一覧ページ送りルートで一覧と登録フォームが再表示される	管理者ログイン済み／SEED-M03-14-ADMIN	—	1. /admin/product/storage/page/1 を開く	一覧ページ送りルート(/product/storage/page/{page_no})で一覧と登録フォームが再表示されること（入口「一覧ページ送り」の確認）。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-064	IT-26	登録内容	P2	アルファベット順ソートフラグONで登録すると一覧の並び順列が「アルファベット」表示になる	管理者ログイン済み／SEED-M03-14-ADMIN	名称＝一意名(接頭辞E2E-)、並び順＝任意、フラグ＝ON	"1. /admin/product/storage を開く
-2. 名称・並び順を入力しアルファベット順ソートフラグをONにして登録ボタンを押下"	成功フラッシュが表示され、一覧の当該行の並び順列が「アルファベット」表示になること（alphabetSortFlg=真の保存が一覧へ反映＝OFF既定との対）。
+2. 名称・並び順を入力しアルファベット順ソートフラグをONにして登録ボタンを押下"	成功フラッシュが表示され、一覧の当該行の並び順列が「アルファベット」表示になること（alphabetSortFlg=真の保存が一覧へ反映＝OFF既定との対）。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-065	IT-22	必須バリデーション	P2	編集中に名称を空にして更新すると失敗フラッシュが表示され更新されない	管理者ログイン済み／SEED-M03-14-TAG	名称＝空	"1. /admin/product/storage/{既存id} を開く
-2. 名称を空にして登録ボタンを押下"	失敗フラッシュ「登録できませんでした。」が表示され一覧トップ(/product/storage)へ遷移、当該行は更新されないこと（編集時 名称 NotBlank・失敗時は永続化なし＝編集正常系030/031の対）。
+2. 名称を空にして登録ボタンを押下"	失敗フラッシュ「登録できませんでした。」が表示され一覧トップ(/product/storage)へ遷移、当該行は更新されないこと（編集時 名称 NotBlank・失敗時は永続化なし＝編集正常系030/031の対）。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-070	IT-26	登録内容	P3	表示件数選択後の再訪でセッションの表示件数が引き継がれる	管理者ログイン済み／SEED-M03-14-ADMIN	表示件数＝50	"1. 表示件数プルダウンで50を選択
-2. クエリ無しで /admin/product/storage を再訪"	再訪時もセッション(admin.product.storage.page_count)に従い50件表示が維持されること。手動/間接（セッションキーはブラウザ直接観測外・表示件数で間接確認。詳細は付帯表1/付帯表5）。
+2. クエリ無しで /admin/product/storage を再訪"	再訪時もセッション(admin.product.storage.page_count)に従い50件表示が維持されること。手動/間接（セッションキーはブラウザ直接観測外・表示件数で間接確認。詳細は付帯表1/付帯表5）。				
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	E2E-M03-14-071	IT-26	登録内容	P3	一覧が並び順(rank)昇順で表示される	管理者ログイン済み／既知rank値の複数シード	—	"1. /admin/product/storage を開く
-2. 一覧の並び順(rank)列の並び順序を確認"	一覧が rank 昇順で並ぶこと。手動/間接（既知rank値の複数行シードが必要・順序の直接アサートは要シードのため手動。設計書「集計条件」由来）。
+2. 一覧の並び順(rank)列の並び順序を確認"	一覧が rank 昇順で並ぶこと。手動/間接（既知rank値の複数行シードが必要・順序の直接アサートは要シードのため手動。設計書「集計条件」由来）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

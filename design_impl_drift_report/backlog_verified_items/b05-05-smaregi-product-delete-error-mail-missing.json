@@ -1,0 +1,247 @@
+{
+  "id": "b05-05-smaregi-product-delete-error-mail-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b05-05_0405_sheet-7_sheet.json",
+  "sourceFindingId": "b05-05_0405_sheet-7_sheet-conformance-d02594b89cec",
+  "classification": "バッチ受注管理",
+  "feature": "スマレジ商品削除",
+  "issueCategory": "実装漏れ",
+  "issue": "スマレジ商品削除の連携失敗時にスマレジ通信エラーメールが送信されない",
+  "designBook": "0405_基本設計仕様書(バッチ_受注管理).xlsx",
+  "reproSteps": [
+    "設計書 B05-05 のエラーハンドリングで、スマレジ連携エラーごとに管理者へメール通知することを確認する",
+    "ベース実装 pf-eccube3 の `DeleteSmaregiProduct` から `postSmaregiProcess(..., ['delete'])` が呼ばれ、削除連携失敗時に `sendSmaregiErrorMail(..., 'product_upd(delete)', ...)` が実行されることを確認する",
+    "ec-cube-enterprise の `SmaregiOtcDeleteService` で、スマレジ商品検索または削除API失敗時に `DELETE_FAILED` を返す経路を確認する",
+    "ec-cube-enterprise の `SmaregiOtcDeleteMessageHandler` で、`DELETE_FAILED` が `MessengerJob::STATUS_FAILED` 更新に留まり、MailService や mailer 送信へ到達しないことを確認する"
+  ],
+  "expected": [
+    "スマレジ商品削除の連携に失敗した場合、スマレジ通信エラーメールを送信する",
+    "エラーが発生したスマレジ連携ごとに、管理者へメール通知する",
+    "通知には対象注文番号、処理名、スマレジ側エラー情報が含まれる"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise のスマレジ商品削除サービスは、商品検索API失敗時と削除API失敗時に `logger->error()` して `SmaregiOtcDeleteResult::DELETE_FAILED` を返すが、このサービスの依存関係は Logger/EntityManager/SmaregiProductApiClient だけで、MailService や mailer 送信は呼ばない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の削除サービスはメール送信サービスを注入していない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php",
+          "start": 36,
+          "end": 43,
+          "language": "php",
+          "contains": [
+            "final readonly class SmaregiOtcDeleteService",
+            "private LoggerInterface $logger",
+            "private EntityManagerInterface $entityManager",
+            "private SmaregiProductApiClient $productApiClient"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise は商品検索API失敗時にログ出力して DELETE_FAILED を返すだけ",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php",
+          "start": 64,
+          "end": 77,
+          "language": "php",
+          "contains": [
+            "$listResult = $this->productApiClient->listByProductCode($apiUrl, $contractId, $accessToken, $productCode);",
+            "$this->logger->error('Smaregi product lookup failed'",
+            "return SmaregiOtcDeleteResult::DELETE_FAILED;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise は商品削除API失敗時にログ出力して DELETE_FAILED を返すだけ",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php",
+          "start": 92,
+          "end": 102,
+          "language": "php",
+          "contains": [
+            "$deleteResult = $this->productApiClient->delete($apiUrl, $contractId, $accessToken, $productId);",
+            "$this->logger->error('Smaregi product delete failed'",
+            "return SmaregiOtcDeleteResult::DELETE_FAILED;"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ec-cube-enterprise の Messenger ハンドラは `DELETE_FAILED` を `failJob()` に渡し、`MessengerJob` を `STATUS_FAILED` に更新する。ハンドラのコンストラクタにも MailService はなく、失敗経路でスマレジ通信エラーメールは送信されない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の削除ハンドラはメール送信サービスを注入していない",
+          "path": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php",
+          "start": 40,
+          "end": 56,
+          "language": "php",
+          "contains": [
+            "final readonly class SmaregiOtcDeleteMessageHandler",
+            "private LoggerInterface $logger",
+            "private SmaregiOtcDeleteService $deleteService",
+            "private string $smaregiApiContractId"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise は DELETE_FAILED を MessengerJob 失敗状態へ変換する",
+          "path": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php",
+          "start": 113,
+          "end": 124,
+          "language": "php",
+          "contains": [
+            "if ($result === SmaregiOtcDeleteResult::DELETE_FAILED) {",
+            "$this->failJob($Job, sprintf('Smaregi OTC delete failed: result=%s', $result->value));",
+            "$Job->setStatus(MessengerJob::STATUS_COMPLETED);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の失敗確定処理は MessengerJob を FAILED に保存するだけ",
+          "path": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php",
+          "start": 133,
+          "end": 145,
+          "language": "php",
+          "contains": [
+            "private function failJob(MessengerJob $Job, string $message): void",
+            "$Job->setStatus(MessengerJob::STATUS_FAILED);",
+            "$Job->setErrorMessage($message);",
+            "$this->entityManager->flush();"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では削除連携失敗時に `sendSmaregiErrorMail($result, 'product_upd(delete)', $orderNumber)` を呼び、スマレジ通信エラー件名で管理者宛メールを送信する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は削除連携失敗時にスマレジ通信エラーメールを呼ぶ",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php",
+          "start": 49,
+          "end": 56,
+          "language": "php",
+          "contains": [
+            "if (in_array('delete', $processes))",
+            "$app['hareruya_ec.service.mail']->sendSmaregiErrorMail($result, 'product_upd(delete)', $orderSub->getOrderNumber());",
+            "return;"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 のスマレジ通信エラーメール本文は注文番号と処理名を含む",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php",
+          "start": 1379,
+          "end": 1426,
+          "language": "php",
+          "contains": [
+            "public function sendSmaregiErrorMail($result, $process, $orderNumber)",
+            "$smaregiMailAddress = [$mailAddress => 'スマレジ通信エラー'];",
+            "注文番号：{$orderNumber}",
+            "処理名：{$process}",
+            "->setSubject('スマレジ通信エラー')",
+            "$this->app->mail($message);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B05-05 はスマレジ連携エラーごとに管理者へメール通知することを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1550,
+      "end": 1565,
+      "language": "html",
+      "contains": [
+        "スマレジ商品コードが登録されている",
+        "スマレジ削除フラグが立っていない",
+        "スマレジプラットフォームAPIでスマレジから取得した注文データの商品情報を論理削除する",
+        "エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B05-05 のリバース詳細は pf-eccube3 を挙動参照元としている",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1576,
+      "end": 1578,
+      "language": "html",
+      "contains": [
+        "手続きが完了した店頭注文を対象に、スマレジ側の商品を削除する連携を行うバッチ",
+        "確認値はpf-eccube3"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の削除サービスは商品検索/削除API失敗時に `DELETE_FAILED` を返すがメール送信しない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php",
+      "start": 36,
+      "end": 102,
+      "language": "php",
+      "contains": [
+        "private LoggerInterface $logger",
+        "$this->logger->error('Smaregi product lookup failed'",
+        "$this->logger->error('Smaregi product delete failed'",
+        "return SmaregiOtcDeleteResult::DELETE_FAILED;"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の削除ハンドラは `DELETE_FAILED` を MessengerJob の失敗状態にするだけでメール送信しない",
+      "path": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php",
+      "start": 40,
+      "end": 145,
+      "language": "php",
+      "contains": [
+        "private SmaregiOtcDeleteService $deleteService",
+        "if ($result === SmaregiOtcDeleteResult::DELETE_FAILED) {",
+        "$Job->setStatus(MessengerJob::STATUS_FAILED);",
+        "$this->entityManager->flush();"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "Messenger の failure transport はコメントアウトされており、失敗メッセージの別通知経路も確認できない",
+      "path": "ec-cube-enterprise/app/config/eccube/packages/messenger.yaml",
+      "start": 1,
+      "end": 9,
+      "language": "yaml",
+      "contains": [
+        "framework:",
+        "# failure_transport: failed",
+        "# failed: 'doctrine://default?queue_name=failed'"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は削除連携失敗時に `sendSmaregiErrorMail()` を呼び出す",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php",
+      "start": 49,
+      "end": 56,
+      "language": "php",
+      "contains": [
+        "if (in_array('delete', $processes))",
+        "sendSmaregiErrorMail($result, 'product_upd(delete)', $orderSub->getOrderNumber())"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の `sendSmaregiErrorMail()` はスマレジ通信エラー件名で管理者宛に送信する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php",
+      "start": 1379,
+      "end": 1426,
+      "language": "php",
+      "contains": [
+        "public function sendSmaregiErrorMail($result, $process, $orderNumber)",
+        "->setSubject('スマレジ通信エラー')",
+        "$this->app->mail($message);"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B05-05|スマレジ商品削除|スマレジ通信エラー|管理者に通知|エラーが発生した場合\" excel_to_html/output/0405_基本設計仕様書\\(バッチ_受注管理\\).html",
+      "rg -n \"sendSmaregiErrorMail|SmaregiErrorMail|スマレジ通信エラー|product_upd\\(delete\\)|MailService|mailer->send|->send\\(|DELETE_FAILED|logger->error|STATUS_FAILED\" ../ec-cube-enterprise/src/Eccube/Service/Smaregi ../ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php ../ec-cube-enterprise/src/Eccube/Command/SmaregiOtcDeleteCommand.php ../ec-cube-enterprise/src/Eccube/Service/MailService.php 2>/dev/null",
+      "rg -n \"sendSmaregiErrorMail|postSmaregiProcess|product_upd|product_upd\\(delete\\)|スマレジ通信エラー|管理者\" ../pf-eccube3/app/Plugin/HareruyaEc/Service"
+    ],
+    "notes": [
+      "codex gpt-5.5 high reviewer Lagrange: VERIFIED。設計はスマレジ連携失敗時の管理者メールを要求し、pf-eccube3 は `product_upd(delete)` で `sendSmaregiErrorMail()` を呼ぶ。enterprise の B05-05 経路は `SmaregiOtcDeleteCommand` / `SmaregiOtcDeleteService` / `SmaregiOtcDeleteMessageHandler` でログと MessengerJob 失敗更新に留まり、MailService/MailerInterface 注入もない。",
+      "enterprise で `WorkerMessageFailedEvent` / `MessageFailed` / `sendSmaregiErrorMail` / `failure_transport` を確認したが、B05-05 の失敗を管理者メールへ変換する代替経路は見つからない。",
+      "B05-01/B05-04 の共通OTC同期メール漏れとは別に、B05-05は削除専用の `SmaregiOtcDeleteService` / `SmaregiOtcDeleteMessageHandler` 失敗経路でメール送信がないため、削除連携固有の起票として扱う。"
+    ]
+  }
+}

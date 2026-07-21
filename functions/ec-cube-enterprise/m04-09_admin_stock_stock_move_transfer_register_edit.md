@@ -284,6 +284,17 @@
 | M04-09-MSG-083 | 確認モーダル | 商品を削除（振替対象外）にします。よろしいですか。 | 明細行の削除ボタン押下 |
 | M04-09-MSG-084 | 入力項目付近（インライン） | 振替先の商品コードを入力してください。 | 振替先商品コードが未入力(NotBlank違反) |
 | M04-09-MSG-085 | 画面上部フラッシュ | 却下する場合は却下理由を入力してください。 | 却下時に却下理由が未入力(NotBlank違反、reject検証グループ) |
+| M04-09-MSG-086 | 画面中央(ダイアログ) | 選択されていません | 商品規格 select[name="product_class"] が未選択（parseInt結果が0/NaN）のまま「決定」を押下したとき |
+| M04-09-MSG-087 | 画面中央(ダイアログ) | ポップアップがブロックされているため、ピック表を開けませんでした。ブラウザの設定を確認してください。 | ピック表を出力ボタン押下時、window.open() が偽値を返し別ウィンドウを開けないとき |
+| M04-09-MSG-088 | 画面中央(ダイアログ) | ピック表用データの取得に失敗しました。 | ピック表PDF出力Ajax(POST admin_stock_move_outbound_approval_request_pick_list_pdf_export)のdone時、response.success===true かつ response.html を満たさず、response.redirectUrl も無いとき |
+| M04-09-MSG-089 | 画面中央(ダイアログ) | ピック表用データの取得に失敗しました。 | ピック表PDF出力Ajaxが通信失敗し fail コールバックへ進んだとき |
+| M04-09-MSG-090 | 画面中央(ダイアログ) | ポップアップがブロックされているため、戻しリストPDFを開けませんでした。ブラウザの設定を確認してください。 | ボタン押下後、window.open() が null を返しポップアップを開けなかったとき |
+| M04-09-MSG-091 | 画面中央(ダイアログ) | 戻しリストPDF用データの取得に失敗しました。 | Ajax done時に response.success===true かつ response.html の成功条件を満たさず、かつ response.redirectUrl も無いとき |
+| M04-09-MSG-092 | 画面中央(ダイアログ) | 戻しリストPDF用データの取得に失敗しました。 | POST Ajax通信が fail コールバックへ到達したとき（通信エラー・HTTPエラー） |
+| M04-09-MSG-093 | 画面中央(モーダル) | セッションがタイムアウトしました。もう一度やり直してください。 | 差分CSV取込のAjax POST（admin_stock_move_inbound_approval_request_differential_csv_import）が HTTP 403 で失敗したとき（CSRFトークン 'stock_move_differential_csv' 不正） |
+| M04-09-MSG-094 | 画面中央(モーダル) | 保存に失敗しました | 差分CSV取込のAjax POST（admin_stock_move_inbound_approval_request_differential_csv_import）が HTTP 403 以外の通信エラーで失敗したとき（fail ハンドラの else 分岐） |
+| M04-09-MSG-095 | 画面中央(モーダル) | セッションがタイムアウトしました。もう一度やり直してください。 | 欠品CSV取込Ajax(POST admin_stock_move_shortage_csv_import)が HTTP 403（CSRFトークン不正）で失敗したとき |
+| M04-09-MSG-096 | 画面中央(モーダル) | 保存に失敗しました | 欠品CSV取込Ajaxが403以外のHTTPエラーで fail コールバックへ進んだとき |
 
 ## リニューアル移行時の扱い
 

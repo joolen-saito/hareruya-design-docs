@@ -1,0 +1,133 @@
+{
+  "id": "f04-03-shipping-edit-address-help-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f04-03_0304_sheet-5_sheet.json",
+  "sourceFindingId": "f04-03_0304_sheet-5_sheet-conformance-eb1c8bd8f973",
+  "classification": "フロント注文",
+  "feature": "配送先の新規登録_変更",
+  "issueCategory": "実装漏れ",
+  "issue": "配送先の新規登録・変更画面の住所欄下に町名・番地の入力注意が表示されない",
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "reproSteps": [
+    "ログインした状態で商品をカートに入れ、http://localhost:8080/ja/shopping に進む",
+    "お届け先の追加導線から配送先の新規登録・変更画面（/ja/shopping/shipping_edit/{id}）を表示する",
+    "住所欄の下に「※町名・番地の入力漏れにご注意ください。」が表示されるか確認する"
+  ],
+  "expected": [
+    "日本語の配送先新規登録・変更画面では、住所欄の下に「※町名・番地の入力漏れにご注意ください。」を表示する",
+    "英語テンプレートでは対応文言がないため表示対象外とする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の注文中配送先編集画面 `Shopping/shipping_edit.twig` は、日本国内住所の `pref` / `addr01` / `addr02` と海外住所の `addr01` / `addr02` / `addr03` を描画するが、住所欄下に `front.entry.address.note` や `front.mypage.delivery.address_help` を出力していない。これらの文言キーは存在し、会員登録画面やマイページ配送先編集では使われているが、注文中配送先編集では未使用。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 注文中配送先編集の住所欄は注意文なし",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/shipping_edit.twig",
+          "start": 231,
+          "end": 259,
+          "language": "twig",
+          "contains": [
+            "{% if form.country.vars.value == constant('Eccube\\\\Entity\\\\Master\\\\Country::JAPAN') %}",
+            "<span class=\"p-hareruya-form-block__label c-hareruya-heading--lev4\">{{ 'common.address'|trans }}</span>",
+            "{{ form_widget(form.address.pref) }}",
+            "{{ form_widget(form.address.addr01, { attr: { class: 'c-hareruya-form-input__field p-locality p-street-address', placeholder: 'common.address_sample_01', 'data-old-font-check': 'true' } }) }}",
+            "{{ form_widget(form.address.addr02, { attr: { class: 'c-hareruya-form-input__field p-extended-address', placeholder: 'common.address_sample_02', 'data-old-font-check': 'true' } }) }}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 海外住所欄にも入力注意なし",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/shipping_edit.twig",
+          "start": 260,
+          "end": 288,
+          "language": "twig",
+          "contains": [
+            "{% else %}",
+            "p-hareruya-entry__address-overseas",
+            "{{ form_widget(form.address.addr01, { attr: { class: 'c-hareruya-form-input__field', placeholder: 'common.address_sample_01' } }) }}",
+            "{{ form_widget(form.address.addr03, { attr: { class: 'c-hareruya-form-input__field', placeholder: 'common.address_sample_03' } }) }}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 文言キーは存在するが別画面で使用",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 464,
+          "end": 748,
+          "language": "yaml",
+          "contains": [
+            "front.entry.address.note: 町名・番地の入力漏れにご注意ください。",
+            "front.mypage.delivery.address_help: 町名・番地の入力漏れにご注意ください。"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の注文中配送先編集テンプレートは、住所入力（都道府県・住所1・住所2）の直下に `<p class=\"regist-usrdata__data__attention\">※町名・番地の入力漏れにご注意ください。</p>` を表示している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 住所欄下の入力注意",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/delivery_edit.twig",
+          "start": 132,
+          "end": 150,
+          "language": "twig",
+          "contains": [
+            "<img class=\"must-input-data\" src=\"{{ path('assets', {path: 'img/sys/check.gif'}) }}\" alt=\"必須\">住所",
+            "{{ form_widget(form.addr01, { attr : { placeholder: '(例)新宿区高田馬場', class: 'classrequired'}}) }}",
+            "{{ form_widget(form.addr02, { attr : { placeholder: '(例)3-12-2 OCビル2F', class: 'classrequired'}}) }}",
+            "<p class=\"regist-usrdata__data__attention\">※町名・番地の入力漏れにご注意ください。</p>"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "住所欄下の入力注意",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2077,
+      "end": 2078,
+      "language": "html",
+      "contains": [
+        "入力注意",
+        "※町名・番地の入力漏れにご注意ください。",
+        "住所欄の下",
+        "入力注意は英語テンプレートに対応文言が無いため"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "注文中配送先編集の住所欄に入力注意がない",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/shipping_edit.twig",
+      "start": 231,
+      "end": 288,
+      "language": "twig",
+      "contains": [
+        "p-hareruya-entry__address",
+        "p-hareruya-entry__address-overseas",
+        "{{ form_widget(form.address.addr02"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3では住所欄直下に入力注意を表示",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/delivery_edit.twig",
+      "start": 132,
+      "end": 150,
+      "language": "twig",
+      "contains": [
+        "<p class=\"regist-usrdata__data__attention\">※町名・番地の入力漏れにご注意ください。</p>"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f04-03_0304_sheet-5_sheet.json#f04-03_0304_sheet-5_sheet-conformance-eb1c8bd8f973'",
+      "python3 - <<'PY' ... search excel_to_html/output/0304_基本設計仕様書(フロント_注文).html for 町名・番地 and 入力注意 ... PY",
+      "rg -n \"町名・番地|address_help|address\\.note|入力漏れ\" ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage ec-cube-enterprise/src/Eccube/Resource/template/default/Entry ec-cube-enterprise/src/Eccube/Resource/locale pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage pf-eccube3/app/Plugin/HareruyaEc/Resource/locale",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/shipping_edit.twig | sed -n '215,300p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/delivery_edit.twig | sed -n '132,154p'"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。"
+  }
+}

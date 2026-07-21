@@ -1,0 +1,122 @@
+{
+  "chunkId": "a17-03_0517_sheet-5_pointgranterapi--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-03_0517_sheet-5_pointgranterapi.json#a17-03_0517_sheet-5_pointgranterapi-conformance-88b47dcc29d6",
+      "functionId": "a17-03_0517_sheet-5_pointgranterapi",
+      "featureNo": "A17-03",
+      "title": "A17-03 PointGranterAPI連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計はスマレジ取引APIへの中継を要求するが、実装は中継処理がTODOのまま固定の成功レスポンスを返すだけで実際の中継を行っていない。",
+      "reason": "設計は契約ID・アクセストークンを付与してスマレジ顧客連携サービスへ処理名とパラメータを渡し取引APIへ中継することを要求（詳細設計 処理フロー step2, 概要）。PointGranterController は $this->smaregiApiService->postRegisterTransaction() を呼ぶが、SmaregiApiService::postRegisterTransaction() は本体が『// TODO: スマレジAPIを実行する実装を追加』のみで固定の ['result'=>['status'=>'success']] を返す。別経路を探したが、SmaregiTransactionApiClient は getTransaction / listTransactions（いずれもGET）のみで取引登録POSTを持たない。他に postRegisterTransaction / transaction_upd 中継の別実装は無かった。よって取引API中継は未実装で、実装は設計と異なる固定応答を返す。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html",
+        "start": 1785,
+        "end": 1785,
+        "contains": ["スマレジ顧客連携サービスへ処理名とパラメータを渡し", "取引APIへ中継する"]
+      },
+      "implEvidence": [
+        {
+          "label": "中継処理が固定レスポンスのスタブ",
+          "note": "実装漏れ相当だが構造上メソッドは存在するため実装違いとして扱う。要求を満たす最寄りの実装。",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiApiService.php",
+          "start": 41,
+          "end": 47,
+          "contains": ["TODO: スマレジAPIを実行する実装を追加", "'status' => 'success',"]
+        },
+        {
+          "label": "呼び出し元コントローラ",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php",
+          "start": 62,
+          "end": 67,
+          "contains": ["$this->smaregiApiService->postRegisterTransaction("]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-03_0517_sheet-5_pointgranterapi.json#a17-03_0517_sheet-5_pointgranterapi-conformance-18726207b0b9",
+      "functionId": "a17-03_0517_sheet-5_pointgranterapi",
+      "featureNo": "A17-03",
+      "title": "A17-03 PointGranterAPI連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "UNCERTAIN",
+      "confidence": "medium",
+      "summary": "必須項目欠落時のステータスが設計内で矛盾（一次シート404 vs 詳細設計400）しており、実装の400を誤りと断定できない。",
+      "reason": "一次シート本文（処理概要『下記の項目がなければエラー404を返す』line 1703、ステータスコード表『404.0 必須項目にデータがない場合』line 1740）は404を要求している。一方、同一HTML内の埋め込み詳細設計は、認証・認可(line 1780)、処理フロー(line 1785)、レスポンス失敗表(line 1797)、バリデーション(line 1808)、権限・認可(line 1822)、エラー処理(line 1825)のいずれも『いずれかが欠落する場合は入力不正（HTTP 400）』と繰り返し記載しており、実装(PointGranterController.php:53,59 の Response::HTTP_BAD_REQUEST=400)と一致する。設計書自体が404と400の両方を矛盾して定義しているため、どちらが正かを本審査では確定できず、実装の400を実装違いと断定できない。設計内不整合の解消（実機・仕様確認）が必要。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-03_0517_sheet-5_pointgranterapi.json#a17-03_0517_sheet-5_pointgranterapi-conformance-45b7970abf58",
+      "functionId": "a17-03_0517_sheet-5_pointgranterapi",
+      "featureNo": "A17-03",
+      "title": "A17-03 PointGranterAPI連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は会員ポイント残高 dtb_customer.point を加算するよう要求するが、実装は dtb_player.point を加算しており会員テーブルの残高を更新しない。",
+      "reason": "設計はリニューアル移行時の扱い(line 1769)およびDBカラム表(line 1816)で『会員ポイント残高＝dtb_customer.point、取引更新時にポイントを加算する』と明記。実装 PointGranterAction::handle は smaregiId で DtbPlayer を特定し、$Player->setPoint($Player->getPoint() + $newPoint)（line 66）で dtb_player.point（DtbPlayer.php:89-90 の point カラム）を加算する。Customer には point カラム（Customer.php:138-139）が存在するが本処理では更新されない。ポイント履歴登録には $Player->getCustomer() を渡すものの、残高加算先は Player 自身であり、更新対象テーブル/列が設計（dtb_customer.point）と異なる。",
+      "designEvidence": {
+        "label": "設計要求（DBカラム）",
+        "path": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html",
+        "start": 1816,
+        "end": 1816,
+        "contains": ["dtb_customer", "取引更新時にポイントを加算する"]
+      },
+      "implEvidence": [
+        {
+          "label": "Player残高を加算（会員テーブルではない）",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php",
+          "start": 66,
+          "end": 67,
+          "contains": ["$Player->setPoint($Player->getPoint() + $newPoint)", "$this->entityManager->persist($Player)"]
+        },
+        {
+          "label": "dtb_player.point カラム定義",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/DtbPlayer.php",
+          "start": 89,
+          "end": 90,
+          "contains": ["name: 'point'", "private int $point = 0"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-03_0517_sheet-5_pointgranterapi.json#a17-03_0517_sheet-5_pointgranterapi-conformance-9e30c8c7c6f9",
+      "functionId": "a17-03_0517_sheet-5_pointgranterapi",
+      "featureNo": "A17-03",
+      "title": "A17-03 PointGranterAPI連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計はポイント履歴に transaction_id（スマレジ取引ID）を付与時に登録するよう要求するが、実装は常に transactionId: null を渡し保存しない。",
+      "reason": "設計はDBカラム表(line 1816)およびリニューアル移行時の扱い(line 1769)で dtb_point_history が『スマレジ取引ID（transaction_id）』を持ち付与時に登録すると明記。実装 PointGranterAction::handle は pointHistoryEntityManager->save() に transactionId: null（line 76）を渡す。PointHistoryEntityManager::save() は $transactionId が null でないときのみ setTransactionId する（PointHistoryEntityManager.php:73-74）ため、常に未設定となる。DtbPointHistory には transaction_id カラム（DtbPointHistory.php:58-59、コメント『スマレジ取引ID』）と setTransactionId が存在するが、PointGranter付与経路では取引IDが保存されない。なお本項目は中継スタブ（item1）に起因して実取引IDが得られない構造だが、設計要求（transaction_id 登録）に対し実装がnull固定である事実は成立する。",
+      "designEvidence": {
+        "label": "設計要求（DBカラム）",
+        "path": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html",
+        "start": 1816,
+        "end": 1816,
+        "contains": ["transaction_id", "スマレジ取引ID"]
+      },
+      "implEvidence": [
+        {
+          "label": "transaction_id を null 固定で保存",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php",
+          "start": 68,
+          "end": 77,
+          "contains": ["$this->pointHistoryEntityManager->save(", "transactionId: null,"]
+        },
+        {
+          "label": "null時はsetTransactionIdしない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/EntityManager/PointHistoryEntityManager.php",
+          "start": 73,
+          "end": 74,
+          "contains": ["if ($transactionId !== null)", "$PointHistory->setTransactionId($transactionId)"]
+        }
+      ]
+    }
+  ]
+}

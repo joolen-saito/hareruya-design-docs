@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m07_05_admin_online_purchase_purchase_csv_export_deposit_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・フラッシュ等ブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。**CSVファイルの内容（列順・列値・空値・金額計算・エンコーディング・ファイル名規則の値）は手動確認**とする（E2Eではダウンロード発火・応答ヘッダ・ファイル名書式のみ観測）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・フラッシュ等ブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。**CSVファイルの内容（列順・列値・空値・金額計算・エンコーディング・ファイル名規則の値）は手動確認**とする（E2Eではダウンロード発火・応答ヘッダ・ファイル名書式のみ観測）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は pf-eccube3 のリバース設計であり、刷新先 ec-cube-enterprise のコア実装（`admin_purchase_csv_export_deposit` = POST `/{admin_route}/purchase/csv_export_deposit`）に該当画面が存在する。基本設計・観点表を上位オラクルとし、実装との乖離は付帯表4に記す。
 
@@ -27,56 +27,56 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-001	IT-25	UI部品	P1	検索結果1件以上で「ダウンロード」内に「入金CSV」が表示される	管理者ログイン済／SEED-M07-05-BUYORDER（検索ヒット1件以上）	検索条件は空（全件）	"1. 買取一覧（/admin/purchase/list）を開く
 2. 検索を実行する
-3. 結果テーブル直下の「ダウンロード」ドロップダウンを開く"	ドロップダウン内に「入金CSV」ボタン（#csvexport_deposit）が表示されること。
+3. 結果テーブル直下の「ダウンロード」ドロップダウンを開く"	ドロップダウン内に「入金CSV」ボタン（#csvexport_deposit）が表示されること。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-002	IT-25	送信可否制御	P2	検索前の一覧初期表示では「入金CSV」が描画されない	管理者ログイン済	—	"1. 買取一覧（/admin/purchase/list）を初期表示する
-2. ダウンロードフォーム・入金CSVの有無を確認する"	pagination が無い初期表示ではダウンロードフォーム（#bulk_csv_export）と「入金CSV」が描画されないこと。
+2. ダウンロードフォーム・入金CSVの有無を確認する"	pagination が無い初期表示ではダウンロードフォーム（#bulk_csv_export）と「入金CSV」が描画されないこと。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-003	IT-25	UI部品	P2	各買取注文行に選択チェックと全選択#allCheckが表示される	管理者ログイン済／SEED-M07-05-BUYORDER	検索条件は空（全件）	"1. 買取一覧を開き検索を実行する
-2. 表頭の#allCheckと各行のチェックを確認する"	表頭チェック#allCheckと、各行に name=buyOrderIds[] のチェックボックスが表示されること。
+2. 表頭の#allCheckと各行のチェックを確認する"	表頭チェック#allCheckと、各行に name=buyOrderIds[] のチェックボックスが表示されること。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-004	IT-25	操作起点	P2	#allCheckで全行チェックが一括ONになる	管理者ログイン済／SEED-M07-05-BUYORDER	検索条件は空（全件）	"1. 買取一覧を開き検索を実行する
-2. 表頭#allCheckをONにする"	同一フォーム内の全行チェック（buyOrderId属性付き）が一括でONになること。
+2. 表頭#allCheckをONにする"	同一フォーム内の全行チェック（buyOrderId属性付き）が一括でONになること。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-005	IT-25	送信可否制御	P2	検索結果が無い表示では「入金CSV」が描画されない	管理者ログイン済／SEED-M07-05-BUYORDER	結果行が出ない状態（範囲外ページ等）	"1. 買取一覧で結果行が出ない状態（範囲外ページ等）を開く
-2. 結果行（buyOrderIds[]）・ダウンロードフォーム・入金CSVの有無を確認する"	結果行（name=buyOrderIds[]）が0件のとき、ダウンロードフォーム（#bulk_csv_export）と「入金CSV」（#csvexport_deposit）が描画されないこと。
+2. 結果行（buyOrderIds[]）・ダウンロードフォーム・入金CSVの有無を確認する"	結果行（name=buyOrderIds[]）が0件のとき、ダウンロードフォーム（#bulk_csv_export）と「入金CSV」（#csvexport_deposit）が描画されないこと。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-013	IT-25	UI部品	P3	「入金CSV」のformactionと出力フォームのmethodが規則どおり	管理者ログイン済／SEED-M07-05-BUYORDER	検索条件は空（全件）	"1. 買取一覧を開き検索を実行する
-2. #bulk_csv_export の method と #csvexport_deposit の formaction を確認する"	出力フォーム#bulk_csv_exportのmethodがpostで、入金CSV#csvexport_depositが入金CSVルート（/purchase/csv_export_deposit）へ向くformactionを持つこと。
+2. #bulk_csv_export の method と #csvexport_deposit の formaction を確認する"	出力フォーム#bulk_csv_exportのmethodがpostで、入金CSV#csvexport_depositが入金CSVルート（/purchase/csv_export_deposit）へ向くformactionを持つこと。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-010	IT-16	実行結果	P1	行を選択し「入金CSV」を押すとダウンロードが発火しファイル名が規則どおり	管理者ログイン済／SEED-M07-05-BUYORDER	先頭行を1件チェック	"1. 買取一覧を開き検索を実行する
 2. 先頭行のチェックを付ける
-3. ダウンロード→「入金CSV」を押す"	ダウンロードが発火し、ファイル名が purchase_bank_deposit_（7桁ゼロ埋め）_（YmdHis14桁）.csv の書式であること。
+3. ダウンロード→「入金CSV」を押す"	ダウンロードが発火し、ファイル名が purchase_bank_deposit_（7桁ゼロ埋め）_（YmdHis14桁）.csv の書式であること。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-011	IT-16	実行結果	P1	入金CSV出力POSTがoctet-stream/attachmentで応答する	管理者ログイン済／SEED-M07-05-BUYORDER	先頭行を1件チェック	"1. 買取一覧を開き検索を実行する
 2. 先頭行をチェックし「入金CSV」を押す
-3. POST応答ヘッダを確認する"	応答が Content-Type: application/octet-stream かつ Content-Disposition: attachment で返ること。
+3. POST応答ヘッダを確認する"	応答が Content-Type: application/octet-stream かつ Content-Disposition: attachment で返ること。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-012	IT-25	確認ダイアログ	P2	行選択して出力時に確認ダイアログ（モーダル）を表示しない	管理者ログイン済／SEED-M07-05-BUYORDER	先頭行を1件チェック	"1. 買取一覧を開き検索を実行する
-2. 先頭行をチェックし「入金CSV」を押す"	出力前の確認ダイアログ（モーダル）を表示せずダウンロードが発火すること。
+2. 先頭行をチェックし「入金CSV」を押す"	出力前の確認ダイアログ（モーダル）を表示せずダウンロードが発火すること。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-014	IT-16	実行結果	P2	複数行選択時ファイル名の数値部が選択ID集合の最小値になる	管理者ログイン済／SEED-M07-05-BUYORDER（2件以上）	2件以上の行をチェック	"1. 買取一覧を開き検索を実行する
 2. 2件以上の行をチェックし選択行のbuyOrderId値を控える
-3. ダウンロード→「入金CSV」を押す"	ファイル名 purchase_bank_deposit_（数値）_（YmdHis）.csv の数値部が、選択した行のbuyOrderId値の最小値をゼロ埋め（最小7桁）したものと一致すること。
+3. ダウンロード→「入金CSV」を押す"	ファイル名 purchase_bank_deposit_（数値）_（YmdHis）.csv の数値部が、選択した行のbuyOrderId値の最小値をゼロ埋め（最小7桁）したものと一致すること。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-020	IT-25	確認ダイアログ	P1	未選択で「入金CSV」を押すとアラートで送信が抑止される	管理者ログイン済／SEED-M07-05-BUYORDER	どの行もチェックしない	"1. 買取一覧を開き検索を実行する
-2. どの行もチェックせず「入金CSV」を押す"	アラート「CSV出力する買取注文情報をひとつ以上選択してください。」が出てPOSTが送信されないこと。
+2. どの行もチェックせず「入金CSV」を押す"	アラート「CSV出力する買取注文情報をひとつ以上選択してください。」が出てPOSTが送信されないこと。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-021	IT-15	状態変化	P1	買取注文IDを含まずサーバ到達するとエラーフラッシュが表示される	管理者ログイン済	buyOrderIds 無し（空配列）でPOST	"1. クライアントJSを介さず入金CSVルートへ買取注文IDなしでPOSTする
-2. リダイレクト先の買取一覧でフラッシュを確認する"	「1つ以上の買取注文情報を選択してください。」がフラッシュ表示されること。
+2. リダイレクト先の買取一覧でフラッシュを確認する"	「1つ以上の買取注文情報を選択してください。」がフラッシュ表示されること。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-022	IT-25	URL	P1	買取注文ID空送信は買取一覧ページへリダイレクトされる	管理者ログイン済	buyOrderIds 無し（空配列）でPOST	"1. 入金CSVルートへ買取注文IDなしでPOSTする
-2. 応答のリダイレクト先URLを確認する"	302で買取一覧ページ（admin_purchase_page = /purchase/page/{page_no}）へリダイレクトされること。
+2. 応答のリダイレクト先URLを確認する"	302で買取一覧ページ（admin_purchase_page = /purchase/page/{page_no}）へリダイレクトされること。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-023	IT-27	出力失敗	P2	存在しないIDのみ送信すると例外メッセージがフラッシュされる	管理者ログイン済	buyOrderIds[]=（存在しない巨大ID）	"1. 入金CSVルートへ存在しない買取注文IDのみでPOSTする
-2. リダイレクト先の買取一覧でフラッシュを確認する"	「存在しない買取注文情報IDが含まれています。」がフラッシュ表示されること。
+2. リダイレクト先の買取一覧でフラッシュを確認する"	「存在しない買取注文情報IDが含まれています。」がフラッシュ表示されること。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-024	IT-03	画面遷移	P2	存在しないIDのみ送信は買取一覧ページへリダイレクトされる	管理者ログイン済	buyOrderIds[]=（存在しない巨大ID）	"1. 入金CSVルートへ存在しない買取注文IDのみでPOSTする
-2. 応答のリダイレクト先URLを確認する"	302で買取一覧ページ（admin_purchase_page）へリダイレクトされCSVを返さないこと。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-030	IT-13	URL直接アクセス	P2	未ログインで入金CSVルートへPOSTすると管理ログインへリダイレクトされる	未ログイン	buyOrderIds 無しでPOST	"1. /admin/purchase/csv_export_deposit へ未ログインでPOSTする（POST専用ルートのため認可ガードはPOSTで観測。GETはメソッド不許可=032に化けて認可観測にならない）"	302で管理ログイン画面（#login_id）へリダイレクトされCSVを返さないこと。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-031	IT-13	URL直接アクセス	P2	未ログインで買取一覧URLへ直アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/purchase/list へ直接アクセスする"	管理ログイン画面（#login_id）へ誘導されること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-032	IT-25	HTTPステータス	P3	入金CSVルートはPOST専用でGET直アクセスを許可しない	管理者ログイン済	—	"1. 入金CSVルートへGETで直接アクセスする"	GETは許可されず（405相当）CSVを返さないこと。
+2. 応答のリダイレクト先URLを確認する"	302で買取一覧ページ（admin_purchase_page）へリダイレクトされCSVを返さないこと。				
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-030	IT-13	URL直接アクセス	P2	未ログインで入金CSVルートへPOSTすると管理ログインへリダイレクトされる	未ログイン	buyOrderIds 無しでPOST	1. /admin/purchase/csv_export_deposit へ未ログインでPOSTする（POST専用ルートのため認可ガードはPOSTで観測。GETはメソッド不許可=032に化けて認可観測にならない）	302で管理ログイン画面（#login_id）へリダイレクトされCSVを返さないこと。				
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-031	IT-13	URL直接アクセス	P2	未ログインで買取一覧URLへ直アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/purchase/list へ直接アクセスする	管理ログイン画面（#login_id）へ誘導されること。				
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-032	IT-25	HTTPステータス	P3	入金CSVルートはPOST専用でGET直アクセスを許可しない	管理者ログイン済	—	1. 入金CSVルートへGETで直接アクセスする	GETは許可されず（405相当）CSVを返さないこと。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-040	IT-16	実行結果	P2	入金CSVの列順とヘッダと振込金額計算が仕様どおりである	管理者ログイン済／SEED-M07-05-BUYORDER	既知の送料・査定額を持つ買取注文を選択	"1. 既知データの行を選択し「入金CSV」を押す
-2. ダウンロードCSVの中身を確認する"	"ヘッダが受注番号/送料/査定額/銀行名/支店名/口座種別/口座番号/受取人口座名義/振込金額/オンライン本人確認区分の順で、振込金額=送料+査定額であること（CSV内容＝手動確認）。"
+2. ダウンロードCSVの中身を確認する"	ヘッダが受注番号/送料/査定額/銀行名/支店名/口座種別/口座番号/受取人口座名義/振込金額/オンライン本人確認区分の順で、振込金額=送料+査定額であること（CSV内容＝手動確認）。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-041	IT-03	画面遷移	P2	銀行口座・本人確認が結べない行は該当列が空文字になる	管理者ログイン済／SEED-M07-05-NOBANK（口座/本人確認なし買取注文）	口座・本人確認の無い買取注文を選択	"1. 口座/本人確認の無い行を選択し「入金CSV」を押す
-2. ダウンロードCSVの中身を確認する"	該当行の銀行列・本人確認列が空文字で、受注番号・金額列は出力されること（CSV内容＝手動確認）。
+2. ダウンロードCSVの中身を確認する"	該当行の銀行列・本人確認列が空文字で、受注番号・金額列は出力されること（CSV内容＝手動確認）。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-042	IT-13	URL直接アクセス	P2	一部のIDだけ存在する場合は存在分だけCSV行が出る	管理者ログイン済／SEED-M07-05-BUYORDER	存在するIDと存在しないIDを混在送信	"1. 存在ID＋存在しないIDを混ぜて「入金CSV」を押す
-2. ダウンロードCSVの行を確認する"	存在する買取注文分のみがID昇順でCSV行に出力されエラーにならないこと（CSV内容＝手動確認）。
+2. ダウンロードCSVの行を確認する"	存在する買取注文分のみがID昇順でCSV行に出力されエラーにならないこと（CSV内容＝手動確認）。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-043	IT-16	実行結果	P2	入金CSVの文字コード・BOM・区切り文字・改行コードが既存CSV仕様どおり	管理者ログイン済／SEED-M07-05-BUYORDER	任意の存在行を選択	"1. 存在行を選択し「入金CSV」を押す
-2. ダウンロードCSVのエンコーディング・先頭バイト・区切り・改行を確認する"	文字コードが設定 eccube_csv_export_encoding（UTF-8時は先頭にBOM）、区切り文字が設定 eccube_csv_export_separator、改行が既存CSV仕様どおりであること（CSV内容＝手動確認）。
+2. ダウンロードCSVのエンコーディング・先頭バイト・区切り・改行を確認する"	文字コードが設定 eccube_csv_export_encoding（UTF-8時は先頭にBOM）、区切り文字が設定 eccube_csv_export_separator、改行が既存CSV仕様どおりであること（CSV内容＝手動確認）。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-044	IT-16	実行結果	P2	銀行口座・本人確認が結べる行は各列が取得元の値どおり出力される	管理者ログイン済／SEED-M07-05-BUYORDER（口座/本人確認あり）	口座・本人確認のある行を選択	"1. 口座/本人確認のある行を選択し「入金CSV」を押す
-2. ダウンロードCSVの各列を確認する"	銀行名＝銀行コード、支店名＝支店コード、口座種別・口座番号・受取人口座名義＝銀行口座、オンライン本人確認区分＝本人確認ステータス名称が、各取得元の値どおり出力されること（CSV内容＝手動確認）。
+2. ダウンロードCSVの各列を確認する"	銀行名＝銀行コード、支店名＝支店コード、口座種別・口座番号・受取人口座名義＝銀行口座、オンライン本人確認区分＝本人確認ステータス名称が、各取得元の値どおり出力されること（CSV内容＝手動確認）。				
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	E2E-M07-05-045	IT-16	実行結果	P2	複数行選択時は各行の振込金額が行ごとの送料+査定額で他注文と合算されない	管理者ログイン済／SEED-M07-05-BUYORDER（2件以上・金額既知）	金額既知の複数行を選択	"1. 金額既知の複数行を選択し「入金CSV」を押す
-2. ダウンロードCSVの各行の振込金額を確認する"	各データ行の振込金額がその行の送料+査定額に等しく、他の買取注文と合算されないこと（CSV内容＝手動確認）。
+2. ダウンロードCSVの各行の振込金額を確認する"	各データ行の振込金額がその行の送料+査定額に等しく、他の買取注文と合算されないこと（CSV内容＝手動確認）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

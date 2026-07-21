@@ -1,0 +1,1362 @@
+{
+  "functionId": "a05-03_0505_sheet-5_sheet",
+  "featureNo": "A05-03",
+  "title": "A05-03 店頭注文番号取得",
+  "domain": "a05",
+  "kind": "api",
+  "designHtml": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+  "sourceBook": "0505_基本設計仕様書(API_受注管理).html",
+  "sheetId": "sheet-5",
+  "sheetName": "店頭注文番号取得",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "a05-03_0505_sheet-5_sheet-conformance-70f9c4a69e12",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5:1463,1476",
+      "designRefDetail": null,
+      "designExpectation": "店頭注文番号リストの取得は GET /{_locale}/waiting_api/get_waiting で提供し、本APIはリクエストパラメータを持たない。パスパラメータ {_locale} は言語識別子であり、取得対象の絞り込みには用いない。",
+      "designQuote": "店頭注文番号リストの取得は GET /{_locale}/waiting_api/get_waiting で提供し、本APIはリクエストパラメータを持たない。パスパラメータ {_locale} は言語識別子であり、取得対象の絞り込みには用いない。",
+      "implRef": "src/Eccube/Controller/Front/WaitingNumberController.php:56,57,61,64,69,71,77,79; src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig:96; src/Eccube/Repository/DtbWaitingNumberRepository.php:43,49,50; 不在（探索範囲: src/Eccube と html/template の Route/Twig/YAML/PHP を get_waiting, waiting_api, get_waiting_number で検索し、/{_locale}/waiting_api/get_waiting または get_waiting 名のルートは未検出）",
+      "implementationActual": "実装は GET /waiting_api/get_waiting_number/{base_info_id} の `get_waiting_number` ルートを定義し、Twig も `BaseInfo.id` を渡して呼び出す。Controller は `base_info_id > 0` の場合だけ取得処理に入り、注文番号札・注文番号の双方を BaseInfo で絞り込む。",
+      "difference": "設計は URL を `/{_locale}/waiting_api/get_waiting` とし、入力パラメータなし、`{_locale}` は取得対象の絞り込みに使わない外部契約としている。一方、実装は URL 名称が `get_waiting_number` で、追加パスパラメータ `{base_info_id}` を必須化し、これを取得対象の店舗絞り込みに使用しているため、呼び出し契約と入力条件が設計と一致しない。反証として `get_waiting`、`waiting_api`、`get_waiting_number`、`base_info_id`、Twig の `url('get_waiting_number')` を検索したが、設計通りの無パラメータ API ルートは確認できなかった。",
+      "mismatchReason": "設計は URL を `/{_locale}/waiting_api/get_waiting` とし、入力パラメータなし、`{_locale}` は取得対象の絞り込みに使わない外部契約としている。一方、実装は URL 名称が `get_waiting_number` で、追加パスパラメータ `{base_info_id}` を必須化し、これを取得対象の店舗絞り込みに使用しているため、呼び出し契約と入力条件が設計と一致しない。反証として `get_waiting`、`waiting_api`、`get_waiting…",
+      "comparisonRows": [
+        {
+          "item": "HTTPエンドポイント",
+          "design": "GET /{_locale}/waiting_api/get_waiting",
+          "implementation": "#[Route(path: '/waiting_api/get_waiting_number/{base_info_id}', name: 'get_waiting_number', methods: ['GET'])]",
+          "mismatch": "パス末尾が `get_waiting` ではなく `get_waiting_number/{base_info_id}` になっている。"
+        },
+        {
+          "item": "入力パラメータ",
+          "design": "リクエストパラメータなし。`{_locale}` は言語識別子で取得対象の絞り込みには用いない。",
+          "implementation": "Controller メソッドは `int $base_info_id` を受け取り、Twig は `url('get_waiting_number', {'base_info_id': BaseInfo.id})` を生成する。",
+          "mismatch": "設計にない `base_info_id` が API 呼び出し契約に追加されている。"
+        },
+        {
+          "item": "取得対象の絞り込み",
+          "design": "利用者の資格情報による絞り込みは行わず、パスパラメータ `{_locale}` も取得対象の絞り込みに使わない。",
+          "implementation": "`findBy(['BaseInfo' => $base_info_id])` と `getWaitingNumberByStatus(..., $base_info_id)` により BaseInfo で絞り込む。Repository も `IDENTITY(wn.BaseInfo) = :baseInfoId` を条件にしている。",
+          "mismatch": "設計で非入力・非絞り込みのはずの API が、店舗ID相当のパス値を必須条件として取得対象を限定している。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "a05-03_0505_sheet-5_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/Front/WaitingNumberController.php:56,57,61,64,69,71,77,79; src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig:96; src/Eccube/Repository/DtbWaitingNumberRepository.php:43,49,50; 不在（探索範囲: src/Eccube と html/template の Route/Twig/YAML/PHP を get_waiting, waiting_api, get_waiting_number で検索し、/{_locale}/waiting_api/get_waiting または get_waiting 名のルートは未検出）",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「店頭注文番号リストの取得は GET /{_locale}/waiting_api/get_waiting で提供し、本APIはリクエストパラメータを持たない。パスパラメータ {_locale} は言語識別子であり、取得対象の絞り込みには用いない。」。実装は「実装は GET /waiting_api/get_waiting_number/{base_info_id} の `get_waiting_number` ルートを定義し、Twig も `BaseInfo.id` を渡して呼び出す。Controller は `base_info_id > 0` の場合だけ取得処理に入り、注文番号札・注文番号の双方を BaseInfo で絞り込む。」。乖離理由は「設計は URL を `/{_locale}/waiting_api/get_waiting` とし、入力パラメータなし、`{_locale}` は取得対象の絞り込みに使わない外部契約としている。一方、実装は URL 名称が `get_waiting_number` で、追加パスパラメータ `{base_info_id}` を必須化し、これを取得対象の店舗絞り込みに使用しているため、呼び出し契約と入力条件が設計と一致しない。反証として `get_waiting`、`waiting_api`、`get_waiting…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "ルート・Controller",
+        "Form・入力項目",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Controller/Front/WaitingNumberController.php:56,57,61,64,69,71,77,79",
+        "src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig:96",
+        "src/Eccube/Repository/DtbWaitingNumberRepository.php:43,49,50",
+        "src/Eccube/Controller/Front/WaitingNumberController.php",
+        "src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig",
+        "src/Eccube/Repository/DtbWaitingNumberRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Front/WaitingNumberController.php:56\n53:      *\n54:      * @return JsonResponse\n55:      */\n56:     #[Route(path: '/waiting_api/get_waiting_number/{base_info_id}', name: 'get_waiting_number', requirements: ['base_info_id' => '\\d+'], methods: ['GET'])]\n57:     public function getWaitingNumber(Request $request, int $base_info_id): JsonResponse\n58:     {\n59:         $returnResponse = [];",
+        "src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig:96\n93:     function update() {\n94:         $.ajax({\n95:             type: 'GET',\n96:             url: '{{ url('get_waiting_number', {'base_info_id': BaseInfo.id}) }}',\n97:             {# TODO: ECCUBE_HARERUYA-182 店頭注文呼び出し番号表示 店舗切り替えができるようになったら修正 #}\n98:             data: {},\n99:             success: function(result) {",
+        "src/Eccube/Repository/DtbWaitingNumberRepository.php:43\n40:         $connection->executeStatement('TRUNCATE TABLE dtb_waiting_number');\n41:     }\n42: \n43:     public function getWaitingNumberByStatus(int $status, int $baseInfoId): mixed\n44:     {\n45:         return $this->createQueryBuilder('wn')\n46:             ->select('wn')"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 33,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-ecb83508f6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "店舗IDに紐づく受注データで、かつ店頭PC購入の「ピック済み」になっている店頭注文番号と店頭注文番号札管理(M05-27)で登録されている番号のリストを取得し、",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-877e99e051",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "データが存在しない場合は、空のJSON配列を返す",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-f062c7e220",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "ピックアップ済みの受注データの注文番号、もしくは管理画面で登録された店頭注文番号のJSON配列",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-86c37f6ca0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "店内モニター（店頭注文番号表示画面）が、ピック済みになった店頭注文番号のリストを取得するためのAPIである。pf-eccube3のHareruyaEcプラグインが提供するJSON APIで、ピック完了ステータスの注文に紐づく注文番号札（数字）と、注文番号札（アルファベット）を1つの配列にまとめて返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-db94acc5e1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はHareruyaEcプラグインの店頭注文番号取得処理、フロントのルート登録（ControllerProvider）、注文番号テーブル・注文番号札テーブル・受注ステータスを正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-2999933d97",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "画面表示最大件数を超える場合の出荷完了番号の補完",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-14f355abb5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-904c1d923c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "店頭注文番号表示画面そのものの描画と定期取得（フロント画面の設計を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-fbda45cf0d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "注文番号札（数字）の発番・登録、注文番号札（アルファベット）の管理（店頭注文番号札管理の設計を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-1705de97a7",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "受注ステータスの遷移そのもの（受注管理の設計を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-42e1e37244",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "受注（dtb_order）のステータス列で判定",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-4a83a2d963",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "抽出条件・補完ロジック・本APIのエンドポイント自体のリニューアル後仕様はec-cube-enterprise実装で要確認とし、本書は現行（pf-eccube3）の挙動を正とする。永続化に関わるテーブル・列名は上記のとおり移行先と同一であるため、現行名をそのまま用いる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-f85c1b1fc0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "注文ごとに採番した数値の呼び出し番号。注文番号テーブルが注文IDと対で保持する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-6537f3e85d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "数値とは別に管理する英字の呼び出し番号。注文番号札テーブルが保持する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-1371c39cea",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "受注ステータスのうち出荷を終えた状態。表示件数超過時の補完判定に用いる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-726d877316",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "応答形式はJSON。呼び出し元は店内モニター（店頭注文番号表示画面）からの定期取得。フロントのルートは言語識別子 {_locale} 配下にマウントされる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-6e69168737",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "本APIは認証トークンを要求しない。フロントのファイアウォールは匿名アクセスを許可し、本パスにはログイン必須のアクセス制御を設定していない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-f5df3cd5b0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "認証判定を行わないため、未認証でも取得できる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-4091953b1a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "呼び出し元は店内モニターの表示画面。利用者の資格情報による絞り込みは行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-acf7886a27",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "数字の件数とアルファベットの件数の合計が画面表示最大件数を超える場合は、出荷完了ステータスの注文番号札（数字）も取得し、欠番の補完を行う。直前に追加した番号の次から対象番号の手前までの連番がすべて出荷完了であれば、その間の番号を配列に加える。超えない場合は補完を行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-dd9de97fc1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "ピック完了と英字の合計件数が画面表示最大件数（既定25）を超える場合のみ、ピック完了番号の間にある欠番を、その区間がすべて出荷完了のときに補完する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-359312d732",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "注文番号の配列。先頭側にピック完了の注文番号札（数字、表示件数超過時は間の出荷完了番号を含む）、末尾側に注文番号札（アルファベット）を連結する。数字要素はinteger、英字要素はstringとなる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-fb455a4a18",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "入力検証・認証判定を行わないため、400・401は発生しない。該当データが無い場合は空配列を200で返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-980faf83ad",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "無し（参照のみ）。本APIはデータを更新しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-b46b7969a4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "本APIは入力パラメータを持たないため、入力検証を行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-c7ad64c17f",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "本機能の判定・集計・表示条件は既存実装のリポジトリ、サービス、フォーム定義を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-1b3682981f",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "金額・ポイント・数量・ステータス・日時は永続化済み値または既存サービスの計算結果を使用し、画面・API層で独自補正しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-4be023bb88",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "呼び出し時点でピック完了・出荷完了の受注ステータスを持つ注文番号、および注文番号札（アルファベット）を返す。本APIはデータを更新しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-612978c946",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "出荷完了番号の補完は表示件数超過時のみ行い、超えない場合はピック完了番号と英字のみを返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-427c406bef",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "受注との結合キー。受注ステータスの判定に用いる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-ccfc540a05",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "ピック完了・出荷完了の判定に用いる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-f7dea23064",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "任意のクライアント（未認証含む）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a05-03_0505_sheet-5_sheet-req-54fc4745fc",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "エラーとせず、空配列を200で返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "order_id"
+      ],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "waiting_api/get_waiting/{",
+        "waiting_api/get_waiting/123",
+        "pf-eccube3/a05-03_api_order_order_store_call_number.md",
+        "{_locale}/waiting_api/get_waiting",
+        "json"
+      ],
+      "businessTerms": [
+        "A05",
+        "店頭注文番号取得",
+        "受注管理",
+        "受注管理機能",
+        "ピック済みになった店頭注文番号のリストを取得",
+        "エンドポイントURL",
+        "支店側のエンドポイントURLが変更",
+        "店頭注文番号一覧ページから非同期に定期的に",
+        "店舗IDに紐づく受注データで",
+        "かつ店頭PC購入の",
+        "になっている店頭注文番号と店頭注文番号札管理",
+        "注文番号のJSON配列",
+        "ピックアップ済みの受注データの注文番号",
+        "もしくは管理画面で登録された店頭注文番号のJSO",
+        "店頭注文番号表示画面",
+        "ピック済みになった店頭注文番号のリストを取得する",
+        "ためのAPIである",
+        "APIで",
+        "ピック完了ステータスの注文に紐づく注文番号札",
+        "注文番号札",
+        "確認値はHareruyaEcプラグインの店頭注文",
+        "注文番号テーブル",
+        "注文番号札テーブル",
+        "受注ステータスを正とする"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 14,
+    "candidateRefs": [
+      {
+        "term": "waiting_api/get_waiting/{",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/WaitingNumberController.php:56",
+        "snippet": "#[Route(path: '/waiting_api/get_waiting_number/{base_info_id}', name: 'get_waiting_number', requirements: ['base_info_id' => '\\d+'], methods: ['GET'])]",
+        "weight": 6
+      },
+      {
+        "term": "waiting_api/get_waiting/123",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Deck/CardListParserService.php:62",
+        "snippet": "// Arena形式: \"4 Lightning Bolt (SET) 123\" または標準形式: \"4 Lightning Bolt\"",
+        "weight": 6
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbPointHistory.php:38",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '注文ID'])]",
+        "weight": 5
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbShippingStandby.php:56",
+        "snippet": "#[ORM\\InverseJoinColumn(name: 'order_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbUserMailHistory.php:46",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Shipping.php:145",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "{_locale}/waiting_api/get_waiting",
+        "termType": "path",
+        "role": "Config",
+        "ref": "app/config/eccube/routes.yaml:18",
+        "snippet": "# 本店では'/{_locale}'、支店では'/{_locale}/{_shop}'となる。",
+        "weight": 4
+      },
+      {
+        "term": "{_locale}/waiting_api/get_waiting",
+        "termType": "path",
+        "role": "Config",
+        "ref": "app/config/eccube/routes.yaml:39",
+        "snippet": "# 本店では'/{_locale}'、支店では'/{_locale}/{_shop}'となる。",
+        "weight": 4
+      },
+      {
+        "term": "{_locale}/waiting_api/get_waiting",
+        "termType": "path",
+        "role": "Config",
+        "ref": "app/config/eccube/routes.yaml:61",
+        "snippet": "# prefix: /{_locale}",
+        "weight": 4
+      },
+      {
+        "term": "{_locale}/waiting_api/get_waiting",
+        "termType": "path",
+        "role": "Config",
+        "ref": "app/config/eccube/routes.yaml:73",
+        "snippet": "# path: /{_locale}",
+        "weight": 4
+      },
+      {
+        "term": "json",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:179",
+        "snippet": "if (typeof url === 'string' && /\\/assets\\/data\\/events.*\\.json/.test(url)) {",
+        "weight": 4
+      },
+      {
+        "term": "json",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:181",
+        "snippet": "res.clone().json().then(ingestSchedule).catch(function() {});",
+        "weight": 4
+      },
+      {
+        "term": "json",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:230",
+        "snippet": "labels = JSON.parse(labelsEl.textContent || '{}');",
+        "weight": 4
+      },
+      {
+        "term": "json",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-main.js:1",
+        "snippet": "(()=>{\"use strict\";let e,t;var r,i,n,a,o,s,l,c,u,d,h,p,f,m,v={},g={};function y(e){var t=g[e];if(void 0!==t)return t.exports;var r=g[e]={exports:{}};return v[e](r,r.exports,y),r.exports}y.rv=()=>\"1.7.5\",y.ruid=\"bundler=…",
+        "weight": 4
+      },
+      {
+        "term": "注文番号札",
+        "termType": "businessTerm",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/WaitingNumberController.php:116",
+        "snippet": "* 注文番号札（数字）リストと販売完了を渡し、すべて販売完了ならtrueを返す。",
+        "weight": 4
+      },
+      {
+        "term": "受注管理",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:129",
+        "snippet": "* 受注管理 出荷指示リスト編集",
+        "weight": 4
+      },
+      {
+        "term": "受注管理",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:218",
+        "snippet": "* 受注管理 出荷指示リスト編集",
+        "weight": 4
+      },
+      {
+        "term": "受注管理",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/OrderRepository.php:1351",
+        "snippet": "* 受注管理",
+        "weight": 4
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 3,
+    "implementationGapRequirementCount": 3,
+    "rows": [
+      {
+        "findingId": "a05-03_0505_sheet-5_sheet-conformance-70f9c4a69e12",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5:1463,1476",
+        "designRequirement": "GET /{_locale}/waiting_api/get_waiting",
+        "implementationActual": "#[Route(path: '/waiting_api/get_waiting_number/{base_info_id}', name: 'get_waiting_number', methods: ['GET'])]",
+        "mismatchReason": "パス末尾が `get_waiting` ではなく `get_waiting_number/{base_info_id}` になっている。",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/WaitingNumberController.php:56,57,61,64,69,71,77,79",
+          "src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig:96",
+          "src/Eccube/Repository/DtbWaitingNumberRepository.php:43,49,50",
+          "src/Eccube/Controller/Front/WaitingNumberController.php",
+          "src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig",
+          "src/Eccube/Repository/DtbWaitingNumberRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "HTTPエンドポイント",
+            "design": "GET /{_locale}/waiting_api/get_waiting",
+            "implementation": "#[Route(path: '/waiting_api/get_waiting_number/{base_info_id}', name: 'get_waiting_number', methods: ['GET'])]",
+            "mismatch": "パス末尾が `get_waiting` ではなく `get_waiting_number/{base_info_id}` になっている。"
+          }
+        ]
+      },
+      {
+        "findingId": "a05-03_0505_sheet-5_sheet-conformance-70f9c4a69e12",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5:1463,1476",
+        "designRequirement": "リクエストパラメータなし。`{_locale}` は言語識別子で取得対象の絞り込みには用いない。",
+        "implementationActual": "Controller メソッドは `int $base_info_id` を受け取り、Twig は `url('get_waiting_number', {'base_info_id': BaseInfo.id})` を生成する。",
+        "mismatchReason": "設計にない `base_info_id` が API 呼び出し契約に追加されている。",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/WaitingNumberController.php:56,57,61,64,69,71,77,79",
+          "src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig:96",
+          "src/Eccube/Repository/DtbWaitingNumberRepository.php:43,49,50",
+          "src/Eccube/Controller/Front/WaitingNumberController.php",
+          "src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig",
+          "src/Eccube/Repository/DtbWaitingNumberRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "入力パラメータ",
+            "design": "リクエストパラメータなし。`{_locale}` は言語識別子で取得対象の絞り込みには用いない。",
+            "implementation": "Controller メソッドは `int $base_info_id` を受け取り、Twig は `url('get_waiting_number', {'base_info_id': BaseInfo.id})` を生成する。",
+            "mismatch": "設計にない `base_info_id` が API 呼び出し契約に追加されている。"
+          }
+        ]
+      },
+      {
+        "findingId": "a05-03_0505_sheet-5_sheet-conformance-70f9c4a69e12",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5:1463,1476",
+        "designRequirement": "利用者の資格情報による絞り込みは行わず、パスパラメータ `{_locale}` も取得対象の絞り込みに使わない。",
+        "implementationActual": "`findBy(['BaseInfo' => $base_info_id])` と `getWaitingNumberByStatus(..., $base_info_id)` により BaseInfo で絞り込む。Repository も `IDENTITY(wn.BaseInfo) = :baseInfoId` を条件にしている。",
+        "mismatchReason": "設計で非入力・非絞り込みのはずの API が、店舗ID相当のパス値を必須条件として取得対象を限定している。",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/WaitingNumberController.php:56,57,61,64,69,71,77,79",
+          "src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig:96",
+          "src/Eccube/Repository/DtbWaitingNumberRepository.php:43,49,50",
+          "src/Eccube/Controller/Front/WaitingNumberController.php",
+          "src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig",
+          "src/Eccube/Repository/DtbWaitingNumberRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "取得対象の絞り込み",
+            "design": "利用者の資格情報による絞り込みは行わず、パスパラメータ `{_locale}` も取得対象の絞り込みに使わない。",
+            "implementation": "`findBy(['BaseInfo' => $base_info_id])` と `getWaitingNumberByStatus(..., $base_info_id)` により BaseInfo で絞り込む。Repository も `IDENTITY(wn.BaseInfo) = :baseInfoId` を条件にしている。",
+            "mismatch": "設計で非入力・非絞り込みのはずの API が、店舗ID相当のパス値を必須条件として取得対象を限定している。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 33,
+    "verdictedCount": 33,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 33,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-ecb83508f6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "店舗IDに紐づく受注データで、かつ店頭PC購入の「ピック済み」になっている店頭注文番号と店頭注文番号札管理(M05-27)で登録されている番号のリストを取得し、",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-877e99e051",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "データが存在しない場合は、空のJSON配列を返す",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-f062c7e220",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "ピックアップ済みの受注データの注文番号、もしくは管理画面で登録された店頭注文番号のJSON配列",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-86c37f6ca0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "店内モニター（店頭注文番号表示画面）が、ピック済みになった店頭注文番号のリストを取得するためのAPIである。pf-eccube3のHareruyaEcプラグインが提供するJSON APIで、ピック完了ステータスの注文に紐づく注文番号札（数字）と、注文番号札（アルファベット）を1つの配列にまとめて返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-db94acc5e1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はHareruyaEcプラグインの店頭注文番号取得処理、フロントのルート登録（ControllerProvider）、注文番号テーブル・注文番号札テーブル・受注ステータスを正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-2999933d97",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "画面表示最大件数を超える場合の出荷完了番号の補完",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-14f355abb5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-904c1d923c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "店頭注文番号表示画面そのものの描画と定期取得（フロント画面の設計を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-fbda45cf0d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "注文番号札（数字）の発番・登録、注文番号札（アルファベット）の管理（店頭注文番号札管理の設計を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-1705de97a7",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "受注ステータスの遷移そのもの（受注管理の設計を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-42e1e37244",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "受注（dtb_order）のステータス列で判定",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-4a83a2d963",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "抽出条件・補完ロジック・本APIのエンドポイント自体のリニューアル後仕様はec-cube-enterprise実装で要確認とし、本書は現行（pf-eccube3）の挙動を正とする。永続化に関わるテーブル・列名は上記のとおり移行先と同一であるため、現行名をそのまま用いる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-f85c1b1fc0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "注文ごとに採番した数値の呼び出し番号。注文番号テーブルが注文IDと対で保持する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-6537f3e85d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "数値とは別に管理する英字の呼び出し番号。注文番号札テーブルが保持する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-1371c39cea",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "受注ステータスのうち出荷を終えた状態。表示件数超過時の補完判定に用いる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-726d877316",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "応答形式はJSON。呼び出し元は店内モニター（店頭注文番号表示画面）からの定期取得。フロントのルートは言語識別子 {_locale} 配下にマウントされる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-6e69168737",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "本APIは認証トークンを要求しない。フロントのファイアウォールは匿名アクセスを許可し、本パスにはログイン必須のアクセス制御を設定していない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-f5df3cd5b0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "認証判定を行わないため、未認証でも取得できる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-4091953b1a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "呼び出し元は店内モニターの表示画面。利用者の資格情報による絞り込みは行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-acf7886a27",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "数字の件数とアルファベットの件数の合計が画面表示最大件数を超える場合は、出荷完了ステータスの注文番号札（数字）も取得し、欠番の補完を行う。直前に追加した番号の次から対象番号の手前までの連番がすべて出荷完了であれば、その間の番号を配列に加える。超えない場合は補完を行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-dd9de97fc1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "ピック完了と英字の合計件数が画面表示最大件数（既定25）を超える場合のみ、ピック完了番号の間にある欠番を、その区間がすべて出荷完了のときに補完する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-359312d732",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "注文番号の配列。先頭側にピック完了の注文番号札（数字、表示件数超過時は間の出荷完了番号を含む）、末尾側に注文番号札（アルファベット）を連結する。数字要素はinteger、英字要素はstringとなる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-fb455a4a18",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "入力検証・認証判定を行わないため、400・401は発生しない。該当データが無い場合は空配列を200で返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-980faf83ad",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "無し（参照のみ）。本APIはデータを更新しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-b46b7969a4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "本APIは入力パラメータを持たないため、入力検証を行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-c7ad64c17f",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "本機能の判定・集計・表示条件は既存実装のリポジトリ、サービス、フォーム定義を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-1b3682981f",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "金額・ポイント・数量・ステータス・日時は永続化済み値または既存サービスの計算結果を使用し、画面・API層で独自補正しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-4be023bb88",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "呼び出し時点でピック完了・出荷完了の受注ステータスを持つ注文番号、および注文番号札（アルファベット）を返す。本APIはデータを更新しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-612978c946",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "出荷完了番号の補完は表示件数超過時のみ行い、超えない場合はピック完了番号と英字のみを返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-427c406bef",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "受注との結合キー。受注ステータスの判定に用いる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-ccfc540a05",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "ピック完了・出荷完了の判定に用いる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-f7dea23064",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "任意のクライアント（未認証含む）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a05-03_0505_sheet-5_sheet-req-54fc4745fc",
+        "category": "条件不一致、権限不足、検証エラー時は業務データを更新せず、既存のエラー形式または画面遷移に従う。",
+        "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5",
+        "designRequirement": "エラーとせず、空配列を200で返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

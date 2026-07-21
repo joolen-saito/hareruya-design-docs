@@ -1,0 +1,76 @@
+{
+  "chunkId": "a02-03_0502_sheet-5_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-03_0502_sheet-5_id.json#a02-03_0502_sheet-5_id-conformance-f696cbc983f0",
+      "functionId": "a02-03_0502_sheet-5_id",
+      "featureNo": "A02-03",
+      "title": "A02-03 ポップアップ用商品情報取得（旧商品ID）",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "404応答本文のキーが設計の message ではなく errors 配列で返る。",
+      "reason": "設計（レスポンス失敗表・エラー処理節）は404本文を {code, message}（message は \"Not Found\"）と規定する。実装 ProductController の旧商品IDルート（getPopupCardByOldProductId / getPopupProductByOldProductId）は該当なし時に NotFoundException('Not Found') を投げ、catch (BaseApiException) で ['code' => $e->getStatusCode(), 'errors' => $e->getErrors()] を返す。NotFoundException は親 BaseApiException に errors: [$message] を渡すため、外部JSONは {code:404, errors:['Not Found']} となる。HTTP 404 と文言 \"Not Found\" は一致するが本文キーが message ではなく errors 配列であり、外部契約のキーが異なる実装違い。BaseApiException 側にも message キーで返す経路は無い。",
+      "designEvidence": {
+        "label": "設計要求（404本文の形）",
+        "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+        "start": 1381,
+        "end": 1381,
+        "contains": ["{code, message}", "Not Found"]
+      },
+      "implEvidence": [
+        {
+          "label": "404発生と本文組み立て",
+          "note": "NotFoundExceptionを投げ、BaseApiException catchで code/errors を返す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php",
+          "start": 323,
+          "end": 339,
+          "contains": ["throw new NotFoundException('Not Found')", "'errors' => $e->getErrors()", "'code' => $e->getStatusCode()"]
+        },
+        {
+          "label": "NotFoundExceptionはmessageをerrors配列に格納",
+          "path": "ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php",
+          "start": 29,
+          "end": 31,
+          "contains": ["errors: [$message]"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-03_0502_sheet-5_id.json#a02-03_0502_sheet-5_id-conformance-a04cfa7b043f",
+      "functionId": "a02-03_0502_sheet-5_id",
+      "featureNo": "A02-03",
+      "title": "A02-03 ポップアップ用商品情報取得（旧商品ID）",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "price01/price02/stock を設計は string（数値文字列）とするが実装は integer 型で返す。",
+      "reason": "設計の成功レスポンス表（1379行）は price01・price02・stock の型を string とし『Doctrineのdecimal値のため数値文字列で返す』と明記、サンプルも \"500.00\"/\"480.00\"/\"12.00\" と文字列。実装 ProductRepository::findPopupProductByOldProductId の ResultSetMapping は price01/price02/stock をいずれも addScalarResult(..., 'integer') で取得し、さらに PopupResponseBuilder::build は stock を (int) にキャストして返す。よって数値文字列ではなく整数型で応答される実装違い。findPopupProductByOldProductIdWithoutLang 側も同一のRSM整数マッピングを用いており別経路でも string 化されていない。",
+      "designEvidence": {
+        "label": "設計要求（成功レスポンスの型）",
+        "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+        "start": 1379,
+        "end": 1379,
+        "contains": ["price01", "数値文字列で返す", "string"]
+      },
+      "implEvidence": [
+        {
+          "label": "RSMがprice01/price02/stockをintegerで取得",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php",
+          "start": 2463,
+          "end": 2465,
+          "contains": ["'price01', 'price01', 'integer'", "'price02', 'price02', 'integer'", "'stock', 'stock', 'integer'"]
+        },
+        {
+          "label": "PopupResponseBuilderがstockを(int)キャスト",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php",
+          "start": 33,
+          "end": 35,
+          "contains": ["'price01' => $result['price01']", "'stock' => (int)"]
+        }
+      ]
+    }
+  ]
+}

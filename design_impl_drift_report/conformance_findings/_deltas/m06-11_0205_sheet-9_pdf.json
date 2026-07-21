@@ -1,0 +1,48 @@
+{
+  "functionId": "m06-11_0205_sheet-9_pdf",
+  "featureNo": "M06-11",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-9:2182",
+      "designExpectation": "4作成日時ラベル---ピッキングリストを作成した日時。※「ピッキングリスト印刷」ボタンを押した日時",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:623-665, src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderRestockListService.php:49-57, src/Eccube/Service/Csv/Exporter/RestockListPdfSectionBuilder.php:51-127, src/Eccube/Resource/template/admin/Purchase/restock_list.twig:1-105, html/template/admin/assets/js/OtcBuyOrder/otc-buy-order.js:20-79。検索語: 作成日時/create_date/createdAt/now/date）",
+      "implementationActual": "戻しリストPDF用HTMLは生成されるが、作成日時をViewDataへ渡す処理も、帳票テンプレート上に作成日時を表示する領域も存在しない。Date.now() はポップアップウィンドウ名にのみ使用され、帳票表示値ではない。",
+      "mismatchReason": "設計は印刷ボタン押下日時を作成日時ラベルとして帳票に表示する要求だが、ControllerはrenderViewへbuildPdfViewDataの返却値だけを渡し、ServiceはrestockListSectionsのみ返却し、Twigは印刷ボタン・ページタイトル・明細表・小計だけを描画しているため、作成日時ラベルが未実装。",
+      "comparisonRows": [
+        {
+          "item": "作成日時ラベル",
+          "design": "ピッキングリストを作成した日時を表示する。印刷ボタン押下日時。",
+          "implementation": "restockListSectionsのみを渡し、Purchase/restock_list.twigに作成日時欄がない。",
+          "mismatch": "帳票上に作成日時が出力されない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-9:2194",
+      "designExpectation": "14ページ内個数小計ラベル---ページ内の商品個数の総計",
+      "implRef": "src/Eccube/Service/Csv/Exporter/RestockListPdfSectionBuilder.php:80, src/Eccube/Service/Csv/Exporter/RestockListPdfSectionBuilder.php:85, src/Eccube/Resource/template/admin/Purchase/restock_list.twig:85, src/Eccube/Resource/template/admin/Purchase/restock_list.twig:92",
+      "implementationActual": "RestockListPdfSectionBuilderはセクション単位でtotal_quantityを累積し、Twigはloop.last時に一度だけsection.total_quantityを表示する。ページ単位の小計は計算していない。",
+      "mismatchReason": "設計は「ページ内」の商品個数総計を要求しているが、実装は閾値セクション全体の総数量を最終ページ末尾に表示する。複数ページになるセクションでは、各ページの小計ではなくセクション総計になる。",
+      "comparisonRows": [
+        {
+          "item": "小計の集計単位",
+          "design": "ページ内の商品個数の総計。",
+          "implementation": "section.total_quantityとして閾値セクション全体の数量を累積。",
+          "mismatch": "ページ単位ではなくセクション単位。"
+        },
+        {
+          "item": "表示タイミング",
+          "design": "ページ内個数小計ラベルとして各ページに対応。",
+          "implementation": "Twigのloop.last時だけ小計行を出力。",
+          "mismatch": "複数ページ時に各ページの小計が表示されない。"
+        }
+      ]
+    }
+  ]
+}

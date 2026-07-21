@@ -1,0 +1,138 @@
+{
+  "id": "f06-24-contact-history-detail-not-found-error-page-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-24_0306_sheet-20_sheet.json",
+  "sourceFindingId": "f06-24_0306_sheet-20_sheet-conformance-4fe92fd44c30",
+  "classification": "フロント会員",
+  "feature": "お問い合わせ履歴詳細",
+  "issueCategory": "実装違い",
+  "issue": "存在しないID・他会員ID指定時に内容非表示ではなく404エラーページを表示する",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "ログイン済み会員で `http://localhost:8080/ja/contact/history/{id}/detail` を表示する",
+    "`{id}` に存在しないお問い合わせID、または他会員のお問い合わせIDを指定する",
+    "当該お問い合わせ内容が表示されないだけで、404等の明示エラー画面にならないか確認する"
+  ],
+  "expected": [
+    "対象お問い合わせが存在しない、またはログイン会員に紐づかない場合、当該内容を表示しない",
+    "閲覧専用のため画面上の明示エラーは出さない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `ContactController::detail()` はルート引数を `DtbContact $Contact` として受け取り、会員条件込みの `findOneBy(['id' => $Contact->getId(), 'Customer' => $user])` が `null` の場合に `throw $this->createNotFoundException();` を実行する。他会員IDではこの分岐で404エラー画面になり、存在しないIDは必須エンティティ引数の解決時点で404になるため、設計の『明示エラーは出さない』挙動と異なる。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise お問い合わせ履歴詳細は対象なし時に404例外",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ContactController.php",
+          "start": 222,
+          "end": 236,
+          "language": "php",
+          "contains": [
+            "#[Route(path: '/contact/history/{id}/detail', name: 'contact_history_detail', requirements: ['id' => '\\d+'], methods: ['GET'])]",
+            "public function detail(Request $request, DtbContact $Contact): array",
+            "$contact = $this->dtbContactRepository->findOneBy(['id' => $Contact->getId(), 'Customer' => $user], ['id' => 'DESC']);",
+            "throw $this->createNotFoundException();"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の `ContactController::detail($id)` は、同じ会員条件込みの検索結果を `$contact` としてテンプレートへ渡すだけで、`null` の場合に404例外やabortを実行しない。テンプレート側にも対象なし専用の明示エラー表示はなく、設計の『当該内容を表示しない』挙動に近い実装になっている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は対象なしでもabortせずテンプレートへ渡す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ContactController.php",
+          "start": 148,
+          "end": 162,
+          "language": "php",
+          "contains": [
+            "public function detail(Application $app, Request $request, $id)",
+            "$contact = $app['hareruya_ec.repository.contact']->findOneBy(['id' => $id, 'customer' => $customer], ['id' => 'DESC']);",
+            "return $app->render('Contact/history_detail.twig', [",
+            "'contact' => $contact,"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 テンプレートはcontact項目を表示するのみ",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history_detail.twig",
+          "start": 8,
+          "end": 30,
+          "language": "twig",
+          "contains": [
+            "{{ contact.createDate|date('Y/m/d H:i') }}",
+            "{{ contact.subject.subject }}",
+            "{{ contact.id }}",
+            "{{ contact.body|nl2br }}"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "存在しないID・他会員IDでは内容を表示しない",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 6752,
+      "end": 6763,
+      "language": "html",
+      "contains": [
+        "他会員のIDを詳細URLに指定",
+        "自分以外の内容は表示しない",
+        "存在しないIDを詳細URLに指定",
+        "当該お問い合わせの内容は表示しない",
+        "対象が無い場合は当該内容を表示しない（閲覧専用のため明示エラーは出さない）"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "画面上の明示エラーは出さない",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 6780,
+      "end": 6782,
+      "language": "html",
+      "contains": [
+        "対象お問い合わせが存在しない／他会員のID",
+        "当該内容を表示しない。閲覧専用のため画面上の明示エラーは出さない。"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "対象なし時に404例外を投げる",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ContactController.php",
+      "start": 222,
+      "end": 236,
+      "language": "php",
+      "contains": [
+        "public function detail(Request $request, DtbContact $Contact): array",
+        "throw $this->createNotFoundException();"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 は対象なしでも404例外にせずテンプレートへ渡す",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ContactController.php",
+      "start": 148,
+      "end": 162,
+      "language": "php",
+      "contains": [
+        "$contact = $app['hareruya_ec.repository.contact']->findOneBy(['id' => $id, 'customer' => $customer], ['id' => 'DESC']);",
+        "'contact' => $contact,"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-24_0306_sheet-20_sheet.json#f06-24_0306_sheet-20_sheet-conformance-4fe92fd44c30'",
+      "rg -n \"4fe92fd44c30|存在しないID|他会員|明示エラー|HTTP404|createNotFoundException|findOneBy|contact_history_detail|取得結果\" design_impl_drift_report/findings/f06-24_0306_sheet-20_sheet.json excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"contact_history_detail|createNotFoundException|NotFound|findOneBy|history_detail|DtbContact|contact === null|throw\" ec-cube-enterprise/src/Eccube/Controller/Front/ContactController.php ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history_detail.twig ec-cube-enterprise/src/Eccube/Repository/DtbContactRepository.php",
+      "rg -n \"contact_history_detail|abort\\(404\\)|NotFound|findOneBy|history_detail|contact is null|contact == null|return \\$app->render\" pf-eccube3/app/Plugin/HareruyaEc/Controller/ContactController.php pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history_detail.twig pf-eccube3/app/Plugin/HareruyaEc/Repository ec-cube/src/Eccube/Controller/ContactController.php",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/ContactController.php | sed -n '222,236p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/ContactController.php | sed -n '148,162p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history_detail.twig | sed -n '8,30p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '6752,6763p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '6780,6782p'"
+    ],
+    "review": "review-pack を生成し、設計の『明示エラーは出さない』要求、ec-cube-enterprise の createNotFoundException 分岐、pf-eccube3 の abortなしテンプレート引き渡しを手動で批判的に再確認した。外部の codex gpt-5.5 high レビューはこの環境では利用できないため、同等の観点で Controller、Repository、Twig、近傍実装を検索した。"
+  }
+}

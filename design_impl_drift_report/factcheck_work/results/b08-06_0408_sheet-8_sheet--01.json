@@ -1,0 +1,49 @@
+{
+  "chunkId": "b08-06_0408_sheet-8_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b08-06_0408_sheet-8_sheet.json#b08-06_0408_sheet-8_sheet-conformance-844e7d0964ef",
+      "functionId": "b08-06_0408_sheet-8_sheet",
+      "featureNo": "B08-06",
+      "title": "B08-06 スマレジ使用ポイント連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計はコンソール起動を `smaregi:batch updatePoint <受注ID>` と定めるが、実装のコマンド登録名は `eccube:smaregi:update-point` で別名。",
+      "reason": "設計書(埋め込み詳細設計)の「利用者視点の入口」と「処理フロー」見出しが、起動方法を明確に `smaregi:batch updatePoint <受注ID>` と記載している(1706,1710行)。ec-cube-enterprise 側の該当バッチ SmaregiUpdatePointCommand.php:26 の #[AsCommand] 登録名は 'eccube:smaregi:update-point' であり、設計名と一致しない。`rg -rn 'smaregi:batch|updatePoint' src/` を実行しても src/ 配下に `smaregi:batch` / `updatePoint` という登録名・呼出しは存在せず(ヒットは admin/Order/edit.twig の JS 関数 nItem() のみで無関係)、src/Eccube/Command 配下のスマレジ系コマンドは全て `eccube:smaregi:*` 名前空間だった。設計の外部起動契約と実装のコマンド名が異なる実装違い。",
+      "designEvidence": {
+        "label": "設計要求(起動コマンド名)",
+        "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+        "start": 1706,
+        "end": 1710,
+        "contains": ["smaregi:batch updatePoint", "コンソールのバッチコマンド"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装コマンド登録名",
+          "note": "設計名と異なる登録名",
+          "path": "ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php",
+          "start": 26,
+          "end": 26,
+          "contains": ["eccube:smaregi:update-point", "AsCommand"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -rn 'smaregi:batch|updatePoint' /home/y-saito/Developments/ec-cube-enterprise/src",
+        "rg -rn 'AsCommand' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b08-06_0408_sheet-8_sheet.json#b08-06_0408_sheet-8_sheet-conformance-e4f3a7819a8a",
+      "functionId": "b08-06_0408_sheet-8_sheet",
+      "featureNo": "B08-06",
+      "title": "B08-06 スマレジ使用ポイント連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "UNCERTAIN",
+      "confidence": "medium",
+      "summary": "受注IDが数値でない場合、実装は error 出力 + Command::FAILURE を返すが、設計は終了ステータス/出力を明示していないため実装違いと断定できない。",
+      "reason": "設計は「受注IDが未指定または数値でない場合は処理を行わずに終了する」(1707,1711,1717,1733行)と記すが、いずれも終了ステータスや出力メッセージには言及していない。上流のエラーハンドリング欄(1670-1671行)で明示的に『正常終了扱い[return終了]』とされているのは『注文IDが未入力もしくは該当データなし』のケースのみで、『数値でない』ケースについては正常終了とも異常終了とも記述がない。実装(SmaregiUpdatePointCommand.php:47-57)は、未入力時は success + Command::SUCCESS、非数値時は error + Command::FAILURE を返す。両ケースとも『ポイント連携処理を行わずに終了』という文言自体は満たしており、非数値時の終了ステータスを『正常終了であるべき』とするのは設計本文にない推測になる。設計文が終了ステータスについて曖昧であり、実装違いを事実として確定できないため UNCERTAIN とする。"
+    }
+  ]
+}

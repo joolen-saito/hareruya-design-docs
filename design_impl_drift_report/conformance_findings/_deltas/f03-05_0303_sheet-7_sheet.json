@@ -1,0 +1,46 @@
+{
+  "functionId": "f03-05_0303_sheet-7_sheet",
+  "featureNo": "F03-05",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0303_基本設計仕様書(フロント_商品).html#sheet-7 (利用者視点の入口『マイページ表示時のおすすめブロック 非同期のおすすめ取得（種別 mypage）会員の最新注文商品を基準におすすめを表示する』／処理フロー『ページ種別が mypage または complete の場合、ログイン会員の最新注文の商品を基準商品とする』)",
+      "designExpectation": "マイページで種別 mypage のおすすめブロックを非同期取得し、会員の最新注文商品（最高額商品）を基準商品としておすすめ商品を抽出・スライダー表示する。0件のときのみ空メッセージを表示する。",
+      "implRef": "src/Eccube/Controller/Front/Mypage/MypageController.php:127-138 ; src/Eccube/Resource/template/default/Mypage/index.twig:20-21,246,266",
+      "implementationActual": "MypageController::index は 'Customer' と 'nextDeadlinePointHistory' のみ返し recommendProducts をセットしない。マイページテンプレートは block_product_recommend を render せず直接 recommendProducts 変数を参照するため line246 の条件は常に偽となり、常に line266 の空メッセージだけが表示される。line20-21 に『TODO: ECCUBE_HARERUYA-164 … 商品リコメンド実装時に追加する』の未実装コメントが残り、recommend_js.twig include もコメントアウトされている。マイページの基準商品決定・おすすめ抽出（RecommendService 呼び出し）は Controller/Service/EventSubscriber いずれにも存在しない。",
+      "mismatchReason": "src/ 全体で recommendProducts をセットする処理を grep したが不在。ProductRecommendController のみが RecommendService を呼ぶが、マイページからは context=mypage で呼び出されておらず、user_recommend_product.twig の mypage 分岐は死コード。マイページのおすすめ表示は未実装（TODO）。",
+      "comparisonRows": [
+        {"item": "マイページ基準商品決定", "design": "会員の最新注文の最高額商品を基準", "implementation": "処理なし（recommendProducts 未セット）", "mismatch": "未実装"},
+        {"item": "おすすめ抽出/表示", "design": "非同期取得しスライダー表示", "implementation": "常に空メッセージのみ表示", "mismatch": "未実装（TODO コメント残存）"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0303_基本設計仕様書(フロント_商品).html#sheet-7 (処理フロー『上記以外（買い物かご）の場合…カートが空なら基準商品なしとする』／エッジケース『カートが空（買い物かご）→ 基準商品なしとしておすすめ0件を表示する』)",
+      "designExpectation": "買い物かご種別ではカート内の最高額商品を基準商品とし、カートが空なら基準商品なし＝おすすめ0件を表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Cart/index.twig:299-310 ; src/Eccube/Controller/Block/ProductRecommendController.php:54-60",
+      "implementationActual": "Cart/index.twig:310 は空カートでも {'context':'checkout'} を無条件 render し、cartBaseProductId が null のため product_id を渡さない。ProductRecommendController::index は product_id==0 かつログイン会員のとき findLatestExpensiveItem($Customer)（直近注文の最高額商品）を基準に採用する。context を区別しないため空カート×ログイン会員では0件にならず直近注文基準のおすすめが表示される。",
+      "mismatchReason": "controller の product_id==0 フォールバック（mypage/complete 向けの最新注文基準ロジック）が checkout(=カート) 文脈にも無差別適用される。設計はカート空で『基準商品なし＝0件』を要求しており挙動が異なる。",
+      "comparisonRows": [
+        {"item": "空カート×ログイン会員のおすすめ", "design": "基準商品なし → おすすめ0件", "implementation": "直近注文の最高額商品を基準におすすめ表示", "mismatch": "0件にならない"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0303_基本設計仕様書(フロント_商品).html#sheet-7 (『おすすめが0件の場合はスライダーを出さず、おすすめが無い旨のメッセージを表示する』／表示メッセージ・常時表示『おすすめなし 表示するおすすめ商品はまだありません。 おすすめが0件のとき』)",
+      "designExpectation": "おすすめが0件のとき、おすすめブロックを持つ全ページで『表示するおすすめ商品はまだありません。』（英語 No recommended items to display yet.）を常時表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Block/user_recommend_product.twig:18-46 ; src/Eccube/Resource/locale/messages.ja.yaml:1172",
+      "implementationActual": "detail/cart/complete が共通利用する Block/user_recommend_product.twig は全出力を {% if Products|length > 0 %} … {% endif %} で囲むだけで {% else %} 分岐が無く、0件時は何も描画しない。0件文言キー front.product.recommend_no_items は Mypage/index.twig:266 のみで使用され、共通ブロックには組み込まれていない。",
+      "mismatchReason": "src/ 全体で recommend_no_items の使用箇所を grep すると Mypage/index.twig のみ。共通ブロック user_recommend_product.twig に0件時メッセージ分岐が存在せず、設計が要求する常時表示（0件文言）が detail/cart/complete で満たされない。",
+      "comparisonRows": [
+        {"item": "0件時メッセージ表示（詳細/カート/完了）", "design": "『表示するおすすめ商品はまだありません。』を表示", "implementation": "何も描画しない（else 分岐なし）", "mismatch": "0件文言が非表示"}
+      ]
+    }
+  ]
+}

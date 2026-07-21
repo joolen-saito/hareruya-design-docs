@@ -1,0 +1,247 @@
+{
+  "id": "a05-03-waiting-api-base-info-parameter-added",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a05-03_0505_sheet-5_sheet.json",
+  "sourceFindingId": "a05-03_0505_sheet-5_sheet-conformance-70f9c4a69e12",
+  "classification": "API受注管理",
+  "feature": "店頭注文番号取得",
+  "issueCategory": "実装違い",
+  "issue": "店頭注文番号取得APIが無パラメータのGET /{_locale}/waiting_api/get_waitingではなくbase_info_id必須で店舗絞り込みする",
+  "designBook": "0505_基本設計仕様書(API_受注管理).xlsx",
+  "reproSteps": [
+    "設計書どおり GET http://localhost:8080/ja/waiting_api/get_waiting を呼び出す",
+    "ec-cube-enterprise の店頭注文番号表示画面で生成される取得APIのURLを確認する",
+    "Controller と Repository で base_info_id が取得対象の絞り込みに使われているか確認する"
+  ],
+  "expected": [
+    "店頭注文番号リストの取得APIは GET /{_locale}/waiting_api/get_waiting として提供する",
+    "本APIはリクエストパラメータを持たない",
+    "パスパラメータ {_locale} は言語識別子であり、取得対象の絞り込みには用いない",
+    "pf-eccube3 の HareruyaEc プラグインと同様に、店頭注文番号札（数字）と注文番号札（アルファベット）を1配列にまとめて返す"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、店頭注文番号取得APIが `GET /waiting_api/get_waiting_number/{base_info_id}` として定義され、Controller メソッドも `int $base_info_id` を必須引数として受け取る。`base_info_id > 0` の場合だけ取得処理に入り、手動登録注文番号札とピック済み注文番号札の双方を BaseInfo で絞り込む。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise Controller は base_info_id 必須ルートを定義し BaseInfo で取得する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/WaitingNumberController.php",
+          "start": 56,
+          "end": 72,
+          "language": "php",
+          "contains": [
+            "#[Route(path: '/waiting_api/get_waiting_number/{base_info_id}'",
+            "public function getWaitingNumber(Request $request, int $base_info_id): JsonResponse",
+            "if ($base_info_id > 0)",
+            "['BaseInfo' => $base_info_id]",
+            "getWaitingNumberByStatus"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise Twig は BaseInfo.id を指定して get_waiting_number を呼ぶ",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig",
+          "start": 92,
+          "end": 98,
+          "language": "twig",
+          "contains": [
+            "type: 'GET'",
+            "url: '{{ url('get_waiting_number', {'base_info_id': BaseInfo.id}) }}'",
+            "data: {}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise Repository は waiting number を BaseInfo で絞り込む",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbWaitingNumberRepository.php",
+          "start": 43,
+          "end": 53,
+          "language": "php",
+          "contains": [
+            "public function getWaitingNumberByStatus(int $status, int $baseInfoId): mixed",
+            "IDENTITY(wn.BaseInfo) = :baseInfoId",
+            "setParameter('baseInfoId', $baseInfoId)"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では、`/waiting_api/get_waiting` を `waiting_api_get` として登録し、Twig も `url('waiting_api_get')` をデータなしで呼び出す。Controller と Repository は `base_info_id` を受け取らず、BaseInfo で絞り込まない。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は /waiting_api/get_waiting を無パラメータAPIとして登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php",
+          "start": 283,
+          "end": 285,
+          "language": "php",
+          "contains": [
+            "$c->get('/waiting_api/get_waiting'",
+            "WaitingNumberController::getWaiting",
+            "->bind('waiting_api_get')"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 Controller は getWaiting(Application $app) で base_info_id を受け取らない",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/WaitingNumberController.php",
+          "start": 22,
+          "end": 67,
+          "language": "php",
+          "contains": [
+            "public function getWaiting(Application $app)",
+            "getWaitingNumberByStatus(OrderStatus::ORDER_PICKED)",
+            "findAll([], ['id' => 'ASC'])",
+            "return $app->json($response"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 Twig は waiting_api_get をデータなしで呼び出す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/waiting_get_js.twig",
+          "start": 88,
+          "end": 91,
+          "language": "twig",
+          "contains": [
+            "type: 'GET'",
+            "url: '{{ url('waiting_api_get') }}'",
+            "data: {}"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "A05-03 は pf-eccube3 の HareruyaEc プラグインを正とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1440,
+      "end": 1442,
+      "language": "html",
+      "contains": [
+        "pf-eccube3のHareruyaEcプラグイン",
+        "確認値はHareruyaEcプラグイン",
+        "挙動の参照リポはpf-eccube3"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "利用者視点の入口は GET /{_locale}/waiting_api/get_waiting",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1460,
+      "end": 1462,
+      "language": "html",
+      "contains": [
+        "店頭注文番号リストの取得",
+        "GET /{_locale}/waiting_api/get_waiting",
+        "フロントのルートは言語識別子"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "リクエストパラメータなし、{_locale} は絞り込みに使わない",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1474,
+      "end": 1476,
+      "language": "html",
+      "contains": [
+        "本APIはリクエストパラメータを持たない",
+        "{_locale}",
+        "取得対象の絞り込みには用いない"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "base_info_id 必須の get_waiting_number ルート",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/WaitingNumberController.php",
+      "start": 56,
+      "end": 72,
+      "language": "php",
+      "contains": [
+        "/waiting_api/get_waiting_number/{base_info_id}",
+        "int $base_info_id",
+        "['BaseInfo' => $base_info_id]",
+        "getWaitingNumberByStatus"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "画面JSも BaseInfo.id を渡す",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig",
+      "start": 92,
+      "end": 98,
+      "language": "twig",
+      "contains": [
+        "url: '{{ url('get_waiting_number', {'base_info_id': BaseInfo.id}) }}'",
+        "TODO: ECCUBE_HARERUYA-182"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "Repository も BaseInfo で絞り込む",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/DtbWaitingNumberRepository.php",
+      "start": 43,
+      "end": 53,
+      "language": "php",
+      "contains": [
+        "getWaitingNumberByStatus(int $status, int $baseInfoId)",
+        "IDENTITY(wn.BaseInfo) = :baseInfoId"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は /waiting_api/get_waiting を waiting_api_get として登録",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php",
+      "start": 283,
+      "end": 285,
+      "language": "php",
+      "contains": [
+        "$c->get('/waiting_api/get_waiting'",
+        "->bind('waiting_api_get')"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の getWaiting は base_info_id を受け取らない",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/WaitingNumberController.php",
+      "start": 22,
+      "end": 67,
+      "language": "php",
+      "contains": [
+        "public function getWaiting(Application $app)",
+        "getWaitingNumberByStatus(OrderStatus::ORDER_PICKED)",
+        "findAll([], ['id' => 'ASC'])",
+        "return $app->json($response"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の Repository は BaseInfo フィルタを持たない",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbWaitingNumberRepository.php",
+      "start": 23,
+      "end": 30,
+      "language": "php",
+      "contains": [
+        "public function getWaitingNumberByStatus($status)",
+        "wn.orderId = o.id AND o.OrderStatus = :statusId",
+        "getResult()"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex + gpt-5.5 high critical review",
+    "commands": [
+      "rg -n \"waiting_api|get_waiting|get_waiting_number|base_info_id|BaseInfo|店頭注文番号|待ち番号|waiting\" hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html hareruya-design-docs/design_impl_drift_report/findings/a05-03_0505_sheet-5_sheet.json ec-cube-enterprise/src/Eccube/Controller/Front/WaitingNumberController.php ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig ec-cube-enterprise/src/Eccube/Repository/DtbWaitingNumberRepository.php pf-eccube3/app/Plugin/HareruyaEc",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html | sed -n '1438,1478p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html | sed -n '1384,1412p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php | sed -n '274,286p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/WaitingNumberController.php | sed -n '1,78p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/waiting_get_js.twig | sed -n '84,94p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbWaitingNumberRepository.php | sed -n '18,42p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/WaitingNumberController.php | sed -n '1,120p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig | sed -n '88,104p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Repository/DtbWaitingNumberRepository.php | sed -n '1,90p'"
+    ],
+    "notes": [
+      "設計HTMLの前半には /waiting_api/get_waiting/{店舗ID} と店舗IDに紐づく受注データの記述があるが、gpt-5.5 high の批判的レビューでは、後半の詳細設計が pf-eccube3 を正とし、GET /{_locale}/waiting_api/get_waiting・リクエストパラメータなしを明示しているため、この範囲で VERIFIED と判定された。",
+      "本項目は、無パラメータAPI契約に対して enterprise が base_info_id を必須化し BaseInfo 絞り込みしている差分に限定する。"
+    ]
+  }
+}

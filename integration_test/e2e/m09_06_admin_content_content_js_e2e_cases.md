@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m09_06_admin_content_content_js_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 刷新先 ec-cube-enterprise に当該画面は存在する（route `admin_content_js`＝`JsController.php:41`、Twig `Resource/template/admin/Content/js.twig`）。
 
@@ -24,47 +24,47 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-001	IT-25	UI部品	P2	見出し「JavaScript管理」が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	"1. JavaScript管理画面（/content/js）を開く"	見出し「JavaScript管理」が表示されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-002	IT-25	表示結果	P3	サブ見出し「コンテンツ管理」が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	"1. JavaScript管理画面を開く"	サブ見出し「コンテンツ管理」が表示されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-003	IT-25	UI部品	P3	カード見出し「JavaScript設定」が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	"1. JavaScript管理画面を開く"	カード見出し「JavaScript設定」が表示されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-004	IT-13	表示結果	P2	コード項目ラベルと必須バッジ「必須」が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	"1. JavaScript管理画面を開く"	コード項目に画面ラベル「コード」と必須バッジ「必須」が表示されること（フォームは required=false だが画面は必須バッジを表示する）。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-005	IT-25	操作起点	P2	コードエディタ領域が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	"1. JavaScript管理画面を開く"	コードエディタ領域（高さ480pxの#editor）が表示されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-006	IT-25	UI部品	P2	登録ボタン「登録」が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	"1. JavaScript管理画面を開く"	フッタに登録ボタン「登録」が表示されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-007	IT-25	UI部品	P3	戻る導線リンクが表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	"1. JavaScript管理画面を開く"	フッタに戻る導線リンク（コンテンツ管理のページ管理一覧へ）が表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-001	IT-25	UI部品	P2	見出し「JavaScript管理」が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	1. JavaScript管理画面（/content/js）を開く	見出し「JavaScript管理」が表示されること。				
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-002	IT-25	表示結果	P3	サブ見出し「コンテンツ管理」が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	1. JavaScript管理画面を開く	サブ見出し「コンテンツ管理」が表示されること。				
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-003	IT-25	UI部品	P3	カード見出し「JavaScript設定」が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	1. JavaScript管理画面を開く	カード見出し「JavaScript設定」が表示されること。				
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-004	IT-13	表示結果	P2	コード項目ラベルと必須バッジ「必須」が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	1. JavaScript管理画面を開く	コード項目に画面ラベル「コード」と必須バッジ「必須」が表示されること（フォームは required=false だが画面は必須バッジを表示する）。				
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-005	IT-25	操作起点	P2	コードエディタ領域が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	1. JavaScript管理画面を開く	コードエディタ領域（高さ480pxの#editor）が表示されること。				
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-006	IT-25	UI部品	P2	登録ボタン「登録」が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	1. JavaScript管理画面を開く	フッタに登録ボタン「登録」が表示されること。				
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-007	IT-25	UI部品	P3	戻る導線リンクが表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	1. JavaScript管理画面を開く	フッタに戻る導線リンク（コンテンツ管理のページ管理一覧へ）が表示されること。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-008	IT-25	表示結果	P3	コード見出しのツールチップ文言が表示される	管理者ログイン済／SEED-M09-06-ADMIN	—	"1. JavaScript管理画面を開く
-2. コード見出し横のヘルプアイコンのtitle属性を確認"	ツールチップに「カスタマイズ用JavaScriptファイルを編集します。JavaScriptで記述します。」が設定されていること。
+2. コード見出し横のヘルプアイコンのtitle属性を確認"	ツールチップに「カスタマイズ用JavaScriptファイルを編集します。JavaScriptで記述します。」が設定されていること。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-009	IT-03	画面遷移	P2	ファイルアップロードに関する案内メッセージが初回のみ表示される	管理者ログイン済／案内未表示の新規セッション／SEED-M09-06-ADMIN	—	"1. 案内未表示の状態でJavaScript管理画面を開く
-2. 同一セッションのまま再度JavaScript管理画面を開く"	初回(手順1)で「この機能の利用頻度が低い場合、…環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。」が情報メッセージとして表示され、かつ同一セッションでの再アクセス(手順2)では当該案内が表示されないこと（addInfoOnce＝1回限り）。
+2. 同一セッションのまま再度JavaScript管理画面を開く"	初回(手順1)で「この機能の利用頻度が低い場合、…環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。」が情報メッセージとして表示され、かつ同一セッションでの再アクセス(手順2)では当該案内が表示されないこと（addInfoOnce＝1回限り）。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-010	IT-03	画面遷移	P1	現在の内容で登録すると保存完了メッセージが表示される	管理者ログイン済／SEED-M09-06-ADMIN	エディタの既存内容（変更なし）	"1. JavaScript管理画面を開く
-2. 登録ボタンを押下"	「保存しました」が表示されること。
+2. 登録ボタンを押下"	「保存しました」が表示されること。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-011	IT-03	画面遷移	P1	登録成功後は同一のJavaScript管理画面へリダイレクトされる	管理者ログイン済／SEED-M09-06-ADMIN	エディタの既存内容（変更なし）	"1. JavaScript管理画面を開く
-2. 登録ボタンを押下"	同一のJavaScript管理画面（/content/js）へリダイレクトされること。
+2. 登録ボタンを押下"	同一のJavaScript管理画面（/content/js）へリダイレクトされること。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-012	IT-22	必須バリデーション	P2	コードを空文字で登録しても検証を通過し保存成功する	管理者ログイン済／隔離環境／SEED-M09-06-ISOLATED	コード＝空文字	"1. JavaScript管理画面を開く
-2. エディタを空にして登録ボタンを押下"	必須エラーは表示されず「保存しました」が表示されること（コードは required=false で空文字も通過する）。
+2. エディタを空にして登録ボタンを押下"	必須エラーは表示されず「保存しました」が表示されること（コードは required=false で空文字も通過する）。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-013	IT-26	表示結果	P2	登録成功後の再表示で保存後内容がエディタへ読み直される	管理者ログイン済／SEED-M09-06-ADMIN	エディタの既存内容（変更なし）	"1. JavaScript管理画面を開く
-2. 登録ボタンを押下"	リダイレクト後の同一画面でエディタ領域が再描画され、保存後のファイル内容が読み直されること。
+2. 登録ボタンを押下"	リダイレクト後の同一画面でエディタ領域が再描画され、保存後のファイル内容が読み直されること。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-014	IT-25	送信可否制御	P2	JavaScript構文エラーを検知すると登録ボタンが非活性になる	管理者ログイン済／SEED-M09-06-ADMIN	構文エラーを含むJavaScript	"1. JavaScript管理画面を開く
-2. エディタに構文エラーのあるJavaScriptを入力"	注釈にエラー種別が1件以上検知され、登録ボタンが非活性になること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-015	IT-25	送信可否制御	P3	構文エラーが無い間は登録ボタンが活性である	管理者ログイン済／SEED-M09-06-ADMIN	構文上正しいJavaScript（または初期表示）	"1. JavaScript管理画面を開く"	注釈にエラー種別が無いため登録ボタンが活性であること。
+2. エディタに構文エラーのあるJavaScriptを入力"	注釈にエラー種別が1件以上検知され、登録ボタンが非活性になること。				
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-015	IT-25	送信可否制御	P3	構文エラーが無い間は登録ボタンが活性である	管理者ログイン済／SEED-M09-06-ADMIN	構文上正しいJavaScript（または初期表示）	1. JavaScript管理画面を開く	注釈にエラー種別が無いため登録ボタンが活性であること。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-016	IT-03	画面遷移	P2	戻る導線を押下するとページ管理一覧へ遷移する	管理者ログイン済／SEED-M09-06-ADMIN	—	"1. JavaScript管理画面を開く
-2. フッタの戻る導線リンクを押下"	コンテンツ管理のページ管理一覧（/content/page）へ遷移すること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-017	IT-15	URL直接アクセス	P2	未ログインで/content/jsへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /content/js へ直接アクセス"	管理ログイン画面へ誘導されること。
+2. フッタの戻る導線リンクを押下"	コンテンツ管理のページ管理一覧（/content/page）へ遷移すること。				
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-017	IT-15	URL直接アクセス	P2	未ログインで/content/jsへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /content/js へ直接アクセス	管理ログイン画面へ誘導されること。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-018	IT-03	画面遷移	P1	書き込み失敗時は保存失敗メッセージを表示し同一画面に留まる	管理者ログイン済／編集対象ファイル書込不可／SEED-M09-06-IOFAIL	任意のコード	"1. 編集対象ファイルを書込不可にする
-2. JavaScript管理画面を開き登録ボタンを押下"	「保存に失敗しました」が表示され、リダイレクトせず同一画面に留まること。かつ「保存しました」は表示されないこと（失敗時は保存完了メッセージを積まない）。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-019	IT-25	確認ダイアログ	P3	本画面はモーダル・確認ダイアログを表示しない	管理者ログイン済／SEED-M09-06-ADMIN	—	"1. JavaScript管理画面を開く"	モーダル・ポップアップ・確認ダイアログが表示されないこと。
+2. JavaScript管理画面を開き登録ボタンを押下"	「保存に失敗しました」が表示され、リダイレクトせず同一画面に留まること。かつ「保存しました」は表示されないこと（失敗時は保存完了メッセージを積まない）。				
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-019	IT-25	確認ダイアログ	P3	本画面はモーダル・確認ダイアログを表示しない	管理者ログイン済／SEED-M09-06-ADMIN	—	1. JavaScript管理画面を開く	モーダル・ポップアップ・確認ダイアログが表示されないこと。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-020	IT-25	URL	P2	保存後フロント全ページでcustomize.jsが読み込まれる	管理者ログイン済／登録成功済／SEED-M09-06-ADMIN	—	"1. 登録に成功させる
-2. フロントの任意ページを表示しソースを確認"	フロント公開先 /html/user_data/assets/js/customize.js を読み込むスクリプトタグが出力されること（ファイル内容の一致は手動）。
+2. フロントの任意ページを表示しソースを確認"	フロント公開先 /html/user_data/assets/js/customize.js を読み込むスクリプトタグが出力されること（ファイル内容の一致は手動）。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-021	IT-26	データ整合性	P2	編集した非空のJavaScriptを登録すると保存後の再表示で同一内容が読み直される	管理者ログイン済／隔離環境／SEED-M09-06-ISOLATED	一意に識別できる非空のJavaScript（構文上正しい文字列）	"1. JavaScript管理画面を開く
 2. エディタに一意な非空のJavaScriptを入力
-3. 登録ボタンを押下"	「保存しました」が表示され、リダイレクト後の同一画面でエディタに手順2で入力したJavaScriptと同一の内容が再読込されること（送信時にエディタ値が非表示textareaへ書き戻され保存・再表示される）。
+3. 登録ボタンを押下"	「保存しました」が表示され、リダイレクト後の同一画面でエディタに手順2で入力したJavaScriptと同一の内容が再読込されること（送信時にエディタ値が非表示textareaへ書き戻され保存・再表示される）。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-022	IT-26	表示結果	P2	編集対象ファイルが不存在のときGET初回表示でエディタが空表示になる	管理者ログイン済／編集対象customize.js不存在／SEED-M09-06-NOFILE	—	"1. 編集対象ファイル(customize.js)を不存在にする
-2. JavaScript管理画面を開く"	例外は発生せず、エディタが空（初期値未設定）で表示されること。
+2. JavaScript管理画面を開く"	例外は発生せず、エディタが空（初期値未設定）で表示されること。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-023	IT-26	表示結果	P2	編集対象ファイルが書込不可のときGET初回表示でエディタが空表示になる	管理者ログイン済／編集対象customize.js書込不可／SEED-M09-06-IOFAIL	—	"1. 編集対象ファイル(customize.js)を書込不可にする
-2. JavaScript管理画面を開く"	既存内容を初期表示せず、例外も発生させずにエディタが空で表示されること。
+2. JavaScript管理画面を開く"	既存内容を初期表示せず、例外も発生させずにエディタが空で表示されること。				
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	E2E-M09-06-024	IT-25	送信可否制御	P2	構文エラーを含むJavaScriptを送信してもサーバは構文検証せず保存される	管理者ログイン済／隔離環境／SEED-M09-06-ISOLATED	構文エラーを含むJavaScript	"1. JavaScript管理画面を開く
 2. 構文エラーを含むJavaScriptを入力（登録ボタンが非活性なら非活性を解除して送信）
-3. 登録ボタンを押下"	構文エラーを理由とするサーバ側エラーは発生せず「保存しました」が表示されること（サーバ側はJavaScript構文の妥当性を検証しない）。
+3. 登録ボタンを押下"	構文エラーを理由とするサーバ側エラーは発生せず「保存しました」が表示されること（サーバ側はJavaScript構文の妥当性を検証しない）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

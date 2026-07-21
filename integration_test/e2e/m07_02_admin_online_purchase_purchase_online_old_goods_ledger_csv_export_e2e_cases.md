@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m07_02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名・クライアントalert・エラーフラッシュなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は `csv_export` 型のため、CSVの各列値（日付・受注番号・氏名・住所・年齢・職業・身分証・点数・金額・利用回数・前回利用日）・集計・並び順・BOM/エンコードといった**ファイル内容の照合は手動**とする（ダウンロード発火・ファイル名・応答ヘッダのみ自動化）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名・クライアントalert・エラーフラッシュなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は `csv_export` 型のため、CSVの各列値（日付・受注番号・氏名・住所・年齢・職業・身分証・点数・金額・利用回数・前回利用日）・集計・並び順・BOM/エンコードといった**ファイル内容の照合は手動**とする（ダウンロード発火・ファイル名・応答ヘッダのみ自動化）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 設計源は pf-eccube3（HareruyaEcプラグイン）のリバースだが、刷新先 **ec-cube-enterprise に同一画面（買取一覧 `admin_purchase_list` ＋ 買取詳細 `admin_purchase_edit` ＋ CSV出力 `admin_purchase_csv_export`）が実在**するためE2E化した。設計（pf-eccube3）と実装（ec-cube-enterprise）の乖離は付帯表4に出し、テストは仕様どおりに書く。
 
@@ -26,37 +26,37 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-001	IT-16	実行結果	P1	買取一覧で1件チェックし古物台帳入力用CSVを押すとCSVダウンロードが発火する	管理者ログイン済／SEED-M07-02-BUY-ORDERS（買取注文1件以上）	buyOrderIds[]＝チェックした1件	"1. 買取一覧（/admin/purchase/list）を開き検索して結果を表示する
 2. 任意の行のチェックボックス（buyOrderIds[]）をオンにする
-3. 「ダウンロード」ドロップダウンを開き「古物台帳入力用CSV」（#csvexport）を押下する"	ブラウザのダウンロードが発火すること（HTML画面遷移を伴わない）。
+3. 「ダウンロード」ドロップダウンを開き「古物台帳入力用CSV」（#csvexport）を押下する"	ブラウザのダウンロードが発火すること（HTML画面遷移を伴わない）。				
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-002	IT-25	URL	P2	ダウンロードファイル名が purchase_<最小IDの7桁ゼロ埋め>_<日時>.csv 形式である	管理者ログイン済／SEED-M07-02-BUY-ORDERS	buyOrderIds[]＝1件	"1. 一覧で1件チェックする
-2. 「古物台帳入力用CSV」を押下しダウンロードを取得する"	ダウンロードファイル名が接頭辞 purchase_ ＋ 送信IDの最小値を7桁ゼロ埋めした番号 ＋ _ ＋ 14桁の日時 ＋ 拡張子 .csv であること（例 purchase_0000123_20260619123000.csv）。
+2. 「古物台帳入力用CSV」を押下しダウンロードを取得する"	ダウンロードファイル名が接頭辞 purchase_ ＋ 送信IDの最小値を7桁ゼロ埋めした番号 ＋ _ ＋ 14桁の日時 ＋ 拡張子 .csv であること（例 purchase_0000123_20260619123000.csv）。				
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-003	IT-03	外部画面	P2	エクスポート応答のContent-Typeがoctet-streamである	管理者ログイン済／SEED-M07-02-BUY-ORDERS	buyOrderIds[]＝1件	"1. 一覧で1件チェックし「古物台帳入力用CSV」を押下する（実UIフォーム送信）
-2. /admin/purchase/csv_export への応答ヘッダを確認する"	Content-Type が application/octet-stream であること。
+2. /admin/purchase/csv_export への応答ヘッダを確認する"	Content-Type が application/octet-stream であること。				
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-004	IT-13	URL直接アクセス	P2	エクスポート応答のContent-Dispositionがattachmentでファイル名を含む	管理者ログイン済／SEED-M07-02-BUY-ORDERS	buyOrderIds[]＝1件	"1. 一覧で1件チェックし「古物台帳入力用CSV」を押下する（実UIフォーム送信）
-2. /admin/purchase/csv_export への応答ヘッダを確認する"	Content-Disposition が attachment; filename=purchase_<最小ID7桁>_<日時>.csv であること。
+2. /admin/purchase/csv_export への応答ヘッダを確認する"	Content-Disposition が attachment; filename=purchase_<最小ID7桁>_<日時>.csv であること。				
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-005	IT-27	実行結果	P1	買取詳細で古物台帳入力用CSV出力を押すと1件分のCSVダウンロードが発火する	管理者ログイン済／SEED-M07-02-BUY-ORDERS（任意の買取注文1件）	隠し buyOrderIds[]＝当該買取注文ID	"1. 任意の買取注文の詳細（/admin/purchase/{id}/edit）を開く
-2. 「古物台帳入力用CSV出力」（#export_csv）を押下する"	当該買取IDが隠しフィールドで送信され、ブラウザのダウンロードが発火すること（選択チェックの対象外で常に送信）。
+2. 「古物台帳入力用CSV出力」（#export_csv）を押下する"	当該買取IDが隠しフィールドで送信され、ブラウザのダウンロードが発火すること（選択チェックの対象外で常に送信）。				
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-010	IT-25	UI部品	P2	検索結果が1件以上のとき「ダウンロード」ドロップダウンと「古物台帳入力用CSV」が表示される	管理者ログイン済／SEED-M07-02-BUY-ORDERS	—	"1. 買取一覧を開き検索して結果（1件以上）を表示する
-2. 「ダウンロード」ドロップダウンを開く"	「ダウンロード」ドロップダウンと配下の「古物台帳入力用CSV」（#csvexport）が表示されること。
-m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-011	IT-25	UI部品	P3	検索結果の各行にチェックボックスと表頭の全選択チェックが表示される	管理者ログイン済／SEED-M07-02-BUY-ORDERS	—	"1. 買取一覧を開き検索して結果を表示する"	各行に name=buyOrderIds[]（class=searched_buy_order_id）のチェックボックスがあり、表頭に全選択チェック（#allCheck）が表示されること。
+2. 「ダウンロード」ドロップダウンを開く"	「ダウンロード」ドロップダウンと配下の「古物台帳入力用CSV」（#csvexport）が表示されること。				
+m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-011	IT-25	UI部品	P3	検索結果の各行にチェックボックスと表頭の全選択チェックが表示される	管理者ログイン済／SEED-M07-02-BUY-ORDERS	—	1. 買取一覧を開き検索して結果を表示する	各行に name=buyOrderIds[]（class=searched_buy_order_id）のチェックボックスがあり、表頭に全選択チェック（#allCheck）が表示されること。				
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-012	IT-25	確認ダイアログ	P3	古物台帳入力用CSVの出力前にサーバ確認ダイアログ（モーダル）がない	管理者ログイン済／SEED-M07-02-BUY-ORDERS	—	"1. 買取一覧を開き検索して結果を表示する
-2. 「ダウンロード」ドロップダウンを開く"	「古物台帳入力用CSV」は確認モーダル属性（data-bs-toggle=modal）を持たない通常のsubmitであること（出力前の確認モーダルがない。未選択時のみクライアントalertで案内）。
+2. 「ダウンロード」ドロップダウンを開く"	「古物台帳入力用CSV」は確認モーダル属性（data-bs-toggle=modal）を持たない通常のsubmitであること（出力前の確認モーダルがない。未選択時のみクライアントalertで案内）。				
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-013	IT-03	画面遷移	P2	表頭の全選択チェックを押すと全行のチェックが一括でオンになる	管理者ログイン済／SEED-M07-02-BUY-ORDERS（2件以上推奨）	—	"1. 買取一覧を開き検索して結果を表示する
-2. 表頭の全選択チェック（#allCheck）をオンにする"	同フォーム内の buyOrderId 属性付きチェックボックスが一括でオンになること。
-m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-014	IT-03	外部画面	P2	買取詳細に古物台帳入力用CSV出力ボタンと隠しbuyOrderIdsが存在する	管理者ログイン済／SEED-M07-02-BUY-ORDERS	—	"1. 任意の買取注文の詳細（/admin/purchase/{id}/edit）を開く"	「古物台帳入力用CSV出力」ボタン（#export_csv）と隠し入力（#buyOrderIds、name=buyOrderIds[]、value=当該ID）が存在すること。
+2. 表頭の全選択チェック（#allCheck）をオンにする"	同フォーム内の buyOrderId 属性付きチェックボックスが一括でオンになること。				
+m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-014	IT-03	外部画面	P2	買取詳細に古物台帳入力用CSV出力ボタンと隠しbuyOrderIdsが存在する	管理者ログイン済／SEED-M07-02-BUY-ORDERS	—	1. 任意の買取注文の詳細（/admin/purchase/{id}/edit）を開く	「古物台帳入力用CSV出力」ボタン（#export_csv）と隠し入力（#buyOrderIds、name=buyOrderIds[]、value=当該ID）が存在すること。				
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-020	IT-25	送信可否制御	P1	一覧でチェックを1つも付けずに古物台帳入力用CSVを押すとクライアントalertで中断されダウンロードしない	管理者ログイン済／SEED-M07-02-BUY-ORDERS	buyOrderIds[]＝なし（未選択）	"1. 買取一覧を開き検索して結果を表示する
-2. どの行もチェックせず「ダウンロード」→「古物台帳入力用CSV」（#csvexport）を押下する"	クライアントのalertで選択を促し、ダウンロードが開始されないこと（一覧に留まる）。
-m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-021	IT-27	出力失敗	P1	buyOrderIdsが空でエクスポートに到達すると選択なしエラーで一覧へ戻る	管理者ログイン済／SEED-M07-02-BUY-ORDERS	buyOrderIds＝空（クライアントJSを介さずエンドポイント送信）	"1. /admin/purchase/csv_export へ buyOrderIds を含めずPOST送信する"	選択なしのエラーフラッシュ（仕様: admin.purchase.online.csv_export.no_selection）が表示され、買取一覧ページへリダイレクトされること（ダウンロードは発火しない）。
-m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-022	IT-27	出力失敗	P2	指定IDがすべてDB不存在のとき存在しないIDエラーで一覧へ戻る	管理者ログイン済	buyOrderIds[]＝存在しない買取注文ID（例 99999999）のみ	"1. /admin/purchase/csv_export へ存在しないIDのみを含めてPOST送信する"	存在しないIDのエラーフラッシュ（仕様: admin.purchase.online.csv_export.not_registered_buy_order_id）が表示され、買取一覧ページへリダイレクトされること（ダウンロードは発火しない）。
-m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-023	IT-22	数値バリデーション	P2	buyOrderIdsが0のみ（正規化で除去され空）でエクスポート到達すると選択なしエラーで一覧へ戻る	管理者ログイン済	buyOrderIds[]＝0 のみ（クライアントJSを介さずエンドポイント送信）	"1. /admin/purchase/csv_export へ buyOrderIds[]=0 のみを含めてPOST送信する"	0はintval後にarray_filterで除去され配列が空になるため、選択なしのエラーフラッシュ（仕様: admin.purchase.online.csv_export.no_selection／処理フロー#3-#4）が表示され、買取一覧ページへリダイレクトされること（ダウンロードは発火しない）。
+2. どの行もチェックせず「ダウンロード」→「古物台帳入力用CSV」（#csvexport）を押下する"	クライアントのalertで選択を促し、ダウンロードが開始されないこと（一覧に留まる）。				
+m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-021	IT-27	出力失敗	P1	buyOrderIdsが空でエクスポートに到達すると選択なしエラーで一覧へ戻る	管理者ログイン済／SEED-M07-02-BUY-ORDERS	buyOrderIds＝空（クライアントJSを介さずエンドポイント送信）	1. /admin/purchase/csv_export へ buyOrderIds を含めずPOST送信する	選択なしのエラーフラッシュ（仕様: admin.purchase.online.csv_export.no_selection）が表示され、買取一覧ページへリダイレクトされること（ダウンロードは発火しない）。				
+m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-022	IT-27	出力失敗	P2	指定IDがすべてDB不存在のとき存在しないIDエラーで一覧へ戻る	管理者ログイン済	buyOrderIds[]＝存在しない買取注文ID（例 99999999）のみ	1. /admin/purchase/csv_export へ存在しないIDのみを含めてPOST送信する	存在しないIDのエラーフラッシュ（仕様: admin.purchase.online.csv_export.not_registered_buy_order_id）が表示され、買取一覧ページへリダイレクトされること（ダウンロードは発火しない）。				
+m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-023	IT-22	数値バリデーション	P2	buyOrderIdsが0のみ（正規化で除去され空）でエクスポート到達すると選択なしエラーで一覧へ戻る	管理者ログイン済	buyOrderIds[]＝0 のみ（クライアントJSを介さずエンドポイント送信）	1. /admin/purchase/csv_export へ buyOrderIds[]=0 のみを含めてPOST送信する	0はintval後にarray_filterで除去され配列が空になるため、選択なしのエラーフラッシュ（仕様: admin.purchase.online.csv_export.no_selection／処理フロー#3-#4）が表示され、買取一覧ページへリダイレクトされること（ダウンロードは発火しない）。				
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-024	IT-22	部分入力	P2	存在IDと不存在IDを混在送信すると存在分のみCSV出力され依頼ID本数と行数が一致しない（CSV内容＝手動照合）	管理者ログイン済／SEED-M07-02-BUY-ORDERS（存在する買取注文1件以上）	buyOrderIds[]＝存在する買取注文ID ＋ 存在しないID（例 99999999）の混在	"1. 一覧で存在する1件を選択し、存在しないIDを buyOrderIds[] に加えてエクスポート送信する（または同一内容を直接POST）
-2. ダウンロードされたCSVのデータ行数を確認する"	ダウンロードが発火し（octet-stream／attachment）、CSVのデータ行は存在する買取注文の分のみで、依頼したID本数とは一致しないこと（処理フロー#7・エッジケース「一部のIDだけ存在」由来。少なくとも1件存在するため not_registered には至らない。行数・各列値の照合はCSVを開いて手動）。
+2. ダウンロードされたCSVのデータ行数を確認する"	ダウンロードが発火し（octet-stream／attachment）、CSVのデータ行は存在する買取注文の分のみで、依頼したID本数とは一致しないこと（処理フロー#7・エッジケース「一部のIDだけ存在」由来。少なくとも1件存在するため not_registered には至らない。行数・各列値の照合はCSVを開いて手動）。				
 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-025	IT-25	送信可否制御	P3	古物台帳入力用CSV押下直後の約500msは送信ボタンの多重押下が抑止される（要実機確認）	管理者ログイン済／SEED-M07-02-BUY-ORDERS	buyOrderIds[]＝1件	"1. 一覧で1件選択し「古物台帳入力用CSV」を素早く連続で押下する
-2. 送信ボタン（[type=submit]）のpointer-eventsが一時的に無効化されるか確認する"	クリック直後の約500ms間は [type=submit] の pointer-events が空にされ多重押下が抑止されること（フロント挙動「JS挙動」由来。タイミング依存のため手動/要実機確認）。
-m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-030	IT-15	未認証	P1	未ログインで買取一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/purchase/list へ直接アクセスする"	管理ログイン画面へ誘導されること。
-m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-031	IT-15	未認証	P2	未ログインでエクスポートエンドポイントへ送信すると処理に到達せず管理ログインへ誘導される	未ログイン	buyOrderIds[]＝1件	"1. 未ログインで /admin/purchase/csv_export へPOST送信する"	CSV応答（octet-stream）にならず管理ログイン画面へ誘導されること。
+2. 送信ボタン（[type=submit]）のpointer-eventsが一時的に無効化されるか確認する"	クリック直後の約500ms間は [type=submit] の pointer-events が空にされ多重押下が抑止されること（フロント挙動「JS挙動」由来。タイミング依存のため手動/要実機確認）。				
+m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-030	IT-15	未認証	P1	未ログインで買取一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/purchase/list へ直接アクセスする	管理ログイン画面へ誘導されること。				
+m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）	E2E-M07-02-031	IT-15	未認証	P2	未ログインでエクスポートエンドポイントへ送信すると処理に到達せず管理ログインへ誘導される	未ログイン	buyOrderIds[]＝1件	1. 未ログインで /admin/purchase/csv_export へPOST送信する	CSV応答（octet-stream）にならず管理ログイン画面へ誘導されること。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象セレクタ・仕様根拠・元ITケースID（TSV外）

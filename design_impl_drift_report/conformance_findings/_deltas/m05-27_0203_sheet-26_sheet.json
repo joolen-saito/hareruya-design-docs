@@ -1,0 +1,90 @@
+{
+  "functionId": "m05-27_0203_sheet-26_sheet",
+  "featureNo": "M05-27",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-26:7989,7997,7998,8011,8015",
+      "designExpectation": "初期表示時はメンバー管理で設定されているデフォルト検索表示店舗で絞り込み、デフォルト検索表示店舗が「ALL」または「全店」の場合は「TC東京」を表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/WaitingTagController.php:51,52,67,70 ／ 不在（探索範囲: WaitingTagController.php, WaitingTagType.php, waiting_tag.twig, WaitingTagStoreAction.php, WaitingTagDeleteAction.php の getDefaultSearchBaseInfo/defaultSearchBaseInfo/TC_TOKYO_ID/ALL_STORE_KEY）",
+      "implementationActual": "初期GETでは DtbWaitingTag にログインメンバーの getBaseInfo() を設定し、一覧検索もその BaseInfo を使う。Member::getDefaultSearchBaseInfo() や ALL/全店時に TC東京へフォールバックする分岐はない。",
+      "mismatchReason": "設計はメンバー管理のデフォルト検索表示店舗を初期表示・一覧絞り込みの基準にするが、実装はログインメンバーの所属店舗 base_info_id を基準にしている。反証検索でも WaitingTag 系実装内にデフォルト検索表示店舗または TC東京フォールバックの使用は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "初期表示店舗",
+          "design": "メンバー管理で設定されているデフォルト検索表示店舗を表示する。",
+          "implementation": "$WaitingTag->setBaseInfo($this->getMember()->getBaseInfo()) を使用する。",
+          "mismatch": "DefaultSearchBaseInfo ではなく所属店舗 BaseInfo を使っている。"
+        },
+        {
+          "item": "ALL/全店時の扱い",
+          "design": "デフォルト検索表示店舗が ALL/全店の場合は TC東京を表示する。",
+          "implementation": "WaitingTag 系 Controller/Form/Twig/Service に TC_TOKYO_ID または ALL_STORE_KEY の分岐がない。",
+          "mismatch": "TC東京へのフォールバックが実装されていない。"
+        },
+        {
+          "item": "一覧絞り込み",
+          "design": "初期表示はデフォルト検索表示店舗で絞り込まれている状態で表示する。",
+          "implementation": "findBy(['BaseInfo' => $BaseInfo]) の $BaseInfo は初期GETでは getBaseInfo() 由来。",
+          "mismatch": "初期一覧の対象店舗が設計値と異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-26:7990,7991,8016",
+      "designExpectation": "ユーザーが編集権限を保持している店舗に関連付けられたデータを編集可能とし、該当データに対して削除ボタンを表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/waiting_tag.twig:84,118 ／ /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/WaitingTagController.php:129,135 ／ /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Member.php:78",
+      "implementationActual": "画面は登録ボタンを form.BaseInfo.vars.value == BaseInfo.id のときだけ表示し、削除ボタンを WaitingTag.BaseInfo.id == BaseInfo.id のときだけ表示する。DELETE ハンドラは URL の DtbWaitingTag を削除処理へ渡すだけで、Member::isEditableShop() 等の編集権限判定を使用しない。",
+      "mismatchReason": "設計は編集権限を保持している店舗を条件にしているが、実装はログイン店舗IDとの一致だけを表示条件にしている。反証検索でも WaitingTag 系 Controller/Twig/Service 内に editableBaseInfos/MemberBaseInfos/isEditableShop による判定はなかった。",
+      "comparisonRows": [
+        {
+          "item": "登録ボタン表示条件",
+          "design": "編集権限を保持している店舗に関連付けられたデータを編集可能。",
+          "implementation": "選択店舗IDがログイン店舗IDと一致するときだけ登録ボタンを描画する。",
+          "mismatch": "編集権限店舗ではなくログイン店舗一致で制御している。"
+        },
+        {
+          "item": "削除ボタン表示条件",
+          "design": "メンバーが編集権限を保持している店舗に関連付けられたデータに対して削除ボタンを表示する。",
+          "implementation": "一覧行の店舗IDがログイン店舗IDと一致するときだけ削除ボタンを描画する。",
+          "mismatch": "編集権限を持つ別店舗の行では削除ボタンが表示されない。"
+        },
+        {
+          "item": "削除時の権限検証",
+          "design": "編集権限を保持している店舗のデータを編集可能にする。",
+          "implementation": "DELETE ハンドラと削除サービスはログインメンバーの編集権限を再検証しない。",
+          "mismatch": "設計の編集権限条件がサーバ側削除処理にも接続されていない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-26:8016",
+      "designExpectation": "削除リンク押下でJavaScriptポップアップを表示し、「[店頭注文番号]を を削除してもよろしいですか？」を表示し、「OK」をクリックすると当該の店頭注文番号を一覧から除去する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/waiting_tag.twig:121,123,156,158 ／ /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1754",
+      "implementationActual": "削除操作は Bootstrap モーダルを開き、本文は共通翻訳 admin.common.delete_modal__message（「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」）を使う。確定ボタンの表示文言は admin.common.delete の「削除」。",
+      "mismatchReason": "設計で指定された確認文言および確定操作名「OK」と、実装の共通削除モーダル文言および「削除」ボタンが一致しない。",
+      "comparisonRows": [
+        {
+          "item": "確認文言",
+          "design": "「[店頭注文番号]を を削除してもよろしいですか？」",
+          "implementation": "「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」",
+          "mismatch": "ユーザーに表示される削除確認文言が異なる。"
+        },
+        {
+          "item": "確定操作の文言",
+          "design": "「OK」をクリックする。",
+          "implementation": "モーダル確定アンカーは admin.common.delete の「削除」。",
+          "mismatch": "設計の OK 操作ではなく削除ボタンとして表示される。"
+        }
+      ]
+    }
+  ]
+}

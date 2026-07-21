@@ -1,0 +1,183 @@
+{
+  "id": "b02-01-sales-summary-command-name-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json",
+  "sourceFindingId": "b02-01_0404_sheet-3_sheet-conformance-2ba83b4ed100",
+  "classification": "バッチ商品管理",
+  "feature": "期間別販売数集計",
+  "issueCategory": "実装違い",
+  "issue": "期間別販売数集計バッチの実行コマンド名が設計と異なる",
+  "designBook": "0404_基本設計仕様書(バッチ_商品管理).xlsx",
+  "reproSteps": [
+    "ec-cube-enterprise のコンテナまたはローカル環境で bin/console product:batch updateProductSummary を実行する",
+    "同じ環境で bin/console eccube:aggregate-sales を実行し、登録済みコマンド名を確認する",
+    "設計書の B02-01 期間別販売数集計で指定されている実行方法と、ec-cube-enterprise の Symfony Console コマンド定義を照合する"
+  ],
+  "expected": [
+    "期間別販売数集計バッチは bin/console product:batch updateProductSummary で実行できる",
+    "コマンド名または batch_name が一致しない場合は処理を行わず終了する",
+    "ベース実装と同様に product:batch コマンドから updateProductSummary の処理へ分岐する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、期間別販売数集計バッチの Symfony Console コマンド名が `eccube:aggregate-sales` として登録されている。`AggregateSalesCommand` のコメント上の使い方も `bin/console eccube:aggregate-sales` であり、設計が指定する `product:batch updateProductSummary` の入口ではない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise AggregateSalesCommand は eccube:aggregate-sales を登録している",
+          "path": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php",
+          "start": 25,
+          "end": 35,
+          "language": "php",
+          "contains": [
+            "期間別販売数集計バッチ（B02-01）",
+            "bin/console eccube:aggregate-sales",
+            "#[AsCommand(name: 'eccube:aggregate-sales', description: '期間別販売数集計バッチ')]"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise AggregateSalesCommand は BatchAggregateSalesAction::handle を実行する",
+          "path": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php",
+          "start": 43,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "protected function execute(InputInterface $input, OutputInterface $output): int",
+            "$this->batchAggregateSalesAction->handle();",
+            "$io->success('期間別販売数集計が完了しました。');"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では、`ProductBatch` が `product:batch` をコンソールコマンドとして登録し、第一引数 `updateProductSummary` を `Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummary` に対応させている。第一引数が未登録なら `Nothing args or command.` を出して処理せず return 1 となるため、設計の「コマンド名が一致しない場合は処理を行わずに終了」の根拠にもなっている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は updateProductSummary をバッチ名として定義する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 12,
+          "end": 15,
+          "language": "php",
+          "contains": [
+            "const BATCH_NAMES = [",
+            "'updateProductSummary' => 'Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummary'"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は product:batch コマンドを登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 28,
+          "end": 32,
+          "language": "php",
+          "contains": [
+            "protected function configure()",
+            "$this->setName('product:batch')",
+            "->addArgument('batch_name', InputArgument::OPTIONAL)"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は未登録名なら処理せず終了し、登録名なら対象サービスを実行する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 43,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "$name = $input->getArgument('batch_name');",
+            "if (!isset($batchNames[$name])) {",
+            "return 1;",
+            "$product = new $batchNames[$name]($app, $this->createOptions($input));",
+            "$product->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 CommandRegister は ProductBatch を console に追加する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/CommandRegister.php",
+          "start": 35,
+          "end": 43,
+          "language": "php",
+          "contains": [
+            "private function getCommands()",
+            "new Command\\ProductBatch()"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "設計HTMLはB02-01の機能名を期間別販売数集計とし、商品管理バッチ機能として定義する",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 848,
+      "end": 857,
+      "language": "html",
+      "contains": [
+        "ドキュメント名</dt><dd>商品管理バッチ機能",
+        "機能No</dt><dd>B02-01",
+        "機能名</dt><dd>期間別販売数集計"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計は利用者視点の入口を product:batch updateProductSummary とし、不一致時は処理せず終了すると明記する",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 921,
+      "end": 927,
+      "language": "html",
+      "contains": [
+        "利用者視点の入口",
+        "product:batch updateProductSummary",
+        "コマンド名が一致しない場合は処理を行わずに終了する",
+        "期間別販売数集計を実行する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の登録コマンド名は eccube:aggregate-sales で、設計の product:batch updateProductSummary ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php",
+      "start": 31,
+      "end": 35,
+      "language": "php",
+      "contains": [
+        "bin/console eccube:aggregate-sales",
+        "#[AsCommand(name: 'eccube:aggregate-sales', description: '期間別販売数集計バッチ')]"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は product:batch コマンドと updateProductSummary バッチ名の組み合わせで期間別販売数集計を起動する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+      "start": 12,
+      "end": 32,
+      "language": "php",
+      "contains": [
+        "'updateProductSummary' => 'Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummary'",
+        "$this->setName('product:batch')",
+        "->addArgument('batch_name', InputArgument::OPTIONAL)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は ProductBatch を console に登録する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/CommandRegister.php",
+      "start": 35,
+      "end": 43,
+      "language": "php",
+      "contains": [
+        "return [",
+        "new Command\\ProductBatch()"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B02-01|期間別販売数集計|product:batch updateProductSummary|コマンド名が一致しない\" excel_to_html/output/0404_基本設計仕様書\\(バッチ_商品管理\\).html design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json",
+      "rg -n \"updateProductSummary|product:batch|ProductBatch|CommandRegister\" ../pf-eccube3/app/Plugin/HareruyaEc/Command ../pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider",
+      "rg -n \"product:batch|updateProductSummary|aggregate-sales|AggregateSales|期間別販売数集計|BatchAggregateSales\" ../ec-cube-enterprise/src ../ec-cube-enterprise/app"
+    ],
+    "notes": [
+      "設計HTMLの詳細設計は、B02-01のコンソール入口を `product:batch updateProductSummary` としている。",
+      "pf-eccube3 では `ProductBatch::configure()` が `product:batch` を登録し、`BATCH_NAMES['updateProductSummary']` で販売数集計サービスへ分岐する。",
+      "ec-cube-enterprise では `AggregateSalesCommand` の `AsCommand` 名が `eccube:aggregate-sales` であり、検索範囲内に `product:batch updateProductSummary` の互換入口は確認できなかった。"
+    ]
+  }
+}

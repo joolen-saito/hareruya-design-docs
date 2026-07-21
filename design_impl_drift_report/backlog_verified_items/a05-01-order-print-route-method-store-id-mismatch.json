@@ -1,0 +1,153 @@
+{
+  "id": "a05-01-order-print-route-method-store-id-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json",
+  "sourceFindingId": "a05-01_0505_sheet-3_sheet-conformance-4054eb26d82f",
+  "classification": "API受注管理",
+  "feature": "注文印刷_印刷情報をプリンタへ送信",
+  "issueCategory": "実装漏れ",
+  "issue": "A05-01 が GET /order/prints/{店舗ID} ではなく A05-02 と同じPOSTルートで処理される",
+  "designBook": "0505_基本設計仕様書(API_受注管理).xlsx",
+  "reproSteps": [
+    "A05-01 の印刷情報取得APIとして、設計書どおり GET http://localhost:8080/order/prints/{店舗ID} を呼び出す",
+    "ec-cube-enterprise の実装ルートを確認し、GET /order/prints/{店舗ID} が登録されているか確認する",
+    "現在登録されている POST http://localhost:8080/api/order/prints/direct/{base_info_id} に ConnectionType=GetRequest または ConnectionType=SetResponse を指定し、A05-01 と A05-02 が同じルート内で分岐していることを確認する"
+  ],
+  "expected": [
+    "A05-01 のエンドポイントURLは /order/prints/{店舗ID} とする",
+    "A05-01 のHTTPメソッドは GET とする",
+    "URLに店舗ID(shop_id)をパス引数として持たせる",
+    "A05-02 の印刷済みステータス更新APIとはエンドポイントを分ける"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、注文印刷APIのルートが `POST /api/order/prints/direct/{base_info_id}` として定義されている。メソッド内で `ConnectionType` を読み、`GetRequest` の場合はA05-01、`SetResponse` の場合はA05-02を同じControllerメソッド内で分岐しているため、設計の `GET /order/prints/{店舗ID}` とエンドポイント分離を満たしていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は POST /api/order/prints/direct/{base_info_id} の単一ルートで GetRequest と SetResponse を分岐する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php",
+          "start": 43,
+          "end": 82,
+          "language": "php",
+          "contains": [
+            "#[Route(path: '/api/order/prints/direct/{base_info_id}'",
+            "methods: ['POST']",
+            "$connectionType = $request->get('ConnectionType')",
+            "$connectionType === 'GetRequest'",
+            "$connectionType === 'SetResponse'"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、`GET /order/print/direct` と `POST /order/print/direct` がどちらも `Admin\\OrderController::postPrintDirectAction` に割り当てられている。これは設計HTMLのカスタマイズ説明で「現状」として示された共通メソッド・ConnectionType分岐の由来であり、カスタマイズ後に求められている `/order/prints/{店舗ID}` とは異なる。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は GET/POST /order/print/direct を同じ controller action に割り当てる",
+          "path": "pf-api/config/routes.yaml",
+          "start": 73,
+          "end": 80,
+          "language": "yaml",
+          "contains": [
+            "get_order_print_direct:",
+            "path: /order/print/direct",
+            "controller: App\\Controller\\Admin\\OrderController::postPrintDirectAction",
+            "methods: GET",
+            "post_order_print_direct:",
+            "methods: POST"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "A05-01 のエンドポイントURLとHTTPメソッド",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 855,
+      "end": 857,
+      "language": "html",
+      "contains": [
+        "エンドポイントURL",
+        "/order/prints/{店舗ID}",
+        "メソッド　GET"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "現状の ConnectionType 分岐を A05-02 と分離するカスタマイズ要求",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 858,
+      "end": 863,
+      "language": "html",
+      "contains": [
+        "カスタマイズ説明",
+        "現状は印刷完了ステータスに更新するAPI (A05-02)と処理を受けるメソッドが共通",
+        "A05-02とエンドポイントを分ける"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "URLに店舗ID(shop_id)を持つ要求とリクエストサンプル",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 877,
+      "end": 899,
+      "language": "html",
+      "contains": [
+        "URLに店舗ID(shop_id)を引数として持つ",
+        "店舗ID",
+        "受取店舗の店舗ID(shop_id)",
+        "/order/prints/123"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "GET /order/prints/{店舗ID} ではなく POST /api/order/prints/direct/{base_info_id} で登録されている",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php",
+      "start": 43,
+      "end": 82,
+      "language": "php",
+      "contains": [
+        "#[Route(path: '/api/order/prints/direct/{base_info_id}'",
+        "methods: ['POST']",
+        "$connectionType === 'GetRequest'",
+        "$connectionType === 'SetResponse'"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "旧ルートでは GET/POST /order/print/direct が同じ action に割り当てられている",
+      "path": "pf-api/config/routes.yaml",
+      "start": 73,
+      "end": 80,
+      "language": "yaml",
+      "contains": [
+        "get_order_print_direct:",
+        "path: /order/print/direct",
+        "methods: GET",
+        "post_order_print_direct:",
+        "methods: POST"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex + gpt-5.5 high critical review",
+    "commands": [
+      "rg -n \"order/prints|order/print/direct|base_info_id|shop_id|店舗ID|methods|Route\\(|order_direct_print|GetRequest|SetResponse\" hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html pf-api/config/routes.yaml pf-api/src/Controller/Admin/OrderController.php ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php",
+      "rg -n \"order/prints|order/print/direct|order_direct_print|prints/direct|base_info_id|shop_id|店舗ID\" ec-cube-enterprise/src/Eccube pf-api/src pf-api/config",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html | sed -n '846,906p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html | sed -n '1030,1048p'",
+      "nl -ba pf-api/config/routes.yaml | sed -n '70,82p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php | sed -n '38,84p'",
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json#a05-01_0505_sheet-3_sheet-conformance-4054eb26d82f'"
+    ],
+    "notes": [
+      "設計HTMLの 856-863 行と 877-899 行は、カスタマイズ後のA05-01を GET /order/prints/{店舗ID} とし、A05-02とはエンドポイントを分ける要求を示している。",
+      "同じHTMLの後半には pf-api 由来の /order/print/direct + ConnectionType 記述があるが、gpt-5.5 high の批判的レビューでは、これはベース実装の確認値であり前半のカスタマイズ要求を上書きしないと判定された。",
+      "pf-api は旧方式として GET/POST /order/print/direct を同じ action に割り当てている。",
+      "ec-cube-enterprise は POST /api/order/prints/direct/{base_info_id} の単一ルート内で GetRequest と SetResponse を分岐しており、GET /order/prints/{店舗ID} は見つからない。"
+    ]
+  }
+}

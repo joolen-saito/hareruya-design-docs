@@ -1,0 +1,25 @@
+{
+  "chunkId": "b05-01_0405_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-01_0405_sheet-3_sheet.json#b05-01_0405_sheet-3_sheet-conformance-56c9ca3f713b",
+      "refuted": false,
+      "reason": "反証失敗、指摘維持。OrderRepository.php:1862 は確かに `o.order_date < :targetDateTime` であり、docblock 1847 も『注文日時 = 指定日時以前』と明記。Command.php:48-51 で targetDateTime = now->modify('-30 minutes')。よって抽出は order_date < (now-30分) = 30分より古い注文。設計 line 945/984『30分前以降の注文』および line 991『バッチ駆動時間からバッチ駆動時間より30分前』は order_date >= now-30分（直近30分窓）を要求しており条件は真逆。別実装の探索(rg findTargetOrdersForSmaregiPost / OtcOrderSmaregiPost / 30 minutes)でも該当パスは Command→PostAction→Repository の1本のみで代替ルートなし。設計側にPh2/対象外/現行踏襲の除外注記もなし（line 942-944 はむしろ直近注文対象化の意図を補強）。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-01_0405_sheet-3_sheet.json#b05-01_0405_sheet-3_sheet-conformance-284420b0093c",
+      "refuted": false,
+      "reason": "反証失敗、指摘維持。正しく0埋めする SmaregiOtcProductCodeGenerator::normalizeOrderNumber (Otc/SmaregiOtcProductCodeGenerator.php:76-78 str_pad(...,8,'0',LEFT) 後 substr(-6)) は存在するが、実行フローで使われていない。実際のパス: Command→SmaregiOtcOrderPostAction::handle→getProductBarcode(SmaregiOtcOrderPostAction.php:97 で `substr($orderNumber,-6)` を0埋めなしで実行)→setSmaregiCode(:60)。その後の SmaregiOtcOrderSyncService::sync:79-82 は `$productCode = $Order->getSmaregiCode();` を優先し、空でない限り Generator を呼ばない(:81 の generate はフォールバックのみ)。よって親バッチの未0埋めコードがそのまま送信される。設計 line 952『注文番号(8桁0埋め後、末尾6桁)』・例 line 956-957(12345→012345→2010010123451、13桁)を満たさず、5桁など6桁未満の注文番号で12桁の異なるコードになる（getProductBarcode は Generator と違い桁数検証もない）。別実装・除外注記とも確認できず。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-01_0405_sheet-3_sheet.json#b05-01_0405_sheet-3_sheet-conformance-ea6adcd624a9",
+      "refuted": true,
+      "reason": "反証成立。実装は categoryId を追加システム設定 smaregi_category_id から解決するが(SmaregiOtcSyncMessageHandler.php:153-161→sync→buildProductBody:284 'categoryId'=>$categoryId)、その設定値は出荷時マイグレーション app/DoctrineMigrations/Version20251125161057.php:170-171 で option_key='smaregi_category_id', option_value='6' としてシードされている。すなわちデプロイ状態でスマレジへ送信される categoryId は設計 line 964-965『6: 店頭受取（固定）』のとおり実値6であり、観測される送信値は設計と一致する。EC-CUBE では他の固定値(例: エラーメール送信先 line 973)も追加設定として外部化する規約であり、部門IDを設定化して既定6で送る実装は要求(6を送る)を満たす。MtbSection エンティティのコメントも smaregi_category_id が categories.categoryId(=部門ID)である対応を裏付ける。『6以外になりうる』は運用で設定を変えた場合の仮定に過ぎず、出荷実装は6固定で送信するため指摘の前提(固定でない=6を保証しない)は崩れる。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-01_0405_sheet-3_sheet.json#b05-01_0405_sheet-3_sheet-conformance-b701cd53d4a0",
+      "refuted": false,
+      "reason": "反証失敗、指摘維持。OtcOrderSmaregiPostCommand.php の開始出力は $io->text('店頭受取注文スマレジ連携バッチ開始')(:44)、完了出力は $io->success('店頭受取注文スマレジ連携処理が完了しました。')(:61)で、いずれの文字列にも日時が含まれない。rg で当コマンド内の date(/DateTime/format(/->text(/->success( を確認したが、:48 の new \\DateTime() は抽出条件用(now-30分)であって出力には使われず、開始・完了出力に日時を付与するコードは存在しない。SymfonyStyle の text/success は既定でタイムスタンプを付けない。設計(詳細設計 ログ・監査 line 1095-1096)は『開始・完了のコンソール出力（日時付き）』を要求しており、開始・完了出力自体は存在するが『日時付き』要件を満たしていない。確信度mediumだが実装に日時が無い事実は確認済みのため維持。"
+    }
+  ]
+}

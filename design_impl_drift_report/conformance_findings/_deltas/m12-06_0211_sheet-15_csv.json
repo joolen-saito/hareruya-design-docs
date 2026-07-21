@@ -1,0 +1,84 @@
+{
+  "functionId": "m12-06_0211_sheet-15_csv",
+  "featureNo": "M12-06",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-15:3361",
+      "designExpectation": "検索結果CSVを出力する入口は GET /{admin_route}/analysis/request/export とし、検索結果一覧の「CSVダウンロード」からこのエンドポイントでCSVを出力する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:92",
+      "implementationActual": "実装のCSV出力ルートは GET /{admin_route}/analysis/product-request/export（name=admin_analysis_product_request_export）。反証検索でも analysis/request/export / admin_analysis_request 系ルートは不在。",
+      "mismatchReason": "設計URLは /analysis/request/export だが、実装URLは /analysis/product-request/export でパスが一致しない。探索範囲: src/Eccube, html を analysis/request/export・request/export・admin_analysis_request・admin_analysis_product_request_export で検索。",
+      "comparisonRows": [
+        {
+          "item": "CSV出力エンドポイント",
+          "design": "GET /{admin_route}/analysis/request/export",
+          "implementation": "GET /{admin_route}/analysis/product-request/export",
+          "mismatch": "URLパスが設計と異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-15:3402",
+      "designExpectation": "検索条件セッションが空の場合は、空の検索条件で抽出し、出力する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:95",
+      "implementationActual": "セッション値が null の場合、'検索条件がありません。先に検索を実行してください。' を addError し、admin_analysis_product_request へリダイレクトする。",
+      "mismatchReason": "設計は空条件でCSVを出力する仕様だが、実装はCSVを出力せず検索画面へ戻す。反証検索でも ProductRequestController 以外に空条件で出力する product_request CSV 入口は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "検索条件セッション空時",
+          "design": "空の検索条件で抽出しCSV出力",
+          "implementation": "エラー表示して検索画面へリダイレクト",
+          "mismatch": "失敗時の外部挙動が逆"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-15:3376",
+      "designExpectation": "ヘッダ行は 商品コード・商品名・言語・状態・販売金額・在庫数・会員名・依頼日・購入日・通知日/通知設定削除日の順。抽出した依頼を1件ずつ、ヘッダ列の順で出力する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:24",
+      "implementationActual": "CSV_HEADER は 商品ID・言語ID・商品名・通知待ち・削除 の5列。リポジトリは product_id と language_id で groupBy し、pending_count/deleted_count の集計行を出力する。",
+      "mismatchReason": "詳細設計のCSV外部契約は依頼単位の10列だが、実装は商品×言語単位の5列集計CSVで、商品コード・状態・販売金額・在庫数・会員名・依頼日・購入日・通知日/通知設定削除日を出力しない。",
+      "comparisonRows": [
+        {
+          "item": "CSV列",
+          "design": "商品コード、商品名、言語、状態、販売金額、在庫数、会員名、依頼日、購入日、通知日/通知設定削除日",
+          "implementation": "商品ID、言語ID、商品名、通知待ち、削除",
+          "mismatch": "列数・列名・出力粒度が異なる"
+        },
+        {
+          "item": "データ行粒度",
+          "design": "抽出した依頼を1件ずつ出力",
+          "implementation": "product_id・language_id で集計して件数を出力",
+          "mismatch": "依頼単位ではなく集計単位"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-15:3304",
+      "designExpectation": "識別ID 5:「通知済み/削除」の追加。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:29",
+      "implementationActual": "CSVヘッダの5列目は '削除'。画面一覧側も5列目を '削除' と表示している（src/Eccube/Resource/template/admin/Analysis/product_request.twig:134）。",
+      "mismatchReason": "設計の外部表示名は「通知済み/削除」だが、CSVヘッダおよび画面表示は「削除」のみで、通知済みを含む項目名になっていない。反証検索でも product_request 実装内に「通知済み/削除」「通知済/削除」の表示は不在。",
+      "comparisonRows": [
+        {
+          "item": "識別ID 5 ヘッダ表示",
+          "design": "通知済み/削除",
+          "implementation": "削除",
+          "mismatch": "通知済みの文言が欠落"
+        }
+      ]
+    }
+  ]
+}

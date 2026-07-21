@@ -24,47 +24,47 @@ Playwright は本リポジトリでは実行しない（未実行雛形）。セ
 | IT-23 | 検索フィルタ非存在。全件一覧へのレコード出現の間接確認のみ（手動/間接） |
 | IT-02 | 初期行数（DB件数の間接）、表示順（ORDER BY無くドライバ依存で対象外） |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-001	IT-03	画面遷移	P1	ナビ「データ管理」→「買取減額率一覧」で一覧表が表示される	未ログイン→ログイン可能／SEED-M16-08-ADMIN／SEED-M16-08-MASTER	有効な管理ログインID・パスワード	"1. 管理ログインする
-2. サイドナビ「データ管理」→「買取減額率一覧」を選択する"	買取減額率一覧表（左端「名称」列＋カード状態コードの列見出し）が表示されること。
+2. サイドナビ「データ管理」→「買取減額率一覧」を選択する"	買取減額率一覧表（左端「名称」列＋カード状態コードの列見出し）が表示されること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-002	IT-13	URL直接アクセス	P1	URL直接GETで一覧表が表示される	SEED-M16-08-ADMIN／SEED-M16-08-MASTER	GET /{admin_route}/buy_discount（設計入口。実装移設 /data/buy_discount は付帯表4#1で落ちて検出）	"1. 管理ログインする
-2. 一覧URLを直接GETする"	一覧表が表示され、同一URLのHTMLに留まること。
-m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-003	IT-15	未認証	P1	未認証URL直接GETで管理ログイン画面へ誘導	未ログイン	GET /{admin_route}/buy_discount（設計入口）	"1. 未ログイン状態で一覧URLを直接GETする"	管理ログイン画面へ誘導されること。
+2. 一覧URLを直接GETする"	一覧表が表示され、同一URLのHTMLに留まること。				
+m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-003	IT-15	未認証	P1	未認証URL直接GETで管理ログイン画面へ誘導	未ログイン	GET /{admin_route}/buy_discount（設計入口）	1. 未ログイン状態で一覧URLを直接GETする	管理ログイン画面へ誘導されること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-004	IT-25	HTTPステータス	P2	一覧GETが200でHTMLを返す	SEED-M16-08-ADMIN	GET /{admin_route}/buy_discount（設計入口）	"1. 管理ログインする
-2. 一覧URLをGETしHTTP応答を観測する"	HTTP200でHTML（管理画面共通フレーム＋表）が返ること。
+2. 一覧URLをGETしHTTP応答を観測する"	HTTP200でHTML（管理画面共通フレーム＋表）が返ること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-005	IT-15	対象データ	P2	タイトル帯が「買取減額率管理」	SEED-M16-08-ADMIN	なし（GET）	"1. 管理ログインし一覧を表示する
-2. タイトル帯の文言を確認する"	タイトル帯が「買取減額率管理」であること。
+2. タイトル帯の文言を確認する"	タイトル帯が「買取減額率管理」であること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-006	IT-20	出力内容	P2	サブタイトルが「買取減額率一覧」	SEED-M16-08-ADMIN	なし（GET）	"1. 管理ログインし一覧を表示する
-2. サブタイトルの文言を確認する"	サブタイトルが「買取減額率一覧」であること。
+2. サブタイトルの文言を確認する"	サブタイトルが「買取減額率一覧」であること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-007	IT-20	出力内容	P1	左端ヘッダ列が「名称」	SEED-M16-08-ADMIN	なし（GET）	"1. 管理ログインし一覧を表示する
-2. 表頭の左端ヘッダ列を確認する"	表頭の左端ヘッダ列が「名称」であること。
+2. 表頭の左端ヘッダ列を確認する"	表頭の左端ヘッダ列が「名称」であること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-008	IT-20	出力内容	P2	列見出しにカード状態コードが表示される	SEED-M16-08-MASTER（mtb_card_condition≥1）	既知のカード状態 code	"1. 管理ログインし一覧を表示する
-2. 列見出しにシードした code が出るか確認する"	列見出しに mtb_card_condition の code が表示されること。
+2. 列見出しにシードした code が出るか確認する"	列見出しに mtb_card_condition の code が表示されること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-009	IT-02	表示順	P2	各行の先頭セルに買取減額率名称が表示される	SEED-M16-08-MASTER（mtb_buy_discount≥1）	既知の買取減額率名称	"1. 管理ログインし一覧を表示する
-2. 各行の第一データ列を確認する"	各行の第一データ列に mtb_buy_discount の名称が表示されること。
+2. 各行の第一データ列を確認する"	各行の第一データ列に mtb_buy_discount の名称が表示されること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-010	IT-20	出力内容	P2	交差ありセルにrateの数値が表示される	SEED-M16-08-MASTER（既知の交差レコード）	既知の (buy_discount,card_condition,rate)	"1. 管理ログインし一覧を表示する
-2. 交差ありセルの値を確認する"	交差ありセルに rate の素の数値（桁区切り・％なし）が表示されること。
+2. 交差ありセルの値を確認する"	交差ありセルに rate の素の数値（桁区切り・％なし）が表示されること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-011	IT-15	状態変化	P1	交差なしセルに固定文言「未定義」が表示される	SEED-M16-08-MASTER（欠損交差を含む）	なし（GET）	"1. 管理ログインし一覧を表示する
-2. 交差なしセルの値を確認する"	交差が無いセルに固定文言「未定義」が表示されること。
+2. 交差なしセルの値を確認する"	交差が無いセルに固定文言「未定義」が表示されること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-012	IT-25	UI部品	P3	一覧テンプレートに行クリック/操作ボタンが無い	SEED-M16-08-ADMIN	なし（GET）	"1. 管理ログインし一覧を表示する
-2. 表内の操作要素（button/a）有無を確認する"	表内に操作ボタン・行リンクが存在しないこと。
+2. 表内の操作要素（button/a）有無を確認する"	表内に操作ボタン・行リンクが存在しないこと。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-013	IT-25	送信可否制御	P3	一覧表示は同一URLのHTMLに留まる	SEED-M16-08-ADMIN	なし（GET）	"1. 管理ログインし一覧を表示する
-2. 自動遷移の有無とURLを確認する"	自動遷移せず同一URLのHTMLに留まること。
+2. 自動遷移の有無とURLを確認する"	自動遷移せず同一URLのHTMLに留まること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-014	IT-25	画面レイアウト	P3	表ラッパー/表本体に設計どおりのレイアウトクラスが付与される	SEED-M16-08-ADMIN	なし（GET）	"1. 管理ログインし一覧を表示する
-2. 表ラッパーと表本体のクラスを確認する"	表ラッパーに table-responsive with-border、表本体に table table-striped が付与されていること。
+2. 表ラッパーと表本体のクラスを確認する"	表ラッパーに table-responsive with-border、表本体に table table-striped が付与されていること。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-015	IT-02	出力内容	P3	表の列数が1（名称列）＋カード状態マスタ件数に一致する	SEED-M16-08-MASTER／DB件数取得可	mtb_card_condition 件数	"1. mtb_card_condition の件数を取得する
 2. 管理ログインし一覧を表示する
-3. 表頭の th 数を数える"	表頭の列数が 1＋mtb_card_condition 件数に一致すること（DB件数の取得が前提＝手動/間接）。
+3. 表頭の th 数を数える"	表頭の列数が 1＋mtb_card_condition 件数に一致すること（DB件数の取得が前提＝手動/間接）。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-016	IT-02	初期行数	P3	表の行数が買取減額率マスタ件数に一致する	SEED-M16-08-MASTER／DB件数取得可	mtb_buy_discount 件数	"1. mtb_buy_discount の件数を取得する
 2. 管理ログインし一覧を表示する
-3. tbody tr 数を数える"	tbody の行数が mtb_buy_discount 件数に一致すること（DB件数の取得が前提＝手動/間接）。
+3. tbody tr 数を数える"	tbody の行数が mtb_buy_discount 件数に一致すること（DB件数の取得が前提＝手動/間接）。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-017	IT-23	実行結果	P3	買取減額率マスタ0件で表頭のみ・空tbodyが描画される	専用空マスタ環境（mtb_buy_discount=0）	なし（GET）	"1. 買取減額率マスタが0件の環境で管理ログインする
-2. 一覧を表示し tbody を確認する"	表頭（名称＋コード列）は描画され、データ行（tbody tr）が0件であること（環境制約＝手動）。
+2. 一覧を表示し tbody を確認する"	表頭（名称＋コード列）は描画され、データ行（tbody tr）が0件であること（環境制約＝手動）。				
 m16-08_admin_data_data_buy_discount_list（データ管理 — 買取減額率一覧）	E2E-M16-08-018	IT-23	実行結果	P3	カード状態マスタ0件で名称列のみが描画される	専用空マスタ環境（mtb_card_condition=0）	なし（GET）	"1. カード状態マスタが0件の環境で管理ログインする
-2. 表頭と各行の列構成を確認する"	表頭は「名称」列のみ、各データ行も名称列のみとなること（環境制約＝手動）。
+2. 表頭と各行の列構成を確認する"	表頭は「名称」列のみ、各データ行も名称列のみとなること（環境制約＝手動）。				
 ```
 
 ---

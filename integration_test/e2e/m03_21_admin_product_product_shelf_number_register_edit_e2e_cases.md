@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_21_admin_product_product_shelf_number_register_edit_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・フラッシュメッセージ・ダウンロード発火・(間接)一覧反映などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない（メッセージ文言は設計書が参照する trans キーの確定値＝messages.ja.yaml / ShelfNumberType の固定文言を引用）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・フラッシュメッセージ・ダウンロード発火・(間接)一覧反映などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない（メッセージ文言は設計書が参照する trans キーの確定値＝messages.ja.yaml / ShelfNumberType の固定文言を引用）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 設計源は pf-eccube3 のリバースであり、**刷新先 ec-cube-enterprise に該当画面（`ShelfNumberController` / `shelf_number.twig` / `ShelfNumberType`）が存在しセレクタを導出できた**（screenExists=true）。設計書と実装の乖離は付帯表4に分離する。
 
@@ -24,70 +24,70 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-001	IT-25	UI部品	P1	新規画面に名称・並び順入力欄・登録ボタンと下部一覧が表示される	管理者ログイン済／SEED-M03-ADMIN	—	"1. /admin/product/shelf_number を開く"	名称入力欄・並び順入力欄・「登録」ボタン・下部一覧表が表示されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-002	IT-25	UI部品	P2	新規モードのカード見出しが「新規追加」	管理者ログイン済／SEED-M03-ADMIN	—	"1. /admin/product/shelf_number を開く"	カード見出しに「新規追加」が表示されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-003	IT-25	表示結果	P2	タイトル「商品管理」・サブタイトル「棚番号登録/編集」が表示される	管理者ログイン済／SEED-M03-ADMIN	—	"1. /admin/product/shelf_number を開く"	タイトル「商品管理」・サブタイトル「棚番号登録/編集」が表示されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-004	IT-25	UI部品	P2	一覧ヘッダ(ID/名称/並び順)・編集/削除導線・表示件数セレクトが表示される	管理者ログイン済／SEED-M03-ADMIN	—	"1. /admin/product/shelf_number を開く"	一覧にID・名称・並び順の列見出しと編集/削除導線、表示件数セレクトが表示されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-005	IT-25	操作起点	P2	「CSV出力」「CSV入力」リンクが表示される	管理者ログイン済／SEED-M03-ADMIN	—	"1. /admin/product/shelf_number を開く"	画面上部に「CSV出力」「CSV入力」リンクが表示されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-006	IT-03	画面遷移	P2	編集画面でカード見出し「編集」と「新規登録へ戻る」が表示される	管理者ログイン済／SEED-M03-21-ROW（既存棚番号）	—	"1. 一覧の編集リンク（/admin/product/shelf_number/{id}）を開く"	カード見出し「編集」と「新規登録へ戻る」リンクが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-001	IT-25	UI部品	P1	新規画面に名称・並び順入力欄・登録ボタンと下部一覧が表示される	管理者ログイン済／SEED-M03-ADMIN	—	1. /admin/product/shelf_number を開く	名称入力欄・並び順入力欄・「登録」ボタン・下部一覧表が表示されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-002	IT-25	UI部品	P2	新規モードのカード見出しが「新規追加」	管理者ログイン済／SEED-M03-ADMIN	—	1. /admin/product/shelf_number を開く	カード見出しに「新規追加」が表示されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-003	IT-25	表示結果	P2	タイトル「商品管理」・サブタイトル「棚番号登録/編集」が表示される	管理者ログイン済／SEED-M03-ADMIN	—	1. /admin/product/shelf_number を開く	タイトル「商品管理」・サブタイトル「棚番号登録/編集」が表示されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-004	IT-25	UI部品	P2	一覧ヘッダ(ID/名称/並び順)・編集/削除導線・表示件数セレクトが表示される	管理者ログイン済／SEED-M03-ADMIN	—	1. /admin/product/shelf_number を開く	一覧にID・名称・並び順の列見出しと編集/削除導線、表示件数セレクトが表示されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-005	IT-25	操作起点	P2	「CSV出力」「CSV入力」リンクが表示される	管理者ログイン済／SEED-M03-ADMIN	—	1. /admin/product/shelf_number を開く	画面上部に「CSV出力」「CSV入力」リンクが表示されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-006	IT-03	画面遷移	P2	編集画面でカード見出し「編集」と「新規登録へ戻る」が表示される	管理者ログイン済／SEED-M03-21-ROW（既存棚番号）	—	1. 一覧の編集リンク（/admin/product/shelf_number/{id}）を開く	カード見出し「編集」と「新規登録へ戻る」リンクが表示されること。				
 m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-007	IT-03	画面遷移	P2	編集画面の上部フォームが当該行の名称・並び順を反映する	管理者ログイン済／SEED-M03-21-ROW	—	"1. /admin/product/shelf_number/{id} を開く
-2. 上部フォームの値と一覧の当該行を照合する"	上部フォームの名称・並び順が当該行の値（一覧にも存在する値）を反映していること。
+2. 上部フォームの値と一覧の当該行を照合する"	上部フォームの名称・並び順が当該行の値（一覧にも存在する値）を反映していること。				
 m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-008	IT-03	画面遷移	P2	編集画面で「新規登録へ戻る」を押すと新規モードへ戻る	管理者ログイン済／SEED-M03-21-ROW	—	"1. /admin/product/shelf_number/{id} を開く
-2. 「新規登録へ戻る」を押下"	一覧トップ（/admin/product/shelf_number）へ遷移し、カード見出しが「新規追加」になること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-010	IT-26	登録内容	P1	形式妥当な未登録名称＋並び順で登録すると成功フラッシュが表示される	管理者ログイン済／SEED-M03-21-NEW（未登録の形式妥当名・使い捨て）	"名称＝SHELF_NEW_NAME（例 Z-999）、並び順＝999"	"1. /admin/product/shelf_number を開く
+2. 「新規登録へ戻る」を押下"	一覧トップ（/admin/product/shelf_number）へ遷移し、カード見出しが「新規追加」になること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-010	IT-26	登録内容	P1	形式妥当な未登録名称＋並び順で登録すると成功フラッシュが表示される	管理者ログイン済／SEED-M03-21-NEW（未登録の形式妥当名・使い捨て）	名称＝SHELF_NEW_NAME（例 Z-999）、並び順＝999	"1. /admin/product/shelf_number を開く
 2. 名称・並び順を入力
-3. 「登録」を押下"	「登録が完了しました。」が表示されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-011	IT-03	画面遷移	P1	登録成功後は一覧(admin_product_shelf_number)へリダイレクトされる	管理者ログイン済／SEED-M03-21-NEW	"名称＝SHELF_NEW_NAME、並び順＝999"	"1. 新規登録を成功させる"	一覧ルート（/admin/product/shelf_number。生成URLに保存後idが付く場合がある）へリダイレクトされること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-012	IT-26	登録内容	P2	登録後は一覧に登録名称が表示される（間接DB確認）	管理者ログイン済／SEED-M03-21-NEW	"名称＝SHELF_NEW_NAME、並び順＝1"	"1. 新規登録を成功させる
-2. 一覧を確認する"	一覧に登録した名称が表示されること（persist/flushによる即時反映の間接確認）。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-013	IT-26	更新内容	P1	編集で値を変更して保存すると成功フラッシュが表示される	管理者ログイン済／SEED-M03-21-ROW（使い捨て更新用）	"並び順＝任意の変更値"	"1. /admin/product/shelf_number/{id} を開く
+3. 「登録」を押下"	「登録が完了しました。」が表示されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-011	IT-03	画面遷移	P1	登録成功後は一覧(admin_product_shelf_number)へリダイレクトされる	管理者ログイン済／SEED-M03-21-NEW	名称＝SHELF_NEW_NAME、並び順＝999	1. 新規登録を成功させる	一覧ルート（/admin/product/shelf_number。生成URLに保存後idが付く場合がある）へリダイレクトされること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-012	IT-26	登録内容	P2	登録後は一覧に登録名称が表示される（間接DB確認）	管理者ログイン済／SEED-M03-21-NEW	名称＝SHELF_NEW_NAME、並び順＝1	"1. 新規登録を成功させる
+2. 一覧を確認する"	一覧に登録した名称が表示されること（persist/flushによる即時反映の間接確認）。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-013	IT-26	更新内容	P1	編集で値を変更して保存すると成功フラッシュが表示される	管理者ログイン済／SEED-M03-21-ROW（使い捨て更新用）	並び順＝任意の変更値	"1. /admin/product/shelf_number/{id} を開く
 2. 並び順を変更
-3. 「登録」を押下"	「登録が完了しました。」が表示されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-014	IT-26	更新内容	P2	編集更新後に変更値が一覧/再編集フォームに反映される（間接DB確認）	管理者ログイン済／SEED-M03-21-ROW（使い捨て更新用）	"並び順＝変更値"	"1. /admin/product/shelf_number/{id} を開く 2. 並び順を変更し登録 3. 一覧または再編集フォームで値を確認"	変更後の並び順が一覧/再編集フォームに反映されていること（persist/flushによる即時反映の間接確認）。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-020	IT-22	必須バリデーション	P1	名称未入力で登録すると失敗フラッシュが表示され同画面が再描画される	管理者ログイン済／SEED-M03-ADMIN	"名称＝空、並び順＝100"	"1. /admin/product/shelf_number を開く
+3. 「登録」を押下"	「登録が完了しました。」が表示されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-014	IT-26	更新内容	P2	編集更新後に変更値が一覧/再編集フォームに反映される（間接DB確認）	管理者ログイン済／SEED-M03-21-ROW（使い捨て更新用）	並び順＝変更値	1. /admin/product/shelf_number/{id} を開く 2. 並び順を変更し登録 3. 一覧または再編集フォームで値を確認	変更後の並び順が一覧/再編集フォームに反映されていること（persist/flushによる即時反映の間接確認）。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-020	IT-22	必須バリデーション	P1	名称未入力で登録すると失敗フラッシュが表示され同画面が再描画される	管理者ログイン済／SEED-M03-ADMIN	名称＝空、並び順＝100	"1. /admin/product/shelf_number を開く
 2. 名称を空のまま並び順を入力
-3. 「登録」を押下"	「登録できませんでした。」が表示され、一覧へリダイレクトせず同テンプレート(store)で再描画されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-021	IT-22	文字種バリデーション	P1	形式不正な名称で登録すると名称の形式エラーが表示される	管理者ログイン済／SEED-M03-ADMIN	"名称＝abc（形式不正）、並び順＝100"	"1. /admin/product/shelf_number を開く
+3. 「登録」を押下"	「登録できませんでした。」が表示され、一覧へリダイレクトせず同テンプレート(store)で再描画されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-021	IT-22	文字種バリデーション	P1	形式不正な名称で登録すると名称の形式エラーが表示される	管理者ログイン済／SEED-M03-ADMIN	名称＝abc（形式不正）、並び順＝100	"1. /admin/product/shelf_number を開く
 2. 形式不正な名称を入力
-3. 「登録」を押下"	「※名称は大文字アルファベットと-(ハイフン)と3桁の数値の形式のみ登録可能です。」が表示されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-022	IT-22	必須バリデーション	P2	並び順未入力で登録すると失敗フラッシュが表示される	管理者ログイン済／SEED-M03-ADMIN	"名称＝A-001、並び順＝空"	"1. /admin/product/shelf_number を開く
+3. 「登録」を押下"	「※名称は大文字アルファベットと-(ハイフン)と3桁の数値の形式のみ登録可能です。」が表示されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-022	IT-22	必須バリデーション	P2	並び順未入力で登録すると失敗フラッシュが表示される	管理者ログイン済／SEED-M03-ADMIN	名称＝A-001、並び順＝空	"1. /admin/product/shelf_number を開く
 2. 並び順を空のまま名称を入力
-3. 「登録」を押下"	「登録できませんでした。」が表示され、同テンプレート(store)で再描画されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-023	IT-22	必須バリデーション	P2	編集モード(/store/{id})でも名称未入力で登録すると失敗フラッシュが表示され同画面が再描画される（非破壊）	管理者ログイン済／SEED-M03-21-ROW（参照のみ・検証失敗でDB不変）	"名称＝空、並び順＝任意"	"1. /admin/product/shelf_number/{id} を開く 2. 名称を空にして「登録」を押下"	「登録できませんでした。」が表示され、一覧へリダイレクトせず同テンプレート(store)で再描画されること（更新は確定しない）。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-024	IT-22	DBとの相関バリデーション	P1	既存名称と同一名称で登録すると一意制約違反メッセージが表示される	管理者ログイン済／SEED-M03-21-DUP（既存の形式妥当名）	"名称＝SHELF_DUP_NAME（既存）、並び順＝998"	"1. /admin/product/shelf_number を開く
+3. 「登録」を押下"	「登録できませんでした。」が表示され、同テンプレート(store)で再描画されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-023	IT-22	必須バリデーション	P2	編集モード(/store/{id})でも名称未入力で登録すると失敗フラッシュが表示され同画面が再描画される（非破壊）	管理者ログイン済／SEED-M03-21-ROW（参照のみ・検証失敗でDB不変）	名称＝空、並び順＝任意	1. /admin/product/shelf_number/{id} を開く 2. 名称を空にして「登録」を押下	「登録できませんでした。」が表示され、一覧へリダイレクトせず同テンプレート(store)で再描画されること（更新は確定しない）。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-024	IT-22	DBとの相関バリデーション	P1	既存名称と同一名称で登録すると一意制約違反メッセージが表示される	管理者ログイン済／SEED-M03-21-DUP（既存の形式妥当名）	名称＝SHELF_DUP_NAME（既存）、並び順＝998	"1. /admin/product/shelf_number を開く
 2. 既存名称と同一の名称を入力
-3. 「登録」を押下"	「値が重複しています。」が表示され、一覧（admin_product_shelf_number）へリダイレクトされること。
+3. 「登録」を押下"	「値が重複しています。」が表示され、一覧（admin_product_shelf_number）へリダイレクトされること。				
 m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-030	IT-25	確認ダイアログ	P2	一覧の削除リンクが data-method=delete と確認メッセージ属性を持つ	管理者ログイン済／SEED-M03-ADMIN（一覧に1件以上）	—	"1. /admin/product/shelf_number を開く
-2. 一覧の削除リンクの属性を確認する"	削除リンクが data-method=\"delete\" と確認メッセージ属性（data-message）を持つこと。
+2. 一覧の削除リンクの属性を確認する"	"削除リンクが data-method=\""delete\"" と確認メッセージ属性（data-message）を持つこと。"				
 m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-031	IT-23	実行結果	P1	商品規格に参照されない棚番号を削除すると削除成功メッセージが表示される	管理者ログイン済／SEED-M03-21-DELETABLE（参照なし・使い捨て）	—	"1. /admin/product/shelf_number を開く
-2. 対象行の削除リンクを押下し確認ダイアログを承認"	「削除しました」が表示され、一覧から当該行が消えること。
+2. 対象行の削除リンクを押下し確認ダイアログを承認"	「削除しました」が表示され、一覧から当該行が消えること。				
 m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-032	IT-23	実行結果	P1	商品規格に参照される棚番号は削除されずエラーメッセージが表示される	管理者ログイン済／SEED-M03-21-LINKED（商品規格が参照）	—	"1. /admin/product/shelf_number を開く
-2. 参照ありの棚番号の削除リンクを押下し確認ダイアログを承認"	「商品で使用されているため、「{名称}」の棚番号は削除することができません。」が表示され、削除されないこと。
+2. 参照ありの棚番号の削除リンクを押下し確認ダイアログを承認"	「商品で使用されているため、「{名称}」の棚番号は削除することができません。」が表示され、削除されないこと。				
 m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-040	IT-25	操作起点	P2	「CSV出力」押下でCSVダウンロードが開始される	管理者ログイン済／SEED-M03-ADMIN	—	"1. /admin/product/shelf_number を開く
-2. 「CSV出力」を押下"	CSVダウンロードが開始され、ファイル名が shelf_number_YYYYMMDDHHmmss.csv 形式であること（内容は手動確認）。
+2. 「CSV出力」を押下"	CSVダウンロードが開始され、ファイル名が shelf_number_YYYYMMDDHHmmss.csv 形式であること（内容は手動確認）。				
 m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-041	IT-25	操作起点	P1	「CSV入力」押下でマスタCSVアップロード画面へ遷移する	管理者ログイン済／SEED-M03-ADMIN	—	"1. /admin/product/shelf_number を開く
-2. 「CSV入力」を押下"	マスタCSVアップロード画面（/admin/product/shelf_number/master_csv_upload）へ遷移すること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-042	IT-13	URL直接アクセス	P3	後方互換URL(/product/shelf_number/csv)でも取込画面が表示される	管理者ログイン済／SEED-M03-ADMIN	—	"1. /admin/product/shelf_number/csv を直接開く"	マスタCSVアップロード画面（master_csv_upload と同一画面）が表示されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-043	IT-22	その他のバリデーション	P2	CSV取込で行数上限(5010)を超えると件数上限メッセージが表示される	管理者ログイン済／SEED-M03-ADMIN	"5010行を超えるCSVファイル"	"1. CSVアップロード画面でファイルを選択
-2. 取込を実行"	「{N} 行を超えるCSVファイルは登録できません。」が表示され、取込画面へ戻ること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-044	IT-25	操作起点	P2	マスタCSVヘッダー雛形(master_csv_template)のダウンロードが発火する	管理者ログイン済／SEED-M03-ADMIN	—	"1. /admin/product/shelf_number/master_csv_template を開く（または雛形DL導線を押下）"	CSV雛形のダウンロードが発火すること（ヘッダーのみ・内容は手動確認。画面上の導線露出は要実機確認）。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-045	IT-23	実行結果	P2	CSV出力の内容がヘッダー「ID,名称,並び順」で全行sort_no昇順である	管理者ログイン済／SEED-M03-ADMIN	—	"1. 「CSV出力」を押下 2. ダウンロードファイルの中身を確認"	1行目が「ID,名称,並び順」で、データ行が並び順(sort_no)昇順であること（SJIS・全件DB状態依存のため手動/間接）。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-046	IT-23	実行結果	P2	CSV取込でファイル未選択/フォーム検証失敗時はエラーで取込画面へ戻る	管理者ログイン済／SEED-M03-ADMIN	"ファイル未選択 または 不正形式"	"1. CSVアップロード画面で未選択のまま取込を実行"	エラーフラッシュが表示され、master_csv_upload へ戻ること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-047	IT-23	実行結果	P2	CSV取込で行エラーがあると各行メッセージが表示される	管理者ログイン済／SEED-M03-ADMIN	"行エラーを含むCSV"	"1. 行エラーを含むCSVを選択し取込を実行"	各行のエラーメッセージが表示され、master_csv_upload へ戻ること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-048	IT-26	登録内容	P2	CSV取込が正常完了すると成功メッセージが表示される	管理者ログイン済／SEED-M03-ADMIN	"形式妥当なCSV"	"1. 妥当なCSVを選択し取込を実行"	「登録が完了しました。」が表示され、master_csv_upload へ戻ること（取込後DB反映は間接/手動）。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-049	IT-03	画面遷移	P3	互換POST(/product/shelf_number/import)でも取込処理が成立する	管理者ログイン済／SEED-M03-ADMIN	"形式妥当なCSV"	"1. /product/shelf_number/import へ取込POST"	master_import と同一の取込処理が実行され、master_csv_upload へ戻ること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-050	IT-25	送信可否制御	P2	表示件数セレクト変更でURLにpage_countが付き再読込される	管理者ログイン済／SEED-M03-ADMIN	"表示件数＝50"	"1. /admin/product/shelf_number を開く
-2. 表示件数セレクトを50に変更"	URLに page_count=50 が付与され、同一画面構成が再描画されること。
+2. 「CSV入力」を押下"	マスタCSVアップロード画面（/admin/product/shelf_number/master_csv_upload）へ遷移すること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-042	IT-13	URL直接アクセス	P3	後方互換URL(/product/shelf_number/csv)でも取込画面が表示される	管理者ログイン済／SEED-M03-ADMIN	—	1. /admin/product/shelf_number/csv を直接開く	マスタCSVアップロード画面（master_csv_upload と同一画面）が表示されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-043	IT-22	その他のバリデーション	P2	CSV取込で行数上限(5010)を超えると件数上限メッセージが表示される	管理者ログイン済／SEED-M03-ADMIN	5010行を超えるCSVファイル	"1. CSVアップロード画面でファイルを選択
+2. 取込を実行"	「{N} 行を超えるCSVファイルは登録できません。」が表示され、取込画面へ戻ること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-044	IT-25	操作起点	P2	マスタCSVヘッダー雛形(master_csv_template)のダウンロードが発火する	管理者ログイン済／SEED-M03-ADMIN	—	1. /admin/product/shelf_number/master_csv_template を開く（または雛形DL導線を押下）	CSV雛形のダウンロードが発火すること（ヘッダーのみ・内容は手動確認。画面上の導線露出は要実機確認）。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-045	IT-23	実行結果	P2	CSV出力の内容がヘッダー「ID,名称,並び順」で全行sort_no昇順である	管理者ログイン済／SEED-M03-ADMIN	—	1. 「CSV出力」を押下 2. ダウンロードファイルの中身を確認	1行目が「ID,名称,並び順」で、データ行が並び順(sort_no)昇順であること（SJIS・全件DB状態依存のため手動/間接）。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-046	IT-23	実行結果	P2	CSV取込でファイル未選択/フォーム検証失敗時はエラーで取込画面へ戻る	管理者ログイン済／SEED-M03-ADMIN	ファイル未選択 または 不正形式	1. CSVアップロード画面で未選択のまま取込を実行	エラーフラッシュが表示され、master_csv_upload へ戻ること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-047	IT-23	実行結果	P2	CSV取込で行エラーがあると各行メッセージが表示される	管理者ログイン済／SEED-M03-ADMIN	行エラーを含むCSV	1. 行エラーを含むCSVを選択し取込を実行	各行のエラーメッセージが表示され、master_csv_upload へ戻ること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-048	IT-26	登録内容	P2	CSV取込が正常完了すると成功メッセージが表示される	管理者ログイン済／SEED-M03-ADMIN	形式妥当なCSV	1. 妥当なCSVを選択し取込を実行	「登録が完了しました。」が表示され、master_csv_upload へ戻ること（取込後DB反映は間接/手動）。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-049	IT-03	画面遷移	P3	互換POST(/product/shelf_number/import)でも取込処理が成立する	管理者ログイン済／SEED-M03-ADMIN	形式妥当なCSV	1. /product/shelf_number/import へ取込POST	master_import と同一の取込処理が実行され、master_csv_upload へ戻ること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-050	IT-25	送信可否制御	P2	表示件数セレクト変更でURLにpage_countが付き再読込される	管理者ログイン済／SEED-M03-ADMIN	表示件数＝50	"1. /admin/product/shelf_number を開く
+2. 表示件数セレクトを50に変更"	URLに page_count=50 が付与され、同一画面構成が再描画されること。				
 m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-051	IT-03	画面遷移	P2	一覧ページリンクで指定ページの一覧が表示される	管理者ログイン済／SEED-M03-21-PAGES（2ページ以上の件数）	—	"1. /admin/product/shelf_number を開く
-2. ページリンク（/page/{page_no}）を押下"	指定ページの一覧が返り、セッションのページ番号が更新されること。
+2. ページリンク（/page/{page_no}）を押下"	指定ページの一覧が返り、セッションのページ番号が更新されること。				
 m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-052	IT-23	実行結果	P2	一覧が並び順(sort_no)昇順で表示される	管理者ログイン済／SEED-M03-ADMIN（2件以上）	—	"1. /admin/product/shelf_number を開く
-2. 並び順列の値を上から確認する"	一覧の並び順列が昇順で表示されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-053	IT-25	UI部品	P2	表示件数セレクトの選択肢が仕様の9値(10/50/100/300/500/1000/2000/10000/12000)である	管理者ログイン済／SEED-M03-ADMIN	—	"1. /admin/product/shelf_number を開く 2. 表示件数セレクトの選択肢を確認"	選択肢が 10,50,100,300,500,1000,2000,10000,12000 のみであること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-054	IT-03	画面遷移	P3	編集時のページリンク(/{id}/page/{page_no})で編集idを保持したまま指定ページが表示される	管理者ログイン済／SEED-M03-21-ROW＋SEED-M03-21-PAGES（2ページ以上）	—	"1. /admin/product/shelf_number/{id} を開く 2. ページリンク(/{id}/page/{page_no})を押下"	編集中のid を保持したまま指定ページの一覧が返り、セッションのページ番号が更新されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-060	IT-13	URL直接アクセス	P1	未ログインで棚番号画面URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product/shelf_number へ直接アクセス"	管理ログイン画面へ誘導されること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-061	IT-25	HTTPステータス	P2	存在しないidの編集URLはHTTP404になる	管理者ログイン済／SEED-M03-ADMIN	"id＝999999999（不存在）"	"1. /admin/product/shelf_number/999999999 を開く"	HTTPステータス404が返ること。
-m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-062	IT-25	HTTPステータス	P3	存在しないidの削除(DELETE)はマスタ行が解決されず404になる	管理者ログイン済／SEED-M03-ADMIN	"id＝999999999（不存在）＋有効トークン"	"1. /admin/product/shelf_number/999999999/delete へDELETE送信"	HTTPステータス404が返ること（削除フローのマスタ行未解決・設計書 削除#2）。
+2. 並び順列の値を上から確認する"	一覧の並び順列が昇順で表示されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-053	IT-25	UI部品	P2	表示件数セレクトの選択肢が仕様の9値(10/50/100/300/500/1000/2000/10000/12000)である	管理者ログイン済／SEED-M03-ADMIN	—	1. /admin/product/shelf_number を開く 2. 表示件数セレクトの選択肢を確認	選択肢が 10,50,100,300,500,1000,2000,10000,12000 のみであること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-054	IT-03	画面遷移	P3	編集時のページリンク(/{id}/page/{page_no})で編集idを保持したまま指定ページが表示される	管理者ログイン済／SEED-M03-21-ROW＋SEED-M03-21-PAGES（2ページ以上）	—	1. /admin/product/shelf_number/{id} を開く 2. ページリンク(/{id}/page/{page_no})を押下	編集中のid を保持したまま指定ページの一覧が返り、セッションのページ番号が更新されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-060	IT-13	URL直接アクセス	P1	未ログインで棚番号画面URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product/shelf_number へ直接アクセス	管理ログイン画面へ誘導されること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-061	IT-25	HTTPステータス	P2	存在しないidの編集URLはHTTP404になる	管理者ログイン済／SEED-M03-ADMIN	id＝999999999（不存在）	1. /admin/product/shelf_number/999999999 を開く	HTTPステータス404が返ること。				
+m03-21_admin_product_product_shelf_number_register_edit（商品管理 — 棚番号登録/編集）	E2E-M03-21-062	IT-25	HTTPステータス	P3	存在しないidの削除(DELETE)はマスタ行が解決されず404になる	管理者ログイン済／SEED-M03-ADMIN	id＝999999999（不存在）＋有効トークン	1. /admin/product/shelf_number/999999999/delete へDELETE送信	HTTPステータス404が返ること（削除フローのマスタ行未解決・設計書 削除#2）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

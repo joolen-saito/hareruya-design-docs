@@ -1,0 +1,914 @@
+{
+  "functionId": "a17-02_0517_sheet-4_id",
+  "featureNo": "A17-02",
+  "title": "A17-02 記事IDに関連する記事情報を取得",
+  "domain": "a17",
+  "kind": "api",
+  "designHtml": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+  "sourceBook": "0517_基本設計仕様書(API_その他).html",
+  "sheetId": "sheet-4",
+  "sheetName": "記事IDに関連する記事情報を取得",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "a17-02_0517_sheet-4_id-conformance-bb37c3e32fee",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4:1605,1656",
+      "designRefDetail": null,
+      "designExpectation": "記事は dtb_article.deleted_at による論理削除で削除済みは対象外とする。基準記事の特定（wp_post_id）と論理削除判定に用いる。",
+      "designQuote": "記事は dtb_article.deleted_at による論理削除で削除済みは対象外とする。基準記事の特定（wp_post_id）と論理削除判定に用いる。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:75",
+      "implementationActual": "関連記事取得SQLは dtb_article a1 と dtb_article a2 を参照し、WHERE は a1.wp_post_id、a2.wp_post_id 差異、a2.wp_post_id <> 0、共有中間テーブル EXISTS のみで、a1.deleted_at IS NULL / a2.deleted_at IS NULL の条件がない。",
+      "difference": "設計は基準記事・関連記事とも dtb_article.deleted_at による論理削除を応答対象外判定に用いることを要求しているが、実装の raw SQL には deleted_at 条件が存在しない。探索範囲: src/Eccube/Controller/App/ArticleController.php、src/Eccube/Repository/DtbArticleRepository.php、src/Eccube/Entity/DtbArticle.php、src/Eccube/Service/App/Article/ArticleResponseBuilder.php。別キーワード deleted_at/deletedAt/findOneBy/wpPostId/getRelatedArticles でも関連記事取得側の削除除外処理は確認できなかった。",
+      "mismatchReason": "設計は基準記事・関連記事とも dtb_article.deleted_at による論理削除を応答対象外判定に用いることを要求しているが、実装の raw SQL には deleted_at 条件が存在しない。探索範囲: src/Eccube/Controller/App/ArticleController.php、src/Eccube/Repository/DtbArticleRepository.php、src/Eccube/Entity/DtbArticle.php、src/Eccube/Service/App…",
+      "comparisonRows": [
+        {
+          "item": "基準記事の論理削除判定",
+          "design": "dtb_article.wp_post_id で基準記事を特定し、dtb_article.deleted_at による論理削除で削除済みは対象外。",
+          "implementation": "WHERE a1.wp_post_id = :wpPostId のみで a1.deleted_at IS NULL がない。",
+          "mismatch": "削除済みの基準記事でも関連記事検索の基準になり得る。"
+        },
+        {
+          "item": "関連記事の論理削除判定",
+          "design": "記事は dtb_article.deleted_at による論理削除で削除済みは応答対象外。",
+          "implementation": "a2 側にも a2.deleted_at IS NULL がない。",
+          "mismatch": "削除済み関連記事が応答配列に含まれ得る。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "a17-02_0517_sheet-4_id",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:75",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「記事は dtb_article.deleted_at による論理削除で削除済みは対象外とする。基準記事の特定（wp_post_id）と論理削除判定に用いる。」。実装は「関連記事取得SQLは dtb_article a1 と dtb_article a2 を参照し、WHERE は a1.wp_post_id、a2.wp_post_id 差異、a2.wp_post_id <> 0、共有中間テーブル EXISTS のみで、a1.deleted_at IS NULL / a2.deleted_at IS NULL の条件がない。」。乖離理由は「設計は基準記事・関連記事とも dtb_article.deleted_at による論理削除を応答対象外判定に用いることを要求しているが、実装の raw SQL には deleted_at 条件が存在しない。探索範囲: src/Eccube/Controller/App/ArticleController.php、src/Eccube/Repository/DtbArticleRepository.php、src/Eccube/Entity/DtbArticle.php、src/Eccube/Service/App…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "DB・保存/更新処理未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ルート・Controller",
+        "Service・業務ルール",
+        "Repository・Entity・DB"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:75",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/DtbArticleRepository.php:75\n72:                     WHERE aed1.article_id = a1.id\n73:                       AND aed2.article_id = a2.id\n74:                 ) THEN 1 ELSE 0 END AS has_same_event_detail\n75:             FROM dtb_article a1\n76:             INNER JOIN dtb_article a2 ON a1.wp_type_id = a2.wp_type_id\n77:             WHERE a1.wp_post_id = :wpPostId\n78:               AND a2.wp_post_id <> a1.wp_post_id",
+        "src/Eccube/Repository/DtbArticleRepository.php:25\n22: /**\n23:  * @extends AbstractRepository<DtbArticle>\n24:  */\n25: class DtbArticleRepository extends AbstractRepository\n26: {\n27:     public function __construct(RegistryInterface $registry)\n28:     {"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "a17-02_0517_sheet-4_id-conformance-2e708b350ab7",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4:1623",
+      "designRefDetail": null,
+      "designExpectation": "関連記事の配列を返す。同一デッキ・アーキタイプ・カード・イベント詳細のいずれかを共有する記事を関連とみなし、共有度の高い順に並ぶ。",
+      "designQuote": "関連記事の配列を返す。同一デッキ・アーキタイプ・カード・イベント詳細のいずれかを共有する記事を関連とみなし、共有度の高い順に並ぶ。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:110",
+      "implementationActual": "ORDER BY は has_same_deck DESC, has_same_archetype DESC, has_same_card DESC, has_same_event_detail DESC, a2.wp_post_id ASC の固定優先順位であり、共有フラグ数の合計や共有度スコアによる降順ではない。",
+      "difference": "設計は共有度の高い順を要求しているが、実装はデッキ共有を最優先する辞書順ソートであるため、共有数3件（例: archetype/card/eventDetail）より共有数1件（deckのみ）が前に並ぶ可能性がある。探索範囲: src/Eccube/Repository/DtbArticleRepository.php、src/Eccube/Controller/App/ArticleController.php。別キーワード ORDER BY/has_same/getRelatedArticles/relatedArticles でも共有度合計順の別実装は確認できなかった。",
+      "mismatchReason": "設計は共有度の高い順を要求しているが、実装はデッキ共有を最優先する辞書順ソートであるため、共有数3件（例: archetype/card/eventDetail）より共有数1件（deckのみ）が前に並ぶ可能性がある。探索範囲: src/Eccube/Repository/DtbArticleRepository.php、src/Eccube/Controller/App/ArticleController.php。別キーワード ORDER BY/has_same/getRelatedArticles/relate…",
+      "comparisonRows": [
+        {
+          "item": "並び順",
+          "design": "共有度の高い順。",
+          "implementation": "has_same_deck, has_same_archetype, has_same_card, has_same_event_detail の固定優先順位 DESC。",
+          "mismatch": "共有フラグ数の多さと実装順序が一致しないケースがある。"
+        },
+        {
+          "item": "同順位処理",
+          "design": "明示なし。",
+          "implementation": "最後に a2.wp_post_id ASC。",
+          "mismatch": "同順位処理自体は追加仕様だが、主排序が共有度ではない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "a17-02_0517_sheet-4_id",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:110",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「関連記事の配列を返す。同一デッキ・アーキタイプ・カード・イベント詳細のいずれかを共有する記事を関連とみなし、共有度の高い順に並ぶ。」。実装は「ORDER BY は has_same_deck DESC, has_same_archetype DESC, has_same_card DESC, has_same_event_detail DESC, a2.wp_post_id ASC の固定優先順位であり、共有フラグ数の合計や共有度スコアによる降順ではない。」。乖離理由は「設計は共有度の高い順を要求しているが、実装はデッキ共有を最優先する辞書順ソートであるため、共有数3件（例: archetype/card/eventDetail）より共有数1件（deckのみ）が前に並ぶ可能性がある。探索範囲: src/Eccube/Repository/DtbArticleRepository.php、src/Eccube/Controller/App/ArticleController.php。別キーワード ORDER BY/has_same/getRelatedArticles/relate…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:110",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/DtbArticleRepository.php:110\n107:                         AND aed2.article_id = a2.id\n108:                   )\n109:               )\n110:             ORDER BY\n111:                 has_same_deck DESC,\n112:                 has_same_archetype DESC,\n113:                 has_same_card DESC,",
+        "src/Eccube/Repository/DtbArticleRepository.php:25\n22: /**\n23:  * @extends AbstractRepository<DtbArticle>\n24:  */\n25: class DtbArticleRepository extends AbstractRepository\n26: {\n27:     public function __construct(RegistryInterface $registry)\n28:     {"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 18,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "a17-02_0517_sheet-4_id-req-d87c4da747",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "・ 記事IDから関連する記事情報検索しJSON出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-c9afd710a8",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "設定しない場合は取得件数20件とする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-c54871a6e4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "404.0 該当データがない場合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-4066ccd040",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの関連記事取得処理、ルート定義、記事を扱うリポジトリを正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-d602211bd5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-6a0a634b0e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "検索クエリに一致する記事の取得（記事検索取得を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-42047013f3",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "関連の判定ロジックの詳細（実装を確認値とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-e5dba5c352",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "記事連携テーブルは現行（pf-api）と移行先（ec-cube-enterprise）でスキーマが同一の構成である。DB関連の記述は移行先を正とする。関連の判定に用いる共有（同一デッキ・アーキタイプ・カード・イベント詳細）は、記事との中間テーブル（ dtb_article_deck ・ dtb_article_archetype ・ dtb_article_card ・ dtb_article_event_detail ）の一致で評価する。基準記事の特定には dtb_article.wp_post_id を用い、記事は dtb_article.deleted_at による論理削除で削除済みは対象外とする。応答の hasSameDeck ・ hasSameArchetype ・ hasSameCard ・ hasSameEventDetail は各中間テーブルの共有有無に対応する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-c9889f0bcc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "指定記事IDに関連する記事。関連の判定は実装を確認値とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-c40ae82d6a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "関連記事の配列を返す。同一デッキ・アーキタイプ・カード・イベント詳細のいずれかを共有する記事を関連とみなし、共有度の高い順に並ぶ。各要素は以下のフィールドを持つ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-bed4a51a20",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "成功時の応答例（実装確認値に基づく代表値）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-c08499f4a9",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-f8f3b3bb99",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-12e17ca9af",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-7785ceb881",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "呼び出し時点の記事情報を返す。本APIはデータを更新しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-9c9d33f9f6",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "基準記事の特定（ wp_post_id ）と論理削除判定に用いる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-ab17e5a3bd",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "共有有無の判定に用いる中間テーブル。応答の hasSameDeck 等に対応する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a17-02_0517_sheet-4_id-req-55988490b1",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "article/related/{",
+        "article/related/1043",
+        "pf-api/a17-02_api_other_article_related.md",
+        "article/related/{id}"
+      ],
+      "businessTerms": [
+        "A17",
+        "記事IDに関連する記事情報を取得",
+        "その他API機能",
+        "エンドポイントURL",
+        "CUBEのAPI",
+        "その記事に関連する記事情報を取得するAPIである",
+        "APIである",
+        "APIエンドポイントであり"
+      ]
+    },
+    "candidateCount": 12,
+    "strongSignalCount": 12,
+    "candidateRefs": [
+      {
+        "term": "article/related/{id}",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/ArticleController.php:81",
+        "snippet": "#[Route('/article/related/{id}', name: 'article_related', methods: ['GET'])]",
+        "weight": 6
+      },
+      {
+        "term": "article/related/{id}",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/Api/Mock/Response/ProductMockResponse.php:26",
+        "snippet": "* - PATCH /pos/products/{id} : リクエストボディをエコー (200)",
+        "weight": 6
+      },
+      {
+        "term": "article/related/{id}",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/Api/Mock/SmaregiMockResponder.php:125",
+        "snippet": "// /pos/customers/{id} (existence check or delete)",
+        "weight": 6
+      },
+      {
+        "term": "article/related/{id}",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/Api/Mock/SmaregiMockResponder.php:74",
+        "snippet": "// /pos/products/{id} (update or delete)",
+        "weight": 6
+      },
+      {
+        "term": "article/related/1043",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-purchase-unisearch-list-client.js:244",
+        "snippet": "const $keywords = $('#purchase-list-related-keywords');",
+        "weight": 4
+      },
+      {
+        "term": "article/related/{",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbArchetype.php:93",
+        "snippet": "#[ORM\\JoinTable(name: 'dtb_article_archetype')]",
+        "weight": 4
+      },
+      {
+        "term": "article/related/{",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbArticle.php:25",
+        "snippet": "#[ORM\\Table(name: 'dtb_article')]",
+        "weight": 4
+      },
+      {
+        "term": "article/related/{",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbDeck.php:185",
+        "snippet": "#[ORM\\JoinTable(name: 'dtb_article_deck')]",
+        "weight": 4
+      },
+      {
+        "term": "article/related/{",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbDeck.php:187",
+        "snippet": "#[ORM\\InverseJoinColumn(name: 'article_id', referencedColumnName: 'id')]",
+        "weight": 4
+      },
+      {
+        "term": "article/related/1043",
+        "termType": "path",
+        "role": "Locale",
+        "ref": "src/Eccube/Resource/locale/messages.en.yaml:1095",
+        "snippet": "front.shopping.reserve_return_modal.return.nonconformity.not_applicable.li1: \"Scratches, stains, or age-related deterioration already noted on the product page.\"",
+        "weight": 4
+      },
+      {
+        "term": "article/related/1043",
+        "termType": "path",
+        "role": "Locale",
+        "ref": "src/Eccube/Resource/locale/messages.en.yaml:1432",
+        "snippet": "admin.common.delete_error_foreign_key: \"Sorry, we are unable to delete %name%, because it has related data.\"",
+        "weight": 4
+      },
+      {
+        "term": "article/related/1043",
+        "termType": "path",
+        "role": "Locale",
+        "ref": "src/Eccube/Resource/locale/messages.en.yaml:776",
+        "snippet": "front.product.related_category: Related Category",
+        "weight": 4
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 4,
+    "implementationGapRequirementCount": 2,
+    "rows": [
+      {
+        "findingId": "a17-02_0517_sheet-4_id-conformance-bb37c3e32fee",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "DB・保存/更新処理未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4:1605,1656",
+        "designRequirement": "dtb_article.wp_post_id で基準記事を特定し、dtb_article.deleted_at による論理削除で削除済みは対象外。",
+        "implementationActual": "WHERE a1.wp_post_id = :wpPostId のみで a1.deleted_at IS NULL がない。",
+        "mismatchReason": "削除済みの基準記事でも関連記事検索の基準になり得る。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:75",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "基準記事の論理削除判定",
+            "design": "dtb_article.wp_post_id で基準記事を特定し、dtb_article.deleted_at による論理削除で削除済みは対象外。",
+            "implementation": "WHERE a1.wp_post_id = :wpPostId のみで a1.deleted_at IS NULL がない。",
+            "mismatch": "削除済みの基準記事でも関連記事検索の基準になり得る。"
+          }
+        ]
+      },
+      {
+        "findingId": "a17-02_0517_sheet-4_id-conformance-bb37c3e32fee",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "DB・保存/更新処理未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4:1605,1656",
+        "designRequirement": "記事は dtb_article.deleted_at による論理削除で削除済みは応答対象外。",
+        "implementationActual": "a2 側にも a2.deleted_at IS NULL がない。",
+        "mismatchReason": "削除済み関連記事が応答配列に含まれ得る。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:75",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "関連記事の論理削除判定",
+            "design": "記事は dtb_article.deleted_at による論理削除で削除済みは応答対象外。",
+            "implementation": "a2 側にも a2.deleted_at IS NULL がない。",
+            "mismatch": "削除済み関連記事が応答配列に含まれ得る。"
+          }
+        ]
+      },
+      {
+        "findingId": "a17-02_0517_sheet-4_id-conformance-2e708b350ab7",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4:1623",
+        "designRequirement": "共有度の高い順。",
+        "implementationActual": "has_same_deck, has_same_archetype, has_same_card, has_same_event_detail の固定優先順位 DESC。",
+        "mismatchReason": "共有フラグ数の多さと実装順序が一致しないケースがある。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:110",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "並び順",
+            "design": "共有度の高い順。",
+            "implementation": "has_same_deck, has_same_archetype, has_same_card, has_same_event_detail の固定優先順位 DESC。",
+            "mismatch": "共有フラグ数の多さと実装順序が一致しないケースがある。"
+          }
+        ]
+      },
+      {
+        "findingId": "a17-02_0517_sheet-4_id-conformance-2e708b350ab7",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4:1623",
+        "designRequirement": "明示なし。",
+        "implementationActual": "最後に a2.wp_post_id ASC。",
+        "mismatchReason": "同順位処理自体は追加仕様だが、主排序が共有度ではない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:110",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "同順位処理",
+            "design": "明示なし。",
+            "implementation": "最後に a2.wp_post_id ASC。",
+            "mismatch": "同順位処理自体は追加仕様だが、主排序が共有度ではない。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 18,
+    "verdictedCount": 18,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 18,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-d87c4da747",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "・ 記事IDから関連する記事情報検索しJSON出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-c9afd710a8",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "設定しない場合は取得件数20件とする",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-c54871a6e4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "404.0 該当データがない場合",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-4066ccd040",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの関連記事取得処理、ルート定義、記事を扱うリポジトリを正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-d602211bd5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-6a0a634b0e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "検索クエリに一致する記事の取得（記事検索取得を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-42047013f3",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "関連の判定ロジックの詳細（実装を確認値とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-e5dba5c352",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "記事連携テーブルは現行（pf-api）と移行先（ec-cube-enterprise）でスキーマが同一の構成である。DB関連の記述は移行先を正とする。関連の判定に用いる共有（同一デッキ・アーキタイプ・カード・イベント詳細）は、記事との中間テーブル（ dtb_article_deck ・ dtb_article_archetype ・ dtb_article_card ・ dtb_article_event_detail ）の一致で評価する。基準記事の特定には dtb_article.wp_post_id を用い、記事は dtb_article.deleted_at による論理削除で削除済みは対象外とする。応答の hasSameDeck ・ hasSameArchetype ・ hasSameCard ・ hasSameEventDetail は各中間テーブルの共有有無に対応する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-c9889f0bcc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "指定記事IDに関連する記事。関連の判定は実装を確認値とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-c40ae82d6a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "関連記事の配列を返す。同一デッキ・アーキタイプ・カード・イベント詳細のいずれかを共有する記事を関連とみなし、共有度の高い順に並ぶ。各要素は以下のフィールドを持つ。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-bed4a51a20",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "成功時の応答例（実装確認値に基づく代表値）。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-c08499f4a9",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-f8f3b3bb99",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-12e17ca9af",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-7785ceb881",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "呼び出し時点の記事情報を返す。本APIはデータを更新しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-9c9d33f9f6",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "基準記事の特定（ wp_post_id ）と論理削除判定に用いる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-ab17e5a3bd",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "共有有無の判定に用いる中間テーブル。応答の hasSameDeck 等に対応する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a17-02_0517_sheet-4_id-req-55988490b1",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

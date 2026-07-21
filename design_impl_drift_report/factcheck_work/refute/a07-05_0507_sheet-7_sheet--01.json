@@ -1,0 +1,20 @@
+{
+  "chunkId": "a07-05_0507_sheet-7_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-05_0507_sheet-7_sheet.json#a07-05_0507_sheet-7_sheet-conformance-e93dfe110454",
+      "refuted": false,
+      "reason": "反証失敗。設計はHTML行1698/1705/1707/1712/1732/1746で一貫して入力検証失敗をHTTP 400と明記し、サンプル(1719-1725)も code:400 に「ステータスを選択してください。」「1つ以上の商品を選んでください。」を返す。これらは UpdateBuyOrderDto の Assert メッセージ(order_status NotNull, order_details NotNull/Count, #[Assert\\Valid]で UpdateBuyOrderDetailDto の name NotBlank/Length へカスケード)と完全一致し、いずれも #[MapRequestPayload] 経由で検証される。BuyOrderController.php:171 は #[MapRequestPayload] を validationFailedStatusCode 未指定で使用。vendor MapRequestPayload.php:42 で既定は Response::HTTP_UNPROCESSABLE_ENTITY(422) と実確認。別実装の反証を試みたが、(a) src 内に validationFailedStatusCode の上書きは皆無、(b) MapRequestPayload( に引数を与える箇所なし(全て素の属性)、(c) 独自 RequestPayloadValueResolver 等のカスタムリゾルバも存在せず、(d) ExceptionListener.php:94-101 の HttpExceptionInterface 分岐は HTTP_UNPROCESSABLE_ENTITY を 422 のまま返し 400 へ再マップしない。よって設計400と実装422の食い違いは実在。指摘維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-05_0507_sheet-7_sheet.json#a07-05_0507_sheet-7_sheet-conformance-26dbb897bddd",
+      "refuted": false,
+      "reason": "反証失敗。設計HTML行1712のレスポンス失敗表は401/404を『本文を持たない』、400/500のみ『{code, errors}』と明確に区別し、エラー処理節(1745-1746)も404は本文言及なし。実装 BuyOrderController.php:175 は対象無しで NotFoundException('買取情報が見つかりません') を送出、NotFoundException.php:29-34 は BaseApiException として statusCode=HTTP_NOT_FOUND(404)・errors=['買取情報が見つかりません'] を保持。ExceptionListener.php:72-142 の isAppApi 分岐には空ボディを返す経路が一切存在せず、必ず new JsonResponse(['code'=>$statusCode,'errors'=>$errors], $statusCode)(136-139)を返す。別経路(404を先に握って空ボディ化する別リスナ/Controller)を探したが無し。当ルートは App/MTGBuyer 配下の買取アプリ向けAPIで isAppApi=真(同一分岐に400/500の他指摘も依存)。よって404でも {code:404, errors:[...]} のJSON本文が返り、設計『本文を持たない』と食い違う。指摘維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-05_0507_sheet-7_sheet.json#a07-05_0507_sheet-7_sheet-conformance-7238baebc48d",
+      "refuted": false,
+      "reason": "反証失敗。設計は入出力表(1707)・バリデーション節(1732)で明細 name を必須・最大65535と規定。実装 UpdateBuyOrderDetailDto.php:32 は Assert\\Length(max: 65535) で65535まで検証通過。保存先を確認すると UpdateBuyOrderAction.php:184-187 で productClassId===null||===0 の明細を個別入力商品と判定し、:216-223 buildIndivisualInputProduct が DtbBuyOrderIndivisualInputProduct を生成し :223 で ->setName($orderDetail->name) にDTOのnameを直接格納。当該カラムは DtbBuyOrderIndivisualInputProduct.php:35 で type: STRING, length: 255 と実確認。別の保存先(より大きいカラム)を探したが、個別入力商品の name はこのエンティティのみで、カード明細(product_class_id≠0)は買取代表カード経由で name を直接保持しない。したがって256〜65535文字の name は検証通過後に255カラムへ永続化できず(DBエラー/切り詰め)、永続化可能最大長が設計65535に満たない実装違いは実在。指摘維持。"
+    }
+  ]
+}

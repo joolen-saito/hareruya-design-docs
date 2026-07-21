@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_19_admin_product_product_section_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・ダウンロード発火・HTTP応答ヘッダ・ファイル名・URL・遷移などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言や Form 制約をオラクル化しない。**CSV の中身（列・行・並び順・エンコーディング）は手動確認**とし、自動化はダウンロード発火・ファイル名・応答ヘッダ・UI部品・未認証ガードに限る。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・ダウンロード発火・HTTP応答ヘッダ・ファイル名・URL・遷移などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言や Form 制約をオラクル化しない。**CSV の中身（列・行・並び順・エンコーディング）は手動確認**とし、自動化はダウンロード発火・ファイル名・応答ヘッダ・UI部品・未認証ガードに限る。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 刷新元は pf-eccube3 だが、刷新先 ec-cube-enterprise に同等画面・ルートが実在する（`SectionController::export` admin_product_section_export＝GET /<route>/product/section/export :199、リンクは section.twig:44）。**screenExists=true**。
 
@@ -26,38 +26,38 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-001	IT-25	UI部品	P2	部門一覧に「CSV出力」リンクが表示される	管理者ログイン済／SEED-M03-19-ADMIN	—	"1. 部門一覧(/admin/product/section)を開く"	画面ヘッダに「CSV出力」リンク（href$=/product/section/export）が表示されること。
-m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-002	IT-25	UI部品	P3	部門一覧に「CSV入力」リンクが表示される	管理者ログイン済／SEED-M03-19-ADMIN	—	"1. 部門一覧を開く"	画面ヘッダに別ルート（master_csv_upload・本出力とは別経路）のCSV取込リンクが表示されること（href＝ルート由来で判定。実装ラベルは表記ゆれあり＝文言固定しない）。
-m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-003	IT-03	外部画面	P3	部門編集画面ヘッダにも同じ「CSV出力」リンクが表示される	管理者ログイン済／SEED-M03-19-SECTION（部門1件以上）	既存部門ID	"1. 部門編集画面(/admin/product/section/{id})を開く"	編集画面ヘッダにも一覧と同一の「CSV出力」リンクが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-001	IT-25	UI部品	P2	部門一覧に「CSV出力」リンクが表示される	管理者ログイン済／SEED-M03-19-ADMIN	—	1. 部門一覧(/admin/product/section)を開く	画面ヘッダに「CSV出力」リンク（href$=/product/section/export）が表示されること。				
+m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-002	IT-25	UI部品	P3	部門一覧に「CSV入力」リンクが表示される	管理者ログイン済／SEED-M03-19-ADMIN	—	1. 部門一覧を開く	画面ヘッダに別ルート（master_csv_upload・本出力とは別経路）のCSV取込リンクが表示されること（href＝ルート由来で判定。実装ラベルは表記ゆれあり＝文言固定しない）。				
+m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-003	IT-03	外部画面	P3	部門編集画面ヘッダにも同じ「CSV出力」リンクが表示される	管理者ログイン済／SEED-M03-19-SECTION（部門1件以上）	既存部門ID	1. 部門編集画面(/admin/product/section/{id})を開く	編集画面ヘッダにも一覧と同一の「CSV出力」リンクが表示されること。				
 m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-010	IT-16	実行結果	P1	「CSV出力」押下でダウンロードが発火する	管理者ログイン済／SEED-M03-19-ADMIN	—	"1. 部門一覧を開く
-2. 「CSV出力」リンクを押下"	ダウンロード(download)イベントが発火し、HTML一覧へ画面遷移しないこと。
+2. 「CSV出力」リンクを押下"	ダウンロード(download)イベントが発火し、HTML一覧へ画面遷移しないこと。				
 m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-011	IT-27	実行結果	P1	ダウンロードファイル名が section_<日時>.csv 形式である	管理者ログイン済／SEED-M03-19-ADMIN	—	"1. 部門一覧を開く
-2. 「CSV出力」リンクを押下しダウンロードを取得"	ダウンロードファイル名が section_YYYYMMDDhhmmss.csv（section_+14桁数字+.csv）形式であること。
-m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-012	IT-13	URL直接アクセス	P2	エクスポートURL直接GETでダウンロードが発火する	管理者ログイン済／SEED-M03-19-ADMIN	—	"1. /admin/product/section/export へ直接GETアクセス"	HTML画面を表示せずダウンロードが発火し、ファイル名が section_<日時>.csv 形式であること。
-m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-013	IT-25	HTTPステータス	P1	エクスポート応答が添付ファイルのHTTPヘッダを返す	管理者ログイン済／SEED-M03-19-ADMIN	—	"1. 認証済みコンテキストで /admin/product/section/export を GET し応答ヘッダを観測"	"応答が HTTP 200、Content-Type: application/octet-stream、Content-Disposition: attachment; filename=section_<日時>.csv を返すこと。"
-m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-020	IT-15	未認証	P1	未ログインでエクスポートURL→管理ログイン画面へ誘導	未ログイン	—	"1. 未ログインで /admin/product/section/export へGETアクセス"	管理ログイン画面（/admin/login・#login_id 表示）へ誘導されること。
+2. 「CSV出力」リンクを押下しダウンロードを取得"	ダウンロードファイル名が section_YYYYMMDDhhmmss.csv（section_+14桁数字+.csv）形式であること。				
+m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-012	IT-13	URL直接アクセス	P2	エクスポートURL直接GETでダウンロードが発火する	管理者ログイン済／SEED-M03-19-ADMIN	—	1. /admin/product/section/export へ直接GETアクセス	HTML画面を表示せずダウンロードが発火し、ファイル名が section_<日時>.csv 形式であること。				
+m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-013	IT-25	HTTPステータス	P1	エクスポート応答が添付ファイルのHTTPヘッダを返す	管理者ログイン済／SEED-M03-19-ADMIN	—	1. 認証済みコンテキストで /admin/product/section/export を GET し応答ヘッダを観測	応答が HTTP 200、Content-Type: application/octet-stream、Content-Disposition: attachment; filename=section_<日時>.csv を返すこと。				
+m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-020	IT-15	未認証	P1	未ログインでエクスポートURL→管理ログイン画面へ誘導	未ログイン	—	1. 未ログインで /admin/product/section/export へGETアクセス	管理ログイン画面（/admin/login・#login_id 表示）へ誘導されること。				
 m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-030	IT-25	確認ダイアログ	P2	ダウンロード前に確認ダイアログを介さず一覧に留まる	管理者ログイン済／SEED-M03-19-ADMIN	—	"1. 部門一覧を開く
-2. 「CSV出力」リンクを押下"	出力前の確認ダイアログ(dialog)が表示されず、部門一覧URLに留まること。
+2. 「CSV出力」リンクを押下"	出力前の確認ダイアログ(dialog)が表示されず、部門一覧URLに留まること。				
 m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-014	IT-15	セッション/Cookie	P3	エクスポート応答で新規Cookie/セッションを設定しない	管理者ログイン済／SEED-M03-19-ADMIN	—	"1. 認証済みコンテキストのCookie集合を取得
 2. /admin/product/section/export を GET
-3. 取得後のCookie集合を再取得"	エクスポート応答が新たなCookieを発行せず、取得前後でブラウザのCookie集合が増えないこと（設計書「セッションを更新しない／新Cookieを設定しない」由来。Cookie名はオラクル化しない）。
-m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-015	IT-23	入出力	P2	任意クエリ付きGETでも全件CSVがダウンロードされる（クエリ無視）	管理者ログイン済／SEED-M03-19-ADMIN	任意クエリ（?dummy=1&keyword=zzz 等）	"1. /admin/product/section/export に任意クエリを付与してGET"	クエリの有無/内容に関わらずダウンロードが発火し、ファイル名が section_<日時>.csv 形式であること（設計書「入出力＝検索条件/編集値は渡らず常に全件」由来。全件・内容一致はCSV本文＝手動102）。
+3. 取得後のCookie集合を再取得"	エクスポート応答が新たなCookieを発行せず、取得前後でブラウザのCookie集合が増えないこと（設計書「セッションを更新しない／新Cookieを設定しない」由来。Cookie名はオラクル化しない）。				
+m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-015	IT-23	入出力	P2	任意クエリ付きGETでも全件CSVがダウンロードされる（クエリ無視）	管理者ログイン済／SEED-M03-19-ADMIN	任意クエリ（?dummy=1&keyword=zzz 等）	1. /admin/product/section/export に任意クエリを付与してGET	クエリの有無/内容に関わらずダウンロードが発火し、ファイル名が section_<日時>.csv 形式であること（設計書「入出力＝検索条件/編集値は渡らず常に全件」由来。全件・内容一致はCSV本文＝手動102）。				
 m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-016	IT-03	外部画面	P3	部門編集画面からCSV出力押下でダウンロードが発火する（雛形=要シード）	管理者ログイン済／SEED-M03-19-SECTION（既存部門1件以上）	既存部門ID	"1. 部門編集画面(/admin/product/section/{id})を開く
-2. 「CSV出力」リンクを押下"	編集画面起点でもダウンロードが発火し、ファイル名が section_<日時>.csv 形式であること（設計書「編集画面でも同一CSVが返る」由来。CSV内容の一覧時との同一性は手動102）。
+2. 「CSV出力」リンクを押下"	編集画面起点でもダウンロードが発火し、ファイル名が section_<日時>.csv 形式であること（設計書「編集画面でも同一CSVが返る」由来。CSV内容の一覧時との同一性は手動102）。				
 m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-101	IT-27	実行結果	P1	CSVの1行目が固定の5列見出しである（手動）	管理者ログイン済／SEED-M03-19-SECTION	—	"1. CSVを出力しファイルを開く
-2. 1行目を確認する"	1行目がソース固定の5列見出し（ID・部門名・部門コード・免税区分・表示フラグ）であること。店舗設定のCSV項目定義で増減しないこと。
+2. 1行目を確認する"	1行目がソース固定の5列見出し（ID・部門名・部門コード・免税区分・表示フラグ）であること。店舗設定のCSV項目定義で増減しないこと。				
 m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-102	IT-23	実行結果	P1	2行目以降が mtb_section 全件・部門コード昇順である（手動）	管理者ログイン済／SEED-M03-19-SECTION（複数部門・コード混在順）	—	"1. CSVを出力しファイルを開く
-2. データ行を確認する"	2行目以降が部門マスタ全件で、部門コード昇順に並ぶこと（一覧テーブルの表示順とは一致しない場合がある）。
+2. データ行を確認する"	2行目以降が部門マスタ全件で、部門コード昇順に並ぶこと（一覧テーブルの表示順とは一致しない場合がある）。				
 m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-103	IT-15	状態変化	P2	免税区分は整数値で出力される（一覧は翻訳ラベル）（手動）	管理者ログイン済／SEED-M03-19-SECTION（免税区分の値が既知）	—	"1. CSVを出力しファイルを開く
-2. 免税区分列を確認する"	免税区分列がDBの整数値そのままで出力されること（一覧画面の翻訳ラベル表現とは異なること）。
+2. 免税区分列を確認する"	免税区分列がDBの整数値そのままで出力されること（一覧画面の翻訳ラベル表現とは異なること）。				
 m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-104	IT-26	登録内容	P2	MTGBuyer表示フラグが1/0の整数で出力される（手動）	管理者ログイン済／SEED-M03-19-SECTION（表示/非表示混在）	—	"1. CSVを出力しファイルを開く
-2. 表示フラグ列を確認する"	表示フラグが表示なら1・非表示なら0の整数で出力されること。
-m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-105	IT-27	実行結果	P2	部門0件のとき見出しのみのファイルになる（手動）	管理者ログイン済／SEED-M03-19-EMPTY（mtb_section 0件）	—	"1. CSVを出力しファイルを開く"	見出し1行のみでデータ行が無いファイルとなること。
-m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-106	IT-27	実行結果	P3	文字コード・BOM・区切りが設定どおりである（手動）	管理者ログイン済／SEED-M03-19-SECTION	—	"1. CSVを出力しバイナリ/エンコーディングを確認する"	eccube_csv_export_encoding に従い変換され、UTF-8指定時は先頭にBOMが付き、区切りが eccube_csv_export_separator であること。
+2. 表示フラグ列を確認する"	表示フラグが表示なら1・非表示なら0の整数で出力されること。				
+m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-105	IT-27	実行結果	P2	部門0件のとき見出しのみのファイルになる（手動）	管理者ログイン済／SEED-M03-19-EMPTY（mtb_section 0件）	—	1. CSVを出力しファイルを開く	見出し1行のみでデータ行が無いファイルとなること。				
+m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-106	IT-27	実行結果	P3	文字コード・BOM・区切りが設定どおりである（手動）	管理者ログイン済／SEED-M03-19-SECTION	—	1. CSVを出力しバイナリ/エンコーディングを確認する	eccube_csv_export_encoding に従い変換され、UTF-8指定時は先頭にBOMが付き、区切りが eccube_csv_export_separator であること。				
 m03-19_admin_product_product_section_csv_export（商品管理 — 部門 CSV 出力）	E2E-M03-19-107	IT-26	副作用	P2	CSV出力前後で mtb_section が不変である（参照系・DB副作用なし）（手動）	管理者ログイン済／SEED-M03-19-SECTION	—	"1. mtb_section の件数/対象行を記録する
 2. CSVを出力する
-3. mtb_section の件数/対象行を再取得し比較する"	出力前後で mtb_section のレコード件数・内容が変化しないこと（設計書「副作用＝DB更新は行わない」「DB操作＝参照系」由来。DB状態の確認＝手動）。
+3. mtb_section の件数/対象行を再取得し比較する"	出力前後で mtb_section のレコード件数・内容が変化しないこと（設計書「副作用＝DB更新は行わない」「DB操作＝参照系」由来。DB状態の確認＝手動）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

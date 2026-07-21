@@ -1,0 +1,172 @@
+{
+  "id": "f06-06-shopping-history-status-image-not-used",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-06_0304_sheet-8_sheet.json",
+  "sourceFindingId": "f06-06_0304_sheet-8_sheet-conformance-c9d958dbae28",
+  "classification": "フロント注文",
+  "feature": "注文購入履歴一覧",
+  "issueCategory": "実装違い",
+  "issue": "購入履歴一覧の処理状態が注文ステータス別画像ではなくテキストラベルで表示される",
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "reproSteps": [
+    "任意の注文履歴を持つ会員で `http://localhost:8080/ja/mypage/shopping_history` を表示する",
+    "注文行の「処理状態」欄を確認する",
+    "注文ステータスに応じた画像が表示されるか、ステータス名のテキストラベルが表示されるか確認する"
+  ],
+  "expected": [
+    "注文購入履歴一覧の要素13「処理状態」は画像として表示する",
+    "注文ステータスと表示画像の紐付けは「別添資料_注文ステータスと表示画像の紐付け」シートに従う",
+    "スマレジの取引データの場合は処理状態を非表示にする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の購入履歴一覧 `shopping_history.twig` は、注文ステータスIDから `completed` / `cancelled` / `pending` のCSS修飾子を決め、処理状態欄では `<span class=\"c-hareruya-label--status ...\">{{ Order.OrderStatus.name }}</span>` を描画する。`img` やステータス画像パスは使っておらず、注文ステータス別画像ではなく色付きテキストラベルで表示している。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise ステータスIDをCSS修飾子へ変換",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 82,
+          "end": 95,
+          "language": "twig",
+          "contains": [
+            "{% set statusId = Order.OrderStatus.id %}",
+            "{% set statusCssModifier = 'completed' %}",
+            "{% set statusCssModifier = 'cancelled' %}",
+            "{% set statusCssModifier = 'pending' %}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 処理状態はテキストラベルで描画",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 193,
+          "end": 200,
+          "language": "twig",
+          "contains": [
+            "{% if Order.isEcOrder or Order.isOtcAwaitingPickup %}",
+            "{{ 'front.mypage.shopping_history.col.status'|trans }}",
+            "<span class=\"c-hareruya-label--status c-hareruya-label--status-{{ statusCssModifier }}\">{{ Order.OrderStatus.name }}</span>"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 詳細画面もテキストラベル表示",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig",
+          "start": 107,
+          "end": 112,
+          "language": "twig",
+          "contains": [
+            "{{ 'front.mypage.shopping_history.col.order_status'|trans }}",
+            "<span class=\"c-hareruya-label--status c-hareruya-label--status-{{ statusCssModifier }}\">{{ Order.CustomerOrderStatus }}</span>"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の購入履歴一覧は、処理状態欄で `<img src=\"... img/sys/shopping_status_{{ order.OrderStatus.id }}.gif\">` を表示している。購入履歴詳細でも同じ `img/sys/shopping_status_<注文ステータスID>.gif` を `alt=\"処理状態\"` 付きで表示しており、注文ステータスIDに応じた画像表示になっている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 購入履歴一覧の処理状態画像",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 125,
+          "end": 129,
+          "language": "twig",
+          "contains": [
+            "aria-label=\"処理状態\"",
+            "<img src=\"{{ path('assets', {path: 'img/sys/shopping_status_' ~ order.OrderStatus.id ~ '.gif'}) }}\">"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 購入履歴詳細の処理状態画像",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history_detail.twig",
+          "start": 56,
+          "end": 58,
+          "language": "twig",
+          "contains": [
+            "processimage_",
+            "<img src=\"{{ path('assets', {path: 'img/sys/shopping_status_' ~ order.OrderStatus.id ~ '.gif'}) }}\" alt=\"処理状態\">"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "処理状態は画像で、注文ステータスと表示画像の紐付けシートを参照する",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2705,
+      "end": 2707,
+      "language": "html",
+      "contains": [
+        "id=\"item-sheet-8-13\"",
+        "<td>処理状態</td><td>画像</td>",
+        "注文ステータスと表示画像の紐付けは「注文ステータスと表示画像の紐付け」シートを参照"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "用語定義とJS挙動でも状態に応じた画像と規定",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2783,
+      "end": 2790,
+      "language": "html",
+      "contains": [
+        "処理状態</td><td>注文の処理状態（注文ステータス）。一覧では状態に応じた画像で表す。",
+        "処理状態は状態に応じた画像で表示する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "別添資料として注文ステータスと表示画像の紐付けがある",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 3359,
+      "end": 3368,
+      "language": "html",
+      "contains": [
+        "別添資料_注文ステータスと表示画像の紐付け",
+        "BOステータス",
+        "フロント表示画像"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "処理状態をOrderStatus.nameのspanラベルで表示",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+      "start": 193,
+      "end": 200,
+      "language": "twig",
+      "contains": [
+        "c-hareruya-label--status",
+        "Order.OrderStatus.name"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は注文ステータスID別gif画像を表示",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig",
+      "start": 125,
+      "end": 129,
+      "language": "twig",
+      "contains": [
+        "img/sys/shopping_status_",
+        "order.OrderStatus.id",
+        ".gif"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-06_0304_sheet-8_sheet.json#f06-06_0304_sheet-8_sheet-conformance-c9d958dbae28'",
+      "rg -n \"処理状態|注文ステータス|表示画像|ステータス.*画像|注文ステータスと表示画像|item-sheet-8-13|sheet-8\" hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html",
+      "rg -n \"処理状態|OrderStatus|status|order_status|img|画像|c-hareruya-label--status\" ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html | sed -n '2661,2707p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html | sed -n '2783,2790p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html | sed -n '3359,3368p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig | sed -n '80,102p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig | sed -n '190,201p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig | sed -n '40,112p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig | sed -n '82,130p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history_detail.twig | sed -n '52,59p'"
+    ],
+    "review": "review-pack を生成し、設計HTML、ec-cube-enterprise の購入履歴一覧/詳細テンプレート、pf-eccube3 の購入履歴一覧/詳細テンプレートを手動で再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

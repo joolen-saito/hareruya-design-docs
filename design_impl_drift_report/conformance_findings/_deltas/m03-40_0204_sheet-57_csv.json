@@ -1,0 +1,90 @@
+{
+  "functionId": "m03-40_0204_sheet-57_csv",
+  "featureNo": "M03-40",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-57:12834",
+      "designExpectation": "ナビゲーションの表示名の翻訳キー admin.product.product_shelf_number_csv の値は「棚番号更新CSV登録」である。",
+      "implRef": "src/Eccube/Resource/locale/messages.ja.yaml:1841",
+      "implementationActual": "admin.product.product_shelf_number_csv は「棚番号登録CSVアップロード」と定義されている。",
+      "mismatchReason": "設計はナビ表示名を「棚番号更新CSV登録」と明記しているが、実装の翻訳値は「更新」ではなく「登録」、かつ「CSVアップロード」を含む別文言である。反証として棚番号更新CSV登録、product_shelf_number_csv、棚番号登録CSVを src/Eccube、app/config、html 配下で検索したが、該当翻訳キーの設計値は存在せず、同キーは eccube_nav.yaml:74 からナビに使用される。",
+      "comparisonRows": [
+        {
+          "item": "翻訳キー",
+          "design": "admin.product.product_shelf_number_csv",
+          "implementation": "admin.product.product_shelf_number_csv",
+          "mismatch": "キーは一致"
+        },
+        {
+          "item": "表示値",
+          "design": "棚番号更新CSV登録",
+          "implementation": "棚番号登録CSVアップロード",
+          "mismatch": "画面・ナビに出る文言が設計値と異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-57:12872",
+      "designExpectation": "棚番号列は正の整数 ID として解釈し、その ID の dtb_shelf_number が存在する場合だけ shelf_number_id に書く。空または 0 以下として解釈される値は NULL 更新にする。",
+      "implRef": "src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:478",
+      "implementationActual": "棚番号列は RegexValidator('/^[A-Z][-][0-9]{3}$/') を持つ文字列列として定義され、ProductShelfNumberUpdateImportHandler.php:168 と :191 で DtbShelfNumberRepository::findOneByName により名称検索される。",
+      "mismatchReason": "設計は dtb_shelf_number.id の正の整数 ID 入力と ID 実在確認を要求しているが、実装は S-002 形式の棚番号名称を検証し name で検索する。さらに設計では 0 以下は NULL 更新だが、実装では非空の「0」は正規表現不一致で列検証エラーになる。反証として shelfNumberId、棚番号ID、findOneByName、shelf_number_id、replaceShelfNumber を検索し、ID 入力を受ける別実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "CSV値の意味",
+          "design": "dtb_shelf_number.id の正の整数 ID",
+          "implementation": "dtb_shelf_number.name に一致する S-002 形式の名称",
+          "mismatch": "ID 指定ではなく名称指定になっている"
+        },
+        {
+          "item": "存在確認",
+          "design": "dtb_shelf_number.id の存在確認",
+          "implementation": "DtbShelfNumberRepository::findOneByName による name 検索",
+          "mismatch": "参照列が id ではなく name"
+        },
+        {
+          "item": "0以下の扱い",
+          "design": "NULL 更新として許容",
+          "implementation": "RegexValidator('/^[A-Z][-][0-9]{3}$/') に不一致でエラー",
+          "mismatch": "NULL 更新条件が設計と異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-57:12818",
+      "designExpectation": "CSVフォーマット表の 2 列目は項目名「棚番号名称」、主キー◯、書式・制限「文字型」、必須◯、入力例「S-002」である。",
+      "implRef": "src/Eccube/Controller/Admin/Product/Csv/ProductShelfNumberCsvController.php:185",
+      "implementationActual": "getCsvHeader() は 2 列目を「棚番号」として返し、getRequiredCsvHeader() は「商品コード」のみを必須にしている。専用ハンドラも ColumnDefinitions::shelfNumberId() を setRequired(true) せず任意列として扱う。",
+      "mismatchReason": "設計の先頭フォーマット表は 2 列目を「棚番号名称」かつ必須として定義しているが、実装の画面・雛形ヘッダは「棚番号」で、必須バッジおよび必須検証は商品コードのみである。反証として 棚番号名称、棚番号、getRequiredCsvHeader、shelfNumberId を Controller/Service/Twig/locale/config 配下で検索したが、本機能のヘッダを棚番号名称必須として出す実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "2列目ヘッダ",
+          "design": "棚番号名称",
+          "implementation": "棚番号",
+          "mismatch": "CSVヘッダ名が異なる"
+        },
+        {
+          "item": "2列目必須性",
+          "design": "必須◯",
+          "implementation": "getRequiredCsvHeader() は商品コードのみ、棚番号列は setRequired(true) なし",
+          "mismatch": "必須扱いがない"
+        },
+        {
+          "item": "画面フォーマット表",
+          "design": "棚番号名称に必須表示",
+          "implementation": "headers のキー「棚番号」を表示し、必須バッジは商品コードのみ",
+          "mismatch": "利用者に提示されるフォーマットが設計と異なる"
+        }
+      ]
+    }
+  ]
+}

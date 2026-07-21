@@ -1,0 +1,150 @@
+{
+  "functionId": "m12-03_0211_sheet-10_sheet",
+  "featureNo": "M12-03",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-10:2518,2527",
+      "designExpectation": "検索ボタン押下のURLエンドポイントは POST /{admin_route}/analysis/sales/result とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:62, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/sales.twig:105",
+      "implementationActual": "実装は POST /{admin_route}/analysis/sales/search（admin_analysis_sales_search）へ送信する。/analysis/sales/result のルートは存在しない。",
+      "mismatchReason": "設計の外部契約である検索実行URLが /result だが、Controller と Twig は /search を実装している。反証として admin_analysis_sales_result, analysis/sales/result, sales/result を検索したが該当ルートは無く、admin_analysis_sales_search のみ存在した。",
+      "comparisonRows": [
+        {
+          "item": "検索実行URL",
+          "design": "POST /{admin_route}/analysis/sales/result",
+          "implementation": "POST /{admin_route}/analysis/sales/search",
+          "mismatch": "URLエンドポイントが異なる"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-10:2522,2532",
+      "designExpectation": "各行に平均単価・数量・合計・件数とそれぞれの割合を表示し、数量割合・合計割合・件数割合は合計に対する各行の比率を100倍し小数点以下を切り捨てて算出する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/sales.twig, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml）",
+      "implementationActual": "集計結果テーブルはカテゴリ/商品コード/商品名、平均単価、数量、合計、件数のみを表示し、Repository も total, sales, price, order_count のみ算出する。割合列・割合算出結果は無い。",
+      "mismatchReason": "sales.twig:274-277,289-292 は平均単価・数量・合計・件数のみで、割合列が無い。OrderItemRepository.php:209-212,317-324 も total/sales/price/order_count と合計のみを返し、quantity_ratio/total_ratio/order_count_ratio 等を算出しない。割合・比率・ratio・cumulative で反証検索したが、本機能の割合表示実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "数量割合",
+          "design": "各行の数量 ÷ 合計数量 × 100 を小数点以下切り捨てで表示",
+          "implementation": "未算出・未表示",
+          "mismatch": "割合列が無い"
+        },
+        {
+          "item": "合計割合",
+          "design": "各行の合計 ÷ 合計金額 × 100 を小数点以下切り捨てで表示",
+          "implementation": "未算出・未表示",
+          "mismatch": "割合列が無い"
+        },
+        {
+          "item": "件数割合",
+          "design": "各行の件数 ÷ 合計件数 × 100 を小数点以下切り捨てで表示",
+          "implementation": "未算出・未表示",
+          "mismatch": "割合列が無い"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-10:2531",
+      "designExpectation": "集計単位は商品・カテゴリ・支払方法・購入グループ・都道府県・性別・利用端末・年代（会員）から選択でき、指定に応じてグループ化キーを切り替える。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/sales.twig, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml）",
+      "implementationActual": "SalesType::SUMMARY_TYPE は 商品(product_id) と カテゴリ(class_category_name) の2択のみ。Repository も product_id と class_category_name の分岐のみ実装している。",
+      "mismatchReason": "SalesType.php:50-52 は商品・カテゴリのみを定義し、OrderItemRepository.php:198,214-223 はカテゴリ名または商品コードでしかグループ化しない。payment, purchase_group/customer_group, pref, sex, device_type, age/年代 へ翻案して検索したが、本機能の集計単位としての実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "商品",
+          "design": "選択可能",
+          "implementation": "実装あり",
+          "mismatch": "なし"
+        },
+        {
+          "item": "カテゴリ",
+          "design": "選択可能",
+          "implementation": "実装あり",
+          "mismatch": "なし"
+        },
+        {
+          "item": "支払方法・購入グループ・都道府県・性別・利用端末・年代（会員）",
+          "design": "選択可能で各キーにグループ化",
+          "implementation": "未実装",
+          "mismatch": "設計上の集計単位が不足"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-10:2522,2531",
+      "designExpectation": "入力項目として、カテゴリ、都道府県、性別、誕生日From・To、利用端末、売上分析タグ、カードセット、平均単価From・To、数量From・To、状態を持ち、絞り込みでは都道府県・性別・誕生日・利用端末も対応する結合・条件を追加する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/sales.twig, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php）",
+      "implementationActual": "フォームと検索条件はカテゴリ、状態、売上分析タグ、カードセット、平均単価、数量など一部のみ実装。都道府県、性別、誕生日From・To、利用端末のフォーム項目および検索条件追加は無い。",
+      "mismatchReason": "sales.twig:193-235 と SalesType.php:159 以降に表示される絞り込みは category_id, card_condition, tag_sales_analysis, cardset, price_from/to, quantity_from/to 等で、pref/sex/birth_from/birth_to/device_type が無い。OrderItemRepository.php:265-299 も同項目のみ条件化しており、都道府県・性別・誕生日・利用端末の結合/条件が無い。pref, sex, birth, device_type, 都道府県, 性別, 誕生日, 利用端末で反証検索したが本機能内の項目・条件は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "カテゴリ・状態・売上分析タグ・カードセット・平均単価・数量",
+          "design": "入力・絞り込み対象",
+          "implementation": "実装あり",
+          "mismatch": "なし"
+        },
+        {
+          "item": "都道府県",
+          "design": "入力・絞り込み対象",
+          "implementation": "未実装",
+          "mismatch": "フォーム項目とSQL条件が無い"
+        },
+        {
+          "item": "性別",
+          "design": "入力・絞り込み対象",
+          "implementation": "未実装",
+          "mismatch": "フォーム項目とSQL条件が無い"
+        },
+        {
+          "item": "誕生日From・To",
+          "design": "入力・絞り込み対象",
+          "implementation": "未実装",
+          "mismatch": "フォーム項目とSQL条件が無い"
+        },
+        {
+          "item": "利用端末",
+          "design": "入力・絞り込み対象",
+          "implementation": "未実装",
+          "mismatch": "フォーム項目とSQL条件が無い"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-10:2531,2536",
+      "designExpectation": "集計期間は集計日Fromから集計日To未満まで、使用日付で選んだ日付列で絞り込む。集計日Toの初期値は当月末日（初期値は翌月初日相当）とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:106, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:248",
+      "implementationActual": "集計日Toの初期値は last day of this month 23:59:59。検索条件は o.{dateType} <= :summaryDateTo で上限を含む。",
+      "mismatchReason": "設計は To 未満の半開区間だが、実装は <= で上限日時を含める。初期値も設計の翌月初日相当ではなく当月末日 23:59:59 を設定しているため、境界時刻の扱いが設計と異なる。summary_date_to, date_to, <=, < で反証検索しても該当箇所はこの実装のみ。",
+      "comparisonRows": [
+        {
+          "item": "期間上限",
+          "design": "集計日To未満",
+          "implementation": "集計日To以下",
+          "mismatch": "境界値を含める/含めないが異なる"
+        },
+        {
+          "item": "集計日To初期値",
+          "design": "当月末日（初期値は翌月初日相当）",
+          "implementation": "last day of this month 23:59:59",
+          "mismatch": "翌月初日相当ではない"
+        }
+      ]
+    }
+  ]
+}

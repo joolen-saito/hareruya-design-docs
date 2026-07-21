@@ -1,0 +1,85 @@
+{
+  "functionId": "m04-24_0202_sheet-32_sheet",
+  "featureNo": "M04-24",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-32（在庫移動実績CSV登録『・CSVは2,000件を登録上限とする』）",
+      "designExpectation": "在庫移動実績CSV登録はCSV 2,000件を登録上限とし、超過時はエラーとする。",
+      "implRef": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php（上限チェック不在）, src/Eccube/Resource/locale/messages.ja.yaml:5258",
+      "implementationActual": "取込ハンドラ/Importer/UploadActionのいずれにも行数上限(MAX_ROWS)チェックが無い。兄弟のStockJoinListCsvImportHandler.php:46・StockSplitListCsvImportHandler.php:45はconst MAX_ROWS=2000を持つが本機能には無い。モーダル案内文言はmessages.ja.yaml:5258で『（1ファイルの登録上限は10,000件です）』。",
+      "mismatchReason": "設計は2,000件上限だが、実装に件数上限判定が存在せず、画面文言も10,000件と表示している。",
+      "comparisonRows": [
+        {"item": "CSV登録上限件数", "design": "2,000件（超過はエラー）", "implementation": "上限チェック無し", "mismatch": "上限判定が未実装"},
+        {"item": "モーダル案内文言", "design": "2,000件", "implementation": "10,000件（messages.ja.yaml:5258）", "mismatch": "文言が設計と矛盾"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-32（在庫移動実績CSV登録『・エラーがある場合、登録処理を終了し…』『・エラーがなければ登録処理を行う』）",
+      "designExpectation": "1件でもエラーがあれば登録処理を行わずに終了する（全体を登録しない）。",
+      "implRef": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:69-107, src/Eccube/Service/Csv/Importer/CsvImporter.php:242,269-273",
+      "implementationActual": "onValidateRowはエラー行でbreakAll()せずskipRow()で継続。CsvImporter.php:269のcommit判定は $isSuccessful = messageStore->count()===0 || !$hasBreak で、skipのみ($hasBreak=false)ならエラーが有っても正常行をコミットする。onReadRowの行レベルエラーもfalse返却のみで中断しない。",
+      "mismatchReason": "設計は『エラーがあれば登録処理を終了（全体未登録）』だが、実装は行単位スキップで成功行を確定コミットする。",
+      "comparisonRows": [
+        {"item": "エラー時の登録挙動", "design": "エラー1件でも全体を登録せず終了", "implementation": "不正行をskipし成功行はコミット", "mismatch": "部分登録される"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-32（在庫移動実績CSV登録『・移動指示IDに重複がないこと』）",
+      "designExpectation": "在庫移動実績CSVで移動指示IDに重複がないことを検証する。",
+      "implRef": "不在（src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php getRowValidators()=空／onReadRow()に重複検出なし, StockMoveInstructionCsvImporter.php, StockMoveInstructionCsvImportService.php）",
+      "implementationActual": "移動指示ID列はsetRequired(true)+NumericValidatorのみ。ファイル全体で移動指示IDの重複を検出するロジックがgetRowValidators()(空)にもonReadRow()にもImporter/ImportServiceにも無い。存在検証(find)・店舗名一致検証は在るが重複検証だけ無い。",
+      "mismatchReason": "CSV系ファイル一式を確認したが、移動指示IDの重複検証は痕跡なし。",
+      "comparisonRows": [
+        {"item": "移動指示ID重複チェック", "design": "重複不可（検証あり）", "implementation": "重複検出ロジック無し", "mismatch": "未実装"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-32（『3-14 送状No. 65535byte』／登録CSV『2-2 送り状No. 65535byte』）",
+      "designExpectation": "送状No.の最大は65535byteを許容する（カンマ区切りで複数登録可能）。",
+      "implRef": "src/Eccube/Entity/DtbStockMoveInstruction.php:176, src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php:39, src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:263",
+      "implementationActual": "送り状No.はDBカラムlength:255・詳細フォームAssert\\Length max=255・一覧モーダルの入力欄maxlength=255で、いずれも255文字上限。",
+      "mismatchReason": "Entity・詳細FormType・一覧モーダルTwigの3箇所とも255で一致。設計の65535byteと明確な桁違い。",
+      "comparisonRows": [
+        {"item": "送状No.最大長", "design": "65535byte", "implementation": "255文字（DB/Form/Twigとも）", "mismatch": "桁違いに小さい"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "low",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-32（画面部品一覧『3-4 表示件数 初期値=50』）",
+      "designExpectation": "一覧の表示件数（3-4）の初期値は50件。",
+      "implRef": "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:78-79, app/config/eccube/packages/eccube.yaml:140",
+      "implementationActual": "Controllerはsession未設定時eccube_default_page_countを採用し、その値はeccube.yaml:140で10。プルダウン(twig:170)・ページネーション(paginate,:135)は実装済みだが初期値は10。",
+      "mismatchReason": "Controllerが参照する既定値がconfigで10。設計の初期値50と不一致。",
+      "comparisonRows": [
+        {"item": "表示件数の初期値", "design": "50件", "implementation": "10件（eccube_default_page_count）", "mismatch": "初期値相違"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "low",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-32（『2-7 発送状況 複数選択(セレクトボックス) 選択肢：未、済』）",
+      "designExpectation": "検索条件『発送状況』(2-7)は複数選択セレクトボックスで選択肢は未／済。",
+      "implRef": "src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php:141-148, src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:130-134",
+      "implementationActual": "発送状況は複数選択セレクトボックスではなく、独立したチェックボックス2つ(shipment_status_not_done/shipment_status_done、CheckboxType×2)として実装。",
+      "mismatchReason": "フォーム型がCheckboxType×2でTwigも個別チェックボックス描画。設計指定の『複数選択(セレクトボックス)』とは部品種別が異なる。",
+      "comparisonRows": [
+        {"item": "発送状況の入力部品", "design": "複数選択セレクトボックス", "implementation": "チェックボックス×2", "mismatch": "UI部品種別が相違"}
+      ]
+    }
+  ]
+}

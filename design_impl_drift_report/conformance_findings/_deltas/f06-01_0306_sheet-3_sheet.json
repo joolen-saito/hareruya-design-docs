@@ -1,0 +1,45 @@
+{ "functionId": "f06-01_0306_sheet-3_sheet", "featureNo": "F06-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-3 (1-11 メールアドレス(確認) / バリデーション: メールアドレス 不一致メッセージ)",
+      "designExpectation": "(1-11)メールアドレス(確認): 同意する押下時にメール不一致なら「同じメールアドレスを入力してください。」を表示する",
+      "implRef": "src/Eccube/Resource/template/default/Entry/index.twig:282, src/Eccube/Resource/locale/messages.ja.yaml:482",
+      "implementationActual": "サーバ側 RepeatedEmailType→form_error.same_email=「同じメールアドレスを入力してください。」(validators.ja.yaml:55) は設計一致だが、同意する押下時はクライアント側JS検証(data-validation=match)が先行して送信をブロックし、index.twig:282 の data-error-match=front.entry.error.email_mismatch=「メールアドレスが一致しません」(messages.ja.yaml:482) を表示する。hareruya-main.js が data-error-match 値をエラーメッセージとして返却することを確認。",
+      "mismatchReason": "設計はメール確認不一致メッセージを「同じメールアドレスを入力してください。」に固定するが、クライアント側の初出表示文言が別キー(email_mismatch=「メールアドレスが一致しません」)を参照しており乖離。",
+      "comparisonRows": [
+        {"item": "メール確認不一致メッセージ(初出=クライアント側)", "design": "同じメールアドレスを入力してください。", "implementation": "メールアドレスが一致しません (messages.ja.yaml:482 / index.twig:282)", "mismatch": "文言不一致"},
+        {"item": "サーバ側検証メッセージ", "design": "同じメールアドレスを入力してください。", "implementation": "同じメールアドレスを入力してください。 (validators.ja.yaml:55)", "mismatch": "一致(差異なし)"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-3 (1-13 パスワード(確認) / バリデーション: パスワード 不一致メッセージ)",
+      "designExpectation": "パスワード(確認)の不一致メッセージは「同じパスワードを入力してください。」",
+      "implRef": "src/Eccube/Resource/template/default/Entry/index.twig:334, src/Eccube/Resource/locale/messages.ja.yaml:486",
+      "implementationActual": "サーバ側 form_error.same_password=「同じパスワードを入力してください。」(validators.ja.yaml:54) は設計一致だが、同意する押下時にクライアント側JS検証が先行し、index.twig:334 の data-error-match=front.entry.error.password_mismatch=「パスワードが一致しません」(messages.ja.yaml:486) を表示する。",
+      "mismatchReason": "設計はパスワード確認不一致文言を「同じパスワードを入力してください。」に固定するが、クライアント側初出文言が別キー(password_mismatch=「パスワードが一致しません」)を参照しており乖離。",
+      "comparisonRows": [
+        {"item": "パスワード確認不一致メッセージ(初出=クライアント側)", "design": "同じパスワードを入力してください。", "implementation": "パスワードが一致しません (messages.ja.yaml:486 / index.twig:334)", "mismatch": "文言不一致"},
+        {"item": "サーバ側検証メッセージ", "design": "同じパスワードを入力してください。", "implementation": "同じパスワードを入力してください。 (validators.ja.yaml:54)", "mismatch": "一致(差異なし)"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-3 (仮会員登録完了 機能仕様: デッキ登録用ユーザーID（英数字の8文字のランダム文字列で一意）)",
+      "designExpectation": "仮会員登録完了時にデッキ登録用ユーザーID（英数字の8文字のランダム文字列で一意）を登録する",
+      "implRef": "src/Eccube/Service/PlayerService.php:28-46, src/Eccube/Entity/DtbPlayer.php:114-115",
+      "implementationActual": "PlayerService::setNewDeckUserId は StringUtil::random で8桁を生成し do-while + findOneBy で既存チェックするが、DtbPlayer.php:114-115 の ORM Column に unique:true が無く、クラスレベルの UniqueConstraint も無く、app/DoctrineMigrations にユニークインデックスが存在しない。生成チェックから insert までに時間差があり並行登録で重複可能。PlayerService.php:28-31 の TODO コメント自身が『カラム自体にユニーク制約はついていない』『厳密には重複が発生する可能性がゼロではない』と明記。",
+      "mismatchReason": "設計は deck_user_id を『一意』と要求するが、実装は一意性をアプリ側ベストエフォート照合のみで担保し、DB制約もトランザクション直列化も無く重複可能性を実装自身が認めている。",
+      "comparisonRows": [
+        {"item": "deck_user_id 一意性担保", "design": "一意 (DBレベルで保証されるべき一意ID)", "implementation": "アプリ側 do-while + findOneBy のみ。DBユニーク制約/インデックス無し", "mismatch": "一意性の担保レベル不足(重複可能)"},
+        {"item": "桁数/文字種", "design": "英数字8文字ランダム", "implementation": "StringUtil::random 8桁, DtbPlayer カラム length=8", "mismatch": "一致(差異なし)"}
+      ]
+    }
+  ] }

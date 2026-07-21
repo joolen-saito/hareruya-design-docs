@@ -1,0 +1,79 @@
+{
+  "chunkId": "a07-05_0507_sheet-8_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-05_0507_sheet-8_id.json#a07-05_0507_sheet-8_id-conformance-de392aa697d9",
+      "functionId": "a07-05_0507_sheet-8_id",
+      "featureNo": "A07-05",
+      "title": "A07-05 複数ネット買取IDからネット買取受注の商品一覧を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は `[].foilFlg` を boolean と定義するが、実装は SMALLINT の Foil区分値(0/1/2/null)を変換せず返している。",
+      "reason": "設計HTMLのレスポンス表(line 2097)で `[].foilFlg` は型 boolean（フォイルか否か、未設定はnull）と定義され、サンプルレスポンス(line 2109)も `\"foilFlg\": false` と真偽値。しかし実装 BuyMainCardController::getByBuyOrderIds() の line 74 は `'foilFlg' => $BuyMainCard->getFoilFlg()` とエンティティ値をそのまま出力する。DtbBuyMainCard の foil_flg カラム(line 63)は Types::SMALLINT・コメント『Foil区分（0:なし, 1:通常, 2:特殊）』で、getFoilFlg() の戻り値型(line 139)は ?int。したがって JSON では boolean ではなく 0/1/2/null の数値が返り、しかも3値区分のため単純な真偽値化もできない。Controller・Entity・Repository(findByBuyOrderIdsWithApplicationPrices)周辺を確認したが boolean へ変換する整形処理は存在しない。設計を正とすると型不一致の実装違い。",
+      "designEvidence": {
+        "label": "設計要求（レスポンス型）",
+        "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html",
+        "start": 2097,
+        "end": 2097,
+        "contains": ["[].foilFlg", "boolean", "フォイルか否か"]
+      },
+      "implEvidence": [
+        {
+          "label": "レスポンス整形（Controller）",
+          "note": "エンティティの値をそのまま出力",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php",
+          "start": 74,
+          "end": 74,
+          "contains": ["'foilFlg' => $BuyMainCard->getFoilFlg()"]
+        },
+        {
+          "label": "カラム定義（Entity）",
+          "note": "SMALLINTの3値区分",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php",
+          "start": 63,
+          "end": 64,
+          "contains": ["'foil_flg'", "Types::SMALLINT", "Foil区分（0:なし, 1:通常, 2:特殊）"]
+        },
+        {
+          "label": "getter戻り値型（Entity）",
+          "note": "?int を返す",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php",
+          "start": 139,
+          "end": 141,
+          "contains": ["public function getFoilFlg(): ?int", "return $this->foilFlg"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-05_0507_sheet-8_id.json#a07-05_0507_sheet-8_id-conformance-e2f90fd99131",
+      "functionId": "a07-05_0507_sheet-8_id",
+      "featureNo": "A07-05",
+      "title": "A07-05 複数ネット買取IDからネット買取受注の商品一覧を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は `ids` の形式・件数の検証を行わないとするが、実装は preg_match で数字のみを抽出し非数値トークンを検索対象から除外している。",
+      "reason": "設計HTMLのバリデーション表(line 2128)は `ids` について『任意。カンマ区切り文字列として受け取り分解する。形式・件数の検証は行わない。未指定・空文字のときは0件となる。』と明記。入出力(line 2093)も『カンマで分解してIDの配列とし…未指定・空文字のときは空文字を分解した配列で検索するため、結果は0件となる』とし、分解した要素をそのまま検索する前提。だが実装 BuyMainCardController::getByBuyOrderIds() は line 48-51 で explode(',', $ids) 後に array_filter で `preg_match('/^\\d+$/', trim($id)) === 1` を課し、数字のみを残して非数値トークンを除外し(line 52 で intval)、有効IDが空なら空配列を返す(line 55-56)。これは実質的に `ids` の形式検証であり『形式・件数の検証は行わない』という設計要求と一致しない。HTTP 400 を返さない点(設計line 2129)は一致するが、非数値要素を検索配列から落とす挙動が設計より狭い。同Controllerに別の未検証パーサへ委譲する経路は無い。実行時の可観測な結果(0件)は多くの入力で一致し得るためconfidenceはmedium。",
+      "designEvidence": {
+        "label": "設計要求（バリデーション）",
+        "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html",
+        "start": 2128,
+        "end": 2128,
+        "contains": ["カンマ区切り文字列として受け取り分解する", "形式・件数の検証は行わない"]
+      },
+      "implEvidence": [
+        {
+          "label": "IDフィルタリング（Controller）",
+          "note": "数字のみをpreg_matchで抽出",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php",
+          "start": 47,
+          "end": 52,
+          "contains": ["array_filter", "preg_match('/^\\d+$/', trim($id))", "array_map('intval'"]
+        }
+      ]
+    }
+  ]
+}

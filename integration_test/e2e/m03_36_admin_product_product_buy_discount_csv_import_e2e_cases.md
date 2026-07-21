@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_36_admin_product_product_buy_discount_csv_import_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・取込結果メッセージ・ファイルダウンロード発火・URL等のブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装の現挙動・Form制約(NotBlank/CsvMimeType/csv_size)・POM見出し文言をオラクル化しない。TSV は既存IT casesと同一の10列固定。E2E固有情報はTSV後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・取込結果メッセージ・ファイルダウンロード発火・URL等のブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装の現挙動・Form制約(NotBlank/CsvMimeType/csv_size)・POM見出し文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報はTSV後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 > **重要（刷新先未存在 / screenExists=false）**: 本機能の設計は現行 pf-eccube3 プラグイン HareruyaEc のリバースである。刷新先 **ec-cube-enterprise には「買取減額率変更CSV登録」専用画面・取込ハンドラが存在しない**。
 > - 専用ルート `GET/POST /{admin_route}/product/product_buy_discount_csv_upload` は ec-cube-enterprise に無い（`src/Eccube/Controller/Admin/Product/Csv/` を全走査。買取減額率専用コントローラ無し。`product_buy_discount` の grep ヒット 0）。
@@ -32,60 +32,60 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-001	IT-25	UI部品	P1	画面表示でファイル選択・アップロードボタンが表示される	管理ログイン済／SEED-M03-36-ADMIN	—	"1. 商品管理メニューから「買取減額率変更CSV登録」を開く（GET /{admin_route}/product/product_buy_discount_csv_upload）"	ファイル選択欄とCSVアップロードボタンが表示されること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-002	IT-25	UI部品	P2	ボックス見出し「買取減額率変更CSV」が表示される	管理ログイン済／SEED-M03-36-ADMIN	—	"1. 買取減額率変更CSV登録画面を表示する"	ボックス見出しに「買取減額率変更CSV」、サブタイトルに「買取減額率変更CSVアップロード」が表示されること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-003	IT-25	UI部品	P2	フォーマット表に「商品ID」「買取減額率(ID)」の列説明が表示される	管理ログイン済／SEED-M03-36-ADMIN	—	"1. 買取減額率変更CSV登録画面を表示する"	フォーマット表に列「商品ID」「買取減額率(ID)」とセル説明が表示されること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-004	IT-25	表示結果	P2	雛形ファイルダウンロードリンクが表示される	管理ログイン済／SEED-M03-36-ADMIN	—	"1. 買取減額率変更CSV登録画面を表示する"	「雛形ファイルダウンロード」リンク（type=buyDiscount）が表示されること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-005	IT-25	操作起点	P2	当該CSV種別のインポート履歴ブロックが表示される	管理ログイン済／履歴1件以上／SEED-M03-36-HISTORY	—	"1. 買取減額率変更CSV登録画面を表示する"	「CSVインポート履歴」にファイル名・アップロード日時・作業者が新しい順に表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-001	IT-25	UI部品	P1	画面表示でファイル選択・アップロードボタンが表示される	管理ログイン済／SEED-M03-36-ADMIN	—	1. 商品管理メニューから「買取減額率変更CSV登録」を開く（GET /{admin_route}/product/product_buy_discount_csv_upload）	ファイル選択欄とCSVアップロードボタンが表示されること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-002	IT-25	UI部品	P2	ボックス見出し「買取減額率変更CSV」が表示される	管理ログイン済／SEED-M03-36-ADMIN	—	1. 買取減額率変更CSV登録画面を表示する	ボックス見出しに「買取減額率変更CSV」、サブタイトルに「買取減額率変更CSVアップロード」が表示されること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-003	IT-25	UI部品	P2	フォーマット表に「商品ID」「買取減額率(ID)」の列説明が表示される	管理ログイン済／SEED-M03-36-ADMIN	—	1. 買取減額率変更CSV登録画面を表示する	フォーマット表に列「商品ID」「買取減額率(ID)」とセル説明が表示されること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-004	IT-25	表示結果	P2	雛形ファイルダウンロードリンクが表示される	管理ログイン済／SEED-M03-36-ADMIN	—	1. 買取減額率変更CSV登録画面を表示する	「雛形ファイルダウンロード」リンク（type=buyDiscount）が表示されること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-005	IT-25	操作起点	P2	当該CSV種別のインポート履歴ブロックが表示される	管理ログイン済／履歴1件以上／SEED-M03-36-HISTORY	—	1. 買取減額率変更CSV登録画面を表示する	「CSVインポート履歴」にファイル名・アップロード日時・作業者が新しい順に表示されること。				
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-006	IT-15	対象データ	P3	card-csvimport.js と spin.min.js を読み込む	管理ログイン済／SEED-M03-36-ADMIN	—	"1. 買取減額率変更CSV登録画面を表示する
-2. 読み込まれるスクリプトを確認する"	card-csvimport.js と spin.min.js が読み込まれること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-007	IT-25	確認ダイアログ	P3	取込前の確認ダイアログが無い	管理ログイン済／SEED-M03-36-ADMIN	正常CSV	"1. ファイルを選択しアップロードボタンを押下"	取込前の確認ダイアログ（モーダル）が表示されずそのまま送信されること。
+2. 読み込まれるスクリプトを確認する"	card-csvimport.js と spin.min.js が読み込まれること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-007	IT-25	確認ダイアログ	P3	取込前の確認ダイアログが無い	管理ログイン済／SEED-M03-36-ADMIN	正常CSV	1. ファイルを選択しアップロードボタンを押下	取込前の確認ダイアログ（モーダル）が表示されずそのまま送信されること。				
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-008	IT-25	集計条件	P2	当該CSV種別(13)のインポート履歴のみが最新順・最大100件で表示される	管理ログイン済／別CSV種別の履歴も存在／SEED-M03-36-HISTORY	—	"1. 買取減額率変更CSV登録画面を表示する
-2. インポート履歴ブロックを確認する"	CSVインポート履歴には買取減額率変更登録種別の履歴のみが新しい順に表示され（最大100件）、他CSV種別の履歴が混在しないこと。
+2. インポート履歴ブロックを確認する"	CSVインポート履歴には買取減額率変更登録種別の履歴のみが新しい順に表示され（最大100件）、他CSV種別の履歴が混在しないこと。				
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-009	IT-25	UI部品	P3	ファイル選択欄がCSV/TSV形式を受け付ける	管理ログイン済／SEED-M03-36-ADMIN	—	"1. 買取減額率変更CSV登録画面を表示する
-2. ファイル選択欄の受付形式を確認する"	ファイル選択欄がCSV及びTSV形式（text/csv,text/tsv）を選択対象として受け付けること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-010	IT-16	実行結果	P1	正常CSVアップロードで成功メッセージが表示される	管理ログイン済／対象商品・買取減額率ID実在／SEED-M03-36-PRODUCT	"商品ID,買取減額率(ID) の2列・実在商品ID・実在買取減額率ID 1行"	"1. 買取減額率変更CSV登録画面を表示する
-2. 正常CSVを選択しアップロードボタンを押下"	取込成功のフラッシュメッセージが表示されること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-011	IT-26	登録内容	P1	取込成功で対象商品の買取減額率IDが更新される	管理ログイン済／対象商品・買取減額率ID実在／SEED-M03-36-PRODUCT	"実在商品ID・新しい買取減額率ID 1行"	"1. 正常CSVをアップロードする
-2. 当該商品の買取減額率を確認する"	対象商品の買取減額率（移行先 dtb_product.buy_discount_id）がCSVの値に更新されること。
+2. ファイル選択欄の受付形式を確認する"	ファイル選択欄がCSV及びTSV形式（text/csv,text/tsv）を選択対象として受け付けること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-010	IT-16	実行結果	P1	正常CSVアップロードで成功メッセージが表示される	管理ログイン済／対象商品・買取減額率ID実在／SEED-M03-36-PRODUCT	商品ID,買取減額率(ID) の2列・実在商品ID・実在買取減額率ID 1行	"1. 買取減額率変更CSV登録画面を表示する
+2. 正常CSVを選択しアップロードボタンを押下"	取込成功のフラッシュメッセージが表示されること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-011	IT-26	登録内容	P1	取込成功で対象商品の買取減額率IDが更新される	管理ログイン済／対象商品・買取減額率ID実在／SEED-M03-36-PRODUCT	実在商品ID・新しい買取減額率ID 1行	"1. 正常CSVをアップロードする
+2. 当該商品の買取減額率を確認する"	対象商品の買取減額率（移行先 dtb_product.buy_discount_id）がCSVの値に更新されること。				
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-012	IT-26	登録内容	P2	取込成功でインポート履歴が1件追記される	管理ログイン済／SEED-M03-36-PRODUCT	正常CSV	"1. 正常CSVをアップロードする
-2. 画面の履歴ブロックを確認する"	CSVインポート履歴に当該ファイルが1件追記されること。
+2. 画面の履歴ブロックを確認する"	CSVインポート履歴に当該ファイルが1件追記されること。				
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-013	IT-03	画面遷移	P2	アップロード送信後URLは変わらず同一画面が再描画される	管理ログイン済／SEED-M03-36-PRODUCT	正常CSV	"1. 正常CSVをアップロードする
-2. アドレスバーのURLを確認する"	URLは変わらず（PRGパターンではない）POST応答で同一画面が再描画されること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-014	IT-26	更新内容	P2	同一商品が複数行のとき最終行の買取減額率IDが残る	管理ログイン済／対象商品実在／SEED-M03-36-PRODUCT	"同一商品IDを2行・買取減額率IDが異なる"	"1. 同一商品IDを2行含むCSVをアップロードする
-2. 当該商品の買取減額率を確認する"	最終行の買取減額率IDが反映されていること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-015	IT-26	更新内容	P2	買取減額率(ID)空欄の行は買取減額率がNULLに更新される	管理ログイン済／対象商品実在／SEED-M03-36-PRODUCT	"実在商品ID・買取減額率(ID)空欄 1行"	"1. 買取減額率(ID)空欄のCSVをアップロードする
-2. 当該商品の買取減額率を確認する"	対象商品の買取減額率（dtb_product.buy_discount_id）がNULLに更新されること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-016	IT-16	実行結果	P2	TSV(タブ区切り)ファイルでも正常に取込まれる	管理ログイン済／対象商品・買取減額率ID実在／SEED-M03-36-PRODUCT	"拡張子tsv・タブ区切り・実在商品ID/実在買取減額率ID 1行"	"1. タブ区切りTSVファイルを選択しアップロード送信"	取込成功のフラッシュメッセージが表示されること（CSV正常系010とTSV区切りの対）。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-017	IT-16	実行結果	P3	BOM付き/CRLF改行を含む正常ファイルでも取込まれる	管理ログイン済／対象商品実在／SEED-M03-36-PRODUCT	"UTF-8 BOM付き・CRLF改行・実在商品ID/買取減額率ID 1行"	"1. BOM付き・CRLF改行の正常CSVを選択しアップロード送信"	文字コード変換・改行正規化が行われ取込成功のフラッシュメッセージが表示されること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-018	IT-22	部分入力	P2	上限未満(5009行)のCSVは件数超過にならず取込まれる	管理ログイン済／対象商品実在／SEED-M03-36-PRODUCT	"ヘッダ含め5009行（上限5010未満）の正常CSV"	"1. 5009行の正常CSVを選択しアップロード送信"	件数超過メッセージが表示されず取込が成功すること（件数超過異常024と対をなす境界正常系）。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-020	IT-22	必須バリデーション	P1	ファイル未選択で送信すると必須エラーで再描画される	管理ログイン済／SEED-M03-36-ADMIN	ファイル未選択	"1. ファイルを選択せずアップロードボタンを押下"	ファイル必須のエラーメッセージが表示され、同一画面に留まること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-021	IT-15	CSRF	P2	CSRFトークン不正の送信が拒否される	管理ログイン済／SEED-M03-36-ADMIN	"正常CSV＋不正/欠落CSRFトークン"	"1. CSRFトークンを欠落/改ざんしてアップロード送信"	取込されずエラーとなり、DBが更新されないこと。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-022	IT-22	その他のバリデーション	P2	CSV以外のMIMEファイルはフォームエラーになる	管理ログイン済／SEED-M03-36-ADMIN	"拡張子/MIMEがCSVでないファイル"	"1. CSV以外のファイルを選択しアップロード送信"	MIME不正のフォームエラーが表示され、取込が行われないこと。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-023	IT-22	文字列長バリデーション	P2	サイズ上限超過のファイルはフォームエラーになる	管理ログイン済／SEED-M03-36-ADMIN	"設定 csv_size 超過のファイル"	"1. 上限超過のファイルを選択しアップロード送信"	サイズ上限超過のフォームエラーが表示され、取込が行われないこと。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-024	IT-22	部分入力	P2	行数5010以上で件数超過メッセージが表示される	管理ログイン済／SEED-M03-36-ADMIN	"ヘッダ含め5010行以上のCSV"	"1. 5010行以上のCSVを選択しアップロード送信"	件数超過のメッセージが表示され、同一画面が再描画されること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-025	IT-22	その他のバリデーション	P2	ヘッダ/データ行が無いCSVは取込エラーになる	管理ログイン済／SEED-M03-36-ADMIN	"ヘッダのみ又は空CSV"	"1. データ行の無いCSVを選択しアップロード送信"	取込エラーメッセージが errors として表示され、成功フラッシュが出ないこと。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-026	IT-25	UI部品	P2	必須列名が欠落すると列存在エラーで打ち切られる	管理ログイン済／SEED-M03-36-ADMIN	"「商品ID」又は「買取減額率(ID)」列名が欠けた/列数が2でないCSV"	"1. 必須列名を欠いた（列数2でない）CSVをアップロード送信"	列数不正/列存在エラーメッセージが表示され、取込が打ち切られロールバックされること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-027	IT-22	数値バリデーション	P2	商品IDが非数値のとき形式エラーになる	管理ログイン済／SEED-M03-36-ADMIN	"商品ID列に非数値を含むCSV"	"1. 商品IDが非数値のCSVをアップロード送信"	形式エラーメッセージが表示され、取込が完了しないこと。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-028	IT-22	DBとの相関バリデーション	P1	買取減額率IDがマスタ未存在のときエラーになる	管理ログイン済／mtb_buy_discount実在ID既知／SEED-M03-36-BUYDISCOUNT	"mtb_buy_discountに存在しない買取減額率IDのCSV"	"1. 不存在の買取減額率IDのCSVをアップロード送信"	買取減額率IDのマスタ不存在エラーが表示され、取込が完了しないこと。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-029	IT-22	DBとの相関バリデーション	P1	商品が未削除で存在しないときエラーで打ち切られる	管理ログイン済／SEED-M03-36-ADMIN	"未削除で存在しない商品IDのCSV"	"1. 不存在商品IDのCSVをアップロード送信"	商品不存在エラーが表示され、全行処理が打ち切られロールバックされること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-030	IT-25	確認ダイアログ	P1	取込エラー時は成功フラッシュを積まず errors で表示する	管理ログイン済／SEED-M03-36-ADMIN	"いずれかの検証で失敗するCSV"	"1. 検証失敗するCSVをアップロード送信"	成功フラッシュが表示されず、エラー内容が errors として画面に表示されること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-031	IT-26	更新内容	P2	取込失敗時はロールバックしDB・履歴が変わらない	管理ログイン済／対象商品実在／SEED-M03-36-PRODUCT	"途中行で検証失敗するCSV"	"1. 検証失敗するCSVをアップロードする
-2. 対象商品の買取減額率と履歴を確認する"	対象商品の買取減額率が変わらず、インポート履歴も増えないこと。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-032	IT-25	操作起点	P3	商品はあるが補助表サブ行が無い場合の挙動（現行）	管理ログイン済／商品本体ありサブ行なし／SEED-M03-36-NOSUB	"実在商品IDだが補助表サブ行が無い商品のCSV"	"1. 当該CSVをアップロード送信"	（現行設計）補助表サブ行が取得できない場合は取込が成功せずエラー扱いとなること。※移行先は dtb_product 統合により本前提が成立しないため移行方針確定待ち（対象外）。期待値は設計仕様由来とし実装現挙動をオラクル化しない。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-033	IT-22	数値バリデーション	P2	買取減額率(ID)が非数値/負数のとき形式エラーになる	管理ログイン済／SEED-M03-36-ADMIN	"買取減額率(ID)列に非数値又は負数を含むCSV（商品IDは実在・正常）"	"1. 買取減額率(ID)が非数値/負数のCSVをアップロード送信"	買取減額率(ID)の形式エラーメッセージが表示され、取込が完了しないこと（商品ID側の形式検証 E2E-027 と対をなす異常系）。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-034	IT-22	必須バリデーション	P1	商品IDが空欄の行は必須エラーで打ち切られる	管理ログイン済／SEED-M03-36-ADMIN	"商品ID列が空欄の行を含むCSV（買取減額率IDは実在）"	"1. 商品ID空欄のCSVをアップロード送信"	商品ID必須のエラーメッセージが表示され取込が打ち切られること（実在商品IDが通る正常系010と対をなす必須欠落異常系）。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-035	IT-22	文字種バリデーション	P2	商品IDが負数のとき形式/文字種エラーになる	管理ログイン済／SEED-M03-36-ADMIN	"商品ID列に負数を含むCSV"	"1. 商品IDが負数のCSVをアップロード送信"	商品IDの符号なし整数形式エラーが表示され取込が完了しないこと（非数値027と合わせ商品ID形式の境界異常系）。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-036	IT-22	DBとの相関バリデーション	P2	無効化(非公開/論理削除相当)商品IDはエラーで打ち切られる	管理ログイン済／無効化商品実在／SEED-M03-36-PRODUCT	"未削除でない/無効化された商品IDのCSV"	"1. 無効化商品IDのCSVをアップロード送信"	商品不存在/無効エラーが表示され全行処理が打ち切られること（不存在029と対をなす無効化分岐。移行先は del_flg 無→product_status 判定の可能性＝乖離#4）。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-037	IT-22	部分入力	P2	列数が2でない行は列数不正エラーで打ち切られる	管理ログイン済／SEED-M03-36-ADMIN	"1行の列数が2でない（過不足）CSV（列名は正）"	"1. 列数が2でないCSVをアップロード送信"	列数不正エラーが表示され取込が打ち切られロールバックされること（列名欠落026と分離した列数分岐）。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-040	IT-13	URL直接アクセス	P1	雛形ダウンロードでファイルダウンロード応答が返る	管理ログイン済／SEED-M03-36-ADMIN	—	"1. 「雛形ファイルダウンロード」を押下（GET /{admin_route}/product/product_csv_template/buyDiscount）"	ファイルダウンロード応答（product_buy_discount.csv）が発火すること。
+2. アドレスバーのURLを確認する"	URLは変わらず（PRGパターンではない）POST応答で同一画面が再描画されること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-014	IT-26	更新内容	P2	同一商品が複数行のとき最終行の買取減額率IDが残る	管理ログイン済／対象商品実在／SEED-M03-36-PRODUCT	同一商品IDを2行・買取減額率IDが異なる	"1. 同一商品IDを2行含むCSVをアップロードする
+2. 当該商品の買取減額率を確認する"	最終行の買取減額率IDが反映されていること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-015	IT-26	更新内容	P2	買取減額率(ID)空欄の行は買取減額率がNULLに更新される	管理ログイン済／対象商品実在／SEED-M03-36-PRODUCT	実在商品ID・買取減額率(ID)空欄 1行	"1. 買取減額率(ID)空欄のCSVをアップロードする
+2. 当該商品の買取減額率を確認する"	対象商品の買取減額率（dtb_product.buy_discount_id）がNULLに更新されること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-016	IT-16	実行結果	P2	TSV(タブ区切り)ファイルでも正常に取込まれる	管理ログイン済／対象商品・買取減額率ID実在／SEED-M03-36-PRODUCT	拡張子tsv・タブ区切り・実在商品ID/実在買取減額率ID 1行	1. タブ区切りTSVファイルを選択しアップロード送信	取込成功のフラッシュメッセージが表示されること（CSV正常系010とTSV区切りの対）。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-017	IT-16	実行結果	P3	BOM付き/CRLF改行を含む正常ファイルでも取込まれる	管理ログイン済／対象商品実在／SEED-M03-36-PRODUCT	UTF-8 BOM付き・CRLF改行・実在商品ID/買取減額率ID 1行	1. BOM付き・CRLF改行の正常CSVを選択しアップロード送信	文字コード変換・改行正規化が行われ取込成功のフラッシュメッセージが表示されること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-018	IT-22	部分入力	P2	上限未満(5009行)のCSVは件数超過にならず取込まれる	管理ログイン済／対象商品実在／SEED-M03-36-PRODUCT	ヘッダ含め5009行（上限5010未満）の正常CSV	1. 5009行の正常CSVを選択しアップロード送信	件数超過メッセージが表示されず取込が成功すること（件数超過異常024と対をなす境界正常系）。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-020	IT-22	必須バリデーション	P1	ファイル未選択で送信すると必須エラーで再描画される	管理ログイン済／SEED-M03-36-ADMIN	ファイル未選択	1. ファイルを選択せずアップロードボタンを押下	ファイル必須のエラーメッセージが表示され、同一画面に留まること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-021	IT-15	CSRF	P2	CSRFトークン不正の送信が拒否される	管理ログイン済／SEED-M03-36-ADMIN	正常CSV＋不正/欠落CSRFトークン	1. CSRFトークンを欠落/改ざんしてアップロード送信	取込されずエラーとなり、DBが更新されないこと。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-022	IT-22	その他のバリデーション	P2	CSV以外のMIMEファイルはフォームエラーになる	管理ログイン済／SEED-M03-36-ADMIN	拡張子/MIMEがCSVでないファイル	1. CSV以外のファイルを選択しアップロード送信	MIME不正のフォームエラーが表示され、取込が行われないこと。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-023	IT-22	文字列長バリデーション	P2	サイズ上限超過のファイルはフォームエラーになる	管理ログイン済／SEED-M03-36-ADMIN	設定 csv_size 超過のファイル	1. 上限超過のファイルを選択しアップロード送信	サイズ上限超過のフォームエラーが表示され、取込が行われないこと。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-024	IT-22	部分入力	P2	行数5010以上で件数超過メッセージが表示される	管理ログイン済／SEED-M03-36-ADMIN	ヘッダ含め5010行以上のCSV	1. 5010行以上のCSVを選択しアップロード送信	件数超過のメッセージが表示され、同一画面が再描画されること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-025	IT-22	その他のバリデーション	P2	ヘッダ/データ行が無いCSVは取込エラーになる	管理ログイン済／SEED-M03-36-ADMIN	ヘッダのみ又は空CSV	1. データ行の無いCSVを選択しアップロード送信	取込エラーメッセージが errors として表示され、成功フラッシュが出ないこと。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-026	IT-25	UI部品	P2	必須列名が欠落すると列存在エラーで打ち切られる	管理ログイン済／SEED-M03-36-ADMIN	「商品ID」又は「買取減額率(ID)」列名が欠けた/列数が2でないCSV	1. 必須列名を欠いた（列数2でない）CSVをアップロード送信	列数不正/列存在エラーメッセージが表示され、取込が打ち切られロールバックされること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-027	IT-22	数値バリデーション	P2	商品IDが非数値のとき形式エラーになる	管理ログイン済／SEED-M03-36-ADMIN	商品ID列に非数値を含むCSV	1. 商品IDが非数値のCSVをアップロード送信	形式エラーメッセージが表示され、取込が完了しないこと。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-028	IT-22	DBとの相関バリデーション	P1	買取減額率IDがマスタ未存在のときエラーになる	管理ログイン済／mtb_buy_discount実在ID既知／SEED-M03-36-BUYDISCOUNT	mtb_buy_discountに存在しない買取減額率IDのCSV	1. 不存在の買取減額率IDのCSVをアップロード送信	買取減額率IDのマスタ不存在エラーが表示され、取込が完了しないこと。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-029	IT-22	DBとの相関バリデーション	P1	商品が未削除で存在しないときエラーで打ち切られる	管理ログイン済／SEED-M03-36-ADMIN	未削除で存在しない商品IDのCSV	1. 不存在商品IDのCSVをアップロード送信	商品不存在エラーが表示され、全行処理が打ち切られロールバックされること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-030	IT-25	確認ダイアログ	P1	取込エラー時は成功フラッシュを積まず errors で表示する	管理ログイン済／SEED-M03-36-ADMIN	いずれかの検証で失敗するCSV	1. 検証失敗するCSVをアップロード送信	成功フラッシュが表示されず、エラー内容が errors として画面に表示されること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-031	IT-26	更新内容	P2	取込失敗時はロールバックしDB・履歴が変わらない	管理ログイン済／対象商品実在／SEED-M03-36-PRODUCT	途中行で検証失敗するCSV	"1. 検証失敗するCSVをアップロードする
+2. 対象商品の買取減額率と履歴を確認する"	対象商品の買取減額率が変わらず、インポート履歴も増えないこと。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-032	IT-25	操作起点	P3	商品はあるが補助表サブ行が無い場合の挙動（現行）	管理ログイン済／商品本体ありサブ行なし／SEED-M03-36-NOSUB	実在商品IDだが補助表サブ行が無い商品のCSV	1. 当該CSVをアップロード送信	（現行設計）補助表サブ行が取得できない場合は取込が成功せずエラー扱いとなること。※移行先は dtb_product 統合により本前提が成立しないため移行方針確定待ち（対象外）。期待値は設計仕様由来とし実装現挙動をオラクル化しない。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-033	IT-22	数値バリデーション	P2	買取減額率(ID)が非数値/負数のとき形式エラーになる	管理ログイン済／SEED-M03-36-ADMIN	買取減額率(ID)列に非数値又は負数を含むCSV（商品IDは実在・正常）	1. 買取減額率(ID)が非数値/負数のCSVをアップロード送信	買取減額率(ID)の形式エラーメッセージが表示され、取込が完了しないこと（商品ID側の形式検証 E2E-027 と対をなす異常系）。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-034	IT-22	必須バリデーション	P1	商品IDが空欄の行は必須エラーで打ち切られる	管理ログイン済／SEED-M03-36-ADMIN	商品ID列が空欄の行を含むCSV（買取減額率IDは実在）	1. 商品ID空欄のCSVをアップロード送信	商品ID必須のエラーメッセージが表示され取込が打ち切られること（実在商品IDが通る正常系010と対をなす必須欠落異常系）。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-035	IT-22	文字種バリデーション	P2	商品IDが負数のとき形式/文字種エラーになる	管理ログイン済／SEED-M03-36-ADMIN	商品ID列に負数を含むCSV	1. 商品IDが負数のCSVをアップロード送信	商品IDの符号なし整数形式エラーが表示され取込が完了しないこと（非数値027と合わせ商品ID形式の境界異常系）。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-036	IT-22	DBとの相関バリデーション	P2	無効化(非公開/論理削除相当)商品IDはエラーで打ち切られる	管理ログイン済／無効化商品実在／SEED-M03-36-PRODUCT	未削除でない/無効化された商品IDのCSV	1. 無効化商品IDのCSVをアップロード送信	商品不存在/無効エラーが表示され全行処理が打ち切られること（不存在029と対をなす無効化分岐。移行先は del_flg 無→product_status 判定の可能性＝乖離#4）。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-037	IT-22	部分入力	P2	列数が2でない行は列数不正エラーで打ち切られる	管理ログイン済／SEED-M03-36-ADMIN	1行の列数が2でない（過不足）CSV（列名は正）	1. 列数が2でないCSVをアップロード送信	列数不正エラーが表示され取込が打ち切られロールバックされること（列名欠落026と分離した列数分岐）。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-040	IT-13	URL直接アクセス	P1	雛形ダウンロードでファイルダウンロード応答が返る	管理ログイン済／SEED-M03-36-ADMIN	—	1. 「雛形ファイルダウンロード」を押下（GET /{admin_route}/product/product_csv_template/buyDiscount）	ファイルダウンロード応答（product_buy_discount.csv）が発火すること。				
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-041	IT-27	出力失敗	P2	雛形は列名のみ・BOM付きUTF-8で受け取れる	管理ログイン済／SEED-M03-36-ADMIN	—	"1. 雛形ファイルをダウンロードする
-2. ファイル内容を確認する（内容検査は手動）"	列名のみ（商品ID・買取減額率(ID)）のCSVがBOM付きUTF-8で受け取れること。
+2. ファイル内容を確認する（内容検査は手動）"	列名のみ（商品ID・買取減額率(ID)）のCSVがBOM付きUTF-8で受け取れること。				
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-042	IT-27	出力結果	P3	雛形DL応答がファイル添付(octet-stream)として返る	管理ログイン済／SEED-M03-36-ADMIN	—	"1. 「雛形ファイルダウンロード」を押下
-2. ダウンロード発火/応答を確認する"	応答が application/octet-stream の添付ファイル（filename=product_buy_discount.csv）として返り、ブラウザのダウンロードが発火すること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-050	IT-15	未認証	P2	未ログインで該当URLへ直接アクセスすると管理ログインへ誘導される	未ログイン	—	"1. /{admin_route}/product/product_buy_discount_csv_upload へ未ログインで直接アクセス"	管理ログイン画面へ誘導されること（取込POSTへ到達しない）。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-051	IT-15	未認証	P2	未ログインで取込POSTを送ると拒否されログインへ誘導される	未ログイン	正常CSV相当のPOST	"1. /{admin_route}/product/product_buy_discount_csv_upload へ未ログインでPOST送信"	取込が実行されず管理ログイン画面へ誘導されること（未ログインGET050と対をなすPOST認可異常系）。
+2. ダウンロード発火/応答を確認する"	応答が application/octet-stream の添付ファイル（filename=product_buy_discount.csv）として返り、ブラウザのダウンロードが発火すること。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-050	IT-15	未認証	P2	未ログインで該当URLへ直接アクセスすると管理ログインへ誘導される	未ログイン	—	1. /{admin_route}/product/product_buy_discount_csv_upload へ未ログインで直接アクセス	管理ログイン画面へ誘導されること（取込POSTへ到達しない）。				
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	E2E-M03-36-051	IT-15	未認証	P2	未ログインで取込POSTを送ると拒否されログインへ誘導される	未ログイン	正常CSV相当のPOST	1. /{admin_route}/product/product_buy_discount_csv_upload へ未ログインでPOST送信	取込が実行されず管理ログイン画面へ誘導されること（未ログインGET050と対をなすPOST認可異常系）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

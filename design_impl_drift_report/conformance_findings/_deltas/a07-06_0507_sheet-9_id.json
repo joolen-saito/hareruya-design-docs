@@ -1,0 +1,72 @@
+{
+  "functionId": "a07-06_0507_sheet-9_id",
+  "featureNo": "A07-06",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-9:1980",
+      "designExpectation": "エンドポイントURLは /api/admin/buyOrderIndivisualInputProduct.json とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:37",
+      "implementationActual": "実装ルートは /%eccube_api_v1_route%/admin/buyOrderIndivisualInputProduct.json で、設定値 eccube_api_v1_route は api/v1 のため、実際の入口は /api/v1/admin/buyOrderIndivisualInputProduct.json。",
+      "mismatchReason": "設計は /api/admin/... を指定しているが、実装は api/v1 プレフィックス付きの /api/v1/admin/... で公開している。app/config/eccube/packages/eccube.yaml:6,55 で ECCUBE_API_V1_ROUTE の既定値が api/v1 であることも確認した。",
+      "comparisonRows": [
+        {
+          "item": "URLエンドポイント",
+          "design": "/api/admin/buyOrderIndivisualInputProduct.json",
+          "implementation": "/api/v1/admin/buyOrderIndivisualInputProduct.json",
+          "mismatch": "api/v1 プレフィックス有無が異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-9:2003",
+      "designExpectation": "リクエストパラメータ ids は文字列・必須（〇）で、ネット買取IDをカンマ区切りで指定する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:40",
+      "implementationActual": "ids を取得後、null または空文字なら HTTP 200 の空配列を返す。さらにカンマ分解後は数字のみをフィルタリングし、有効IDが空なら HTTP 200 の空配列を返す。",
+      "mismatchReason": "設計では ids が必須指定だが、実装は ids 未指定・空文字を許容し、必須エラーにしない。実装コメントでも 400 ではなく空配列を返す旧システム互換挙動としている。",
+      "comparisonRows": [
+        {
+          "item": "ids 必須性",
+          "design": "必須（〇）",
+          "implementation": "未指定・空文字を許容して [] を返す",
+          "mismatch": "必須パラメータとして扱っていない"
+        },
+        {
+          "item": "ids 形式",
+          "design": "カンマ区切りのネット買取ID",
+          "implementation": "preg_match('/^\\d+$/') に一致する要素だけを採用",
+          "mismatch": "非数値要素は明示エラーではなく黙って除外される"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-9:1981",
+      "designExpectation": "認証方式は IP制限・トークン とする。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html, /home/y-saito/Developments/ec-cube-enterprise/app/config/eccube; 検索語: IP制限, ip制限, client_ip, REMOTE_ADDR, access_control, allowlist, trusted_proxies）",
+      "implementationActual": "jwt-token ヘッダによるトークン認証は実装済みだが、当該 API 入口に対する IP 制限の実装は確認できない。",
+      "mismatchReason": "トークン認証は JwtTokenHeaderExtractor と security access_token で確認できる一方、IP アドレス allowlist / denylist / access_control / Request::getClientIp 相当の判定が当該 API ルートに存在しない。",
+      "comparisonRows": [
+        {
+          "item": "トークン認証",
+          "design": "トークン",
+          "implementation": "jwt-token ヘッダを抽出し JWT を検証する",
+          "mismatch": "一致"
+        },
+        {
+          "item": "IP制限",
+          "design": "IP制限",
+          "implementation": "該当実装なし",
+          "mismatch": "IP制限が実装されていない"
+        }
+      ]
+    }
+  ]
+}

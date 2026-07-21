@@ -1,0 +1,36 @@
+{
+  "functionId": "m11-01_0201_sheet-3_sheet",
+  "featureNo": "M11-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3（利用者視点の入口 表『存在しないIDで削除を実行する』行、および処理フロー『削除（DELETE）』の『見つからない場合は削除警告メッセージを積み、一覧へリダイレクトする（404 にはしない）』）",
+      "designExpectation": "存在しないIDで DELETE /%admin_route%/setting/system/member/{id}/delete を実行したとき、対象が見つからない場合は削除警告メッセージ（フラッシュ）を積み、一覧へリダイレクトする。404 にはしない。up/down の『無ければ404とする』とは明確に区別される。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php:274-308",
+      "implementationActual": "delete() が型付き引数 `Member $Member` を受けるため、存在しないIDでは Symfony の EntityValueResolver が本体到達前に NotFoundHttpException(404) を投げる。isTokenValid/delete/addSuccess/DELETE完了イベントに到達せず、設計要求の『削除警告メッセージ→一覧リダイレクト・404にはしない』は発生せず 404 応答となる。存在時の削除本体（MemberRepository::delete():116 の物理削除＋sort_no繰り下げ、成功/外部キー/一般例外メッセージ、DELETE完了イベント）は設計どおり実装済み。Controller.php・MemberRepository.php・member.twig に不在時の警告フラッシュ＋redirectToRoute 分岐や 404→リダイレクト変換リスナは存在しない。",
+      "mismatchReason": "設計は削除対象不在時の期待挙動を明示的に『404にはしない／警告メッセージ→一覧リダイレクト』と規定し（HTML L970/L983）、up/down の『無ければ404』（L979/L989）と対比して区別している。しかし実装 delete は型付きエンティティ引数解決に依存し、不在IDでは本体到達前に404となるため設計と差異。pf-eccube3→EC-CUBE4系(enterprise)のコントローラ署名変更に由来する未記載の挙動差。",
+      "comparisonRows": [
+        {
+          "item": "存在しないID削除時のHTTP応答",
+          "design": "404にはしない（本体到達→警告フラッシュ→一覧リダイレクト 302）",
+          "implementation": "EntityValueResolver が NotFoundHttpException(404) を送出",
+          "mismatch": "設計は非404・警告＋リダイレクト、実装は404"
+        },
+        {
+          "item": "削除警告メッセージの積載",
+          "design": "見つからない場合は削除警告メッセージを積む",
+          "implementation": "本体未到達のため addError/addWarning は実行されない",
+          "mismatch": "警告フラッシュが積まれない"
+        },
+        {
+          "item": "up/down との区別",
+          "design": "up/down は無ければ404、delete は404にしない（明示区別）",
+          "implementation": "delete も up/down と同様に型付き引数で一律404",
+          "mismatch": "設計が意図した挙動の区別が失われている"
+        }
+      ]
+    }
+  ]
+}

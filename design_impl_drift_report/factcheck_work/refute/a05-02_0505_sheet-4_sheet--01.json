@@ -1,0 +1,35 @@
+{
+  "chunkId": "a05-02_0505_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02-0505-sheet-4-sheet-38aeaf4def-01",
+      "refuted": true,
+      "reason": "designEvidence(HTML1269-1270 GET/POST /order/print/direct 同一パス)は埋め込み詳細設計の『利用者視点の入口』で、直前1261行が『挙動は現行(pf-api)を正とし』と明記する通り現行pf-apiのAS-IS挙動の記述であり、ec-cube-enterpriseのTO-BEルート仕様ではない。同じ設計のExcel本体はA05-02のエンドポイントを /order/prints/status/printed へ変更(1152)・メソッドPOST(1153)・『A05-02とエンドポイントを分ける』(1155)・本店プリンタのURL変更(1157)を要求しており、設計自身が/order/print/directからの変更を指示している。本シートはA05-02(SetResponse=ステータス更新)で、ResponseFileはPOST本文から取得(1288)ゆえ本質的にPOST専用であり、実装のmethods:['POST']は妥当。GETは別機能A05-01(GetRequest)の入口。よって『GETも受けるべき』という方法差分の前提は誤り。残るパス差分の実質的な要求網羅は conformance-f7b7c67f2e23 が正しい対象URL(/order/prints/status/printed)で捕捉しており本件は重複・弱証拠。App/OrderController.phpのRoute定義は1件のみと確認。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02-0505-sheet-4-sheet-c3771c630b-04",
+      "refuted": false,
+      "reason": "実装を実地確認。本店 getPrintOrderListMainShop(OrderRepository.php 1571-1587)は s.Delivery=:smoothOtc の SMOOTH_OTC 分岐(未確定・未出荷・未取消・未受領・otc_rsv_date未設定・smaregi_code非NULL)を持つが、支店 getDirectPrintOrderList(1610-1652)は (delivery_id=:otc AND order_status_id=:orderNew AND smaregi_code IS NOT NULL) UNION (browser_print_flg=true) の2分岐のみで SMOOTH_OTC 分岐が無い。OrderDirectPrintAction::handle(44-48行)は isMainShop() で両者を排他分岐するため、支店ではスムーズ店頭受取受注が抽出されない。設計(HTML1278 ステップ2)はスムーズ店頭受取を含む単一条件集合を示し本店/支店の分岐やスムーズ店頭受取を本店限定とする除外記述は無い(『本書で扱わないこと』1258・移行時扱い1262・DBカラム1341いずれにも該当除外なし)。指摘は正しく維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02-0505-sheet-4-sheet-084b8e0ff9-06",
+      "refuted": false,
+      "reason": "実装を実地確認。OrderDirectPrintAction::getPrintData は77行で $orderNumber=$Order['order_number'] を取り、店頭注文番号ラベル(94行 <text>店頭注文番号</text>)直後の欄(97行)に {$orderNumber} を出力し、さらに注文番号欄(117行)にも同じ order_number を出力する。抽出クエリ getPrintOrderListMainShop/getDirectPrintOrderList は dtb_order_number を join・参照せず、rg で OrderDirectPrintAction.php 内に DtbOrderNumber/waitingNumber/dtb_order_number の参照なしを確認。設計 DBカラム表(HTML1341)は 店頭注文番号 dtb_order_number.value を『印刷情報の店頭注文番号欄。受注IDで引く』とし、order_number は別行で『注文番号欄』に割当てられ両欄は明確に区別される。移行時扱い1262の『(および order_number)』は値の保持場所の注記に過ぎず印刷欄マッピングを覆さない。『本書で扱わないこと』1258の除外は採番・参照API(A05-03)であり本欄の印字要求は除外していない。DtbOrderNumberRepository等の基盤は存在するが本印刷経路では未使用。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02-0505-sheet-4-sheet-f51c39b763-07",
+      "refuted": true,
+      "reason": "実装(OrderController.php 79-84)は ConnectionType 不一致時に setCallback(空)の StreamedResponse を返し受注処理を一切行わない。設計要求の核心『処理を行わず/応答を組み立てず本文を返さない』(HTML1296,1333,1350)のうち実質要求である『本文を返さない』は満たされている(本文長0・空コールバック)。差分は付加された HTTP 400/text-plain のステータスのみで、これは現行pf-apiのフォールスルー(明示レスポンス非構築)をリバース記述した設計に対しフレームワーク上必然の実現であり、機能的な受注副作用・本文内容の乖離は無い。加えて当分岐はプリンタが常に GetRequest/SetResponse を送る運用上ほぼ到達不能なエッジであり、400付与はむしろ不正入力に対する妥当な応答。実質乖離とは言い難く証拠が弱い。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02_0505_sheet-4_sheet-conformance-f7b7c67f2e23",
+      "refuted": false,
+      "reason": "rg で src・html 全体に 'status/printed' を含むルートは0件、App/OrderController.php の #[Route] は1件のみと確認。実装は単一ルート /api/order/prints/direct/{base_info_id}(POST)内で ConnectionType==='GetRequest'/'SetResponse' を分岐し続けており(43-77行)、A05-02専用URL /order/prints/status/printed は存在しない。設計Excel本体(HTML1152 エンドポイントURL /order/prints/status/printed、1155『A05-02とエンドポイントを分ける』)は★カスタマイズ項目としてエンドポイント分離を明示要求し、Ph2/現行踏襲/対象外の除外注記も無い。要求された入口分離は未実装。別ルート・別Controllerも見当たらず。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02_0505_sheet-4_sheet-conformance-4734c8af59f4",
+      "refuted": false,
+      "reason": "実装 UpdatePrintedOrderStatusAction を全読。XMLパース失敗時に responseFile と 'XMLパースエラー' を、$xml->ServerDirectPrint==='false' または count($xml->ePOSPrint)<1 の場合に responseFile をログ出力するのみ(48-59行)。foreach($xml->ePOSPrint as $print)(78行)では printjobid から受注IDを抽出しステータス更新へ進むだけで、各要素の PrintResponse/response の success 属性や失敗理由 code 属性を一切読まない。rg で src/Eccube 全体に 'EX_BADPORT' も 'PrintResponse' も0件、Service/Admin/Order 配下にも success/code 参照処理なしと確認。設計Excel(HTML1159,1164 ★『レスポンスデータの中にエラーコードが返ってくるのでログに追記』、1165-1166『印刷結果の詳細を参照してエラーの有無を確認していない』の改善要求)に対し、印刷結果詳細参照・codeログ追記は未実装。別Subscriber/Service/Command での実装も無し。指摘は維持。"
+    }
+  ]
+}

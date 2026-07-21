@@ -1,0 +1,132 @@
+{
+  "functionId": "b13-01_0413_sheet-3_sheet",
+  "featureNo": "B13-01",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:854,945",
+      "designExpectation": "SP.LINKSに取引照会を行い、照会結果に応じた処理を行う。決済サービスへ取引を照会し、結果でステータスを判定する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191",
+      "implementationActual": "getApiResponse() は SP.LINKS 取引照会APIを実行せず、常に LogicException を throw する。",
+      "mismatchReason": "PaymentStatusCheckAction::handle() は申込みごとに getApiResponse($paymentNo) を呼ぶが、同メソッド本体が「SP.LINKS取引照会API未実装」として例外を投げるため、設計上の取引照会・レスポンス判定・後続のステータス整合に到達できない。探索範囲: src/Eccube/Command, src/Eccube/Service/Admin/Payment, src/Eccube/Service/Payment, src/Eccube/Repository, html。検索語: SP.LINKS, 取引照会, ResponseCd, MerchantId, getApiResponse, payment-status-check。",
+      "comparisonRows": [
+        {
+          "item": "決済サービス照会",
+          "design": "SP.LINKSに取引照会を行う",
+          "implementation": "getApiResponse() が LogicException を throw する",
+          "mismatch": "照会API本体が未実装"
+        },
+        {
+          "item": "結果判定",
+          "design": "照会結果でステータスを判定する",
+          "implementation": "固定の OK/K02 等を判定する分岐はあるが、実レスポンス取得が存在しない",
+          "mismatch": "外部契約である決済照会結果を取得できない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:936,939",
+      "designExpectation": "直前と同じ決済番号の申込みは、前回の照会結果に従って同様の処理を行う。同一決済番号は前回結果を流用する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEventEntryRepository.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: 前回, 直前, 同一決済, 同じ決済, previous, prev, last, paymentNo, payment_no, ResponseCd）",
+      "implementationActual": "DtbEventEntryRepository::getBeforeMinutesEntry() は paymentNo 順に並べるが、PaymentStatusCheckAction::handle() は各 EventEntry ごとに getApiResponse($paymentNo) を呼び、前回の paymentNo/result を保持・再利用する変数や分岐がない。",
+      "mismatchReason": "実装には orderBy('ee.paymentNo') はあるが、同一決済番号の検出、前回照会結果のキャッシュ、前回結果に基づく更新・削除・保留処理の流用が存在しない。",
+      "comparisonRows": [
+        {
+          "item": "同一決済番号の扱い",
+          "design": "前回の照会結果を流用する",
+          "implementation": "各申込みで getApiResponse($paymentNo) を呼ぶ",
+          "mismatch": "前回結果の保持・流用が未実装"
+        },
+        {
+          "item": "抽出順",
+          "design": "同一決済番号は前回結果を使える処理単位",
+          "implementation": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEventEntryRepository.php:272 で paymentNo 順に並べるのみ",
+          "mismatch": "並び順だけで流用処理がない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:936,942,962",
+      "designExpectation": "取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する。取引不在・未完了以外のエラーは重複を除いてまとめ、管理者へ通知する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:164",
+      "implementationActual": "各 EventEntry の catch 節で sendEventPaymentErrorAlertMail($EventEntry, $e->getMessage()) を即時送信し、cntError を加算する。エラー配列への蓄積、重複排除、ループ後の一括通知はない。",
+      "mismatchReason": "設計は想定外エラーを重複排除して1つにまとめ管理者へ通知することを要求しているが、実装は申込み単位の例外ごとに通知メールを送信するため、同一エラーが複数回通知され得る。",
+      "comparisonRows": [
+        {
+          "item": "通知タイミング",
+          "design": "想定外エラーを1つにまとめて通知",
+          "implementation": "catch のたびに即時送信",
+          "mismatch": "一括通知ではない"
+        },
+        {
+          "item": "重複排除",
+          "design": "重複を除いてまとめる",
+          "implementation": "array_unique 等の集約処理なし",
+          "mismatch": "重複除去がない"
+        },
+        {
+          "item": "通知内容",
+          "design": "まとめた想定外エラー",
+          "implementation": "単一 EventEntry と単一例外メッセージ",
+          "mismatch": "集約されたエラーメッセージにならない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:948,962",
+      "designExpectation": "取引不在・未完了等のメッセージ収集、想定外エラーの通知。取引不在・未完了は記録の除去等の所定処理を行い、メッセージを収集する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:154",
+      "implementationActual": "取引が存在しない・失敗している場合は deletedAt を設定して flush し、cntDeleted を加算するだけで、取引不在・未完了等のメッセージを収集しない。戻り値 detail も件数集計のみ。",
+      "mismatchReason": "設計は失敗時出力として取引不在・未完了等のメッセージ収集を要求しているが、実装にはメッセージ配列や個別理由の蓄積がなく、削除件数だけを返す。",
+      "comparisonRows": [
+        {
+          "item": "取引不在・未完了の出力",
+          "design": "メッセージを収集する",
+          "implementation": "cntDeleted を加算し、detail に削除件数を出す",
+          "mismatch": "個別メッセージ収集がない"
+        },
+        {
+          "item": "所定処理",
+          "design": "記録除去等とメッセージ収集",
+          "implementation": "論理削除は行うがメッセージ収集なし",
+          "mismatch": "出力契約の一部が欠落"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-3:970",
+      "designExpectation": "照会・更新を積み、最後に確定する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:113",
+      "implementationActual": "成功時は申込みごとに beginTransaction()、flush()、commit() を行い、取引不在・失敗時も申込みごとに flush() する。",
+      "mismatchReason": "設計はバッチ全体で照会・更新を積み最後に確定することを要求しているが、実装は対象申込みごとにDB確定するため、途中エラー時に既処理分が確定済みになる。",
+      "comparisonRows": [
+        {
+          "item": "確定単位",
+          "design": "最後に確定する",
+          "implementation": "申込みごとに commit/flush",
+          "mismatch": "バッチ末尾の一括確定ではない"
+        },
+        {
+          "item": "削除処理",
+          "design": "照会・更新を積んで最後に確定",
+          "implementation": "取引不在・失敗時は setDeletedAt 後すぐ flush",
+          "mismatch": "削除も逐次確定される"
+        }
+      ]
+    }
+  ]
+}

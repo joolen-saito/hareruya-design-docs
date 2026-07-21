@@ -1,0 +1,108 @@
+{
+  "functionId": "a17-03_0517_sheet-5_pointgranterapi",
+  "featureNo": "A17-03",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-5:1700,1805,1823",
+      "designExpectation": "PointGranterから送られてきた端末販売APIの内容をスマレジ取引APIへ中継する。契約ID・アクセストークンを付与して、スマレジ顧客連携サービスへ処理名とパラメータを渡し、取引APIへ中継する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiApiService.php:35",
+      "implementationActual": "PointGranterController は SmaregiApiService::postRegisterTransaction() を呼ぶが、同メソッドは TODO コメント付きで固定の {'result': {'status': 'success'}} を返すだけで、スマレジ取引APIへのHTTP POST中継を行っていない。反証検索でも postRegisterTransaction/postTransactions/transaction_upd/point_granter の別実装は見つからず、SmaregiTransactionApiClient はGET取得・一覧のみだった。",
+      "mismatchReason": "設計は受信した処理名・パラメータをスマレジ取引APIへ中継する外部契約を要求しているが、実装は固定成功レスポンスで中継していない。探索範囲: src/Eccube, html。検索語: postRegisterTransaction, postTransactions, transactions, transaction_upd, proc_name, PointGranter, point_granter。",
+      "comparisonRows": [
+        {
+          "item": "スマレジ取引API中継",
+          "design": "契約ID・アクセストークン・処理名・パラメータを付与してスマレジ取引APIへ中継する。",
+          "implementation": "SmaregiApiService.php:41-47 が TODO 固定レスポンスを返す。",
+          "mismatch": "外部API呼び出しが実装されていない。"
+        },
+        {
+          "item": "中継結果",
+          "design": "スマレジ取引APIの中継結果を返す。",
+          "implementation": "常に result.status=success を返す。",
+          "mismatch": "スマレジの実レスポンスではない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-5:1703,1740",
+      "designExpectation": "下記の項目（X_contract_id、X_access_token、proc_name、params）がなければエラー404を返す。ステータスコード 404.0 は必須項目にデータがない場合。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php:53",
+      "implementationActual": "契約ID・アクセストークン・proc_name・params のいずれかが空の場合、JsonResponse([], HTTP_BAD_REQUEST) を返すためHTTP 400になる。",
+      "mismatchReason": "シート本体のステータスコード表は必須項目欠落時404を要求しているが、実装は400を返す。なお同HTML内の埋め込み詳細設計にはHTTP 400の記載もあるため、設計内不整合はあるが、一次シート本文の404要求とは不一致。",
+      "comparisonRows": [
+        {
+          "item": "必須項目欠落時ステータス",
+          "design": "404",
+          "implementation": "400",
+          "mismatch": "HTTPステータスが異なる。"
+        },
+        {
+          "item": "対象項目",
+          "design": "X_contract_id、X_access_token、proc_name、params",
+          "implementation": "X-Contract-Id、X-Access-Token、proc_name、params を空判定",
+          "mismatch": "欠落判定対象は概ねあるが、返却ステータスが異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-5:1770,1900",
+      "designExpectation": "会員ポイント残高は dtb_customer.point とし、取引更新時にポイントを加算する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php:66",
+      "implementationActual": "customerId から dtb_player.smaregi_id で DtbPlayer を検索し、DtbPlayer::setPoint($Player->getPoint() + $newPoint) で dtb_player.point を更新している。Customer::point は Entity に存在するが、この処理では更新されない。",
+      "mismatchReason": "設計は会員テーブル dtb_customer.point の加算を正としているが、実装はプレイヤーテーブル dtb_player.point を加算している。探索範囲: PointGranterAction, DtbPlayer, Customer。",
+      "comparisonRows": [
+        {
+          "item": "ポイント残高の保存先",
+          "design": "dtb_customer.point",
+          "implementation": "dtb_player.point",
+          "mismatch": "更新対象テーブル/列が異なる。"
+        },
+        {
+          "item": "会員特定",
+          "design": "dtb_player.smaregi_id 由来で会員を特定し、会員ポイントを加算する。",
+          "implementation": "DtbPlayer を特定し、その Player 自身の point を加算する。",
+          "mismatch": "会員(Customer)のpointへ反映されない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-5:1770,1901",
+      "designExpectation": "ポイント履歴（dtb_point_history）は、会員（customer_id）・増減ポイント（point_change）・備考（note）・発行日（issue_date）・作成日（create_date）・ポイント種別（point_type_id）・スマレジ取引ID（transaction_id）を持ち、付与時に登録する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php:68",
+      "implementationActual": "PointHistoryEntityManager::save() で customer_id、point_change、note、issue_date、point_type_id は設定されるが、transactionId は常に null が渡される。DtbPointHistory には transaction_id カラムと setter があるが、この処理ではスマレジ取引IDを保存しない。",
+      "mismatchReason": "設計が登録対象として明示する transaction_id が、PointGranter付与時に常にnullで保存される。探索範囲: PointGranterAction, PointHistoryEntityManager, DtbPointHistory。",
+      "comparisonRows": [
+        {
+          "item": "customer_id",
+          "design": "登録する",
+          "implementation": "Player->getCustomer() を渡して保存",
+          "mismatch": "一致"
+        },
+        {
+          "item": "point_change / note / issue_date / point_type_id",
+          "design": "登録する",
+          "implementation": "newPoint, memo, terminalTranDateTime, pointAttr を保存",
+          "mismatch": "概ね一致"
+        },
+        {
+          "item": "transaction_id",
+          "design": "スマレジ取引IDを登録する",
+          "implementation": "transactionId: null",
+          "mismatch": "スマレジ取引IDが保存されない。"
+        }
+      ]
+    }
+  ]
+}

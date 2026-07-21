@@ -1,0 +1,60 @@
+{
+  "chunkId": "b02-06_0404_sheet-8_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-06_0404_sheet-8_sheet.json#b02-06_0404_sheet-8_sheet-conformance-822931db11c3",
+      "functionId": "b02-06_0404_sheet-8_sheet",
+      "featureNo": "B02-06",
+      "title": "B02-06 在庫初期化",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "UNCERTAIN",
+      "confidence": "medium",
+      "summary": "複製元店舗の設計名(TC大阪)と実装定数名(TC_TOKYO_ID)が食い違うが、いずれも id=1 を複製元にしており実機データ確認が要る。",
+      "reason": "設計(HTML 1481行)は複製元を「TC大阪(支店ID:1)」と記す。実装は BatchInitialStockRegistrationAction::handle()（BatchInitialStockRegistrationAction.php:43）が $sourceBaseInfoId = \\Eccube\\Entity\\BaseInfo::TC_TOKYO_ID を複製元とし、BaseInfo.php:45 で TC_TOKYO_ID = 1。つまり設計が指定する『支店ID:1』と実装の複製元ID(=1)は一致する。差異は定数名が TOKYO で設計名が 大阪 という『ラベル』のみで、コード上の複製元IDは設計どおり 1 である。id=1 の実店舗が TC大阪か TC東京かは dtb_base_info のデータを見ないと判定できず（実機/DB確認が必要）、コードから実装違いを立証できないため UNCERTAIN。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-06_0404_sheet-8_sheet.json#b02-06_0404_sheet-8_sheet-conformance-e23efc5f7ad1",
+      "functionId": "b02-06_0404_sheet-8_sheet",
+      "featureNo": "B02-06",
+      "title": "B02-06 在庫初期化",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "UNCERTAIN",
+      "confidence": "low",
+      "summary": "複製範囲『商品規格コード・拡張タイプのみ』に対し実装は product_class_id と stock_location_id を複製するが、拡張タイプがどの列かの対応が取れず判定できない。",
+      "reason": "設計(HTML 1482行)は『複製範囲は「商品規格コード」および「拡張タイプ」のみ。それ以外は初期値(在庫数0など)』と記す。実装 ProductStockRepository::copyStockForNewShop（ProductStockRepository.php:427-435）の INSERT ... SELECT は、source から product_class_id と stock_location_id の2列のみを複製し、stock=0, total_cost=0, pick_up_flg=false, creator_id=1, create_date/update_date=now を初期値として設定する。構造としては『識別2列を複製し残りを初期化(在庫数0)』で設計パターンと一致する。設計語『拡張タイプ』が実装の stock_location_id に対応するのか別列なのかの対応関係が設計・スキーマから確定できず、リバース設計の用語も曖昧なため、実装違いか一致かを立証できない。よって UNCERTAIN。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-06_0404_sheet-8_sheet.json#b02-06_0404_sheet-8_sheet-conformance-7b0a907d9225",
+      "functionId": "b02-06_0404_sheet-8_sheet",
+      "featureNo": "B02-06",
+      "title": "B02-06 在庫初期化",
+      "dimension": "⑦要求網羅・未実装",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "medium",
+      "summary": "設計の詳細設計書が定めるコンソールバッチ product:batch insertStockHistory <開始日> <終了日>（受注日範囲から在庫減算履歴を作成）が ec-cube-enterprise に存在しない。",
+      "reason": "設計の詳細設計書(HTML 1522行, 処理フロー1526-1527行)は、コンソールバッチ product:batch insertStockHistory <開始日> <終了日> で受注日範囲の受注をたどり、受注日より前の最新在庫履歴を基準に受注分の在庫減算の在庫履歴(dtb_stock_history)を作成し、stock_change_reason 一致による重複判定と各種コンソール出力を行うと規定する。ec-cube-enterprise を確認すると insertStockHistory の名を持つ Command/Service は存在せず（rg で src/ html/ app/ 全て 0 件）、B02-06 として実装されている唯一のバッチは InitialStockRegistrationCommand（eccube:initial-stock-registration, 引数は target_base_info_id 1つ、InitialStockRegistrationCommand.php:35,46）で、これは基準店舗の dtb_product_stock を新店舗へ複製する別処理であり、受注日範囲から在庫履歴を作成するバッチ入口・処理フロー・重複判定・出力契約を一切満たさない。受注ベースの在庫履歴作成は ShoppingService の通常受注フローにのみ存在し、開始日・終了日を受ける再作成バッチではない。したがって設計要求のバッチは未実装。なお当シート冒頭のExcel機能仕様(1481-1482行)は別の『新店舗への在庫複製』機能を記しており実装済みだが、詳細設計書が明記する insertStockHistory バッチとは別物であるため、当要求の実装漏れは変わらない（シート内に設計記述の内部矛盾がある点は confidence を medium とする理由）。",
+      "designEvidence": {
+        "label": "設計要求(詳細設計書 利用者視点の入口/処理フロー)",
+        "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+        "start": 1522,
+        "end": 1527,
+        "contains": ["insertStockHistory", "開始日", "終了日", "在庫減算"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装漏れの最寄り実装(B02-06の唯一のバッチは別処理)",
+          "note": "eccube:initial-stock-registration は target_base_info_id 1引数で新店舗への在庫複製を行うのみ。insertStockHistory バッチではない。",
+          "path": "ec-cube-enterprise/src/Eccube/Command/InitialStockRegistrationCommand.php",
+          "start": 35,
+          "end": 46,
+          "contains": ["eccube:initial-stock-registration", "target_base_info_id"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -rln 'insertStockHistory' /home/y-saito/Developments/ec-cube-enterprise/src /home/y-saito/Developments/ec-cube-enterprise/html",
+        "rg -rn 'product:batch|受注日より前|開始日.*終了日' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command"
+      ]
+    }
+  ]
+}

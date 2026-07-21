@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m07_08_admin_online_purchase_purchase_online_return_list_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火/応答ヘッダなどブラウザで観測できる結果で判定する。**期待結果は仕様（基本設計＝Excel設計書／正本md／観点表）由来**とし、実装の現挙動・POM見出し・Form制約・メッセージ文言を期待値へ流用しない（messages.ja.yaml の文言は仕様文言の静的確認として併記する位置情報扱い）。CSVの中身（8列の値）の厳密検査は**手動**。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火/応答ヘッダなどブラウザで観測できる結果で判定する。**期待結果は仕様（基本設計＝Excel設計書／正本md／観点表）由来**とし、実装の現挙動・POM見出し・Form制約・メッセージ文言を期待値へ流用しない（messages.ja.yaml の文言は仕様文言の静的確認として併記する位置情報扱い）。CSVの中身（8列の値）の厳密検査は**手動**。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は「ネット買取管理 > 買取一覧」（`admin_purchase_list`＝`/admin/purchase/list`）で対象買取注文をチェック選択し、ダウンロードドロップダウンの「戻しリストCSV」ボタン（`admin_purchase_csv_export_return_list`＝`POST /admin/purchase/csv_export_return_list`）で棚戻し業務用CSVを出力する bulk/csv_export 型の機能である。
 
@@ -23,45 +23,45 @@
 | IT-20 | ログ出力抑止・識別子（ブラウザ観測外＝対象外） |
 | IT-23 | 一覧検索条件は別機能（買取検索）へ委譲（対象外） |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-001	IT-25	操作起点	P1	買取一覧画面が表示され戻しリストCSV出力の入口に到達できる	管理者ログイン済／SEED-M07-08-ADMIN	—	"1. 管理者でログインする
-2. /admin/purchase/list を開く"	ネット買取管理の買取一覧画面（サブタイトル「買取一覧」）が表示されること。
+2. /admin/purchase/list を開く"	ネット買取管理の買取一覧画面（サブタイトル「買取一覧」）が表示されること。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-002	IT-25	UI部品	P2	ダウンロードドロップダウンに「戻しリストCSV」ボタンが表示される	管理者ログイン済／検索結果が1件以上／SEED-M07-08-RESTOCK	—	"1. 買取一覧画面を表示する（検索結果1件以上）
-2. 「ダウンロード」ドロップダウンを開く"	ドロップダウン内に「戻しリストCSV」ボタン（id=csv_export_return_list）が表示されること。
+2. 「ダウンロード」ドロップダウンを開く"	ドロップダウン内に「戻しリストCSV」ボタン（id=csv_export_return_list）が表示されること。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-003	IT-25	URL	P3	「戻しリストCSV」ボタンのformactionが戻しリスト出力ルートを指す	管理者ログイン済／検索結果が1件以上／SEED-M07-08-RESTOCK	—	"1. 買取一覧画面を表示する
-2. 「戻しリストCSV」ボタンのformaction属性を確認する"	formaction が戻しリストCSV出力ルート（/admin/purchase/csv_export_return_list）であること。
+2. 「戻しリストCSV」ボタンのformaction属性を確認する"	formaction が戻しリストCSV出力ルート（/admin/purchase/csv_export_return_list）であること。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-010	IT-27	実行結果	P1	出力対象を選択し戻しリストCSVを実行するとCSVダウンロードが発火する	管理者ログイン済／入庫待ちまたは入庫済みステータスの買取が1件以上／SEED-M07-08-RESTOCK	対象買取のチェックボックスを選択	"1. 買取一覧画面を表示する
 2. 出力対象（入庫待ち/入庫済み）の買取をチェックする
-3. 「ダウンロード」→「戻しリストCSV」を押下"	CSVファイルのダウンロードが発火すること（添付ファイルとして応答されること）。
+3. 「ダウンロード」→「戻しリストCSV」を押下"	CSVファイルのダウンロードが発火すること（添付ファイルとして応答されること）。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-011	IT-25	HTTPステータス	P2	ダウンロードファイル名が戻しリストCSVの命名規則に従う	管理者ログイン済／入庫待ち/入庫済みの買取が1件以上／SEED-M07-08-RESTOCK	対象買取のチェックボックスを選択	"1. 戻しリストCSVを実行する
-2. ダウンロードの提案ファイル名を確認する"	ファイル名が purchase_restock_list_ で始まり拡張子 .csv であること。
+2. ダウンロードの提案ファイル名を確認する"	ファイル名が purchase_restock_list_ で始まり拡張子 .csv であること。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-012	IT-27	出力失敗	P3	出力処理中に失敗した場合はCSVが完成せずエラーとなる（手動・強制注入）	管理者ログイン済／入庫待ち/入庫済みの買取／SEED-M07-08-RESTOCK	出力ストリーム/CSV書込/データ取得を強制的に失敗させる	"1. 戻しリストCSVを実行する
-2. 出力処理中に例外/失敗を強制注入する"	正常なCSVが完成せず（添付ファイルとして完了応答されず）エラーとして扱われること。※失敗の強制注入は実機/フィクスチャ依存のため手動（付帯表4 #6）。
+2. 出力処理中に例外/失敗を強制注入する"	正常なCSVが完成せず（添付ファイルとして完了応答されず）エラーとして扱われること。※失敗の強制注入は実機/フィクスチャ依存のため手動（付帯表4 #6）。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-020	IT-22	必須制御	P1	未選択で戻しリストCSVを実行すると選択必須エラーが表示され一覧に留まる	管理者ログイン済／検索結果が1件以上／SEED-M07-08-RESTOCK	買取を1件も選択しない	"1. 買取一覧画面を表示する
-2. 何も選択せず「ダウンロード」→「戻しリストCSV」を押下"	「1つ以上の買取注文情報を選択してください。」がエラー表示され、買取一覧に留まる（CSVは出力されない）こと。
+2. 何も選択せず「ダウンロード」→「戻しリストCSV」を押下"	「1つ以上の買取注文情報を選択してください。」がエラー表示され、買取一覧に留まる（CSVは出力されない）こと。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-021	IT-22	DBとの相関バリデーション	P2	出力対象に入庫待ち/入庫済み以外のステータスを含めるとエラーになる	管理者ログイン済／入庫待ち・入庫済み以外のステータスの買取が存在／SEED-M07-08-INVALID-STATUS	入庫待ち/入庫済み以外のステータスの買取を選択	"1. 買取一覧画面を表示する
 2. 出力対象外ステータスの買取を選択
-3. 「戻しリストCSV」を押下"	出力対象に入庫待ち/入庫済み以外のステータスを含む場合はエラーが表示され（一覧に留まる）、CSVは出力されないこと。※具体的なエラーメッセージ文言・許可ステータスの定義は設計に明記が薄く実装補完（付帯表4 #3）＝要確認のため、文言の完全一致は固定しない。
-m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-022	IT-22	DBとの相関バリデーション	P3	対象IDが全件不存在のとき「対象のデータが見つかりません。」エラーになる	管理者ログイン済／SEED-M07-08-ADMIN	存在しない買取番号のみを buyOrderIds に指定（直接POST）	"1. 有効なCSRFトークン付きで存在しない買取番号のみを送信する"	全件が不存在の場合「対象のデータが見つかりません。」がエラー表示され、CSVは出力されないこと（判定順序: findBy結果が空＝BuyOrderRestockListService.php:101-103）。
-m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-023	IT-22	DBとの相関バリデーション	P3	有効IDと不存在IDが混在するとき不存在ID個別エラーになる	管理者ログイン済／入庫待ち/入庫済みの買取1件以上／SEED-M07-08-RESTOCK	有効な買取番号と存在しない買取番号を混在指定（直接POST）	"1. 有効なCSRFトークン付きで有効ID＋不存在IDを送信する"	不存在IDについて「買取番号: {7桁} は存在しません。」が個別エラー表示され、CSVは出力されないこと（判定順序: 一部不存在＝BuyOrderRestockListService.php:111-114）。
-m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-024	IT-22	部分入力	P3	buyOrderIdsに非数値/0/負数のみを送ると除去され未選択エラーになる	管理者ログイン済／SEED-M07-08-ADMIN	buyOrderIds に非数値文字列・0・負数のみを指定（直接POST）	"1. 有効なCSRFトークン付きで非数値/0/負数のみを送信する"	intval+array_filter で除去され実質未選択となり「1つ以上の買取注文情報を選択してください。」がエラー表示され、CSVは出力されないこと（境界: PurchaseController.php:645-651）。
-m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-030	IT-15	未認証	P1	未ログインで買取一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. ログアウト状態で /admin/purchase/list へアクセスする"	管理ログイン画面（ログインIDフォーム）へ誘導されること。
-m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-032	IT-15	未認証	P2	未ログインで戻しリスト出力ルートへPOSTすると出力されずログインへ誘導される	未ログイン	不正でないCSRFトークン無し/未認証セッション	"1. ログアウト状態で /admin/purchase/csv_export_return_list へPOSTする"	CSVは出力されず、管理ログインへ誘導（または拒否）されること（権限・認可はエンドポイント側でも有効）。
-m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-031	IT-13	URL直接アクセス	P2	POST専用の戻しリスト出力ルートへGETで直接アクセスすると出力されない	管理者ログイン済／SEED-M07-08-ADMIN	—	"1. /admin/purchase/csv_export_return_list へGETでアクセスする"	CSVは出力されず、許可されないメソッドとして拒否（または利用不可）となること。
+3. 「戻しリストCSV」を押下"	出力対象に入庫待ち/入庫済み以外のステータスを含む場合はエラーが表示され（一覧に留まる）、CSVは出力されないこと。※具体的なエラーメッセージ文言・許可ステータスの定義は設計に明記が薄く実装補完（付帯表4 #3）＝要確認のため、文言の完全一致は固定しない。				
+m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-022	IT-22	DBとの相関バリデーション	P3	対象IDが全件不存在のとき「対象のデータが見つかりません。」エラーになる	管理者ログイン済／SEED-M07-08-ADMIN	存在しない買取番号のみを buyOrderIds に指定（直接POST）	1. 有効なCSRFトークン付きで存在しない買取番号のみを送信する	全件が不存在の場合「対象のデータが見つかりません。」がエラー表示され、CSVは出力されないこと（判定順序: findBy結果が空＝BuyOrderRestockListService.php:101-103）。				
+m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-023	IT-22	DBとの相関バリデーション	P3	有効IDと不存在IDが混在するとき不存在ID個別エラーになる	管理者ログイン済／入庫待ち/入庫済みの買取1件以上／SEED-M07-08-RESTOCK	有効な買取番号と存在しない買取番号を混在指定（直接POST）	1. 有効なCSRFトークン付きで有効ID＋不存在IDを送信する	不存在IDについて「買取番号: {7桁} は存在しません。」が個別エラー表示され、CSVは出力されないこと（判定順序: 一部不存在＝BuyOrderRestockListService.php:111-114）。				
+m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-024	IT-22	部分入力	P3	buyOrderIdsに非数値/0/負数のみを送ると除去され未選択エラーになる	管理者ログイン済／SEED-M07-08-ADMIN	buyOrderIds に非数値文字列・0・負数のみを指定（直接POST）	1. 有効なCSRFトークン付きで非数値/0/負数のみを送信する	intval+array_filter で除去され実質未選択となり「1つ以上の買取注文情報を選択してください。」がエラー表示され、CSVは出力されないこと（境界: PurchaseController.php:645-651）。				
+m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-030	IT-15	未認証	P1	未ログインで買取一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. ログアウト状態で /admin/purchase/list へアクセスする	管理ログイン画面（ログインIDフォーム）へ誘導されること。				
+m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-032	IT-15	未認証	P2	未ログインで戻しリスト出力ルートへPOSTすると出力されずログインへ誘導される	未ログイン	不正でないCSRFトークン無し/未認証セッション	1. ログアウト状態で /admin/purchase/csv_export_return_list へPOSTする	CSVは出力されず、管理ログインへ誘導（または拒否）されること（権限・認可はエンドポイント側でも有効）。				
+m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-031	IT-13	URL直接アクセス	P2	POST専用の戻しリスト出力ルートへGETで直接アクセスすると出力されない	管理者ログイン済／SEED-M07-08-ADMIN	—	1. /admin/purchase/csv_export_return_list へGETでアクセスする	CSVは出力されず、許可されないメソッドとして拒否（または利用不可）となること。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-040	IT-16	実行結果	P2	出力CSVの内容（8列）が選択した買取データと一致する	管理者ログイン済／既知の棚戻しデータ／SEED-M07-08-RESTOCK	内容が既知の買取を選択	"1. 戻しリストCSVを出力する
-2. ファイルを開き8列（ピッキング区分/棚番号/言語・状態/略称/色・R/数/商品名/基準価格）を確認する"	CSVの列構成と各行の値が選択データおよびExcel設計書の出力仕様と一致すること。
+2. ファイルを開き8列（ピッキング区分/棚番号/言語・状態/略称/色・R/数/商品名/基準価格）を確認する"	CSVの列構成と各行の値が選択データおよびExcel設計書の出力仕様と一致すること。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-042	IT-16	実行結果	P2	ピッキング区分が基準価格と本店閾値に応じた区分（円未満/円以上〜円未満/円以上/サプライ）で出力される	管理者ログイン済／本店閾値(expensive_threshold1〜3)と各区分に該当する基準価格の買取／SEED-M07-08-PICKING	閾値の各境界に該当/非該当する基準価格の買取を選択	"1. 戻しリストCSVを出力する
-2. ピッキング区分列の値を区分ごとに確認する"	設計（md:118-120）どおり、基準価格が「●●円未満」「●●円以上▲▲円未満」「■■円以上」のいずれかに分類され、サプライ品は「サプライ」と出力されること（閾値表示も基準価格を参照）。※CSV内容検査は手動。
+2. ピッキング区分列の値を区分ごとに確認する"	設計（md:118-120）どおり、基準価格が「●●円未満」「●●円以上▲▲円未満」「■■円以上」のいずれかに分類され、サプライ品は「サプライ」と出力されること（閾値表示も基準価格を参照）。※CSV内容検査は手動。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-043	IT-16	実行結果	P2	言語/状態・略称・色R・商品名がFoil/サプライ品の編集規則で出力される	管理者ログイン済／Foil・非Foil・サプライ品の各買取／SEED-M07-08-EDIT	Foil/非Foil/サプライ品をそれぞれ含む買取を選択	"1. 戻しリストCSVを出力する
-2. 言語/状態・略称・色R・商品名の各列を確認する"	設計（md:122-126）どおり、Foilは「FoilJP/NM」形式、サプライ品は言語/状態が「サプライ品」かつ略称は非表示、色/Rは商品名から抽出、商品名は略称・言語・状態・色・レアリティを除去した値で出力されること。※CSV内容検査は手動。
+2. 言語/状態・略称・色R・商品名の各列を確認する"	設計（md:122-126）どおり、Foilは「FoilJP/NM」形式、サプライ品は言語/状態が「サプライ品」かつ略称は非表示、色/Rは商品名から抽出、商品名は略称・言語・状態・色・レアリティを除去した値で出力されること。※CSV内容検査は手動。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-044	IT-16	実行結果	P3	棚番号(本店のみ)・基準価格・CSV項目順/ソート/文字コードが仕様どおり出力される	管理者ログイン済／複数区分の買取（ソート確認用）／SEED-M07-08-PICKING	複数のピッキング区分が混在する買取を選択	"1. 戻しリストCSVを出力する
-2. 棚番号・基準価格・項目順・行ソート・文字コード/改行/区切りを確認する"	棚番号は本店の棚番が出力され、8項目の列順が設計どおりで、行は「円未満→円以上〜円未満→円以上→サプライ」「非Foil→Foil」の順にソートされること（IT-24相当の文字コード/改行/区切りも仕様準拠）。※CSV内容検査は手動。
+2. 棚番号・基準価格・項目順・行ソート・文字コード/改行/区切りを確認する"	棚番号は本店の棚番が出力され、8項目の列順が設計どおりで、行は「円未満→円以上〜円未満→円以上→サプライ」「非Foil→Foil」の順にソートされること（IT-24相当の文字コード/改行/区切りも仕様準拠）。※CSV内容検査は手動。				
 m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-041	IT-26	更新内容	P2	戻しリストCSV出力後も対象買取の棚戻し済みフラグが更新されない（仕様＝参照のみ・乖離検出／間接）	管理者ログイン済／入庫待ち/入庫済みの買取／SEED-M07-08-RESTOCK	対象買取を選択	"1. 戻しリストCSVを出力する
-2. 対象買取の棚戻し済みフラグ（restocked_flg）をDBで確認する"	仕様（正本md「CSV出力＝参照のみでDB更新を伴わない」）どおり、出力対象の買取の restocked_flg が更新されないこと。※実装は markBuyOrdersAsRestocked で更新するため、更新が起きれば仕様乖離を検出（付帯表4 #1）。
-m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-050	IT-15	CSRF	P2	CSRFトークンが不正な戻しリスト出力リクエストは拒否される	管理者ログイン済／SEED-M07-08-ADMIN	不正/欠落のCSRFトークン	"1. 不正なトークンで /admin/purchase/csv_export_return_list へPOSTする"	リクエストが拒否され、CSVが出力されないこと。
+2. 対象買取の棚戻し済みフラグ（restocked_flg）をDBで確認する"	仕様（正本md「CSV出力＝参照のみでDB更新を伴わない」）どおり、出力対象の買取の restocked_flg が更新されないこと。※実装は markBuyOrdersAsRestocked で更新するため、更新が起きれば仕様乖離を検出（付帯表4 #1）。				
+m07-08_admin_online_purchase_purchase_online_return_list_csv_export（戻しリストCSV）	E2E-M07-08-050	IT-15	CSRF	P2	CSRFトークンが不正な戻しリスト出力リクエストは拒否される	管理者ログイン済／SEED-M07-08-ADMIN	不正/欠落のCSRFトークン	1. 不正なトークンで /admin/purchase/csv_export_return_list へPOSTする	リクエストが拒否され、CSVが出力されないこと。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

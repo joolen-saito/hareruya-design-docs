@@ -1,0 +1,166 @@
+{
+  "id": "f06-06-shopping-history-bottom-toolbar-count-and-display-count-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-06_0304_sheet-8_sheet.json",
+  "sourceFindingId": "f06-06_0304_sheet-8_sheet-conformance-6dada7e76bf5",
+  "classification": "フロント注文",
+  "feature": "注文購入履歴一覧",
+  "issueCategory": "実装漏れ",
+  "issue": "購入履歴一覧の下部に件数表示と表示件数プルダウンが表示されない",
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "reproSteps": [
+    "注文履歴を持つ会員で `http://localhost:8080/ja/mypage/shopping_history` を表示する",
+    "一覧上部に件数表示、ページング、表示件数プルダウンが表示されていることを確認する",
+    "一覧下部に移動し、件数表示、ページング、表示件数プルダウンが同様に表示されているか確認する"
+  ],
+  "expected": [
+    "一覧下部の要素15として件数ラベルを表示する",
+    "一覧下部の要素16としてページングリンクを表示する",
+    "一覧下部の要素17として表示件数プルダウンを表示する",
+    "要素15/16/17はいずれの注文区分でも表示対象とする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の購入履歴一覧では、上部ツールバーに件数表示、ページャ、`form.disp_number` の表示件数プルダウンを描画している。一方、下部の `p-hareruya-history-list__pagination-wrap--bottom` は `pager.twig` の include だけで、件数表示と表示件数プルダウンを描画していない。`ShoppingHistoryType` には `disp_number` フィールドがあるため入力部品は定義済みだが、下部には出力されていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 上部ツールバーは件数・ページャ・表示件数を描画",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 60,
+          "end": 80,
+          "language": "twig",
+          "contains": [
+            "p-hareruya-toolbar__count",
+            "front.mypage.history_count",
+            "{% include \"pager.twig\" with {'pages': pagination.paginationData} %}",
+            "form_widget(form.disp_number"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 下部はページャのみ",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 212,
+          "end": 216,
+          "language": "twig",
+          "contains": [
+            "p-hareruya-history-list__pagination-wrap--bottom",
+            "{% include \"pager.twig\" with {'pages': pagination.paginationData} %}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 表示件数フィールド定義",
+          "path": "ec-cube-enterprise/src/Eccube/Form/Type/Front/ShoppingHistoryType.php",
+          "start": 56,
+          "end": 63,
+          "language": "php",
+          "contains": [
+            "$builder->add('disp_number', ChoiceType::class",
+            "'choices' => $choices"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の購入履歴一覧は、上部に表示件数セレクトと件数・ページャを描画し、下部にも `[表示範囲 件]`、総件数、ページャを描画している。ただし表示件数セレクトは旧実装でも上部のみで、下部表示件数プルダウンの要求は設計側で追加された要素17として確認できる。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 上部の表示件数セレクトとページャ",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 27,
+          "end": 67,
+          "language": "twig",
+          "contains": [
+            "<select id=\"selectPageSize\" name=\"selectPageSize\">",
+            "<span class=\"count_number\">{{ orders.getTotalItemCount }} 件あります</span>",
+            "<span><a href=\"{{ path('mypage_shopping_history', query|merge({'page': pages})) }}\">最後</a></span>"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 下部の件数・ページャ",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 135,
+          "end": 164,
+          "language": "twig",
+          "contains": [
+            "<div class=\"navipage_ bottom_\">",
+            "<span class=\"count_number\">{{ orders.getTotalItemCount }} 件あります</span>",
+            "<span><a href=\"{{ path('mypage_shopping_history', query|merge({'page': pages})) }}\">最後</a></span>"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "画面上のピンで下部に15件数、16ページング、17表示件数が配置されている",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2633,
+      "end": 2649,
+      "language": "html",
+      "contains": [
+        "pin-sheet-8-16",
+        "title=\"No.16 ページング\"",
+        "pin-sheet-8-17",
+        "title=\"No.17 表示件数\"",
+        "pin-sheet-8-15",
+        "title=\"No.15 件数\""
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "要素表で下部15/16/17が全区分表示対象として定義されている",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2708,
+      "end": 2710,
+      "language": "html",
+      "contains": [
+        "id=\"item-sheet-8-15\"",
+        "<td>件数</td><td>ラベル</td>",
+        "id=\"item-sheet-8-16\"",
+        "<td>ページング</td><td>リンク</td>",
+        "id=\"item-sheet-8-17\"",
+        "<td>表示件数</td><td>プルダウン</td>"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "下部はpager.twigだけを描画し、件数表示・表示件数プルダウンがない",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+      "start": 212,
+      "end": 216,
+      "language": "twig",
+      "contains": [
+        "p-hareruya-history-list__pagination-wrap--bottom",
+        "pager.twig"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は下部にも件数範囲・総件数・ページャを描画している",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig",
+      "start": 135,
+      "end": 164,
+      "language": "twig",
+      "contains": [
+        "navipage_ bottom_",
+        "count_number",
+        "件あります"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-06_0304_sheet-8_sheet.json#f06-06_0304_sheet-8_sheet-conformance-6dada7e76bf5'",
+      "rg -n \"item-sheet-8-1[567]|表示件数|件数|ページング|p-hareruya-history-list__pagination-wrap--bottom|disp_number|pager\\.twig|search_pagination|pagination\" hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig",
+      "rg -n \"表示件数|disp_number|件数|最初|最後|pagination|pager|pages\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/ShoppingController.php",
+      "rg -n \"function .*shoppingHistory|mypage_shopping_history|ShoppingHistoryType|disp_number\" ec-cube-enterprise/src/Eccube/Controller ec-cube-enterprise/src/Eccube/Form/Type/Front/ShoppingHistoryType.php",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html | sed -n '2633,2710p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig | sed -n '52,86p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig | sed -n '204,236p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Form/Type/Front/ShoppingHistoryType.php | sed -n '1,100p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig | sed -n '1,170p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLの下部要素15/16/17、ec-cube-enterprise の上部/下部テンプレートと表示件数フォーム、pf-eccube3 の上部/下部ページャを再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

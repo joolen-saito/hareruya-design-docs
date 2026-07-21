@@ -1,0 +1,277 @@
+{
+  "id": "f06-03-login-restriction-input-fields-not-hidden",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-03_0306_sheet-5_sheet.json",
+  "sourceFindingId": "f06-03_0306_sheet-5_sheet-conformance-eee0826d789c",
+  "classification": "フロント会員",
+  "feature": "ログイン",
+  "issueCategory": "実装漏れ",
+  "issue": "ログイン試行制限中もメールアドレス・パスワード入力欄とログインボタンが表示される",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "`http://localhost:8080/ja/mypage/login` で同一条件のログイン失敗を5回発生させ、Symfony の `login_throttling` 制限状態にする",
+    "制限状態で `http://localhost:8080/ja/mypage/login` を表示、または再度ログイン送信する",
+    "メールアドレス欄・パスワード欄・ログインボタンと、ログイン制限メッセージの表示状態を確認する"
+  ],
+  "expected": [
+    "ログイン制限中（制限日時が現在より後）の場合は、フォーム位置に制限メッセージのみを表示する",
+    "制限中はメールアドレス欄、パスワード欄、Remember Me欄、ログインボタンを表示しない",
+    "制限中の表示文言は「誤ったメールアドレスやパスワードを繰り返し入力されたため、ログインを制限しました。<br>しばらく待ってから、お試しください。」とする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise は `security.yaml` で Symfony の `login_throttling` を有効にし、`eccube.yaml` で上限5回・30分を設定している。一方、会員ログイン画面の `MypageController::login()` は制限日時や入力欄非表示フラグをテンプレートへ渡しておらず、`Mypage/login.twig` はメールアドレス欄、パスワード欄、ログインボタンを常時描画する。制限時は認証エラーがある場合にエラー枠へ Symfony の `Too many failed login attempts` 翻訳を表示するだけで、設計の「入力欄に代えて制限メッセージのみ表示」にはなっていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise ログイン画面は制限状態フラグを渡していない",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/MypageController.php",
+          "start": 83,
+          "end": 117,
+          "language": "php",
+          "contains": [
+            "#[Route(path: '/mypage/login', name: 'mypage_login', methods: ['GET', 'POST'])]",
+            "'error' => $utils->getLastAuthenticationError()",
+            "'form' => $form->createView()"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise メールアドレス・パスワード入力欄を常時描画",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/login.twig",
+          "start": 46,
+          "end": 67,
+          "language": "twig",
+          "contains": [
+            "form_widget(form.login_email",
+            "form_widget(form.login_pass"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 制限エラーは入力欄の後にエラー枠として表示",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/login.twig",
+          "start": 77,
+          "end": 89,
+          "language": "twig",
+          "contains": [
+            "data-error-code=\"too-many-login-attempts\"",
+            "error.messageKey|trans(error.messageData, 'validators')",
+            "<button type=\"submit\""
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise ログイン試行制限の有効化",
+          "path": "ec-cube-enterprise/app/config/eccube/packages/security.yaml",
+          "start": 62,
+          "end": 63,
+          "language": "yaml",
+          "contains": [
+            "login_throttling:",
+            "limiter: app.login_rate_limiter"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise ログイン試行制限の回数と時間",
+          "path": "ec-cube-enterprise/app/config/eccube/packages/eccube.yaml",
+          "start": 283,
+          "end": 284,
+          "language": "yaml",
+          "contains": [
+            "eccube_login_throttling_max_attempts: 5",
+            "eccube_login_throttling_interval: '30 minutes'"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise Symfony制限メッセージ翻訳",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/validators.ja.yaml",
+          "start": 25,
+          "end": 27,
+          "language": "yaml",
+          "contains": [
+            "Too many failed login attempts",
+            "ログイン試行回数"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、ログイン失敗回数が上限に達すると `FrontLoginFailureHandler` がセッションの `customer.login.restriction_datetime` に制限日時を保存する。会員ログイン画面 `Mypage/login.twig` はこの日時が現在より後なら制限メッセージだけを表示し、入力欄・エラー枠・ログインボタン・CSRF hidden は `{% else %}` 側に置かれているため表示されない。成功時は `FrontLoginSuccessHandler` が失敗回数と制限日時を削除する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 制限日時セッションキー",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/config.yml",
+          "start": 335,
+          "end": 339,
+          "language": "yaml",
+          "contains": [
+            "login_retry_count: customer.login.retry.count",
+            "login_restriction_datetime: customer.login.restriction_datetime",
+            "login_restriction_minutes: 10"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 失敗上限到達時に制限日時を保存",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Security/FrontLoginFailureHandler.php",
+          "start": 26,
+          "end": 34,
+          "language": "php",
+          "contains": [
+            "$retryCount = $session->get",
+            "if ($retryCount >=",
+            "$session->set($app['config']['HareruyaEc']['const']['security']['login_restriction_datetime'], $limitDateTime);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 制限中はメッセージのみ表示",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/login.twig",
+          "start": 19,
+          "end": 24,
+          "language": "twig",
+          "contains": [
+            "{% set loginTime = app.session.get(app.config.HareruyaEc.const.security.login_restriction_datetime)|default(null) %}",
+            "{% if loginTime is not null and loginTime > date() %}",
+            "誤ったメールアドレスやパスワードを繰り返し入力されたため、ログインを制限しました。<br>しばらく待ってから、お試しください。"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 入力欄とボタンは制限中でない場合だけ表示",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/login.twig",
+          "start": 24,
+          "end": 51,
+          "language": "twig",
+          "contains": [
+            "{% else %}",
+            "form_widget(form.login_email",
+            "form_widget(form.login_pass",
+            "value=\"ログイン\"",
+            "{% endif %}"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 成功時に制限日時を削除",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Security/FrontLoginSuccessHandler.php",
+          "start": 21,
+          "end": 29,
+          "language": "php",
+          "contains": [
+            "ログイン失敗回数とログイン制限日時をリセット",
+            "$session->remove($app['config']['HareruyaEc']['const']['security']['login_restriction_datetime']);",
+            "return parent::onAuthenticationSuccess"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "制限状態のときは入力欄を出さず制限メッセージのみ表示",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 2033,
+      "end": 2034,
+      "language": "html",
+      "contains": [
+        "制限状態のときは入力欄を出さず制限メッセージのみを表示する",
+        "ログイン制限中（制限日時が現在より後）の場合は、入力欄を表示せず制限メッセージを表示する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "ログイン送信時の判定順序でも入力欄を出さないと規定",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 2046,
+      "end": 2048,
+      "language": "html",
+      "contains": [
+        "試行制限中か（制限日時が現在より後）",
+        "制限中ならログイン画面で制限メッセージを表示し、入力欄を出さない"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "制限メッセージ文言と表示位置",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 2050,
+      "end": 2056,
+      "language": "html",
+      "contains": [
+        "誤ったメールアドレスやパスワードを繰り返し入力されたため、ログインを制限しました",
+        "フォーム位置に入力欄に代えて表示",
+        "制限中は入力欄を表示しない"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "入力欄とログインボタンが常時描画される",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/login.twig",
+      "start": 46,
+      "end": 89,
+      "language": "twig",
+      "contains": [
+        "form_widget(form.login_email",
+        "form_widget(form.login_pass",
+        "data-error-code=\"too-many-login-attempts\"",
+        "<button type=\"submit\""
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "ログイン画面コントローラは制限中判定や入力欄非表示フラグを渡していない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/MypageController.php",
+      "start": 83,
+      "end": 117,
+      "language": "php",
+      "contains": [
+        "public function login",
+        "'error' => $utils->getLastAuthenticationError()",
+        "'form' => $form->createView()"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は制限日時が現在より後なら制限メッセージだけを表示する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/login.twig",
+      "start": 19,
+      "end": 51,
+      "language": "twig",
+      "contains": [
+        "login_restriction_datetime",
+        "{% if loginTime is not null and loginTime > date() %}",
+        "誤ったメールアドレスやパスワードを繰り返し入力されたため、ログインを制限しました",
+        "{% else %}",
+        "form_widget(form.login_email",
+        "value=\"ログイン\""
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は失敗上限到達時に制限日時をセッションへ保存する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Security/FrontLoginFailureHandler.php",
+      "start": 26,
+      "end": 34,
+      "language": "php",
+      "contains": [
+        "login_retry_count",
+        "login_restriction_datetime",
+        "$session->set"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-03_0306_sheet-5_sheet.json#f06-03_0306_sheet-5_sheet-conformance-eee0826d789c'",
+      "rg -n \"制限状態のときは入力欄を出さず|ログイン制限中|入力欄を表示せず|フォーム位置に入力欄に代えて表示|制限中は入力欄を表示しない\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"Too many failed login attempts|login_throttling|login_rate_limiter|eccube_login_throttling|max_attempts|login_email|login_pass|too-many-login-attempts\" ec-cube-enterprise/src/Eccube ec-cube-enterprise/app/config/eccube/packages",
+      "rg -n \"login_restriction_datetime|login_retry_count|ログインを制限しました|FrontLoginFailureHandler|FrontLoginSuccessHandler|login_retry_limit|login_restriction_minutes\" pf-eccube3/app/Plugin/HareruyaEc",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '2033,2056p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/MypageController.php | sed -n '83,117p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/login.twig | sed -n '38,96p'",
+      "nl -ba ec-cube-enterprise/app/config/eccube/packages/security.yaml | sed -n '55,67p'",
+      "nl -ba ec-cube-enterprise/app/config/eccube/packages/eccube.yaml | sed -n '280,285p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/locale/validators.ja.yaml | sed -n '23,28p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/login.twig | sed -n '19,51p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Service/Security/FrontLoginFailureHandler.php | sed -n '1,55p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Service/Security/FrontLoginSuccessHandler.php | sed -n '1,40p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/config.yml | sed -n '334,340p'"
+    ],
+    "review": "review-pack を生成し、設計・enterprise・ベース実装の該当箇所を手動で再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "chunkId": "a17-03_0517_sheet-5_pointgranterapi--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-03_0517_sheet-5_pointgranterapi.json#a17-03_0517_sheet-5_pointgranterapi-conformance-88b47dcc29d6",
+      "refuted": false,
+      "reason": "反証できず、指摘を維持。(1)引用の正しさ: SmaregiApiService::postRegisterTransaction (SmaregiApiService.php:35-48) は本体が `// TODO: スマレジAPIを実行する実装を追加 // 未実装のため仮の固定レスポンスを返却` のみで `['result'=>['status'=>'success']]` を返す。実装自身が『未実装』と明記。PointGranterController.php:62 が同メソッドを呼ぶことも確認。(2)別実装の探索: `rg postRegisterTransaction` はこの1メソッドとController呼出のみ。SmaregiTransactionApiClient は requestGet 経由の getTransaction / listTransactions（GET）のみで、pos/transactions への POST 中継メソッドは存在しない。registerTransaction/postTransaction/transaction_upd/proc_name の別中継実装も src 全体に無し。(3)設計側除外の検討: 設計の『本書で扱わないこと』(line 1761近傍) はスマレジ取引API『そのものの仕様・応答構造』を対象外とするだけで、『本書で扱うこと』(line 1761) は『連携先からの取引要求のスマレジ取引APIへの中継』を明示的に対象内としている。よって中継は要求範囲内かつ未実装。指摘成立。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-03_0517_sheet-5_pointgranterapi.json#a17-03_0517_sheet-5_pointgranterapi-conformance-45b7970abf58",
+      "refuted": true,
+      "reason": "反証成立。指摘は『設計=dtb_customer.point / 実装=dtb_player.point』の表面的なテーブル名差を実装違いとするが、設計自身が実装を正とする逃げ道と会員=プレイヤーの定義を持ち、実装は本システムの正準な会員ポイント残高列を加算しているため要求を満たす。(1)設計側の自己除外: line 1770『現行のポイント残高列・ポイント履歴テーブルの呼称・型は現行と移行先で異なる可能性があり、列名・型の最終確定はec-cube-enterprise実装を正とする』と明記。列名の最終確定は実装優先。(2)設計の用語定義(line 1773): 『会員ポイント＝会員（プレイヤー）が保有するポイント残高』と、会員を『プレイヤー』として定義。処理フローの『会員（スマレジ会員IDで特定）』もdtb_player.smaregi_id由来であり、加算対象がPlayerであることと整合。(3)コードベース横断(rg setPoint/getPoint): ec-cube-enterprise の会員ポイント残高の正準列は dtb_player.point。PointService(gainPoints/spendPoints)、PointDiffProcessor、SmaregiPointAdjustmentApplier/Reverter、AdjustPointVarianceAction、LostPointsAction、そして本 PointGranterAction いずれも $Player->getPoint()/setPoint() を更新。Customer::point を触るのは基盤EC-CUBE由来の PointHelper のみで本系の会員残高操作には使われていない。よって実装(PointGranterAction.php:66 の dtb_player.point 加算)は『会員(プレイヤー)ポイント残高に付与ポイントを加算する』という設計要求を、設計自身が正とする実装の列で満たしている。設計のDBカラム表 dtb_customer 記載は同節の実装優先条項に劣後する文書上の不整合であり、指摘の実装違いは成立しない。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-03_0517_sheet-5_pointgranterapi.json#a17-03_0517_sheet-5_pointgranterapi-conformance-9e30c8c7c6f9",
+      "refuted": false,
+      "reason": "反証できず、指摘を維持。(1)引用の正しさ: PointGranterAction::handle は pointHistoryEntityManager->save(..., transactionId: null) (PointGranterAction.php:76) を渡す。PointHistoryEntityManager::save は `if ($transactionId !== null) { setTransactionId(...) }` (PointHistoryEntityManager.php:73-74) のため、PointGranter付与経路では transaction_id が常に未設定。DtbPointHistory には該当列(コメント『スマレジ取引ID』)と setter が存在するが populate されない。(2)別経路の検討: rg で transaction_id を設定するのは Webhook系(SmaregiOrderPointApplier/PointAdjustmentApplier/Reverter が PointService 経由で取引ID記録)だが、これは注文/Webhook起点の別フローであり、本設計シートが要求する PointGranter admin_api 付与経路(『付与時に登録する』line 1770近傍のDBカラム節)ではない。当該経路での取引ID保存機構は存在しない。(3)設計側除外の検討: line 1770 の実装優先条項は『列名・型の最終確定』を実装に委ねるのみで、列を populate しない挙動を許容するものではない(列は実在する)。よって設計要求(transaction_id を付与時に登録)に対し実装はnull固定で未充足。指摘成立。なお本項は中継スタブ(88b47dcc)に起因する構造だが、transaction_id 非保存の事実は独立して成立する。"
+    }
+  ]
+}

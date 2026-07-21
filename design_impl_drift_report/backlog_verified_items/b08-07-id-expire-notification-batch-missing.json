@@ -1,0 +1,293 @@
+{
+  "id": "b08-07-id-expire-notification-batch-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b08-07_0408_sheet-9_sheet.json",
+  "sourceFindingId": "b08-07_0408_sheet-9_sheet-conformance-da4f74c918b0",
+  "classification": "バッチ会員",
+  "feature": "身分証有効期限切れ通知",
+  "issueCategory": "実装漏れ",
+  "issue": "身分証有効期限切れ通知バッチの実行処理がなく、対象者更新と通知メール送信が行われない",
+  "designBook": "0408_基本設計仕様書(バッチ_会員).xlsx",
+  "reproSteps": [
+    "設計書 B08-07 の処理内容で、身分証有効期限2週間前のユーザー取得、身分証有効期限のNULL更新、本人確認ステータス更新、会員向けメール、管理者向け一覧メールが要求されていることを確認する",
+    "ベース実装 pf-eccube3 の `CustomerBatch` を確認し、`customer:batch idExpireNotification` が `IdExpireNotification` に対応付けられていることを確認する",
+    "ベース実装 pf-eccube3 の `IdExpireNotification` を確認し、対象者取得、対象者なし終了、ユーザーごとの更新、会員向けメール送信、管理者向けメール送信を実行していることを確認する",
+    "ec-cube-enterprise の `DtbPlayerRepository::findCustomersForNotificationIdExpire()`、メールテンプレート、管理者宛先オプションを確認する",
+    "ec-cube-enterprise の `src/Eccube/Command`、`src/Eccube/Service/Admin/Customer`、`MailService.php` を検索し、B08-07相当のCommand/Action/Serviceおよび送信メソッドが存在しないことを確認する"
+  ],
+  "expected": [
+    "毎日8:00のスケジュール起動で身分証有効期限切れ通知バッチを実行できる",
+    "身分証有効期限が2週間前に到達したプレイヤーを取得し、対象者がいなければ処理を終了する",
+    "対象者ごとに `idExpirationDate` を null に更新し、オンライン本人確認の場合は本人確認ステータスを未設定または未確認へ戻す。簡易書留確認済みの場合はステータスを変更しない",
+    "対象会員のメールアドレス宛に件名「【晴れる屋】オンライン本人確認の更新手続きのお願い」の身分証有効期限切れ通知メールを送信する",
+    "処理後に対象者の会員ID・氏名一覧を作成し、`check_id_expired_mail_address` の管理者宛へ件名「身分証の有効期限切れ会員の存在を通知するメール」で送信する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise には対象者抽出メソッド `findCustomersForNotificationIdExpire()`、会員向けメールテンプレート、管理者宛先オプションは存在する。しかし、これらを組み合わせてB08-07のバッチ処理として実行するCommand/Action/Serviceは確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise には身分証有効期限2週間前相当の対象者抽出メソッドだけが存在する",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbPlayerRepository.php",
+          "start": 155,
+          "end": 167,
+          "language": "php",
+          "contains": [
+            "public function findCustomersForNotificationIdExpire(\\DateTime $targetDate): mixed",
+            "->where('p.idExpirationDate <= :target_date')",
+            "return $qb->getQuery()->getResult();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise には会員向けメールテンプレート本文が存在する",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mail/Mall/id_expire_notification.twig",
+          "start": 1,
+          "end": 26,
+          "language": "twig",
+          "contains": [
+            "お客様が現在ご登録いただいている「オンライン本人確認」の身分証の有効期限が残り2週間を切っております。",
+            "https://www.hareruyamtg.com/ja/mypage/identification",
+            "※現在お客様のオンライン本人確認のステータスは「未確認」に切り替わっています。"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise のメールマスタには身分証有効期限切れ通知メールが登録される",
+          "path": "ec-cube-enterprise/app/DoctrineMigrations/Version20251204111453.php",
+          "start": 1773,
+          "end": 1778,
+          "language": "php",
+          "contains": [
+            "'mail_key' => 'eccube.mail.id_expire_notification'",
+            "'file_name' => 'Mail/Mall/id_expire_notification.twig'",
+            "'mail_subject' => '【晴れる屋】オンライン本人確認の更新手続きのお願い'"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の管理者宛先オプションは存在する",
+          "path": "ec-cube-enterprise/app/DoctrineMigrations/Version20251125161057.php",
+          "start": 280,
+          "end": 284,
+          "language": "php",
+          "contains": [
+            "'option_key' => 'check_id_expired_mail_address'",
+            "'option_value' => 'it_common@hareruyamtg.com'"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "`rg` で `IdExpireNotification`、`id_expire_notification`、`sendIdExpire`、`findCustomersForNotificationIdExpire()`、件名文言を `src/Eccube/Command`、`src/Eccube/Service/Admin/Customer`、`src/Eccube/Service/MailService.php` から検索しても、B08-07の実行入口やメール送信メソッドは見つからない。B08-03/B08-04のような既存バッチCommand/Action構造はあるため、同種バッチの置き場所自体は存在するが、B08-07相当が欠落している。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise には同種バッチのCommand構造はあるがB08-07ではない",
+          "path": "ec-cube-enterprise/src/Eccube/Command/PointExpireNotificationCommand.php",
+          "start": 25,
+          "end": 53,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:customer:point-expire-notification', description: 'ポイント有効期限通知バッチ')]",
+            "$this->pointExpireNotificationAction->handle();",
+            "$io->success('ポイント有効期限通知処理が完了しました。');"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise には同種Action構造はあるがB08-07ではない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Customer/CheckBlankRequiredItemCustomerAction.php",
+          "start": 31,
+          "end": 42,
+          "language": "php",
+          "contains": [
+            "$blankRequiredItemCustomers = $this->customerRepository->getBlankRequiredItemCustomers();",
+            "if (empty($blankRequiredItemCustomers)) {",
+            "$this->mailService->sendBlankRequiredItemCustomerAlertMail($blankRequiredItemCustomers);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の本人確認ステータス定数は未確認=1、簡易書留確認済み=4",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbIdentityConfirmStatus.php",
+          "start": 29,
+          "end": 36,
+          "language": "php",
+          "contains": [
+            "public const STATUS_UNCONFIRMED = 1;",
+            "public const STATUS_REGISTERED_MAIL_CONFIRMED = 4;"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、`customer:batch idExpireNotification` が登録され、`IdExpireNotification` が対象者取得から更新、会員向け通知、管理者向け通知まで実行している。`MailService` には会員向け・管理者向けの専用送信メソッドがあり、管理者メール本文は `会員ID 氏名` から始まる一覧を作成する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は customer:batch idExpireNotification を登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php",
+          "start": 12,
+          "end": 52,
+          "language": "php",
+          "contains": [
+            "'idExpireNotification' => 'Plugin\\HareruyaEc\\Service\\Customer\\IdExpireNotification'",
+            "$this->setName('customer:batch')",
+            "$accountList->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の IdExpireNotification は対象者取得・更新・通知を実行する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/IdExpireNotification.php",
+          "start": 31,
+          "end": 64,
+          "language": "php",
+          "contains": [
+            "$targetDate = (clone $now)->modify(\"+{$daysBefore} days\")->setTime(0, 0, 0);",
+            "$expiringPlayers = $app['hareruya_ec.repository.player']->findCustomersForNotificationIdExpire($targetDate);",
+            "if (count($expiringPlayers) === 0) {",
+            "$player->setIdExpirationDate(null);",
+            "$player->setIdentityConfirmStatusId(MtbIdentityConfirmStatus::STATUS_UNCONFIRMED);",
+            "$app['hareruya_ec.service.mail']->sendIdExpireNotificationMailToCustomer($player);",
+            "$app['hareruya_ec.service.mail']->sendIdExpireNotificationMailToAdmin($expiringPlayers);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の対象者抽出は idExpirationDate <= target_date",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbPlayerRepository.php",
+          "start": 155,
+          "end": 164,
+          "language": "php",
+          "contains": [
+            "public function findCustomersForNotificationIdExpire($targetDate)",
+            "->where('p.idExpirationDate <= :target_date')",
+            "return $qb->getQuery()->getResult();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の MailService は会員向け・管理者向け通知を送信する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php",
+          "start": 1841,
+          "end": 1913,
+          "language": "php",
+          "contains": [
+            "public function sendIdExpireNotificationMailToCustomer($player)",
+            "->setTo([$customer->getEmail()])",
+            "public function sendIdExpireNotificationMailToAdmin($players)",
+            "$lines[] = $customer->getId() . ' ' . $customer;",
+            "会員ID 氏名",
+            "->setSubject('身分証の有効期限切れ会員の存在を通知するメール')"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B08-07 は対象者取得、対象者なし終了、ユーザーごとの更新、会員向けメール、管理者向け一覧メールまでを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+      "start": 1748,
+      "end": 1807,
+      "language": "html",
+      "contains": [
+        "身分証の有効期限切れ間近のユーザーの身分証データ削除およびメール通知を行い、管理者には該当ユーザー一覧をメール送信を行う",
+        "プレイヤーデータの身分証有効期限切れ2週間前のユーザーを取得する",
+        "該当者がいない場合には、処理を終了する。",
+        "プレイヤーデータにある身分証有効期限(idExpirationDate)を未設定値(null)へ更新する",
+        "簡易書留で確認している場合は、本人確認ステータスの変更は行わない",
+        "件名:　【晴れる屋】オンライン本人確認の更新手続きのお願い",
+        "件名:　身分証の有効期限切れ会員の存在を通知するメール"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "対象者抽出Repositoryは存在するが、`rg findCustomersForNotificationIdExpire\\(` ではこの定義以外の呼び出し元が見つからない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/DtbPlayerRepository.php",
+      "start": 155,
+      "end": 167,
+      "language": "php",
+      "contains": [
+        "findCustomersForNotificationIdExpire",
+        "p.idExpirationDate <= :target_date"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "メールテンプレートとメールマスタは存在するが、MailServiceの専用送信メソッドやB08-07 Actionからの呼び出しは見つからない",
+      "path": "ec-cube-enterprise/app/DoctrineMigrations/Version20251204111453.php",
+      "start": 1773,
+      "end": 1778,
+      "language": "php",
+      "contains": [
+        "eccube.mail.id_expire_notification",
+        "Mail/Mall/id_expire_notification.twig",
+        "【晴れる屋】オンライン本人確認の更新手続きのお願い"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "管理者宛先オプションは存在するが、対象者一覧メールを作成・送信する実装は見つからない",
+      "path": "ec-cube-enterprise/app/DoctrineMigrations/Version20251125161057.php",
+      "start": 280,
+      "end": 284,
+      "language": "php",
+      "contains": [
+        "check_id_expired_mail_address",
+        "it_common@hareruyamtg.com"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `customer:batch idExpireNotification` の入口を持つ",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php",
+      "start": 12,
+      "end": 52,
+      "language": "php",
+      "contains": [
+        "'idExpireNotification' => 'Plugin\\HareruyaEc\\Service\\Customer\\IdExpireNotification'",
+        "$this->setName('customer:batch')",
+        "$accountList->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の `IdExpireNotification` はB08-07の対象者取得、更新、会員通知、管理者通知を実行する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/IdExpireNotification.php",
+      "start": 31,
+      "end": 64,
+      "language": "php",
+      "contains": [
+        "findCustomersForNotificationIdExpire($targetDate)",
+        "if (count($expiringPlayers) === 0)",
+        "$player->setIdExpirationDate(null);",
+        "$player->setIdentityConfirmStatusId(MtbIdentityConfirmStatus::STATUS_UNCONFIRMED);",
+        "sendIdExpireNotificationMailToCustomer($player)",
+        "sendIdExpireNotificationMailToAdmin($expiringPlayers)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の MailService にはB08-07専用の会員向け・管理者向け送信メソッドがある",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php",
+      "start": 1841,
+      "end": 1913,
+      "language": "php",
+      "contains": [
+        "sendIdExpireNotificationMailToCustomer",
+        "setTo([$customer->getEmail()])",
+        "sendIdExpireNotificationMailToAdmin",
+        "会員ID 氏名",
+        "身分証の有効期限切れ会員の存在を通知するメール"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B08-07|身分証有効期限切れ通知|idExpirationDate|identity_confirm_status|check_id_expired|有効期限切れ|オンライン本人確認の更新\" excel_to_html/output/0408_基本設計仕様書\\(バッチ_会員\\).html design_impl_drift_report/findings/b08-07_0408_sheet-9_sheet.json",
+      "rg -n \"idExpirationDate|IdExpiration|identity_confirm|IdentityConfirm|check_id_expired|id_expire|有効期限切れ|オンライン本人確認の更新|findCustomersForNotificationIdExpire|CheckId|Expired\" ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/app -g '*.php' -g '*.twig' -g '*.yaml'",
+      "rg -n \"id_expire_notification|sendIdExpire|IdExpireNotification|NotificationIdExpire|身分証有効期限通知|身分証の有効期限切れ会員\" ../ec-cube-enterprise/src/Eccube/Service/MailService.php ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/src/Eccube/Service/Admin/Customer -g '*.php'",
+      "rg -n \"idExpirationDate|IdExpiration|identityConfirm|IdentityConfirm|check_id_expired|id_expire|有効期限切れ|オンライン本人確認|IdExpireNotification|sendIdExpireNotificationMail\" ../pf-eccube3/app/Plugin/HareruyaEc ../pf-eccube3/app -g '*.php' -g '*.twig' -g '*.yml'"
+    ]
+  },
+  "notes": [
+    "同じB08-07内の `7be16af85a95`、`0173e2b67783`、`e846e4ae4c57`、`e2c82669a7af`、`3e1a1ed81b95`、`a50a4ec981a2` は、同一の `idExpireNotification` バッチ本体欠落に起因するため本チケットへ統合する。",
+    "ec-cube-enterprise にはRepository・メールテンプレート・メールマスタ・管理者宛先オプションなどの部品は存在するため、部品欠落ではなく、B08-07を実行するCommand/Action/ServiceとMailService送信メソッドの欠落として扱う。",
+    "設計上の `identity_confirm_status_id=0(未設定)` は、enterprise実装上の未確認定数が `STATUS_UNCONFIRMED = 1` であるため、実装時には移行先マスタ定義との整合確認が必要。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

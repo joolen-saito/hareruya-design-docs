@@ -1,0 +1,172 @@
+{
+  "id": "f04-03-shipping-confirm-country-pref-validation-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f04-03_0304_sheet-6_sheet.json",
+  "sourceFindingId": "f04-03_0304_sheet-6_sheet-conformance-c95aecfc90e2",
+  "classification": "フロント注文",
+  "feature": "配送先の新規登録_確認",
+  "issueCategory": "実装漏れ",
+  "issue": "国と都道府県の組み合わせ不整合時に国項目へエラーを表示しない",
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "reproSteps": [
+    "ログインした状態で商品をカートに入れ、http://localhost:8080/ja/shopping に進む",
+    "配送先の新規登録・変更画面で、国と都道府県の組み合わせが不整合になる入力（例: 国=日本、都道府県=国外）を送信する",
+    "確認画面へ進まず編集画面が再表示され、国の項目直下に不整合エラーが表示されるか確認する"
+  ],
+  "expected": [
+    "国が日本で都道府県が国外、または国が日本以外で都道府県が国外でない場合は不整合として扱う",
+    "不整合時は国の項目にエラーを付与し、編集画面を再表示する",
+    "エラー文言は `form.country.error.invalid` の `The combination of country and region is incorrect.` を国の項目直下に表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の注文中配送先フォームは `ShoppingShippingType` が `CustomerAddressType` を親にするが、`ShoppingShippingType` 自体には国・都道府県の整合検証がない。親の `CustomerAddressType` の `POST_SUBMIT` も郵便番号必須チェックと、国が日本以外の場合に `Pref::PREF_ABROAD` をセットする片方向の補正のみで、国=日本かつ都道府県=国外、または国!=日本かつ都道府県!=国外を国項目エラーにする処理がない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise ShoppingShippingType は CustomerAddressType を親にするだけ",
+          "path": "ec-cube-enterprise/src/Eccube/Form/Type/Front/ShoppingShippingType.php",
+          "start": 21,
+          "end": 51,
+          "language": "php",
+          "contains": [
+            "class ShoppingShippingType extends AbstractType",
+            "public function buildForm(FormBuilderInterface $builder, array $options): void",
+            "return CustomerAddressType::class;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise CustomerAddressType は海外時に都道府県を国外へ補正するだけ",
+          "path": "ec-cube-enterprise/src/Eccube/Form/Type/Front/CustomerAddressType.php",
+          "start": 160,
+          "end": 181,
+          "language": "php",
+          "contains": [
+            "$builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event): void {",
+            "if ($CustomerAddress->getCountry()->isJapan()) {",
+            "$form['postalCode']['postalCode01']->addError(new FormError(trans('form.type.select.notselect', [], 'validators')));",
+            "// 海外の場合、都道府県 = 国外を固定で設定",
+            "$CustomerAddress->setPref($this->prefRepository->find(Pref::PREF_ABROAD));"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise PrefType は都道府県の選択肢を絞り込まない",
+          "path": "ec-cube-enterprise/src/Eccube/Form/Type/Master/PrefType.php",
+          "start": 30,
+          "end": 35,
+          "language": "php",
+          "contains": [
+            "'class' => Pref::class",
+            "'placeholder' => 'common.select__pref'"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、配送先登録フォーム生成時に `FormEvents::SUBMIT` の検証を追加し、国=日本かつ都道府県=国外、または国!=日本かつ都道府県!=国外の場合に `form.country.error.invalid` を国項目へ `FormError` として追加している。日本語・英語ロケールにも対応文言が定義されている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 国・都道府県不整合を国項目エラーにする",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/DeliveryService.php",
+          "start": 42,
+          "end": 62,
+          "language": "php",
+          "contains": [
+            "->addEventListener(FormEvents::SUBMIT, function ($event) use ($app) {",
+            "$countryCodeJp = $app['config']['HareruyaEc']['const']['country']['japan']['code'];",
+            "$data->getCountry()->getId() === $countryCodeJp && $data->getPref()->getId() === Pref::PREF_ABROAD",
+            "$data->getCountry()->getId() !== $countryCodeJp && $data->getPref()->getId() !== Pref::PREF_ABROAD",
+            "$form->get('country')->addError(new FormError($app->trans('form.country.error.invalid')));"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 英語エラー文言",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.en.yml",
+          "start": 659,
+          "end": 662,
+          "language": "yaml",
+          "contains": [
+            "country:",
+            "error:",
+            "invalid: The combination of country and region is incorrect."
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 日本語エラー文言",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml",
+          "start": 700,
+          "end": 703,
+          "language": "yaml",
+          "contains": [
+            "country:",
+            "error:",
+            "invalid: 国と都道府県の組み合わせが正しくありません。"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "国・都道府県の整合検証とエラー表示",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2080,
+      "end": 2084,
+      "language": "html",
+      "contains": [
+        "国と都道府県の不整合エラー文",
+        "The combination of country and region is incorrect.",
+        "form.country.error.invalid",
+        "国が日本で都道府県が国外、または国が日本以外で都道府県が国外でない場合は不整合として国にエラーを付与する。"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "不整合時は編集画面を再表示",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2089,
+      "end": 2089,
+      "language": "html",
+      "contains": [
+        "国と都道府県の不整合",
+        "国にエラーを付与し、編集画面を再表示する。"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "CustomerAddressType は不整合エラーではなく海外時補正のみ",
+      "path": "ec-cube-enterprise/src/Eccube/Form/Type/Front/CustomerAddressType.php",
+      "start": 160,
+      "end": 181,
+      "language": "php",
+      "contains": [
+        "if ($CustomerAddress->getCountry()->isJapan()) {",
+        "// 海外の場合、都道府県 = 国外を固定で設定",
+        "$CustomerAddress->setPref($this->prefRepository->find(Pref::PREF_ABROAD));"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 は国項目に form.country.error.invalid を追加",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/DeliveryService.php",
+      "start": 47,
+      "end": 60,
+      "language": "php",
+      "contains": [
+        "$form->get('country')->addError(new FormError($app->trans('form.country.error.invalid')));"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f04-03_0304_sheet-6_sheet.json#f04-03_0304_sheet-6_sheet-conformance-c95aecfc90e2'",
+      "python3 - <<'PY' ... search excel_to_html/output/0304_基本設計仕様書(フロント_注文).html for form.country.error.invalid, The combination of country and region is incorrect, 国と都道府県 ... PY",
+      "rg -n \"form\\.country\\.error\\.invalid|combination of country|PREF_ABROAD|国と都道府県|country.*pref|pref.*country|POST_SUBMIT|addError\\(new FormError|ShoppingShippingType|CustomerAddressType|PrefType\" ec-cube-enterprise/src/Eccube pf-eccube3/app/Plugin/HareruyaEc",
+      "rg -n \"form\\.country\\.error\\.invalid|The combination of country and region is incorrect|country:|invalid:\" ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml ec-cube-enterprise/src/Eccube/Resource/locale/messages.en.yaml pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.en.yml",
+      "nl -ba ec-cube-enterprise/src/Eccube/Form/Type/Front/CustomerAddressType.php | sed -n '130,185p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Form/Type/Front/ShoppingShippingType.php | sed -n '1,55p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Service/DeliveryService.php | sed -n '35,62p'"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。"
+  }
+}

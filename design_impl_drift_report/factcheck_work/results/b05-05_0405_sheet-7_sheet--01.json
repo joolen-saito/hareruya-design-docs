@@ -1,0 +1,42 @@
+{
+  "chunkId": "b05-05_0405_sheet-7_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-05_0405_sheet-7_sheet.json#b05-05_0405_sheet-7_sheet-conformance-b4cd2e3f7de2",
+      "functionId": "b05-05_0405_sheet-7_sheet",
+      "featureNo": "B05-05",
+      "title": "B05-05 スマレジ商品削除",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は本バッチが楽観ロック・悲観ロックの対象を持たないと明記するが、実装は MessengerJob に対し悲観ロック(PESSIMISTIC_WRITE)を取得している。",
+      "reason": "設計書 sheet-7『排他制御・トランザクション』の本文(行1633)は『本バッチは削除連携が主であり、楽観ロック・悲観ロックの対象は持たない。』と明記している。一方、実装の SmaregiOtcDeleteMessageHandler は SmaregiMessengerJobProcessingLock を注入(行45)し、__invoke 内で tryBeginProcessingJob($Job) を呼んで削除本線に入る(行73)。当該ロッククラス SmaregiMessengerJobProcessingLock::tryBeginProcessingJob は Doctrine の EntityManager::lock($Job, LockMode::PESSIMISTIC_WRITE) を実行して MessengerJob 行に悲観ロックを取得しており(行43)、クラスの docblock も『重複実行抑止（悲観ロック + 状態遷移）』と記す(行24)。したがって『悲観ロックの対象は持たない』とする設計に反し、実装は削除処理の本線で悲観ロックを使用している。別経路（重複実行抑止を悲観ロック以外で実現している等）を確認するため MessageHandler / ProcessingLock 実体を精査したが、削除本線のロックは PESSIMISTIC_WRITE で確定しており設計との相違は事実。",
+      "designEvidence": {
+        "label": "設計要求（排他制御・トランザクション）",
+        "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+        "start": 1632,
+        "end": 1633,
+        "contains": ["楽観ロック・悲観ロックの対象は持たない", "排他制御・トランザクション"]
+      },
+      "implEvidence": [
+        {
+          "label": "MessageHandler がロックを注入・実行",
+          "note": "削除本線に入る前に tryBeginProcessingJob を呼ぶ",
+          "path": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php",
+          "start": 45,
+          "end": 73,
+          "contains": ["private SmaregiMessengerJobProcessingLock $smaregiMessengerJobProcessingLock", "tryBeginProcessingJob($Job)"]
+        },
+        {
+          "label": "ロック実体は悲観ロックを取得",
+          "note": "Doctrine LockMode::PESSIMISTIC_WRITE を MessengerJob 行に適用",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiMessengerJobProcessingLock.php",
+          "start": 24,
+          "end": 43,
+          "contains": ["悲観ロック", "LockMode::PESSIMISTIC_WRITE"]
+        }
+      ]
+    }
+  ]
+}

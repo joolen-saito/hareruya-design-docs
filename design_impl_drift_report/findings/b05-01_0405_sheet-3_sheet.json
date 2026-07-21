@@ -1,0 +1,3650 @@
+{
+  "functionId": "b05-01_0405_sheet-3_sheet",
+  "featureNo": "B05-01",
+  "title": "B05-01 注文番号登録",
+  "domain": "b05",
+  "kind": "batch",
+  "designHtml": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+  "sourceBook": "0405_基本設計仕様書(バッチ_受注管理).html",
+  "sheetId": "sheet-3",
+  "sheetName": "注文番号登録",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "b05-01_0405_sheet-3_sheet-conformance-56c9ca3f713b",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:945,984,991",
+      "designRefDetail": null,
+      "designExpectation": "スマレジ商品連携対象は「バッチ起動から30分前以降の注文」とする。",
+      "designQuote": "スマレジ商品連携対象は「バッチ起動から30分前以降の注文」とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:47, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1802",
+      "implementationActual": "コマンドは現在時刻から30分前を targetDateTime として渡し、Repository は `o.order_date < :targetDateTime` で30分前より古い注文を対象にしている。",
+      "difference": "設計はバッチ駆動時刻から30分前以降の注文を対象にする要求だが、実装は30分前以前の注文を抽出しており、時間条件が逆方向になっている。",
+      "mismatchReason": "設計はバッチ駆動時刻から30分前以降の注文を対象にする要求だが、実装は30分前以前の注文を抽出しており、時間条件が逆方向になっている。",
+      "comparisonRows": [
+        {
+          "item": "注文日時条件",
+          "design": "バッチ起動から30分前以降の注文",
+          "implementation": "`o.order_date < :targetDateTime`、targetDateTime は now - 30 minutes",
+          "mismatch": "対象期間が設計と逆"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:47, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1802",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「スマレジ商品連携対象は「バッチ起動から30分前以降の注文」とする。」。実装は「コマンドは現在時刻から30分前を targetDateTime として渡し、Repository は `o.order_date < :targetDateTime` で30分前より古い注文を対象にしている。」。乖離理由は「設計はバッチ駆動時刻から30分前以降の注文を対象にする要求だが、実装は30分前以前の注文を抽出しており、時間条件が逆方向になっている。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Repository・Entity・DB",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:47",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1802",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Command/OtcOrderSmaregiPostCommand.php:47\n44:         $io->text('店頭受取注文スマレジ連携バッチ開始');\n45: \n46:         try {\n47:             // 現在時刻から30分前の時刻を取得\n48:             $now = new \\DateTime();\n49:             $thirtyMinutesAgo = $now->modify('-30 minutes');\n50: ",
+        "src/Eccube/Repository/OrderRepository.php:1802\n1799:     {\n1800:         $qb = $this->createQueryBuilder('o');\n1801:         $qb->select('o, bi')\n1802:             ->where('o.order_date < :targetDateTime')\n1803:             ->join('o.baseInfo', 'bi')\n1804:             ->andWhere('bi.smaregi_shop_id IS NOT NULL')\n1805:             ->andWhere('bi.smaregi_shop_code IS NOT NULL')",
+        "src/Eccube/Command/OtcOrderSmaregiPostCommand.php:26\n23: use Symfony\\Component\\Console\\Style\\SymfonyStyle;\n24: \n25: #[AsCommand(name: 'eccube:order:otc-smaregi-post', description: '店頭受取注文のスマレジ連携バッチ')]\n26: class OtcOrderSmaregiPostCommand extends Command\n27: {\n28:     public function __construct(\n29:         private readonly SmaregiOtcOrderPostAction $smaregiOtcOrderPostAction,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b05-01_0405_sheet-3_sheet-conformance-284420b0093c",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:950-956",
+      "designRefDetail": null,
+      "designExpectation": "スマレジ用商品コードは `20 + 1 + スマレジ店舗ID3桁0埋め + 注文番号8桁0埋め後の末尾6桁 + チェックディジット` で採番する。",
+      "designQuote": "スマレジ用商品コードは `20 + 1 + スマレジ店舗ID3桁0埋め + 注文番号8桁0埋め後の末尾6桁 + チェックディジット` で採番する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:58, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:94-98, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:77-80",
+      "implementationActual": "親バッチ側で `getProductBarcode('20','1',sprintf('%03d',$smaregiShopId),$orderNumber)` を呼び、`substr($orderNumber, -6)` をそのまま使う。同期サービスは既存 `smaregi_code` がある場合は再生成しない。",
+      "difference": "設計は注文番号を8桁0埋めしてから末尾6桁を使うが、親バッチ実装は0埋めせず末尾6桁を切り出す。注文番号が6桁未満の場合、設計例のような13桁コードにならない。",
+      "mismatchReason": "設計は注文番号を8桁0埋めしてから末尾6桁を使うが、親バッチ実装は0埋めせず末尾6桁を切り出す。注文番号が6桁未満の場合、設計例のような13桁コードにならない。",
+      "comparisonRows": [
+        {
+          "item": "注文番号部分",
+          "design": "注文番号を8桁0埋め後、末尾6桁取得",
+          "implementation": "`substr($orderNumber, -6)` のみ",
+          "mismatch": "短い注文番号で0埋めが欠落"
+        },
+        {
+          "item": "同期時の再生成",
+          "design": "設計式で採番したスマレジ用商品コードを保存・連携",
+          "implementation": "既存 `smaregi_code` があれば `SmaregiOtcProductCodeGenerator` を使わない",
+          "mismatch": "親バッチで誤採番した値がそのまま連携される"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:58, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:94-98, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:77-80",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「スマレジ用商品コードは `20 + 1 + スマレジ店舗ID3桁0埋め + 注文番号8桁0埋め後の末尾6桁 + チェックディジット` で採番する。」。実装は「親バッチ側で `getProductBarcode('20','1',sprintf('%03d',$smaregiShopId),$orderNumber)` を呼び、`substr($orderNumber, -6)` をそのまま使う。同期サービスは既存 `smaregi_code` がある場合は再生成しない。」。乖離理由は「設計は注文番号を8桁0埋めしてから末尾6桁を使うが、親バッチ実装は0埋めせず末尾6桁を切り出す。注文番号が6桁未満の場合、設計例のような13桁コードにならない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:58",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:94-98",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:77-80",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:58\n55:             $orderNumber = $Order->getOrderNumber();\n56: \n57:             // スマレジ商品用バーコードの採番\n58:             $smaregiCode = $this->getProductBarcode('20', '1', sprintf('%03d', $smaregiShopId), $orderNumber);\n59:             // スマレジ用商品コード(バーコード)登録\n60:             $Order->setSmaregiCode($smaregiCode);\n61:             $this->entityManager->persist($Order);",
+        "src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:94\n91:      *\n92:      * @return string\n93:      */\n94:     public function getProductBarcode(string $inStoreCode, string $extension, string $shopCode, string $orderNumber): string\n95:     {\n96:         // CheckDigit付与前のJANコード\n97:         $janCode = $inStoreCode.$extension.$shopCode.substr($orderNumber, -6);",
+        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:77\n74:         }\n75: \n76:         try {\n77:             $productCode = $Order->getSmaregiCode();\n78:             if ($productCode === null || $productCode === '') {\n79:                 $productCode = $this->productCodeGenerator->generate($storeId, $orderNumber);\n80:             }"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b05-01_0405_sheet-3_sheet-conformance-ea6adcd624a9",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:962-963",
+      "designRefDetail": null,
+      "designExpectation": "スマレジ商品登録APIへ送信する部門IDは `6: 店頭受取（固定）` とする。",
+      "designQuote": "スマレジ商品登録APIへ送信する部門IDは `6: 店頭受取（固定）` とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:96, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:153-160, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-268",
+      "implementationActual": "追加システム設定 `smaregi_category_id` から categoryId を取得し、商品登録リクエストの `categoryId` に設定している。",
+      "difference": "設計は部門ID 6 固定だが、実装は設定値依存であり、6固定を保証していない。",
+      "mismatchReason": "設計は部門ID 6 固定だが、実装は設定値依存であり、6固定を保証していない。",
+      "comparisonRows": [
+        {
+          "item": "部門ID/categoryId",
+          "design": "6: 店頭受取（固定）",
+          "implementation": "`MtbOption::SMAREGI_CATEGORY_ID` の option_value",
+          "mismatch": "固定値ではなく設定値を送信"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:96, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:153-160, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-268",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「スマレジ商品登録APIへ送信する部門IDは `6: 店頭受取（固定）` とする。」。実装は「追加システム設定 `smaregi_category_id` から categoryId を取得し、商品登録リクエストの `categoryId` に設定している。」。乖離理由は「設計は部門ID 6 固定だが、実装は設定値依存であり、6固定を保証していない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Repository・Entity・DB",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:96",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:153-160",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-268",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:96\n93:                     return;\n94:                 }\n95: \n96:                 $categoryId = $this->resolveSmaregiCategoryId();\n97:                 if ($categoryId === '') {\n98:                     $this->failJob($Job, '追加システム設定のスマレジ部門ID (smaregi_category_id) が未設定のため処理不能');\n99: ",
+        "src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:153\n150:         ]);\n151:     }\n152: \n153:     private function resolveSmaregiCategoryId(): string\n154:     {\n155:         $Option = $this->mtbOptionRepository->findOneBy(['option_key' => MtbOption::SMAREGI_CATEGORY_ID]);\n156:         if (!$Option instanceof MtbOption) {",
+        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250\n247:     /**\n248:      * @return array<string,string>\n249:      */\n250:     private function buildProductBody(Order $Order, string $productCode, string $categoryId): array\n251:     {\n252:         $name = SmaregiFieldFormatter::truncateProductName(\n253:             sprintf('店頭受取 %s', (string) ($Order->getOrderNumber() ?? '')),"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b05-01_0405_sheet-3_sheet-conformance-7814f4ac1df3",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:965-967",
+      "designRefDetail": null,
+      "designExpectation": "スマレジ商品登録APIへ送信する商品名は、店頭PCアカウントの場合「店頭注文: 店頭注文番号 のご注文」、通常会員の場合「注文者姓カナ 注文者名カナ 様のご注文」とする。",
+      "designQuote": "スマレジ商品登録APIへ送信する商品名は、店頭PCアカウントの場合「店頭注文: 店頭注文番号 のご注文」、通常会員の場合「注文者姓カナ 注文者名カナ 様のご注文」とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-259",
+      "implementationActual": "商品名は常に `sprintf('店頭受取 %s', Order.orderNumber)` で生成している。店頭PCアカウント/通常会員の分岐や注文者カナの利用はない。",
+      "difference": "設計の商品名文言・分岐条件と実装の productName が一致しない。反証検索でも `店頭注文:`、`様のご注文`、注文者カナを使ったOTC商品名生成は確認できなかった。",
+      "mismatchReason": "設計の商品名文言・分岐条件と実装の productName が一致しない。反証検索でも `店頭注文:`、`様のご注文`、注文者カナを使ったOTC商品名生成は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "店頭PCアカウントの商品名",
+          "design": "店頭注文: 店頭注文番号 のご注文",
+          "implementation": "店頭受取 {注文番号}",
+          "mismatch": "文言が異なる"
+        },
+        {
+          "item": "通常会員の商品名",
+          "design": "注文者姓カナ 注文者名カナ 様のご注文",
+          "implementation": "店頭受取 {注文番号}",
+          "mismatch": "会員名カナを使わない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-259",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「スマレジ商品登録APIへ送信する商品名は、店頭PCアカウントの場合「店頭注文: 店頭注文番号 のご注文」、通常会員の場合「注文者姓カナ 注文者名カナ 様のご注文」とする。」。実装は「商品名は常に `sprintf('店頭受取 %s', Order.orderNumber)` で生成している。店頭PCアカウント/通常会員の分岐や注文者カナの利用はない。」。乖離理由は「設計の商品名文言・分岐条件と実装の productName が一致しない。反証検索でも `店頭注文:`、`様のご注文`、注文者カナを使ったOTC商品名生成は確認できなかった。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "Repository・Entity・DB",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-259",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250\n247:     /**\n248:      * @return array<string,string>\n249:      */\n250:     private function buildProductBody(Order $Order, string $productCode, string $categoryId): array\n251:     {\n252:         $name = SmaregiFieldFormatter::truncateProductName(\n253:             sprintf('店頭受取 %s', (string) ($Order->getOrderNumber() ?? '')),",
+        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:41\n38:  * API 呼び出し失敗時は smaregi_error_flg を true にし、{@see SmaregiOtcSyncResult} を返す。\n39:  * エラー受注は次回バッチで自動再試行しない方針 (運用側でのフラグ解除を前提)。\n40:  */\n41: final readonly class SmaregiOtcOrderSyncService\n42: {\n43:     public function __construct(\n44:         private LoggerInterface $logger,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b05-01_0405_sheet-3_sheet-conformance-0a182b493c16",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:972-979,1002-1004",
+      "designRefDetail": null,
+      "designExpectation": "スマレジ連携APIの実行に失敗した場合はエラーメールを送信し、送信先は追加設定のスマレジ通信エラー送信メールアドレスとする。",
+      "designQuote": "スマレジ連携APIの実行に失敗した場合はエラーメールを送信し、送信先は追加設定のスマレジ通信エラー送信メールアドレスとする。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php, src/Eccube/Service/Smaregi, src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php, src/Eccube/Repository/OrderRepository.php; 検索語: スマレジ通信エラー, 通信エラー送信, エラーメール, smaregi mail, MailService, sendMail, send）",
+      "implementationActual": "API失敗時は `smaregi_error_flg` を true にして logger/MessengerJob errorMessage に記録するのみで、メール送信処理と送信先設定の参照がない。",
+      "difference": "設計が要求するエラーメール送信と追加設定メールアドレス参照が、OTCスマレジ連携コマンド・同期サービス・メッセージハンドラ周辺に存在しない。",
+      "mismatchReason": "設計が要求するエラーメール送信と追加設定メールアドレス参照が、OTCスマレジ連携コマンド・同期サービス・メッセージハンドラ周辺に存在しない。",
+      "comparisonRows": [
+        {
+          "item": "商品連携失敗",
+          "design": "エラーメールを追加設定のスマレジ通信エラー送信メールアドレスへ送信",
+          "implementation": "`markError()` でログ出力と `smaregi_error_flg=true` のみ",
+          "mismatch": "メール送信がない"
+        },
+        {
+          "item": "在庫連携失敗",
+          "design": "エラーメールを追加設定のスマレジ通信エラー送信メールアドレスへ送信",
+          "implementation": "`markError()` でログ出力と `smaregi_error_flg=true` のみ",
+          "mismatch": "メール送信がない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php, src/Eccube/Service/Smaregi, src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php, src/Eccube/Repository/OrderRepository.php; 検索語: スマレジ通信エラー, 通信エラー送信, エラーメール, smaregi mail, MailService, sendMail, send）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「スマレジ連携APIの実行に失敗した場合はエラーメールを送信し、送信先は追加設定のスマレジ通信エラー送信メールアドレスとする。」。実装は「API失敗時は `smaregi_error_flg` を true にして logger/MessengerJob errorMessage に記録するのみで、メール送信処理と送信先設定の参照がない。」。乖離理由は「設計が要求するエラーメール送信と追加設定メールアドレス参照が、OTCスマレジ連携コマンド・同期サービス・メッセージハンドラ周辺に存在しない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "業務ロジック・外部連携未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php",
+        "src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php",
+        "src/Eccube/Repository/OrderRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Command/OtcOrderSmaregiPostCommand.php:26\n23: use Symfony\\Component\\Console\\Style\\SymfonyStyle;\n24: \n25: #[AsCommand(name: 'eccube:order:otc-smaregi-post', description: '店頭受取注文のスマレジ連携バッチ')]\n26: class OtcOrderSmaregiPostCommand extends Command\n27: {\n28:     public function __construct(\n29:         private readonly SmaregiOtcOrderPostAction $smaregiOtcOrderPostAction,",
+        "src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:43\n40:  * (Symfony Messenger の自動リトライを使わず、運用側で FAILED ジョブを再投入する想定)。\n41:  */\n42: #[AsMessageHandler]\n43: final readonly class SmaregiOtcSyncMessageHandler\n44: {\n45:     public function __construct(\n46:         private LoggerInterface $logger,",
+        "src/Eccube/Repository/OrderRepository.php:57\n54:  *\n55:  * @extends AbstractEnterpriseRepository<Order>\n56:  */\n57: class OrderRepository extends AbstractEnterpriseRepository implements ServiceEntityRepositoryInterface\n58: {\n59:     use SortProductTrait;\n60: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b05-01_0405_sheet-3_sheet-conformance-b701cd53d4a0",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:1095-1096",
+      "designRefDetail": null,
+      "designExpectation": "ログ・監査として開始・完了のコンソール出力を日時付きで行う。",
+      "designQuote": "ログ・監査として開始・完了のコンソール出力を日時付きで行う。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:44, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:61",
+      "implementationActual": "開始時は `店頭受取注文スマレジ連携バッチ開始`、完了時は `店頭受取注文スマレジ連携処理が完了しました。` を出力するが、日時を付与していない。",
+      "difference": "設計は開始・完了のコンソール出力に日時付きであることを要求しているが、実装の出力文字列に日時が含まれない。",
+      "mismatchReason": "設計は開始・完了のコンソール出力に日時付きであることを要求しているが、実装の出力文字列に日時が含まれない。",
+      "comparisonRows": [
+        {
+          "item": "開始ログ",
+          "design": "開始のコンソール出力（日時付き）",
+          "implementation": "日時なしの固定文言",
+          "mismatch": "日時が欠落"
+        },
+        {
+          "item": "完了ログ",
+          "design": "完了のコンソール出力（日時付き）",
+          "implementation": "日時なしの固定文言",
+          "mismatch": "日時が欠落"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:44, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:61",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「ログ・監査として開始・完了のコンソール出力を日時付きで行う。」。実装は「開始時は `店頭受取注文スマレジ連携バッチ開始`、完了時は `店頭受取注文スマレジ連携処理が完了しました。` を出力するが、日時を付与していない。」。乖離理由は「設計は開始・完了のコンソール出力に日時付きであることを要求しているが、実装の出力文字列に日時が含まれない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:44",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:61",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Command/OtcOrderSmaregiPostCommand.php:44\n41:     {\n42:         $io = new SymfonyStyle($input, $output);\n43: \n44:         $io->text('店頭受取注文スマレジ連携バッチ開始');\n45: \n46:         try {\n47:             // 現在時刻から30分前の時刻を取得",
+        "src/Eccube/Command/OtcOrderSmaregiPostCommand.php:61\n58:             return Command::FAILURE;\n59:         }\n60: \n61:         $io->success('店頭受取注文スマレジ連携処理が完了しました。');\n62: \n63:         return Command::SUCCESS;\n64:     }",
+        "src/Eccube/Command/OtcOrderSmaregiPostCommand.php:26\n23: use Symfony\\Component\\Console\\Style\\SymfonyStyle;\n24: \n25: #[AsCommand(name: 'eccube:order:otc-smaregi-post', description: '店頭受取注文のスマレジ連携バッチ')]\n26: class OtcOrderSmaregiPostCommand extends Command\n27: {\n28:     public function __construct(\n29:         private readonly SmaregiOtcOrderPostAction $smaregiOtcOrderPostAction,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 98,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-fc95f00226",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "→店頭受取注文商品スマレジ連携（名称変更）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-42251ec2f0",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "概要 スマレジ用商品コードの登録と連携を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-37953e71b0",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "★ スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-bdda77fd34",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 現行でこのバッチは以下の2つの処理を行っている",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-011ddd71df",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 店頭受取注文の場合、スマレジ側に注文した商品の情報を連携する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-c6d05801dd",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号登録バッチ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-58799bb570",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注データが更新されるとトリガーの処理が実行される",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-40a6c4f5fe",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "に変更された場合に注文番号を採番する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-ce66feebea",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "遷移一覧（3件）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-49206a801f",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "新たなテーブル(dtb_order_number)を作成し採番を行っている",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-91e40978dc",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 採番用のテーブル(dtb_order_number)にデータ登録をする処理でデッドロックが起こる可能性はあるため、",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-691844fd3d",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "データ登録の処理をなくした形にしたい",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-c1a8a65750",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "以上のカスタマイズにより、注文番号登録バッチから注文番号登録の処理を削除する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-72aee19980",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "元々、注文番号登録バッチという名称であるがリニューアル後は注文番号登録を行わないため、",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-43d1e7a896",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "バッチ名称は「店頭受取注文商品スマレジ連携バッチ」に変更する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-ace6a53457",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "支店側の「スマレジ商品登録バッチ」が同じ役割を持っており、今回本店で実装されるため不要になるので、実装を引き継ぐ形とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-73e2cc31ac",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "【開発申し送り】支店と本店のバッチを見比べながら作成する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-23f1fd851b",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "★ 以下の注文を対象にスマレジ商品コードの採番とスマレジ連携を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-f762b25d52",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "※現行の支店のスマレジ商品連携バッチと同仕様にする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-dff57da101",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "※本店側のバッチは注文番号採番を行った注文に対してスマレジ連携を行っていたが、",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-409b4fb39f",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号採番の処理を除外するため、以下の条件でスマレジ商品を連携することにより、スマレジ商品再連携バッチが不要となる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-f737ae8778",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "（連携が成功しないとスマレジ連携済みフラグが立たないため。支店側はもともとスマレジ商品再連携バッチはない）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-9ef65a3893",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ スマレジ連携済みフラグが立っていない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-1b767b7a0e",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ スマレジ在庫連携済みフラグが立っていない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-aeefa51f81",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 採番ルールは以下の通り（インストアコードの採番ルールに従う）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-309c230ecf",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "20(固定) + 1(固定) + スマレジ店舗ID(3桁0埋め、スマレジ店舗IDの指定がない場合は000となる) + 注文番号(8桁0埋め後、末尾から6桁取得）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-fe03bc3aaa",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "+ チェックディジット",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-86e4e79835",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "※チェックディジット = 「奇数桁をそのまま足したもの」と「偶数桁を3倍して足したもの」を合計し、",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-710dda65f3",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "その結果の一の位を求め、10から引いた数（ただし、結果が10の場合は0）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-e2881e5a83",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "例: 本店で店頭受取注文を行い、注文番号が12345だった場合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-9a68b3a604",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 注文データに採番したスマレジ用商品コードを保存する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-f83fd35220",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ スマレジ商品登録APIを使用し、スマレジに注文商品を登録する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-2cb2b834bf",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 以下のデータを送信する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-ae38aab73a",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭PCアカウントの場合: 「店頭注文: 店頭注文番号 のご注文」",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-4c9ac0c6cc",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "通常会員の場合: 「注文者姓カナ 注文者名カナ 様のご注文」",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-7aeca34bbf",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "スムーズ店頭受取の場合: 0円（固定）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-67186adf85",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取の場合: 注文合計金額（注文内の明細を1つにまとめて1商品とするため、合計金額を指定する）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-517db889fa",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ スマレジ連携が成功した場合スマレジ連携済みフラグを立てる、失敗した場合エラーメールを送信する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-baffc3c399",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ メールの送信先は追加設定のスマレジ通信エラー送信メールアドレス",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-9ad5083e11",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 商品連携が成功した場合、スマレジ在庫登録APIを使用し、連携した商品に在庫を登録する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-f7af603bc1",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ スマレジ連携が成功した場合スマレジ在庫連携済みフラグを立てる、失敗した場合エラーメールを送信する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-5c4228dfa9",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "入力データ元 DB 出力先(フォーマット) DB、スマレジ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-79602a0b1f",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "DBから以下のデータを取得",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-f934e9ab7e",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "入力データ検索条件",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-b9d78cb14d",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文データ.注文店舗.スマレジ店舗ID スマレジ店舗IDが登録済み",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-d1af720d4f",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文データ.注文店舗.スマレジ店舗コード スマレジ店舗コードが登録済み",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-ac2523b848",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文データ.スマレジ連携済みフラグ スマレジ連携済みフラグが立っていない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-c94592eeb3",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文データ.スマレジ在庫連携済みフラグ スマレジ在庫連携済みフラグが立っていない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-b36012e4c1",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "実行結果詳細 ※主にDBの登録・更新結果について記載",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-edd0074c60",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "スマレジ連携済みフラグ、スマレジ在庫連携済みフラグ、スマレジ商品コードを登録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-a3877c74b2",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文商品をスマレジに登録（在庫含む）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-d83b718b59",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "エラーハンドリング",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-f0f2409d75",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "APIの実行に失敗した場合は、エラーメールを送信する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-47b5b2b2aa",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "処理に失敗した注文は、スマレジ商品再連携バッチで再度連携の対象となる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-7141682b8c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・スマレジ用商品コード（バーコード）生成＆登録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-c48bd205fb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取注文商品スマレジ連携バッチ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-5d68218f6e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・これまで行っていた注文番号のコピーの処理は行わず、以下の処理のみ行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-d32163cca4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "B05-01 注文番号登録 / バッチ 受注管理 — 注文番号登録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-26816bc3ac",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号テーブルに採番された注文番号を、受注サブテーブルへコピーするバッチである。コマンドライン（コンソールコマンド）から実行する。コピー対象の受注のうち店頭受取の注文については、スマレジ用の商品コード（バーコード）を生成して登録し、スマレジへ商品・在庫を連携する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-cd538b291e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（注文番号コピー処理）、注文番号・受注サブを扱うリポジトリ、スマレジ連携処理を正とする。カスタマイズ区分は現行踏襲であり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-f9b91351f1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取注文に対するスマレジ商品コード生成とスマレジ連携",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-32b4f93aa8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "コピー対象が無い場合の挙動",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-8afcee242d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-f79cdf1b63",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "スマレジ連携サービスの内部仕様",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-7e354da999",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注サブテーブル dtb_order_sub が注文番号・スマレジ用コード等を保持する補助表として存在する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-d086b36304",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "補助表 dtb_order_sub を持たず、注文番号（ order_number ）・スマレジ用商品コード（ smaregi_code ）・スマレジ各連携フラグを受注 dtb_order の列へ統合している。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-6f129b3c0f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "dtb_order_sub.smaregi_code へ生成・登録する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-900005cadf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "dtb_order.smaregi_code （桁20）へ登録する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-dfc35c053e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "dtb_order_number が注文番号（ order_number 、自動採番）と order_id を持つ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-269c3b5b96",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "dtb_order_number が id ・ base_info_id ・ value ・ update_date を持つ構造で、現行のコピー機構と差がある（ec-cube-enterprise実装で要確認）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-bff424ffb4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注に採番される番号。注文番号テーブルに保持する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-963b59fbde",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注の拡張情報。注文番号・スマレジ用コード等を保持する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-a002b119fc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "スマレジ連携用に生成するバーコード。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-5809123c1f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号テーブルから受注サブテーブルへ注文番号をコピーし、店頭受取注文はスマレジへ連携する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-2bdee8cc7c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-9fde187d63",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号登録を実行する（ order:batch copyOrderNumber ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-68ff9740ae",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "対象が無い場合は処理を終了する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-0bdf4a5bd4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "メール送信用の経路を準備する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-ae2f689c39",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "当該注文が店頭受取の配送区分に該当する場合、スマレジ用商品コード（バーコード）を生成して受注サブへ登録し保存する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-d5948d5085",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取の注文についてスマレジへ商品・在庫を連携する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-9bdc181dad",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "配送区分が店頭受取グループに含まれる注文を対象にスマレジ連携を行う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-a949cad77d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "入力はコマンド名。成功時は注文番号をコピーし、店頭受取はスマレジへ商品・在庫を連携する。コピー対象が無ければ何もせず完了する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-6c6db20952",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取注文についてスマレジへ商品・在庫を連携する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-3116868315",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注サブへの注文番号反映、店頭受取注文のスマレジ用コード登録とスマレジ連携。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-09ddd540ea",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "エラーメッセージのコンソール出力。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-dfc6e1daa2",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注（移行先 dtb_order 、現行 dtb_order_sub ）の注文番号・スマレジ用コード更新、スマレジ連携。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-66b2f1a52a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "テーブル・列名はec-cube-enterpriseを正とする。現行（pf-eccube3）と異なる場合は移行先名を主とし現行名を括弧で添える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-2d58c98dda",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "コピー元（移行先は id ・ base_info_id ・ value 構造のためコピー機構は要確認）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-81284ef606",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取注文に生成・登録するスマレジ用商品コード。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-349eea0a79",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-37a9262998",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号テーブルと受注（移行先 dtb_order 、現行 dtb_order_sub ）の注文番号を一致させる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-ab7920c4b8",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取注文のスマレジ用コードを登録し、スマレジへ連携する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-3d726c599f",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "コマンド名が未指定・不一致",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-c207a3bab2",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "エラーメッセージをコンソールに出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-953c467cc0",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "開始・完了のコンソール出力（日時付き）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-cfa7611aa0",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "スマレジ連携の認証情報",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-7409d2aefb",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注サブへの注文番号反映とスマレジ用コード登録を保存する。本バッチは楽観ロック・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "order_id",
+        "order_number",
+        "order_number_seq",
+        "smaregi_code"
+      ],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "pf-eccube3/b05-01_batch_order_order_copy_order_number.md",
+        "flush"
+      ],
+      "businessTerms": [
+        "B05",
+        "注文番号登録",
+        "受注管理",
+        "受注管理機能",
+        "店頭受取注文商品スマレジ連携",
+        "スマレジ用商品コードの登録と連携を行う",
+        "注文番号のコピー処理をバッチから除外する",
+        "注文番号の採番処理を新たなデータベースに合わせて",
+        "スマレジ連携APIについて",
+        "呼び出しを廃止予定のスマレジAPIからプラットフ",
+        "ォームAPIに変更",
+        "現行でこのバッチは以下の2つの処理を行っている",
+        "採番された注文番号を注文情報へコピーする処理",
+        "注文ステータスが変更されたときに実行されるMyS",
+        "QLのトリガーで注文番号が注文番号採番専用テーブ",
+        "店頭受取注文の場合",
+        "スマレジ側に注文した商品の情報を連携する",
+        "注文完了",
+        "注文番号登録バッチ",
+        "注文番号採番",
+        "受注データが更新されるとトリガーの処理が実行され",
+        "決済処理中",
+        "注文受領",
+        "に変更された場合に注文番号を採番する"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 16,
+    "candidateRefs": [
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CartService.php:242",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CartService.php:83",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CsvExportService.php:202",
+        "snippet": "flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/DeckService.php:285",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbPointHistory.php:38",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '注文ID'])]",
+        "weight": 5
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbShippingStandby.php:56",
+        "snippet": "#[ORM\\InverseJoinColumn(name: 'order_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbUserMailHistory.php:46",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "order_number",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:1733",
+        "snippet": "return $this->order_number;",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_code",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:1925",
+        "snippet": "return $this->smaregi_code;",
+        "weight": 5
+      },
+      {
+        "term": "order_number",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:47",
+        "snippet": "* @method Order setOrderNumber(?string $order_number)",
+        "weight": 5
+      },
+      {
+        "term": "order_number",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:633",
+        "snippet": "#[ORM\\Column(name: 'order_number', type: Types::STRING, length: 11, nullable: true, options: ['unsigned' => true, 'comment' => '注文番号'])]",
+        "weight": 5
+      },
+      {
+        "term": "order_number",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:634",
+        "snippet": "private ?string $order_number = null;",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_code",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:685",
+        "snippet": "#[ORM\\Column(name: 'smaregi_code', type: Types::STRING, length: 20, nullable: true, options: ['comment' => 'スマレジ用商品コード'])]",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_code",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:686",
+        "snippet": "private ?string $smaregi_code = null;",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_code",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:79",
+        "snippet": "* @method Order setSmaregiCode(?string $smaregi_code)",
+        "weight": 5
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Shipping.php:145",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "B05",
+        "termType": "businessTerm",
+        "role": "Command/Batch",
+        "ref": "src/Eccube/Command/CheckDuplicatePointCommand.php:26",
+        "snippet": "* ポイント二重登録チェックバッチ（B05-06）",
+        "weight": 4
+      },
+      {
+        "term": "B05",
+        "termType": "businessTerm",
+        "role": "Command/Batch",
+        "ref": "src/Eccube/Command/CheckNotReflectedPointUsageCommand.php:26",
+        "snippet": "* ポイント利用未反映チェックバッチ（B05-07）",
+        "weight": 4
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 10,
+    "implementationGapRequirementCount": 2,
+    "rows": [
+      {
+        "findingId": "b05-01_0405_sheet-3_sheet-conformance-56c9ca3f713b",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:945,984,991",
+        "designRequirement": "バッチ起動から30分前以降の注文",
+        "implementationActual": "`o.order_date < :targetDateTime`、targetDateTime は now - 30 minutes",
+        "mismatchReason": "対象期間が設計と逆",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:47",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1802",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "注文日時条件",
+            "design": "バッチ起動から30分前以降の注文",
+            "implementation": "`o.order_date < :targetDateTime`、targetDateTime は now - 30 minutes",
+            "mismatch": "対象期間が設計と逆"
+          }
+        ]
+      },
+      {
+        "findingId": "b05-01_0405_sheet-3_sheet-conformance-284420b0093c",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:950-956",
+        "designRequirement": "注文番号を8桁0埋め後、末尾6桁取得",
+        "implementationActual": "`substr($orderNumber, -6)` のみ",
+        "mismatchReason": "短い注文番号で0埋めが欠落",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:58",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:94-98",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:77-80",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "注文番号部分",
+            "design": "注文番号を8桁0埋め後、末尾6桁取得",
+            "implementation": "`substr($orderNumber, -6)` のみ",
+            "mismatch": "短い注文番号で0埋めが欠落"
+          }
+        ]
+      },
+      {
+        "findingId": "b05-01_0405_sheet-3_sheet-conformance-284420b0093c",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:950-956",
+        "designRequirement": "設計式で採番したスマレジ用商品コードを保存・連携",
+        "implementationActual": "既存 `smaregi_code` があれば `SmaregiOtcProductCodeGenerator` を使わない",
+        "mismatchReason": "親バッチで誤採番した値がそのまま連携される",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:58",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:94-98",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:77-80",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "同期時の再生成",
+            "design": "設計式で採番したスマレジ用商品コードを保存・連携",
+            "implementation": "既存 `smaregi_code` があれば `SmaregiOtcProductCodeGenerator` を使わない",
+            "mismatch": "親バッチで誤採番した値がそのまま連携される"
+          }
+        ]
+      },
+      {
+        "findingId": "b05-01_0405_sheet-3_sheet-conformance-ea6adcd624a9",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:962-963",
+        "designRequirement": "6: 店頭受取（固定）",
+        "implementationActual": "`MtbOption::SMAREGI_CATEGORY_ID` の option_value",
+        "mismatchReason": "固定値ではなく設定値を送信",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:96",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:153-160",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-268",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "部門ID/categoryId",
+            "design": "6: 店頭受取（固定）",
+            "implementation": "`MtbOption::SMAREGI_CATEGORY_ID` の option_value",
+            "mismatch": "固定値ではなく設定値を送信"
+          }
+        ]
+      },
+      {
+        "findingId": "b05-01_0405_sheet-3_sheet-conformance-7814f4ac1df3",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:965-967",
+        "designRequirement": "店頭注文: 店頭注文番号 のご注文",
+        "implementationActual": "店頭受取 {注文番号}",
+        "mismatchReason": "文言が異なる",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-259",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "店頭PCアカウントの商品名",
+            "design": "店頭注文: 店頭注文番号 のご注文",
+            "implementation": "店頭受取 {注文番号}",
+            "mismatch": "文言が異なる"
+          }
+        ]
+      },
+      {
+        "findingId": "b05-01_0405_sheet-3_sheet-conformance-7814f4ac1df3",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:965-967",
+        "designRequirement": "注文者姓カナ 注文者名カナ 様のご注文",
+        "implementationActual": "店頭受取 {注文番号}",
+        "mismatchReason": "会員名カナを使わない",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-259",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "通常会員の商品名",
+            "design": "注文者姓カナ 注文者名カナ 様のご注文",
+            "implementation": "店頭受取 {注文番号}",
+            "mismatch": "会員名カナを使わない"
+          }
+        ]
+      },
+      {
+        "findingId": "b05-01_0405_sheet-3_sheet-conformance-0a182b493c16",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:972-979,1002-1004",
+        "designRequirement": "エラーメールを追加設定のスマレジ通信エラー送信メールアドレスへ送信",
+        "implementationActual": "`markError()` でログ出力と `smaregi_error_flg=true` のみ",
+        "mismatchReason": "メール送信がない",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php",
+          "src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php",
+          "src/Eccube/Repository/OrderRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "商品連携失敗",
+            "design": "エラーメールを追加設定のスマレジ通信エラー送信メールアドレスへ送信",
+            "implementation": "`markError()` でログ出力と `smaregi_error_flg=true` のみ",
+            "mismatch": "メール送信がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b05-01_0405_sheet-3_sheet-conformance-0a182b493c16",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:972-979,1002-1004",
+        "designRequirement": "エラーメールを追加設定のスマレジ通信エラー送信メールアドレスへ送信",
+        "implementationActual": "`markError()` でログ出力と `smaregi_error_flg=true` のみ",
+        "mismatchReason": "メール送信がない",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php",
+          "src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php",
+          "src/Eccube/Repository/OrderRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "在庫連携失敗",
+            "design": "エラーメールを追加設定のスマレジ通信エラー送信メールアドレスへ送信",
+            "implementation": "`markError()` でログ出力と `smaregi_error_flg=true` のみ",
+            "mismatch": "メール送信がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b05-01_0405_sheet-3_sheet-conformance-b701cd53d4a0",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:1095-1096",
+        "designRequirement": "開始のコンソール出力（日時付き）",
+        "implementationActual": "日時なしの固定文言",
+        "mismatchReason": "日時が欠落",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:44",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:61",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "開始ログ",
+            "design": "開始のコンソール出力（日時付き）",
+            "implementation": "日時なしの固定文言",
+            "mismatch": "日時が欠落"
+          }
+        ]
+      },
+      {
+        "findingId": "b05-01_0405_sheet-3_sheet-conformance-b701cd53d4a0",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:1095-1096",
+        "designRequirement": "完了のコンソール出力（日時付き）",
+        "implementationActual": "日時なしの固定文言",
+        "mismatchReason": "日時が欠落",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:44",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:61",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "完了ログ",
+            "design": "完了のコンソール出力（日時付き）",
+            "implementation": "日時なしの固定文言",
+            "mismatch": "日時が欠落"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 97,
+    "verdictedCount": 97,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 97,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-fc95f00226",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "→店頭受取注文商品スマレジ連携（名称変更）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-42251ec2f0",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "概要 スマレジ用商品コードの登録と連携を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-37953e71b0",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "★ スマレジ連携APIについて、呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-bdda77fd34",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 現行でこのバッチは以下の2つの処理を行っている",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-011ddd71df",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 店頭受取注文の場合、スマレジ側に注文した商品の情報を連携する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-c6d05801dd",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号登録バッチ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-58799bb570",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注データが更新されるとトリガーの処理が実行される",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-40a6c4f5fe",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "に変更された場合に注文番号を採番する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-ce66feebea",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "遷移一覧（3件）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-49206a801f",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "新たなテーブル(dtb_order_number)を作成し採番を行っている",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-91e40978dc",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 採番用のテーブル(dtb_order_number)にデータ登録をする処理でデッドロックが起こる可能性はあるため、",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-691844fd3d",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "データ登録の処理をなくした形にしたい",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-c1a8a65750",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "以上のカスタマイズにより、注文番号登録バッチから注文番号登録の処理を削除する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-72aee19980",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "元々、注文番号登録バッチという名称であるがリニューアル後は注文番号登録を行わないため、",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-43d1e7a896",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "バッチ名称は「店頭受取注文商品スマレジ連携バッチ」に変更する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-ace6a53457",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "支店側の「スマレジ商品登録バッチ」が同じ役割を持っており、今回本店で実装されるため不要になるので、実装を引き継ぐ形とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-73e2cc31ac",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "【開発申し送り】支店と本店のバッチを見比べながら作成する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-23f1fd851b",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "★ 以下の注文を対象にスマレジ商品コードの採番とスマレジ連携を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-f762b25d52",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "※現行の支店のスマレジ商品連携バッチと同仕様にする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-dff57da101",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "※本店側のバッチは注文番号採番を行った注文に対してスマレジ連携を行っていたが、",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-409b4fb39f",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号採番の処理を除外するため、以下の条件でスマレジ商品を連携することにより、スマレジ商品再連携バッチが不要となる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-f737ae8778",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "（連携が成功しないとスマレジ連携済みフラグが立たないため。支店側はもともとスマレジ商品再連携バッチはない）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-9ef65a3893",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ スマレジ連携済みフラグが立っていない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-1b767b7a0e",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ スマレジ在庫連携済みフラグが立っていない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-aeefa51f81",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 採番ルールは以下の通り（インストアコードの採番ルールに従う）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-309c230ecf",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "20(固定) + 1(固定) + スマレジ店舗ID(3桁0埋め、スマレジ店舗IDの指定がない場合は000となる) + 注文番号(8桁0埋め後、末尾から6桁取得）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-fe03bc3aaa",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "+ チェックディジット",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-86e4e79835",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "※チェックディジット = 「奇数桁をそのまま足したもの」と「偶数桁を3倍して足したもの」を合計し、",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-710dda65f3",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "その結果の一の位を求め、10から引いた数（ただし、結果が10の場合は0）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-e2881e5a83",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "例: 本店で店頭受取注文を行い、注文番号が12345だった場合",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-9a68b3a604",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 注文データに採番したスマレジ用商品コードを保存する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-f83fd35220",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ スマレジ商品登録APIを使用し、スマレジに注文商品を登録する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-2cb2b834bf",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 以下のデータを送信する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-ae38aab73a",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭PCアカウントの場合: 「店頭注文: 店頭注文番号 のご注文」",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-4c9ac0c6cc",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "通常会員の場合: 「注文者姓カナ 注文者名カナ 様のご注文」",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-7aeca34bbf",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "スムーズ店頭受取の場合: 0円（固定）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-67186adf85",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取の場合: 注文合計金額（注文内の明細を1つにまとめて1商品とするため、合計金額を指定する）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-517db889fa",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ スマレジ連携が成功した場合スマレジ連携済みフラグを立てる、失敗した場合エラーメールを送信する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-baffc3c399",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ メールの送信先は追加設定のスマレジ通信エラー送信メールアドレス",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-9ad5083e11",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ 商品連携が成功した場合、スマレジ在庫登録APIを使用し、連携した商品に在庫を登録する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-f7af603bc1",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・ スマレジ連携が成功した場合スマレジ在庫連携済みフラグを立てる、失敗した場合エラーメールを送信する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-5c4228dfa9",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "入力データ元 DB 出力先(フォーマット) DB、スマレジ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-79602a0b1f",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "DBから以下のデータを取得",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-f934e9ab7e",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "入力データ検索条件",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-b9d78cb14d",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文データ.注文店舗.スマレジ店舗ID スマレジ店舗IDが登録済み",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-d1af720d4f",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文データ.注文店舗.スマレジ店舗コード スマレジ店舗コードが登録済み",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-ac2523b848",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文データ.スマレジ連携済みフラグ スマレジ連携済みフラグが立っていない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-c94592eeb3",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文データ.スマレジ在庫連携済みフラグ スマレジ在庫連携済みフラグが立っていない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-b36012e4c1",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "実行結果詳細 ※主にDBの登録・更新結果について記載",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-edd0074c60",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "スマレジ連携済みフラグ、スマレジ在庫連携済みフラグ、スマレジ商品コードを登録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-a3877c74b2",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文商品をスマレジに登録（在庫含む）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-d83b718b59",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "エラーハンドリング",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-f0f2409d75",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "APIの実行に失敗した場合は、エラーメールを送信する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-47b5b2b2aa",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "処理に失敗した注文は、スマレジ商品再連携バッチで再度連携の対象となる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-7141682b8c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・スマレジ用商品コード（バーコード）生成＆登録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-c48bd205fb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取注文商品スマレジ連携バッチ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-5d68218f6e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "・これまで行っていた注文番号のコピーの処理は行わず、以下の処理のみ行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-d32163cca4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "B05-01 注文番号登録 / バッチ 受注管理 — 注文番号登録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-26816bc3ac",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号テーブルに採番された注文番号を、受注サブテーブルへコピーするバッチである。コマンドライン（コンソールコマンド）から実行する。コピー対象の受注のうち店頭受取の注文については、スマレジ用の商品コード（バーコード）を生成して登録し、スマレジへ商品・在庫を連携する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-cd538b291e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注バッチ（注文番号コピー処理）、注文番号・受注サブを扱うリポジトリ、スマレジ連携処理を正とする。カスタマイズ区分は現行踏襲であり、挙動の参照リポはpf-eccube3、DB関連はec-cube-enterpriseを正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-f9b91351f1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取注文に対するスマレジ商品コード生成とスマレジ連携",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-32b4f93aa8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "コピー対象が無い場合の挙動",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-8afcee242d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-f79cdf1b63",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "スマレジ連携サービスの内部仕様",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-7e354da999",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注サブテーブル dtb_order_sub が注文番号・スマレジ用コード等を保持する補助表として存在する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-d086b36304",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "補助表 dtb_order_sub を持たず、注文番号（ order_number ）・スマレジ用商品コード（ smaregi_code ）・スマレジ各連携フラグを受注 dtb_order の列へ統合している。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-6f129b3c0f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "dtb_order_sub.smaregi_code へ生成・登録する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-900005cadf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "dtb_order.smaregi_code （桁20）へ登録する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-dfc35c053e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "dtb_order_number が注文番号（ order_number 、自動採番）と order_id を持つ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-269c3b5b96",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "dtb_order_number が id ・ base_info_id ・ value ・ update_date を持つ構造で、現行のコピー機構と差がある（ec-cube-enterprise実装で要確認）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-bff424ffb4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注に採番される番号。注文番号テーブルに保持する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-963b59fbde",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注の拡張情報。注文番号・スマレジ用コード等を保持する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-a002b119fc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "スマレジ連携用に生成するバーコード。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-5809123c1f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号テーブルから受注サブテーブルへ注文番号をコピーし、店頭受取注文はスマレジへ連携する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-2bdee8cc7c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-9fde187d63",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号登録を実行する（ order:batch copyOrderNumber ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-68ff9740ae",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "対象が無い場合は処理を終了する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-0bdf4a5bd4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "メール送信用の経路を準備する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-ae2f689c39",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "当該注文が店頭受取の配送区分に該当する場合、スマレジ用商品コード（バーコード）を生成して受注サブへ登録し保存する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-d5948d5085",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取の注文についてスマレジへ商品・在庫を連携する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-9bdc181dad",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "配送区分が店頭受取グループに含まれる注文を対象にスマレジ連携を行う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-a949cad77d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "入力はコマンド名。成功時は注文番号をコピーし、店頭受取はスマレジへ商品・在庫を連携する。コピー対象が無ければ何もせず完了する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-6c6db20952",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取注文についてスマレジへ商品・在庫を連携する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-3116868315",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注サブへの注文番号反映、店頭受取注文のスマレジ用コード登録とスマレジ連携。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-09ddd540ea",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "エラーメッセージのコンソール出力。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-dfc6e1daa2",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注（移行先 dtb_order 、現行 dtb_order_sub ）の注文番号・スマレジ用コード更新、スマレジ連携。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-66b2f1a52a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "テーブル・列名はec-cube-enterpriseを正とする。現行（pf-eccube3）と異なる場合は移行先名を主とし現行名を括弧で添える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-2d58c98dda",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "コピー元（移行先は id ・ base_info_id ・ value 構造のためコピー機構は要確認）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-81284ef606",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取注文に生成・登録するスマレジ用商品コード。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-349eea0a79",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-37a9262998",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "注文番号テーブルと受注（移行先 dtb_order 、現行 dtb_order_sub ）の注文番号を一致させる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-ab7920c4b8",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "店頭受取注文のスマレジ用コードを登録し、スマレジへ連携する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-3d726c599f",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "コマンド名が未指定・不一致",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-c207a3bab2",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "エラーメッセージをコンソールに出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-953c467cc0",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "開始・完了のコンソール出力（日時付き）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-cfa7611aa0",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "スマレジ連携の認証情報",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-7409d2aefb",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "受注サブへの注文番号反映とスマレジ用コード登録を保存する。本バッチは楽観ロック・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

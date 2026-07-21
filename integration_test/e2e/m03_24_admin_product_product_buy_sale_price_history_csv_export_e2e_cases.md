@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_24_admin_product_product_buy_sale_price_history_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。
 
 本機能は pf-eccube3 のリバース設計であり、刷新先 ec-cube-enterprise に同等機能（`BuySalePriceHistoryController::export`）が存在する。**セレクタ・ルートは実装（位置情報）から取り、合否は仕様で判定**する。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
@@ -28,32 +28,32 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-001	IT-25	UI部品	P1	検索結果1件以上で一覧に「CSVダウンロード」リンクが表示される	管理ログイン済／SEED-M03-24-HISTORY（履歴1件以上）	検索条件なし（全件ヒット）	"1. 買取/販売価格履歴一覧（/admin/product/buy_sale_price_history）を開く
-2. 検索条件を空のまま検索を実行する"	検索結果ヘッダ右に「CSVダウンロード」リンクが表示されること。
+2. 検索条件を空のまま検索を実行する"	検索結果ヘッダ右に「CSVダウンロード」リンクが表示されること。				
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-002	IT-25	URL	P2	「CSVダウンロード」リンクが CSV 出力ルートを指す	管理ログイン済／SEED-M03-24-HISTORY	検索条件なし（全件ヒット）	"1. 検索を実行し結果1件以上を表示する
-2. 「CSVダウンロード」リンクの href を確認する"	リンク先が `/admin/product/buy_sale_price_history/export` であること。
+2. 「CSVダウンロード」リンクの href を確認する"	リンク先が `/admin/product/buy_sale_price_history/export` であること。				
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-003	IT-27	実行結果	P1	CSVダウンロードリンク押下でダウンロードが発火しファイル名が buy_sale_price_{YmdHis}.csv	管理ログイン済／SEED-M03-24-HISTORY	検索条件なし（全件ヒット）	"1. 検索を実行し結果1件以上を表示する
-2. 「CSVダウンロード」リンクを押下する"	ダウンロードが発火し、ファイル名が `buy_sale_price_{14桁数字}.csv` であること（中身は手動確認）。
+2. 「CSVダウンロード」リンクを押下する"	ダウンロードが発火し、ファイル名が `buy_sale_price_{14桁数字}.csv` であること（中身は手動確認）。				
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-004	IT-25	HTTPステータス	P1	検索済みセッションで出力ルートGETすると octet-stream の添付応答が返る	管理ログイン済／SEED-M03-24-HISTORY／同一セッションで検索実行済み	—	"1. 検索を実行しセッションに検索条件を保存する
-2. 同一セッションで GET /admin/product/buy_sale_price_history/export を送る"	"応答が 200 で Content-Type: application/octet-stream、Content-Disposition に attachment と filename=buy_sale_price_ を含むこと。"
+2. 同一セッションで GET /admin/product/buy_sale_price_history/export を送る"	応答が 200 で Content-Type: application/octet-stream、Content-Disposition に attachment と filename=buy_sale_price_ を含むこと。				
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-008	IT-25	入出力	P2	検索済みセッションで余計なクエリパラメータ付きで出力ルートGETしても無視され通常どおりCSVが返る	管理ログイン済／SEED-M03-24-HISTORY／同一セッションで検索実行済み	クエリ文字列 ?dummy=1&page_count=9999（仕様上は解釈されない）	"1. 検索を実行しセッションに検索条件を保存する
-2. 同一セッションで GET /admin/product/buy_sale_price_history/export?dummy=1&page_count=9999 を送る"	応答が 200 で Content-Type: application/octet-stream、Content-Disposition に attachment を含むこと。クエリパラメータの有無で応答内容が変わらない（クエリは解釈されず検索条件はセッションからのみ復元される）こと。
+2. 同一セッションで GET /admin/product/buy_sale_price_history/export?dummy=1&page_count=9999 を送る"	応答が 200 で Content-Type: application/octet-stream、Content-Disposition に attachment を含むこと。クエリパラメータの有無で応答内容が変わらない（クエリは解釈されず検索条件はセッションからのみ復元される）こと。				
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-005	IT-25	送信可否制御	P2	検索結果0件のとき「CSVダウンロード」リンクが表示されない	管理ログイン済／SEED-M03-24-HISTORY	どの履歴にも一致しない検索語（例 ZZZ_NO_MATCH_ZZZ）	"1. 一致しない検索語で検索を実行する
-2. 結果領域を確認する"	「CSVダウンロード」リンクが表示されないこと（m03-24オラクル＝0件はリンク非描画）。なおデータ無しメッセージ表示は親機能m03-23（一覧/検索）の表示仕様による補助確認。
+2. 結果領域を確認する"	「CSVダウンロード」リンクが表示されないこと（m03-24オラクル＝0件はリンク非描画）。なおデータ無しメッセージ表示は親機能m03-23（一覧/検索）の表示仕様による補助確認。				
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-006	IT-03	モーダル・ポップアップ	P3	CSV出力リンク押下時に確認ダイアログ（モーダル/alert）を表示しない	管理ログイン済／SEED-M03-24-HISTORY	検索条件なし（全件ヒット）	"1. 検索を実行し結果1件以上を表示する
-2. ブラウザの dialog を監視しつつ「CSVダウンロード」を押下する"	出力前に確認ダイアログ（モーダル/alert）が表示されず、ダウンロードが発火すること。
+2. ブラウザの dialog を監視しつつ「CSVダウンロード」を押下する"	出力前に確認ダイアログ（モーダル/alert）が表示されず、ダウンロードが発火すること。				
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-012	IT-03	画面遷移	P3	「CSVダウンロード」リンクは別タブ指定がなく同一タブでダウンロードする	管理ログイン済／SEED-M03-24-HISTORY	検索条件なし（全件ヒット）	"1. 検索を実行し結果1件以上を表示する
-2. 「CSVダウンロード」リンクの target 属性を確認する"	リンクに target=""_blank""（別タブ）指定が無く、押下しても新規タブ/ウィンドウを開かず同一タブでダウンロード応答となること（設計フロント挙動: 別タブ指定なし／同一タブ）。
+2. 「CSVダウンロード」リンクの target 属性を確認する"	"リンクに target=""""_blank""""（別タブ）指定が無く、押下しても新規タブ/ウィンドウを開かず同一タブでダウンロード応答となること（設計フロント挙動: 別タブ指定なし／同一タブ）。"				
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-007	IT-25	送信可否制御	P2	0件検索後（セッションに検索条件あり）に出力ルート直アクセスするとリダイレクトせずヘッダ行のみCSVが返る	管理ログイン済／SEED-M03-24-HISTORY	どの履歴にも一致しない検索語（例 ZZZ_NO_MATCH_ZZZ）	"1. 一致しない検索語で検索を実行する（0件だが検索実行＝セッションに検索条件保存）
-2. 同一セッションで GET /admin/product/buy_sale_price_history/export を送る（リダイレクト追従しない）"	リダイレクトせず応答が 200 で Content-Type: application/octet-stream、Content-Disposition に attachment を含むこと（ヘッダ行のみCSVという中身は手動確認）。
+2. 同一セッションで GET /admin/product/buy_sale_price_history/export を送る（リダイレクト追従しない）"	リダイレクトせず応答が 200 で Content-Type: application/octet-stream、Content-Disposition に attachment を含むこと（ヘッダ行のみCSVという中身は手動確認）。				
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-009	IT-13	URL直接アクセス	P2	出力ルートへ非GET（POST）でアクセスするとCSVとして処理されない	管理ログイン済／SEED-M03-24-HISTORY／同一セッションで検索実行済み	POST メソッド	"1. 検索を実行しセッションに検索条件を保存する
-2. 同一セッションで POST /admin/product/buy_sale_price_history/export を送る（リダイレクト追従しない）"	CSV（200／application/octet-stream の添付応答）が返らないこと。出力ルートは GET 専用であり非GETは許可されない（Method Not Allowed）こと。
-m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-010	IT-03	画面遷移	P1	検索未実行（セッション欠落）で出力ルート直アクセスすると一覧へリダイレクトされる	管理ログイン済／検索未実行（セッションに検索条件なし）	—	"1. 検索を一度も実行していない状態で GET /admin/product/buy_sale_price_history/export を開く"	買取/販売価格履歴一覧（/admin/product/buy_sale_price_history）へリダイレクトされ、CSV を返さないこと。
+2. 同一セッションで POST /admin/product/buy_sale_price_history/export を送る（リダイレクト追従しない）"	CSV（200／application/octet-stream の添付応答）が返らないこと。出力ルートは GET 専用であり非GETは許可されない（Method Not Allowed）こと。				
+m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-010	IT-03	画面遷移	P1	検索未実行（セッション欠落）で出力ルート直アクセスすると一覧へリダイレクトされる	管理ログイン済／検索未実行（セッションに検索条件なし）	—	1. 検索を一度も実行していない状態で GET /admin/product/buy_sale_price_history/export を開く	買取/販売価格履歴一覧（/admin/product/buy_sale_price_history）へリダイレクトされ、CSV を返さないこと。				
 m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-011	IT-25	失敗時出力	P1	セッション欠落時にフラッシュ「検索条件を指定してから…」が表示される	管理ログイン済／検索未実行（セッションに検索条件なし）	—	"1. 検索未実行で出力ルートへ直接アクセスする
-2. リダイレクト先の一覧でフラッシュを確認する"	「検索条件を指定してからCSVをダウンロードしてください。」が表示されること。
-m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-020	IT-13	URL直接アクセス	P1	未ログインで出力ルートへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで GET /admin/product/buy_sale_price_history/export を開く"	管理ログイン画面へ誘導され、CSV を返さないこと。
-m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-021	IT-13	URL直接アクセス	P2	未ログインで一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで GET /admin/product/buy_sale_price_history を開く"	管理ログイン画面へ誘導されること。
+2. リダイレクト先の一覧でフラッシュを確認する"	「検索条件を指定してからCSVをダウンロードしてください。」が表示されること。				
+m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-020	IT-13	URL直接アクセス	P1	未ログインで出力ルートへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで GET /admin/product/buy_sale_price_history/export を開く	管理ログイン画面へ誘導され、CSV を返さないこと。				
+m03-24_admin_product_product_buy_sale_price_history_csv_export（商品管理 — 買取/販売価格履歴 CSV 出力）	E2E-M03-24-021	IT-13	URL直接アクセス	P2	未ログインで一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで GET /admin/product/buy_sale_price_history を開く	管理ログイン画面へ誘導されること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

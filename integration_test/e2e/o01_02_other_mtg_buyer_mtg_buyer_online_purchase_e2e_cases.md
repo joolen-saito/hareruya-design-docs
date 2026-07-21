@@ -6,7 +6,7 @@
 
 **area 判定＝api（画面を伴わない）**。判断根拠: MTGバイヤー本体はリポジトリ外の外部アプリで、画面・UI・ローカル保存は正本mdで仕様確定せず、「画面遷移」節（L197-199）で「EC-CUBE側はAPI応答のみで画面遷移を持たない」と明記。EC-CUBE側で観測できる入口は `App/MTGBuyer/V1/Admin/` の JSON API のみ（正本md「利用者視点の入口」L57-66）。したがって front/admin 画面specは無く、Playwright request で HTTPステータス・レスポンス本文を観測し、更新副作用は永続化先テーブル（dtb_buy_order 等）のDB照合で補完する。
 
-期待結果は仕様（正本md・観点表・基本設計）由来（オラクル独立性）。実装のレスポンス形・FW既定値・DTO制約をオラクル化しない。乖離は付帯表4に出す。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。未確定は `要実機確認`。
+期待結果は仕様（正本md・観点表・基本設計）由来（オラクル独立性）。実装のレスポンス形・FW既定値・DTO制約をオラクル化しない。乖離は付帯表4に出す。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。未確定は `要実機確認`。
 
 ## エンドポイント特定状況：実装済み（`App/MTGBuyer/V1/Admin/` に実在）
 
@@ -42,45 +42,45 @@
 タブ区切り。改行や `"` を含むセルはダブルクォートで囲む。**1行目**が列見出し、**2行目以降**がケース。`機能名` は全行同一。`テストID` で一意。優先度 **P1／P2／P3**。**期待結果は1行1判定**。
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-001	IT-20	出力抑止	P1	有効な管理者資格でログインすると認証トークンが返る	有効な管理者会員が存在する／SEED-O01-02-ADMIN	有効なログインID・パスワード	"1. POST /api/v1/admin/login.json に資格情報を送信する
-2. HTTPステータスを確認する"	HTTP200が返り、以降のネット買取APIで使う認証トークンが返ること。
+2. HTTPステータスを確認する"	HTTP200が返り、以降のネット買取APIで使う認証トークンが返ること。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-002	IT-15	未認証	P1	jwt-tokenヘッダ欠落で査定対象取得が401となる	ネット買取受注が試験できる状態／SEED-O01-02-ORDER	jwt-tokenヘッダなしのGET要求	"1. jwt-tokenを付けずに GET /api/v1/admin/buyOrders.json を送信する
-2. HTTPステータスを確認する"	HTTP401が返り、認証エラーとなること。
+2. HTTPステータスを確認する"	HTTP401が返り、認証エラーとなること。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-003	IT-15	未認証	P1	該当管理者会員が無いJWTで査定結果確定が401となる	ネット買取受注が試験できる状態／SEED-O01-02-JWT-NO-MEMBER	該当会員なしのJWT＋正常明細	"1. 該当会員なしJWTで PUT /api/v1/admin/buyOrder/{id}.json を送信する
-2. HTTPステータスを確認する"	HTTP401が返り、受注が更新されないこと。
+2. HTTPステータスを確認する"	HTTP401が返り、受注が更新されないこと。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-004	IT-15	未認証	P1	署名不正のJWTでステータス更新が401となる	ネット買取受注が試験できる状態／SEED-O01-02-JWT-BAD-SIGNATURE	署名不正JWT＋ステータス更新	"1. 署名不正JWTで PUT /api/v1/admin/buyOrder/{id}/status.json を送信する
-2. HTTPステータスを確認する"	HTTP401が返り、ステータスが更新されないこと。
+2. HTTPステータスを確認する"	HTTP401が返り、ステータスが更新されないこと。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-010	IT-27	ファイル取得	P1	有効JWTで査定対象のネット買取受注一覧を取得できる	査定対象の受注が存在する／SEED-O01-02-ORDER	有効JWTのGET要求	"1. 有効JWTで GET /api/v1/admin/buyOrders.json を送信する
-2. HTTPステータスと本文の形を確認する"	HTTP200が返り、査定対象のネット買取受注一覧が配列で返ること。
+2. HTTPステータスと本文の形を確認する"	HTTP200が返り、査定対象のネット買取受注一覧が配列で返ること。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-020	IT-15	状態変化	P1	正常な明細で査定結果を確定でき200が返る	更新対象受注が存在する／SEED-O01-02-ORDER	有効JWT＋正常な確定ボディ	"1. 有効JWTで PUT /api/v1/admin/buyOrder/{id}.json を送信する
-2. HTTPステータスを確認する"	HTTP200が返り、査定結果が確定されること。
+2. HTTPステータスを確認する"	HTTP200が返り、査定結果が確定されること。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-021	IT-25	更新抑止	P1	存在しない受注IDでは404となり更新されない	ネット買取受注が試験できる状態／SEED-O01-02-ORDER	存在しない受注ID＋正常明細	"1. 存在しない受注IDへ確定要求を送信する
-2. HTTPステータスを確認する"	HTTP404が返り、更新されないこと。
+2. HTTPステータスを確認する"	HTTP404が返り、更新されないこと。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-022	IT-12	入力検証	P1	検証エラー（明細空）で400となりDB更新されない	更新対象受注が存在する／SEED-O01-02-ORDER	main_cards が空	"1. 明細が空のボディで確定要求を送信する
-2. HTTPステータスと本文を確認する"	HTTP400が返り、入力検証エラーとしてDB更新が行われないこと。
+2. HTTPステータスと本文を確認する"	HTTP400が返り、入力検証エラーとしてDB更新が行われないこと。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-023	IT-25	画面表示データ	P2	マスタに無いステータスでは400となり更新されない	更新対象受注が存在する／SEED-O01-02-STATUS-MTB	マスタ非存在の order_status	"1. マスタ非存在ステータスで確定要求を送信する
-2. HTTPステータスを確認する"	HTTP400が返り、入力不正として更新されないこと。
+2. HTTPステータスを確認する"	HTTP400が返り、入力不正として更新されないこと。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-024	IT-25	画面レイアウト	P1	確定成功時に明細（メインカード）が送信内容で全置換される	既存明細のある受注が存在する／SEED-O01-02-ORDER	送信外の旧明細と異なる新明細	"1. 新明細で確定要求を送信する
-2. 対象受注の明細（DB照合）を確認する"	既存明細が削除され送信内容で作り直され、送信外の旧明細が残らないこと。
+2. 対象受注の明細（DB照合）を確認する"	既存明細が削除され送信内容で作り直され、送信外の旧明細が残らないこと。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-025	IT-02	初期行数	P1	買取合計金額が明細からサーバ側で再計算され保存される	更新対象受注が存在する／SEED-O01-02-ORDER	単価×数量が既知の明細	"1. 明細で確定要求を送信する
-2. 買取合計金額（DB照合）を確認する"	明細（単価×数量）からサーバ側で再計算した買取合計金額が保存され、明細と合計が一致すること。
+2. 買取合計金額（DB照合）を確認する"	明細（単価×数量）からサーバ側で再計算した買取合計金額が保存され、明細と合計が一致すること。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-030	IT-20	出力内容	P1	ステータスを更新でき200が返る	更新対象受注が存在する／SEED-O01-02-ORDER	有効JWT＋ステータス更新	"1. PUT /api/v1/admin/buyOrder/{id}/status.json を送信する
-2. HTTPステータスを確認する"	HTTP200が返り、ステータス・査定担当者・更新日時が保存されること。
+2. HTTPステータスを確認する"	HTTP200が返り、ステータス・査定担当者・更新日時が保存されること。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-031	IT-02	表示順	P1	ステータス更新時に変更履歴が1件登録される	更新前ステータス既知の受注が存在する／SEED-O01-02-ORDER	更新前と異なるステータス	"1. 異なるステータスへ更新要求を送信する
-2. ステータス変更履歴（DB照合）を確認する"	ステータス変更履歴が1件追加され、受注の現在ステータスと履歴の最新が一致すること。
+2. ステータス変更履歴（DB照合）を確認する"	ステータス変更履歴が1件追加され、受注の現在ステータスと履歴の最新が一致すること。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-040	IT-20	出力内容	P2	フリーコメント（メモ）を更新でき200が返る	更新対象受注が存在する／SEED-O01-02-ORDER	有効JWT＋フリーコメント	"1. PUT /api/v1/admin/buyOrder/{id}/freeComment.json を送信する
-2. HTTPステータスとメモ（DB照合）を確認する"	HTTP200が返り、フリーコメント（メモ）が保存されること。
+2. HTTPステータスとメモ（DB照合）を確認する"	HTTP200が返り、フリーコメント（メモ）が保存されること。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-041	IT-25	更新抑止	P2	存在しない受注IDへのフリーコメント更新は404となる	ネット買取受注が試験できる状態／SEED-O01-02-ORDER	存在しない受注ID	"1. 存在しない受注IDへコメント更新を送信する
-2. HTTPステータスを確認する"	HTTP404が返り、更新されないこと。
+2. HTTPステータスを確認する"	HTTP404が返り、更新されないこと。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-050	IT-20	出力内容	P2	メインカードAPIが認証付きで200を返す	更新対象受注が存在する／SEED-O01-02-ORDER	有効JWT＋buy_order_ids	"1. POST /api/v1/admin/buyMainCard.json を送信する
-2. HTTPステータスを確認する"	HTTP200が返ること（正本mdは「登録」だが実装は取得＝付帯表4-2の乖離を要確認）。
+2. HTTPステータスを確認する"	HTTP200が返ること（正本mdは「登録」だが実装は取得＝付帯表4-2の乖離を要確認）。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-051	IT-15	対象データ	P2	個別入力商品APIが認証付きで200を返す	更新対象受注が存在する／SEED-O01-02-ORDER	有効JWT＋buy_order_ids	"1. POST /api/v1/admin/buyOrderIndivisualInputProduct.json を送信する
-2. HTTPステータスを確認する"	HTTP200が返ること（正本mdは「登録」だが実装は取得＝付帯表4-2の乖離を要確認）。
+2. HTTPステータスを確認する"	HTTP200が返ること（正本mdは「登録」だが実装は取得＝付帯表4-2の乖離を要確認）。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-052	IT-15	未認証	P2	メインカードAPIは認証欠落で401となる	ネット買取受注が試験できる状態／SEED-O01-02-ORDER	jwt-tokenヘッダなし	"1. jwt-tokenなしで POST /api/v1/admin/buyMainCard.json を送信する
-2. HTTPステータスを確認する"	HTTP401が返り、認証エラーとなること。
+2. HTTPステータスを確認する"	HTTP401が返り、認証エラーとなること。				
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	E2E-O01-02-900	IT-12	保存例外	P3	保存例外時は失敗応答となりDB更新されない（例外誘発＝手動）	保存例外を誘発できる状態／SEED-O01-02-EXCEPTION	保存処理で例外を誘発する条件	"1. 例外誘発条件で確定要求を送信する
-2. 応答と対象受注（DB照合）を確認する"	失敗応答となり、明細・合計金額が中途更新されないこと（例外誘発は実機依存のため手動）。
+2. 応答と対象受注（DB照合）を確認する"	失敗応答となり、明細・合計金額が中途更新されないこと（例外誘発は実機依存のため手動）。				
 ```
 
 ---

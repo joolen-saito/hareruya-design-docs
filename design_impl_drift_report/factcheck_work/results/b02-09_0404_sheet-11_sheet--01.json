@@ -1,0 +1,53 @@
+{
+  "chunkId": "b02-09_0404_sheet-11_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-09_0404_sheet-11_sheet.json#b02-09_0404_sheet-11_sheet-conformance-3b3bd259827e",
+      "functionId": "b02-09_0404_sheet-11_sheet",
+      "featureNo": "B02-09",
+      "title": "B02-09 ユニサーチフィード送信",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計はSCPでTSVファイルとdoneファイルを送信する外部契約だが、実装はSFTPライブラリで .tsv.gz とdoneファイルを送信している。",
+      "reason": "設計HTML 1837行『SCPでフィードファイルとdoneファイルをユニサーチのサーバに送信する』、1838行『秘密鍵ファイルを設置しSCPコマンド実行時に指定』、1848行『TSVファイル、doneファイルをSCPで送信する』が要求。実装は UniSearchSftpService が phpseclib3\\Net\\SFTP を使い createSftp()/$sftp->put() でSFTPアップロードしており、SCPコマンド実行は存在しない。さらに UniSearchExportService::exportAndUpload() は compressFile($tsvPath, gzip) で .tsv.gz を生成し、$gzipPath と $donePath をアップロードするため、TSVそのものではなく圧縮済み .tsv.gz を送信している。src/Eccube 配下で scp/proc_open/shell_exec を検索したがSCP実装は皆無で、SFTP実装のみ確認した。転送方式・送信ファイル形式ともに設計と実装が相違する。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+        "start": 1837,
+        "end": 1848,
+        "contains": ["SCPでフィードファイルとdoneファイルをユニサーチのサーバに送信する", "SCPコマンド実行時に指定", "doneファイルをSCPで送信する"]
+      },
+      "implEvidence": [
+        {
+          "label": "SFTP実装(SCPではない)",
+          "note": "phpseclib3\\Net\\SFTP を使い put() でアップロードしている",
+          "path": "ec-cube-enterprise/src/Eccube/Service/UniSearch/UniSearchSftpService.php",
+          "start": 23,
+          "end": 66,
+          "contains": ["use phpseclib3\\Net\\SFTP;", "$sftp->put($remotePath, $localPath, SFTP::SOURCE_LOCAL_FILE)"]
+        },
+        {
+          "label": "圧縮.tsv.gzを送信",
+          "note": "TSVそのものではなくgzip圧縮ファイルをアップロードしている",
+          "path": "ec-cube-enterprise/src/Eccube/Service/UniSearch/UniSearchExportService.php",
+          "start": 90,
+          "end": 106,
+          "contains": ["$gzipPath = $this->compressFile($tsvPath, self::COMPRESS_GZIP);", "$this->sftpService->upload($gzipPath)", "$this->sftpService->upload($donePath)"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-09_0404_sheet-11_sheet.json#b02-09_0404_sheet-11_sheet-conformance-8cfea7ba84d1",
+      "functionId": "b02-09_0404_sheet-11_sheet",
+      "featureNo": "B02-09",
+      "title": "B02-09 ユニサーチフィード送信",
+      "dimension": "⑦要求網羅・未実装",
+      "verdict": "UNCERTAIN",
+      "confidence": "medium",
+      "summary": "スケジュール起動(Step Functions)・5分おき起動は外部インフラ設定であり、当リポジトリからは実装有無を確認できない。",
+      "reason": "設計HTML 1839行は『現行のCron設定は以下のとおり（シェルはリポジトリ管理なし）』と明記し、1840行に */5 * * * * ... feed_upload.sh、1841行に『実行トリガー スケジュール起動(Step Functions) 実行タイミング 5分おき』とある。すなわち起動シェルはリポジトリ非管理、トリガーはAWS Step Functionsであると設計自身が述べており、これはアプリケーションソース(ec-cube-enterprise)外のインフラ/デプロイ設定に属する。アプリ側の実装として unisearch:batch コマンド(SendUnisearchProductFeedCommand.php:30)は存在し、これが定期起動から呼ばれる想定のエントリポイントである。feed_upload / feed.log / ec2-user / Step Functions / */5 を src/・html/ 配下で検索したが該当なしだが、これは元々コードに含まれない外部インフラ設定であり、不在をもって実装漏れと断定できない。Step Functions定義やサーバCronの実機確認が必要なためUNCERTAINとする。"
+    }
+  ]
+}

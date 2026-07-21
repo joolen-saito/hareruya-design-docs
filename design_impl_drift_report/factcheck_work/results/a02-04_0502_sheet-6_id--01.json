@@ -1,0 +1,101 @@
+{
+  "chunkId": "a02-04_0502_sheet-6_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-04_0502_sheet-6_id.json#a02-04_0502_sheet-6_id-conformance-157cfce5b130",
+      "functionId": "a02-04_0502_sheet-6_id",
+      "featureNo": "A02-04",
+      "title": "A02-04 ポップアップ用カード情報取得（旧商品ID）",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "UNCERTAIN",
+      "confidence": "low",
+      "summary": "lang判定が 'ja'=>JP / default=>EN である点は事実だが、設計の言語受け渡し仕様が矛盾しており実装違いと断定できない。",
+      "reason": "実装は ProductController.php:366-369 で match (strtolower($lang)) { 'ja' => 'JP', default => 'EN' } とし、'ja' のみ JP、それ以外は EN にしているのは事実。しかし設計側は矛盾している。詳細設計 line 1563 は lang を「jpまたはenを想定する」と記すが、同じシートの Excel 部 line 1456 は『langはEC-CUBEサーバURLではjpで表記する(EC-CUBEサーバ→APIサーバ通信時にjaに差し替えられる)』と明記しており、API境界（本ルートは pf-api 相当のAPIエンドポイント）に到達する値は 'ja' になると読める。その場合 'ja'=>JP は設計フロー通りで正しい。逆に line 1563 を字義通り 'jp' が到達すると読むと 'jp' が EN 扱いになり不整合。どちらの値が本ルートに実際に渡るかは呼び出し元（フロントJS/EC-CUBEプロキシ）に依存し、設計文だけでは確定できない。実機・呼び出し元確認が要るため UNCERTAIN とする。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-04_0502_sheet-6_id.json#a02-04_0502_sheet-6_id-conformance-45afd3b94cd7",
+      "functionId": "a02-04_0502_sheet-6_id",
+      "featureNo": "A02-04",
+      "title": "A02-04 ポップアップ用カード情報取得（旧商品ID）",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "404の本文キーが設計の {code, message} ではなく {code, errors} で返る。",
+      "reason": "設計 line 1568 は 404 の本文の形を明示的に {code, message}（\"Not Found\"）と定めている。実装は ProductController.php:372-373 で該当なし時に NotFoundException('Not Found') を投げ、384-388 の BaseApiException 捕捉で {'code' => $e->getStatusCode(), 'errors' => $e->getErrors()} を返す。NotFoundException.php:29-31 は受け取った message を errors: [$message] として保持するため、本文は {code, errors:['Not Found']} となり、message キーではなく errors 配列で返る。当該旧商品IDルートで {code, message} を返す分岐は存在しないため実装違いと確認した。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+        "start": 1568,
+        "end": 1568,
+        "contains": ["{code, message}", "Not Found", "該当する商品規格が無い"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(応答生成)",
+          "note": "BaseApiException捕捉で errors キーを返す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php",
+          "start": 384,
+          "end": 388,
+          "contains": ["'code' => $e->getStatusCode()", "'errors' => $e->getErrors()"]
+        },
+        {
+          "label": "実装(例外)",
+          "note": "message を errors 配列に格納",
+          "path": "ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php",
+          "start": 27,
+          "end": 34,
+          "contains": ["errors: [$message]", "statusCode: Response::HTTP_NOT_FOUND"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-04_0502_sheet-6_id.json#a02-04_0502_sheet-6_id-conformance-571f2ae20163",
+      "functionId": "a02-04_0502_sheet-6_id",
+      "featureNo": "A02-04",
+      "title": "A02-04 ポップアップ用カード情報取得（旧商品ID）",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "price01/price02/stock/weeklySold を設計は数値文字列(string)で返す想定だが、実装は integer で返す。",
+      "reason": "設計 line 1566 の成功レスポンス表は price01/price02/stock を string（Doctrineのdecimal値のため数値文字列）、weeklySold を string（集計SUM結果のため数値文字列）と定める。両サンプル(line 1510-1518, 1575-1581)も \"50\"/\"17\"/\"1\" 等の文字列で示す。実装は旧商品ID用の ProductRepository.php:findPopupProductByOldProductId(2404-) の RSM で price01/price02/stock/weeklySold をいずれも 'integer' スカラにマッピング(2463-2465,2470)し、PopupResponseBuilder.php:35,41 で stock・weeklySold を (int) にキャストして返す。したがって JSON は整数で返り、設計の数値文字列契約と一致しない。旧商品IDレスポンスで文字列化する処理は見当たらないため実装違いと確認した。（なお元指摘の行番号 2356-2363 は findPopupProductByCardId 側の行で誤り。正しくは 2463-2470。）",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+        "start": 1566,
+        "end": 1566,
+        "contains": ["Doctrineのdecimal値のため数値文字列で返す", "集計（SUM）結果のため数値文字列で返す"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(RSM型)",
+          "note": "旧商品ID用メソッドの integer マッピング",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php",
+          "start": 2458,
+          "end": 2470,
+          "contains": ["$rsm->addScalarResult('price01', 'price01', 'integer')", "$rsm->addScalarResult('weeklysold', 'weeklySold', 'integer')"]
+        },
+        {
+          "label": "実装(応答整形)",
+          "note": "stock/weeklySold を int キャスト",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php",
+          "start": 33,
+          "end": 41,
+          "contains": ["'stock' => (int) ($result['stock'] ?? 0)", "'weeklySold' => (int) ($result['weeklySold'] ?? 0)"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-04_0502_sheet-6_id.json#a02-04_0502_sheet-6_id-conformance-a4fac59479b1",
+      "functionId": "a02-04_0502_sheet-6_id",
+      "featureNo": "A02-04",
+      "title": "A02-04 ポップアップ用カード情報取得（旧商品ID）",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "medium",
+      "summary": "旧商品IDルートのレスポンスに foilFlg が無い点は事実だが、当該エンドポイントの設計サンプル・詳細設計は beltUrl を示し foilFlg を含めないため、実装は設計に整合する。",
+      "reason": "実装は ProductController.php:383 で PopupResponseBuilder::build($result, $productUrl, true)（includeBeltUrl=true）を呼び、PopupResponseBuilder.php:45-49 で includeBeltUrl=true 時は beltUrl を追加し foilFlg を追加しない。旧商品ID用リポジトリ(2412-2429)も beltUrl は SELECT するが foilFlg は取得しない。これは事実。しかし設計は内部矛盾しており、foilFlg 必須とは断定できない。元指摘の根拠 line 1497（Excelレスポンス項目表）は foilFlg を挙げるが、(1) 同じ Excel 部のサンプルレスポンス line 1517 は本エンドポイント(旧商品ID/sheet-6)について \"beltUrl\": null を示し foilFlg を含めない、(2) 詳細設計(リバース)のレスポンス表 line 1566 は foilFlg を列挙しない、(3) 詳細設計サンプル line 1571-1582 も foilFlg を含めない。すなわち4つの設計記述のうち3つが foilFlg 非掲載/beltUrl であり、実装(beltUrl)はその多数側=当該エンドポイントの権威的表現(サンプル+詳細設計)と一致する。line 1497 の foilFlg エントリは設計自身のサンプルに反する（現行商品IDルートからのコピー由来と推測される）。よって元の実装漏れ/違い指摘は設計の一記述のみを一方的に採用したもので、実装は設計サンプル・詳細設計に整合するため REFUTED とする。"
+    }
+  ]
+}

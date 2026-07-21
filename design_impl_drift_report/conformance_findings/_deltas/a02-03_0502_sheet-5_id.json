@@ -1,0 +1,84 @@
+{
+  "functionId": "a02-03_0502_sheet-5_id",
+  "featureNo": "A02-03",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-5:1381,1413",
+      "designExpectation": "404 応答本文は `{code, message}` 形式で、message は \"Not Found\" とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:323-339,372-388 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php:79-86",
+      "implementationActual": "該当なし時に NotFoundException('Not Found') を投げ、BaseApiException catch で `{code: 404, errors: ['Not Found']}` を返す。",
+      "mismatchReason": "設計は本文キーを `message` とするが、実装は `errors` 配列を返す。HTTP 404 と \"Not Found\" 文言自体は実装済みだが、外部 JSON 契約のキーが異なる。",
+      "comparisonRows": [
+        {
+          "item": "404本文キー",
+          "design": "{code, message}",
+          "implementation": "{code, errors}",
+          "mismatch": "message ではなく errors 配列で返却される"
+        },
+        {
+          "item": "404文言",
+          "design": "\"Not Found\"",
+          "implementation": "NotFoundException が errors: ['Not Found'] を保持",
+          "mismatch": "文言は一致するが格納先キーが異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-5:1360,1379,1393,1404",
+      "designExpectation": "A02-03（旧商品ID・言語指定なし）の成功レスポンスは productId, name, productClassId, price01, price02, stock, nameEn, fileName, cardId を返す。cardId は mtb_card.id を返す。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php:29-49 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2384-2435",
+      "implementationActual": "レスポンスビルダーは productId/name/productClassId/price01/price02/stock/nameEn/subFileName/fileName/code/conditionCode/weeklySold/productUrl/beltUrl を返し、cardId は返さない。Repository 側 SELECT/RSM にも cardId がない。",
+      "mismatchReason": "設計で必須の cardId が実装レスポンスに存在しない。一方で設計詳細のA02-03成功レスポンスにない subFileName/code/conditionCode/weeklySold/productUrl/beltUrl が返る。",
+      "comparisonRows": [
+        {
+          "item": "cardId",
+          "design": "紐づくカードIDとして cardId を返す",
+          "implementation": "Repository SELECT と PopupResponseBuilder に cardId なし",
+          "mismatch": "必須応答フィールド欠落"
+        },
+        {
+          "item": "追加フィールド",
+          "design": "詳細設計の成功レスポンスは 9 項目",
+          "implementation": "subFileName, code, conditionCode, weeklySold, productUrl, beltUrl も返却",
+          "mismatch": "詳細設計のレスポンス契約より多い"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-5:1379,1388-1390",
+      "designExpectation": "A02-03 詳細設計の成功レスポンスでは price01, price02, stock は string（Doctrine decimal 値のため数値文字列）で返す。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2428-2430 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php:33-35",
+      "implementationActual": "ResultSetMapping は price01/price02/stock を integer として取得し、PopupResponseBuilder は stock を `(int)` にキャストして返す。",
+      "mismatchReason": "設計は decimal 由来の数値文字列を外部契約としているが、実装は整数型に変換して返す。",
+      "comparisonRows": [
+        {
+          "item": "price01",
+          "design": "string",
+          "implementation": "RSM integer",
+          "mismatch": "型が string ではない"
+        },
+        {
+          "item": "price02",
+          "design": "string",
+          "implementation": "RSM integer",
+          "mismatch": "型が string ではない"
+        },
+        {
+          "item": "stock",
+          "design": "string",
+          "implementation": "RSM integer かつ `(int)` キャスト",
+          "mismatch": "型が string ではない"
+        }
+      ]
+    }
+  ]
+}

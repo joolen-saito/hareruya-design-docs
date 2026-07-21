@@ -1,0 +1,119 @@
+{
+  "chunkId": "a06-02_0506_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-e31161ef4383",
+      "functionId": "a06-02_0506_sheet-4_sheet",
+      "featureNo": "A06-02",
+      "title": "A06-02 店頭買取情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "実装ルートは /api/v1/admin/otcBuyOrders.json のみで、設計の /api/admin/otcBuyOrders.json および拡張子なし別名 /admin/otcBuyOrders が存在しない。",
+      "reason": "設計（基本設計）はエンドポイントURLを /api/admin/otcBuyOrders.json とし、詳細設計は GET /admin/otcBuyOrders.json と拡張子なし別名 GET /admin/otcBuyOrders を同一処理とする。実装では OtcBuyOrderController.php:69 に #[Route('/%eccube_api_v1_route%/admin/otcBuyOrders.json', ... methods:['GET'])] があるのみ。eccube.yaml:6 で env(ECCUBE_API_V1_ROUTE) の既定値が 'api/v1' のため実効パスは /api/v1/admin/otcBuyOrders.json となり、設計の /api プレフィックスと異なる。src/ 全体を 'admin/otcBuyOrders' で検索しても .json 付き api/v1 ルート1件のみで、拡張子なし別名も /api/admin ルートも存在しない。",
+      "designEvidence": {"label": "設計要求（エンドポイントURL / 拡張子なし別名）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1078, "end": 1078, "contains": ["/api/admin/otcBuyOrders.json"]},
+      "implEvidence": [
+        {"label": "実装ルート", "note": "api/v1 プレフィックス付き .json ルートのみ", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php", "start": 69, "end": 69, "contains": ["/%eccube_api_v1_route%/admin/otcBuyOrders.json", "api_admin_otc_buy_orders"]},
+        {"label": "APIプレフィックス既定値", "note": "既定値 api/v1", "path": "ec-cube-enterprise/app/config/eccube/packages/eccube.yaml", "start": 6, "end": 6, "contains": ["env(ECCUBE_API_V1_ROUTE)", "api/v1"]}
+      ],
+      "absenceCommands": [
+        "rg -n \"admin/otcBuyOrders\" /home/y-saito/Developments/ec-cube-enterprise/src",
+        "rg -n \"'/api/admin/otcBuyOrders\" /home/y-saito/Developments/ec-cube-enterprise/src"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-092ff312e7c3",
+      "functionId": "a06-02_0506_sheet-4_sheet",
+      "featureNo": "A06-02",
+      "title": "A06-02 店頭買取情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "抽出ステータスは設計が 5,6,7,8,9 だが、実装 ASSESSMENT_UNCOMPLETED_STATUSES は 5,6,8,9 のみで 7（振込前）を含まない。",
+      "reason": "設計の集計条件は抽出対象を『商品到着（5）・査定中（6）・振込前（7）・保留（8）・査定再開（9）』とする。実装は Controller.php:79 で MtbOtcBuyOrderStatus::ASSESSMENT_UNCOMPLETED_STATUSES を渡すが、その定数（MtbOtcBuyOrderStatus.php:84-89）は STATUS_ASSESSMENT_PENDING(5)・STATUS_ASSESSMENT_IN_PROGRESS(6)・STATUS_ASSESSMENT_PAUSED(8)・STATUS_ASSESSMENT_RESUMED(9) のみで、STATUS_BEFORE_PAY(7) は含まれず（同ファイル:53-54 で 7 は @deprecated 扱い）。7 を含める別定数・別呼び出しはこの一覧APIに見当たらない。",
+      "designEvidence": {"label": "設計要求（抽出対象ステータス）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1188, "end": 1188, "contains": ["商品到着（5）", "振込前（7）", "査定再開（9）"]},
+      "implEvidence": [
+        {"label": "抽出ステータス定数（7欠落）", "note": "5,6,8,9 のみ", "path": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php", "start": 84, "end": 89, "contains": ["ASSESSMENT_UNCOMPLETED_STATUSES", "STATUS_ASSESSMENT_PAUSED", "STATUS_ASSESSMENT_RESUMED"]},
+        {"label": "7は廃止扱い", "note": "STATUS_BEFORE_PAY=7 は @deprecated", "path": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php", "start": 53, "end": 54, "contains": ["STATUS_BEFORE_PAY = 7"]},
+        {"label": "一覧取得での使用箇所", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php", "start": 79, "end": 79, "contains": ["ASSESSMENT_UNCOMPLETED_STATUSES"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-4dcf720d3010",
+      "functionId": "a06-02_0506_sheet-4_sheet",
+      "featureNo": "A06-02",
+      "title": "A06-02 店頭買取情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "high",
+      "summary": "『店舗が紐づかない場合は絞り込まず一律に返す』分岐が無く、実装は常に会員の baseInfo で絞り込み、店舗が空なら空配列を返す。",
+      "reason": "設計は『認証した管理者会員に店舗が紐づく場合はその店舗の受注に絞り込み、紐づかない場合は店舗による絞り込みを行わず査定対象の受注を一律に返す』とする。実装は Controller.php:77 で常に $shopId = $Member->getBaseInfo()->getId() を取得し、Repository.getOtcBuyOrdersByShopIdAndStatus は先頭（:1001）で empty($shopId) なら [] を返し、:1047 で常に baseInfo.id = :shopId を付与する。すなわち店舗なし時に無絞り込みで全件返す分岐は存在しない（空配列になる）。無絞り込み経路や shopId=null 分岐を検索したが見つからない。",
+      "designEvidence": {"label": "設計要求（店舗紐づきなし→無絞り込み）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1180, "end": 1180, "contains": ["紐づかない場合は店舗による絞り込みを行わず", "一律に返す"]},
+      "implEvidence": [
+        {"label": "常に店舗IDを取得", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php", "start": 77, "end": 77, "contains": ["$Member->getBaseInfo()->getId()"]},
+        {"label": "店舗空なら空配列＋常に絞り込み", "note": "無絞り込み分岐なし", "path": "ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php", "start": 1001, "end": 1050, "contains": ["empty($shopId)", "baseInfo.id = :shopId", "setParameter('shopId', $shopId)"]}
+      ],
+      "absenceCommands": [
+        "rg -n \"getBaseInfo|shopId\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php",
+        "rg -n \"empty\\(\\$shopId\\)|shopId\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-d2bc0805a817",
+      "functionId": "a06-02_0506_sheet-4_sheet",
+      "featureNo": "A06-02",
+      "title": "A06-02 店頭買取情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "applyDate と customerInfo.birth は設計が ISO8601 だが、実装は applyDate='Y/m/d H:i:s'、birth='Y-m-d' で整形しており ISO8601 ではない。",
+      "reason": "設計レスポンス定義では applyDate と customerInfo.birth を『ISO8601形式の日時文字列』とする。実装は Controller.php:97 で applyDate を format('Y/m/d H:i:s')、:113 で birth を format('Y-m-d') に整形している。format('c')/DATE_ATOM 等 ISO8601 整形はこの整形箇所に無い。",
+      "designEvidence": {"label": "設計要求（applyDate/birth は ISO8601）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1196, "end": 1196, "contains": ["ISO8601形式の日時文字列", "applyDate", "customerInfo.birth"]},
+      "implEvidence": [
+        {"label": "applyDate 整形", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php", "start": 97, "end": 97, "contains": ["'applyDate'", "format('Y/m/d H:i:s')"]},
+        {"label": "birth 整形", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php", "start": 113, "end": 113, "contains": ["'birth'", "format('Y-m-d')"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-92f6fa682dfe",
+      "functionId": "a06-02_0506_sheet-4_sheet",
+      "featureNo": "A06-02",
+      "title": "A06-02 店頭買取情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "identificationId は未登録時に設計では 0 を返すべきだが、実装は null を返す。",
+      "reason": "設計レスポンス定義は identificationId を『本人確認のID。未登録の場合は0』とする。実装は Repository.php:1041 で本人確認を leftJoin し identification.id as identificationId を取得、Controller.php:106 で 'identificationId' => $otcBuyOrder['identificationId'] ?? null としている。未登録（leftJoin 未一致）時は null となり、0 への補正（?? 0 / COALESCE）はこの整形箇所に無い。",
+      "designEvidence": {"label": "設計要求（未登録時 identificationId=0）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1196, "end": 1196, "contains": ["identificationId", "未登録の場合は0"]},
+      "implEvidence": [
+        {"label": "本人確認 leftJoin と ID取得", "note": "未一致なら null", "path": "ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php", "start": 1011, "end": 1041, "contains": ["leftJoin('otcBuyOrder.Identification', 'identification')", "identification.id as identificationId"]},
+        {"label": "未登録時 null 返却", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php", "start": 106, "end": 106, "contains": ["'identificationId' => $otcBuyOrder['identificationId'] ?? null"]}
+      ],
+      "absenceCommands": [
+        "rg -n \"identificationId\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-41ef44b084c2",
+      "functionId": "a06-02_0506_sheet-4_sheet",
+      "featureNo": "A06-02",
+      "title": "A06-02 店頭買取情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "認証失敗時、設計は HTTP 401 で本文なしとするが、実装は {code:401, errors:['認証エラー']} の JSON 本文を返す。",
+      "reason": "設計のレスポンス（失敗）定義は 401 を『認証拒否（本文を持たない）』とする。実装では Controller が認証失敗時に UnauthenticatedException('認証エラー') を投げ（:74）、App API では ExceptionListener が isAppApi 時に必ず (code, errors) を JSON で返す（:136-139）。401 の errors は固定文言 ['認証エラー'] に集約される（:98）。本文なしで返す経路は App API には無い。",
+      "designEvidence": {"label": "設計要求（401 本文なし）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1198, "end": 1198, "contains": ["認証拒否（本文を持たない）", "401"]},
+      "implEvidence": [
+        {"label": "認証失敗で例外送出", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php", "start": 74, "end": 74, "contains": ["UnauthenticatedException('認証エラー')"]},
+        {"label": "401 固定文言＋JSON本文返却", "note": "App API は常に code/errors を返す", "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php", "start": 98, "end": 139, "contains": ["Response::HTTP_UNAUTHORIZED => ['認証エラー']", "'code' => $statusCode", "'errors' => $errors"]}
+      ]
+    }
+  ]
+}

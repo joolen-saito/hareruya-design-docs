@@ -1,0 +1,4138 @@
+{
+  "functionId": "m04-23_0202_sheet-30_csv",
+  "featureNo": "M04-23",
+  "title": "M04-23 在庫分割CSV登録",
+  "domain": "m04",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+  "sourceBook": "0202_基本設計仕様書(在庫管理機能).html",
+  "sheetId": "sheet-30",
+  "sheetName": "在庫分割CSV登録",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "m04-23_0202_sheet-30_csv-conformance-7dd43a46825f",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12324,12345",
+      "designRefDetail": null,
+      "designExpectation": "権限制御はM11-03の「編集可能店舗処理」に応じて行い、店舗は必須選択とする。",
+      "designQuote": "権限制御はM11-03の「編集可能店舗処理」に応じて行い、店舗は必須選択とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:241,242,438,488",
+      "implementationActual": "分割CSV取込POSTではstore未指定時に既定BaseInfoを使用し、指定storeIdはbaseInfoRepository->find()するだけでログインメンバーの編集可能店舗かを検証していない。isEditableShop()はapproval-members JSONでのみ使用される。",
+      "difference": "設計は店舗必須かつM11-03の編集可能店舗制御を要求するが、取込ルートはPOST値のstoreをサーバー側で必須検証せず、編集不可店舗IDも排除しない。反証検索範囲: StockSplitJoinController, StockSplitCsvUploadType, StockJoinCsvUploadTypeのstore/isEditableShop/getEditableBaseInfos。",
+      "mismatchReason": "設計は店舗必須かつM11-03の編集可能店舗制御を要求するが、取込ルートはPOST値のstoreをサーバー側で必須検証せず、編集不可店舗IDも排除しない。反証検索範囲: StockSplitJoinController, StockSplitCsvUploadType, StockJoinCsvUploadTypeのstore/isEditableShop/getEditableBaseInfos。",
+      "comparisonRows": [
+        {
+          "item": "店舗必須",
+          "design": "店舗は単一選択セレクトボックスで必須。",
+          "implementation": "storeIdが0または未指定ならbaseInfoRepository->get()を使用する。",
+          "mismatch": "未指定をエラーにせず既定店舗で処理する。"
+        },
+        {
+          "item": "編集可能店舗制御",
+          "design": "M11-03の編集可能店舗処理に応じた権限制御。",
+          "implementation": "listSplitCsvImport内にMember::isEditableShop($BaseInfo)相当の検証がない。",
+          "mismatch": "UI選択肢だけで制限し、POST取込の外部契約として権限制御されていない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-23_0202_sheet-30_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:241,242,438,488",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「権限制御はM11-03の「編集可能店舗処理」に応じて行い、店舗は必須選択とする。」。実装は「分割CSV取込POSTではstore未指定時に既定BaseInfoを使用し、指定storeIdはbaseInfoRepository->find()するだけでログインメンバーの編集可能店舗かを検証していない。isEditableShop()はapproval-members JSONでのみ使用される。」。乖離理由は「設計は店舗必須かつM11-03の編集可能店舗制御を要求するが、取込ルートはPOST値のstoreをサーバー側で必須検証せず、編集不可店舗IDも排除しない。反証検索範囲: StockSplitJoinController, StockSplitCsvUploadType, StockJoinCsvUploadTypeのstore/isEditableShop/getEditableBaseInfos。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Form・入力項目",
+        "Repository・Entity・DB",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:241,242,438,488",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:241\n238:             return $this->redirectToRoute('admin_stock_split_join_list');\n239:         }\n240: \n241:         $storeId = isset($csvBag['store']) ? (int) $csvBag['store'] : 0;\n242:         $BaseInfo = $storeId > 0 ? $this->baseInfoRepository->find($storeId) : $this->baseInfoRepository->get();\n243:         if ($BaseInfo === null) {\n244:             $this->addError(trans('admin.common.csv_upload_error'), 'admin');",
+        "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:54\n51: /**\n52:  * 在庫分割結合（一覧・検索画面）\n53:  */\n54: class StockSplitJoinController extends AbstractController\n55: {\n56:     public function __construct(\n57:         private readonly StockSplitJoinIndexAction $indexAction,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m04-23_0202_sheet-30_csv-conformance-39d701be5c45",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12348",
+      "designRefDetail": null,
+      "designExpectation": "承認通知先（メンバー選択）は複数選択セレクトボックスで必須とし、承認担当者へメール通知する。",
+      "designQuote": "承認通知先（メンバー選択）は複数選択セレクトボックスで必須とし、承認担当者へメール通知する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:56,57,121; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:303,305,410,412",
+      "implementationActual": "フォーム型にはapproval_notification_required=true時だけNotBlank制約があるが、既定はfalse。CSV取込POSTはフォームをhandleRequest/isValidせず、承認通知先が空でも成功時メール送信をスキップして取込を完了する。",
+      "difference": "設計の必須項目が取込ルートのサーバー側契約として enforced されていない。反証検索範囲: approval_notification_required/approval_notification_target_required/approval_notification_target_members/sendApprovalNotificationMails。",
+      "mismatchReason": "設計の必須項目が取込ルートのサーバー側契約として enforced されていない。反証検索範囲: approval_notification_required/approval_notification_target_required/approval_notification_target_members/sendApprovalNotificationMails。",
+      "comparisonRows": [
+        {
+          "item": "必須チェック",
+          "design": "承認通知先（メンバー選択）は必須。",
+          "implementation": "空配列・未指定の場合sendApprovalNotificationMails()がreturnするだけ。",
+          "mismatch": "空の承認通知先をエラーにしない。"
+        },
+        {
+          "item": "フォーム検証",
+          "design": "CSV登録処理実行時の入力として必須。",
+          "implementation": "POST取込でStockSplitCsvUploadTypeのNotBlank制約を検証していない。",
+          "mismatch": "画面表示上の必須とサーバー処理が一致しない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-23_0202_sheet-30_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:56,57,121; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:303,305,410,412",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「承認通知先（メンバー選択）は複数選択セレクトボックスで必須とし、承認担当者へメール通知する。」。実装は「フォーム型にはapproval_notification_required=true時だけNotBlank制約があるが、既定はfalse。CSV取込POSTはフォームをhandleRequest/isValidせず、承認通知先が空でも成功時メール送信をスキップして取込を完了する。」。乖離理由は「設計の必須項目が取込ルートのサーバー側契約として enforced されていない。反証検索範囲: approval_notification_required/approval_notification_target_required/approval_notification_target_members/sendApprovalNotificationMails。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Form・入力項目",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:56,57,121",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:303,305,410,412",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:56\n53:         $editableBaseInfos = $options['editableBaseInfos'];\n54:         $allBaseInfos = $editableBaseInfos !== [] ? $editableBaseInfos : [$BaseInfo];\n55: \n56:         $approvalConstraints = $options['approval_notification_required']\n57:             ? [new NotBlank(['message' => 'admin.stock.split_join.form.approval_notification_target_required'])]\n58:             : [];\n59: ",
+        "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:303\n300:             $this->addSuccess($msg, 'admin');\n301:         }\n302: \n303:         // 承認通知先メールの送信（取り込み成功時のみ）\n304:         if ($handler->getFlashSuccesses() !== []) {\n305:             $this->sendApprovalNotificationMails($csvBag['approval_notification_target_members'] ?? []);\n306:         }",
+        "src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:33\n30:  * 新規登録時はCSV内容を画面に反映するのみ。DB登録はCSV入力後の別操作で行う。\n31:  * 承認通知先は任意（オプション approval_notification_required で必須化可能）。\n32:  */\n33: class StockSplitCsvUploadType extends AbstractType\n34: {\n35:     public const INVENTORY_CATEGORY_EC_CUBE = 1;\n36: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m04-23_0202_sheet-30_csv-conformance-f8b1edf61bda",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12347",
+      "designRefDetail": null,
+      "designExpectation": "承認通知先（所属選択）は、編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする。",
+      "designQuote": "承認通知先（所属選択）は、編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:78,82; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:466,477",
+      "implementationActual": "approval_departmentの選択肢はフォーム生成時の$allBaseInfos[0]から作成される。店舗変更時のreloadApprovalMembers()はメンバーoptionのみ差し替え、所属選択肢は差し替えない。",
+      "difference": "設計は選択店舗に紐づく所属を表示条件としているが、実装は初期店舗の所属に固定される経路がある。反証検索範囲: StockSplitCsvUploadType::getDepartmentChoices, stock_split_join_index.twig reloadApprovalMembers, stock_split_csv_modal_body.twig approval_department。",
+      "mismatchReason": "設計は選択店舗に紐づく所属を表示条件としているが、実装は初期店舗の所属に固定される経路がある。反証検索範囲: StockSplitCsvUploadType::getDepartmentChoices, stock_split_join_index.twig reloadApprovalMembers, stock_split_csv_modal_body.twig approval_department。",
+      "comparisonRows": [
+        {
+          "item": "所属選択肢の取得元",
+          "design": "編集している在庫を保持している店舗の所属マスターデータ。",
+          "implementation": "$allBaseInfos[0]をgetDepartmentChoices()へ渡す。",
+          "mismatch": "選択中の店舗ではなく初期店舗基準。"
+        },
+        {
+          "item": "店舗変更時の再取得",
+          "design": "店舗に応じた所属選択肢。",
+          "implementation": "fetch後に更新するのは承認通知先メンバーoptionのみ。",
+          "mismatch": "所属セレクトが店舗変更に追従しない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-23_0202_sheet-30_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:78,82; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:466,477",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「承認通知先（所属選択）は、編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする。」。実装は「approval_departmentの選択肢はフォーム生成時の$allBaseInfos[0]から作成される。店舗変更時のreloadApprovalMembers()はメンバーoptionのみ差し替え、所属選択肢は差し替えない。」。乖離理由は「設計は選択店舗に紐づく所属を表示条件としているが、実装は初期店舗の所属に固定される経路がある。反証検索範囲: StockSplitCsvUploadType::getDepartmentChoices, stock_split_join_index.twig reloadApprovalMembers, stock_split_csv_modal_body.twig approval_department。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Form・入力項目",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:78,82",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:466,477",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:78\n75:                 'choice_translation_domain' => 'messages',\n76:                 'constraints' => [new NotBlank(['message' => 'admin.stock.split_csv_modal.inventory_category_required'])],\n77:             ])\n78:             ->add('approval_department', ChoiceType::class, [\n79:                 'label' => 'admin.stock.split_join.form.approval_department',\n80:                 'required' => false,\n81:                 'mapped' => false,",
+        "src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:466\n463:             let modalSplitCsv = document.getElementById('modalSplitCsv');\n464:             let modalJoinCsv = document.getElementById('modalJoinCsv');\n465: \n466:             function reloadApprovalMembers(storeId) {\n467:                 if (!storeId) { return; }\n468:                 fetch(approvalMembersUrl + '?store_id=' + encodeURIComponent(storeId), {\n469:                     headers: { 'X-Requested-With': 'XMLHttpRequest' },",
+        "src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:33\n30:  * 新規登録時はCSV内容を画面に反映するのみ。DB登録はCSV入力後の別操作で行う。\n31:  * 承認通知先は任意（オプション approval_notification_required で必須化可能）。\n32:  */\n33: class StockSplitCsvUploadType extends AbstractType\n34: {\n35:     public const INVENTORY_CATEGORY_EC_CUBE = 1;\n36: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m04-23_0202_sheet-30_csv-conformance-40ac2e9f3025",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12326",
+      "designRefDetail": null,
+      "designExpectation": "アップロードされたファイルがcsv以外のファイルの場合は登録処理実行時エラーとする。",
+      "designQuote": "アップロードされたファイルがcsv以外のファイルの場合は登録処理実行時エラーとする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:233,235; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:172,173",
+      "implementationActual": "取込POSTはUploadedFile::isValid()だけを確認してCsvImporterへ渡す。CsvImporterは拡張子tsvならタブ区切りとして処理する分岐を持ち、csv拡張子・MIME必須チェックはない。",
+      "difference": "フォーム型にはMIME制約があるが、取込POSTでフォーム検証を行っていないため設計のcsv以外エラーがサーバー側で保証されない。反証検索範囲: getMimeType/getClientOriginalExtension/mimeTypes/text/csv/tsv/upload_error_file_type。",
+      "mismatchReason": "フォーム型にはMIME制約があるが、取込POSTでフォーム検証を行っていないため設計のcsv以外エラーがサーバー側で保証されない。反証検索範囲: getMimeType/getClientOriginalExtension/mimeTypes/text/csv/tsv/upload_error_file_type。",
+      "comparisonRows": [
+        {
+          "item": "ファイル種別チェック",
+          "design": "csv以外はエラー。",
+          "implementation": "UploadedFile::isValid()のみ確認。",
+          "mismatch": "アップロード成功かどうかだけでcsv種別を判定していない。"
+        },
+        {
+          "item": "TSV扱い",
+          "design": "CSVファイルをアップロード。",
+          "implementation": "拡張子tsvはタブ区切りで読み込む。",
+          "mismatch": "csv以外の形式を取込可能にしている。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-23_0202_sheet-30_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:233,235; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:172,173",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「アップロードされたファイルがcsv以外のファイルの場合は登録処理実行時エラーとする。」。実装は「取込POSTはUploadedFile::isValid()だけを確認してCsvImporterへ渡す。CsvImporterは拡張子tsvならタブ区切りとして処理する分岐を持ち、csv拡張子・MIME必須チェックはない。」。乖離理由は「フォーム型にはMIME制約があるが、取込POSTでフォーム検証を行っていないため設計のcsv以外エラーがサーバー側で保証されない。反証検索範囲: getMimeType/getClientOriginalExtension/mimeTypes/text/csv/tsv/upload_error_file_type。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Form・入力項目",
+        "Repository・Entity・DB",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:233,235",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:172,173",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:233\n230:             return $this->redirectToRoute('admin_stock_split_join_list');\n231:         }\n232: \n233:         $splitFiles = $request->files->get('admin_stock_split_csv_upload');\n234:         $file = \\is_array($splitFiles) ? ($splitFiles['import_file'] ?? null) : null;\n235:         if (!$file instanceof UploadedFile || !$file->isValid()) {\n236:             $this->addError(trans('admin.common.csv_upload_error'), 'admin');",
+        "src/Eccube/Service/Csv/Importer/CsvImporter.php:172\n169:         $filePath = $this->eccubeConfig['eccube_csv_temp_realdir'].'/'.$tempFileName;\n170:         $splFile = new \\SplFileObject($filePath);\n171: \n172:         $fileExtension = $file->getClientOriginalExtension();\n173:         $delimiter = ($fileExtension === 'tsv') ? \"\\t\" : $this->eccubeConfig['eccube_csv_import_delimiter'];\n174: \n175:         return new CsvImportService($splFile, $delimiter, $this->eccubeConfig['eccube_csv_import_enclosure']);",
+        "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:54\n51: /**\n52:  * 在庫分割結合（一覧・検索画面）\n53:  */\n54: class StockSplitJoinController extends AbstractController\n55: {\n56:     public function __construct(\n57:         private readonly StockSplitJoinIndexAction $indexAction,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m04-23_0202_sheet-30_csv-conformance-40f9a518da44",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12363,12365",
+      "designRefDetail": null,
+      "designExpectation": "登録CSVの分割数、分割在庫数は数値で、最大値は0~999999999とする。",
+      "designQuote": "登録CSVの分割数、分割在庫数は数値で、最大値は0~999999999とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php:148,149,162",
+      "implementationActual": "分割数はctype_digitかつ0超過、分割先在庫数はctype_digitかつ1以上のみを検証し、999999999以下の上限比較を行っていない。",
+      "difference": "設計の数値範囲上限がCSV行バリデーションに存在しない。反証検索範囲: StockSplitListCsvImportHandler, StockSplitRegisterActionで999999999/上限定数/上限比較を検索。",
+      "mismatchReason": "設計の数値範囲上限がCSV行バリデーションに存在しない。反証検索範囲: StockSplitListCsvImportHandler, StockSplitRegisterActionで999999999/上限定数/上限比較を検索。",
+      "comparisonRows": [
+        {
+          "item": "分割数",
+          "design": "0~999999999。",
+          "implementation": "!ctype_digitまたは0以下だけを不正扱い。",
+          "mismatch": "999999999超過を弾かない。"
+        },
+        {
+          "item": "分割先在庫数",
+          "design": "0~999999999。",
+          "implementation": "空、非数値、1未満だけを不正扱い。",
+          "mismatch": "999999999超過を弾かない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-23_0202_sheet-30_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php:148,149,162",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「登録CSVの分割数、分割在庫数は数値で、最大値は0~999999999とする。」。実装は「分割数はctype_digitかつ0超過、分割先在庫数はctype_digitかつ1以上のみを検証し、999999999以下の上限比較を行っていない。」。乖離理由は「設計の数値範囲上限がCSV行バリデーションに存在しない。反証検索範囲: StockSplitListCsvImportHandler, StockSplitRegisterActionで999999999/上限定数/上限比較を検索。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "入出力・列定義・副作用未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "Form・入力項目",
+        "Repository・Entity・DB",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php:148,149,162",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php:148\n145:         }\n146: \n147:         // 分割数: 空欄→グローバル引き継ぎ、同一→許可、異なる→エラー\n148:         if ($splitQtyRaw !== '') {\n149:             if (!ctype_digit($splitQtyRaw) || (int) $splitQtyRaw <= 0) {\n150:                 $rowErrors[] = \"{$lineNum}行目: 分割数が不正です。\";\n151:             } elseif ($this->globalSplitQty === '') {",
+        "src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php:43\n40:  * - {@see onReadRow}: 有効行をバッファに蓄積\n41:  * - {@see onAfterImport}: グループ化→分割登録→承認申請、コミットまたはロールバック\n42:  */\n43: class StockSplitListCsvImportHandler extends BaseCsvImportHandler\n44: {\n45:     public const MAX_ROWS = 2000;\n46: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m04-23_0202_sheet-30_csv-conformance-f80e9d5747ab",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12432",
+      "designRefDetail": null,
+      "designExpectation": "エラー発生時、モーダルの選択内容はリセットされ、一覧の検索条件・状態は維持される。",
+      "designQuote": "エラー発生時、モーダルの選択内容はリセットされ、一覧の検索条件・状態は維持される。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:111,127,130,230,238,290,311",
+      "implementationActual": "CSV取込エラー時も成功時もadmin_stock_split_join_listへresume指定なしでリダイレクトする。index()はresume=1のときだけセッション検索条件を復元し、通常GETではstockSplitJoinSearchPerformed=falseの空一覧を返す。",
+      "difference": "元画面でaddError表示する経路はあるが、リダイレクト後の一覧検索条件・状態維持が設計と一致しない。反証検索範囲: redirectToRoute(admin_stock_split_join_list), resume, SESSION_KEY_SEARCH, stockSplitJoinSearchPerformed。",
+      "mismatchReason": "元画面でaddError表示する経路はあるが、リダイレクト後の一覧検索条件・状態維持が設計と一致しない。反証検索範囲: redirectToRoute(admin_stock_split_join_list), resume, SESSION_KEY_SEARCH, stockSplitJoinSearchPerformed。",
+      "comparisonRows": [
+        {
+          "item": "エラー表示",
+          "design": "一覧画面上部のエラー表示エリアに表示。",
+          "implementation": "result/handlerエラーをaddErrorする。",
+          "mismatch": "この部分は実装あり。"
+        },
+        {
+          "item": "一覧状態維持",
+          "design": "検索条件・状態を維持して再描画。",
+          "implementation": "resumeなしの一覧GETへリダイレクトし、通常GETは空一覧扱い。",
+          "mismatch": "検索条件・一覧状態が復元されない。"
+        },
+        {
+          "item": "モーダルリセット",
+          "design": "モーダル選択内容はリセット。",
+          "implementation": "リダイレクトで新規フォームを作る。",
+          "mismatch": "この部分は実装あり。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-23_0202_sheet-30_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:111,127,130,230,238,290,311",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「エラー発生時、モーダルの選択内容はリセットされ、一覧の検索条件・状態は維持される。」。実装は「CSV取込エラー時も成功時もadmin_stock_split_join_listへresume指定なしでリダイレクトする。index()はresume=1のときだけセッション検索条件を復元し、通常GETではstockSplitJoinSearchPerformed=falseの空一覧を返す。」。乖離理由は「元画面でaddError表示する経路はあるが、リダイレクト後の一覧検索条件・状態維持が設計と一致しない。反証検索範囲: redirectToRoute(admin_stock_split_join_list), resume, SESSION_KEY_SEARCH, stockSplitJoinSearchPerformed。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Form・入力項目",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:111,127,130,230,238,290,311",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:111\n108:                 $session->set(StockSplitJoinIndexAction::SESSION_KEY_SEARCH, FormUtil::getViewData($searchForm));\n109:             }\n110:             $rawFormPayload = $request->request->all('admin_search_stock_split_join');\n111:         } elseif ($request->query->getBoolean('resume')) {\n112:             $viewData = $session->get(StockSplitJoinIndexAction::SESSION_KEY_SEARCH, []);\n113:             FormUtil::submitAndGetData($searchForm, $viewData);\n114:         } else {",
+        "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:54\n51: /**\n52:  * 在庫分割結合（一覧・検索画面）\n53:  */\n54: class StockSplitJoinController extends AbstractController\n55: {\n56:     public function __construct(\n57:         private readonly StockSplitJoinIndexAction $indexAction,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 120,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-0f9b43c88c",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割CSV登録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-c0e2550ffb",
+        "category": "処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "レイアウト図 在庫分割CSV登録モーダル",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-fba22107d4",
+        "category": "処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割CSV登録 / C7 / image 1",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-83334fe5e9",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割CSV登録画面概要",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-9cd249790c",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・在庫分割結合一覧画面から在庫分割CSV出力ボタンを押下し、このモーダル（在庫分割CSV登録モーダル）を表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-8dfd6f7cf8",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・選択した条件に対して、CSVの分割元商品コード、分割数、分割先商品コード、分割先在庫数をもとに在庫分割の登録および承認申請を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-81cb906204",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・登録処理完了後、ステータスは分割承認待ちとなり、分割対象の店舗の対象の商品の在庫が分割数分減る",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-d9cc895c8e",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "登録処理実行時のエラー",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-8a38e3bf19",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・アップロードされたファイルがcsv以外のファイルの場合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-c004583748",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・CSVファイルが下記のカラム以外の場合（フォーマット不一致エラー）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-dc6e0b05c5",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・分割元商品または分割先商品が存在するコードであることをチェック",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-e010b11ece",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・分割元商品コードが１つであることをチェック",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-739ad93618",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・分割元商品の在庫数が分割数以上であることをチェック",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-ce22dc84cc",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・１ファイルあたりに登録できる商品点数の上限を2,000件に設定 上限数は性能試験により確定",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-f5dbc244a0",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "エラー発生時の挙動",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-7f6a2fead6",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・モーダルを表示する元画面でエラーを扱う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-b51a18d7bd",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割CSV登録処理",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-cc85b0ad66",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・機能ID: M04-13の「新規登録」および「分割先登録」に応じた在庫分割登録処理が行われる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-9b67b50dc9",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割・結合登録 編集（分割）の \"識別ID1-3\" と同様に",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-aa46958d78",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割・結合登録 編集（分割）の \"識別ID1-4\" と同様に",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-34007b2d64",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "表示内容については下記条件を追加とする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-415127fd67",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-eb0711894e",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "ボタンを押下すると、アップロードするためのディレクトリフォームが開き、",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-50e8ca36f4",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割CSV登録処理を実行",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-1139c7dd51",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "ボタン押下時に下記のカラムが記入されているCSVファイルを出力する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-43fad2cc24",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "M04-23 在庫分割結合CSV登録 / M04-23（在庫分割結合CSV登録）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-6dcd84a129",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割結合CSV登録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-15b065f187",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-3cf4153a37",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "ec-cube-enterprise 実装（Controller/Importハンドラ/Form/Action）と既存テストを読み込み、必須ヘッダ・バリデーション・エラー行扱い・トランザクションを実装確認値で具体化。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-e4cba8f847",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1. 在庫分割結合CSV登録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-48eda9f5a1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割結合一覧画面（M04-12）のモーダルからCSVをアップロードし、在庫分割または在庫結合をファイル単位で一括登録する管理画面機能。分割は登録後に承認申請まで行い分割承認待ちへ、結合は登録後に欠品入力遷移を行い結合元登録へ進める。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-d3a10cb72e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。挙動・CSV列の業務要件は基本設計仕様書を正とし、URLエンドポイント・必須ヘッダ・バリデーション・処理順序はリニューアル先 ec-cube-enterprise 実装を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-d140b2864b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割CSV登録／結合CSV登録の入口（エンドポイント）とCSV雛形ダウンロード",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-4343365f6b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "CSV必須ヘッダ・列数・行バリデーション、エラー行/不正行の扱い、登録上限",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-b8a646fdf6",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "登録後のステータス遷移・承認通知メール",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-ab41f08435",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割・結合の登録/承認ロジックそのもの（M04-13。各Actionの内部仕様）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-bc7f6e78a1",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "一覧・検索（M04-12）、CSV出力（M04-14/M04-15）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-1edcdb88c6",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割CSVを取り込み、登録＋承認申請。完了後に一覧へリダイレクト（PRGパターン）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-1fab01a78f",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "結合CSVを取り込み、登録＋欠品入力遷移。完了後に一覧へリダイレクト。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-23c4707a3f",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割CSV登録モーダル用に店舗の承認権限メンバーをJSONで返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-7e81a7a75f",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "店舗 store （必須セレクト）／在庫区分 inventory_category （必須ラジオ：EC-CUBE在庫=1／スマレジ在庫=2）／承認通知先所属 approval_department （任意・unmapped）／承認通知先メンバー approval_notification_target_members （複数。 approval_notification_required=true 時は必須）／アップロードファイル import_file （必須。MIME text/csv ・ text/plain ・ application/csv ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-dd0feff183",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "店舗 store ／在庫区分 inventory_category （EC-CUBE在庫=1／スマレジ在庫=2）／アップロードファイル import_file （必須）。承認通知先メンバー項目は持たない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-e614023332",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "CSV必須ヘッダ（雛形・取込）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-bc5ee84ee0",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "必須ヘッダ（実装値・順序）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-d058e0272d",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "CSRFトークン検証（分割 admin_stock_split_csv_upload ／結合 admin_stock_join_csv_upload ）。不正は admin.common.csrf_invalid を表示し一覧へリダイレクト。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-a1a6ba17d7",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "アップロードファイルの存在・妥当性（ UploadedFile::isValid ）。不正は admin.common.csv_upload_error を表示しリダイレクト。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-79d8ea14f9",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "店舗の解決（ store が正なら BaseInfo を find 、未指定は既定 BaseInfo を取得）。解決不可は admin.common.csv_upload_error 。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-0bbd7912ee",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫区分の検証。分割は inventory_category ∈ {1,2} のみ許可。結合は inventory_category ≥ 1 を要求（CSV行内の 結合元在庫区分 から結合元ロケーションを別途解決）。不正は admin.common.csv_upload_error 。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-5b11783e48",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "ログインメンバーの確認。未ログインは admin.stock.split.login_required 。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-a2ac1af29b",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "ハンドラ＋ CsvImporter を構築して import() を実行。例外時は log_error ＋ admin.common.csv_import_error を表示しリダイレクト。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-39feba4a0d",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "取込結果のエラー（行エラー・業務エラー）を addError 、成功メッセージを addSuccess で表示。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-76d71953cf",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "取込成功時のみ、選択された承認通知先メンバーに承認アラートメール（ MailService::sendStockApprovalAlertMail ）を送信。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-576b501ded",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "完了イベント（分割 ADMIN_STOCK_SPLIT_JOIN_LIST_SPLIT_CSV_IMPORT_COMPLETE ／結合 ADMIN_STOCK_SPLIT_JOIN_LIST_JOIN_CSV_IMPORT_COMPLETE ）を発火し、一覧へリダイレクト。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-58ecd4856b",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "StockSplitListCsvImportHandler / StockJoinListCsvImportHandler が CsvImporter のライフサイクルで動作する。**ファイル全体を1トランザクションで処理し、1件でもエラーがあれば全件ロールバックする。**",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-f9fdd33c43",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "行ごとに検証。登録上限 MAX_ROWS=2000 を超えたら以降を中断（ breakAll ）。列数不一致（分割4列／結合5列でない）はその行をスキップしエラー。必須ヘッダ欠落は中断しエラー。各フィールドの空・数値・正数チェック（分割：分割数>0、分割先在庫数≥1。結合：結合数量>0、結合元数量≥1）。不正行は skipRow してエラー記録。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-9fb727e8b7",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "onAfterImport（業務登録）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-161d3c50dd",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "エラー有り・空・未成功なら即ロールバック。正常時はグループ化して登録。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-b69c9369ca",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割の登録単位・業務検証（onAfterImport）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-e4695a3a60",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割元 ProductStock を「商品コード×店舗×在庫区分（ inventory_category ）」で解決。見つからなければエラー。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-53184ce963",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "各分割先 ProductStock を同条件で解決。見つからない／分割元と同一在庫はエラー。同一分割先は数量を合算。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-ed814c3514",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "StockSplitRegisterInput → StockSplitRegisterAction::handle() で分割登録（ errorMessage 返却時はエラー）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-c54948bb0e",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "全グループ成功時のみ commit し、 admin.stock.split_join.list_csv_split_import_done （成功件数）を成功表示。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-ca4ef42ac8",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "結合の登録単位・業務検証（onAfterImport）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-b0ec1a8d9a",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "結合先 ProductStock を「商品コード×店舗×在庫区分（ inventory_category ）」で解決。見つからなければエラー。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-8d9da37142",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "結合元 ProductStock を、CSV行の 結合元在庫区分 （ 1 / EC-CUBE / 自社 ほか→EC-CUBE、 2 / スマレジ ほか→スマレジに正規化）から解決。区分不正・不存在・結合先と同一はエラー。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-15834f1f61",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "StockJoinRegisterInput → StockJoinRegisterAction::handle() で結合登録（ステータス＝結合元登録）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-a9e932f033",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "続けて StockJoinMoveToShortageEntryAction::handle() で欠品入力へ遷移（ StockJoinMoveToShortageValidationException はエラー）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-c85436b0ba",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "全グループ成功時のみ commit し、 admin.stock.split_join.list_csv_join_import_done （成功件数）を成功表示。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-cfd57504dc",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "エラー行・不正行・エラー時の挙動",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-194a84d443",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "行単位の形式エラー（列数・空・数値不正）と業務エラー（コード未解決・在庫不足・同一在庫等）は、いずれも一覧画面上部のエラー表示エリアに addError で表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-4741d0f73c",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "**部分コミットはしない**: 形式エラー・業務エラーのどちらか1件でもあれば全件ロールバックし、登録は一切確定しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-03eef02b84",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "エラー発生時、モーダルの選択内容はリセットされ、一覧の検索条件・状態は維持される（基本設計の要件。リダイレクト後の一覧で再描画）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-a4281500fd",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "登録上限 2,000件 超過は中断しエラー（基本設計の上限。最終値は性能試験で確定）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-66277ba791",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "状態・データ更新",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-c1cbd12f37",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割結合 dtb_stock_split_join （タイプ・基準価格・原価単価・総原価・在庫数・分割結合数・ステータス等）と明細 dtb_stock_split_join_detail （基準価格・原価単価・在庫数・欠品点数等）を登録する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-95860bbc91",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割＝分割承認待ち（ SPLIT_APPROVAL_WAITING=3 ）、結合＝結合元登録（ JOIN_SOURCE_REGISTERED=2 ）へ。ステータス履歴は dtb_stock_split_join_status_history 。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-6e39c4fe2f",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "各Actionにより分割元/結合元の在庫が分割数/結合元数量分の確保・更新を受ける（M04-13の登録ロジック）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-fba6509abf",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "本取込ルートの CsvImporter は dtb_csv_import_history への記録処理を持たない（実装確認値。取込履歴を残す場合は要追加・実装要確認）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-9c3e30c1c1",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "取込成功時、承認通知先メンバーへ承認アラートメールを送信。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-532949b578",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "CSV列・モーダル項目・権限制御の業務定義は参照元Excel設計書（在庫分割CSV登録／在庫結合CSV登録シート）および M11-03（権限制御）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-0b035157d0",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "登録/承認ロジックはM04-13、一覧はM04-12を参照。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-7c573f5335",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "本機能は新規実装であり、現行（pf-eccube3）に対応する在庫分割・結合CSV登録機能は無い。挙動・画面・CSV列は基本設計仕様書（在庫管理機能 M04-23シート）を正とし、DBスキーマ・取込処理は ec-cube-enterprise の実装を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-9fe11f5cdd",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "dtb_stock_split_join （移行先で実在）。タイプ・基準価格・原価単価・総原価・在庫数・分割結合数などを保持。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-8e4bed3ed9",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "dtb_stock_split_join_detail （移行先で実在）。基準価格・原価単価・在庫数・欠品点数などを保持。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-ca51901306",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "mtb_stock_split_join_status （1新規登録/2結合元登録/3分割承認待ち/4結合承認待ち/5入庫済み/6却下）、履歴 dtb_stock_split_join_status_history 。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-b71aafe08e",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "現状の取込ルートでは dtb_csv_import_history への記録は確認できない（実装要確認）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-b088e89ed0",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "識別IDラベル書式・制限必須最大値初期値画面部品の説明",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-edf012548a",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-1店舗単一選択(セレクトボックス)○--在庫分割・結合登録 編集（分割）の \"識別ID1-3\" と同様に",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-0f95a20ee4",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-2在庫区分単一選択(ラジオボタン)○--在庫分割・結合登録 編集（分割）の \"識別ID1-4\" と同様に",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-7e13d06b07",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-5ファイルを選択ボタン○--ボタンを押下すると、アップロードするためのディレクトリフォームが開き、",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-e21aa54712",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-6登録ボタン---在庫分割CSV登録処理を実行",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-c58bcf52b5",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "2-1雛形をダウンロードボタン---ボタン押下時に下記のカラムが記入されているCSVファイルを出力する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-2dbc31f17e",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "識別ID項目名主キー書式・制限必須最大文字数入力例説明",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-b3d11acd99",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫結合CSV登録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-6ffbd112b6",
+        "category": "処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "レイアウト図 在庫結合CSV登録モーダル",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-f5417188a1",
+        "category": "処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫結合CSV登録 / C8 / image 1",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-2cf19b75cf",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫結合CSV登録画面概要",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-779a9bd015",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・在庫分割結合一覧画面から在庫結合CSV出力ボタンを押下し、このモーダル（在庫結合CSV登録モーダル）を表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-3c3ad8f470",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・選択した条件に対して、CSVの結合先商品コード、結合数、結合元商品コード、結合元在庫区分、結合元在庫数をもとに在庫結合の登録および承認申請を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-e34f7a39d4",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・登録処理完了後、ステータスは結合元登録となり、結合対象の店舗の対象の商品の在庫が結合元在庫数分減る",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-efe6e8bf48",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・結合先商品または結合元商品が存在するコードであることをチェック",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-bb8c142460",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・結合先商品コードが１つであることをチェック",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-dd03580555",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・結合元在庫区分が正しい値かをチェック",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-60d163d13f",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・結合元商品の在庫数が結合元在庫数以上であることをそれぞれチェック",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-30daa94baf",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・機能ID: M04-13の「新規登録」および「結合元登録」に応じた在庫結合登録処理が行われる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-fdb24a3967",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-1店舗単一選択(セレクトボックス)○--在庫分割・結合登録 編集（結合）の \"識別ID1-3\" と同様に",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-c8f4140e38",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-2在庫区分単一選択(ラジオボタン)○--在庫分割・結合登録 編集（結合）の \"識別ID1-4\" と同様に",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-7c2a3d07d0",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-3ファイルを選択ボタン○--ボタンを押下すると、アップロードするためのディレクトリフォームが開き、",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-23_0202_sheet-30_csv-req-5b06cf9f3a",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-4登録ボタン---在庫結合CSV登録処理を実行",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "StockSplitJoinController",
+        "StockSplitListCsvImportHandler",
+        "StockJoinListCsvImportHandler",
+        "StockSplitCsvUploadType",
+        "StockJoinCsvUploadType",
+        "StockSplitRegisterAction",
+        "StockSplitApplyApprovalAction",
+        "StockJoinRegisterAction",
+        "StockJoinMoveToShortageEntryAction",
+        "admin_stock_split_join_list_split_csv_import",
+        "admin_stock_split_join_list_join_csv_import",
+        "admin_stock_split_csv_template",
+        "admin_stock_join_csv_template",
+        "admin_stock_split_join_approval_members",
+        "admin_stock_split_csv_upload",
+        "admin_stock_join_csv_upload",
+        "admin_stock_",
+        "ADMIN_STOCK_SPLIT_JOIN_LIST_SPLIT_CSV_IMPORT_COMPLETE",
+        "ADMIN_STOCK_SPLIT_JOIN_LIST_JOIN_CSV_IMPORT_COMPLETE",
+        "ProductStock",
+        "StockSplitRegisterInput",
+        "StockSplitApplyApprovalInput",
+        "StockJoinRegisterInput",
+        "StockJoinMoveToShortageValidationException"
+      ],
+      "translationKeys": [
+        "admin.common.csrf_invalid",
+        "admin.common.csv_upload_error",
+        "admin.stock.split.login_required",
+        "admin.common.csv_import_error",
+        "admin.stock.split_join.list_csv_split_import_done",
+        "admin.stock.split_join.list_csv_join_import_done"
+      ],
+      "classNames": [
+        "StockSplitJoinController",
+        "StockSplitListCsvImportHandler",
+        "StockJoinListCsvImportHandler",
+        "CsvImporter",
+        "StockSplitCsvUploadType",
+        "StockJoinCsvUploadType",
+        "StockSplitRegisterAction",
+        "StockSplitApplyApprovalAction",
+        "StockJoinRegisterAction",
+        "StockJoinMoveToShortageEntryAction",
+        "MailService"
+      ],
+      "paths": [
+        "ec-cube-enterprise/m04-23_admin_stock_stock_split_join_csv_import.md",
+        "output/0202_",
+        "ec-cube-enterprise",
+        "Import",
+        "Form/Action",
+        "M04-15",
+        "product/stock/split-join/list-split-csv-import",
+        "product/stock/split-join/list-join-csv-import",
+        "product/stock/split-join/split-csv-template",
+        "product/stock/split-join/join-csv-template",
+        "product/stock/split-join/approval-members",
+        "csv",
+        "plain"
+      ],
+      "businessTerms": [
+        "M04",
+        "在庫分割CSV登録",
+        "在庫管理",
+        "在庫分割CSV登録モーダル",
+        "在庫分割CSV登録画面概要",
+        "在庫分割結合一覧画面から在庫分割CSV出力ボタン",
+        "CSVの分割元商品コード",
+        "分割先商品コード",
+        "分割先在庫数をもとに在庫分割の登録および承認申請",
+        "分割対象の店舗の対象の商品の在庫が分割数分減る",
+        "権限制御",
+        "xlsxの権限制御シート",
+        "に応じた権限制御が行われる",
+        "CSVファイルが下記のカラム以外の場合",
+        "分割元商品コード",
+        "分割先在庫数",
+        "分割元商品または分割先商品が存在するコードである",
+        "分割元商品コードが",
+        "分割元商品の在庫数が分割数以上であることをチェッ",
+        "ファイルあたりに登録できる商品点数の上限を2",
+        "在庫分割CSV登録処理",
+        "に応じた在庫分割登録処理が行われる",
+        "在庫分割",
+        "在庫区分"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "StockSplitJoinController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php",
+        "weight": 7
+      },
+      {
+        "term": "StockSplitJoinController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php",
+        "weight": 7
+      },
+      {
+        "term": "StockSplitCsvUploadType",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:117",
+        "snippet": "$splitCsvForm = $this->formFactory->createBuilder(StockSplitCsvUploadType::class, null, [",
+        "weight": 7
+      },
+      {
+        "term": "StockSplitCsvUploadType",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:117",
+        "snippet": "$splitCsvForm = $this->formFactory->createBuilder(StockSplitCsvUploadType::class, null, [",
+        "weight": 7
+      },
+      {
+        "term": "StockJoinCsvUploadType",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:122",
+        "snippet": "$joinCsvForm = $this->formFactory->createBuilder(StockJoinCsvUploadType::class, null, [",
+        "weight": 7
+      },
+      {
+        "term": "StockJoinCsvUploadType",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:122",
+        "snippet": "$joinCsvForm = $this->formFactory->createBuilder(StockJoinCsvUploadType::class, null, [",
+        "weight": 7
+      },
+      {
+        "term": "admin_stock_join_csv_template",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:172",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/split-join/join-csv-template', name: 'admin_stock_join_csv_template', methods: ['GET'])]",
+        "weight": 7
+      },
+      {
+        "term": "admin_stock_split_csv_template",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:180",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/split-join/split-csv-template', name: 'admin_stock_split_csv_template', methods: ['GET'])]",
+        "weight": 7
+      },
+      {
+        "term": "admin_stock_split_join_list_split_csv_import",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:222",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/split-join/list-split-csv-import', name: 'admin_stock_split_join_list_split_csv_import', methods: ['POST'])]",
+        "weight": 7
+      },
+      {
+        "term": "admin_stock_split_csv_upload",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:225",
+        "snippet": "$csvBag = $request->request->all('admin_stock_split_csv_upload');",
+        "weight": 7
+      },
+      {
+        "term": "admin_stock_split_csv_upload",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:227",
+        "snippet": "if (!$this->isCsrfTokenValid('admin_stock_split_csv_upload', $token)) {",
+        "weight": 7
+      },
+      {
+        "term": "StockJoinCsvUploadType",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:24",
+        "snippet": "use Eccube\\Form\\Type\\Admin\\StockJoinCsvUploadType;",
+        "weight": 7
+      },
+      {
+        "term": "StockJoinCsvUploadType",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:24",
+        "snippet": "use Eccube\\Form\\Type\\Admin\\StockJoinCsvUploadType;",
+        "weight": 7
+      },
+      {
+        "term": "StockSplitCsvUploadType",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:25",
+        "snippet": "use Eccube\\Form\\Type\\Admin\\StockSplitCsvUploadType;",
+        "weight": 7
+      },
+      {
+        "term": "StockSplitCsvUploadType",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:25",
+        "snippet": "use Eccube\\Form\\Type\\Admin\\StockSplitCsvUploadType;",
+        "weight": 7
+      },
+      {
+        "term": "StockSplitListCsvImportHandler",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:264",
+        "snippet": "$handler = new StockSplitListCsvImportHandler(",
+        "weight": 7
+      },
+      {
+        "term": "StockSplitListCsvImportHandler",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:264",
+        "snippet": "$handler = new StockSplitListCsvImportHandler(",
+        "weight": 7
+      },
+      {
+        "term": "ADMIN_STOCK_SPLIT_JOIN_LIST_SPLIT_CSV_IMPORT_COMPLETE",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:309",
+        "snippet": "$this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_STOCK_SPLIT_JOIN_LIST_SPLIT_CSV_IMPORT_COMPLETE);",
+        "weight": 7
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 13,
+    "implementationGapRequirementCount": 2,
+    "rows": [
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-7dd43a46825f",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12324,12345",
+        "designRequirement": "店舗は単一選択セレクトボックスで必須。",
+        "implementationActual": "storeIdが0または未指定ならbaseInfoRepository->get()を使用する。",
+        "mismatchReason": "未指定をエラーにせず既定店舗で処理する。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:241,242,438,488",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "店舗必須",
+            "design": "店舗は単一選択セレクトボックスで必須。",
+            "implementation": "storeIdが0または未指定ならbaseInfoRepository->get()を使用する。",
+            "mismatch": "未指定をエラーにせず既定店舗で処理する。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-7dd43a46825f",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12324,12345",
+        "designRequirement": "M11-03の編集可能店舗処理に応じた権限制御。",
+        "implementationActual": "listSplitCsvImport内にMember::isEditableShop($BaseInfo)相当の検証がない。",
+        "mismatchReason": "UI選択肢だけで制限し、POST取込の外部契約として権限制御されていない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:241,242,438,488",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "編集可能店舗制御",
+            "design": "M11-03の編集可能店舗処理に応じた権限制御。",
+            "implementation": "listSplitCsvImport内にMember::isEditableShop($BaseInfo)相当の検証がない。",
+            "mismatch": "UI選択肢だけで制限し、POST取込の外部契約として権限制御されていない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-39d701be5c45",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12348",
+        "designRequirement": "承認通知先（メンバー選択）は必須。",
+        "implementationActual": "空配列・未指定の場合sendApprovalNotificationMails()がreturnするだけ。",
+        "mismatchReason": "空の承認通知先をエラーにしない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:56,57,121",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:303,305,410,412",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "必須チェック",
+            "design": "承認通知先（メンバー選択）は必須。",
+            "implementation": "空配列・未指定の場合sendApprovalNotificationMails()がreturnするだけ。",
+            "mismatch": "空の承認通知先をエラーにしない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-39d701be5c45",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12348",
+        "designRequirement": "CSV登録処理実行時の入力として必須。",
+        "implementationActual": "POST取込でStockSplitCsvUploadTypeのNotBlank制約を検証していない。",
+        "mismatchReason": "画面表示上の必須とサーバー処理が一致しない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:56,57,121",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:303,305,410,412",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "フォーム検証",
+            "design": "CSV登録処理実行時の入力として必須。",
+            "implementation": "POST取込でStockSplitCsvUploadTypeのNotBlank制約を検証していない。",
+            "mismatch": "画面表示上の必須とサーバー処理が一致しない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-f8b1edf61bda",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12347",
+        "designRequirement": "編集している在庫を保持している店舗の所属マスターデータ。",
+        "implementationActual": "$allBaseInfos[0]をgetDepartmentChoices()へ渡す。",
+        "mismatchReason": "選択中の店舗ではなく初期店舗基準。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:78,82",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:466,477",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "所属選択肢の取得元",
+            "design": "編集している在庫を保持している店舗の所属マスターデータ。",
+            "implementation": "$allBaseInfos[0]をgetDepartmentChoices()へ渡す。",
+            "mismatch": "選択中の店舗ではなく初期店舗基準。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-f8b1edf61bda",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12347",
+        "designRequirement": "店舗に応じた所属選択肢。",
+        "implementationActual": "fetch後に更新するのは承認通知先メンバーoptionのみ。",
+        "mismatchReason": "所属セレクトが店舗変更に追従しない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:78,82",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:466,477",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "店舗変更時の再取得",
+            "design": "店舗に応じた所属選択肢。",
+            "implementation": "fetch後に更新するのは承認通知先メンバーoptionのみ。",
+            "mismatch": "所属セレクトが店舗変更に追従しない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-40ac2e9f3025",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12326",
+        "designRequirement": "csv以外はエラー。",
+        "implementationActual": "UploadedFile::isValid()のみ確認。",
+        "mismatchReason": "アップロード成功かどうかだけでcsv種別を判定していない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:233,235",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:172,173",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "ファイル種別チェック",
+            "design": "csv以外はエラー。",
+            "implementation": "UploadedFile::isValid()のみ確認。",
+            "mismatch": "アップロード成功かどうかだけでcsv種別を判定していない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-40ac2e9f3025",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12326",
+        "designRequirement": "CSVファイルをアップロード。",
+        "implementationActual": "拡張子tsvはタブ区切りで読み込む。",
+        "mismatchReason": "csv以外の形式を取込可能にしている。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:233,235",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php:172,173",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "TSV扱い",
+            "design": "CSVファイルをアップロード。",
+            "implementation": "拡張子tsvはタブ区切りで読み込む。",
+            "mismatch": "csv以外の形式を取込可能にしている。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-40f9a518da44",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "入出力・列定義・副作用未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12363,12365",
+        "designRequirement": "0~999999999。",
+        "implementationActual": "!ctype_digitまたは0以下だけを不正扱い。",
+        "mismatchReason": "999999999超過を弾かない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php:148,149,162",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "分割数",
+            "design": "0~999999999。",
+            "implementation": "!ctype_digitまたは0以下だけを不正扱い。",
+            "mismatch": "999999999超過を弾かない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-40f9a518da44",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "入出力・列定義・副作用未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12363,12365",
+        "designRequirement": "0~999999999。",
+        "implementationActual": "空、非数値、1未満だけを不正扱い。",
+        "mismatchReason": "999999999超過を弾かない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php:148,149,162",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "分割先在庫数",
+            "design": "0~999999999。",
+            "implementation": "空、非数値、1未満だけを不正扱い。",
+            "mismatch": "999999999超過を弾かない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-f80e9d5747ab",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12432",
+        "designRequirement": "一覧画面上部のエラー表示エリアに表示。",
+        "implementationActual": "result/handlerエラーをaddErrorする。",
+        "mismatchReason": "この部分は実装あり。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:111,127,130,230,238,290,311",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "エラー表示",
+            "design": "一覧画面上部のエラー表示エリアに表示。",
+            "implementation": "result/handlerエラーをaddErrorする。",
+            "mismatch": "この部分は実装あり。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-f80e9d5747ab",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12432",
+        "designRequirement": "検索条件・状態を維持して再描画。",
+        "implementationActual": "resumeなしの一覧GETへリダイレクトし、通常GETは空一覧扱い。",
+        "mismatchReason": "検索条件・一覧状態が復元されない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:111,127,130,230,238,290,311",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "一覧状態維持",
+            "design": "検索条件・状態を維持して再描画。",
+            "implementation": "resumeなしの一覧GETへリダイレクトし、通常GETは空一覧扱い。",
+            "mismatch": "検索条件・一覧状態が復元されない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-23_0202_sheet-30_csv-conformance-f80e9d5747ab",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30:12432",
+        "designRequirement": "モーダル選択内容はリセット。",
+        "implementationActual": "リダイレクトで新規フォームを作る。",
+        "mismatchReason": "この部分は実装あり。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:111,127,130,230,238,290,311",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "モーダルリセット",
+            "design": "モーダル選択内容はリセット。",
+            "implementation": "リダイレクトで新規フォームを作る。",
+            "mismatch": "この部分は実装あり。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 109,
+    "verdictedCount": 109,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 109,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-0f9b43c88c",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割CSV登録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-c0e2550ffb",
+        "category": "処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "レイアウト図 在庫分割CSV登録モーダル",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-fba22107d4",
+        "category": "処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割CSV登録 / C7 / image 1",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-83334fe5e9",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割CSV登録画面概要",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-9cd249790c",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・在庫分割結合一覧画面から在庫分割CSV出力ボタンを押下し、このモーダル（在庫分割CSV登録モーダル）を表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-8dfd6f7cf8",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・選択した条件に対して、CSVの分割元商品コード、分割数、分割先商品コード、分割先在庫数をもとに在庫分割の登録および承認申請を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-81cb906204",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・登録処理完了後、ステータスは分割承認待ちとなり、分割対象の店舗の対象の商品の在庫が分割数分減る",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-d9cc895c8e",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "登録処理実行時のエラー",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-8a38e3bf19",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・アップロードされたファイルがcsv以外のファイルの場合",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-c004583748",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・CSVファイルが下記のカラム以外の場合（フォーマット不一致エラー）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-dc6e0b05c5",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・分割元商品または分割先商品が存在するコードであることをチェック",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-e010b11ece",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・分割元商品コードが１つであることをチェック",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-739ad93618",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・分割元商品の在庫数が分割数以上であることをチェック",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-ce22dc84cc",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・１ファイルあたりに登録できる商品点数の上限を2,000件に設定 上限数は性能試験により確定",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-f5dbc244a0",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "エラー発生時の挙動",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-7f6a2fead6",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・モーダルを表示する元画面でエラーを扱う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-b51a18d7bd",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割CSV登録処理",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-cc85b0ad66",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・機能ID: M04-13の「新規登録」および「分割先登録」に応じた在庫分割登録処理が行われる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-9b67b50dc9",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割・結合登録 編集（分割）の \"識別ID1-3\" と同様に",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-aa46958d78",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割・結合登録 編集（分割）の \"識別ID1-4\" と同様に",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-34007b2d64",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "表示内容については下記条件を追加とする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-415127fd67",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-eb0711894e",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "ボタンを押下すると、アップロードするためのディレクトリフォームが開き、",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-50e8ca36f4",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割CSV登録処理を実行",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-1139c7dd51",
+        "category": "機能仕様 処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "ボタン押下時に下記のカラムが記入されているCSVファイルを出力する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-43fad2cc24",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "M04-23 在庫分割結合CSV登録 / M04-23（在庫分割結合CSV登録）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-6dcd84a129",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割結合CSV登録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-15b065f187",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-3cf4153a37",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "ec-cube-enterprise 実装（Controller/Importハンドラ/Form/Action）と既存テストを読み込み、必須ヘッダ・バリデーション・エラー行扱い・トランザクションを実装確認値で具体化。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-e4cba8f847",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1. 在庫分割結合CSV登録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-48eda9f5a1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割結合一覧画面（M04-12）のモーダルからCSVをアップロードし、在庫分割または在庫結合をファイル単位で一括登録する管理画面機能。分割は登録後に承認申請まで行い分割承認待ちへ、結合は登録後に欠品入力遷移を行い結合元登録へ進める。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-d3a10cb72e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "本機能のカスタマイズ区分は新規実装であり、対応する現行（pf-eccube3）実装は無い。挙動・CSV列の業務要件は基本設計仕様書を正とし、URLエンドポイント・必須ヘッダ・バリデーション・処理順序はリニューアル先 ec-cube-enterprise 実装を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-d140b2864b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割CSV登録／結合CSV登録の入口（エンドポイント）とCSV雛形ダウンロード",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-4343365f6b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "CSV必須ヘッダ・列数・行バリデーション、エラー行/不正行の扱い、登録上限",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-b8a646fdf6",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "登録後のステータス遷移・承認通知メール",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-ab41f08435",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割・結合の登録/承認ロジックそのもの（M04-13。各Actionの内部仕様）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-bc7f6e78a1",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "一覧・検索（M04-12）、CSV出力（M04-14/M04-15）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-1edcdb88c6",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割CSVを取り込み、登録＋承認申請。完了後に一覧へリダイレクト（PRGパターン）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-1fab01a78f",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "結合CSVを取り込み、登録＋欠品入力遷移。完了後に一覧へリダイレクト。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-23c4707a3f",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割CSV登録モーダル用に店舗の承認権限メンバーをJSONで返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-7e81a7a75f",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "店舗 store （必須セレクト）／在庫区分 inventory_category （必須ラジオ：EC-CUBE在庫=1／スマレジ在庫=2）／承認通知先所属 approval_department （任意・unmapped）／承認通知先メンバー approval_notification_target_members （複数。 approval_notification_required=true 時は必須）／アップロードファイル import_file （必須。MIME text/csv ・ text/plain ・ application/csv ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-dd0feff183",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "店舗 store ／在庫区分 inventory_category （EC-CUBE在庫=1／スマレジ在庫=2）／アップロードファイル import_file （必須）。承認通知先メンバー項目は持たない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-e614023332",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "CSV必須ヘッダ（雛形・取込）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-bc5ee84ee0",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "必須ヘッダ（実装値・順序）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-d058e0272d",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "CSRFトークン検証（分割 admin_stock_split_csv_upload ／結合 admin_stock_join_csv_upload ）。不正は admin.common.csrf_invalid を表示し一覧へリダイレクト。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-a1a6ba17d7",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "アップロードファイルの存在・妥当性（ UploadedFile::isValid ）。不正は admin.common.csv_upload_error を表示しリダイレクト。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-79d8ea14f9",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "店舗の解決（ store が正なら BaseInfo を find 、未指定は既定 BaseInfo を取得）。解決不可は admin.common.csv_upload_error 。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-0bbd7912ee",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫区分の検証。分割は inventory_category ∈ {1,2} のみ許可。結合は inventory_category ≥ 1 を要求（CSV行内の 結合元在庫区分 から結合元ロケーションを別途解決）。不正は admin.common.csv_upload_error 。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-5b11783e48",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "ログインメンバーの確認。未ログインは admin.stock.split.login_required 。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-a2ac1af29b",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "ハンドラ＋ CsvImporter を構築して import() を実行。例外時は log_error ＋ admin.common.csv_import_error を表示しリダイレクト。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-39feba4a0d",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "取込結果のエラー（行エラー・業務エラー）を addError 、成功メッセージを addSuccess で表示。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-76d71953cf",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "取込成功時のみ、選択された承認通知先メンバーに承認アラートメール（ MailService::sendStockApprovalAlertMail ）を送信。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-576b501ded",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "完了イベント（分割 ADMIN_STOCK_SPLIT_JOIN_LIST_SPLIT_CSV_IMPORT_COMPLETE ／結合 ADMIN_STOCK_SPLIT_JOIN_LIST_JOIN_CSV_IMPORT_COMPLETE ）を発火し、一覧へリダイレクト。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-58ecd4856b",
+        "category": "取込のトランザクション（ファイル全体1トランザクション・全件ロールバック）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "StockSplitListCsvImportHandler / StockJoinListCsvImportHandler が CsvImporter のライフサイクルで動作する。**ファイル全体を1トランザクションで処理し、1件でもエラーがあれば全件ロールバックする。**",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-f9fdd33c43",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "行ごとに検証。登録上限 MAX_ROWS=2000 を超えたら以降を中断（ breakAll ）。列数不一致（分割4列／結合5列でない）はその行をスキップしエラー。必須ヘッダ欠落は中断しエラー。各フィールドの空・数値・正数チェック（分割：分割数>0、分割先在庫数≥1。結合：結合数量>0、結合元数量≥1）。不正行は skipRow してエラー記録。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-9fb727e8b7",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "onAfterImport（業務登録）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-161d3c50dd",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "エラー有り・空・未成功なら即ロールバック。正常時はグループ化して登録。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-b69c9369ca",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割の登録単位・業務検証（onAfterImport）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-e4695a3a60",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割元 ProductStock を「商品コード×店舗×在庫区分（ inventory_category ）」で解決。見つからなければエラー。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-53184ce963",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "各分割先 ProductStock を同条件で解決。見つからない／分割元と同一在庫はエラー。同一分割先は数量を合算。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-ed814c3514",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "StockSplitRegisterInput → StockSplitRegisterAction::handle() で分割登録（ errorMessage 返却時はエラー）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-c54948bb0e",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "全グループ成功時のみ commit し、 admin.stock.split_join.list_csv_split_import_done （成功件数）を成功表示。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-ca4ef42ac8",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "結合の登録単位・業務検証（onAfterImport）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-b0ec1a8d9a",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "結合先 ProductStock を「商品コード×店舗×在庫区分（ inventory_category ）」で解決。見つからなければエラー。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-8d9da37142",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "結合元 ProductStock を、CSV行の 結合元在庫区分 （ 1 / EC-CUBE / 自社 ほか→EC-CUBE、 2 / スマレジ ほか→スマレジに正規化）から解決。区分不正・不存在・結合先と同一はエラー。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-15834f1f61",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "StockJoinRegisterInput → StockJoinRegisterAction::handle() で結合登録（ステータス＝結合元登録）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-a9e932f033",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "続けて StockJoinMoveToShortageEntryAction::handle() で欠品入力へ遷移（ StockJoinMoveToShortageValidationException はエラー）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-c85436b0ba",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "全グループ成功時のみ commit し、 admin.stock.split_join.list_csv_join_import_done （成功件数）を成功表示。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-cfd57504dc",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "エラー行・不正行・エラー時の挙動",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-194a84d443",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "行単位の形式エラー（列数・空・数値不正）と業務エラー（コード未解決・在庫不足・同一在庫等）は、いずれも一覧画面上部のエラー表示エリアに addError で表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-4741d0f73c",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "**部分コミットはしない**: 形式エラー・業務エラーのどちらか1件でもあれば全件ロールバックし、登録は一切確定しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-03eef02b84",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "エラー発生時、モーダルの選択内容はリセットされ、一覧の検索条件・状態は維持される（基本設計の要件。リダイレクト後の一覧で再描画）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-a4281500fd",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "登録上限 2,000件 超過は中断しエラー（基本設計の上限。最終値は性能試験で確定）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-66277ba791",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "状態・データ更新",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-c1cbd12f37",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫分割結合 dtb_stock_split_join （タイプ・基準価格・原価単価・総原価・在庫数・分割結合数・ステータス等）と明細 dtb_stock_split_join_detail （基準価格・原価単価・在庫数・欠品点数等）を登録する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-95860bbc91",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "分割＝分割承認待ち（ SPLIT_APPROVAL_WAITING=3 ）、結合＝結合元登録（ JOIN_SOURCE_REGISTERED=2 ）へ。ステータス履歴は dtb_stock_split_join_status_history 。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-6e39c4fe2f",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "各Actionにより分割元/結合元の在庫が分割数/結合元数量分の確保・更新を受ける（M04-13の登録ロジック）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-fba6509abf",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "本取込ルートの CsvImporter は dtb_csv_import_history への記録処理を持たない（実装確認値。取込履歴を残す場合は要追加・実装要確認）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-9c3e30c1c1",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "取込成功時、承認通知先メンバーへ承認アラートメールを送信。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-532949b578",
+        "category": "トランザクション開始・状態初期化。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "CSV列・モーダル項目・権限制御の業務定義は参照元Excel設計書（在庫分割CSV登録／在庫結合CSV登録シート）および M11-03（権限制御）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-0b035157d0",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "登録/承認ロジックはM04-13、一覧はM04-12を参照。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-7c573f5335",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "本機能は新規実装であり、現行（pf-eccube3）に対応する在庫分割・結合CSV登録機能は無い。挙動・画面・CSV列は基本設計仕様書（在庫管理機能 M04-23シート）を正とし、DBスキーマ・取込処理は ec-cube-enterprise の実装を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-9fe11f5cdd",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "dtb_stock_split_join （移行先で実在）。タイプ・基準価格・原価単価・総原価・在庫数・分割結合数などを保持。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-8e4bed3ed9",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "dtb_stock_split_join_detail （移行先で実在）。基準価格・原価単価・在庫数・欠品点数などを保持。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-ca51901306",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "mtb_stock_split_join_status （1新規登録/2結合元登録/3分割承認待ち/4結合承認待ち/5入庫済み/6却下）、履歴 dtb_stock_split_join_status_history 。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-b71aafe08e",
+        "category": "必須ヘッダ・バリデーション・処理順序・トランザクションは ../ec-cube-enterprise の各取込ハンドラ・Action実装を正とする。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "現状の取込ルートでは dtb_csv_import_history への記録は確認できない（実装要確認）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-b088e89ed0",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "識別IDラベル書式・制限必須最大値初期値画面部品の説明",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-edf012548a",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-1店舗単一選択(セレクトボックス)○--在庫分割・結合登録 編集（分割）の \"識別ID1-3\" と同様に",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-0f95a20ee4",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-2在庫区分単一選択(ラジオボタン)○--在庫分割・結合登録 編集（分割）の \"識別ID1-4\" と同様に",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-7e13d06b07",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-5ファイルを選択ボタン○--ボタンを押下すると、アップロードするためのディレクトリフォームが開き、",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-e21aa54712",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-6登録ボタン---在庫分割CSV登録処理を実行",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-c58bcf52b5",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "2-1雛形をダウンロードボタン---ボタン押下時に下記のカラムが記入されているCSVファイルを出力する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-2dbc31f17e",
+        "category": "機能仕様処理概要 在庫分割CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "識別ID項目名主キー書式・制限必須最大文字数入力例説明",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-b3d11acd99",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫結合CSV登録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-6ffbd112b6",
+        "category": "処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "レイアウト図 在庫結合CSV登録モーダル",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-f5417188a1",
+        "category": "処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫結合CSV登録 / C8 / image 1",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-2cf19b75cf",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "在庫結合CSV登録画面概要",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-779a9bd015",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・在庫分割結合一覧画面から在庫結合CSV出力ボタンを押下し、このモーダル（在庫結合CSV登録モーダル）を表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-3c3ad8f470",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・選択した条件に対して、CSVの結合先商品コード、結合数、結合元商品コード、結合元在庫区分、結合元在庫数をもとに在庫結合の登録および承認申請を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-e34f7a39d4",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・登録処理完了後、ステータスは結合元登録となり、結合対象の店舗の対象の商品の在庫が結合元在庫数分減る",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-efe6e8bf48",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・結合先商品または結合元商品が存在するコードであることをチェック",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-bb8c142460",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・結合先商品コードが１つであることをチェック",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-dd03580555",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・結合元在庫区分が正しい値かをチェック",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-60d163d13f",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・結合元商品の在庫数が結合元在庫数以上であることをそれぞれチェック",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-30daa94baf",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "・機能ID: M04-13の「新規登録」および「結合元登録」に応じた在庫結合登録処理が行われる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-fdb24a3967",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-1店舗単一選択(セレクトボックス)○--在庫分割・結合登録 編集（結合）の \"識別ID1-3\" と同様に",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-c8f4140e38",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-2在庫区分単一選択(ラジオボタン)○--在庫分割・結合登録 編集（結合）の \"識別ID1-4\" と同様に",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-7c2a3d07d0",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-3ファイルを選択ボタン○--ボタンを押下すると、アップロードするためのディレクトリフォームが開き、",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-23_0202_sheet-30_csv-req-5b06cf9f3a",
+        "category": "機能仕様処理概要 在庫結合CSV登録モーダル",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-30",
+        "designRequirement": "1-4登録ボタン---在庫結合CSV登録処理を実行",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      }
+    ],
+    "materialGapRows": []
+  }
+}

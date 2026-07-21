@@ -1,0 +1,15 @@
+{
+  "chunkId": "b06-01_0406_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b06-01_0406_sheet-3_sheet.json#b06-01_0406_sheet-3_sheet-conformance-aa5d8221b7d7",
+      "refuted": false,
+      "reason": "3層で不一致を確認し反証不成立。(1)設計: HTML 883/987行の入力データ検索条件が『店頭買取情報.ステータス 12: 入庫待ち』と明記（引用正確）。(2)実装コード: MtbOtcBuyOrderStatus.php 41-42行コメント・59-60行定数で STATUS_HAS_UNREGISTERED_STOCK=12（未登録在庫あり）/STATUS_STOCKING_PENDING=13（入庫待ち）。BatchAutoStockAction.php:45 は findBy(['OtcBuyOrderStatus' => STATUS_STOCKING_PENDING])=13 を対象（引用正確）。(3)DBシード: Version20260115080738.php:36-37 で id=12 name='未登録在庫あり'、id=13 name='入庫待ち' と確定。別実装の可能性を検討: 状態12を入庫待ちとして扱う経路をrg（MtbOtcBuyOrderStatus全定数/SUMMARY_STATUSES/isXxx群）で確認したが存在しない。設計値12と実装値13は業務意味レベルで別物（12=未登録在庫あり）であり、設計通り12でフィルタすれば誤った集合を拾う。要求読み違いや設計側除外注記も無い。ID不一致は事実で指摘維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b06-01_0406_sheet-3_sheet.json#b06-01_0406_sheet-3_sheet-conformance-09bc5baac501",
+      "refuted": false,
+      "reason": "反証を試みたが逆に確定的な裏付けが得られた。設計 HTML 851/856行は『買取を行った店舗のECCUBE在庫に登録する』を要求（引用正確）。実装 OtcBuyOrderStockInbound.php 56-61行は getProductStocks() を走査し $Stock->getBaseInfo()->getId() === $BaseInfo->getId() のみで選択し stock_location_id を条件にせず、81行で save 時に既存行の getStockLocationId() を引き継ぐ（未存在時のみ STOCK_LOCATION_ECCUBE）。ProductStockEntityManager::save も渡された stockLocationId をそのまま setStockLocationId するだけで補正しない。反証観点『同一(product_class, base_info)に複数行は無い』を検証すべくシード dtb_product_stock_1.sql を確認したところ、product_class_id=1/base_info_id=3 に対し id=1(stock_location_id=1=ECCUBE)と id=2(stock_location_id=2=スマレジ)の2行が実在（全base_infoで1/2の2行構成）。すなわち BaseInfo一致のみの選択はコレクション順次第で非ECCUBE(スマレジ)行を拾い得る。専用メソッド getProductStockByEccube(ProductClass.php:618, getProductStockByLocation 646-661 で base_info_id+stock_location_id=ECCUBE 判定)が実装済みだが本処理は未使用。別実装・ネット買取側含めrgしたが ECCUBE 限定選択の代替経路は無い。指摘維持。"
+    }
+  ]
+}

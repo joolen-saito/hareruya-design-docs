@@ -1,0 +1,195 @@
+{
+  "id": "a06-13-identification-extensionless-route-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a06-13_0506_sheet-13_sheet.json",
+  "sourceFindingId": "a06-13_0506_sheet-13_sheet-conformance-d6fe27542ce6",
+  "classification": "API店頭買取管理",
+  "feature": "本人確認更新",
+  "issueCategory": "実装漏れ",
+  "issue": "本人確認更新APIの拡張子なしPUTルートが実装されていない",
+  "designBook": "0506_基本設計仕様書(API_店頭買取管理).xlsx",
+  "reproSteps": [
+    "JWT認証済みの状態で、存在する店頭買取受注IDと本人確認証明書IDを用意する",
+    "PUT http://localhost:8080/api/v1/admin/otcBuyOrder/{id}/identification に identification=<本人確認証明書ID> を指定して実行する",
+    "同じ入力で PUT http://localhost:8080/api/v1/admin/otcBuyOrder/{id}/identification.json を実行し、拡張子なしURLでも同一処理として成功するか確認する"
+  ],
+  "expected": [
+    "PUT /admin/otcBuyOrder/{id}/identification と PUT /admin/otcBuyOrder/{id}/identification.json を同一処理として提供する",
+    "拡張子なしURLでも、受注IDの店頭買取受注に本人確認証明書を設定し、更新担当者・更新日時とともに保存する",
+    "成功時は code: 200 のJSONを返す"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、本人確認更新APIの Route 属性が `/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/identification.json` の1本だけで、拡張子なしの `/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/identification` は定義されていない。`app/config/eccube/routes.yaml` は App Controller 配下を attribute route として読み込むだけで、対象APIの拡張子なし alias を追加する定義もない。`rg` で `otcBuyOrder/{id}/identification`、`api_admin_otc_buy_order_update_identification`、`identification.json` を Controller/config/html 配下に検索しても、この `.json` ルート以外の対象PUTルートは見つからない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise Controller は .json 付きRouteのみを定義する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php",
+          "start": 270,
+          "end": 309,
+          "language": "php",
+          "contains": [
+            "#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/identification.json'",
+            "name: 'api_admin_otc_buy_order_update_identification'",
+            "methods: ['PUT']",
+            "public function updateIdentification",
+            "return new JsonResponse(['code' => Response::HTTP_OK], Response::HTTP_OK)"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise routes.yaml は App Controller の attribute route 読み込みのみで個別aliasを持たない",
+          "path": "ec-cube-enterprise/app/config/eccube/routes.yaml",
+          "start": 1,
+          "end": 7,
+          "language": "yaml",
+          "contains": [
+            "app_controllers:",
+            "resource: '../../../src/Eccube/Controller/App'",
+            "type: attribute"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 更新Serviceは保存処理のみでRoute alias定義ではない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateIdentificationAction.php",
+          "start": 31,
+          "end": 39,
+          "language": "php",
+          "contains": [
+            "public function handle(UpdateIdentificationInput $input): void",
+            "setIdentification($input->Identification)",
+            "setMember($input->Member)",
+            "setUpdateDate(new \\DateTime())",
+            "$this->entityManager->flush()"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、`/admin/otcBuyOrder/{id}/identification.json` と `/admin/otcBuyOrder/{id}/identification` の両方を `OtcBuyOrderIdentificationController::putAction` に向けており、同一メソッドで本人確認証明書・更新担当者・更新日時を保存して `code: 200` を返す。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は .json と拡張子なしの両ルートを同一Controllerへ定義する",
+          "path": "pf-api/config/routes.yaml",
+          "start": 49,
+          "end": 56,
+          "language": "yaml",
+          "contains": [
+            "put_otcbuy_identification_json:",
+            "path: /admin/otcBuyOrder/{id}/identification.json",
+            "controller: App\\Controller\\Admin\\OtcBuyOrderIdentificationController::putAction",
+            "put_otcbuy_identification:",
+            "path: /admin/otcBuyOrder/{id}/identification"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api の putAction は本人確認証明書・担当者・更新日時を保存して code 200 を返す",
+          "path": "pf-api/src/Controller/Admin/OtcBuyOrderIdentificationController.php",
+          "start": 20,
+          "end": 59,
+          "language": "php",
+          "contains": [
+            "public function putAction(Request $request, int $id) : Response",
+            "$identificationId = $request->get('identification')",
+            "->setIdentification($putIdentification)",
+            "->setMember($this->member)",
+            "->setUpdateDate(new \\DateTime())",
+            "\"code\" => Response::HTTP_OK"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "利用者視点の入口で拡張子なしと .json 別名を同一処理として列挙している",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 3420,
+      "end": 3422,
+      "language": "html",
+      "contains": [
+        "PUT /admin/otcBuyOrder/{id}/identification",
+        "PUT /admin/otcBuyOrder/{id}/identification.json",
+        "上と同一処理",
+        "応答形式はJSON"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "移行時扱いでは pf-api 側を拡張子あり別名ありとし、移行先はAPI版数プレフィックス付き .json として整理している",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 3412,
+      "end": 3415,
+      "language": "html",
+      "contains": [
+        "挙動は現行を正とし",
+        "PUT /admin/otcBuyOrder/{id}/identification",
+        "拡張子あり別名あり",
+        "PUT /{api_v1_route}/admin/otcBuyOrder/{id}/identification.json"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は .json 付きRouteのみを定義する",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php",
+      "start": 270,
+      "end": 309,
+      "language": "php",
+      "contains": [
+        "#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/identification.json'",
+        "public function updateIdentification",
+        "methods: ['PUT']"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "routes.yaml 側にも対象APIの拡張子なしaliasはない",
+      "path": "ec-cube-enterprise/app/config/eccube/routes.yaml",
+      "start": 1,
+      "end": 7,
+      "language": "yaml",
+      "contains": [
+        "app_controllers:",
+        "resource: '../../../src/Eccube/Controller/App'",
+        "type: attribute"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は .json と拡張子なしを同じ putAction へ向ける",
+      "path": "pf-api/config/routes.yaml",
+      "start": 49,
+      "end": 56,
+      "language": "yaml",
+      "contains": [
+        "path: /admin/otcBuyOrder/{id}/identification.json",
+        "path: /admin/otcBuyOrder/{id}/identification",
+        "OtcBuyOrderIdentificationController::putAction"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api の putAction は設計どおり本人確認更新と code 200 応答を行う",
+      "path": "pf-api/src/Controller/Admin/OtcBuyOrderIdentificationController.php",
+      "start": 20,
+      "end": 59,
+      "language": "php",
+      "contains": [
+        "public function putAction",
+        "setIdentification",
+        "setMember",
+        "setUpdateDate",
+        "Response::HTTP_OK"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"PUT /admin/otcBuyOrder/\\{id\\}/identification|identification\\.json|上と同一処理|応答形式はJSON\" excel_to_html/output/0506_基本設計仕様書\\(API_店頭買取管理\\).html",
+      "rg -n \"put_otcbuy_identification|/admin/otcBuyOrder/\\{id\\}/identification|OtcBuyOrderIdentificationController::putAction\" ../pf-api/config/routes.yaml ../pf-api/src/Controller/Admin/OtcBuyOrderIdentificationController.php",
+      "rg -n \"otcBuyOrder/\\{id\\}/identification|api_admin_otc_buy_order_update_identification|identification\\.json|updateIdentification\" ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/app/config ../ec-cube-enterprise/html --glob '!var/**'",
+      "rg -n \"path: /admin/otcBuyOrder/\\{id\\}/identification|Route\\('.*otcBuyOrder/\\{id\\}/identification|otcBuyOrder/.*/identification\" ../ec-cube-enterprise/app/config ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/html --glob '!var/**'"
+    ],
+    "review": "gpt-5.5 high reviewer Newton VERDICT: VERIFIED. Design line 3421 lists PUT /admin/otcBuyOrder/{id}/identification and PUT /admin/otcBuyOrder/{id}/identification.json as the same process. The migration table line 3414 lists the destination endpoint as the version-prefixed .json path, but the embedded detailed design's user-facing入口 still requires both aliases. pf-api implements both paths to the same controller, while ec-cube-enterprise exposes only the .json Route attribute and routes.yaml only imports attribute routes. The HTTP 400/404 validation mismatch is a separate source finding fb7fac71e0ca and is not merged into this route-alias item. Reviewer concern addressed: issue wording is limited to extensionless PUT alias missing, not the whole API being absent."
+  }
+}

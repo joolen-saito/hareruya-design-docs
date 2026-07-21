@@ -1,0 +1,152 @@
+{
+  "chunkId": "m03-20_0204_sheet-35_csv--01",
+  "functionId": "m03-20_0204_sheet-35_csv",
+  "featureNo": "M03-20",
+  "title": "M03-20 部門登録CSVフォーマット",
+  "domain": "m03",
+  "designHtml": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-35",
+  "designSheet": {
+    "path": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html",
+    "anchor": "sheet-35",
+    "start": 7963,
+    "end": 8135,
+    "lines": 173
+  },
+  "partIndex": 1,
+  "partCount": 1,
+  "itemCount": 3,
+  "items": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/m03-20_0204_sheet-35_csv.json#m03-20_0204_sheet-35_csv-conformance-e2272c694da9",
+      "candidateType": "finding",
+      "queueStatus": "pending",
+      "functionId": "m03-20_0204_sheet-35_csv",
+      "featureNo": "M03-20",
+      "title": "M03-20 部門登録CSVフォーマット",
+      "domain": "m03",
+      "designHtml": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-35",
+      "designSheet": {
+        "path": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html",
+        "anchor": "sheet-35",
+        "start": 7963,
+        "end": 8135,
+        "lines": 173
+      },
+      "issueCategory": "実装漏れ",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "priorClaim": {
+        "designExpectation": "部門登録CSVのアップロードを実行し、部門登録および部門更新のタイミングで、スマレジへ部門情報の連携を実施するAPIを呼び出す（★カスタマイズ項目）。",
+        "implementationActual": "csvDepartment は mtb_section の new/find→set→persist/flush→commit→clearDoctrineCache のみ。登録・更新後にスマレジ部門連携API（SmaregiSectionEventService::dispatchUpsert / SmaregiSectionApiClient）を呼ばない（当該メソッド内 grep smaregi/スマレジ 該当0件）。",
+        "mismatchReason": "スマレジ部門同期の実装は存在するが SectionMasterImportHandler::onAfterImport の dispatchUpsert 経由で別ルート admin_product_section_master_import（部門更新CSV, SectionController::import）専用に配線され、監査対象の部門登録CSVフロー(csvDepartment)からは到達しない。設計の★本命要件が当該入口に未実装。"
+      },
+      "disputedExclusion": false,
+      "sourceFindingId": "m03-20_0204_sheet-35_csv-conformance-e2272c694da9",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-35",
+      "designQuote": "部門登録CSVのアップロードを実行し、部門登録および部門更新のタイミングで、スマレジへ部門情報の連携を実施するAPIを呼び出す（★カスタマイズ項目）。",
+      "implRef": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:1077-1197 (csvDepartment / route admin_product_department_csv_import)",
+      "implementationRefs": [
+        "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:1077-1197",
+        "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php"
+      ],
+      "comparisonRows": [
+        {
+          "item": "スマレジ部門連携API呼出",
+          "design": "登録/更新時に dispatchUpsert を呼ぶ",
+          "implementation": "csvDepartment 内で呼出なし（別ルート専用に配線）",
+          "mismatch": "監査対象フローでスマレジ連携が発火しない"
+        }
+      ],
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "searchTerms": []
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/m03-20_0204_sheet-35_csv.json#m03-20_0204_sheet-35_csv-conformance-b64ebf457c9c",
+      "candidateType": "finding",
+      "queueStatus": "pending",
+      "functionId": "m03-20_0204_sheet-35_csv",
+      "featureNo": "M03-20",
+      "title": "M03-20 部門登録CSVフォーマット",
+      "domain": "m03",
+      "designHtml": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-35",
+      "designSheet": {
+        "path": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html",
+        "anchor": "sheet-35",
+        "start": 7963,
+        "end": 8135,
+        "lines": 173
+      },
+      "issueCategory": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "priorClaim": {
+        "designExpectation": "免税区分: 数値(整数)、必須、最大値2、値は 0:対象外 / 1:一般品 / 2:消耗品 のいずれか。",
+        "implementationActual": "StringUtil::isBlank の空チェックのみを行い trim 文字列を setTaxFreeDivision に渡す。数値検証・0/1/2 の値域検証が無い。",
+        "mismatchReason": "設計は数値かつ 0/1/2(最大値2) に限定する要求だが csvDepartment に数値/値域検証が無く、3以上や範囲外値が保存され得る。設計準拠の NumericValidator+ChoiceValidator('0','1','2')+IntConverter は別ルート SectionMasterImportHandler.php:56-59 にのみ存在。"
+      },
+      "disputedExclusion": false,
+      "sourceFindingId": "m03-20_0204_sheet-35_csv-conformance-b64ebf457c9c",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-35",
+      "designQuote": "免税区分: 数値(整数)、必須、最大値2、値は 0:対象外 / 1:一般品 / 2:消耗品 のいずれか。",
+      "implRef": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:1167-1173",
+      "implementationRefs": [
+        "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:1167-1173",
+        "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php"
+      ],
+      "comparisonRows": [
+        {
+          "item": "免税区分の値検証",
+          "design": "数値(整数)かつ 0/1/2 のいずれか",
+          "implementation": "空チェックのみ、値域検証なし",
+          "mismatch": "3以上/範囲外値がエラーにならず保存され得る"
+        }
+      ],
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "searchTerms": []
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/m03-20_0204_sheet-35_csv.json#m03-20_0204_sheet-35_csv-conformance-05a74dea54ee",
+      "candidateType": "finding",
+      "queueStatus": "pending",
+      "functionId": "m03-20_0204_sheet-35_csv",
+      "featureNo": "M03-20",
+      "title": "M03-20 部門登録CSVフォーマット",
+      "domain": "m03",
+      "designHtml": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-35",
+      "designSheet": {
+        "path": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html",
+        "anchor": "sheet-35",
+        "start": 7963,
+        "end": 8135,
+        "lines": 173
+      },
+      "issueCategory": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "priorClaim": {
+        "designExpectation": "MTGBuyer表示フラグ: 数値(整数)、最大値1、値は 0:非表示 / 1:表示（未指定時 0:非表示）。",
+        "implementationActual": "trimAll(...) == '1' のとき true、それ以外（'2' 等の不正値含む）は一律 false。0/1 以外の不正値を拒否せず非表示として黙認する（未指定時0非表示のみ満たす）。",
+        "mismatchReason": "設計は値域を 0/1 に限定する要求だが実装は '1' 以外を無条件 false 化し範囲外値をバリデーションエラーにしない。設計準拠の ChoiceValidator('0','1') は別ルート SectionMasterImportHandler.php:61-62 にのみ存在。"
+      },
+      "disputedExclusion": false,
+      "sourceFindingId": "m03-20_0204_sheet-35_csv-conformance-05a74dea54ee",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-35",
+      "designQuote": "MTGBuyer表示フラグ: 数値(整数)、最大値1、値は 0:非表示 / 1:表示（未指定時 0:非表示）。",
+      "implRef": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:1175-1179",
+      "implementationRefs": [
+        "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:1175-1179",
+        "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php"
+      ],
+      "comparisonRows": [
+        {
+          "item": "表示フラグの値検証",
+          "design": "0/1 のいずれか（未指定は0）",
+          "implementation": "'1'なら true、他は全て false（不正値拒否なし）",
+          "mismatch": "'2'等の範囲外値がエラーにならず非表示扱い"
+        }
+      ],
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "searchTerms": []
+    }
+  ]
+}

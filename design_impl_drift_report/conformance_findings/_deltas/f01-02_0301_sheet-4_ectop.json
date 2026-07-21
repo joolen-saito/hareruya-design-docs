@@ -1,0 +1,59 @@
+{
+  "functionId": "f01-02_0301_sheet-4_ectop",
+  "featureNo": "F01-02",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html#sheet-4 (2)今週の売れ筋商品 & SALE中の商品 / 部品2-11 カートに入れる",
+      "designExpectation": "(2-11)カートに入れる ボタン: 押下すると(2-9)商品数の数量分商品をカートに追加する。今週の売れ筋商品/SALE中の商品の各カードにカート追加ボタンを表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Block/_product_card.twig:9,72,78-82; src/Eccube/Resource/template/default/Block/shop_best_sellers.twig:23; src/Eccube/Resource/template/default/Block/shop_sale.twig:23",
+      "implementationActual": "add-cartボタン(78-82行)は {% if _show_customer_favorite %}(72行)ブロック内にのみ存在。_show_customer_favorite(9行)は (showFavoriteButton未定義 or showFavoriteButton) かつ isMainShop を要求。shop_best_sellers.twig:23/shop_sale.twig:23 は showFavoriteButton:false を渡し isMainShop も未指定(未定義=false)のため、支店ECTOPの両カルーセルでカート追加ボタンが一度も描画されない。数量±は出るが追加手段が無い。",
+      "mismatchReason": "ShopTopController→shop_top.twig:37-38→shop_best_sellers/shop_sale.twig(showFavoriteButton:false,isMainShop未指定)→_product_card.twig を追跡。add-cartボタンの表示条件がお気に入りボタン表示条件に内包されており支店では必ず非表示。app/html オーバーライドも無し。設計は店頭注文フローとしてカート追加ボタンを要求。",
+      "comparisonRows": [
+        {"item": "カート追加ボタン描画", "design": "各カードに『カートに入れる』ボタンを表示", "implementation": "_show_customer_favorite(showFavoriteButton && isMainShop)内にのみ存在→支店で非表示", "mismatch": "支店ECTOPでカート追加ボタンが描画されずカート追加不可"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html#sheet-4 (6)アイテムを探す / 部品6-5,6-6",
+      "designExpectation": "(6-5)カテゴリリンク押下で押下カテゴリで絞り込んだ商品一覧へ遷移／(6-6)通常盤以外のカードセットリンク押下で押下カードセットで絞り込んだ商品一覧へ遷移。",
+      "implRef": "src/Eccube/Resource/template/default/Block/search_items.twig (全体); shop_top.twig:45",
+      "implementationActual": "search_items.twig は3枚のハードコードダミーカード(ダミー画像 dammy-feature01〜03.webp、固定タイトル等)。カテゴリ/カードセット相当タグは全て <a class=\"c-hareruya-tag\" aria-disabled=\"true\"> で href 無し。shop_top.twig:45 からデータ無しで include され動的連携なし。",
+      "mismatchReason": "ShopTopController は search_items 用データを渡さず(PHPに search_items 参照なし)、app/html オーバーライドも無し。設計(6-5)(6-6)の『押下→商品一覧遷移』が aria-disabled のダミータグで実装されておらず遷移機能が不在。",
+      "comparisonRows": [
+        {"item": "カテゴリ/カードセットリンク", "design": "押下で絞り込み済み商品一覧へ遷移", "implementation": "<a aria-disabled=\"true\"> で href 無し・動的データ無し", "mismatch": "遷移リンクが存在せず未実装"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html#sheet-4 (8)おすすめ特集 / 部品8-1",
+      "designExpectation": "(8-1)バナー画像押下でhtml内で各画像に設定しているURLに遷移。管理画面＞コンテンツ管理＞ブロック管理に設定されている編集可能なブロックを表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Block/shop_recommend.twig:18,28,38,48,58,68; shop_top.twig:47",
+      "implementationActual": "shop_recommend.twig は6枚の固定バナーカード(ダミー画像 top-category-banner01〜06.webp、固定ラベル等)で全リンクが href=\"#\"。各画像設定URLへの遷移未実装。ブロック管理由来の編集可能コンテンツにも連携なし。shop_top.twig:47 からデータ無しで include。",
+      "mismatchReason": "shop_recommend を無パラメータで include(PHPに shop_recommend 参照なし)、動的URL/ブロック管理データを渡していない。app/html オーバーライドも無し。設計(8-1)の『押下→設定URLへ遷移』『ブロック管理の編集可能ブロック表示』が href=\"#\" のプレースホルダで未実装。",
+      "comparisonRows": [
+        {"item": "バナーリンク遷移", "design": "各画像設定URLへ遷移", "implementation": "全リンク href=\"#\"", "mismatch": "遷移先URL未実装"},
+        {"item": "ブロック管理連携", "design": "ブロック管理の編集可能ブロックを表示", "implementation": "固定バナー6枚をハードコード", "mismatch": "管理画面編集不可・連携なし"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html#sheet-4 (1)注文方法 / 部品1 注文方法ラベル",
+      "designExpectation": "非会員向け文言『このサイトでは、晴れる屋{支店名}での店頭受け取り注文を承っております。配送をご希望の方は、通販サイトをご利用ください。』",
+      "implRef": "src/Eccube/Resource/locale/messages.ja.yaml:1250 (shop_top.order_method.public.prefix1); src/Eccube/Resource/template/default/Block/shop_order_method.twig:23",
+      "implementationActual": "翻訳キー shop_top.order_method.public.prefix1 は『このサイトでは、晴れる屋%shop_name%での店頭受け取り注文を承っています。』で、設計の『承っております。』ではなく『承っています。』。",
+      "mismatchReason": "shop_order_method.twig:23 が prefix1/prefix2/link_text/suffix を結合表示。messages.ja.yaml:1250 の文言が設計の引用文と一字相違(承っております/承っています)。利用者が直接目にする文言のため差異として計上(軽微)。",
+      "comparisonRows": [
+        {"item": "注文方法文言(敬語)", "design": "承っております。", "implementation": "承っています。", "mismatch": "敬語表現の一字相違"}
+      ]
+    }
+  ]
+}

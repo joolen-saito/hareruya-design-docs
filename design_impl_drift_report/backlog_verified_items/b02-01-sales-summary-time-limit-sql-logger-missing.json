@@ -1,0 +1,171 @@
+{
+  "id": "b02-01-sales-summary-time-limit-sql-logger-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json",
+  "sourceFindingId": "b02-01_0404_sheet-3_sheet-conformance-7d61d9aec75f",
+  "classification": "バッチ商品管理",
+  "feature": "期間別販売数集計",
+  "issueCategory": "実装漏れ",
+  "issue": "期間別販売数集計バッチでSQLロガー無効化が行われない",
+  "designBook": "0404_基本設計仕様書(バッチ_商品管理).xlsx",
+  "reproSteps": [
+    "ec-cube-enterprise の期間別販売数集計バッチ実行経路として AggregateSalesCommand::execute() から BatchAggregateSalesAction::handle() を確認する",
+    "同実行経路で SQLLogger を null にする処理が呼ばれているか確認する",
+    "pf-eccube3 の UpdateProductSummary::execute() と照合し、設計フロー1番目の処理が移行先で実装されているか確認する"
+  ],
+  "expected": [
+    "期間別販売数集計バッチの開始時に Doctrine SQLロガーを無効化する",
+    "長時間・大量更新に備えたSQLログ抑制をB02-01の実行経路内で行う"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、`bin/console` 共通処理で `set_time_limit(0)` は実行される。一方、B02-01 の入口である `AggregateSalesCommand::execute()` は `BatchAggregateSalesAction::handle()` を呼ぶだけで、SQLロガー無効化を行っていない。`BatchAggregateSalesAction::handle()` 側も、明示トランザクション、集計行削除、集計、更新、commit/rollback のみで、SQLロガー無効化はない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise bin/console 共通処理では set_time_limit(0) が実行される",
+          "path": "ec-cube-enterprise/bin/console",
+          "start": 10,
+          "end": 11,
+          "language": "php",
+          "contains": [
+            "umask(0000);",
+            "set_time_limit(0);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise AggregateSalesCommand は BatchAggregateSalesAction::handle を呼ぶのみ",
+          "path": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php",
+          "start": 43,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "protected function execute(InputInterface $input, OutputInterface $output): int",
+            "$this->batchAggregateSalesAction->handle();",
+            "$io->success('期間別販売数集計が完了しました。');"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise BatchAggregateSalesAction には SQLロガー無効化がない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php",
+          "start": 37,
+          "end": 55,
+          "language": "php",
+          "contains": [
+            "public function handle(): void",
+            "$connection->beginTransaction();",
+            "$this->salesQuantityRepository->getSalesForAggregate();",
+            "$this->salesQuantityRepository->updateSalesQuantityColumns($data);",
+            "$connection->commit();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の setSQLLogger は人気商品リコメンド更新用でB02-01から呼ばれない",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php",
+          "start": 305,
+          "end": 315,
+          "language": "php",
+          "contains": [
+            "人気商品リコメンド更新",
+            "public function updateRecommend(): void",
+            "ini_set('memory_limit', '-1');",
+            "$em->getConnection()->getConfiguration()->setSQLLogger(null);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では、`UpdateProductSummary::execute()` の開始時に `set_time_limit(0)` と `$this->app['orm.em']->getConnection()->getConfiguration()->setSQLLogger(null)` を実行してから、期間別販売数の集計・更新に進む。今回の差分は、このうちSQLロガー無効化がec-cube-enterpriseのB02-01実行経路にない点である。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 UpdateProductSummary は開始時に実行時間制限解除とSQLロガー無効化を行う",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php",
+          "start": 30,
+          "end": 34,
+          "language": "php",
+          "contains": [
+            "public function execute()",
+            "set_time_limit(0);",
+            "$this->app['orm.em']->getConnection()->getConfiguration()->setSQLLogger(null);",
+            "$orderDetails = $this->app['hareruya_ec.repository.order_detail']->getSaleForUpdateSummary($this->app);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "設計HTMLはB02-01の処理フロー1番目でSQLロガー無効化を要求する",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 925,
+      "end": 927,
+      "language": "html",
+      "contains": [
+        "処理フロー",
+        "期間別販売数集計を実行する",
+        "SQLロガーを無効化する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は bin/console 共通処理で set_time_limit(0) を実行しているため、実行時間制限解除は差分対象から外す",
+      "path": "ec-cube-enterprise/bin/console",
+      "start": 10,
+      "end": 11,
+      "language": "php",
+      "contains": [
+        "set_time_limit(0);"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise のB02-01コマンドは action を呼ぶのみで、SQLロガー無効化を行わない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php",
+      "start": 43,
+      "end": 58,
+      "language": "php",
+      "contains": [
+        "$this->batchAggregateSalesAction->handle();",
+        "$io->success('期間別販売数集計が完了しました。');"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise のB02-01本体にも setSQLLogger はない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php",
+      "start": 37,
+      "end": 55,
+      "language": "php",
+      "contains": [
+        "$connection->beginTransaction();",
+        "$this->salesQuantityRepository->getSalesForAggregate();",
+        "$connection->commit();",
+        "$connection->rollBack();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 はB02-01相当処理の開始時に SQLロガー無効化を行う",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php",
+      "start": 30,
+      "end": 34,
+      "language": "php",
+      "contains": [
+        "setSQLLogger(null)",
+        "getSaleForUpdateSummary"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"実行時間制限|SQLロガー|set_time_limit|setSQLLogger\" excel_to_html/output/0404_基本設計仕様書\\(バッチ_商品管理\\).html design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json",
+      "rg -n \"set_time_limit|setSQLLogger|getSaleForUpdateSummary|updateProductSummary\" ../pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php",
+      "rg -n \"set_time_limit|memory_limit|setSQLLogger|SQLLogger|BatchAggregateSalesAction|updateRecommend\" ../ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php ../ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php ../ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php"
+    ],
+    "notes": [
+      "enterprise の `bin/console` 共通処理に `set_time_limit(0)` があるため、実行時間制限解除は差分対象から除外した。",
+      "enterprise に `setSQLLogger(null)` は存在するが、`DtbSalesQuantityRepository::updateRecommend()` 用であり、B02-01の `BatchAggregateSalesAction::handle()` から呼ばれていない。",
+      "B02-01実行経路の `AggregateSalesCommand::execute()` と `BatchAggregateSalesAction::handle()` には、SQLロガー無効化が存在しない。"
+    ]
+  }
+}

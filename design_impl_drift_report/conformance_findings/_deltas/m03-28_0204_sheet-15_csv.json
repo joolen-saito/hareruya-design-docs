@@ -1,0 +1,54 @@
+{
+  "functionId": "m03-28_0204_sheet-15_csv",
+  "featureNo": "M03-28",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-15:3906",
+      "designExpectation": "商品タグ更新CSVフォーマットの2列目は項目名「商品タグ(ID)」、書式「文字型」、入力例「8」、備考「商品タグ登録IDを指定/カンマ区切りで複数指定可能」として扱う。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductTagCsvController.php:180",
+      "implementationActual": "画面フォーマット表と雛形ヘッダは getCsvHeader() のキー「タグID」を使用し、必須ヘッダも getRequiredCsvHeader() で「タグID」を要求する。取込ハンドラも ProductTagUpdateImportHandler.php:111 で ColumnDefinitions::productTagList($this->em, 'タグID') として「タグID」列を参照する。",
+      "mismatchReason": "設計のCSV項目名は「商品タグ(ID)」だが、実装の外部契約は「タグID」。反証検索として「商品タグ(ID)」「商品タグID」「タグ(ID)」「タグID」を Controller/Twig/Importer/翻訳キー配下で確認し、商品タグ更新CSV専用実装で「商品タグ(ID)」を受け付ける証跡はなく、「タグID」だけがヘッダ・必須ヘッダ・取込列名に使われていた。",
+      "comparisonRows": [
+        {
+          "item": "CSV 2列目の見出し名",
+          "design": "商品タグ(ID)",
+          "implementation": "タグID",
+          "mismatch": "CSVフォーマットの列名が設計と異なる。"
+        },
+        {
+          "item": "CSV 2列目の複数指定",
+          "design": "商品タグ登録IDを指定/カンマ区切りで複数指定可能",
+          "implementation": "ProductTagCsvController.php:180 で説明は「必須（カンマ区切りで複数指定可能）」、ProductTagUpdateImportHandler.php:111 と ColumnDefinitions.php:336-339 で複数タグID検証",
+          "mismatch": "複数指定の仕様は実装済みだが、列名が設計値と異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-15:3975",
+      "designExpectation": "dtb_product_tag は一律 DELETE 後に入力配列順で INSERT し、ec-cube-enterprise の列は id（主キー）・product_id・tag_id・creator_id・create_date とする。base_info_id 列は持たない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:1813",
+      "implementationActual": "ProductRepository::insertProductTags() は INSERT 対象列に base_info_id を含め、値 1 を固定投入している。ProductTag エンティティも TenantTrait を use しており、TenantTrait.php:25 で base_info_id JoinColumn を定義している。",
+      "mismatchReason": "設計は本機能で扱う dtb_product_tag の ec-cube-enterprise 列から base_info_id を除外しているが、実装は ProductRepository.php:1813 と 1835 で base_info_id を明示的に INSERT している。反証検索として dtb_product_tag/base_info_id/TenantTrait/ProductTag を確認したところ、Entity 側にも base_info_id が存在し、設計値と実装値が一致しない。",
+      "comparisonRows": [
+        {
+          "item": "dtb_product_tag の列構成",
+          "design": "id, product_id, tag_id, creator_id, create_date。base_info_id 列は持たない。",
+          "implementation": "ProductTag.php:30 が TenantTrait を use し、TenantTrait.php:25 が base_info_id を定義。ProductRepository.php:1813 が base_info_id を INSERT 対象に含める。",
+          "mismatch": "設計で除外された base_info_id を実装が保持・書き込みしている。"
+        },
+        {
+          "item": "タグ置換 INSERT",
+          "design": "入力配列順で product_id, tag_id, creator_id, create_date を INSERT",
+          "implementation": "product_id, tag_id, creator_id, base_info_id, create_date を INSERT し、base_info_id は 1 固定",
+          "mismatch": "書込列と値が設計より1列多い。"
+        }
+      ]
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m05_02_admin_order_order_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・ダウンロード発火・HTTP応答ヘッダ・ファイル名・URL等のブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約・Cookie/セッションキー名をオラクル化しない。設計源は pf-eccube3 のリバースだが、基本設計・観点表を上位オラクルとし、DB・挙動は刷新先 ec-cube-enterprise を確認値とする（乖離は付帯表4）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。**CSVの中身（列見出し・各セル値・明細単位の行数・BOM/エンコード・区切り）は、Playwright の `Download.createReadStream()/path()` で取得・検証は技術的に可能だが、合否の確定には設計書由来の列定義オラクルと決定論的シード（SEED-M05-02-ORDER）が必要なため、本納品では手動照合工程に切り出す（自動化は `要確認`。ブラウザで観測不能なのではなく、オラクル確定・シード整備が前提という理由）**。
+期待結果は画面表示・遷移・ダウンロード発火・HTTP応答ヘッダ・ファイル名・URL等のブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約・Cookie/セッションキー名をオラクル化しない。設計源は pf-eccube3 のリバースだが、基本設計・観点表を上位オラクルとし、DB・挙動は刷新先 ec-cube-enterprise を確認値とする（乖離は付帯表4）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。**CSVの中身（列見出し・各セル値・明細単位の行数・BOM/エンコード・区切り）は、Playwright の `Download.createReadStream()/path()` で取得・検証は技術的に可能だが、合否の確定には設計書由来の列定義オラクルと決定論的シード（SEED-M05-02-ORDER）が必要なため、本納品では手動照合工程に切り出す（自動化は `要確認`。ブラウザで観測不能なのではなく、オラクル確定・シード整備が前提という理由）**。
 
 刷新先存在確認: 受注一覧 `admin_order = GET/POST /<route>/order`（OrderController.php:136）、受注CSV出力 `admin_order_export_order = GET /<route>/order/export/order`（OrderController.php:374）、起点リンク id=orderCsvDownload（Order/index.twig:1141）。**screenExists=true**。
 
@@ -23,43 +23,43 @@
 | IT-26 | 本機能は更新を行わない。UI部品・確認モーダル不在に読み替え可能な行は自動化、出力前後の非更新（数量・金額・履歴・セッション不変）はDB前後比較で手動/間接（056） |
 | IT-20 | ログ出力抑止＝ブラウザ観測外 |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-001	IT-25	操作起点	P1	受注一覧（CSV出力の起点）が表示される	管理者ログイン済／SEED-M05-02-ADMIN	—	"1. /admin/order を開く"	受注一覧画面が表示され「CSVダウンロード」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-001	IT-25	操作起点	P1	受注一覧（CSV出力の起点）が表示される	管理者ログイン済／SEED-M05-02-ADMIN	—	1. /admin/order を開く	受注一覧画面が表示され「CSVダウンロード」ボタンが表示されること。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-002	IT-25	UI部品	P1	CSVダウンロードドロップダウンに「受注CSVダウンロード」リンクが表示される	管理者ログイン済／SEED-M05-02-ADMIN	—	"1. 受注一覧を開く
-2. 「CSVダウンロード」ボタンを押しドロップダウンを開く"	ドロップダウン内に「受注CSVダウンロード」リンク（id=orderCsvDownload）が表示されること。
+2. 「CSVダウンロード」ボタンを押しドロップダウンを開く"	ドロップダウン内に「受注CSVダウンロード」リンク（id=orderCsvDownload）が表示されること。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-003	IT-25	確認ダイアログ	P2	「受注CSVダウンロード」は通常アンカーで出力前確認モーダルがない	管理者ログイン済／SEED-M05-02-ADMIN	—	"1. 受注一覧でCSVダウンロードドロップダウンを開く
-2. 受注CSVダウンロードリンクのhref・属性を確認する"	リンクhrefが受注CSV出力URL（/order/export/order）であり、確認モーダルを開く属性（data-bs-toggle=modal）を持たないこと。
+2. 受注CSVダウンロードリンクのhref・属性を確認する"	リンクhrefが受注CSV出力URL（/order/export/order）であり、確認モーダルを開く属性（data-bs-toggle=modal）を持たないこと。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-010	IT-16	実行結果	P1	「受注CSVダウンロード」押下でCSVダウンロードが発火する	管理者ログイン済／SEED-M05-02-ADMIN	—	"1. 受注一覧でドロップダウンを開く
-2. 「受注CSVダウンロード」を押下"	ファイルダウンロード（downloadイベント）が発火すること。
-m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-011	IT-13	URL直接アクセス	P1	受注CSV出力URLへ直接GETするとダウンロードが発火する	管理者ログイン済／SEED-M05-02-ADMIN	GET /admin/order/export/order	"1. CSV出力URLへ直接GETアクセスする"	ファイルダウンロードが発火すること（HTML一覧へ遷移しない）。
+2. 「受注CSVダウンロード」を押下"	ファイルダウンロード（downloadイベント）が発火すること。				
+m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-011	IT-13	URL直接アクセス	P1	受注CSV出力URLへ直接GETするとダウンロードが発火する	管理者ログイン済／SEED-M05-02-ADMIN	GET /admin/order/export/order	1. CSV出力URLへ直接GETアクセスする	ファイルダウンロードが発火すること（HTML一覧へ遷移しない）。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-012	IT-27	実行結果	P1	ダウンロードファイル名が order_<日時>.csv 形式である	管理者ログイン済／SEED-M05-02-ADMIN	GET /admin/order/export/order	"1. CSV出力URLへアクセスしダウンロードを取得する
-2. 提案ファイル名を確認する"	ファイル名が「order_」+ 14桁日時 + 「.csv」の形式であること。
+2. 提案ファイル名を確認する"	ファイル名が「order_」+ 14桁日時 + 「.csv」の形式であること。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-013	IT-25	HTTPステータス	P1	エクスポート応答が octet-stream/attachment のHTTPヘッダを返す	管理者ログイン済／SEED-M05-02-ADMIN	GET /admin/order/export/order	"1. 認証済みセッションでCSV出力URLへGETする
-2. 応答ヘッダを確認する"	"応答が 200・Content-Type が application/octet-stream・Content-Disposition が attachment; filename=order_<日時>.csv であること。"
-m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-014	IT-22	必須制御	P2	セッションに検索データが無くても既定検索でダウンロードが発火する	管理者ログイン済／検索未実行（セッションに検索データなし）／SEED-M05-02-ADMIN	GET /admin/order/export/order	"1. 検索を一度も実行していない新規セッションでCSV出力URLへアクセスする"	エラーにならず既定検索でダウンロードが発火すること（本機能はフォーム入力を受け付けない）。
-m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-020	IT-15	未認証	P1	未ログインでCSV出力URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	GET /admin/order/export/order	"1. 未ログインで /admin/order/export/order へアクセスする"	管理ログイン画面（#login_id 表示）へ誘導されること。
+2. 応答ヘッダを確認する"	応答が 200・Content-Type が application/octet-stream・Content-Disposition が attachment; filename=order_<日時>.csv であること。				
+m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-014	IT-22	必須制御	P2	セッションに検索データが無くても既定検索でダウンロードが発火する	管理者ログイン済／検索未実行（セッションに検索データなし）／SEED-M05-02-ADMIN	GET /admin/order/export/order	1. 検索を一度も実行していない新規セッションでCSV出力URLへアクセスする	エラーにならず既定検索でダウンロードが発火すること（本機能はフォーム入力を受け付けない）。				
+m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-020	IT-15	未認証	P1	未ログインでCSV出力URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	GET /admin/order/export/order	1. 未ログインで /admin/order/export/order へアクセスする	管理ログイン画面（#login_id 表示）へ誘導されること。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-030	IT-03	画面遷移	P2	CSV出力はHTML画面遷移を伴わずダウンロードのみが発火する	管理者ログイン済／SEED-M05-02-ADMIN	—	"1. 受注一覧でCSVダウンロードを実行する
-2. ダウンロード後のURLを確認する"	受注一覧URLに留まり別HTML画面へ遷移しないこと（添付応答のため画面遷移はブラウザ次第）。
+2. ダウンロード後のURLを確認する"	受注一覧URLに留まり別HTML画面へ遷移しないこと（添付応答のため画面遷移はブラウザ次第）。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-040	IT-27	出力失敗	P2	有効な受注CSV列定義が0件のときヘッダ出力処理が論理例外となる	管理者ログイン済／SEED-M05-02-CSVDEF-EMPTY（受注CSV種別 enabled 行0件）	GET /admin/order/export/order	"1. 受注CSV種別の有効列定義を0件にする
-2. CSV出力URLへアクセスする"	ヘッダ出力処理が初期化不完備の論理例外となり、正常なCSVダウンロードが成立しないこと。
+2. CSV出力URLへアクセスする"	ヘッダ出力処理が初期化不完備の論理例外となり、正常なCSVダウンロードが成立しないこと。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-050	IT-23	出力内容	P2	CSVヘッダ行が有効列定義の表示名をsort_no昇順で並べた1行である	管理者ログイン済／SEED-M05-02-ORDER（受注CSV種別 enabled 列が既定で存在）	GET /admin/order/export/order	"1. CSVをダウンロードし内容を開く
-2. 先頭行（列見出し）を確認する"	先頭行が、有効（enabled）な受注CSV列定義の表示名を sort_no 昇順で左から並べた1行であること（CSV内容照合＝手動。設計書 処理フロー#7・入出力 由来）。
+2. 先頭行（列見出し）を確認する"	先頭行が、有効（enabled）な受注CSV列定義の表示名を sort_no 昇順で左から並べた1行であること（CSV内容照合＝手動。設計書 処理フロー#7・入出力 由来）。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-051	IT-23	出力内容	P2	CSVデータ行が受注明細単位で行数が抽出注文の明細件数合計と一致する	管理者ログイン済／SEED-M05-02-ORDER（注文＋複数明細）	GET /admin/order/export/order	"1. CSVをダウンロードし内容を開く
-2. データ行数を数え抽出注文の明細件数合計と突合する"	データ行が受注明細あたり1行で、行数＝抽出された各注文の受注明細件数の合計（一覧の表示行数とは一致しない）であること（CSV内容照合＝手動。設計書 集計条件・データ整合性 由来）。
+2. データ行数を数え抽出注文の明細件数合計と突合する"	データ行が受注明細あたり1行で、行数＝抽出された各注文の受注明細件数の合計（一覧の表示行数とは一致しない）であること（CSV内容照合＝手動。設計書 集計条件・データ整合性 由来）。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-052	IT-27	出力内容	P2	明細0件の注文はCSVデータ行を増やさない（境界）	管理者ログイン済／SEED-M05-02-ORDER（明細0件の注文を含む条件）	GET /admin/order/export/order	"1. 明細0件の注文を含む条件でCSVをダウンロードする
-2. 当該注文に対応するデータ行の有無を確認する"	明細0件の注文についてCSVデータ行が出力されないこと（設計書 エッジケース「注文に明細がない」由来＝手動）。
-m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-053	IT-23	出力内容	P3	列値の型変換（日時形式・真偽値1/0・複数値連結・エンコード・区切り）が設定どおり出力される	管理者ログイン済／SEED-M05-02-ORDER	GET /admin/order/export/order	"1. CSVをダウンロードし各セルを確認する"	日時列が日時形式で文字列化され、真偽値が 1 または 0、コレクション値が複数値区切りで連結、本体がUTF-8（先頭BOM付与）・区切り文字「,」で出力されること（設計書 判定順序・文字コード区切り由来＝設定値オラクル・手動）。
+2. 当該注文に対応するデータ行の有無を確認する"	明細0件の注文についてCSVデータ行が出力されないこと（設計書 エッジケース「注文に明細がない」由来＝手動）。				
+m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-053	IT-23	出力内容	P3	列値の型変換（日時形式・真偽値1/0・複数値連結・エンコード・区切り）が設定どおり出力される	管理者ログイン済／SEED-M05-02-ORDER	GET /admin/order/export/order	1. CSVをダウンロードし各セルを確認する	日時列が日時形式で文字列化され、真偽値が 1 または 0、コレクション値が複数値区切りで連結、本体がUTF-8（先頭BOM付与）・区切り文字「,」で出力されること（設計書 判定順序・文字コード区切り由来＝設定値オラクル・手動）。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-054	IT-23	出力内容	P3	100件超の注文でもページング走査で全明細が出力継続する	管理者ログイン済／SEED-M05-02-ORDER（注文100件超）	GET /admin/order/export/order	"1. 注文が100件を超える状態でCSVをダウンロードする
-2. 全注文の明細が欠落なく出力されているか確認する"	ページサイズ100で繰り返し走査され、100件を超えても全注文の明細がCSVに欠落なく出力継続されること（設計書 処理フロー#8 由来＝手動）。
-m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-055	IT-23	出力内容	P2	セッション検索条件と同一の注文集合のみがCSVに出力される	管理者ログイン済／SEED-M05-02-ORDER（条件一致・不一致の注文を併存）	"GET /admin/order/export/order"	"1. 受注一覧で検索条件を確定する
+2. 全注文の明細が欠落なく出力されているか確認する"	ページサイズ100で繰り返し走査され、100件を超えても全注文の明細がCSVに欠落なく出力継続されること（設計書 処理フロー#8 由来＝手動）。				
+m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-055	IT-23	出力内容	P2	セッション検索条件と同一の注文集合のみがCSVに出力される	管理者ログイン済／SEED-M05-02-ORDER（条件一致・不一致の注文を併存）	GET /admin/order/export/order	"1. 受注一覧で検索条件を確定する
 2. 直後にCSVをダウンロードする
-3. CSV内容を一覧の検索条件と突合する"	一覧の検索条件に一致する注文（明細）のみがCSVに含まれ、一致しない注文は含まれないこと（設計書 データ整合性「一覧との条件一致」由来＝手動）。
+3. CSV内容を一覧の検索条件と突合する"	一覧の検索条件に一致する注文（明細）のみがCSVに含まれ、一致しない注文は含まれないこと（設計書 データ整合性「一覧との条件一致」由来＝手動）。				
 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）	E2E-M05-02-056	IT-26	非更新	P1	CSV出力の前後で受注データ・検索セッションが変化しない（参照系）	管理者ログイン済／SEED-M05-02-ORDER	GET /admin/order/export/order	"1. 出力前に対象注文の数量・金額・履歴と検索セッションを記録する
 2. CSVをダウンロードする
-3. 出力後に同項目を再確認する"	CSV出力の前後で受注データ（数量・金額・履歴）および検索セッション条件が変化しないこと（設計書 DB操作「参照系・更新なし」／セッション「更新しない」由来＝DB前後比較で手動）。
+3. 出力後に同項目を再確認する"	CSV出力の前後で受注データ（数量・金額・履歴）および検索セッション条件が変化しないこと（設計書 DB操作「参照系・更新なし」／セッション「更新しない」由来＝DB前後比較で手動）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象セレクタ・仕様根拠・元ITケースID（TSV外）

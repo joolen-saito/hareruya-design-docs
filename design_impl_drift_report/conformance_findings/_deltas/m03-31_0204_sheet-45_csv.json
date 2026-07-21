@@ -1,0 +1,25 @@
+{ "functionId": "m03-31_0204_sheet-45_csv", "featureNo": "M03-31",
+  "findings": [
+    { "category":"実装違い", "dimension":"⑦要求網羅・実装違い",
+      "severity":"med",
+      "designRef":"excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-45（バリデーション節/処理フロー節/表示メッセージ節・フラッシュ）",
+      "designExpectation":"アップロードファイルのバリデーションとして「MIMEはCSVであること」を行い、非CSVのときフォーム検証エラー『ファイル形式が異なります。CSVファイルをアップロードしてください。』(キー admin.csv.error.upload.mime)を画面上部に表示する。処理フローでもフォーム検証にCSVのMIMEを含める。",
+      "implRef":"src/Eccube/Form/Type/Admin/CsvImportType.php:48-56",
+      "implementationActual":"import_file 制約は Assert\\NotBlank と Assert\\File(maxSize) のみで mimeTypes 制約が無い。ProductPriceCsvController::import()・CsvImporter にもサーバ側MIME検証は無く、翻訳キー admin.csv.error.upload.mime も messages.ja.yaml に存在しない。",
+      "mismatchReason":"ProductPriceCsvController(送信先ルート admin_product_product_price_import)→CsvImportType→CsvImporter→messages.ja.yaml を探索したが、設計が必須とするサーバ側MIME検証と専用メッセージ(admin.csv.error.upload.mime)が実装に存在しない。ファイル必須(NotBlank)・サイズ上限(File maxSize)のみ実装済みでMIME検証が欠落。",
+      "comparisonRows":[
+        {"item":"MIMEバリデーション","design":"CSVのMIME検証を実施","implementation":"mimeTypes制約なし・サーバ側検証なし","mismatch":"MIME検証が未実装"},
+        {"item":"エラーメッセージ/キー","design":"『ファイル形式が異なります。CSVファイルをアップロードしてください。』(admin.csv.error.upload.mime)","implementation":"当該キー・文言が messages.ja.yaml に不在","mismatch":"翻訳キー・文言が存在しない"}
+      ] },
+    { "category":"実装違い", "dimension":"⑦要求網羅・実装違い",
+      "severity":"med",
+      "designRef":"excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-45（表示メッセージ節・フラッシュ）",
+      "designExpectation":"取込成功時、画面上部のフラッシュ領域に『商品登録CSVファイルをアップロードしました。』(キー admin.product.csv_import.save.complete)を表示する。表示メッセージ節は表示文言を正と宣言。",
+      "implRef":"src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:176",
+      "implementationActual":"成功分岐で $this->addSuccess('admin.register.complete', 'admin') を呼び出し、messages.ja.yaml:1929 で『登録が完了しました。』と定義。設計指定キー admin.product.csv_import.save.complete は messages.ja.yaml に不在。",
+      "mismatchReason":"import()成功分岐(:176)と messages.ja.yaml を確認した結果、成功フラッシュの表示文言・翻訳キーが設計指定と一致しない。設計は表示文言を正と宣言しており利用者が目にする成功メッセージに差異がある。",
+      "comparisonRows":[
+        {"item":"成功時翻訳キー","design":"admin.product.csv_import.save.complete","implementation":"admin.register.complete","mismatch":"キー不一致（設計キーは不在）"},
+        {"item":"成功時表示文言","design":"商品登録CSVファイルをアップロードしました。","implementation":"登録が完了しました。","mismatch":"文言不一致"}
+      ] }
+  ] }

@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m12_06_admin_analytics_sales_arrival_notification_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・HTTP応答・ダウンロード発火などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装（ec-cube-enterprise）の現挙動・Form制約をオラクル化しない。CSVの**ヘッダ列順・先頭BOM・ファイル名**は Playwright の `download.path()`/`readFile` で自動検証可能（オラクルは設計書の業務ルール・入出力由来）。**CSV本文の各セル値・エンコード・行内容の一覧一致**は手動確認とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報（セレクタ・自動化区分・仕様根拠・シード・不具合候補）は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・HTTP応答・ダウンロード発火などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装（ec-cube-enterprise）の現挙動・Form制約をオラクル化しない。CSVの**ヘッダ列順・先頭BOM・ファイル名**は Playwright の `download.path()`/`readFile` で自動検証可能（オラクルは設計書の業務ルール・入出力由来）。**CSV本文の各セル値・エンコード・行内容の一覧一致**は手動確認とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報（セレクタ・自動化区分・仕様根拠・シード・不具合候補）は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 > 監査注（自動化区分とspec実装状態の区別）: 「E2E自動化」は**自動化可能な観点**の区分である。spec の実装状態は別で、(a) 資格情報ガード（HAS_CREDS）下で**常時実行**＝005,021,022,024 系（020/021/006/007/001/002/030/031）、(b) seed未整備・仕様乖離・実機確認待ちで `test.fixme` 保留＝015,023,047,075,087 系（003/004/005/010、CSV内容の040/044）。fixme は抜け漏れ可視化であり放置ではない（seed整備・実機確認後に有効化）。
 
@@ -28,39 +28,39 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-001	IT-25	操作起点	P1	検索実行後（結果あり）の一覧に「CSVダウンロード」リンクが表示される	ログイン済み管理者／入荷通知依頼データが存在／SEED-M12-06-REQUEST	検索条件（全件相当・キーワード未指定）	"1. 入荷通知依頼集計画面（/admin/analysis/product-request）を開く
-2. 検索ボタンを押下して結果を描画する"	検索結果ブロックに「CSVダウンロード」リンクが表示されること。
+2. 検索ボタンを押下して結果を描画する"	検索結果ブロックに「CSVダウンロード」リンクが表示されること。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-002	IT-25	UI部品	P2	「CSVダウンロード」はGETリンクで確認ダイアログを介さない	ログイン済み管理者／入荷通知依頼データが存在／SEED-M12-06-REQUEST	—	"1. 検索を実行し結果を描画する
-2. 「CSVダウンロード」リンクの属性を確認する"	「CSVダウンロード」リンクの href が export ルート（/admin/analysis/product-request/export）であり、確認ダイアログを介さずGETで出力されること。
+2. 「CSVダウンロード」リンクの属性を確認する"	「CSVダウンロード」リンクの href が export ルート（/admin/analysis/product-request/export）であり、確認ダイアログを介さずGETで出力されること。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-003	IT-23	検索条件	P1	「CSVダウンロード」押下でCSVダウンロードが発火する	ログイン済み管理者／入荷通知依頼データが存在／SEED-M12-06-REQUEST	検索条件セッション（直前の検索条件）	"1. 検索を実行し結果を描画する
-2. 「CSVダウンロード」を押下する"	検索条件セッションの条件で抽出され、CSVファイルのダウンロードが発火すること。
+2. 「CSVダウンロード」を押下する"	検索条件セッションの条件で抽出され、CSVファイルのダウンロードが発火すること。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-004	IT-03	画面遷移	P1	「CSVダウンロード」押下で画面遷移しない	ログイン済み管理者／入荷通知依頼データが存在／SEED-M12-06-REQUEST	—	"1. 検索を実行し結果を描画する
-2. 「CSVダウンロード」を押下する"	画面遷移を伴わずダウンロードのみ行われること。
+2. 「CSVダウンロード」を押下する"	画面遷移を伴わずダウンロードのみ行われること。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-005	IT-25	送信可否制御	P2	ダウンロードファイル名が request_report_<YmdHis>.csv である	ログイン済み管理者／入荷通知依頼データが存在／SEED-M12-06-REQUEST	—	"1. 検索を実行し結果を描画する
-2. 「CSVダウンロード」を押下しダウンロードファイル名を確認する"	ダウンロードファイル名が「request_report_」に出力日時（YmdHis）を付けた「.csv」であること。
+2. 「CSVダウンロード」を押下しダウンロードファイル名を確認する"	ダウンロードファイル名が「request_report_」に出力日時（YmdHis）を付けた「.csv」であること。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-006	IT-03	画面遷移	P3	検索結果0件のとき「CSVダウンロード」リンクが表示されない	ログイン済み管理者／SEED-M12-06-ADMIN	一致しないキーワード	"1. 入荷通知依頼集計画面を開く
-2. 一致しないキーワードで検索する"	検索結果ブロックに「CSVダウンロード」リンクが表示されないこと。
+2. 一致しないキーワードで検索する"	検索結果ブロックに「CSVダウンロード」リンクが表示されないこと。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-007	IT-03	画面遷移	P3	検索結果0件のとき該当データなしメッセージが表示される	ログイン済み管理者／SEED-M12-06-ADMIN	一致しないキーワード	"1. 入荷通知依頼集計画面を開く
-2. 一致しないキーワードで検索する"	「検索条件に該当するデータがありませんでした。」が表示されること。
-m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-010	IT-22	その他のバリデーション	P2	検索条件セッションが空のままexportへ直接アクセスすると空条件で抽出・出力される	ログイン済み管理者／検索未実行（セッション空）／SEED-M12-06-ADMIN	検索条件セッション＝空	"1. 検索を実行せず export URL（/admin/analysis/product-request/export）へGETでアクセスする"	空の検索条件で抽出し、CSVが出力されること（設計書「エラー処理：検索条件セッションが空＝空の検索条件で抽出し、出力する」由来。実装乖離あり＝付帯表4 #2）。
-m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-020	IT-13	URL直接アクセス	P1	未ログインで export URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/analysis/product-request/export へ直接アクセスする"	CSVを出力せず管理ログイン画面へ誘導されること。
-m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-021	IT-13	URL直接アクセス	P2	未ログインで一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/analysis/product-request へ直接アクセスする"	管理ログイン画面へ誘導されること。
-m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-030	IT-25	UI部品	P2	入荷通知依頼集計画面に検索フォーム・検索ボタンが表示される	ログイン済み管理者／SEED-M12-06-ADMIN	—	"1. 入荷通知依頼集計画面（/admin/analysis/product-request）を開く"	検索フォームとキーワード入力欄・検索ボタンが表示されること。
-m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-031	IT-03	画面遷移	P3	初期表示（検索前）は結果一覧・CSVダウンロードリンクが表示されない	ログイン済み管理者／SEED-M12-06-ADMIN	—	"1. 入荷通知依頼集計画面を開く（検索を実行しない）"	検索結果ブロックおよび「CSVダウンロード」リンクが表示されないこと。
+2. 一致しないキーワードで検索する"	「検索条件に該当するデータがありませんでした。」が表示されること。				
+m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-010	IT-22	その他のバリデーション	P2	検索条件セッションが空のままexportへ直接アクセスすると空条件で抽出・出力される	ログイン済み管理者／検索未実行（セッション空）／SEED-M12-06-ADMIN	検索条件セッション＝空	1. 検索を実行せず export URL（/admin/analysis/product-request/export）へGETでアクセスする	空の検索条件で抽出し、CSVが出力されること（設計書「エラー処理：検索条件セッションが空＝空の検索条件で抽出し、出力する」由来。実装乖離あり＝付帯表4 #2）。				
+m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-020	IT-13	URL直接アクセス	P1	未ログインで export URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/analysis/product-request/export へ直接アクセスする	CSVを出力せず管理ログイン画面へ誘導されること。				
+m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-021	IT-13	URL直接アクセス	P2	未ログインで一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/analysis/product-request へ直接アクセスする	管理ログイン画面へ誘導されること。				
+m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-030	IT-25	UI部品	P2	入荷通知依頼集計画面に検索フォーム・検索ボタンが表示される	ログイン済み管理者／SEED-M12-06-ADMIN	—	1. 入荷通知依頼集計画面（/admin/analysis/product-request）を開く	検索フォームとキーワード入力欄・検索ボタンが表示されること。				
+m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-031	IT-03	画面遷移	P3	初期表示（検索前）は結果一覧・CSVダウンロードリンクが表示されない	ログイン済み管理者／SEED-M12-06-ADMIN	—	1. 入荷通知依頼集計画面を開く（検索を実行しない）	検索結果ブロックおよび「CSVダウンロード」リンクが表示されないこと。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-040	IT-20	識別子	P2	CSVヘッダ行が設計の列順である	ログイン済み管理者／入荷通知依頼データが存在／SEED-M12-06-REQUEST	—	"1. 検索を実行しCSVをダウンロードする
-2. ヘッダ行を確認する"	ヘッダ行が「商品コード・商品名・言語・状態・販売金額・在庫数・会員名・依頼日・購入日・通知日/通知設定削除日」の順であること（実装乖離あり＝付帯表4 #3）。
+2. ヘッダ行を確認する"	ヘッダ行が「商品コード・商品名・言語・状態・販売金額・在庫数・会員名・依頼日・購入日・通知日/通知設定削除日」の順であること（実装乖離あり＝付帯表4 #3）。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-041	IT-15	対象データ	P2	CSVの抽出条件が直前の検索（一覧）と一致する	ログイン済み管理者／入荷通知依頼データが存在／SEED-M12-06-REQUEST	絞り込み条件で検索した検索条件セッション	"1. 絞り込み条件で検索し一覧を確認する
-2. CSVをダウンロードしデータ行を確認する"	CSVのデータ行が一覧と同じ抽出結果であること。
+2. CSVをダウンロードしデータ行を確認する"	CSVのデータ行が一覧と同じ抽出結果であること。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-042	IT-20	出力抑止	P2	論理削除フィルタ無効化で通知済み依頼も含まれる	ログイン済み管理者／通知設定削除済みの依頼が存在／SEED-M12-06-REQUEST-DELETED	—	"1. 通知済み（通知設定削除済み）依頼を含む条件で検索する
-2. CSVをダウンロードしデータ行を確認する"	通知済み（通知設定削除済み）の依頼もCSVに含まれること。
+2. CSVをダウンロードしデータ行を確認する"	通知済み（通知設定削除済み）の依頼もCSVに含まれること。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-043	IT-27	出力失敗	P3	データ取得失敗時は共通例外処理に委ねられる	ログイン済み管理者／DB障害を再現できる状態	—	"1. データ取得が失敗する状況を再現する
-2. CSVダウンロードを実行する"	アプリケーションの共通例外処理に委ねられること。
+2. CSVダウンロードを実行する"	アプリケーションの共通例外処理に委ねられること。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-044	IT-20	識別子	P3	出力CSVの先頭にBOMが付与される	ログイン済み管理者／入荷通知依頼データが存在／SEED-M12-06-REQUEST	—	"1. 検索を実行しCSVをダウンロードする
-2. ダウンロードファイルの先頭バイトを確認する"	出力CSVの先頭に文字コード判別用のBOMが付与されていること（設計書「入出力：文字コード判別用のBOMを付与する」由来。BOM付与条件は実装で要確認＝付帯表4 #4）。
-m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-022	IT-13	権限・認可	P2	権限を持たない利用者ではCSVが出力されない	ログイン状態だが当該機能の権限を持たない利用者／SEED-M12-06-ADMIN	—	"1. 権限を持たない利用者状態で export URL（/admin/analysis/product-request/export）へアクセスする"	CSVを出力しないこと（設計書「エラー処理：認証・権限不足＝出力しない」「権限・認可：未ログイン管理者＝アクセス不可」由来。EC-Cube管理は単一ROLEでサブロール制御を持たず権限不足は実質未ログインと同義＝020で代表・サブロール制御はフレームワーク委譲＝手動/対象外）。
+2. ダウンロードファイルの先頭バイトを確認する"	出力CSVの先頭に文字コード判別用のBOMが付与されていること（設計書「入出力：文字コード判別用のBOMを付与する」由来。BOM付与条件は実装で要確認＝付帯表4 #4）。				
+m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-022	IT-13	権限・認可	P2	権限を持たない利用者ではCSVが出力されない	ログイン状態だが当該機能の権限を持たない利用者／SEED-M12-06-ADMIN	—	1. 権限を持たない利用者状態で export URL（/admin/analysis/product-request/export）へアクセスする	CSVを出力しないこと（設計書「エラー処理：認証・権限不足＝出力しない」「権限・認可：未ログイン管理者＝アクセス不可」由来。EC-Cube管理は単一ROLEでサブロール制御を持たず権限不足は実質未ログインと同義＝020で代表・サブロール制御はフレームワーク委譲＝手動/対象外）。				
 m12-06_admin_analytics_sales_arrival_notification_csv_export（入荷通知依頼 CSVダウンロード）	E2E-M12-06-045	IT-25	対象データ	P3	複数件の依頼が全行CSVに反復出力される	ログイン済み管理者／入荷通知依頼が複数件存在／SEED-M12-06-REQUEST-MULTI	—	"1. 複数件が該当する条件で検索する
-2. CSVをダウンロードしデータ行数を確認する"	抽出結果の全件がヘッダ行に続けて1件ずつ反復出力されること（設計書「業務ルール：大量件数の出力＝抽出結果を1件ずつ反復しながら出力する」由来。CSV本文の行数照合＝手動）。
+2. CSVをダウンロードしデータ行数を確認する"	抽出結果の全件がヘッダ行に続けて1件ずつ反復出力されること（設計書「業務ルール：大量件数の出力＝抽出結果を1件ずつ反復しながら出力する」由来。CSV本文の行数照合＝手動）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

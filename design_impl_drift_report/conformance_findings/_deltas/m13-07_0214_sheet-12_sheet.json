@@ -1,0 +1,102 @@
+{
+  "functionId": "m13-07_0214_sheet-12_sheet",
+  "featureNo": "M13-07",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-12:3570",
+      "designExpectation": "申込一覧で複数選択し「一括編集」は POST /{admin_route}/entry/bulkupdate（非同期）で、選択した申込の申込ステータスを一括変更し、結果をJSONで返す。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:300",
+      "implementationActual": "実装の一括更新エンドポイントは #[Route(path: '/%eccube_admin_route%/event/entry/bulk_update', name: 'admin_event_entry_bulk_update', methods: ['POST'])]。Twig も url('admin_event_entry_bulk_update') を呼ぶ。反証検索でも /entry/bulkupdate または /entry/bulk_update の別ルートは見つからない。",
+      "mismatchReason": "設計の利用者視点入口は /{admin_route}/entry/bulkupdate だが、実装は /{admin_route}/event/entry/bulk_update で、event セグメント追加と bulkupdate/bulk_update の差異がある。探索範囲: src/Eccube, html。検索語: entry/bulkupdate, entry/bulk_update, bulkupdate, admin_entry_bulk_update, admin_event_entry_bulk_update。",
+      "comparisonRows": [
+        {
+          "item": "URLエンドポイント",
+          "design": "POST /{admin_route}/entry/bulkupdate（非同期）",
+          "implementation": "POST /{admin_route}/event/entry/bulk_update",
+          "mismatch": "外部契約のパスが一致しない"
+        },
+        {
+          "item": "画面からの送信先",
+          "design": "申込一覧で複数選択し「一括編集」から設計URLへ送信",
+          "implementation": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/index.twig:547 で url('admin_event_entry_bulk_update') を使用",
+          "mismatch": "実装画面も設計URLではなく実装独自ルートへ送信する"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-12:3571",
+      "designExpectation": "非同期リクエストでない場合は失敗メッセージのJSONを返す。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:301",
+      "implementationActual": "bulkUpdateEntryStatus は JsonResponse を返すが、$request->isXmlHttpRequest() 等による非同期リクエスト判定がない。フォームが valid で entries があれば通常POSTでも更新処理へ進む。",
+      "mismatchReason": "設計は非XHRを失敗JSONにする要求だが、実装は非XHRを拒否せず、フォーム検証・ID取得・更新へ進む。反証検索でも Admin/Event/EntryController の一括更新周辺に isXmlHttpRequest / X-Requested-With 判定は存在しない。",
+      "comparisonRows": [
+        {
+          "item": "非同期判定",
+          "design": "非同期リクエストでない場合は失敗メッセージJSON",
+          "implementation": "EntryController.php:303-334 にフォーム処理と更新処理はあるが XHR 判定なし",
+          "mismatch": "通常POSTでも成功更新され得る"
+        },
+        {
+          "item": "失敗条件",
+          "design": "非同期でないこと自体が失敗条件",
+          "implementation": "失敗条件は未送信/フォーム不正、未選択、不正申込、権限エラーのみ",
+          "mismatch": "非XHR失敗条件が欠落"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-12:3581",
+      "designExpectation": "表示メッセージは、失敗時にロケールキー admin.register.failed、完了時にロケールキー admin.register.complete をJSONで返す。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EntryController.php:307",
+      "implementationActual": "フォーム不正時は admin.common.error_invalid_request またはフォームエラー文言、未選択/権限等は admin.event.entry.bulk_update.*、成功時は admin.event.entry.bulk_update.success を返す。messages.ja.yaml:1780-1781 に admin.register.complete/admin.register.failed は存在するが、この機能では使用していない。",
+      "mismatchReason": "設計指定の表示文言キー admin.register.failed/admin.register.complete と、実装が返すロケールキーが一致しない。",
+      "comparisonRows": [
+        {
+          "item": "失敗メッセージ",
+          "design": "admin.register.failed",
+          "implementation": "admin.common.error_invalid_request または admin.event.entry.bulk_update.nothing_selected / invalid_selection / permission_denied",
+          "mismatch": "設計キーを返していない"
+        },
+        {
+          "item": "完了メッセージ",
+          "design": "admin.register.complete",
+          "implementation": "admin.event.entry.bulk_update.success（%count% 件の申込状況を更新しました。）",
+          "mismatch": "設計キーを返していない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-12:3599",
+      "designExpectation": "一括更新ごとに申込履歴を1件記録する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbEntryHistoryRepository.php:43",
+      "implementationActual": "EntryStatusBulkUpdateAction.php:63 は各申込で createEntryHistory($entry, $member->getId()) を呼ぶが、DtbEntryHistoryRepository.php:43-45 で直近履歴の申込ステータスが現在ステータスと同一なら continue し、履歴を作成しない。",
+      "mismatchReason": "設計は一括更新ごとに1件記録と明記しているが、実装は同一ステータスへの一括更新では履歴をスキップする。反証検索でも一括更新専用に無条件で new DtbEntryHistory を persist する別経路は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "履歴記録単位",
+          "design": "一括更新ごとに申込履歴を1件記録",
+          "implementation": "直近履歴と同一ステータスなら DtbEntryHistoryRepository.php:45 で continue",
+          "mismatch": "一括更新しても履歴が0件になるケースがある"
+        },
+        {
+          "item": "一括更新処理",
+          "design": "申込ごとに申込ステータスを指定値へ更新し、申込履歴を記録",
+          "implementation": "EntryStatusBulkUpdateAction.php:52-63 でステータス保存後に createEntryHistory を呼ぶが、リポジトリ側で重複スキップ",
+          "mismatch": "呼び出しはあるが、設計の「ごとに1件」を満たさない"
+        }
+      ]
+    }
+  ]
+}

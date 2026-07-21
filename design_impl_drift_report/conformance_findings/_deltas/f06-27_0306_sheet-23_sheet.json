@@ -1,0 +1,115 @@
+{
+  "functionId": "f06-27_0306_sheet-23_sheet",
+  "featureNo": "F06-27",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "0306_基本設計仕様書(フロント_会員).html#sheet-23:7530-7535",
+      "designExpectation": "ポリシー違反パスワードでログインした会員を専用画面(F06-27)へ遷移させパスワード変更を促す。変更処理は会員情報変更と同様。",
+      "implRef": "src/Eccube/EventListener/LoginPasswordLengthCheckListener.php:42-57",
+      "implementationActual": "ログイン時 CheckPassportEvent リスナーが login_pass 12桁未満で CustomUserMessageAuthenticationException('error.customer_login.password_length_required') を投げ認証を失敗させ、文言でパスワード再発行(ForgotController)へ誘導。専用Controller/Route/Twigは不在。",
+      "mismatchReason": "設計は一旦ログインさせ専用画面へ強制遷移させる方式。実装はログイン自体をブロックしパスワード再発行フローへ回す方式で根本的に異なる。",
+      "comparisonRows": [
+        {"item": "違反時の挙動", "design": "ログイン許可し専用画面F06-27へ遷移", "implementation": "認証失敗(ログイン拒否)", "mismatch": "遷移方式が逆"},
+        {"item": "誘導先", "design": "F06-27 専用パスワード設定画面", "implementation": "パスワード再発行(Forgot)", "mismatch": "誘導先が異なる"},
+        {"item": "判定内容", "design": "リニューアル後ポリシー(英数混在+12文字)", "implementation": "mb_strlen<12 の長さのみ", "mismatch": "文字種検証なし"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "0306_基本設計仕様書(フロント_会員).html#sheet-23:7536-7541",
+      "designExpectation": "変更未完了時、ログイン必須画面へのリンクを押しても当画面へ戻す。判定はポリシー違反を示すセッション情報を参照。",
+      "implRef": "不在",
+      "implementationActual": "ログイン必須画面アクセス時にポリシー違反セッションを参照して専用画面へ差し戻すガード(リスナー/kernel.requestフック/前処理)が存在しない。ポリシー違反セッションキー自体が未定義。",
+      "mismatchReason": "policy_violation/password_policy/force_password 系キーワードで src/Eccube・html を検索し 0 件。状態ガードとその参照処理が実装に無い。",
+      "comparisonRows": [
+        {"item": "状態ガード", "design": "変更完了までログイン必須画面から当画面へ戻す", "implementation": "なし", "mismatch": "未実装"},
+        {"item": "ポリシー違反セッション", "design": "ログイン時に設定・参照", "implementation": "キー未定義", "mismatch": "未実装"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "0306_基本設計仕様書(フロント_会員).html#sheet-23:7542",
+      "designExpectation": "パスワード変更完了時にポリシー違反を示すセッション情報を削除する。",
+      "implRef": "不在",
+      "implementationActual": "ポリシー違反セッションの設定処理自体が無く、削除処理も存在しない。既存 Mypage/ChangeController は mypage_change_complete へリダイレクトのみ。",
+      "mismatchReason": "参照元セッションが未実装のため削除処理も不在。",
+      "comparisonRows": [
+        {"item": "セッション削除", "design": "変更完了時に削除", "implementation": "なし", "mismatch": "未実装"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "0306_基本設計仕様書(フロント_会員).html#sheet-23:7543-7548 shape C7",
+      "designExpectation": "専用画面に識別ID1の固定メッセージ『[リニューアル日]のサイトリニューアルに伴い…以下の手順でパスワードの再設定をお願いいたします。』を常に表示。",
+      "implRef": "不在",
+      "implementationActual": "当該固定メッセージ本文を常時表示する専用テンプレートが存在しない。近い文言はメール本文と validators.ja.yaml のログインエラー文言のみ。",
+      "mismatchReason": "'再設定をお願い|サイトリニューアルに伴い|個人情報を守る' で該当Twigヒットなし。専用画面自体が不在。",
+      "comparisonRows": [
+        {"item": "固定メッセージ表示", "design": "識別ID1メッセージを常時表示", "implementation": "専用テンプレなし", "mismatch": "未実装"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "0306_基本設計仕様書(フロント_会員).html#sheet-23:7550-7551 item 2,3",
+      "designExpectation": "パスワード／パスワード(確認)入力欄(半角・必須・最大50文字・最低12文字)。未入力で『変更する』押下時に動的に必須エラーを表示。",
+      "implRef": "不在",
+      "implementationActual": "汎用パスワードフォーム(RepeatedPasswordType 等)は存在するが、F06-27専用画面の入力欄・動的必須エラー表示を持つFormType/Twigは存在しない。",
+      "mismatchReason": "専用画面(Controller/Form/Twig)不在のため入力項目一式が未実装。",
+      "comparisonRows": [
+        {"item": "パスワード入力欄", "design": "半角/必須/最大50/最低12", "implementation": "専用フォームなし", "mismatch": "未実装"},
+        {"item": "動的必須エラー", "design": "未入力押下で表示", "implementation": "なし", "mismatch": "未実装"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "0306_基本設計仕様書(フロント_会員).html#sheet-23:7551-7552 item 3,4",
+      "designExpectation": "『変更する』押下でパスワード(確認)一致チェックを行い、パスワード変更完了画面へ遷移する。",
+      "implRef": "不在",
+      "implementationActual": "会員情報変更(Mypage/ChangeController)は mypage_change_complete へ遷移するが F06-27 専用フローではない。専用の変更処理・完了画面遷移が存在しない。",
+      "mismatchReason": "専用画面不在のため一致チェック＋専用完了画面遷移が未実装。既存会員情報変更完了画面では代替にならない。",
+      "comparisonRows": [
+        {"item": "変更処理と完了遷移", "design": "F06-27専用の変更完了画面へ遷移", "implementation": "専用フローなし", "mismatch": "未実装"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "0306_基本設計仕様書(フロント_会員).html#sheet-23:7552 item 5",
+      "designExpectation": "『TOPへ戻る』ボタン押下でTOP画面へ遷移する。",
+      "implRef": "不在",
+      "implementationActual": "専用画面テンプレートが存在しないため『TOPへ戻る』ボタン(homepage遷移)も実装されていない。",
+      "mismatchReason": "専用画面が無く当該ボタンも未実装。",
+      "comparisonRows": [
+        {"item": "TOPへ戻るボタン", "design": "homepage へ遷移", "implementation": "なし", "mismatch": "未実装"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "0306_基本設計仕様書(フロント_会員).html#sheet-23:shape C7",
+      "designExpectation": "パスワードポリシー案内文言『半角英字・数字をそれぞれ1文字以上含め、12文字以上で入力してください。』を画面上に表示。",
+      "implRef": "src/Eccube/EventListener/LoginPasswordLengthCheckListener.php:54",
+      "implementationActual": "ログイン時桁数チェックは mb_strlen<12 の長さ判定のみで文字種混在を検証せず、案内文言も出さない。専用画面の案内文言も存在しない。",
+      "mismatchReason": "'半角英字|それぞれ1文字以上|12文字以上' で該当なし。専用画面不在＋文字種ポリシー未検証。",
+      "comparisonRows": [
+        {"item": "ポリシー案内文言", "design": "英数各1文字以上+12文字以上を表示", "implementation": "なし", "mismatch": "未実装"},
+        {"item": "文字種検証", "design": "英字・数字混在必須", "implementation": "長さのみ", "mismatch": "検証不足"}
+      ]
+    }
+  ]
+}

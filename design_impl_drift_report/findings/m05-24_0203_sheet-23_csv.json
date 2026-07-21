@@ -1,0 +1,2066 @@
+{
+  "functionId": "m05-24_0203_sheet-23_csv",
+  "featureNo": "M05-24",
+  "title": "M05-24 出荷実績入力用CSV出力",
+  "domain": "m05",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+  "sourceBook": "0203_基本設計仕様書(受注管理機能).html",
+  "sheetId": "sheet-23",
+  "sheetName": "出荷実績入力用CSV出力",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "functionId": "m05-24_0203_sheet-23_csv",
+      "dimension": "③バリデーション・処理フロー",
+      "severity": "low",
+      "designRef": "function_spec_html_preview/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.html:236",
+      "designQuote": "キー一覧を整数IDの並びとして解釈する。",
+      "implRef": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:202-213 / src/Eccube/Repository/OrderRepository.php:1460-1461",
+      "difference": "設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。",
+      "impact": "不正なキーや数値文字列の扱いが設計より曖昧になり、入力検証の責務がDB/ORM側へ流れる。",
+      "evidence": "OrderCsvController.php:202-213 と OrderRepository.php:1460-1461 を確認。",
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "reaudit_harness",
+      "id": "m05-24-0203-sheet-23-csv-617807a4bf-01",
+      "designExpectation": "キー一覧を整数IDの並びとして解釈する。",
+      "implementationActual": "設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。",
+      "fixTarget": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:202-213 / src/Eccube/Repository/OrderRepository.php:1460-1461",
+      "implementationRefs": [
+        "src/Eccube/Controller/Admin/Order/OrderCsvController.php:202-213",
+        "src/Eccube/Repository/OrderRepository.php:1460-1461"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Order/OrderCsvController.php:202\n199:         // 注文情報IDを取得する\n200:         $rawOrderIds = $request->get('order_ids', []);\n201:         if (!is_array($rawOrderIds) || empty($rawOrderIds)) {\n202:             $this->addError('admin.common.select', 'admin');\n203: \n204:             $referer = $request->headers->get('referer');\n205:             if ($referer !== null && $referer !== '') {",
+        "src/Eccube/Repository/OrderRepository.php:1460\n1457:                 s.name01,\n1458:                 s.name02,\n1459:                 s.kana01,\n1460:                 s.kana02,\n1461:                 s.company_name,\n1462:                 s.postal_code,\n1463:                 s.addr01,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ],
+      "comparisonRows": [
+        {
+          "item": "③バリデーション・処理フロー",
+          "design": "キー一覧を整数IDの並びとして解釈する。",
+          "implementation": "設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。",
+          "mismatch": "設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。"
+        }
+      ],
+      "comparisonSummary": "③バリデーション・処理フロー：設計は「キー一覧を整数IDの並びとして解釈する。」。実装は「設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。」。乖離理由は「設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。」。",
+      "mismatchReason": "設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "designSnippet": "hareruya-design-docs/function_spec_html_preview/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.html:236\n233: <hr>\n234: <h2 id=\"処理フロー\">処理フロー</h2>\n235: <h3 id=\"CSVをダウンロードする-admin-order-export-for-input-exportForInput\">CSVをダウンロードする（<code>admin_order_export_for_input</code>、<code>exportForInput</code>）</h3>\n236: <ol><li>管理画面の認証・共通制約を通過する。</li><li><code>set_time_limit(0)</code>でPHPの実行時間制限を無効にする。</li><li>Doctrineの設定からSQLログ出力を無効にする確認値となる。</li><li><code>order_ids</code>を配列として取得する。PHP配列でない、または空のときフラッシュへ<code>admin.common.select</code>を載せ、<code>Referer</code>が空で無ければそこへ、空ならルート名<code>admin_order</code>へリダイレクトする。</li><li>キー一覧を整数IDの並びとして解釈し、出荷実績用CSV生成関数へ渡す。</li><li>返却データが論理偽となるとき実行時論外メッセージを投げる。そのメッセージは翻訳キー<code>admin.csv.error.export.not_registered</code>であり、標準ロケール下の日本語文言は文言上カード領域向けであり受注一覧からは転用読みとなる（実装確認値）。</li><li>論外を捕まえた場合はフラッシュへメッセージを載せ、同様に<code>Referer</code>または<code>admin_order</code>へリダイレクトする。</li><li>成功経路では<code>StreamedResponse</code>を返す。コールバック内で<code>CsvExportService</code>を開く。</li><li>ヘッダ行として、ヘッダ定数の連想キー配列について<code>array_keys</code>の順で1行書く。</li><li>クエリ結果の各行について、そのまま<code>fputcsv</code>へ渡す。 DoctrineのDateTime項目はクエリ関数内で事前に<code>'Y/m/d H:i:s'</code>形式へ書式化済みとなる。</li><li>ストリームを閉じる。</li><li>ファイル名は接頭辞<code>order_</code>、<code>YmdHis</code>桁そろえ日時、拡張子<code>.csv</code>を連結する実装関数を用いる（受注一覧向け自動命名と接頭辞と形式が字面で同一規則である確認値）。</li><li>応答ヘッダに<code>Content-Type: text/csv;charset=&lt;出力エンコーディング&gt;</code>と<code>Content-Disposition: attachment; filename=…</code>を付与する。<code>&lt;出力エンコーディング&gt;</code>は設定<code>eccube_csv_export_encoding</code>がSJIS系と判定される場合のラベルを<code>windows-31j</code>に寄せたりそうでない場合そのまま読む処理である。</li><li>ストリーム返却の手前で情報ログに「CSV出力ファイル名」とファイル名を記録する。</li></ol>\n237: <hr>\n238: <h2 id=\"集計条件\">集計条件</h2>\n239: <p>本機能は金額集計をしない。結果行数および列値は検索関数の結合規則に従う。</p>",
+      "auditAspects": [
+        "Form・入力項目",
+        "Twig・画面表示"
+      ]
+    },
+    {
+      "id": "m05-24_0203_sheet-23_csv-conformance-4fbebd377ccd",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7474",
+      "designRefDetail": null,
+      "designExpectation": "出荷実績入力用CSV出力項目設定は、設計HTMLの一覧どおり64列で出力する。配送先住所列は「配送先_住所1」「配送先_住所2」の後に「配送先_TEL1」が続き、「配送先_住所3」は含めない。",
+      "designQuote": "出荷実績入力用CSV出力項目設定は、設計HTMLの一覧どおり64列で出力する。配送先住所列は「配送先_住所1」「配送先_住所2」の後に「配送先_TEL1」が続き、「配送先_住所3」は含めない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418",
+      "implementationActual": "実装のCSV_HEADERには「配送先_住所2」と「配送先_TEL1」の間に「配送先_住所3」が追加されており、generateResultCsv も s.addr03 AS shipping_addr03 を選択してCSV行へ含める。",
+      "difference": "設計HTMLの項目一覧では ID52 が「配送先_住所1」、ID53 が「配送先_住所2」、ID54 が「配送先_TEL1」であり、配送先_住所3 は定義されていない。実装は OrderCsvController::CSV_HEADER と NOT_REQUIRED_CSV_HEADER に「配送先_住所3」を持ち、OrderRepository::generateResultCsv も s.addr03 を返すため、設計より1列多く、ID54以降の列位置がずれる。反証検索では「配送先_住所3」「shipping_addr03」「s.addr03」「CSV_HEADER」「generateResultCsv」を確認し、sheet-23 の出荷実績入力用CSV出力項目設定内に配送先_住所3 の設計定義は見つからなかった。",
+      "mismatchReason": "設計HTMLの項目一覧では ID52 が「配送先_住所1」、ID53 が「配送先_住所2」、ID54 が「配送先_TEL1」であり、配送先_住所3 は定義されていない。実装は OrderCsvController::CSV_HEADER と NOT_REQUIRED_CSV_HEADER に「配送先_住所3」を持ち、OrderRepository::generateResultCsv も s.addr03 を返すため、設計より1列多く、ID54以降の列位置がずれる。反証検索では「配送先_住所3」「shipping…",
+      "comparisonRows": [
+        {
+          "item": "列数",
+          "design": "64列（ID1〜ID64）",
+          "implementation": "CSV_HEADER は「配送先_住所3」を含む65列",
+          "mismatch": "実装が設計より1列多い"
+        },
+        {
+          "item": "ID54相当の列",
+          "design": "配送先_TEL1（excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7476）",
+          "implementation": "配送先_住所3（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95）",
+          "mismatch": "設計上存在しない配送先_住所3が挿入されている"
+        },
+        {
+          "item": "データ行",
+          "design": "配送先_住所3の出力要求なし",
+          "implementation": "s.addr03 AS shipping_addr03 を選択（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418）",
+          "mismatch": "ヘッダだけでなくCSVデータ行にも余分な列が出る"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m05-24_0203_sheet-23_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「出荷実績入力用CSV出力項目設定は、設計HTMLの一覧どおり64列で出力する。配送先住所列は「配送先_住所1」「配送先_住所2」の後に「配送先_TEL1」が続き、「配送先_住所3」は含めない。」。実装は「実装のCSV_HEADERには「配送先_住所2」と「配送先_TEL1」の間に「配送先_住所3」が追加されており、generateResultCsv も s.addr03 AS shipping_addr03 を選択してCSV行へ含める。」。乖離理由は「設計HTMLの項目一覧では ID52 が「配送先_住所1」、ID53 が「配送先_住所2」、ID54 が「配送先_TEL1」であり、配送先_住所3 は定義されていない。実装は OrderCsvController::CSV_HEADER と NOT_REQUIRED_CSV_HEADER に「配送先_住所3」を持ち、OrderRepository::generateResultCsv も s.addr03 を返すため、設計より1列多く、ID54以降の列位置がずれる。反証検索では「配送先_住所3」「shipping…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Form・入力項目",
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Order/OrderCsvController.php:95\n92:         '配送先_都道府県(名称)' => '配送先_都道府県(名称)',\n93:         '配送先_住所1' => '配送先_住所1',\n94:         '配送先_住所2' => '配送先_住所2',\n95:         '配送先_住所3' => '配送先_住所3',\n96:         '配送先_TEL1' => '配送先_TEL1',\n97:         '配送先_TEL2' => '配送先_TEL2',\n98:         '配送先_TEL3' => '配送先_TEL3',",
+        "src/Eccube/Repository/OrderRepository.php:1418\n1415:                 'sp.name AS shipping_pref_name',\n1416:                 's.addr01 AS shipping_addr01',\n1417:                 's.addr02 AS shipping_addr02',\n1418:                 's.addr03 AS shipping_addr03',\n1419:                 's.tel01 AS shipping_tel01',\n1420:                 's.tel02 AS shipping_tel02',\n1421:                 's.tel03 AS shipping_tel03',",
+        "src/Eccube/Controller/Admin/Order/OrderCsvController.php:30\n27: use Symfony\\Component\\HttpFoundation\\Response;\n28: use Symfony\\Component\\Routing\\Attribute\\Route;\n29: \n30: class OrderCsvController extends AbstractController\n31: {\n32:     public function __construct(\n33:         protected OrderCsv $orderCsv,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 55,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-2f06db84ac",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "出荷実績入力用CSV出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-b5779814c0",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "概要 出荷実績入力用のCSVを出力できる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-2b5503ecae",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "出荷実績入力用CSV出力項目設定",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-ad936fa43f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "M05-24 出荷実績入力用CSV出力 / m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-6637fe5a08",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "「出荷実績インポート登録」で取り込むCSVと同一の日本語ヘッダ列を持つファイルを、管理画面からダウンロード応答で返す機能である。画面ラベルは翻訳キー admin.order.shipping_export_for_import で「出荷実績入力用CSVダウンロード」となる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-7f590febe4",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ソース上の確認値はSymfonyルート、 src/Eccube/Controller/Admin/Order/OrderCsvController.php の送信先処理、 src/Eccube/Service/Csv/OrderCsv.php 、 src/Eccube/Repository/OrderRepository.php の出荷実績用CSV検索、 src/Eccube/Resource/template/admin/ShippingStandby/edit.twig のボタンとフォーム送信とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-fb06da45ad",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "本機能のカスタマイズ区分は現行踏襲であり、画面挙動と処理フローは現行リポ pf-eccube3 の実装を確認値とし、永続化に関わるテーブル・列の記述は ec-cube-enterprise を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-7e93a067dd",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "DB関連の記述は ec-cube-enterprise を正とする。CSV生成が参照する永続化先のうち、注文の郵便番号の保持方式に現行と移行先で差がある。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-d5abbe8e9f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "dtb_order が zip01 （3桁）・ zip02 （4桁）の2列で保持",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-0f79337467",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "dtb_order.postal_code （単一列、最大8桁）に統合。先頭3桁・残り4桁への分割はエンティティの取得補助で行う。CSVヘッダは引き続き2列分を出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-a677b032e0",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "dtb_shipping （INNER JOIN のため配送が無い注文は出力対象外）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-15d3223020",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "CSVのヘッダ列順・日時書式（ Y/m/d H:i:s ）・エンコーディング設定は永続化スキーマではなく出力仕様であり、本節の差分管理対象としない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-b8d5774a79",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実績入力用CSVダウンロード」ボタンを押す",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-ee9d43f17b",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "order_ids[<受注内部ID>] が送られ、共通CSV出力サービスでエンコード・区切り付きのCSVファイルが応答となる。ブラウザのダウンロード挙動は利用者環境に委ねる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-7e8152472b",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "上記一覧でチェック済みが1件も送られなかった場合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-3cb32ce2b4",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "エラーフラッシュ admin.common.select 相当の文言となり、 Referer ヘッダがあればそこへ、無ければ admin_order へリダイレクトする確認値となる。ステータスはリダイレクト応答のフレームワーク既定に従う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-dc73d20fd9",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "ストリーム直前までにデータ取得が論外終了した場合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-c9651a137b",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "エラーフラッシュに例外または翻訳メッセージを載せ、 Referer 優先または admin_order へリダイレクトする確認値となる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-38452fc77f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "@admin/ShippingStandby/edit.twig の一覧フォーム（ form_bulk ）直上に、 id=\"orderExportForInput\" のボタンがある。一覧各行のチェックボックスは既定でオン、名前は order_ids[{{ Order.id }}] 。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-53cebddb3f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "クリックで form_bulk から target 属性を削除し、 action を admin_order_export_for_input へ差し替えて submit する。確認ダイアログは無い確認値である。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-3c3d6b9fb8",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "Doctrineの設定からSQLログ出力を無効にする確認値となる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-726df6cc13",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "order_ids を配列として取得する。PHP配列でない、または空のときフラッシュへ admin.common.select を載せ、 Referer が空で無ければそこへ、空ならルート名 admin_order へリダイレクトする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-09a2447975",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "返却データが論理偽となるとき実行時論外メッセージを投げる。そのメッセージは翻訳キー admin.csv.error.export.not_registered であり、標準ロケール下の日本語文言は文言上カード領域向けであり受注一覧からは転用読みとなる（実装確認値）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-d51a368db9",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "論外を捕まえた場合はフラッシュへメッセージを載せ、同様に Referer または admin_order へリダイレクトする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-d0248909fc",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "ファイル名は接頭辞 order_ 、 YmdHis 桁そろえ日時、拡張子 .csv を連結する実装関数を用いる（受注一覧向け自動命名と接頭辞と形式が字面で同一規則である確認値）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-3d37bd92b9",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "応答ヘッダに Content-Type: text/csv;charset=<出力エンコーディング> と Content-Disposition: attachment; filename=… を付与する。 <出力エンコーディング> は設定 eccube_csv_export_encoding がSJIS系と判定される場合のラベルを windows-31j に寄せたりそうでない場合そのまま読む処理である。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-bf3deb2f20",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "ストリーム返却の手前で情報ログに「CSV出力ファイル名」とファイル名を記録する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-399f05a86c",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "出力対象受注集合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-172618b8ee",
+        "category": "POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "関数が空とみなされる配列または偽値を返したとき、このコントローラ経路では上記論外となる。すべての指定IDが顧客未紐付け・配送無しなどでクエリ結果に現れなかった場合に該当しうる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-800107e80e",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "Doctrine結果に含まれる日時項目は関数内書式化により OrderRepository::CSV_DATE_FORMAT の確認値 'Y/m/d H:i:s' へそろえる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-bf0e4cf98e",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "DBは単一桁列の確認値であり、関数内で先頭3桁・残り4桁に SUBSTRING 分割して2列出力する実装である。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-56a7ef17ac",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "DB列が無い確認値であり、関数内では空文字3列として埋める。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-383e950d7a",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "CsvExportService のコールバックで、セルごとに eccube_csv_export_encoding へ向けて mb_convert_encoding する。UTF-8系と判定されるときのみ先頭BOMを付与するfopen処理である。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-5ebc950aa8",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "eccube_csv_export_separator 、 fputcsv のエスケープはバックスラッシュ、囲みは二重引用符が確認値である。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-c48c04f7bb",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "フラッシュ admin.common.select 相当を載せ、 Referer または admin_order へリダイレクト。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-287eed82df",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "転用読みとなる翻訳メッセージを載せて実行時論外となり、その後フラッシュ処理とリダイレクト。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-e4a02a1ceb",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "Symfonyのマッチは受注dtb_csv系CSVが優先される（GETのみのルートが選ばれた確認環境がある）。セッション検索状態に応じて受注明細粒度の項目定義ファイルが生成される。この取得経路によるファイルは受注一覧用の出力であり、固定ヘッダの出荷実績入力用CSVではない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-7e62d82227",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "Twig断片のみでは共通トークンを確認できなかった。送信が拒否されるかはSymfony全体の構成に従う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-44cb712bad",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "ヘッダ定数および列順はインポート実装側のチェック関数と共通のソース定数であり、両者は同一ソースで更新されることが前提となる。一方でSQLが返す列セットはDoctrineの結果キー並びであり、クエリ側の並び変更で列ズレするリスクがあるため、両ファイルの並び確認が運用上の論点となる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-b7dbaceb52",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "読み取りのみ。インポート登録とは別機能。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-61817b804d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "入力（成功経路判定に効くもの）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-586580bdfa",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "POSTボディまたは同等の請求項目 order_ids （PHP配列。キーが受注内部ID）。クエリでの絞り込み入力は読まない確認値である。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-5517841521",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "ブラウザのダウンロードではなく、フラッシュおよびリダイレクトとなる経路がある。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-b9216786f9",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "注文番号、計上金額系、関連日時、送り状番号内部保持列など結果に露出する項目がある。詳細な列リストは関数の選択子およびスキーマを正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-2ee6cf163d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "INNER JOINとなるため無い注文は出力から落ちうることをリバース側で押さえる価値がある。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-5b96b377dd",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-66b46083bc",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-9892a55be6",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "クエリ入力に対してフォームオブジェクト側の入力種別チェックは行わない確認値となる。送信欠損は配列チェックのみ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-524834fc25",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "POSTで送信しうる確認値となる。細かい許可一覧はSymfonyの権限設定を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-3c470103a9",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "画面上は出荷指示編集ページのままになりうる確認値であり、応答本体は別ストリーム。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-62910f8653",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "選択欠損・論外によりリダイレクト",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-fd870fbcaf",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "フラッシュにメッセージを載せ、リダイレクト経路同上。標準文言はキー転用となる（実装修正の論点になりうる）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-8c4dc8ebd1",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "情報ログ「CSV出力ファイル名」とファイル名文字列",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-8785aacef4",
+        "category": "本機能におけるセッション",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "成功経路において検索状態キーは参照しない確認値となる。フラッシュのみフレームワークが利用する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-89fb16099e",
+        "category": "行ロック・悲観ロック・楽観ロック・ロックファイルは使用しない。ロールバック対象や部分反映の扱いは本節のトランザクション境界と例外時の記載を正とする。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "フォーム入力名およびリクエスト取得キー。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "designDerivedTerms": {
+      "routeNames": [
+        "OrderCsvController",
+        "OrderCsv",
+        "OrderRepository",
+        "admin_route",
+        "order_ids",
+        "admin_order",
+        "orderExportForInput",
+        "admin_order_export_for_input"
+      ],
+      "translationKeys": [
+        "admin.order.shipping_export_for_import",
+        "admin.common.select",
+        "admin.csv.error.export.not_registered"
+      ],
+      "classNames": [
+        "OrderCsvController",
+        "OrderCsv",
+        "OrderRepository",
+        "CsvExportService"
+      ],
+      "paths": [
+        "pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.md",
+        "Eccube/Controller/Admin/Order/OrderCsvController.php",
+        "Eccube/Service/Csv/OrderCsv.php",
+        "Eccube/Repository/OrderRepository.php",
+        "Eccube/Resource/template/admin/ShippingStandby/edit.twig",
+        "m/d",
+        "order/export/order",
+        "ShippingStandby/edit.twig",
+        "csv"
+      ],
+      "businessTerms": [
+        "M05",
+        "出荷実績入力用CSV出力",
+        "受注管理",
+        "受注管理機能",
+        "出荷実績入力用のCSVを出力できる",
+        "出荷実績入力用CSV出力項目設定",
+        "注文番号",
+        "会員ID",
+        "支払合計"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "OrderCsvController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Order/OrderCsvController.php",
+        "weight": 7
+      },
+      {
+        "term": "OrderCsvController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Order/OrderCsvController.php",
+        "weight": 7
+      },
+      {
+        "term": "admin_order_export_for_input",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:191",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/order/export/order', name: 'admin_order_export_for_input', methods: ['GET', 'POST'])]",
+        "weight": 7
+      },
+      {
+        "term": "OrderCsv",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:22",
+        "snippet": "use Eccube\\Service\\Csv\\OrderCsv;",
+        "weight": 7
+      },
+      {
+        "term": "OrderCsv",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:22",
+        "snippet": "use Eccube\\Service\\Csv\\OrderCsv;",
+        "weight": 7
+      },
+      {
+        "term": "OrderCsv",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:33",
+        "snippet": "protected OrderCsv $orderCsv,",
+        "weight": 7
+      },
+      {
+        "term": "OrderCsv",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:33",
+        "snippet": "protected OrderCsv $orderCsv,",
+        "weight": 7
+      },
+      {
+        "term": "order_ids",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:291",
+        "snippet": "$orderIdList = array_keys($request->get('order_ids', []));",
+        "weight": 7
+      },
+      {
+        "term": "order_ids",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:401",
+        "snippet": "$orderIdList = array_keys($request->get('order_ids', []));",
+        "weight": 7
+      },
+      {
+        "term": "admin_order",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/Order/edit.twig:1901",
+        "snippet": "<a class=\"c-baseLink\" href=\"{{ url('admin_order', { 'resume': 1 }) }}\"><i class=\"fa fa-backward\" aria-hidden=\"true\"></i><span>{{ 'admin.order.order_list'|trans }}</span></a>",
+        "weight": 7
+      },
+      {
+        "term": "admin_order",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/Order/manual_mail_all.twig:144",
+        "snippet": "href=\"{{ path('admin_order', { page_no : app.session.get('eccube.admin.order.search.page_no')|default('1') } ) }}\"",
+        "weight": 7
+      },
+      {
+        "term": "orderExportForInput",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:126",
+        "snippet": "<button type=\"button\" id=\"orderExportForInput\" class=\"btn btn-primary btn-sm edit submit\">",
+        "weight": 7
+      },
+      {
+        "term": "order_ids",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:157",
+        "snippet": "<input type=\"checkbox\" checked id=\"check-{{ Order.id }}\" data-id=\"{{ Order.id }}\" data-shipping-id=\"{{ (Order.Shippings|first).id ?? '' }}\" name=\"order_ids[{{ Order.id }}]\"></td>",
+        "weight": 7
+      },
+      {
+        "term": "orderExportForInput",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:37",
+        "snippet": "$('#orderExportForInput').on('click', function(event) {",
+        "weight": 7
+      },
+      {
+        "term": "admin_order_export_for_input",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:39",
+        "snippet": "$('#form_bulk').attr('action', \"{{ url('admin_order_export_for_input') }}\");",
+        "weight": 7
+      },
+      {
+        "term": "order_ids",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:48",
+        "snippet": "$('#form_bulk input[type=\"checkbox\"][name^=\"order_ids\"]:checked').each(function() {",
+        "weight": 7
+      },
+      {
+        "term": "admin_order",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/index.twig:123",
+        "snippet": "<a href=\"{{ url('admin_order') }}\">",
+        "weight": 7
+      },
+      {
+        "term": "admin_order",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/index.twig:130",
+        "snippet": "<a href=\"{{ url('admin_order', { 'order_status_id': OrderStatus.id }) }}\" class=\"p-3 d-block\">",
+        "weight": 7
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 4,
+    "implementationGapRequirementCount": 0,
+    "rows": [
+      {
+        "findingId": "m05-24-0203-sheet-23-csv-617807a4bf-01",
+        "dimension": "③バリデーション・処理フロー",
+        "severity": "low",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "function_spec_html_preview/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.html:236",
+        "designRequirement": "キー一覧を整数IDの並びとして解釈する。",
+        "implementationActual": "設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。",
+        "mismatchReason": "設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。",
+        "implementationRefs": [
+          "src/Eccube/Controller/Admin/Order/OrderCsvController.php:202-213",
+          "src/Eccube/Repository/OrderRepository.php:1460-1461"
+        ],
+        "comparisonRows": [
+          {
+            "item": "③バリデーション・処理フロー",
+            "design": "キー一覧を整数IDの並びとして解釈する。",
+            "implementation": "設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。",
+            "mismatch": "設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。"
+          }
+        ]
+      },
+      {
+        "findingId": "m05-24_0203_sheet-23_csv-conformance-4fbebd377ccd",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7474",
+        "designRequirement": "64列（ID1〜ID64）",
+        "implementationActual": "CSV_HEADER は「配送先_住所3」を含む65列",
+        "mismatchReason": "実装が設計より1列多い",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "列数",
+            "design": "64列（ID1〜ID64）",
+            "implementation": "CSV_HEADER は「配送先_住所3」を含む65列",
+            "mismatch": "実装が設計より1列多い"
+          }
+        ]
+      },
+      {
+        "findingId": "m05-24_0203_sheet-23_csv-conformance-4fbebd377ccd",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7474",
+        "designRequirement": "配送先_TEL1（excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7476）",
+        "implementationActual": "配送先_住所3（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95）",
+        "mismatchReason": "設計上存在しない配送先_住所3が挿入されている",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "ID54相当の列",
+            "design": "配送先_TEL1（excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7476）",
+            "implementation": "配送先_住所3（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95）",
+            "mismatch": "設計上存在しない配送先_住所3が挿入されている"
+          }
+        ]
+      },
+      {
+        "findingId": "m05-24_0203_sheet-23_csv-conformance-4fbebd377ccd",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23:7474",
+        "designRequirement": "配送先_住所3の出力要求なし",
+        "implementationActual": "s.addr03 AS shipping_addr03 を選択（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418）",
+        "mismatchReason": "ヘッダだけでなくCSVデータ行にも余分な列が出る",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "データ行",
+            "design": "配送先_住所3の出力要求なし",
+            "implementation": "s.addr03 AS shipping_addr03 を選択（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418）",
+            "mismatch": "ヘッダだけでなくCSVデータ行にも余分な列が出る"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 55,
+    "verdictedCount": 55,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 55,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-2f06db84ac",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "出荷実績入力用CSV出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-b5779814c0",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "概要 出荷実績入力用のCSVを出力できる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-2b5503ecae",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "出荷実績入力用CSV出力項目設定",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-ad936fa43f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "M05-24 出荷実績入力用CSV出力 / m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-6637fe5a08",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "「出荷実績インポート登録」で取り込むCSVと同一の日本語ヘッダ列を持つファイルを、管理画面からダウンロード応答で返す機能である。画面ラベルは翻訳キー admin.order.shipping_export_for_import で「出荷実績入力用CSVダウンロード」となる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-7f590febe4",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ソース上の確認値はSymfonyルート、 src/Eccube/Controller/Admin/Order/OrderCsvController.php の送信先処理、 src/Eccube/Service/Csv/OrderCsv.php 、 src/Eccube/Repository/OrderRepository.php の出荷実績用CSV検索、 src/Eccube/Resource/template/admin/ShippingStandby/edit.twig のボタンとフォーム送信とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-fb06da45ad",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "本機能のカスタマイズ区分は現行踏襲であり、画面挙動と処理フローは現行リポ pf-eccube3 の実装を確認値とし、永続化に関わるテーブル・列の記述は ec-cube-enterprise を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-7e93a067dd",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "DB関連の記述は ec-cube-enterprise を正とする。CSV生成が参照する永続化先のうち、注文の郵便番号の保持方式に現行と移行先で差がある。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-d5abbe8e9f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "dtb_order が zip01 （3桁）・ zip02 （4桁）の2列で保持",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-0f79337467",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "dtb_order.postal_code （単一列、最大8桁）に統合。先頭3桁・残り4桁への分割はエンティティの取得補助で行う。CSVヘッダは引き続き2列分を出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-a677b032e0",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "dtb_shipping （INNER JOIN のため配送が無い注文は出力対象外）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-15d3223020",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "CSVのヘッダ列順・日時書式（ Y/m/d H:i:s ）・エンコーディング設定は永続化スキーマではなく出力仕様であり、本節の差分管理対象としない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-b8d5774a79",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実績入力用CSVダウンロード」ボタンを押す",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-ee9d43f17b",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "order_ids[<受注内部ID>] が送られ、共通CSV出力サービスでエンコード・区切り付きのCSVファイルが応答となる。ブラウザのダウンロード挙動は利用者環境に委ねる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-7e8152472b",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "上記一覧でチェック済みが1件も送られなかった場合",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-3cb32ce2b4",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "エラーフラッシュ admin.common.select 相当の文言となり、 Referer ヘッダがあればそこへ、無ければ admin_order へリダイレクトする確認値となる。ステータスはリダイレクト応答のフレームワーク既定に従う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-dc73d20fd9",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "ストリーム直前までにデータ取得が論外終了した場合",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-c9651a137b",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "エラーフラッシュに例外または翻訳メッセージを載せ、 Referer 優先または admin_order へリダイレクトする確認値となる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-38452fc77f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "@admin/ShippingStandby/edit.twig の一覧フォーム（ form_bulk ）直上に、 id=\"orderExportForInput\" のボタンがある。一覧各行のチェックボックスは既定でオン、名前は order_ids[{{ Order.id }}] 。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-53cebddb3f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "クリックで form_bulk から target 属性を削除し、 action を admin_order_export_for_input へ差し替えて submit する。確認ダイアログは無い確認値である。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-3c3d6b9fb8",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "Doctrineの設定からSQLログ出力を無効にする確認値となる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-726df6cc13",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "order_ids を配列として取得する。PHP配列でない、または空のときフラッシュへ admin.common.select を載せ、 Referer が空で無ければそこへ、空ならルート名 admin_order へリダイレクトする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-09a2447975",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "返却データが論理偽となるとき実行時論外メッセージを投げる。そのメッセージは翻訳キー admin.csv.error.export.not_registered であり、標準ロケール下の日本語文言は文言上カード領域向けであり受注一覧からは転用読みとなる（実装確認値）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-d51a368db9",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "論外を捕まえた場合はフラッシュへメッセージを載せ、同様に Referer または admin_order へリダイレクトする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-d0248909fc",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "ファイル名は接頭辞 order_ 、 YmdHis 桁そろえ日時、拡張子 .csv を連結する実装関数を用いる（受注一覧向け自動命名と接頭辞と形式が字面で同一規則である確認値）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-3d37bd92b9",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "応答ヘッダに Content-Type: text/csv;charset=<出力エンコーディング> と Content-Disposition: attachment; filename=… を付与する。 <出力エンコーディング> は設定 eccube_csv_export_encoding がSJIS系と判定される場合のラベルを windows-31j に寄せたりそうでない場合そのまま読む処理である。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-bf3deb2f20",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "ストリーム返却の手前で情報ログに「CSV出力ファイル名」とファイル名を記録する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-399f05a86c",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "出力対象受注集合",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-172618b8ee",
+        "category": "POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "関数が空とみなされる配列または偽値を返したとき、このコントローラ経路では上記論外となる。すべての指定IDが顧客未紐付け・配送無しなどでクエリ結果に現れなかった場合に該当しうる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-800107e80e",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "Doctrine結果に含まれる日時項目は関数内書式化により OrderRepository::CSV_DATE_FORMAT の確認値 'Y/m/d H:i:s' へそろえる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-bf0e4cf98e",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "DBは単一桁列の確認値であり、関数内で先頭3桁・残り4桁に SUBSTRING 分割して2列出力する実装である。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-56a7ef17ac",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "DB列が無い確認値であり、関数内では空文字3列として埋める。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-383e950d7a",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "CsvExportService のコールバックで、セルごとに eccube_csv_export_encoding へ向けて mb_convert_encoding する。UTF-8系と判定されるときのみ先頭BOMを付与するfopen処理である。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-5ebc950aa8",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "eccube_csv_export_separator 、 fputcsv のエスケープはバックスラッシュ、囲みは二重引用符が確認値である。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-c48c04f7bb",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "フラッシュ admin.common.select 相当を載せ、 Referer または admin_order へリダイレクト。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-287eed82df",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "転用読みとなる翻訳メッセージを載せて実行時論外となり、その後フラッシュ処理とリダイレクト。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-e4a02a1ceb",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "Symfonyのマッチは受注dtb_csv系CSVが優先される（GETのみのルートが選ばれた確認環境がある）。セッション検索状態に応じて受注明細粒度の項目定義ファイルが生成される。この取得経路によるファイルは受注一覧用の出力であり、固定ヘッダの出荷実績入力用CSVではない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-7e62d82227",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "Twig断片のみでは共通トークンを確認できなかった。送信が拒否されるかはSymfony全体の構成に従う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-44cb712bad",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "ヘッダ定数および列順はインポート実装側のチェック関数と共通のソース定数であり、両者は同一ソースで更新されることが前提となる。一方でSQLが返す列セットはDoctrineの結果キー並びであり、クエリ側の並び変更で列ズレするリスクがあるため、両ファイルの並び確認が運用上の論点となる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-b7dbaceb52",
+        "category": "本機能では画面フォーム入力をサーバへ永続化しないため、 ### 入力項目 の表は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "読み取りのみ。インポート登録とは別機能。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-61817b804d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "入力（成功経路判定に効くもの）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-586580bdfa",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "POSTボディまたは同等の請求項目 order_ids （PHP配列。キーが受注内部ID）。クエリでの絞り込み入力は読まない確認値である。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-5517841521",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "ブラウザのダウンロードではなく、フラッシュおよびリダイレクトとなる経路がある。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-b9216786f9",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "注文番号、計上金額系、関連日時、送り状番号内部保持列など結果に露出する項目がある。詳細な列リストは関数の選択子およびスキーマを正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-2ee6cf163d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "INNER JOINとなるため無い注文は出力から落ちうることをリバース側で押さえる価値がある。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-5b96b377dd",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-66b46083bc",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-9892a55be6",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "クエリ入力に対してフォームオブジェクト側の入力種別チェックは行わない確認値となる。送信欠損は配列チェックのみ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-524834fc25",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "POSTで送信しうる確認値となる。細かい許可一覧はSymfonyの権限設定を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-3c470103a9",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "画面上は出荷指示編集ページのままになりうる確認値であり、応答本体は別ストリーム。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-62910f8653",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "選択欠損・論外によりリダイレクト",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-fd870fbcaf",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "フラッシュにメッセージを載せ、リダイレクト経路同上。標準文言はキー転用となる（実装修正の論点になりうる）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-8c4dc8ebd1",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "情報ログ「CSV出力ファイル名」とファイル名文字列",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-8785aacef4",
+        "category": "本機能におけるセッション",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "成功経路において検索状態キーは参照しない確認値となる。フラッシュのみフレームワークが利用する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-89fb16099e",
+        "category": "行ロック・悲観ロック・楽観ロック・ロックファイルは使用しない。ロールバック対象や部分反映の扱いは本節のトランザクション境界と例外時の記載を正とする。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "フォーム入力名およびリクエスト取得キー。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

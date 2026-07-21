@@ -1,0 +1,48 @@
+{
+  "functionId": "f07-01_0307_sheet-3_top",
+  "featureNo": "F07-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html#sheet-3（1.バナースライダー／1-2）",
+      "designExpectation": "バナースライダーは自動スクロールで5秒毎に左方向にスクロールする",
+      "implRef": "src/Eccube/Resource/template/default/Event/index.twig:348, 368",
+      "implementationActual": "SP(348行)・PC(368行)のslickカルーセル初期化がともに autoplaySpeed: 4000（4秒毎）。Twig・バンドルJSに5000指定は無し。",
+      "mismatchReason": "設計は5秒毎(5000ms)を明示するが、実装は4000ms(4秒毎)で1秒短い。grep で 5000/autoplaySpeed: 5000 は該当0件、autoplaySpeed: 4000 が2箇所。",
+      "comparisonRows": [
+        {"item": "自動スクロール間隔", "design": "5秒毎(5000ms)", "implementation": "autoplaySpeed: 4000 (4秒毎)", "mismatch": "1秒短い"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html#sheet-3（1-1 パンくずリスト）",
+      "designExpectation": "パンくずは店舗とタブに合わせ切替え、日別=『ホーム > イベントTOP > [店舗名] > 日別 > [期間の最初の月日]』、月別=『… > 月別 > [年月]』を表示する",
+      "implRef": "src/Eccube/Resource/template/default/Event/index.twig:33-55、html/template/default/assets/hareruya/js/hareruya-event.js",
+      "implementationActual": "パンくずは『ホーム > イベントTOP > [店舗名]』の固定3段をサーバ描画するのみ。タブ切替はクライアントJSでコンテンツ差替えのみでパンくずを更新しない。",
+      "mismatchReason": "index.twig:33-55 のパンくずは店舗名までの静的3段(position 1-3)。hareruya-event.js に breadcrumb/__current/日別/月別 のパンくず書換トークンは0件で、日別・月別セグメントの付与・更新処理が不在。",
+      "comparisonRows": [
+        {"item": "日別タブ時パンくず", "design": "…> [店舗名] > 日別 > [月日]", "implementation": "…> [店舗名] (固定3段)", "mismatch": "日別セグメント未付与"},
+        {"item": "月別タブ時パンくず", "design": "…> [店舗名] > 月別 > [年月]", "implementation": "…> [店舗名] (固定3段)", "mismatch": "月別セグメント未付与"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html#sheet-3（1.バナースライダー）",
+      "designExpectation": "バナースライダーは『開催日当日または開催前で、かつ公開状態のイベントに登録されているバナー』を店舗・表示タイプ「スライド」で検索し表示する",
+      "implRef": "src/Eccube/Controller/Front/EventTopController.php:54-59、src/Eccube/Repository/Master/MtbBannerRepository.php:52-71、src/Eccube/Entity/Master/MtbBanner.php:43-76",
+      "implementationActual": "MtbBanner は id/imageUrl/link/dispType/BaseInfos/Languages/imageAlt/sortNo のみ。findWhereUrlIsNotEmpty は 店舗ID・言語・表示タイプ・imageUrl非空 のみで抽出し、開催日・公開状態・イベント紐付けの絞り込みが無い。",
+      "mismatchReason": "MtbBanner にイベントFK・開催日・公開状態カラムが存在せず、Repository/Controller にも日付/公開条件が無い。過去日・非公開イベント想定のバナーでも設定次第で常時表示され、設計の表示条件が未実装。",
+      "comparisonRows": [
+        {"item": "開催日フィルタ(当日/開催前)", "design": "開催日当日または開催前のみ表示", "implementation": "日付条件なし", "mismatch": "開催日フィルタ未実装"},
+        {"item": "公開状態フィルタ", "design": "公開状態のイベントに紐づくバナーのみ", "implementation": "公開状態カラム・条件なし", "mismatch": "公開状態フィルタ未実装"},
+        {"item": "イベント紐付け", "design": "イベントに登録されているバナー", "implementation": "MtbBanner にイベントFKなし", "mismatch": "イベント紐付け不在"}
+      ]
+    }
+  ]
+}

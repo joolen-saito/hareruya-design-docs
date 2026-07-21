@@ -1,0 +1,66 @@
+{
+  "chunkId": "b02-07_0402_sheet-6_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0402_sheet-6_sheet.json#b02-07_0402_sheet-6_sheet-conformance-83bef25206c8",
+      "functionId": "b02-07_0402_sheet-6_sheet",
+      "featureNo": "B02-07",
+      "title": "B02-07 週間在庫履歴更新バッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "対象データを商品在庫の全商品規格IDとする設計に対し、実装は在庫履歴テーブルを起点に集計するため履歴が1件も無い商品在庫が出力対象から欠落する。",
+      "reason": "設計(集計条件/処理フロー)は『商品在庫に存在する全商品規格ID』を対象とし、商品在庫から全規格IDを取得したうえで在庫履歴が無い週は0とする、と明記。しかし実装 DtbWeeklyStockHistoryTempRepository::getStockData の SQL は FROM dtb_stock_history sh を起点に WHERE sh.product_stock_id BETWEEN :start AND :end で GROUP BY sh.product_stock_id している。よって在庫履歴行が1件も存在しない product_stock_id は結果行自体が生成されず、一時テーブル(insertBatch)にも本テーブル(replaceFromTemp)にもコピーされない。週欠損は CASE WHEN...ELSE NULL→0 で0化されるが、これは履歴が1件でもある product_stock_id 内の週単位のみで、商品在庫単位で全欠損の場合は行が作られない。BatchUpdateWeeklyStockHistoryAction は getLastProductStockId() で ProductStock の MAX(id) を取り offset を刻むが、実クエリの FROM は dtb_stock_history のままで ProductStock 起点の LEFT JOIN 等の反証実装はリポジトリ内に存在しない。設計要求と実装の集計起点が食い違う実装違い。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html",
+        "start": 1351,
+        "end": 1351,
+        "contains": ["対象データ", "商品在庫に存在する全商品規格ID", "該当する在庫履歴が無い場合は0とする"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(集計SQL)",
+          "note": "FROM が dtb_stock_history 起点で GROUP BY sh.product_stock_id のため履歴無しの商品在庫が脱落",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php",
+          "start": 72,
+          "end": 78,
+          "contains": ["dtb_stock_history sh", "product_stock_id BETWEEN :start AND :end", "GROUP BY"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0402_sheet-6_sheet.json#b02-07_0402_sheet-6_sheet-conformance-9be8036c6b6a",
+      "functionId": "b02-07_0402_sheet-6_sheet",
+      "featureNo": "B02-07",
+      "title": "B02-07 週間在庫履歴更新バッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は開始・完了を日時付きでコンソール出力する要求だが、実装は完了時の success 出力のみで開始出力も日時付与も無い。",
+      "reason": "設計(ログ・監査)は『開始・完了』のタイミングで『開始・完了のコンソール出力（日時付き）』を要求。実装 UpdateWeeklyStockHistoryCommand::execute は handle() を try で実行し、例外時に $io->error、正常終了時に $io->success('週間在庫履歴の更新が完了しました。') を出すのみ。開始時のコンソール出力は無く、完了出力にも日時が含まれない。反証検索 rg で command/action 内の開始・writeln・note・info・date出力を確認したが、BatchUpdateWeeklyStockHistoryAction 内の \\DateTime はクエリ用 dateStr の生成に使われるだけで、開始/完了ログの日時出力には使われていない。設計要求と実装の出力が食い違う実装違い。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html",
+        "start": 1374,
+        "end": 1374,
+        "contains": ["開始・完了", "開始・完了のコンソール出力（日時付"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(コマンド)",
+          "note": "完了の success 出力のみ。開始出力・日時無し",
+          "path": "ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php",
+          "start": 47,
+          "end": 58,
+          "contains": ["$io->success('週間在庫履歴の更新が完了しました。')", "return Command::SUCCESS"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -n '開始|start|DateTime|date\\(|writeln|->text\\(|->note\\(|->info\\(' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php"
+      ]
+    }
+  ]
+}

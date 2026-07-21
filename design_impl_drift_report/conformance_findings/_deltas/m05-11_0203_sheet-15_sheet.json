@@ -1,0 +1,126 @@
+{
+  "functionId": "m05-11_0203_sheet-15_sheet",
+  "featureNo": "M05-11",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-15:4443,4512-4513,4538-4539",
+      "designExpectation": "受注の新規登録は行えないようにする（新規登録機能は廃止）。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:146; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:203; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:643",
+      "implementationActual": "admin_order_new の GET/POST ルートが存在し、id が null の場合に新規 Order と Shipping を生成する。登録処理でも新規 Order を flush できる経路がある。",
+      "mismatchReason": "設計は新規登録不可を要求しているが、実装は /order/new を公開し、新規受注作成から保存までの処理を保持している。反証検索でも admin_order_new を拒否・リダイレクトする実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "新規登録ルート",
+          "design": "受注の新規登録は行えない",
+          "implementation": "admin_order_new GET/POST が定義されている",
+          "mismatch": "禁止すべき入口が実装上は有効"
+        },
+        {
+          "item": "新規受注生成",
+          "design": "新規登録機能は廃止",
+          "implementation": "id === null の場合に Order/Shipping/preOrderId を生成する",
+          "mismatch": "廃止対象の作成処理が残存"
+        },
+        {
+          "item": "保存処理",
+          "design": "新規登録不可",
+          "implementation": "新規 Order に create/update 日時を設定して flush する",
+          "mismatch": "新規受注を永続化できる"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-15:4514-4515,4540-4541",
+      "designExpectation": "ログインしているメンバーの編集可能店舗に紐づいている店舗の受注データの場合は編集可能とする。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/Order/EditController.php, src/Eccube/Resource/template/admin/Order/edit.twig, src/Eccube/Form/Type/Admin/OrderType.php, src/Eccube/EventListener, src/Eccube/Security; 反証検索: isEditableShop, editableShop, MemberBaseInfo, BaseInfo, admin_order_edit, AccessDenied）",
+      "implementationActual": "Member::isEditableShop は存在するが、受注編集 Controller/Form/Twig の表示・更新・登録処理で受注店舗とログインメンバーの編集可能店舗を照合していない。",
+      "mismatchReason": "設計は店舗単位の編集可否判定を要求しているが、admin_order_edit の表示・POST 保存前に対象受注の店舗が編集可能店舗かを拒否する処理が確認できない。",
+      "comparisonRows": [
+        {
+          "item": "編集権限判定",
+          "design": "ログインメンバーの編集可能店舗に紐づく受注のみ編集可能",
+          "implementation": "EditController の編集・保存処理に isEditableShop 等の判定がない",
+          "mismatch": "店舗権限制御が未実装"
+        },
+        {
+          "item": "保存ガード",
+          "design": "編集不可店舗の受注は編集できない",
+          "implementation": "登録ボタンや POST 処理は店舗権限で無効化・拒否されない",
+          "mismatch": "権限外受注でも更新経路に到達し得る"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-15:4516-4518,4540-4542",
+      "designExpectation": "スマレジ取引の場合は編集不可とし、スマレジから連携されてきたデータは更新不可とする。編集が必要な場合はスマレジ側で編集を行う。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig:823; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig:937; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:678",
+      "implementationActual": "Twig はスマレジ取引IDを表示するだけで、スマレジ取引の各入力項目・登録ボタンを編集不可にしていない。Controller もスマレジコードがある受注を保存対象から除外せず、保存後にスマレジ API 連携を行う分岐がある。",
+      "mismatchReason": "設計はスマレジ連携データの更新不可を要求しているが、smaregi_transaction_id/smaregi_code/smaregiCode を条件にした画面無効化、403、リダイレクト、保存拒否が確認できない。",
+      "comparisonRows": [
+        {
+          "item": "スマレジ取引の画面制御",
+          "design": "スマレジ取引は編集不可",
+          "implementation": "スマレジ取引IDは表示されるが入力欄は編集可能なまま",
+          "mismatch": "編集不可制御がない"
+        },
+        {
+          "item": "スマレジ取引の保存制御",
+          "design": "スマレジから連携されたデータは更新不可",
+          "implementation": "保存処理はスマレジ取引を拒否せず、保存後連携処理に進む",
+          "mismatch": "更新不可ではなく更新可能な経路がある"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-15:4519-4521",
+      "designExpectation": "受注データに対する変更が発生した場合に履歴として保持し、履歴情報はそれぞれの編集画面で参照できるようにする。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/Order, src/Eccube/Resource/template/admin/Order, src/Eccube/Entity, src/Eccube/Repository, src/Eccube/Service; 反証検索: 受注データ更新履歴, 更新履歴, OrderHistory, order_history, DtbOrderHistory, history）",
+      "implementationActual": "受注編集画面にはメール履歴ブロックはあるが、受注データ更新履歴の保存・取得・表示に相当する Entity/Repository/Controller/Twig が確認できない。Controller の受注保存処理でも汎用の受注更新履歴を作成していない。",
+      "mismatchReason": "設計は変更履歴の保持と編集画面での参照を要求しているが、実装で確認できる履歴はメール履歴や在庫切れ履歴など別用途であり、受注データ更新履歴の外部可視要件を満たしていない。",
+      "comparisonRows": [
+        {
+          "item": "変更履歴の保存",
+          "design": "受注データ変更時に履歴として保持",
+          "implementation": "受注保存処理に汎用の受注更新履歴作成がない",
+          "mismatch": "変更履歴保持が未実装"
+        },
+        {
+          "item": "編集画面での参照",
+          "design": "履歴情報を各編集画面で参照可能",
+          "implementation": "edit.twig にある履歴表示はメール履歴で、受注更新履歴表示はない",
+          "mismatch": "参照 UI が未実装"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-15:4549-4553",
+      "designExpectation": "注文者情報、お支払情報、お届け先情報、ポイント連携エラーの各ブロックはアコーディオンで開閉し、初期状態は閉じた状態でタイトルのみ表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/edit.twig:1803",
+      "implementationActual": "ポイントエラーメッセージのブロックは body 側に collapse show が付与されており、初期表示で展開される。注文者情報・お支払情報・お届け先情報は既存受注では閉じる実装になっている。",
+      "mismatchReason": "設計はポイント連携エラーも初期状態を閉じた状態とする要求だが、実装の show クラスによりタイトルのみ表示ではなく本文が初期表示される。",
+      "comparisonRows": [
+        {
+          "item": "ポイント連携エラーブロック初期状態",
+          "design": "閉じた状態でタイトルのみ表示",
+          "implementation": "collapse show により本文が初期展開される",
+          "mismatch": "初期開閉状態が設計と異なる"
+        }
+      ]
+    }
+  ]
+}

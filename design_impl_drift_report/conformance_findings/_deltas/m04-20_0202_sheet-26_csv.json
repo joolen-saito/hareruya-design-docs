@@ -1,0 +1,84 @@
+{
+  "functionId": "m04-20_0202_sheet-26_csv",
+  "featureNo": "M04-20",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-26:10957 / #sheet-26:10963 / #sheet-26:10965 / #sheet-26:10972 / #sheet-26:11033 / #sheet-26:11049",
+      "designExpectation": "欠品履歴CSV出力のCSV出力項目は16列で、7列目は「在庫区分」、9列目は「登録元ID」を出力する。Excelの列要件を正とし、実装のdisposalヘッダ15列は是正対象。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:438 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:447 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryDisposalCsv.php:65 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryDisposalCsv.php:106 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/StockHistoryDisposalCsv.php:108",
+      "implementationActual": "getStockHistoryDisposalCsvHeader() は15列で「在庫場所」を含み「登録元ID」を含まない。convertExportCsvRows() は「登録元ID」を組み立てるが、exportCsv() はヘッダキーだけを fputcsv するため、CSVには出力されない。",
+      "mismatchReason": "設計のCSV列は16列だが、実装の欠品履歴CSVヘッダは15列。さらに設計の「在庫区分」が実装では「在庫場所」になっており、「登録元ID」は行データ側にあってもヘッダ欠落により出力対象外。",
+      "comparisonRows": [
+        {
+          "item": "列数",
+          "design": "16列（商品コードから最終更新者まで）",
+          "implementation": "getStockHistoryDisposalCsvHeader() は15列",
+          "mismatch": "1列不足"
+        },
+        {
+          "item": "識別ID:7",
+          "design": "在庫区分",
+          "implementation": "ヘッダは「在庫場所」、値は ProductStock::getLocationName()",
+          "mismatch": "列名・粒度が設計と異なる"
+        },
+        {
+          "item": "識別ID:9",
+          "design": "登録元ID",
+          "implementation": "rowBase には登録元IDがあるが、ヘッダに無いため fputcsv 対象外",
+          "mismatch": "CSV出力列として未出力"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-26:11011 / #sheet-26:11020 / #sheet-26:11023 / #sheet-26:11024 / #sheet-26:11038 / #sheet-26:11049",
+      "designExpectation": "欠品履歴一覧でチェック選択した行の在庫履歴ID配列 ids[] をPOSTし、選択行だけをCSV出力する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:217 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:223 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:595 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:600 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:604 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:605",
+      "implementationActual": "一覧テンプレートは PaginationAll の全件を hidden の ids[] としてフォームに埋め込み、CSVボタン押下時に全検索結果IDをPOSTする。行選択用checkboxは当該一覧には存在しない。",
+      "mismatchReason": "設計はチェック選択された行を対象にする外部契約だが、実装は検索結果全件を固定送信するため、利用者がCSV出力対象行を選択できない。",
+      "comparisonRows": [
+        {
+          "item": "出力対象",
+          "design": "チェック選択した行の在庫履歴ID配列 ids[]",
+          "implementation": "PaginationAll 全件を hidden ids[] として送信",
+          "mismatch": "選択行限定にならない"
+        },
+        {
+          "item": "一覧UI",
+          "design": "対象行をチェックしてCSV出力",
+          "implementation": "CSVフォーム付近に行選択checkboxがなく、hidden入力のみ",
+          "mismatch": "選択操作が実装されていない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-26:11038 / #sheet-26:11040",
+      "designExpectation": "例外時は、ID未指定ならエラー表示して現在ページへ戻し、存在しないIDまたは変換結果空でリファラ無しなら admin_stock_history_new にリダイレクトする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:85 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:172 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:364 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:371 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:459 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:462 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:464 / 不在（探索範囲: src/Eccube/Controller/Admin/Stock, src/Eccube/Resource/template/admin/Stock, route名 admin_stock_history_new）",
+      "implementationActual": "RuntimeException 捕捉時、リファラが無い場合は admin_stock_history にリダイレクトする。ID未指定時は eccube.admin.stock_history.search.page_no を読むが、一覧側で保存しているページ番号キーは eccube.admin.stock.stock_history.pageNo。admin_stock_history_new ルートは見つからない。",
+      "mismatchReason": "設計の例外遷移先と実装の遷移先が異なる。現在ページ復帰も、保存キーと参照キーが異なるため既定値1へ戻る可能性がある。",
+      "comparisonRows": [
+        {
+          "item": "存在しないID・変換空のリファラ無し",
+          "design": "admin_stock_history_new へリダイレクト",
+          "implementation": "admin_stock_history へリダイレクト",
+          "mismatch": "遷移先ルートが異なる"
+        },
+        {
+          "item": "ID未指定時の現在ページ復帰",
+          "design": "現在ページ番号を使って admin_stock_history_page へ戻る",
+          "implementation": "保存キー eccube.admin.stock.stock_history.pageNo とは別の eccube.admin.stock_history.search.page_no を参照",
+          "mismatch": "現在ページ復帰が保証されない"
+        }
+      ]
+    }
+  ]
+}

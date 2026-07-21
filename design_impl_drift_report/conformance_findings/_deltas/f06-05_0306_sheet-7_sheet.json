@@ -1,0 +1,55 @@
+{ "functionId": "f06-05_0306_sheet-7_sheet", "featureNo": "F06-05",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-7 (機能仕様 (4)バーコードについて / 画面部品説明 識別ID5 バーコード)",
+      "designExpectation": "画面部品(5)バーコードは会員本人を店頭POSで識別するためのバーコードであり、店頭受取注文の際に読み取るとスマレジと連携して会員の注文履歴に登録・ポイント付与される。バーコードは各会員のスマレジ会員コードを表す必要がある。",
+      "implRef": "src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig:22-23",
+      "implementationActual": "22行目 barcode('{{ Customer.getSmaregiMemberCode }}',...) がコメントアウトされ、23行目で全会員共通の固定EAN13 '2900065596792' を描画。Customer.php:1075 に getSmaregiMemberCode() が実在するが未使用。",
+      "mismatchReason": "実バーコードが全会員同一の固定値のため店頭POSで会員本人を識別できず、注文履歴登録・ポイント付与という設計要求を満たさない。",
+      "comparisonRows": [
+        {"item": "バーコード値", "design": "各会員のスマレジ会員コード(EAN13)", "implementation": "固定値 '2900065596792'", "mismatch": "会員別ではなく全会員共通固定値"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-7 (画面部品説明 識別ID19 マイデッキ)",
+      "designExpectation": "画面部品(19)マイデッキ リンク: 押下するとマイデッキ画面へ遷移する。",
+      "implRef": "src/Eccube/Resource/template/default/Mypage/index.twig:172",
+      "implementationActual": "マイデッキのメニューリンク href が空文字 (href=\"\") で遷移先ルートも存在しない。他メニューは全て url('...') 指定。",
+      "mismatchReason": "src/Eccube/Controller/Front/Mypage 配下および Front 全体に my_deck/mydeck/mypage_deck 相当ルートが無く(存在するのは mypage_deckentry_edit 等の画面部品18側のみ)、マイデッキ画面遷移が未実装。",
+      "comparisonRows": [
+        {"item": "マイデッキ遷移先", "design": "マイデッキ画面へ遷移", "implementation": "href=\"\"（現ページ再読込・ルート不在）", "mismatch": "遷移先未実装"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-7 (カスタマイズ説明『買取履歴を買取一覧に名称変更する』/ 画面部品説明 識別ID16)",
+      "designExpectation": "カスタマイズ要件: 買取履歴を『買取一覧』に名称変更する（画面部品16の遷移先も『買取一覧画面へ遷移する』）。",
+      "implRef": "src/Eccube/Resource/template/default/Mypage/index.twig:151, src/Eccube/Resource/locale/messages.ja.yaml:826",
+      "implementationActual": "otc_order グループのメニューは翻訳キー front.mypage.nav__purchase_history を使用し、messages.ja.yaml:826 の訳語は『買取履歴』のまま。",
+      "mismatchReason": "設計カスタマイズ要件本文が明示的に『買取一覧』への名称変更を指示しているのに実装ラベルが旧名『買取履歴』のまま。",
+      "comparisonRows": [
+        {"item": "メニューラベル", "design": "買取一覧", "implementation": "買取履歴 (front.mypage.nav__purchase_history)", "mismatch": "名称変更未適用"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-7 (処理フロー / エッジケース / 画面遷移 / セッション)",
+      "designExpectation": "マイページトップ表示時、直前に商品検索からの戻り先がセッションにある場合は、マイページを表示せずその検索画面へリダイレクトし、戻り先をセッションから消去する（現行踏襲）。",
+      "implRef": "src/Eccube/Controller/Front/Mypage/MypageController.php:127-138",
+      "implementationActual": "index() は Customer と nextDeadlinePointHistory を返すのみで、セッションから戻り先を取得・消去してリダイレクトする処理が無く無条件に index.twig を表示。",
+      "mismatchReason": "同コントローラ・Front配下・EventListener配下を previousUrl/戻り先/search_return/product_list_url 等で grep しても戻り先の保存・消費処理は不在。設計が現行踏襲として要求するリダイレクト挙動が未実装。",
+      "comparisonRows": [
+        {"item": "商品検索戻り先リダイレクト", "design": "戻り先があればマイページ非表示で検索画面へリダイレクト・戻り先消去", "implementation": "処理なし・常にマイページ表示", "mismatch": "リダイレクト/セッション消去が未実装"}
+      ]
+    }
+  ] }

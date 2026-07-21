@@ -1,0 +1,96 @@
+{
+  "functionId": "m12-07_0211_sheet-16_sheet",
+  "featureNo": "M12-07",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-16:3533,3540,3542",
+      "designExpectation": "利用者視点の入口は GET /{admin_route}/analysis/format_sales で検索画面を表示し、検索ボタン押下は POST /{admin_route}/analysis/format_sales/result で同一画面にグラフと表を表示する。",
+      "implRef": "src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:44,64; src/Eccube/Resource/template/admin/Analysis/format_sales.twig:94",
+      "implementationActual": "実装は GET /%eccube_admin_route%/analysis/format-sales と POST /%eccube_admin_route%/analysis/format-sales/search を定義し、Twig も admin_analysis_format_sales_search に送信する。",
+      "mismatchReason": "設計の外部URL契約は underscore の /analysis/format_sales と /analysis/format_sales/result だが、実装は hyphen の /analysis/format-sales と /analysis/format-sales/search であり、利用者視点のエンドポイントが一致しない。反証として format_sales/result、analysis/format_sales、admin_analysis_format_sales_result、format-sales/search を Controller/Twig/route で検索したが、設計通りのパスは確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "初期表示URL",
+          "design": "GET /{admin_route}/analysis/format_sales",
+          "implementation": "GET /%eccube_admin_route%/analysis/format-sales",
+          "mismatch": "underscore と hyphen が異なる"
+        },
+        {
+          "item": "検索実行URL",
+          "design": "POST /{admin_route}/analysis/format_sales/result",
+          "implementation": "POST /%eccube_admin_route%/analysis/format-sales/search",
+          "mismatch": "result ではなく search、かつパス表記も異なる"
+        },
+        {
+          "item": "フォーム送信先",
+          "design": "/analysis/format_sales/result",
+          "implementation": "path('admin_analysis_format_sales_search')",
+          "mismatch": "設計の result ルートへ送信していない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-16:3476,3552",
+      "designExpectation": "集計月の初期値は空（初回表示時は未設定）とする。",
+      "implRef": "src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:48,49",
+      "implementationActual": "初期表示で FormatSalesType を作成した直後、month に (new \\DateTime())->format('Y-m') をセットしている。",
+      "mismatchReason": "設計は項目表で初期値「-」、詳細設計で「空（初回表示時は未設定）」を指定しているが、実装は当月 yyyy-MM を初期投入する。反証として FormType/Twig/Controller の month 初期化、empty/null 設定、default data を検索したが、初期未設定にする実装は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "集計月初期値",
+          "design": "空（初回表示時は未設定）",
+          "implementation": "当月の yyyy-MM を設定",
+          "mismatch": "初期未入力ではなく当月が入る"
+        },
+        {
+          "item": "入力欄生成",
+          "design": "集計月入力欄は必須だが初期値は空",
+          "implementation": "createForm 後に setData((new \\DateTime())->format('Y-m'))",
+          "mismatch": "必須入力前提の初期空欄ではない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-16:3515,3534,3553,3558,3564,3581",
+      "designExpectation": "本機能は検索条件をセッションへ保存しない。CSVダウンロードへ引き継ぐ状態は持たず、CSVダウンロードは送信に含まれる集計月で再集計する。CSVダウンロードはM12-08で扱う。",
+      "implRef": "src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:31,83,98,101,109,110,117; src/Eccube/Resource/template/admin/Analysis/format_sales.twig:136,138",
+      "implementationActual": "M12-07 の FormatSalesController が SESSION_KEY を持ち、検索時に FormUtil::getViewData($form) を session->set する。CSV出力は GET /analysis/format-sales/export で session->get した検索条件を form->submit して再集計し、M12-07 の画面内に CSVダウンロードリンクを表示している。",
+      "mismatchReason": "設計は検索条件・集計結果をセッションへ保存せず、CSVは送信された集計月で再集計するとしている。一方、実装は検索時のフォーム値をセッション保存し、CSV出力時は送信値ではなくセッション値を読む。さらに M12-07 はグラフ・表表示までを扱う設計だが、M12-07 Controller/Twig に CSV export ルートと導線がある。反証として format_sales/export、SESSION_KEY、session->set/get、CSVダウンロード導線、M12-08相当の送信月POSTを検索したが、設計通りに送信月でCSV再集計する導線は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "検索条件の扱い",
+          "design": "検索条件をセッションへ保存しない",
+          "implementation": "SESSION_KEY を定義し、検索時に session->set する",
+          "mismatch": "セッション保存している"
+        },
+        {
+          "item": "CSV再集計条件",
+          "design": "CSVダウンロードの送信に含まれる集計月で再集計",
+          "implementation": "export() が session->get(self::SESSION_KEY) を読み、form->submit($viewData) する",
+          "mismatch": "送信値ではなくセッション値を使用"
+        },
+        {
+          "item": "CSV導線の所在",
+          "design": "CSVダウンロードはM12-08で扱い、M12-07はグラフ・表の表示まで",
+          "implementation": "M12-07 Twig に CSVダウンロードリンク、M12-07 Controller に export ルートがある",
+          "mismatch": "M12-07 側にCSV導線と出力処理が存在する"
+        },
+        {
+          "item": "CSV HTTPメソッド",
+          "design": "送信に含まれる集計月で再集計する前提",
+          "implementation": "GET /analysis/format-sales/export のリンクで送信月を含めない",
+          "mismatch": "集計月をCSV送信に含められない"
+        }
+      ]
+    }
+  ]
+}

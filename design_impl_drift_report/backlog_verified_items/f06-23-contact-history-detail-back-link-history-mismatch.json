@@ -1,0 +1,131 @@
+{
+  "id": "f06-23-contact-history-detail-back-link-history-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-23_0306_sheet-19_sheet.json",
+  "sourceFindingId": "f06-23_0306_sheet-19_sheet-conformance-36b6634f820e",
+  "classification": "フロント会員",
+  "feature": "お問い合わせ履歴詳細",
+  "issueCategory": "実装違い",
+  "issue": "お問い合わせ履歴詳細の戻るがブラウザ履歴ではなく一覧URLへGET遷移する",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "ログイン済み会員で `http://localhost:8080/ja/contact/history` を表示する",
+    "任意のお問い合わせ履歴の詳細画面へ遷移する",
+    "詳細画面下部の「戻る」を押下し、ブラウザ履歴戻りではなく `/ja/contact/history` への通常GET遷移になっていないか確認する"
+  ],
+  "expected": [
+    "詳細の「戻る」は `history.go(-1)` 相当でブラウザ履歴を1つ戻る",
+    "戻る押下時にサーバへのリクエストを発生させない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise のお問い合わせ履歴詳細テンプレートは、「戻る」を `href=\"{{ url('contact_history') }}\"` の通常リンクとして実装している。押下時は `GET /contact/history` が発生し、設計が求める `history.go(-1)` によるブラウザ履歴戻りではない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise お問い合わせ履歴詳細の戻るはcontact_history固定リンク",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history_detail.twig",
+          "start": 44,
+          "end": 51,
+          "language": "twig",
+          "contains": [
+            "<div class=\"p-hareruya-history-detail__btn\">",
+            "<a class=\"c-hareruya-btn c-hareruya-btn--lg u-hareruya-w-full\" href=\"{{ url('contact_history') }}\">",
+            "<span class=\"c-hareruya-btn__text\">{{ 'common.back'|trans }}</span>"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise お問い合わせ履歴一覧はGETルート",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ContactController.php",
+          "start": 202,
+          "end": 212,
+          "language": "php",
+          "contains": [
+            "#[Route(path: '/contact/history', name: 'contact_history', methods: ['GET'])]",
+            "$contactHistories = $this->dtbContactRepository->findBy(['Customer' => $user], ['id' => 'DESC']);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 のお問い合わせ履歴詳細テンプレートは、同じ「戻る」を `href=\"javascript:history.go(-1);\"` で実装している。これは設計の『ブラウザ履歴を1つ戻る、サーバへのリクエストは発生しない』という要求に対応する実装である。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 お問い合わせ履歴詳細の戻るはhistory.go(-1)",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history_detail.twig",
+          "start": 31,
+          "end": 38,
+          "language": "twig",
+          "contains": [
+            "<div class=\"submit-button-wrapper\">",
+            "<a href=\"javascript:history.go(-1);\" class=\"submit-button submit-button-back\">",
+            "戻る"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "詳細の戻るはhistory.go(-1)でサーバリクエストなし",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 6729,
+      "end": 6734,
+      "language": "html",
+      "contains": [
+        "詳細の「戻る」リンク",
+        "ブラウザ履歴を1つ戻る",
+        "history.go(-1)",
+        "サーバへのリクエストは発生しない",
+        "詳細の「戻る」はブラウザ履歴を1つ戻すリンクのみ"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "画面遷移でもブラウザ履歴戻りを指定",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 6777,
+      "end": 6778,
+      "language": "html",
+      "contains": [
+        "詳細の「戻る」",
+        "ブラウザ履歴を1つ戻る（通常は一覧）"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "実装はcontact_historyへの通常リンク",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history_detail.twig",
+      "start": 44,
+      "end": 51,
+      "language": "twig",
+      "contains": [
+        "href=\"{{ url('contact_history') }}\""
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 はhistory.go(-1)",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history_detail.twig",
+      "start": 31,
+      "end": 38,
+      "language": "twig",
+      "contains": [
+        "href=\"javascript:history.go(-1);\""
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-23_0306_sheet-19_sheet.json#f06-23_0306_sheet-19_sheet-conformance-36b6634f820e'",
+      "rg -n \"36b6634f820e|戻る|history\\.go|history\\.back|ブラウザ履歴|サーバへのリクエスト|contact_history\" design_impl_drift_report/findings/f06-23_0306_sheet-19_sheet.json excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"history\\.go|history\\.back|window\\.history|contact_history|url\\('contact_history'\\)|path\\('contact_history'\\)|common.back|戻る\" ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history_detail.twig ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history_detail.en.twig ec-cube-enterprise/src/Eccube/Controller/Front/ContactController.php ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js ec-cube-enterprise/html/template/default/assets/js",
+      "rg -n \"history\\.go|history\\.back|window\\.history|contact_history|url\\('contact_history'\\)|path\\('contact_history'\\)|common.back|戻る\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history_detail.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history_detail.en.twig pf-eccube3/app/Plugin/HareruyaEc/Controller/ContactController.php ec-cube/src/Eccube/Resource/template/default/Contact ec-cube/src/Eccube/Controller/ContactController.php",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '6729,6735p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '6777,6779p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/history_detail.twig | sed -n '44,51p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/history_detail.twig | sed -n '31,38p'"
+    ],
+    "review": "review-pack を生成し、設計の履歴戻り要求、ec-cube-enterprise の contact_history 固定リンク、pf-eccube3 の history.go(-1) 実装を手動で批判的に再確認した。外部の codex gpt-5.5 high レビューはこの環境では利用できないため、同等の観点で ContactController、日英テンプレート、JS 資産を検索した。F06-24 の同一 history_detail.twig 所見はこの起票単位へ統合する。"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "functionId": "a07-02_0507_sheet-4_sheet",
+  "featureNo": "A07-02",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1141-1142,1165",
+      "designExpectation": "成功レスポンスはHTTP 200で、応答本体は受注ごとのオブジェクト配列。netBuyOrderId と netOrderStatusId は integer、applyDate はISO8601形式、freeComment は未設定時 null、memberName は紐づく会員が無い場合 null とする。応答はcamelCase、日時はISO8601、serialize_null有効とする。",
+      "implRef": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76",
+      "implementationActual": "実装は netBuyOrderId と netOrderStatusId を文字列にキャストし、applyDate を `Y/m/d H:i:s` 形式に整形し、freeComment/memberName の null を空文字へ置換して返している。",
+      "mismatchReason": "設計は整数型・ISO8601日時・null保持を外部契約として定義しているが、実装は文字列化、非ISO形式、空文字化を行っており、レスポンススキーマが一致しない。反証検索として `netBuyOrderId`、`applyDate`、`freeComment`、`memberName`、`serialize_null`、`findToAssessBuyOrders` を確認したが、当該GETレスポンスで別の正規化処理は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "netBuyOrderId",
+          "design": "integer",
+          "implementation": "`(string) $buyOrder['id']`",
+          "mismatch": "数値ではなく文字列で返す。"
+        },
+        {
+          "item": "applyDate",
+          "design": "ISO8601形式の日時文字列",
+          "implementation": "`$buyOrder['orderDate']->format('Y/m/d H:i:s')`",
+          "mismatch": "ISO8601ではなく `YYYY/MM/DD HH:MM:SS` 形式で返す。"
+        },
+        {
+          "item": "freeComment",
+          "design": "未設定の場合はnull",
+          "implementation": "`$buyOrder['memo'] ?? ''`",
+          "mismatch": "nullを空文字へ変換する。"
+        },
+        {
+          "item": "memberName",
+          "design": "紐づく会員が無い場合はnull",
+          "implementation": "`$buyOrder['memberName'] ?? ''`",
+          "mismatch": "nullを空文字へ変換する。"
+        },
+        {
+          "item": "netOrderStatusId",
+          "design": "integer",
+          "implementation": "`(string) $buyOrder['buyOrderStatusId']`",
+          "mismatch": "数値ではなく文字列で返す。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1144",
+      "designExpectation": "認証失敗時（トークン欠落・署名不正・該当する管理者会員なし）はHTTP 401とし、本文を持たない認証拒否を返す。",
+      "implRef": "src/Eccube/EventListener/ExceptionListener.php:72-100,136-139",
+      "implementationActual": "App APIの例外処理は401を含むエラー時に `JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)` を返す。401の場合のerrorsは `['認証エラー']` になる。",
+      "mismatchReason": "設計は401で本文なしを要求しているが、実装のApp API共通例外処理は401でもJSON本文 `{code, errors}` を返す。反証検索として `JwtTokenHeaderExtractor`、`JwtTokenHandler`、`UnauthenticatedException`、`ExceptionListener`、security.yaml の access_token 設定を確認し、認証ヘッダ検証自体は存在するが、本文なし401を返す実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "401本文",
+          "design": "認証拒否（本文を持たない）",
+          "implementation": "`{'code': 401, 'errors': ['認証エラー']}` のJSON本文を生成",
+          "mismatch": "401レスポンス本文の有無が異なる。"
+        },
+        {
+          "item": "対象条件",
+          "design": "トークン欠落・署名不正・該当する管理者会員なし",
+          "implementation": "jwt-token抽出、JWT検証、Member取得失敗は認証エラーになるが、App API例外レスポンスはJSON本文付き",
+          "mismatch": "認証条件は概ね実装済みだが、外部レスポンス形が設計と一致しない。"
+        }
+      ]
+    }
+  ]
+}

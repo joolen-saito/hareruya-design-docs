@@ -1,0 +1,30 @@
+{
+  "chunkId": "a06-08_0506_sheet-10_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-08_0506_sheet-10_sheet.json#a06-08_0506_sheet-10_sheet-conformance-13ba660128ce",
+      "refuted": true,
+      "reason": "設計側の一次資料（Excel原本）が実装(POSTボディ)を支持しており、指摘が根拠にした「GET/クエリ」は矛盾する二次資料。原本のリクエストパラメータサンプル（shape C54, HTML 2653行）は JSON リクエストボディ {\"name\": \"【Foil】《王冠泥棒\"} を示しており、GET のクエリパラメータではなくボディ送信を示唆する。実装 BuyingController::getByCardName は #[Route methods:['POST']]（99行）＋ $request->request->get('name')（102行）でまさにこのボディ受け取りを実装している。指摘が引く GET /search・@QueryParam（HTML 2684,2697行）はリバース詳細設計側の記述で、同書自身が「確認値はpf-api…を正とする」「現行踏襲」と明記する二次的推定であり、原本サンプルと矛盾する。一次資料サンプル＝実装の整合が取れているため、GET/クエリ要求は根拠が弱い。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-08_0506_sheet-10_sheet.json#a06-08_0506_sheet-10_sheet-conformance-87645e33a108",
+      "refuted": false,
+      "reason": "404 要求は二次資料だけでなくExcel原本のステータスコード表（HTML 2639行「404 指定された名称に紐づく商品が見つからなかった場合」）に明記されており、リバース設計（2689,2704行）とも一致する強い要求。実装は BuyingController::getByCardName で name 空時に return new JsonResponse(['cards'=>[]]) を HTTP200 で返し（104-105行）、検索0件でも format() が ['cards'=>new stdClass()] を200で返す（BuyingCardsFormatter 123行）。NotFoundException は getByCardDetailId（58行）にのみ存在し、search 経路には404分岐が皆無。JsonResponse を直接返しており404へ変換する上位ハンドラも無い。別ルート・別実装を確認したが該当なし。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-08_0506_sheet-10_sheet.json#a06-08_0506_sheet-10_sheet-conformance-364fb9d75711",
+      "refuted": true,
+      "reason": "設計側の除外条項により「%/_エスケープ」は拘束要求ではない。リバース詳細設計の「本書で扱わないこと」（HTML 2678行）が「検索条件の項目仕様（実装を確認値とする）」を明示的に対象外とし、2681行も「商品名の前方一致検索…に用いる該当テーブル・列はec-cube-enterprise実装で要確認」「挙動…は現行(pf-api)を正とする」と実装優先を宣言している。name パラメータの %/_ 処理はまさにこの「検索条件の項目仕様」に該当し、2696行のエスケープ記述は同書の除外条項と矛盾するリバース推定。実装 MtbCardRepository::getBuyingCardsByCardName（136-137行）は product.name LIKE :cardName に $cardName.'%' を連結しエスケープしないが、設計自身が仕様確定を実装に委ねているため設計要求違反とは断定できない。指摘の根拠は弱い。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-08_0506_sheet-10_sheet.json#a06-08_0506_sheet-10_sheet-conformance-cdc99feae74f",
+      "refuted": false,
+      "reason": "設計は「検索で得たカードを1始まりの連番でキー付けし直して格納する」を本文（HTML 2700行）と型表（2701行「1始まりの連番をキーとするオブジェクト」）とサンプル（2709行 \"1\"）の3箇所で明記し、pf-api挙動を正とする旨（2681行）とも整合する具体的要求。実装 BuyingCardsFormatter::format は $cardId=$dto->cardId（68行）を $cards[$cardId]（74-75行）のキーに使い、array_values 等の再採番が皆無（rg でも array_values/連番なし）。cardId は DB 値（MtbCardRepository select card.id AS cardId, 176行）で 1始まり保証は無く、JSON化すると {\"cards\":{\"10001\":...}} となり設計の {\"1\":...} と不一致。別実装・上位再採番も無い。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-08_0506_sheet-10_sheet.json#a06-08_0506_sheet-10_sheet-conformance-10e08e518139",
+      "refuted": false,
+      "reason": "conditionClasses 配下のJSONキー名が確定的に不一致。設計は productCode（HTML 2701行, サンプル 2730行 \"productCode\":\"P-40001\"）だが、実装 BuyingCardsFormatter は 'productClassCode' => $dto->productClassCode（115行）を出力し、キー文字列が異なる。DTO は public string $productClassCode（42行）で product.code ではなく productClass.code AS productClassCode（MtbCardRepository 193行）由来。productCode というキーはフォーマッタ・クエリ双方に存在せず（rg 'productCode' 該当なし）、外部API契約上クライアントは productCode を取得できない。price は $dto->standardPrice（?int, DTO 44行）、stock は (int)キャスト済み int（DTO 45,106行）で、設計の string（2701,2732-2733行 \"300\"/\"5\"）と型も相違。キー名の不一致だけでも実装違いは成立。指摘は維持。"
+    }
+  ]
+}

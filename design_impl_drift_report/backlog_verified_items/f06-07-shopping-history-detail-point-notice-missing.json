@@ -1,0 +1,153 @@
+{
+  "id": "f06-07-shopping-history-detail-point-notice-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-07_0304_sheet-9_sheet.json",
+  "sourceFindingId": "f06-07_0304_sheet-9_sheet-conformance-201244ef1a45",
+  "classification": "フロント注文",
+  "feature": "注文購入履歴詳細",
+  "issueCategory": "実装漏れ",
+  "issue": "購入履歴詳細に獲得ポイントの有効化タイミング注記が表示されない",
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "reproSteps": [
+    "注文履歴を持つ会員で `http://localhost:8080/ja/mypage/shopping_history` を表示する",
+    "任意の注文の詳細リンクから `http://localhost:8080/ja/mypage/shopping_history_detail/{order_id}` に遷移する",
+    "金額内訳の「ポイント発生」付近に「※獲得ポイントは商品出荷時に有効になります。」が表示されるか確認する"
+  ],
+  "expected": [
+    "購入履歴詳細の表示時に、ポイント注記「※獲得ポイントは商品出荷時に有効になります。」を常時表示する",
+    "注記は獲得ポイント/ポイント発生の説明として表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の購入履歴詳細 `shopping_history_detail.twig` は、`front.mypage.shopping_history.col.point_generated` のラベルと `Order.gained_points` の値を表示するだけで、その直後にポイント注記を描画していない。`front.shopping.notice.point` の翻訳キーは存在するが、使用箇所は購入確認画面 `Shopping/index.twig` であり、購入履歴詳細テンプレートでは参照されていない。Controller も `Order` と `stockOrder` だけを返しており、注記用の値やメッセージを渡していない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 購入履歴詳細のポイント発生表示",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig",
+          "start": 222,
+          "end": 228,
+          "language": "twig",
+          "contains": [
+            "{{ 'front.mypage.shopping_history.col.point_generated'|trans }}",
+            "{{ Order.gained_points }}{{ 'front.block.point.unit'|trans }}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 注記キーは購入確認画面でのみ使用",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig",
+          "start": 755,
+          "end": 757,
+          "language": "twig",
+          "contains": [
+            "{{ 'front.shopping.notice.point'|trans }}",
+            "{{ 'front.shopping.notice.stock'|trans }}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 注記文言の翻訳キー",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 1421,
+          "end": 1428,
+          "language": "yaml",
+          "contains": [
+            "front.shopping.notice.point: ※獲得ポイントは商品出荷時に有効になります。"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 詳細Controllerは注記値を渡していない",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/MypageController.php",
+          "start": 482,
+          "end": 514,
+          "language": "php",
+          "contains": [
+            "#[Route(path: '/mypage/shopping_history_detail/{order_id}'",
+            "'Order' => $Order",
+            "'stockOrder' => $stockOrder"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の購入履歴詳細は、ポイント発生行の直後に `※獲得ポイントは商品出荷時に有効になります。` を `<span class=\"small_\">` で表示している。設計の注記はこのベース実装の表示を踏襲する要求として確認できる。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 ポイント発生と注記",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history_detail.twig",
+          "start": 105,
+          "end": 111,
+          "language": "twig",
+          "contains": [
+            "<th>ポイント発生</th>",
+            "orderSub.gainedPoints",
+            "※獲得ポイントは商品出荷時に有効になります。"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "フロント挙動で獲得ポイント注記の表示を要求",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 3290,
+      "end": 3292,
+      "language": "html",
+      "contains": [
+        "ポイント発生",
+        "獲得ポイントには「獲得ポイントは商品出荷時に有効になります。」の注記を表示する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "表示メッセージ表で詳細画面表示時の常時表示として定義",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 3304,
+      "end": 3306,
+      "language": "html",
+      "contains": [
+        "表示メッセージ",
+        "ポイント注記",
+        "※獲得ポイントは商品出荷時に有効になります。",
+        "詳細画面の表示時"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "購入履歴詳細はポイント発生値のみで注記を出力しない",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig",
+      "start": 222,
+      "end": 228,
+      "language": "twig",
+      "contains": [
+        "front.mypage.shopping_history.col.point_generated",
+        "Order.gained_points"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3はポイント発生の直後に注記を表示",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history_detail.twig",
+      "start": 105,
+      "end": 111,
+      "language": "twig",
+      "contains": [
+        "ポイント発生",
+        "※獲得ポイントは商品出荷時に有効になります。"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-07_0304_sheet-9_sheet.json#f06-07_0304_sheet-9_sheet-conformance-201244ef1a45'",
+      "rg -n \"獲得ポイント|商品出荷時|有効になります|ポイント発生|point_generated|front\\.shopping\\.notice\\.point|notice\\.point\" hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history_detail.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html | sed -n '3288,3308p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig | sed -n '200,232p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig | sed -n '752,758p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml | sed -n '1418,1430p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/MypageController.php | sed -n '482,522p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history_detail.twig | sed -n '88,116p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLの表示メッセージ、ec-cube-enterprise の購入履歴詳細テンプレート/購入確認画面/locale/Controller、pf-eccube3 の購入履歴詳細テンプレートを再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

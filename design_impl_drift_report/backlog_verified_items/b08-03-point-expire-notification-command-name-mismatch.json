@@ -1,0 +1,165 @@
+{
+  "id": "b08-03-point-expire-notification-command-name-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b08-03_0408_sheet-5_sheet.json",
+  "sourceFindingId": "b08-03_0408_sheet-5_sheet-conformance-9c8ebefa5a85",
+  "classification": "バッチ会員",
+  "feature": "ポイント有効期限通知",
+  "issueCategory": "実装違い",
+  "issue": "ポイント有効期限通知バッチを設計どおり `customer:batch pointExpireNotification` で起動できない",
+  "designBook": "0408_基本設計仕様書(バッチ_会員).xlsx",
+  "reproSteps": [
+    "設計書 B08-03 の利用者視点の入口で、実行方法が `customer:batch pointExpireNotification` とされていることを確認する",
+    "ベース実装 pf-eccube3 の `CustomerBatch` が `customer:batch` を登録し、`pointExpireNotification` を `PointExpireNotification` に対応付けていることを確認する",
+    "ec-cube-enterprise の `PointExpireNotificationCommand` を確認し、登録されている Symfony コマンド名が `eccube:customer:point-expire-notification` であることを確認する",
+    "ec-cube-enterprise の `src/Eccube/Command` と設定を検索し、`customer:batch pointExpireNotification` または同等 alias が登録されていないことを確認する"
+  ],
+  "expected": [
+    "ポイント有効期限通知バッチは `customer:batch pointExpireNotification` で実行できる",
+    "設計コマンド名で、通知対象会員の抽出、失効予定ポイント算出、通知メール送信の処理へ到達できる"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise にはポイント有効期限通知バッチ本体は存在するが、登録されている Symfony コマンド名は `eccube:customer:point-expire-notification` である。`customer:batch`、`pointExpireNotification`、`aliases`、`setAliases` を検索しても設計コマンド名を受ける互換入口は確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise のポイント有効期限通知コマンドは別名で登録されている",
+          "path": "ec-cube-enterprise/src/Eccube/Command/PointExpireNotificationCommand.php",
+          "start": 25,
+          "end": 53,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:customer:point-expire-notification', description: 'ポイント有効期限通知バッチ')]",
+            "$this->pointExpireNotificationAction->handle();",
+            "$io->success('ポイント有効期限通知処理が完了しました。');",
+            "return Command::SUCCESS;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise のポイント有効期限通知本体はActionとして存在する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Customer/PointExpireNotificationAction.php",
+          "start": 33,
+          "end": 57,
+          "language": "php",
+          "contains": [
+            "public function handle(): void",
+            "$noticePriors = [",
+            "$lostPointPlayers = $this->pointHistoryRepository->getPlayersForNotificationPointExpire($prior);",
+            "$this->mailService->sendPointExpireNotificationMail($player, $lostPoint, $expireDate);",
+            "$this->logger->info('ポイント有効期限通知処理完了');"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `CustomerBatch` が `customer:batch` を登録し、第一引数 `pointExpireNotification` を `PointExpireNotification` に対応付ける。`PointExpireNotification` は通知日数ごとに対象者を取得し、失効予定ポイントを算出して通知メールを送信する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は customer:batch pointExpireNotification を登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php",
+          "start": 12,
+          "end": 52,
+          "language": "php",
+          "contains": [
+            "'pointExpireNotification' => 'Plugin\\HareruyaEc\\Service\\Customer\\PointExpireNotification'",
+            "$this->setName('customer:batch')",
+            "$accountList = new $batchNames[$name]($app, $this->createOptions($input));",
+            "$accountList->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の PointExpireNotification は通知処理へ到達する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/PointExpireNotification.php",
+          "start": 29,
+          "end": 54,
+          "language": "php",
+          "contains": [
+            "$noticePriors = [",
+            "$lostPointPlayers = $app['hareruya_ec.repository.point_history']->getPlayersForNotificationPointExpire($app, $prior);",
+            "$expireDate = (clone $now)->modify(\"+{$prior} days\")->setTime(0, 0, 0);",
+            "$lostPoint = min([$player->getPoint(), ((int)$lostPointPlayer['gainPoint'] + (int)$lostPointPlayer['usedPoint']), (int)$lostPointPlayer['targetPoint']]);",
+            "$app['hareruya_ec.service.mail']->sendPointExpireNotificationMail($player, $lostPoint, $expireDate);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B08-03 は利用者視点の入口として `customer:batch pointExpireNotification` を要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+      "start": 1317,
+      "end": 1346,
+      "language": "html",
+      "contains": [
+        "確認値はpf-eccube3",
+        "<code>customer:batch pointExpireNotification</code>",
+        "ポイント有効期限通知を実行する（<code>customer:batch pointExpireNotification</code>）"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の登録コマンド名は設計と異なる `eccube:customer:point-expire-notification`",
+      "path": "ec-cube-enterprise/src/Eccube/Command/PointExpireNotificationCommand.php",
+      "start": 25,
+      "end": 53,
+      "language": "php",
+      "contains": [
+        "eccube:customer:point-expire-notification",
+        "$this->pointExpireNotificationAction->handle();",
+        "return Command::SUCCESS;"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise のポイント有効期限通知本体は存在するため、差分は本体欠落ではなく設計コマンド名の入口互換欠落に限定する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Customer/PointExpireNotificationAction.php",
+      "start": 33,
+      "end": 57,
+      "language": "php",
+      "contains": [
+        "public function handle(): void",
+        "getPlayersForNotificationPointExpire($prior)",
+        "sendPointExpireNotificationMail($player, $lostPoint, $expireDate)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `customer:batch` の batch_name として `pointExpireNotification` を受け付ける",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php",
+      "start": 12,
+      "end": 52,
+      "language": "php",
+      "contains": [
+        "'pointExpireNotification' => 'Plugin\\HareruyaEc\\Service\\Customer\\PointExpireNotification'",
+        "$this->setName('customer:batch')",
+        "$accountList->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の PointExpireNotification は設計の通知処理へ到達する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/PointExpireNotification.php",
+      "start": 29,
+      "end": 54,
+      "language": "php",
+      "contains": [
+        "getPlayersForNotificationPointExpire($app, $prior)",
+        "sendPointExpireNotificationMail($player, $lostPoint, $expireDate)"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B08-03|ポイント有効期限通知|customer:batch pointExpireNotification|pointExpireNotification|point-expire-notification|PointExpireNotification\" excel_to_html/output/0408_基本設計仕様書\\(バッチ_会員\\).html design_impl_drift_report/findings/b08-03_0408_sheet-5_sheet.json ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/src/Eccube/Service/Admin/Customer ../pf-eccube3/app/Plugin/HareruyaEc/Command ../pf-eccube3/app/Plugin/HareruyaEc/Service/Customer -g '*.php' -g '*.html' -g '*.json'",
+      "rg -n \"customer:batch|pointExpireNotification|point-expire-notification|aliases|setAliases|AsCommand\" ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/app/config -g '*.php' -g '*.yaml' -g '*.yml'",
+      "rg -n \"customer:batch|pointExpireNotification|PointExpireNotification\" ../pf-eccube3/app/Plugin/HareruyaEc/Command ../pf-eccube3/app/Plugin/HareruyaEc/Service/Customer -g '*.php'"
+    ]
+  },
+  "notes": [
+    "本件はポイント有効期限通知処理本体の未実装ではなく、設計コマンド名 `customer:batch pointExpireNotification` の互換入口がない差分として扱う。",
+    "B08-03内の日時付き開始・完了出力、送信時エラーのコンソール出力などの候補は修正対象が異なるため、このチケットには統合しない。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

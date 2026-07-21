@@ -1,0 +1,118 @@
+{
+  "id": "f06-22-contact-back-link-history-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-22_0306_sheet-18_sheet.json",
+  "sourceFindingId": "f06-22_0306_sheet-18_sheet-conformance-da1de78be63d",
+  "classification": "フロント会員",
+  "feature": "お問い合わせ",
+  "issueCategory": "実装違い",
+  "issue": "お問い合わせ入力画面の戻るがブラウザ履歴ではなくホームへ遷移する",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "任意の画面から `http://localhost:8080/ja/contact` に遷移する",
+    "お問い合わせ入力画面下部の「戻る」を押下する",
+    "ブラウザ履歴の1つ前のページへ戻るか、ホームへ固定遷移するか確認する"
+  ],
+  "expected": [
+    "(1-10)「戻る」押下時は、ブラウザの履歴から1つ前のページに遷移する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise のお問い合わせ入力画面は、「戻る」を `href=\"{{ url('homepage') }}\"` の通常リンクとして実装している。押下時は直前ページではなく `homepage` へ固定遷移し、`history.go(-1)` / `history.back()` 相当の処理ではない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise お問い合わせ入力画面の戻るはhomepage固定リンク",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/index.twig",
+          "start": 381,
+          "end": 389,
+          "language": "twig",
+          "contains": [
+            "<button type=\"submit\" class=\"c-hareruya-btn c-hareruya-btn--primary c-hareruya-btn--lg\" id=\"submitButton\" name=\"mode\" value=\"confirm\">",
+            "<a class=\"c-hareruya-btn c-hareruya-btn--lg\" href=\"{{ url('homepage') }}\">{{ 'common.back'|trans }}</a>"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 のお問い合わせ入力画面は、同じ戻るボタンを `href=\"javascript:history.go(-1);\"` で実装している。確認画面の戻るも同様に `history.go(-1)` で、設計が求めるブラウザ履歴戻りの実装例が存在する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 お問い合わせ入力画面の戻るはhistory.go(-1)",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/index.twig",
+          "start": 189,
+          "end": 198,
+          "language": "twig",
+          "contains": [
+            "<input type=\"submit\" name=\"order\" tabindex=\"1\" value=\"確認画面へ\" id=\"submitButton\" class=\"submit-button submit-button-forward\">",
+            "<a href=\"javascript:history.go(-1);\" class=\"submit-button submit-button-back\">",
+            "戻る"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 お問い合わせ確認画面の戻るもhistory.go(-1)",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/confirm.twig",
+          "start": 162,
+          "end": 170,
+          "language": "twig",
+          "contains": [
+            "<button type=\"submit\" class=\"submit-button submit-button-forward\" name=\"mode\" value=\"complete\">送信をする</button>",
+            "<a href=\"javascript:history.go(-1);\" class=\"submit-button submit-button-back\">",
+            "戻る"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "(1-10)戻るはブラウザ履歴から1つ前へ遷移",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 6312,
+      "end": 6312,
+      "language": "html",
+      "contains": [
+        "item-sheet-18-1-10",
+        "戻る",
+        "押下すると、ブラウザの履歴から1つ前のページに遷移する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "戻るがhomepage固定リンク",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/index.twig",
+      "start": 381,
+      "end": 389,
+      "language": "twig",
+      "contains": [
+        "href=\"{{ url('homepage') }}\"",
+        "{{ 'common.back'|trans }}"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 ではhistory.go(-1)リンク",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/index.twig",
+      "start": 189,
+      "end": 198,
+      "language": "twig",
+      "contains": [
+        "href=\"javascript:history.go(-1);\"",
+        "戻る"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-22_0306_sheet-18_sheet.json#f06-22_0306_sheet-18_sheet-conformance-da1de78be63d'",
+      "rg -n \"da1de78be63d|戻る|ブラウザの履歴|history\\.go|history\\.back|homepage|お問い合わせ\" design_impl_drift_report/findings/f06-22_0306_sheet-18_sheet.json excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"history\\.go|history\\.back|window\\.history|戻る|homepage|url\\('homepage'\\)|common.back|contact\" ec-cube-enterprise/src/Eccube/Resource/template/default/Contact ec-cube-enterprise/src/Eccube/Controller/Front/ContactController.php ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js ec-cube-enterprise/html/template/default/assets/js ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+      "rg -n \"history\\.go|history\\.back|window\\.history|戻る|homepage|path\\('homepage'\\)|url\\('homepage'\\)|common.back|contact\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact pf-eccube3/app/Plugin/HareruyaEc/Controller/ContactController.php pf-eccube3/src/Eccube/Resource/template/default/Contact pf-eccube3/src/Eccube/Controller/ContactController.php pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js ec-cube/src/Eccube/Resource/template/default/Contact ec-cube/src/Eccube/Controller/ContactController.php",
+      "rg -n \"item-sheet-18-1-10|押下すると、ブラウザの履歴から1つ前\" excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Contact/index.twig | sed -n '381,389p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/index.twig | sed -n '189,198p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Contact/confirm.twig | sed -n '162,170p'"
+    ],
+    "review": "review-pack を生成し、設計の(1-10)戻る、ec-cube-enterprise の固定リンク、pf-eccube3 の history.go(-1) 実装を手動で批判的に再確認した。外部の codex gpt-5.5 high レビューはこの環境では利用できないため、同等の観点で ContactController、Contact Twig、Block/js、標準 ec-cube も検索した。"
+  }
+}

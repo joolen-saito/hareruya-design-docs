@@ -1,0 +1,45 @@
+{
+  "chunkId": "a06-04_0506_sheet-6_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-04_0506_sheet-6_sheet.json#a06-04_0506_sheet-6_sheet-conformance-17fa551616c4",
+      "functionId": "a06-04_0506_sheet-6_sheet",
+      "featureNo": "A06-04",
+      "title": "A06-04 店頭買取情報コメント更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計のエンドポイントURLは /api/admin/otcBuyOrder/{id}/freeComment.json だが、実装は版数プレフィックスを挿入し /api/v1/admin/otcBuyOrder/{id}/freeComment.json に解決される。",
+      "reason": "設計HTMLのシート本文『エンドポイントURL』は line 1615 で /api/admin/otcBuyOrder/{id}/freeComment.json（版数プレフィックス無し）を外部契約として示す。一方 OtcBuyOrderController.php:156 のルートは '/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json' であり、eccube.yaml:6 の env(ECCUBE_API_V1_ROUTE) 既定値は 'api/v1' のため、実際の公開パスは /api/v1/admin/otcBuyOrder/{id}/freeComment.json となる。HTTPメソッドは双方 PUT で一致。ec-cube-enterprise 全体を rg で探索したが、v1 を含まない /api/admin/otcBuyOrder/{id}/freeComment.json の別ルートは存在せず、当該エンドポイントは v1 付きルートのみで提供される。したがって処理本体は実装済みだが公開URLが設計値と異なる実装違いが事実。",
+      "designEvidence": {
+        "label": "設計要求（エンドポイントURL）",
+        "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+        "start": 1614,
+        "end": 1616,
+        "contains": ["/api/admin/otcBuyOrder/{id}/freeComment.json", "エンドポイントURL"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装ルート定義",
+          "note": "版数プレフィックス変数を含むルート。メソッドはPUTで設計と一致。",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php",
+          "start": 156,
+          "end": 157,
+          "contains": ["%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json", "methods: ['PUT']"]
+        },
+        {
+          "label": "版数プレフィックス既定値",
+          "note": "eccube_api_v1_route の既定値が api/v1 であることを示す。",
+          "path": "ec-cube-enterprise/app/config/eccube/packages/eccube.yaml",
+          "start": 6,
+          "end": 6,
+          "contains": ["env(ECCUBE_API_V1_ROUTE)", "'api/v1'"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -rn 'admin/otcBuyOrder/\\{id\\}/freeComment' /home/y-saito/Developments/ec-cube-enterprise --glob '!vendor'"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "chunkId": "a06-07_0506_sheet-9_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-07_0506_sheet-9_id.json#a06-07_0506_sheet-9_id-conformance-801b87708c80",
+      "functionId": "a06-07_0506_sheet-9_id",
+      "featureNo": "A06-07",
+      "title": "A06-07 商品IDリストから買取用商品情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は0件時の応答全体を空配列 [] とするが、実装は cards キー付きオブジェクト（{\"cards\":[]} または {\"cards\":{}}）を返す。",
+      "reason": "設計書レスポンス（成功）節（2280行）に『0件のときは空配列を返す。』、フィールド表（2281行）に『0件のときは応答全体が空配列。』、0件時の応答例（2324行）に literal で `[]` が明記され、0件時のトップレベル応答は空配列 [] が正である。実装 BuyingController::getByProductIds では、ids が空／非数値のみのとき 81行 `return new JsonResponse(['cards' => []]);` を返し、これは JSON 上 {\"cards\":[]} となる。数値ID指定で検索0件のときは 91-93行で formatter を経由し、BuyingCardsFormatter::format の 123行 `return ['cards' => empty($cards) ? new \\stdClass() : $cards];` により {\"cards\":{}} を返す。いずれの0件経路でも設計が求めるトップレベル [] ではなく cards キー付きオブジェクトを返しており、外部JSON契約が設計と一致しない。0件を正常応答とする点自体（エラーにしない挙動）は実装も満たすが、応答の形（空配列 vs cardsオブジェクト）が設計と異なるため実装違い。同ルート/別経路の確認として POST /buying/products (api_buying_products, 67行) 以外に該当応答を返す箇所は無く、formatter が唯一の整形経路である。",
+      "designEvidence": {
+        "label": "設計要求（0件時応答＝空配列）",
+        "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+        "start": 2280,
+        "end": 2281,
+        "contains": ["0件のときは空配列を返す", "0件のときは応答全体が空配列"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装（ids空/非数値時）",
+          "note": "ids が空または非数値のみのとき cards キー付き空配列を返す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php",
+          "start": 80,
+          "end": 81,
+          "contains": ["return new JsonResponse(['cards' => []]);"]
+        },
+        {
+          "label": "実装（検索0件時）",
+          "note": "数値ID指定で検索0件のとき cards に stdClass を入れ {\"cards\":{}} を返す",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php",
+          "start": 123,
+          "end": 123,
+          "contains": ["return ['cards' => empty($cards) ? new \\stdClass() : $cards];"]
+        }
+      ]
+    }
+  ]
+}

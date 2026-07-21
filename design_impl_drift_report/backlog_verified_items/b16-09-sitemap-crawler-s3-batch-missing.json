@@ -1,0 +1,150 @@
+{
+  "id": "b16-09-sitemap-crawler-s3-batch-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b16-09_0416_sheet-11_sheet.json",
+  "sourceFindingId": "b16-09_0416_sheet-11_sheet-conformance-c232d4ab20d8",
+  "classification": "バッチインフラ",
+  "feature": "サイトマップ生成",
+  "issueCategory": "実装違い",
+  "issue": "サイトマップをクローラーでファイル生成してS3へアップロードせず、HTTPリクエスト時にDBからXMLを返す",
+  "designBook": "0416_基本設計仕様書(バッチ_インフラ).xlsx",
+  "reproSteps": [
+    "設計書 B16-09 で、Sitemap-Generator-Crawlerを使い、晴れる屋トップページからリンクを辿ってURLリストを作成し、前回サイトマップとの差分がある場合にS3へアップロードするバッチ仕様であることを確認する",
+    "ベース実装 ec-cube の `SitemapController` を確認し、`/sitemap.xml` などのGETルートで、Page/Product/Category情報からTwig XMLレスポンスを返す実装であることを確認する",
+    "ec-cube-enterprise の `Front\\SitemapController` を確認し、同じくGETルートでDB由来のXMLレスポンスを返しており、クローラー実行、サイトマップファイル作成、前回差分比較、S3アップロードがないことを確認する",
+    "ec-cube-enterprise / ec-cube を `Sitemap-Generator-Crawler`, `crawl(`, `Eventbridge`, `putObject`, `sitemap S3`, `前回`, `昨日` などで検索し、設計のバッチ処理本体が存在しないことを確認する"
+  ],
+  "expected": [
+    "Sitemap-Generator-Crawlerを使い、晴れる屋トップページからリンクを辿ってアクセス可能なURLを抽出する",
+    "抽出したURLリストからサイトマップファイルを作成する",
+    "管理ページ、商品検索ページ、カードリスト購入ページ、デッキ検索ページ、イベント情報配下をクロール対象外にする",
+    "前回(昨日)のサイトマップと今回作成したサイトマップを比較し、差異がある場合にS3へアップロードする",
+    "EventBridge + Lambda から毎日4:00に起動するバッチとして実行する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise のサイトマップ実装は、`/sitemap.xml` などのHTTP GETルートを持つ `Front\\SitemapController` である。`index()` はPage/Product/Category/Purchase/Deck情報を取得し、`outputXml()` でTwigテンプレートをレンダリングしてXMLレスポンスを返す。クローラーでURLを巡回してファイルを生成する処理、前回ファイルとの比較、S3アップロードはこのControllerにはない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は /sitemap.xml のHTTPレスポンスとしてサイトマップを返す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php",
+          "start": 53,
+          "end": 115,
+          "language": "php",
+          "contains": [
+            "#[Route(path: '/sitemap.xml', name: 'sitemap_xml', methods: ['GET'])]",
+            "$pageQueryBuilder = $this->pageRepository->createQueryBuilder('p');",
+            "$Product = $this->productRepository->findOneBy(['Status' => 1], ['update_date' => 'DESC']);",
+            "$Category = $this->categoryRepository->findOneBy([], ['update_date' => 'DESC']);",
+            "return $this->outputXml(",
+            "'sitemap_index.xml.twig'"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の outputXml はファイル保存ではなくTwig XMLレスポンスを返す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php",
+          "start": 244,
+          "end": 259,
+          "language": "php",
+          "contains": [
+            "private function outputXml(array $data, string $template_name = 'sitemap.xml.twig'): Response",
+            "$response = new Response();",
+            "$response->headers->set('Content-Type', 'application/xml');",
+            "return $this->render(",
+            "$response"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 ec-cube も同じ方向の実装で、`/sitemap.xml` GETルートからPage/Product/Category情報を取得し、`outputXml()` でXMLレスポンスを返す。設計で前提にしているSitemap-Generator-Crawlerによる巡回バッチやS3アップロード実装ではない。",
+      "snippets": [
+        {
+          "label": "ベース実装 ec-cube も /sitemap.xml のHTTPレスポンスとしてサイトマップを返す",
+          "path": "ec-cube/src/Eccube/Controller/SitemapController.php",
+          "start": 82,
+          "end": 122,
+          "language": "php",
+          "contains": [
+            "* @Route(\"/sitemap.xml\", name=\"sitemap_xml\", methods={\"GET\"})",
+            "$pageQueryBuilder = $this->pageRepository->createQueryBuilder('p');",
+            "$Product = $this->productRepository->findOneBy(['Status' => 1], ['update_date' => 'DESC']);",
+            "$Category = $this->categoryRepository->findOneBy([], ['update_date' => 'DESC']);",
+            "return $this->outputXml(",
+            "'sitemap_index.xml.twig'"
+          ]
+        },
+        {
+          "label": "ベース実装 ec-cube の outputXml もTwig XMLレスポンスを返す",
+          "path": "ec-cube/src/Eccube/Controller/SitemapController.php",
+          "start": 207,
+          "end": 225,
+          "language": "php",
+          "contains": [
+            "private function outputXml(array $data, $template_name = 'sitemap.xml.twig')",
+            "$response = new Response();",
+            "$response->headers->set('Content-Type', 'application/xml');",
+            "return $this->render(",
+            "$response"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B16-09はクローラーによるURL巡回、ファイル作成、前回比較、S3アップロードを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html",
+      "start": 1288,
+      "end": 1326,
+      "language": "html",
+      "contains": [
+        "フロント側のサイトマップを作成し、S3バケットにアップロードを行う",
+        "Sitemap-Generator-Crawler",
+        "晴れる屋トップページ(https://www.hareruyamtg.com/)にアクセスし、取得ページを解析しアクセス可能なリンクURLを抽出",
+        "前回(昨日)のサイトマップと今回作成したサイトマップを比較し、差異がある場合はS3にアップロードする",
+        "実行トリガー　Eventbridge+Lamdba　実行タイミング　毎日4:00",
+        "出力先(フォーマット)　S3"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterpriseはHTTP ControllerでXMLを返す実装であり、ファイル生成/S3アップロードではない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php",
+      "start": 56,
+      "end": 115,
+      "language": "php",
+      "contains": [
+        "#[Route(path: '/sitemap.xml', name: 'sitemap_xml', methods: ['GET'])]",
+        "return $this->outputXml(",
+        "'sitemap_index.xml.twig'"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "ベースec-cubeもHTTP ControllerでXMLを返す実装であり、クローラーバッチではない",
+      "path": "ec-cube/src/Eccube/Controller/SitemapController.php",
+      "start": 82,
+      "end": 122,
+      "language": "php",
+      "contains": [
+        "* @Route(\"/sitemap.xml\", name=\"sitemap_xml\", methods={\"GET\"})",
+        "return $this->outputXml(",
+        "'sitemap_index.xml.twig'"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"Sitemap-Generator-Crawler|晴れる屋トップページ|前回\\(昨日\\)|Eventbridge|Lamdba|出力先\\(フォーマット\\).*S3\" excel_to_html/output/0416_基本設計仕様書\\(バッチ_インフラ\\).html design_impl_drift_report/findings/b16-09_0416_sheet-11_sheet.json",
+      "rg -n \"Sitemap-Generator-Crawler|SitemapGenerator|crawl\\(|Eventbridge|Lambda|s3 cp|s3 sync|putObject|sitemap.*S3|前回|昨日\" ../ec-cube-enterprise ../ec-cube --glob '!vendor/**' --glob '!node_modules/**' --glob '!var/cache/**'",
+      "rg -n \"sitemap.xml|sitemap_index.xml.twig|outputXml|sitemap_product|sitemap_page\" ../ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php ../ec-cube/src/Eccube/Controller/SitemapController.php"
+    ]
+  },
+  "notes": [
+    "同じB16-09内の前回比較、EventBridge+Lambda起動、クロール除外ルールの候補は、同じサイトマップ生成バッチ未実装/実装方式違いに含まれるため本件へ統合する。",
+    "ベース実装 ec-cube も設計要求のクローラーバッチではなくHTTP Controller方式であるため、本件はベース踏襲漏れではなく、設計で追加されたバッチ方式要求との差分として扱う。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

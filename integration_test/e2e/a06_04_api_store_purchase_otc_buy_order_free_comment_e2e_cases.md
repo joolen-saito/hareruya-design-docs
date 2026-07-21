@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない機能仕様（JWT認証付きの店頭買取受注フリーコメント更新API＝PUTで更新する更新系API）であり、**両レイヤで網羅**する。API/統合レイヤ＝Playwright `request` で当該エンドポイントへPUT送信し、HTTPステータス・レスポンス本文（`{code}`／`{code, errors}`）・更新成否で判定。UIレイヤ＝更新結果が管理画面（店頭買取受注詳細のフリーコメント表示・受注他項目の不変）に現れる範囲をブラウザで観測して判定。
 
-**期待結果は仕様（正本md＝pf-apiリバース／観点表／基本設計）由来**とし、実装のレスポンス形・例外クラスの既定挙動・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。**pf-apiリバースを基本設計・観点表を上位オラクル**とし、乖離は付帯表4に出す。実装（ec-cube-enterprise）からは位置情報（APIパス・メソッド・認証方式・セレクタ）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。送信先パスは実装の実効パスに統一し（テストが実在経路へ届くため）、設計パスとの差異は付帯表4でのみ管理する。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（正本md＝pf-apiリバース／観点表／基本設計）由来**とし、実装のレスポンス形・例外クラスの既定挙動・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。**pf-apiリバースを基本設計・観点表を上位オラクル**とし、乖離は付帯表4に出す。実装（ec-cube-enterprise）からは位置情報（APIパス・メソッド・認証方式・セレクタ）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。送信先パスは実装の実効パスに統一し（テストが実在経路へ届くため）、設計パスとの差異は付帯表4でのみ管理する。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -22,67 +22,67 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-001	IT-32	資格情報	P1	有効JWTで認証通過しコメント更新が成功する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	"有効なjwt-tokenヘッダ
 free_comment=任意の文字列
 path id=既存の店頭買取受注ID"	"1. 当該エンドポイントへPUT送信する
-2. HTTPステータスとレスポンスを確認する"	認証が通過し、HTTP200（成功）が返ること。
+2. HTTPステータスとレスポンスを確認する"	認証が通過し、HTTP200（成功）が返ること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-002	IT-09	リクエスト	P3	正常パラメータでコメント更新が成功する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	正常なid・free_comment・jwt-token	"1. 当該エンドポイントへPUT送信する
-2. レスポンスと後続状態を確認する"	正常なパラメータ値での実行結果がHTTP200（code:200）で処理結果と一致すること。
+2. レスポンスと後続状態を確認する"	正常なパラメータ値での実行結果がHTTP200（code:200）で処理結果と一致すること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-003	IT-09	実行結果	P3	更新成功の実行結果がレスポンスと一致する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	正常なid・free_comment・jwt-token	"1. 当該エンドポイントへPUT送信する
-2. レスポンスと後続状態を確認する"	更新成功の実行結果としてレスポンス本文が code:200 で処理結果と一致すること。
+2. レスポンスと後続状態を確認する"	更新成功の実行結果としてレスポンス本文が code:200 で処理結果と一致すること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-004	IT-09	HTTPステータス	P3	正常更新時のHTTPステータスが成功と一致する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	正常なid・free_comment・jwt-token	"1. 当該エンドポイントへPUT送信する
-2. HTTPステータスを確認する"	正常更新時のHTTPステータスが200であること。
+2. HTTPステータスを確認する"	正常更新時のHTTPステータスが200であること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-005	IT-10	正常	P2	対象条件に該当する正常値で成功応答する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	対象条件に該当する正常なfree_comment	"1. 当該エンドポイントへPUT送信する
-2. HTTPステータスとレスポンスを確認する"	対象条件に該当する正常値でHTTP200（code:200）が返ること。
+2. HTTPステータスとレスポンスを確認する"	対象条件に該当する正常値でHTTP200（code:200）が返ること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-006	IT-10	通信	P1	正常通信で成功応答が返る	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	正常なid・free_comment・jwt-token	"1. 当該エンドポイントへPUT送信する
-2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200であること。
+2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200であること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-007	IT-10	HTTPステータス	P1	正常時のHTTPステータスが成功と一致する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	正常なid・free_comment・jwt-token	"1. 当該エンドポイントへPUT送信する
-2. HTTPステータスを確認する"	正常時のHTTPステータスが200であること。
+2. HTTPステータスを確認する"	正常時のHTTPステータスが200であること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-008	IT-32	レスポンス	P3	成功レスポンス本文が仕様の形と一致する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	正常なid・free_comment・jwt-token	"1. 当該エンドポイントへPUT送信する
-2. レスポンス本文を確認する"	成功時のレスポンス本文が `{code:200}`（codeフィールドはinteger・200）であること。
+2. レスポンス本文を確認する"	成功時のレスポンス本文が `{code:200}`（codeフィールドはinteger・200）であること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-009	IT-32	必須条件	P3	free_comment指定ありで成功応答する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	free_comment=非null文字列・jwt-token	"1. free_commentを指定してPUT送信する
-2. HTTPステータスを確認する"	必須項目free_commentを指定して送信するとHTTP200（code:200）が返ること。
+2. HTTPステータスを確認する"	必須項目free_commentを指定して送信するとHTTP200（code:200）が返ること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-010	IT-09	実行結果	P1	空コメント受注へ新規コメント登録で成功する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER-EMPTY	"フリーコメント未設定の受注ID
 free_comment=新規コメント"	"1. 空コメント受注へfree_commentを指定してPUT送信する
-2. HTTPステータスを確認する"	新規コメント登録としてHTTP200（code:200）が返ること（登録値のUI反映は E2E-A06-04-040 で確認）。
+2. HTTPステータスを確認する"	新規コメント登録としてHTTP200（code:200）が返ること（登録値のUI反映は E2E-A06-04-040 で確認）。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-011	IT-10	正常	P1	既存コメントの上書き更新で成功する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER-FILLED	"フリーコメント設定済の受注ID
 free_comment=別の値"	"1. 既存コメント受注へ別値のfree_commentを指定してPUT送信する
-2. HTTPステータスを確認する"	既存コメントの上書き更新としてHTTP200（code:200）が返ること（上書き値のUI反映は E2E-A06-04-040 で確認）。
-a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-012	IT-10	正常	P2	空文字コメントは入力不正とならず成功する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	free_comment=空文字（""・非null）	"1. free_comment=空文字でPUT送信する
-2. HTTPステータスを確認する"	空文字はpf-api側で入力不正と判定せず、HTTP200（code:200）が返ること。
+2. HTTPステータスを確認する"	既存コメントの上書き更新としてHTTP200（code:200）が返ること（上書き値のUI反映は E2E-A06-04-040 で確認）。				
+a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-012	IT-10	正常	P2	空文字コメントは入力不正とならず成功する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	"free_comment=空文字（""""・非null）"	"1. free_comment=空文字でPUT送信する
+2. HTTPステータスを確認する"	空文字はpf-api側で入力不正と判定せず、HTTP200（code:200）が返ること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-013	IT-10	正常	P2	最大長相当の長大コメントもAPIは上限判定せず成功する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	free_comment=長大な文字列（最大長相当）	"1. 長大なfree_commentでPUT送信する
-2. HTTPステータスを確認する"	文字数の上限はpf-api側で判定せず、HTTP200（code:200）が返ること（DBカラム長を超える場合の挙動は付帯表4#7・要実機確認）。
+2. HTTPステータスを確認する"	文字数の上限はpf-api側で判定せず、HTTP200（code:200）が返ること（DBカラム長を超える場合の挙動は付帯表4#7・要実機確認）。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-014	IT-32	リクエスト	P3	想定外項目を加えてもfree_commentのみ反映され成功する	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	正常なfree_commentに想定外の項目（項目名と値のセット）を追加	"1. 想定外項目を含むボディでPUT送信する
-2. HTTPステータスを確認する"	想定外項目があってもエラーで停止せずHTTP200（code:200）が返ること。
+2. HTTPステータスを確認する"	想定外項目があってもエラーで停止せずHTTP200（code:200）が返ること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-020	IT-32	受信検証	P1	jwt-tokenヘッダ欠落で認証拒否となる	SEED-A06-04-OTC-ORDER	jwt-tokenヘッダなし・free_comment=任意	"1. jwt-tokenヘッダを付けずにPUT送信する
-2. HTTPステータスを確認する"	受信検証（認証）に失敗し、認証拒否のHTTP401が返り、応答本文を持たない（空）こと。
+2. HTTPステータスを確認する"	受信検証（認証）に失敗し、認証拒否のHTTP401が返り、応答本文を持たない（空）こと。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-021	IT-32	資格情報	P1	署名不正JWTで認証拒否となる	SEED-A06-04-OTC-ORDER	署名不正のjwt-tokenヘッダ・free_comment=任意	"1. 署名不正のjwt-tokenでPUT送信する
-2. HTTPステータスを確認する"	署名検証に失敗し、認証拒否のHTTP401が返り、応答本文を持たない（空）こと。
+2. HTTPステータスを確認する"	署名検証に失敗し、認証拒否のHTTP401が返り、応答本文を持たない（空）こと。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-022	IT-32	資格情報	P2	該当する管理者会員なしのJWTで認証拒否となる	SEED-A06-04-OTC-ORDER	署名は正当だが該当管理者会員が存在しない利用者IDのjwt-token	"1. 該当会員なしのjwt-tokenでPUT送信する
-2. HTTPステータスを確認する"	ペイロードの利用者IDから管理者会員を引けず、認証拒否のHTTP401が返り、応答本文を持たない（空）こと。
+2. HTTPステータスを確認する"	ペイロードの利用者IDから管理者会員を引けず、認証拒否のHTTP401が返り、応答本文を持たない（空）こと。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-023	IT-10	異常系	P2	異常リクエストで異常応答が返る	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	異常なリクエスト（不正な認証・該当なしid・必須欠落のいずれか）	"1. 異常リクエストでPUT送信する
-2. HTTPステータスを確認する"	HTTPステータスが異常を示す4xx（401／404／400のいずれか仕様分岐どおり）であり、401・404は応答本文を持たない（空）・400は `{code, errors}` を返すこと。
+2. HTTPステータスを確認する"	HTTPステータスが異常を示す4xx（401／404／400のいずれか仕様分岐どおり）であり、401・404は応答本文を持たない（空）・400は `{code, errors}` を返すこと。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-030	IT-32	リクエスト	P3	非該当ID（異常パラメータ）で該当なしとなる	SEED-A06-04-AUTH-MEMBER	有効jwt-token・存在しない受注ID・free_comment=任意	"1. 非該当IDでPUT送信する
-2. HTTPステータスを確認する"	受注IDに該当する店頭買取受注が無く、該当なしのHTTP404が返り、応答本文を持たない（空）こと。
+2. HTTPステータスを確認する"	受注IDに該当する店頭買取受注が無く、該当なしのHTTP404が返り、応答本文を持たない（空）こと。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-031	IT-32	データなし	P3	該当受注なしIDで該当なし応答となる	SEED-A06-04-AUTH-MEMBER	有効jwt-token・対象データが存在しない受注ID	"1. 該当受注なしIDでPUT送信する
-2. HTTPステータスを確認する"	該当する店頭買取受注が無い場合にHTTP404が返り、応答本文を持たない（空）こと。
+2. HTTPステータスを確認する"	該当する店頭買取受注が無い場合にHTTP404が返り、応答本文を持たない（空）こと。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-032	IT-10	エラー	P2	free_comment未指定で入力不正となる	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	有効jwt-token・free_comment未指定（null）	"1. free_commentを送らずにPUT送信する
-2. HTTPステータスを確認する"	コメント未指定（null）で入力不正のHTTP400が返ること。
+2. HTTPステータスを確認する"	コメント未指定（null）で入力不正のHTTP400が返ること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-033	IT-10	エラー	P2	free_comment未指定でエラーメッセージが返る	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	有効jwt-token・free_comment未指定（null）	"1. free_commentを送らずにPUT送信する
-2. レスポンス本文のerrorsを確認する"	HTTP400のレスポンス本文 `{code, errors}` の errors に「コメントを入力してください」が含まれること。
+2. レスポンス本文のerrorsを確認する"	HTTP400のレスポンス本文 `{code, errors}` の errors に「コメントを入力してください」が含まれること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-040	IT-09	実行結果	P2	更新後に管理画面詳細でフリーコメントが更新値で表示される	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER／SEED-M01-ADMIN	更新したfree_commentの値	"1. APIでfree_commentを更新する
 2. 管理画面で当該店頭買取受注の詳細を開く
-3. フリーコメント欄の値を確認する"	店頭買取受注詳細のフリーコメント欄に、APIで更新した値が表示されること。
+3. フリーコメント欄の値を確認する"	店頭買取受注詳細のフリーコメント欄に、APIで更新した値が表示されること。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-041	IT-10	正常	P2	更新後に受注のステータス・他項目が変更されない	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER／SEED-M01-ADMIN	更新前後の受注ステータス・他項目	"1. 更新前に管理画面詳細でステータス・他項目を控える
 2. APIでfree_commentのみ更新する
-3. 詳細を再表示しステータス・他項目を確認する"	更新により変わるのはフリーコメントと更新担当者のみで、それ以外（受注ステータス・他項目）は更新前と一致して不変であること（実装の更新日時更新の扱いは付帯表4#6で別確認）。
+3. 詳細を再表示しステータス・他項目を確認する"	更新により変わるのはフリーコメントと更新担当者のみで、それ以外（受注ステータス・他項目）は更新前と一致して不変であること（実装の更新日時更新の扱いは付帯表4#6で別確認）。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-050	IT-10	重複・順序	P1	更新担当者として認証会員がdtb_member（id）で記録される	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	認証会員（既知のid）・free_comment=任意	"1. 既知の認証会員のjwt-tokenでfree_commentを更新する
-2. 当該受注の更新担当者を確認する（DBまたは管理画面の更新者欄）"	更新担当者に、認証した管理者会員が dtb_member の id で記録されること（移行先で会員の主キー名がidになる）。
+2. 当該受注の更新担当者を確認する（DBまたは管理画面の更新者欄）"	更新担当者に、認証した管理者会員が dtb_member の id で記録されること（移行先で会員の主キー名がidになる）。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-051	IT-10	エラー	P3	タイムアウト時に仕様通りの挙動となる	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してPUT送信する
-2. 応答と更新状態を確認する"	タイムアウト時に未定義エラーで停止せず、仕様通りの応答が返り、フリーコメントが部分更新されないこと。
+2. 応答と更新状態を確認する"	タイムアウト時に未定義エラーで停止せず、仕様通りの応答が返り、フリーコメントが部分更新されないこと。				
 a06-04_api_store_purchase_otc_buy_order_free_comment（API_店頭仕入_買取注文フリーコメント）	E2E-A06-04-052	IT-19	同時実行数の制限	P2	同一受注への同時更新は後勝ちとなる	SEED-A06-04-AUTH-MEMBER／SEED-A06-04-OTC-ORDER	同一受注へ異なるfree_commentを並行PUT送信	"1. 同一受注へ2件のfree_comment更新をほぼ同時に送信する
-2. 最終のフリーコメント値を確認する"	排他制御を持たず（楽観／悲観ロック対象なし）、後に確定した更新のfree_commentが最終値として残る（後勝ち）こと。
+2. 最終のフリーコメント値を確認する"	排他制御を持たず（楽観／悲観ロック対象なし）、後に確定した更新のfree_commentが最終値として残る（後勝ち）こと。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

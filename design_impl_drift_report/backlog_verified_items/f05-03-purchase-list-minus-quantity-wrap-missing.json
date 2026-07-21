@@ -1,0 +1,160 @@
+{
+  "id": "f05-03-purchase-list-minus-quantity-wrap-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f05-03_0305_sheet-5_sheet.json",
+  "sourceFindingId": "f05-03_0305_sheet-5_sheet-conformance-3737dafffede",
+  "classification": "フロントネット買取",
+  "feature": "ネット買取商品一覧",
+  "issueCategory": "実装漏れ",
+  "issue": "商品数が1の状態でマイナスボタンを押しても20に戻らない",
+  "designBook": "0305_基本設計仕様書(フロント_ネット買取).xlsx",
+  "reproSteps": [
+    "http://localhost:8080/ja/purchase/search で買取商品一覧を表示する",
+    "買取価格が500円以上の商品カードで商品数が1になっていることを確認する",
+    "マイナスボタンを押下し、商品数が20に変わるか確認する"
+  ],
+  "expected": [
+    "マイナスボタン押下時、商品数を1つ減らす",
+    "商品数が1の場合にマイナスボタンを押下すると、商品数を20にする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の買取商品カードは `.purchase-detail-qty` に初期値1の hidden input と表示ラベルを持ち、マイナスボタンは `Block/js/Purchase/purchase_js.twig` のイベントで処理される。同イベントは `v > 1` の場合だけ減算し、コメントでも「1で止める」としているため、商品数1で押下しても20へ循環しない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 買取商品カードの数量UI",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/_purchase_product_card_common.twig",
+          "start": 42,
+          "end": 52,
+          "language": "twig",
+          "contains": [
+            "purchase-detail-qty",
+            "data-stock=\"{{ purchaseCartMaxQtyPerLine|default(20) }}\"",
+            "class=\"qty-input\"",
+            "value=\"1\"",
+            "class=\"qty-label"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise マイナスボタンは1で停止",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/Purchase/purchase_js.twig",
+          "start": 44,
+          "end": 55,
+          "language": "twig",
+          "contains": [
+            "$(document).on('click', '.purchase_page .purchase-detail-qty .btn-minus', function () {",
+            "買取カートは1枚以上が前提のため、販売詳細の0下限とは合わせず1で止める",
+            "if (v > 1) {",
+            "v--;",
+            "$inp.val(v);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、買取商品ブロックのマイナスボタンが `qty_spin(..., 'm', 20, 1)` を呼び出す。`qty_spin` は減算後に `qtyval < 1` かつ `min !== 0` の場合、`qtyval = max` とするため、1からマイナス押下で20へ循環する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 買取商品ブロックは qty_spin(..., 20, 1) を使用",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_product.twig",
+          "start": 24,
+          "end": 33,
+          "language": "twig",
+          "contains": [
+            "qty_spin('qty[{{ productSubClass.productClass.id }}]','m',20,1);",
+            "max=\"20\"",
+            "value=\"1\"",
+            "qty_spin('qty[{{ productSubClass.productClass.id }}]','p',20,1);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 qty_spin は下限未満で max に戻す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/assets/js/ec.js",
+          "start": 288,
+          "end": 314,
+          "language": "javascript",
+          "contains": [
+            "function qty_spin(qtyname, type, max = 999, min = 0) {",
+            "qtyval--;",
+            "if (qtyval < 1) {",
+            "qtyval = max;",
+            "} else if (qtyval > max) {"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "商品数が1の場合は20にする",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 1838,
+      "end": 1838,
+      "language": "html",
+      "contains": [
+        "マイナス",
+        "商品数減ボタン",
+        "商品数が1の場合に押下すると、商品数を20にする"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "数量UIは20上限・1初期値",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/_purchase_product_card_common.twig",
+      "start": 42,
+      "end": 52,
+      "language": "twig",
+      "contains": [
+        "purchase-detail-qty",
+        "value=\"1\""
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "マイナス処理は1で止める",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/Purchase/purchase_js.twig",
+      "start": 44,
+      "end": 55,
+      "language": "twig",
+      "contains": [
+        "1で止める",
+        "if (v > 1)"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3では qty_spin(..., 20, 1) を呼ぶ",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_product.twig",
+      "start": 24,
+      "end": 33,
+      "language": "twig",
+      "contains": [
+        "qty_spin('qty[{{ productSubClass.productClass.id }}]','m',20,1);"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3の qty_spin は下限未満で max に戻す",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/assets/js/ec.js",
+      "start": 288,
+      "end": 314,
+      "language": "javascript",
+      "contains": [
+        "qtyval = max;"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f05-03_0305_sheet-5_sheet.json#f05-03_0305_sheet-5_sheet-conformance-3737dafffede'",
+      "rg -n \"商品数が1|20にする|マイナス|btn-minus|purchase-detail-qty|qty_spin|1で止める|商品数を20|商品数を1つ減らす\" hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書\\(フロント_ネット買取\\).html ec-cube-enterprise/src/Eccube/Resource/template pf-eccube3/app/Plugin/HareruyaEc/Resource/template",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書\\(フロント_ネット買取\\).html | sed -n '1834,1840p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Block/_purchase_product_card_common.twig | sed -n '39,53p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/Purchase/purchase_js.twig | sed -n '28,55p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/purchase_product.twig | sed -n '24,33p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/assets/js/ec.js | sed -n '288,314p'"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。"
+  }
+}

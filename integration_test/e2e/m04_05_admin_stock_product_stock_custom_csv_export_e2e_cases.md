@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m04_05_admin_stock_product_stock_custom_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・HTTP応答・ダウンロード発火・URL等のブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の文言・ファイル名・Content-Type・ルートをオラクル化しない。本機能は CSV ダウンロードであり、**CSVの中身（列・並び・rank順・検索条件一致・件数）は手動確認**とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・HTTP応答・ダウンロード発火・URL等のブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の文言・ファイル名・Content-Type・ルートをオラクル化しない。本機能は CSV ダウンロードであり、**CSVの中身（列・並び・rank順・検索条件一致・件数）は手動確認**とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 ## 関連ID対応概要
 
@@ -24,36 +24,36 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-030	IT-15	未認証	P1	未ログインで在庫一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /{admin_route}/product/stock へ直接アクセス"	管理ログイン画面へ誘導されること。
-m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-031	IT-15	未認証	P1	未ログインでカスタムCSV出力URLへ直接アクセスすると管理ログイン画面へ誘導されCSVは出力されない	未ログイン	任意のカスタムCSV識別子	"1. /{admin_route}/custom_csv/export/1 へ直接アクセス"	管理ログイン画面へ誘導されCSVが出力されないこと。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-030	IT-15	未認証	P1	未ログインで在庫一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /{admin_route}/product/stock へ直接アクセス	管理ログイン画面へ誘導されること。				
+m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-031	IT-15	未認証	P1	未ログインでカスタムCSV出力URLへ直接アクセスすると管理ログイン画面へ誘導されCSVは出力されない	未ログイン	任意のカスタムCSV識別子	1. /{admin_route}/custom_csv/export/1 へ直接アクセス	管理ログイン画面へ誘導されCSVが出力されないこと。				
 m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-001	IT-25	UI部品	P2	検索後の在庫一覧にカスタムCSVプルダウンと先頭オプションが表示される	ログイン済み／SEED-M04-05-STOCK	—	"1. 在庫一覧を表示する
-2. 検索を実行する"	カスタムCSV出力用プルダウン（操作起点）が表示され、先頭は空値の見出しオプションであること（翻訳文言は実装値のため合否に固定しない）。
+2. 検索を実行する"	カスタムCSV出力用プルダウン（操作起点）が表示され、先頭は空値の見出しオプションであること（翻訳文言は実装値のため合否に固定しない）。				
 m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-002	IT-25	UI部品	P3	カスタムCSVプルダウン末尾に出力項目設定オプションが表示される	ログイン済み／SEED-M04-05-STOCK	—	"1. 在庫一覧を表示し検索する
-2. プルダウンの選択肢を確認する"	プルダウン末尾に出力項目設定（カスタムCSV出力項目設定）への遷移オプションが表示されること。
+2. プルダウンの選択肢を確認する"	プルダウン末尾に出力項目設定（カスタムCSV出力項目設定）への遷移オプションが表示されること。				
 m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-003	IT-25	送信可否制御	P3	プルダウンの先頭空値オプションを選択しても遷移・ダウンロードしない	ログイン済み／SEED-M04-05-STOCK	空値オプション	"1. 在庫一覧を表示し検索する
-2. プルダウンで先頭の空値オプションを選択する"	画面遷移もダウンロードも発生せず一覧に留まること（観点表IT-25・送信可否制御由来。空値非遷移を構造的に観測）。
+2. プルダウンで先頭の空値オプションを選択する"	画面遷移もダウンロードも発生せず一覧に留まること（観点表IT-25・送信可否制御由来。空値非遷移を構造的に観測）。				
 m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-012	IT-25	確認ダイアログ	P2	ダウンロードはプルダウン変更のみで確認ダイアログを表示しない	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	在庫CSV拡張オプション	"1. 在庫一覧を表示し検索する
-2. プルダウンで在庫CSV拡張を選択する"	確認ダイアログを介さずCSVファイルがダウンロードされること。
+2. プルダウンで在庫CSV拡張を選択する"	確認ダイアログを介さずCSVファイルがダウンロードされること。				
 m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-010	IT-27	実行結果	P1	在庫CSV拡張を選択するとCSVダウンロードが発火し画面遷移しない	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	在庫CSV拡張オプション	"1. 在庫一覧を表示し検索する
-2. プルダウンで在庫CSV拡張を選択する"	CSVファイルのダウンロードが発火し、画面遷移を伴わないこと。
-m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-011	IT-25	HTTPステータス	P2	有効なカスタムCSVのダウンロード応答が200で返る	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	有効なカスタムCSV識別子	"1. 在庫CSV出力URLへ認証済みで直接GETする"	HTTP 200 が返ること（Content-Disposition/Content-Type は設計に規定が無い実装値のためオラクルにしない。添付ダウンロードの観測は010/012のdownloadイベントで行う）。
-m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-020	IT-13	URL直接アクセス	P1	カスタムCSV出力URLへ直接GETすると在庫情報CSVが出力される	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	有効なカスタムCSV識別子	"1. /{admin_route}/custom_csv/export/{id} へ認証済みで直接GETする"	HTTP 200 が返り在庫情報CSVが出力されること（CSVの中身・列・並びは手動確認。実装ヘッダはオラクルにしない）。
-m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-022	IT-13	URL直接アクセス	P2	カスタムCSV出力URLへ直接POSTでも在庫情報CSVが出力される	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	有効なカスタムCSV識別子	"1. /{admin_route}/custom_csv/export/{id} へ認証済みで直接POSTする"	設計入口は GET/POST のため、POST 方式でも HTTP 200 が返り在庫情報CSVが出力されること。
-m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-021	IT-27	出力失敗	P1	存在しないカスタムCSVのURLへ直接GETすると404になる	ログイン済み	存在しないカスタムCSV識別子（未使用の大きなID）	"1. /{admin_route}/custom_csv/export/{未使用ID} へ直接GETする"	ページが見つからない扱い（HTTP 404）となり出力されないこと。
-m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-023	IT-13	URL直接アクセス	P2	存在しないカスタムCSVのURLへ直接POSTでも404になる	ログイン済み	存在しないカスタムCSV識別子（未使用の大きなID）	"1. /{admin_route}/custom_csv/export/{未使用ID} へ認証済みで直接POSTする"	設計入口は GET/POST のため、POST 方式でもページが見つからない扱い（HTTP 404）となり出力されないこと（022正常系のPOSTに対する異常系の対）。
+2. プルダウンで在庫CSV拡張を選択する"	CSVファイルのダウンロードが発火し、画面遷移を伴わないこと。				
+m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-011	IT-25	HTTPステータス	P2	有効なカスタムCSVのダウンロード応答が200で返る	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	有効なカスタムCSV識別子	1. 在庫CSV出力URLへ認証済みで直接GETする	HTTP 200 が返ること（Content-Disposition/Content-Type は設計に規定が無い実装値のためオラクルにしない。添付ダウンロードの観測は010/012のdownloadイベントで行う）。				
+m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-020	IT-13	URL直接アクセス	P1	カスタムCSV出力URLへ直接GETすると在庫情報CSVが出力される	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	有効なカスタムCSV識別子	1. /{admin_route}/custom_csv/export/{id} へ認証済みで直接GETする	HTTP 200 が返り在庫情報CSVが出力されること（CSVの中身・列・並びは手動確認。実装ヘッダはオラクルにしない）。				
+m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-022	IT-13	URL直接アクセス	P2	カスタムCSV出力URLへ直接POSTでも在庫情報CSVが出力される	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	有効なカスタムCSV識別子	1. /{admin_route}/custom_csv/export/{id} へ認証済みで直接POSTする	設計入口は GET/POST のため、POST 方式でも HTTP 200 が返り在庫情報CSVが出力されること。				
+m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-021	IT-27	出力失敗	P1	存在しないカスタムCSVのURLへ直接GETすると404になる	ログイン済み	存在しないカスタムCSV識別子（未使用の大きなID）	1. /{admin_route}/custom_csv/export/{未使用ID} へ直接GETする	ページが見つからない扱い（HTTP 404）となり出力されないこと。				
+m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-023	IT-13	URL直接アクセス	P2	存在しないカスタムCSVのURLへ直接POSTでも404になる	ログイン済み	存在しないカスタムCSV識別子（未使用の大きなID）	1. /{admin_route}/custom_csv/export/{未使用ID} へ認証済みで直接POSTする	設計入口は GET/POST のため、POST 方式でもページが見つからない扱い（HTTP 404）となり出力されないこと（022正常系のPOSTに対する異常系の対）。				
 m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-013	IT-03	外部画面	P2	設定オプション選択でカスタムCSV出力項目設定画面へ遷移する	ログイン済み／SEED-M04-05-STOCK	出力項目設定オプション	"1. 在庫一覧を表示し検索する
-2. プルダウンで出力項目設定オプションを選択する"	カスタムCSV出力項目設定画面へ遷移すること。
-m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-040	IT-25	送信可否制御	P2	（仕様乖離・要確認）刷新プルダウン経路は検索条件未指定だと出力されず一覧へ戻る	ログイン済み／検索条件未保持	—	"1. 検索を行わず刷新プルダウン経路 /{admin_route}/product/stock/custom-csv/{id} へGETする"	（要確認・不具合候補#2）設計には検索前提の規定が無い。刷新先は出力せず在庫一覧へ戻る実装挙動だが、設計外のため実装の警告文言を期待値に固定しない。妥当性は要確認とし手動/実機で確認する。
-m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-041	IT-27	出力失敗	P2	在庫以外のCSV種別/削除済み拡張IDの直接GETで404になる	ログイン済み／SEED-M04-05-NONSTOCK-EXT	在庫以外のCSV種別または削除済みの拡張識別子	"1. 刷新プルダウン経路 /{admin_route}/product/stock/custom-csv/{id} へ直接GETする"	ページが見つからない扱い（HTTP 404）となり出力されないこと。
+2. プルダウンで出力項目設定オプションを選択する"	カスタムCSV出力項目設定画面へ遷移すること。				
+m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-040	IT-25	送信可否制御	P2	（仕様乖離・要確認）刷新プルダウン経路は検索条件未指定だと出力されず一覧へ戻る	ログイン済み／検索条件未保持	—	1. 検索を行わず刷新プルダウン経路 /{admin_route}/product/stock/custom-csv/{id} へGETする	（要確認・不具合候補#2）設計には検索前提の規定が無い。刷新先は出力せず在庫一覧へ戻る実装挙動だが、設計外のため実装の警告文言を期待値に固定しない。妥当性は要確認とし手動/実機で確認する。				
+m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-041	IT-27	出力失敗	P2	在庫以外のCSV種別/削除済み拡張IDの直接GETで404になる	ログイン済み／SEED-M04-05-NONSTOCK-EXT	在庫以外のCSV種別または削除済みの拡張識別子	1. 刷新プルダウン経路 /{admin_route}/product/stock/custom-csv/{id} へ直接GETする	ページが見つからない扱い（HTTP 404）となり出力されないこと。				
 m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-050	IT-16	実行結果	P1	出力CSVの列・並びが指定カスタムCSVの出力項目定義と一致する（手動）	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	在庫CSV拡張オプション	"1. 在庫一覧を検索し在庫CSV拡張を選択してCSVをダウンロードする
-2. ダウンロードしたCSVのヘッダ列と並びを確認する"	出力CSVのヘッダ列と並びが、指定したカスタムCSV（CSV拡張）で定義した出力項目・並びと一致すること（設計「業務ルール・計算（出力項目の適用）」「集計条件（出力項目）」「処理フロー#3〜#5（ヘッダ/データ行のストリーミング）」由来。列名・ファイル名等の実装値はオラクルにせず、定義との一致のみ手動確認）。
+2. ダウンロードしたCSVのヘッダ列と並びを確認する"	出力CSVのヘッダ列と並びが、指定したカスタムCSV（CSV拡張）で定義した出力項目・並びと一致すること（設計「業務ルール・計算（出力項目の適用）」「集計条件（出力項目）」「処理フロー#3〜#5（ヘッダ/データ行のストリーミング）」由来。列名・ファイル名等の実装値はオラクルにせず、定義との一致のみ手動確認）。				
 m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-051	IT-23	実行結果	P2	出力CSVの対象データが検索条件に合致する規格在庫のみで条件外を含まない（手動）	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	検索条件＋在庫CSV拡張オプション	"1. 在庫一覧で検索条件を指定し検索する
 2. 在庫CSV拡張を選択してCSVをダウンロードする
-3. ダウンロードしたCSVの対象データを確認する"	検索条件に合致する規格在庫のみがCSVに出力され、条件外の在庫データを含まないこと（設計「データ整合性（実行時点で検索条件に一致するデータを参照）」「DB操作（検索条件に合致する規格在庫を抽出）」由来。件数・内容の厳密検査は手動）。
+3. ダウンロードしたCSVの対象データを確認する"	検索条件に合致する規格在庫のみがCSVに出力され、条件外の在庫データを含まないこと（設計「データ整合性（実行時点で検索条件に一致するデータを参照）」「DB操作（検索条件に合致する規格在庫を抽出）」由来。件数・内容の厳密検査は手動）。				
 m04-05_admin_stock_product_stock_custom_csv_export（在庫管理 — 在庫情報カスタムCSV出力）	E2E-M04-05-052	IT-26	更新内容	P1	CSV出力の前後で在庫・カスタムCSV定義のレコードが変更されない（副作用なし・手動）	ログイン済み／SEED-M04-05-STOCK-CSV-EXT	在庫CSV拡張オプション	"1. 出力前の在庫情報・カスタムCSV定義のDB状態を記録する
 2. 在庫CSV拡張を選択してCSVをダウンロードする
-3. 出力後のDB状態と比較する"	CSV出力の前後で在庫情報・カスタムCSV定義の各レコードが変更・追加・削除されないこと（設計「入出力（副作用 無し（参照・出力のみ））」「DB操作（参照系・登録/更新/削除なし）」由来。前後のDB状態を手動比較）。
+3. 出力後のDB状態と比較する"	CSV出力の前後で在庫情報・カスタムCSV定義の各レコードが変更・追加・削除されないこと（設計「入出力（副作用 無し（参照・出力のみ））」「DB操作（参照系・登録/更新/削除なし）」由来。前後のDB状態を手動比較）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠（TSV外）

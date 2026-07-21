@@ -1,0 +1,194 @@
+{
+  "id": "b02-03-stock-up-aggregate-batch-flush-clear-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0404_sheet-5_sheet.json",
+  "sourceFindingId": "b02-03_0404_sheet-5_sheet-conformance-612ad2574b65",
+  "classification": "バッチ商品管理",
+  "feature": "期間別入庫数集計",
+  "issueCategory": "実装違い",
+  "issue": "期間別入庫数集計バッチで100件ごとの反映・キャッシュクリアが実装されていない",
+  "designBook": "0404_基本設計仕様書(バッチ_商品管理).xlsx",
+  "reproSteps": [
+    "ec-cube-enterprise の `BatchAggregateStockUpAction::handle()` と `DtbStockUpQuantityRepository::updateStockUpQuantityColumns()` を確認する",
+    "集計結果の foreach 更新中に、100件ごとの反映境界や EntityManager clear / キャッシュクリア相当の処理があるか確認する",
+    "ベース実装(pf-eccube3)の `UpdateProductSummaryForStockUp::execute()` を確認し、100件ごとの `flush()` と `EntityManagerUtil::clearCache()` の有無を比較する",
+    "0404 の B02-03 設計「100件ごとに変更を反映しキャッシュをクリア」と照合する"
+  ],
+  "expected": [
+    "集計結果を行ごとに更新し、100件ごとに変更を反映する",
+    "100件ごとの反映時にキャッシュをクリアしてメモリを管理する",
+    "残りの変更を最後に反映して終了する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `BatchAggregateStockUpAction::handle()` は、全体を1トランザクションで開始し、集計結果を foreach で `updateStockUpQuantityColumns()` に渡した後、最後に一度だけ `commit()` する。100件単位の分岐、flush、EntityManager clear、キャッシュクリア相当の処理はない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise BatchAggregateStockUpAction は全件処理後に一度だけ commit する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php",
+          "start": 34,
+          "end": 49,
+          "language": "php",
+          "contains": [
+            "public function handle(): void",
+            "$connection->beginTransaction();",
+            "foreach ($stockUpData as $data) {",
+            "$this->stockUpQuantityRepository->updateStockUpQuantityColumns($data);",
+            "$connection->commit();"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ec-cube-enterprise の `DtbStockUpQuantityRepository` は、集計用の既存行を一括削除し、各行の INSERT/UPDATE を `executeUpdate()` で実行する。Repository 内にも 100件単位の flush/clear/cache clear はない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise DtbStockUpQuantityRepository は集計用行を DELETE する",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php",
+          "start": 96,
+          "end": 104,
+          "language": "php",
+          "contains": [
+            "public function clearStockUpQuantityForAggregate(): void",
+            "DELETE FROM dtb_stock_up_quantity"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise DtbStockUpQuantityRepository は各行を executeUpdate する",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php",
+          "start": 195,
+          "end": 249,
+          "language": "php",
+          "contains": [
+            "public function updateStockUpQuantityColumns(array $stockUpQuantity): void",
+            "INSERT INTO dtb_stock_up_quantity",
+            "UPDATE dtb_stock_up_quantity",
+            "$this->getEntityManager()->getConnection()->executeUpdate($query, $stockUpQuantity);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)の `UpdateProductSummaryForStockUp::execute()` は、集計結果を foreach で更新し、`$index % 100 === 0` のタイミングで `flush()` と `EntityManagerUtil::clearCache()` を実行し、最後にも `flush()` する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 UpdateProductSummaryForStockUp は100件ごとに flush と clearCache を行う",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php",
+          "start": 28,
+          "end": 41,
+          "language": "php",
+          "contains": [
+            "public function execute()",
+            "foreach ($stockHistories as $index => $history) {",
+            "if ($index % 100 === 0) {",
+            "$this->app['orm.em']->flush();",
+            "EntityManagerUtil::clearCache($this->app['orm.em']);",
+            "$this->app['orm.em']->flush();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は updateProductSummaryForStockUp を処理本体に対応させる",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 12,
+          "end": 20,
+          "language": "php",
+          "contains": [
+            "const BATCH_NAMES = [",
+            "'updateProductSummaryForStockUp' => 'Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummaryForStockUp'"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "0404 の B02-03 は処理フローで100件ごとの変更反映とキャッシュクリア、最後の残り反映を要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 1163,
+      "end": 1168,
+      "language": "html",
+      "contains": [
+        "product:batch updateProductSummaryForStockUp",
+        "100件ごとに変更を反映しキャッシュをクリアしながら処理する",
+        "残りの変更を反映して終了する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "0404 の B02-03 は排他制御・トランザクションでも100件ごとに変更を反映しキャッシュをクリアしてメモリ管理するとしている",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 1199,
+      "end": 1201,
+      "language": "html",
+      "contains": [
+        "長時間処理に備えて実行時間制限を解除し、100件ごとに変更を反映しキャッシュをクリアしてメモリを管理する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は全体トランザクションで foreach 更新し、最後に一度だけ commit する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php",
+      "start": 34,
+      "end": 49,
+      "language": "php",
+      "contains": [
+        "$connection->beginTransaction();",
+        "foreach ($stockUpData as $data) {",
+        "$connection->commit();"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の Repository は DELETE と各行 executeUpdate を行うが、100件単位の flush/clear/cache clear は持たない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php",
+      "start": 195,
+      "end": 249,
+      "language": "php",
+      "contains": [
+        "public function updateStockUpQuantityColumns(array $stockUpQuantity): void",
+        "$this->getEntityManager()->getConnection()->executeUpdate($query, $stockUpQuantity);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は100件ごとに flush と EntityManagerUtil::clearCache を実行し、最後にも flush する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php",
+      "start": 28,
+      "end": 41,
+      "language": "php",
+      "contains": [
+        "if ($index % 100 === 0) {",
+        "$this->app['orm.em']->flush();",
+        "EntityManagerUtil::clearCache($this->app['orm.em']);",
+        "$this->app['orm.em']->flush();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は ProductBatch から updateProductSummaryForStockUp を実行する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+      "start": 12,
+      "end": 20,
+      "language": "php",
+      "contains": [
+        "'updateProductSummaryForStockUp' => 'Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummaryForStockUp'"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"100件|キャッシュ|clearCache|flush|commit|beginTransaction|rollback|反映|updateProductSummaryForStockUp|BatchAggregateStockUpAction|clearStockUpQuantityForAggregate|updateStockUpQuantityColumns\" excel_to_html/output/0404_基本設計仕様書\\(バッチ_商品管理\\).html excel_to_html/output/0402_基本設計仕様書\\(バッチ_在庫管理\\).html ../pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php ../pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php ../ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php ../ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php",
+      "rg -n \"function (clearStockUpQuantityForAggregate|getStockUpForAggregate|updateStockUpQuantityColumns)|clear\\(|flush\\(|commit\\(|beginTransaction|persist\\(|executeStatement|transaction|EntityManager\" ../ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php ../ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php ../ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php",
+      "rg -n \"updateProductSummaryForStockUp|clearCache|flush\\(|EntityManagerUtil|100|BatchAggregateStockUpAction|DtbStockUpQuantityRepository\" ../pf-eccube3/app/Plugin/HareruyaEc ../ec-cube-enterprise/src/Eccube/Service/Product ../ec-cube-enterprise/src/Eccube/Repository ../ec-cube-enterprise/src/Eccube/Command"
+    ],
+    "review": [
+      "codex gpt-5.5 high reviewer Singer: VERIFIED。設計は100件ごとの反映・キャッシュクリアと残件反映を明記しており、enterprise は BatchAggregateStockUpAction::handle() で全件を単一トランザクション内で更新し、最後に一度だけ commit している。100件単位の commit/flush/clear 相当処理は確認できない。カテゴリは、バッチ自体と集計・更新処理は存在するため実装違いが妥当。既存の『途中失敗時は反映済み行のみ残る』差分とは同じトランザクション境界に起因するため、Backlog 上では関連付けるとよい。"
+    ],
+    "notes": [
+      "0402 にも同じ100件ごとの反映・キャッシュクリア要求があるが、本件は 0404 の finding を代表にし、0402 は補助設計根拠として扱う。",
+      "同じ B02-03 にはコマンド名や開始・完了出力など別差分もあるが、本件は100件ごとの反映境界とキャッシュクリアだけを対象とする。",
+      "途中失敗時の反映済み行のみ残る要求とは同じトランザクション境界に起因するため、別途起票時は関連付ける。"
+    ]
+  }
+}

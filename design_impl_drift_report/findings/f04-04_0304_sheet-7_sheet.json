@@ -1,0 +1,3553 @@
+{
+  "functionId": "f04-04_0304_sheet-7_sheet",
+  "featureNo": "F04-04",
+  "title": "F04-04 決済~購入完了",
+  "domain": "f04",
+  "kind": "front",
+  "designHtml": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+  "sourceBook": "0304_基本設計仕様書(フロント_注文).html",
+  "sheetId": "sheet-7",
+  "sheetName": "決済~購入完了",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "f04-04-store-account-complete-1min-auto-redirect-missing-01",
+      "dimension": "②業務ルール・画面自動遷移未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2452",
+      "designQuote": "店内アカウントの場合、画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する",
+      "implRef": "src/Eccube/Controller/Front/ShoppingController.php:615-670 / src/Eccube/Resource/template/default/Shopping/complete.twig:80-118 / html/template/default/assets/hareruya/js/hareruya-checkout.js",
+      "difference": "設計は、店内アカウントの購入完了画面で表示開始から1分後に注文した店舗のTOPへユーザー操作なしで自動遷移することを要求している。実装は購入完了画面を表示し、店内注文番号（waitingNumber）と通常のTOPページへ戻るボタンを出すが、店内アカウント判定に基づく60秒タイマーと自動 location 遷移が確認できない。",
+      "designExpectation": "店内アカウントの場合だけ、購入完了画面を表示してから1分後に、注文した店舗のTOP画面へ自動的に遷移する。",
+      "implementationActual": "ShoppingController::complete は受注ID取得、待ち番号取得、セッションクリア後に Order/hasNextCart/products/waitingNumber をテンプレートへ渡す。Shopping/complete.twig は waitingNumber があればTC注文番号相当の表示を切り替え、TOPページへ戻るボタンを href=\"{{ url('homepage') }}\" で表示するが、app.user/Order.Customer の店内アカウント条件、setTimeout/setInterval/60000、注文店舗TOP URLへの自動遷移処理がない。",
+      "comparisonRows": [
+        {
+          "item": "対象条件",
+          "design": "店内アカウントの場合に限定して自動遷移する。",
+          "implementation": "WaitingNumberProcessor には isOtcGroup 判定があり店内注文番号は発番されるが、ShoppingController::complete と Shopping/complete.twig では購入グループを判定して自動遷移の有無を切り替えていない。",
+          "mismatch": "設計の店内アカウント条件が購入完了画面の自動遷移制御に使われていない。"
+        },
+        {
+          "item": "タイマー",
+          "design": "画面を表示してから1分後に遷移する。",
+          "implementation": "complete.twig と関連 checkout JS に setTimeout/setInterval、60000、60 * 1000 などの1分タイマー処理がない。",
+          "mismatch": "表示開始から1分を測るクライアント側またはサーバー側のタイマー処理が未実装。"
+        },
+        {
+          "item": "遷移方法と遷移先",
+          "design": "注文した店舗のTOP画面へ自動的に遷移する。項目表のTOPページへ戻るボタンも注文した店舗のTOP画面へ遷移する。",
+          "implementation": "画面上には href=\"{{ url('homepage') }}\" の手動TOPボタンだけがあり、注文した店舗のTOP URLを算出して location.href/location.assign 等で自動遷移する処理はない。",
+          "mismatch": "通常TOPへの手動リンクはあるが、注文店舗TOPへの自動遷移という設計要求を満たしていない。"
+        }
+      ],
+      "comparisonSummary": "②業務ルール・画面自動遷移未実装：設計は「店内アカウントの場合だけ、購入完了画面を表示してから1分後に、注文した店舗のTOP画面へ自動的に遷移する。」。実装は「ShoppingController::complete は受注ID取得、待ち番号取得、セッションクリア後に Order/hasNextCart/products/waitingNumber をテンプレートへ渡す。Shopping/complete.twig は waitingNumber があればTC注文番号相当の表示を切り替え、TOPページへ戻るボタンを href=\"{{ url('homepage') }}\" で表示するが、app.user/Order.Customer の店内アカウント条件、setTime…」。乖離理由は「購入完了画面の Controller/Twig/関連JSを確認したが、設計が要求する店内アカウント限定の1分タイマーと注文店舗TOPへの強制遷移処理が確認できないため。」。",
+      "mismatchReason": "購入完了画面の Controller/Twig/関連JSを確認したが、設計が要求する店内アカウント限定の1分タイマーと注文店舗TOPへの強制遷移処理が確認できないため。",
+      "impact": "店内アカウントで購入完了画面が店舗端末に残り続ける可能性があり、設計上想定している店舗TOPへの自動復帰と次操作への復帰導線が実装挙動と一致しない。",
+      "fixTarget": "src/Eccube/Controller/Front/ShoppingController.php、src/Eccube/Resource/template/default/Shopping/complete.twig、必要に応じて hareruya-checkout.js",
+      "requiredChange": "購入完了画面へ店内アカウント判定結果と注文店舗TOP URLを渡し、該当時だけ 60000ms の setTimeout でそのURLへ自動遷移する。TOPページへ戻るボタンも設計どおり注文した店舗のTOPを向くようにする。",
+      "implementationRefs": [
+        "src/Eccube/Controller/Front/ShoppingController.php:615",
+        "src/Eccube/Controller/Front/ShoppingController.php:645",
+        "src/Eccube/Controller/Front/ShoppingController.php:665",
+        "src/Eccube/Resource/template/default/Shopping/complete.twig:88",
+        "src/Eccube/Resource/template/default/Shopping/complete.twig:100",
+        "src/Eccube/Resource/template/default/Shopping/complete.twig:115",
+        "src/Eccube/Entity/DtbCustomerGroup.php:34",
+        "src/Eccube/Entity/DtbCustomerGroup.php:235",
+        "src/Eccube/Service/PurchaseFlow/Processor/WaitingNumberProcessor.php:44"
+      ],
+      "evidence": "設計HTML:2452 は店内アカウントの1分後自動遷移を定義し、:2464 はTOPボタンの遷移先を注文店舗TOPとする。ShoppingController.php:645 は店内注文番号を取得するが、:665-670 でテンプレートへ渡す値に店内アカウント判定や注文店舗TOP URLがない。complete.twig:88-102 は waitingNumber 表示だけを切り替え、:115 は通常の homepage リンクを表示するのみ。関連JS検索でも setTimeout/setInterval/60000 と自動 location 遷移は確認できない。",
+      "requirementTrace": [
+        {
+          "requirementId": "f04-04-store-account-complete-1min-auto-redirect",
+          "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2452",
+          "designRequirement": "店内アカウントの場合、画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する。",
+          "implementationSearchTerms": [
+            "ShoppingController::complete",
+            "Shopping/complete.twig",
+            "waitingNumber",
+            "DtbCustomerGroup::OTC / OTC_SHITEN / isOtcGroup",
+            "setTimeout / setInterval / 60000 / 60 * 1000",
+            "window.location / location.href / location.assign / location.replace",
+            "url('homepage') / 注文した店舗のTOP"
+          ],
+          "implementationRefs": [
+            "src/Eccube/Controller/Front/ShoppingController.php:615",
+            "src/Eccube/Controller/Front/ShoppingController.php:645",
+            "src/Eccube/Controller/Front/ShoppingController.php:665",
+            "src/Eccube/Resource/template/default/Shopping/complete.twig:88",
+            "src/Eccube/Resource/template/default/Shopping/complete.twig:100",
+            "src/Eccube/Resource/template/default/Shopping/complete.twig:115",
+            "src/Eccube/Entity/DtbCustomerGroup.php:34",
+            "src/Eccube/Entity/DtbCustomerGroup.php:235",
+            "src/Eccube/Service/PurchaseFlow/Processor/WaitingNumberProcessor.php:44"
+          ],
+          "implementationActual": "ShoppingController::complete は受注ID取得、待ち番号取得、セッションクリア後に Order/hasNextCart/products/waitingNumber をテンプレートへ渡す。Shopping/complete.twig は waitingNumber があればTC注文番号相当の表示を切り替え、TOPページへ戻るボタンを href=\"{{ url('homepage') }}\" で表示するが、app.user/Order.Customer の店内アカウント条件、setTimeout/setInterval/60000、注文店舗TOP URLへの自動遷移処理がない。",
+          "traceVerdict": "NOT_FOUND",
+          "traceReason": "購入完了画面の Controller/Twig/関連JSを確認したが、設計が要求する店内アカウント限定の1分タイマーと注文店舗TOPへの強制遷移処理が確認できないため。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "explicit_requirement_trace_gate",
+      "functionId": "f04-04_0304_sheet-7_sheet",
+      "implementationGap": true,
+      "implementationGapType": "業務ロジック・外部連携未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ルート・Controller",
+        "Service・業務ルール",
+        "Twig・画面表示",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2452\n2449:             <div class=\"doc-bullet\" style=\"--lv:1\"><span class=\"doc-marker\">・</span><span>ご注文番号表示下にある文言も変更</span></div>\n2450:             <div class=\"doc-bullet\" style=\"--lv:0\"><span class=\"doc-marker\">★</span><span>フリースペースの追加</span></div>\n2451:             <div class=\"doc-bullet\" style=\"--lv:1\"><span class=\"doc-marker\">・</span><span>管理画面&gt;コンテンツ管理&gt;ブロック管理から文章の設定ができるようにする</span></div>\n2452:             <div class=\"doc-bullet\" style=\"--lv:0\"><span class=\"doc-marker\">★</span><span>店内アカウントの場合、画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する</span></div>\n2453:           </div>\n2454:           <div class=\"item-table-wrap\">\n2455:             <table class=\"item-table\">",
+      "implementationSnippets": [
+        "src/Eccube/Controller/Front/ShoppingController.php:615\n612:             $this->uniSearchService->sendCompleteTaglog($taglogProducts);\n613: \n614:             log_info('[注文処理] 注文処理が完了しました. 購入完了画面へ遷移します.', [$Order->getId()]);\n615: \n616:             return $this->redirectToRoute('shopping_complete');\n617:         }\n618: ",
+        "src/Eccube/Controller/Front/ShoppingController.php:645\n642:         }\n643: \n644:         $Order = $this->orderRepository->find($orderId);\n645: \n646:         $event = new EventArgs(\n647:             [\n648:                 'Order' => $Order,",
+        "src/Eccube/Controller/Front/ShoppingController.php:665\n662:         foreach ($Order->getProductOrderItems() as $OrderItem) {\n663:             $products[] = [\n664:                 'sku' => $OrderItem->getProductCode() ?? '',\n665:                 'name' => $OrderItem->getProductName(),\n666:                 'category' => '',\n667:                 'price' => $OrderItem->getPrice(),\n668:                 'quantity' => $OrderItem->getQuantity(),"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "f04-04_0304_sheet-7_sheet-conformance-ed0a7660fced",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+      "designRefDetail": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7（★カスタマイズ／項目表 識別ID5）",
+      "designExpectation": "★店内アカウントの場合、購入完了画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する（識別ID5 TOPページへ戻るボタン＝注文した店舗のTOP画面へ遷移する）。",
+      "designQuote": "★店内アカウントの場合、購入完了画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する（識別ID5 TOPページへ戻るボタン＝注文した店舗のTOP画面へ遷移する）。",
+      "implRef": "src/Eccube/Controller/Front/ShoppingController.php:615-670 / src/Eccube/Resource/template/default/Shopping/complete.twig:113-118 / Block/_top_page_scripts.twig・html/bundle/front.bundle.js（不在）",
+      "implementationActual": "complete() は Order/hasNextCart/products/waitingNumber のみをテンプレートへ渡し、店内アカウント判定フラグや注文店舗TOPのURLを渡さない。complete.twig に setTimeout も meta http-equiv=refresh も無く、店内アカウント分岐も無い。唯一の遷移導線は :114-116 の url('homepage')（ラベル go_to_top『商品一覧へ戻る』）で一般ホームページへの手動リンクのみ。front.bundle.js・hareruya JS にも 60000ms タイマーや店舗TOPリダイレクトは存在しない。",
+      "difference": "Controller/Twig/読込JS を横断確認したが、設計が要求する『店内アカウント限定の60秒タイマー』『注文した店舗TOPへの強制自動遷移』が存在せず、識別ID5の遷移先も注文店舗TOPではなく一般 homepage 固定・条件分岐無しのため未実装。",
+      "mismatchReason": "Controller/Twig/読込JS を横断確認したが、設計が要求する『店内アカウント限定の60秒タイマー』『注文した店舗TOPへの強制自動遷移』が存在せず、識別ID5の遷移先も注文店舗TOPではなく一般 homepage 固定・条件分岐無しのため未実装。",
+      "comparisonRows": [
+        {
+          "item": "1分後の自動遷移(店内アカウント)",
+          "design": "60秒後に注文店舗TOPへ自動遷移",
+          "implementation": "タイマー・自動遷移なし",
+          "mismatch": "自動遷移未実装"
+        },
+        {
+          "item": "識別ID5 TOPページへ戻るボタン遷移先",
+          "design": "注文した店舗のTOP画面",
+          "implementation": "url('homepage')（一般TOP）固定",
+          "mismatch": "遷移先が注文店舗TOPでない/店内アカウント分岐なし"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "f04-04_0304_sheet-7_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/Front/ShoppingController.php:615-670 / src/Eccube/Resource/template/default/Shopping/complete.twig:113-118 / Block/_top_page_scripts.twig・html/bundle/front.bundle.js（不在）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「★店内アカウントの場合、購入完了画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する（識別ID5 TOPページへ戻るボタン＝注文した店舗のTOP画面へ遷移する）。」。実装は「complete() は Order/hasNextCart/products/waitingNumber のみをテンプレートへ渡し、店内アカウント判定フラグや注文店舗TOPのURLを渡さない。complete.twig に setTimeout も meta http-equiv=refresh も無く、店内アカウント分岐も無い。唯一の遷移導線は :114-116 の url('homepage')（ラベル go_to_top『商品一覧へ戻る』）で一般ホームページへの手動リンクのみ。front.bundle.j…」。乖離理由は「Controller/Twig/読込JS を横断確認したが、設計が要求する『店内アカウント限定の60秒タイマー』『注文した店舗TOPへの強制自動遷移』が存在せず、識別ID5の遷移先も注文店舗TOPではなく一般 homepage 固定・条件分岐無しのため未実装。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "業務ロジック・外部連携未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "ルート・Controller",
+        "Service・業務ルール",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2353\n2350:       </section>\n2351:       <!-- function-design-embed:end f04-03-f04-03_front_cart_shopping_delivery_edit -->\n2352: </section>\n2353:       <section class=\"sheet-panel\" id=\"sheet-7\">\n2354:         <div class=\"sheet-heading\">\n2355:           <h2>決済~購入完了</h2>\n2356:         </div>",
+      "implementationRefs": [
+        "src/Eccube/Controller/Front/ShoppingController.php:615-670",
+        "src/Eccube/Resource/template/default/Shopping/complete.twig:113-118",
+        "src/Eccube/Controller/Front/ShoppingController.php",
+        "src/Eccube/Resource/template/default/Shopping/complete.twig",
+        "html/bundle/front.bundle.js"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Front/ShoppingController.php:615\n612:             $this->uniSearchService->sendCompleteTaglog($taglogProducts);\n613: \n614:             log_info('[注文処理] 注文処理が完了しました. 購入完了画面へ遷移します.', [$Order->getId()]);\n615: \n616:             return $this->redirectToRoute('shopping_complete');\n617:         }\n618: ",
+        "src/Eccube/Resource/template/default/Shopping/complete.twig:113\n",
+        "src/Eccube/Controller/Front/ShoppingController.php:92\n89:  * `checkout()` が同一リクエストで呼ばれる。`confirm.twig` の `action` は `shopping_checkout` のままなので、\n90:  * 確認画面を表示するカスタムやテストが `POST shopping_checkout` する経路は残る。ルート名と実際の HTTP の対応を混同しないこと。\n91:  */\n92: class ShoppingController extends AbstractShoppingController\n93: {\n94:     /**\n95:      * `confirm()` から内部呼び出しで {@see checkout()} に渡すフラグ。"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "f04-04_0304_sheet-7_sheet-conformance-173274a9d90b",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+      "designRefDetail": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7（図形内テキスト BA16 文言変更）",
+      "designExpectation": "購入完了本文『注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。』",
+      "designQuote": "購入完了本文『注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。』",
+      "implRef": "src/Eccube/Resource/locale/messages.ja.yaml:1508-1510 / src/Eccube/Resource/template/default/Shopping/complete.twig:104-107",
+      "implementationActual": "front.shopping.complete_message__body は『ただいま、ご注文の確認メールをお送りさせていただきました。／万一、ご確認メールが届かない場合は、トラブルの可能性もありますので大変お手数ではございますがお問い合わせくださいますようお願いいたします。』で、届かない場合の誘導先が『お問い合わせ』。complete.twig:104-107 が当該キーをそのまま描画。",
+      "difference": "翻訳キーの文言を確認したところ、届かない場合の誘導先が設計の『当店のヘルプページを御覧ください』ではなく『お問い合わせ』となっており核心文言が相違。",
+      "mismatchReason": "翻訳キーの文言を確認したところ、届かない場合の誘導先が設計の『当店のヘルプページを御覧ください』ではなく『お問い合わせ』となっており核心文言が相違。",
+      "comparisonRows": [
+        {
+          "item": "完了本文メール未達時の誘導先",
+          "design": "当店のヘルプページを御覧ください",
+          "implementation": "お問い合わせくださいますようお願いいたします",
+          "mismatch": "誘導先・文言が相違（ヘルプページ→お問い合わせ）"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "f04-04_0304_sheet-7_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Resource/locale/messages.ja.yaml:1508-1510 / src/Eccube/Resource/template/default/Shopping/complete.twig:104-107",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「購入完了本文『注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。』」。実装は「front.shopping.complete_message__body は『ただいま、ご注文の確認メールをお送りさせていただきました。／万一、ご確認メールが届かない場合は、トラブルの可能性もありますので大変お手数ではございますがお問い合わせくださいますようお願いいたします。』で、届かない場合の誘導先が『お問い合わせ』。complete.twig:104-107 が当該キーをそのまま描画。」。乖離理由は「翻訳キーの文言を確認したところ、届かない場合の誘導先が設計の『当店のヘルプページを御覧ください』ではなく『お問い合わせ』となっており核心文言が相違。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2353\n2350:       </section>\n2351:       <!-- function-design-embed:end f04-03-f04-03_front_cart_shopping_delivery_edit -->\n2352: </section>\n2353:       <section class=\"sheet-panel\" id=\"sheet-7\">\n2354:         <div class=\"sheet-heading\">\n2355:           <h2>決済~購入完了</h2>\n2356:         </div>",
+      "implementationRefs": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:1508-1510",
+        "src/Eccube/Resource/template/default/Shopping/complete.twig:104-107",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/default/Shopping/complete.twig"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:1508\n1505: admin.messenger.webhook_detail: Webhook 詳細\n1506: admin.messenger.webhook_id: ID\n1507: admin.messenger.webhook_event: イベント\n1508: admin.messenger.webhook_action: アクション\n1509: admin.messenger.webhook_contract_id: 契約ID\n1510: admin.messenger.webhook_smaregi_event_id: スマレジイベントID\n1511: admin.messenger.webhook_received_at: 受信日時",
+        "src/Eccube/Resource/template/default/Shopping/complete.twig:104\n",
+        "src/Eccube/Resource/locale/messages.ja.yaml:1\n1: #====================================================================================\n2: # 共通\n3: #====================================================================================\n4: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "f04-04_0304_sheet-7_sheet-conformance-2a6eb290d271",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+      "designRefDetail": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7（項目表 識別ID3・ヘルプ画面へ遷移する）",
+      "designExpectation": "購入完了画面の画面部品『識別ID3 ヘルプページ リンク（ヘルプ画面へ遷移する）』。",
+      "designQuote": "購入完了画面の画面部品『識別ID3 ヘルプページ リンク（ヘルプ画面へ遷移する）』。",
+      "implRef": "src/Eccube/Resource/template/default/Shopping/complete.twig 全体（本文 :99-118／actions :113-118）（不在）",
+      "implementationActual": "complete.twig の本文・操作領域にヘルプページ（help_guide 等）へ遷移する独立リンク部品が存在しない。操作領域の唯一のリンクは url('homepage') の『商品一覧へ戻る』ボタンのみで、テンプレート内に help/ヘルプ参照ゼロ、汎用ブロックでも代替なし。",
+      "difference": "テンプレート全体を確認したが、設計が独立部品(識別ID3)として要求する『ヘルプページ』リンク（ヘルプ画面遷移）が描画されておらず代替も無いため未実装。",
+      "mismatchReason": "テンプレート全体を確認したが、設計が独立部品(識別ID3)として要求する『ヘルプページ』リンク（ヘルプ画面遷移）が描画されておらず代替も無いため未実装。",
+      "comparisonRows": [
+        {
+          "item": "識別ID3 ヘルプページリンク",
+          "design": "ヘルプ画面へ遷移するリンク部品を配置",
+          "implementation": "リンク部品なし（help参照ゼロ）",
+          "mismatch": "ヘルプページリンク未実装"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "f04-04_0304_sheet-7_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Resource/template/default/Shopping/complete.twig 全体（本文 :99-118／actions :113-118）（不在）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「購入完了画面の画面部品『識別ID3 ヘルプページ リンク（ヘルプ画面へ遷移する）』。」。実装は「complete.twig の本文・操作領域にヘルプページ（help_guide 等）へ遷移する独立リンク部品が存在しない。操作領域の唯一のリンクは url('homepage') の『商品一覧へ戻る』ボタンのみで、テンプレート内に help/ヘルプ参照ゼロ、汎用ブロックでも代替なし。」。乖離理由は「テンプレート全体を確認したが、設計が独立部品(識別ID3)として要求する『ヘルプページ』リンク（ヘルプ画面遷移）が描画されておらず代替も無いため未実装。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "Twig・画面表示"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2353\n2350:       </section>\n2351:       <!-- function-design-embed:end f04-03-f04-03_front_cart_shopping_delivery_edit -->\n2352: </section>\n2353:       <section class=\"sheet-panel\" id=\"sheet-7\">\n2354:         <div class=\"sheet-heading\">\n2355:           <h2>決済~購入完了</h2>\n2356:         </div>",
+      "implementationRefs": [
+        "src/Eccube/Resource/template/default/Shopping/complete.twig"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Resource/template/default/Shopping/complete.twig:1\n1: {#\n2: This file is part of EC-CUBE\n3: \n4: Copyright(c) EC-CUBE CO.,LTD. All Rights Reserved."
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 99,
+    "explicitRequirementCount": 1,
+    "requirements": [
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-0df0b778e2",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "概要 管理画面に注文データを登録し、注文完了メールを送信します。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-03a5038e54",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "★ ECCUBE側で保持している原価情報を使用して総原価・総在庫を増減する処理を行い、在庫履歴を登録する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-3d35934143",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 購入処理前の下記のチェックをする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-05f9c933d5",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 支払方法が受注情報に保持している支払方法と一致していない場合エラーとする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-cadfd700e8",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ カートに入っている商品のチェック",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-a9543f1999",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 商品公開ステータスチェックし非公開商品の場合はエラーとする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-9cf5764626",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 商品制限数チェックし購入制限数より商品数が多い場合はエラーとする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-fff3bb2ce4",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 購入数量と在庫数をチェックして在庫がなければエラーとする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-7d4321740d",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ エラーの場合、カート内の商品そのままの状態でシステムエラーの画面へ遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-bec6fa8157",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 購入したユーザの情報を更新する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-7536d3f7f0",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 在庫履歴登録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-b5295c00b2",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 購入グループで表示内容を変更する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-5516234aa4",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 購入グループが店内アカウントの場合はご注文番号ではなく、TC注文番号を表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-7799e8d8b5",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ ご注文番号表示下にある文言も変更",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-390c7b90a5",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "★ 店内アカウントの場合、画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-2b8d032beb",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・購入グループが店内アカウントの場合はTC注文番号を表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-284a678b88",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ヘルプ画面へ遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-f414850bef",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・注文した店舗のTOP画面へ遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-1b167f359d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-9619b30676",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文方法の最終送信から購入完了画面までの、注文確定と完了処理を扱う機能である。注文確定で受注データを作成し（管理画面に注文として現れる）、購入完了処理で受注ステータスと決済結果を確認したうえで、注文完了メールの送信・在庫の更新・ポイントや外部連携・購入完了画面の表示を行う。受注ステータスが想定外の場合や決済記録が不整合の場合は、購入完了を確定せずエラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-2ea8d2a4c8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの購入処理（注文確定・購入完了）、テンプレート（ Shopping/complete.twig ）、受注・受注番号・呼び出し番号・在庫・メール・ポイントの各処理を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-e63ef1f7f9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "カスタマイズ区分は現行踏襲とする。挙動の参照リポはpf-eccube3（現行）とし、DB関連（テーブル名・列名・型・制約・関連、DBカラム節、保存先・扱い、データ整合性のDB部分、副作用のDB更新）は ec-cube-enterprise を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-c97d4d637c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了を確定するための受注ステータス・決済記録の判定順序",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-0a495449d1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了時の副作用（注文完了メール、在庫更新、ポイント・外部連携、タグログ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-24a46ac17f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面の表示内容と、再アクセス・異常時の扱い",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-92bfc41ed2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-3c15f37707",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ご注文方法指定・注文情報の入力・確認画面の詳細（カートのご注文方法指定機能を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-a81f72abc8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "スマレジ連携・外部タグログの内部仕様",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-836a6a7cf8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "現行（pf-eccube3）と移行先（ec-cube-enterprise）のDBスキーマ差分を記録する。挙動は現行の確認値を正とし、永続化先の名称は移行先（ec-cube-enterprise）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-f1da9f4a07",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文番号として表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-b5868aac34",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ec-cube-enterprise 実装で要確認",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-c6eec74093",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "単一列としての保持有無は移行先で要確認。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-a00b97c759",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "売上分析タグ・SPLINKS決済記録・スマレジ連携",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-60fadc43a2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "補助テーブルの有無・名称は移行先で要確認。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-e9888e7ab8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ご注文方法指定の最終送信（注文確定）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-cd51ab73ee",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "POST /shopping （確認・確定処理）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-96a006ad0b",
+        "category": "セッションの受注を確認し、完了処理を行って購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "フロントのページであり管理画面プレフィックスは付かない。購入完了画面は注文確定からのリダイレクトで到達する。セッションに受注IDが無い場合はトップページへ戻す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-121470e7f6",
+        "category": "セッションの受注を確認し、完了処理を行って購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面で購入完了タグログを送信する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-f2fe120ee8",
+        "category": "セッションの受注を確認し、完了処理を行って購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "店頭受取の場合は完了表示を店頭向けに切り替える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-224df3c302",
+        "category": "セッションの受注を確認し、完了処理を行って購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "呼び出し番号がある場合はTC注文番号を、無い場合はご注文番号を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-f530ef24b9",
+        "category": "セッションの受注を確認し、完了処理を行って購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文内容を確定して受注データを作成する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-3017490a21",
+        "category": "受注IDをセッションに保存する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面へリダイレクトする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-29bb91668b",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注を取得する。受注ステータスが注文受領・入金待ちのいずれでもない場合は、購入処理異常のアラートメールを送信し、セッションの受注情報を初期化して、購入処理エラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-c536cac3f2",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "SPLINKS決済の場合、SPLINKSの受注情報が無いときは受注ステータスを処理中へ戻し、決済記録不整合のエラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-8e56309a6b",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "表示ロケールの調整が必要な場合は、ロケールを合わせたURLへ遷移する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-cf6dfb63ba",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注明細ごとに、商品の売上分析タグを受注明細に登録し、完了画面用の商品情報を組み立てる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-3acf4e2383",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了の初期化イベントを発行する。イベントが応答を返した場合はそれを返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-e6cff7ed5a",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "SPLINKS決済の場合はポイントを使用する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-b24c58e8c7",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文完了メールを送信する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-d27eca9d06",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "在庫数を更新する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-c83baefab3",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "消費ポイントがある場合はスマレジポイント連携を別プロセスで実行する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-0ed71f9028",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了タグログを送信する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-de83b3bd0a",
+        "category": "セッションの受注情報を初期化し、購入処理完了を記録して購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了 時の判定順序",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-b8d40df4d2",
+        "category": "セッションに受注IDがあるか",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "無ければトップページへ戻す",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-01c592164e",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "SPLINKS支払いだが記録が無ければステータスを処理中へ戻し決済記録不整合エラー画面",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-a1ab21a9cd",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "完了処理（メール・在庫・ポイント・タグログ）を行い購入完了画面を表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-42a2cf6650",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "常時表示（正常・静的）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-5883b199f2",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "表示文言（日本語）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-3c8242f21d",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面の表示時",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-a745491ce4",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ご注文番号／TC注文番号（呼び出し番号がある場合）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-3f4d71b81f",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "エラー・警告（画面全体）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-ad7a25fe07",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "表示条件（利用者視点）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-9b64345b51",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入処理エラー（ front.error.shopping_process の文言）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-90ab000c65",
+        "category": "アラートメールを送信し、セッションを初期化する",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "決済記録不整合エラー（ front.error.no_sln_payment_record の文言）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-3457fd3a50",
+        "category": "アラートメールを送信し、セッションを初期化する",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注ステータスを処理中へ戻す",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-4d2af4dc0f",
+        "category": "アラートメールを送信し、セッションを初期化する",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "エラー文言はロケールメッセージを正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-faf14b0e78",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "SPLINKS決済では対応する決済記録の存在を前提とする。無い場合は受注を処理中へ戻す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-9441ba349f",
+        "category": "異常時はセッションの受注情報を初期化し、更新による再通知を避ける。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "店頭受取（呼び出し番号あり）はTC注文番号、それ以外はご注文番号（8桁）を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-0a4ab28265",
+        "category": "異常時はセッションの受注情報を初期化し、更新による再通知を避ける。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注明細ごとに商品の売上分析タグを受注明細へ登録する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-d629d3ca9d",
+        "category": "セッションに受注IDが無い（直接アクセス・完了後再訪）",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "トップページへ戻す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-723deac4d2",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注を処理中へ戻し、エラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-8c62939b67",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ロケールを合わせたURLへ遷移する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-2d6ebf91cf",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文確定で作成した受注は管理画面の受注として現れる。購入完了処理は当該受注を参照する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-c7e3993811",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了時に在庫数を更新する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-4304f94f8d",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文確定時および決済種別に応じて購入完了時にポイントを使用する。スマレジポイント連携は別プロセスで反映する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-1974602305",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文完了メールは購入完了処理で送信する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-bad2aaac71",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "SPLINKS決済の決済記録の有無を確認し、整合しない場合は購入完了を確定しない。購入完了タグログを外部へ送信する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-1b54866ebb",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "消費ポイントがある場合、スマレジポイント連携を別プロセスのコマンドとして実行する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-678c030a27",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文完了メール送信・在庫更新・タグログ送信は購入完了処理で行う。これらの個別失敗時の再実行は本書では仕様確定せず実装を確認値とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-472653799d",
+        "category": "セッションの受注ID、注文確定時の注文内容。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面、注文完了メール送信、在庫更新、ポイント・タグログ連携。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-a393ee5ed0",
+        "category": "セッションの受注ID、注文確定時の注文内容。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注ステータス異常・決済記録不整合のエラー画面、または受注IDなしでトップページへ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-486db840e2",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文受領・入金待ちで購入完了を確定する。異常時は処理中へ戻す場合がある。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-dbac202d08",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注番号（注文番号）。8桁で表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-5c38ef3d32",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "呼び出し番号（TC注文番号、ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-e3159c98b1",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "店頭受取の注文に付く。移行先での保持列は要確認。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-c624a59e7e",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了時に在庫を更新する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-e90c87a327",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注明細・売上分析タグ（ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-1441379ef1",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注明細へ売上分析タグを登録する。補助テーブル名は移行先で要確認。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-94142beadc",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-9ff962b858",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "本機能は購入完了画面で利用者入力を受け付けない。購入完了の可否は受注ステータスと決済記録の整合で判定する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-536da8b6fe",
+        "category": "セッションに保持した自分の受注についてのみ購入完了処理を行う。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面（ /shopping/complete へリダイレクト）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-4a0bb68591",
+        "category": "セッションに保持した自分の受注についてのみ購入完了処理を行う。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "共通エラー画面（購入処理エラー）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-fe06cfa966",
+        "category": "セッションに保持した自分の受注についてのみ購入完了処理を行う。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "共通エラー画面（決済記録不整合）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-cb9a18ece2",
+        "category": "セッションに保持した自分の受注についてのみ購入完了処理を行う。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-d6f7b5f2da",
+        "category": "セッションに保持した自分の受注についてのみ購入完了処理を行う。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-523ab2df7e",
+        "category": "アラートメールを送信し、セッションを初期化して購入処理エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注を処理中へ戻し、決済記録不整合のエラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-986b0cbfbb",
+        "category": "本機能におけるセッション",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文確定時に保存し、購入完了処理で参照する。完了・異常時に初期化する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04_0304_sheet-7_sheet-req-ee268a497c",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文確定で受注を作成し、購入完了処理で在庫・ポイント・メール等を反映する。受注ステータスの確認により、想定外ステータスでの完了確定を避ける。本機能では楽観ロック・悲観ロックの対象は持たないが、受注ステータスを完了確定の前提条件として用いる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f04-04-store-account-complete-1min-auto-redirect",
+        "category": "業務ルール・画面自動遷移",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2452",
+        "designRequirement": "店内アカウントの場合、画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する。",
+        "requiredImplementationEvidence": [
+          "購入完了画面で注文または顧客の購入グループが店内アカウント/支店用店内アカウントかを判定している",
+          "店内アカウントの場合だけ画面表示後1分（60秒/60000ms）のタイマーを開始している",
+          "タイマー満了時に注文した店舗のTOP画面URLへ location.href/location.assign/redirect 等で自動遷移している",
+          "通常のTOPボタンだけでなく、ユーザー操作なしの強制遷移が実装されている"
+        ],
+        "implSearchHints": [
+          "ShoppingController::complete",
+          "Shopping/complete.twig",
+          "waitingNumber",
+          "DtbCustomerGroup::OTC / OTC_SHITEN / isOtcGroup",
+          "setTimeout / setInterval / 60000 / 60 * 1000",
+          "window.location / location.href / location.assign / location.replace",
+          "url('homepage') / 注文した店舗のTOP"
+        ],
+        "source": "explicit_requirement_trace_config",
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "order_no",
+        "shopping_process"
+      ],
+      "translationKeys": [
+        "front.error.shopping_process",
+        "front.error.no_sln_payment_record"
+      ],
+      "classNames": [],
+      "paths": [
+        "pf-eccube3/f04-04_front_cart_shopping_complete.md",
+        "complete.twig",
+        "shopping",
+        "shopping/complete",
+        "flush"
+      ],
+      "businessTerms": [
+        "F04",
+        "購入完了",
+        "注文機能",
+        "管理画面に注文データを登録し",
+        "注文完了メールを送信します",
+        "顧客グループ",
+        "総在庫を増減する処理を行い",
+        "在庫履歴を登録する",
+        "支払方法が受注情報に保持している支払方法と一致し",
+        "カートに入っている商品のチェック",
+        "商品公開ステータスチェックし非公開商品の場合はエ",
+        "商品制限数チェックし購入制限数より商品数が多い場",
+        "購入数量と在庫数をチェックして在庫がなければエラ",
+        "カート内の商品そのままの状態でシステムエラーの画",
+        "在庫調整",
+        "在庫履歴登録",
+        "商品情報",
+        "受注情報",
+        "注文に伴う原価と在庫の変動の例",
+        "購入グループが店内アカウントの場合はご注文番号で",
+        "TC注文番号を表示する",
+        "ご注文番号表示下にある文言も変更",
+        "画面を表示してから1分後に注文した店舗のTOP画",
+        "ご注文番号"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "complete.twig",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/ContactController.php:190",
+        "snippet": "#[Template(template: 'Contact/complete.twig')]",
+        "weight": 6
+      },
+      {
+        "term": "complete.twig",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/EntryController.php:197",
+        "snippet": "#[Template(template: 'Entry/complete.twig')]",
+        "weight": 6
+      },
+      {
+        "term": "complete.twig",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/ForgotController.php:127",
+        "snippet": "#[Template(template: 'Forgot/complete.twig')]",
+        "weight": 6
+      },
+      {
+        "term": "shopping/complete",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/ShoppingController.php:629",
+        "snippet": "#[Route(path: '/shopping/complete', name: 'shopping_complete', methods: ['GET'])]",
+        "weight": 6
+      },
+      {
+        "term": "complete.twig",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/ShoppingController.php:630",
+        "snippet": "#[Template(template: 'Shopping/complete.twig')]",
+        "weight": 6
+      },
+      {
+        "term": "shopping/complete",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/ShoppingController.php:72",
+        "snippet": "* 4. `GET /shopping/complete` (`shopping_complete`) … 注文完了。",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CartService.php:242",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CartService.php:83",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CsvExportService.php:202",
+        "snippet": "flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/DeckService.php:285",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "shopping",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/OrderHelper.php:57",
+        "snippet": "public const SESSION_NON_MEMBER = 'eccube.front.shopping.nonmember';",
+        "weight": 6
+      },
+      {
+        "term": "shopping",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/OrderHelper.php:62",
+        "snippet": "public const SESSION_NON_MEMBER_ADDRESSES = 'eccube.front.shopping.nonmember.customeraddress';",
+        "weight": 6
+      },
+      {
+        "term": "shopping",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/OrderHelper.php:67",
+        "snippet": "public const SESSION_ORDER_ID = 'eccube.front.shopping.order.id';",
+        "weight": 6
+      },
+      {
+        "term": "shopping",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/OrderHelper.php:79",
+        "snippet": "public const SESSION_SHOPPING_CUSTOMER_ADDRESS_ID = 'eccube.front.shopping.customer_address_id';",
+        "weight": 6
+      },
+      {
+        "term": "order_no",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:135",
+        "snippet": "#[ORM\\Index(columns: ['order_no'], name: 'dtb_order_order_no_idx')]",
+        "weight": 5
+      },
+      {
+        "term": "order_no",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:450",
+        "snippet": "#[ORM\\Column(name: 'order_no', type: Types::STRING, length: 255, nullable: true)]",
+        "weight": 5
+      },
+      {
+        "term": "order_no",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:451",
+        "snippet": "private ?string $order_no = null;",
+        "weight": 5
+      },
+      {
+        "term": "order_no",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:842",
+        "snippet": "$this->order_no = $orderNo;",
+        "weight": 5
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 5,
+    "implementationGapRequirementCount": 4,
+    "rows": [
+      {
+        "findingId": "f04-04-store-account-complete-1min-auto-redirect-missing-01",
+        "dimension": "②業務ルール・画面自動遷移未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2452",
+        "designRequirement": "店内アカウントの場合、画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する。",
+        "implementationActual": "ShoppingController::complete は受注ID取得、待ち番号取得、セッションクリア後に Order/hasNextCart/products/waitingNumber をテンプレートへ渡す。Shopping/complete.twig は waitingNumber があればTC注文番号相当の表示を切り替え、TOPページへ戻るボタンを href=\"{{ url('homepage') }}\" で表示するが、app.user/Order.Customer の店内アカウント条件、setTimeout/setInterval/60000、注文店舗TOP URLへの自動遷移処理がない。",
+        "mismatchReason": "購入完了画面の Controller/Twig/関連JSを確認したが、設計が要求する店内アカウント限定の1分タイマーと注文店舗TOPへの強制遷移処理が確認できないため。",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/ShoppingController.php:615",
+          "src/Eccube/Controller/Front/ShoppingController.php:645",
+          "src/Eccube/Controller/Front/ShoppingController.php:665",
+          "src/Eccube/Resource/template/default/Shopping/complete.twig:88",
+          "src/Eccube/Resource/template/default/Shopping/complete.twig:100",
+          "src/Eccube/Resource/template/default/Shopping/complete.twig:115",
+          "src/Eccube/Entity/DtbCustomerGroup.php:34",
+          "src/Eccube/Entity/DtbCustomerGroup.php:235",
+          "src/Eccube/Service/PurchaseFlow/Processor/WaitingNumberProcessor.php:44"
+        ],
+        "comparisonRows": [
+          {
+            "item": "対象条件",
+            "design": "店内アカウントの場合に限定して自動遷移する。",
+            "implementation": "WaitingNumberProcessor には isOtcGroup 判定があり店内注文番号は発番されるが、ShoppingController::complete と Shopping/complete.twig では購入グループを判定して自動遷移の有無を切り替えていない。",
+            "mismatch": "設計の店内アカウント条件が購入完了画面の自動遷移制御に使われていない。"
+          },
+          {
+            "item": "タイマー",
+            "design": "画面を表示してから1分後に遷移する。",
+            "implementation": "complete.twig と関連 checkout JS に setTimeout/setInterval、60000、60 * 1000 などの1分タイマー処理がない。",
+            "mismatch": "表示開始から1分を測るクライアント側またはサーバー側のタイマー処理が未実装。"
+          },
+          {
+            "item": "遷移方法と遷移先",
+            "design": "注文した店舗のTOP画面へ自動的に遷移する。項目表のTOPページへ戻るボタンも注文した店舗のTOP画面へ遷移する。",
+            "implementation": "画面上には href=\"{{ url('homepage') }}\" の手動TOPボタンだけがあり、注文した店舗のTOP URLを算出して location.href/location.assign 等で自動遷移する処理はない。",
+            "mismatch": "通常TOPへの手動リンクはあるが、注文店舗TOPへの自動遷移という設計要求を満たしていない。"
+          }
+        ]
+      },
+      {
+        "findingId": "f04-04_0304_sheet-7_sheet-conformance-ed0a7660fced",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "60秒後に注文店舗TOPへ自動遷移",
+        "implementationActual": "タイマー・自動遷移なし",
+        "mismatchReason": "自動遷移未実装",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/ShoppingController.php:615-670",
+          "src/Eccube/Resource/template/default/Shopping/complete.twig:113-118",
+          "src/Eccube/Controller/Front/ShoppingController.php",
+          "src/Eccube/Resource/template/default/Shopping/complete.twig",
+          "html/bundle/front.bundle.js"
+        ],
+        "comparisonRows": [
+          {
+            "item": "1分後の自動遷移(店内アカウント)",
+            "design": "60秒後に注文店舗TOPへ自動遷移",
+            "implementation": "タイマー・自動遷移なし",
+            "mismatch": "自動遷移未実装"
+          }
+        ]
+      },
+      {
+        "findingId": "f04-04_0304_sheet-7_sheet-conformance-ed0a7660fced",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文した店舗のTOP画面",
+        "implementationActual": "url('homepage')（一般TOP）固定",
+        "mismatchReason": "遷移先が注文店舗TOPでない/店内アカウント分岐なし",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/ShoppingController.php:615-670",
+          "src/Eccube/Resource/template/default/Shopping/complete.twig:113-118",
+          "src/Eccube/Controller/Front/ShoppingController.php",
+          "src/Eccube/Resource/template/default/Shopping/complete.twig",
+          "html/bundle/front.bundle.js"
+        ],
+        "comparisonRows": [
+          {
+            "item": "識別ID5 TOPページへ戻るボタン遷移先",
+            "design": "注文した店舗のTOP画面",
+            "implementation": "url('homepage')（一般TOP）固定",
+            "mismatch": "遷移先が注文店舗TOPでない/店内アカウント分岐なし"
+          }
+        ]
+      },
+      {
+        "findingId": "f04-04_0304_sheet-7_sheet-conformance-173274a9d90b",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "当店のヘルプページを御覧ください",
+        "implementationActual": "お問い合わせくださいますようお願いいたします",
+        "mismatchReason": "誘導先・文言が相違（ヘルプページ→お問い合わせ）",
+        "implementationRefs": [
+          "src/Eccube/Resource/locale/messages.ja.yaml:1508-1510",
+          "src/Eccube/Resource/template/default/Shopping/complete.twig:104-107",
+          "src/Eccube/Resource/locale/messages.ja.yaml",
+          "src/Eccube/Resource/template/default/Shopping/complete.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "完了本文メール未達時の誘導先",
+            "design": "当店のヘルプページを御覧ください",
+            "implementation": "お問い合わせくださいますようお願いいたします",
+            "mismatch": "誘導先・文言が相違（ヘルプページ→お問い合わせ）"
+          }
+        ]
+      },
+      {
+        "findingId": "f04-04_0304_sheet-7_sheet-conformance-2a6eb290d271",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ヘルプ画面へ遷移するリンク部品を配置",
+        "implementationActual": "リンク部品なし（help参照ゼロ）",
+        "mismatchReason": "ヘルプページリンク未実装",
+        "implementationRefs": [
+          "src/Eccube/Resource/template/default/Shopping/complete.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "識別ID3 ヘルプページリンク",
+            "design": "ヘルプ画面へ遷移するリンク部品を配置",
+            "implementation": "リンク部品なし（help参照ゼロ）",
+            "mismatch": "ヘルプページリンク未実装"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementTraceGatePromotedFindings": [
+    {
+      "id": "f04-04-store-account-complete-1min-auto-redirect-missing-01",
+      "dimension": "②業務ルール・画面自動遷移未実装",
+      "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2452"
+    }
+  ],
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 99,
+    "verdictedCount": 99,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "counts": {
+      "実装済み": 99,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-0df0b778e2",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "概要 管理画面に注文データを登録し、注文完了メールを送信します。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-03a5038e54",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "★ ECCUBE側で保持している原価情報を使用して総原価・総在庫を増減する処理を行い、在庫履歴を登録する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-3d35934143",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 購入処理前の下記のチェックをする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-05f9c933d5",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 支払方法が受注情報に保持している支払方法と一致していない場合エラーとする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-cadfd700e8",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ カートに入っている商品のチェック",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-a9543f1999",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 商品公開ステータスチェックし非公開商品の場合はエラーとする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-9cf5764626",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 商品制限数チェックし購入制限数より商品数が多い場合はエラーとする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-fff3bb2ce4",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 購入数量と在庫数をチェックして在庫がなければエラーとする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-7d4321740d",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ エラーの場合、カート内の商品そのままの状態でシステムエラーの画面へ遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-bec6fa8157",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 購入したユーザの情報を更新する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-7536d3f7f0",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 在庫履歴登録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-b5295c00b2",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 購入グループで表示内容を変更する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-5516234aa4",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ 購入グループが店内アカウントの場合はご注文番号ではなく、TC注文番号を表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-7799e8d8b5",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ ご注文番号表示下にある文言も変更",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-390c7b90a5",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "★ 店内アカウントの場合、画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-2b8d032beb",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・購入グループが店内アカウントの場合はTC注文番号を表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-284a678b88",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・ヘルプ画面へ遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-f414850bef",
+        "category": "・ 画面遷移時の処理",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "・注文した店舗のTOP画面へ遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-1b167f359d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-9619b30676",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文方法の最終送信から購入完了画面までの、注文確定と完了処理を扱う機能である。注文確定で受注データを作成し（管理画面に注文として現れる）、購入完了処理で受注ステータスと決済結果を確認したうえで、注文完了メールの送信・在庫の更新・ポイントや外部連携・購入完了画面の表示を行う。受注ステータスが想定外の場合や決済記録が不整合の場合は、購入完了を確定せずエラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-2ea8d2a4c8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの購入処理（注文確定・購入完了）、テンプレート（ Shopping/complete.twig ）、受注・受注番号・呼び出し番号・在庫・メール・ポイントの各処理を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-e63ef1f7f9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "カスタマイズ区分は現行踏襲とする。挙動の参照リポはpf-eccube3（現行）とし、DB関連（テーブル名・列名・型・制約・関連、DBカラム節、保存先・扱い、データ整合性のDB部分、副作用のDB更新）は ec-cube-enterprise を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-c97d4d637c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了を確定するための受注ステータス・決済記録の判定順序",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-0a495449d1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了時の副作用（注文完了メール、在庫更新、ポイント・外部連携、タグログ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-24a46ac17f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面の表示内容と、再アクセス・異常時の扱い",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-92bfc41ed2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-3c15f37707",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ご注文方法指定・注文情報の入力・確認画面の詳細（カートのご注文方法指定機能を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-a81f72abc8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "スマレジ連携・外部タグログの内部仕様",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-836a6a7cf8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "現行（pf-eccube3）と移行先（ec-cube-enterprise）のDBスキーマ差分を記録する。挙動は現行の確認値を正とし、永続化先の名称は移行先（ec-cube-enterprise）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-f1da9f4a07",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文番号として表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-b5868aac34",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ec-cube-enterprise 実装で要確認",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-c6eec74093",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "単一列としての保持有無は移行先で要確認。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-a00b97c759",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "売上分析タグ・SPLINKS決済記録・スマレジ連携",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-60fadc43a2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "補助テーブルの有無・名称は移行先で要確認。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-e9888e7ab8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ご注文方法指定の最終送信（注文確定）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-cd51ab73ee",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "POST /shopping （確認・確定処理）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-96a006ad0b",
+        "category": "セッションの受注を確認し、完了処理を行って購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "フロントのページであり管理画面プレフィックスは付かない。購入完了画面は注文確定からのリダイレクトで到達する。セッションに受注IDが無い場合はトップページへ戻す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-121470e7f6",
+        "category": "セッションの受注を確認し、完了処理を行って購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面で購入完了タグログを送信する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-f2fe120ee8",
+        "category": "セッションの受注を確認し、完了処理を行って購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "店頭受取の場合は完了表示を店頭向けに切り替える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-224df3c302",
+        "category": "セッションの受注を確認し、完了処理を行って購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "呼び出し番号がある場合はTC注文番号を、無い場合はご注文番号を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-f530ef24b9",
+        "category": "セッションの受注を確認し、完了処理を行って購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文内容を確定して受注データを作成する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-3017490a21",
+        "category": "受注IDをセッションに保存する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面へリダイレクトする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-29bb91668b",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注を取得する。受注ステータスが注文受領・入金待ちのいずれでもない場合は、購入処理異常のアラートメールを送信し、セッションの受注情報を初期化して、購入処理エラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-c536cac3f2",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "SPLINKS決済の場合、SPLINKSの受注情報が無いときは受注ステータスを処理中へ戻し、決済記録不整合のエラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-8e56309a6b",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "表示ロケールの調整が必要な場合は、ロケールを合わせたURLへ遷移する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-cf6dfb63ba",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注明細ごとに、商品の売上分析タグを受注明細に登録し、完了画面用の商品情報を組み立てる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-3acf4e2383",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了の初期化イベントを発行する。イベントが応答を返した場合はそれを返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-e6cff7ed5a",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "SPLINKS決済の場合はポイントを使用する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-b24c58e8c7",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文完了メールを送信する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-d27eca9d06",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "在庫数を更新する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-c83baefab3",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "消費ポイントがある場合はスマレジポイント連携を別プロセスで実行する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-0ed71f9028",
+        "category": "セッションから受注IDを取得する。無い場合はトップページへ戻す。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了タグログを送信する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-de83b3bd0a",
+        "category": "セッションの受注情報を初期化し、購入処理完了を記録して購入完了画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了 時の判定順序",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-b8d40df4d2",
+        "category": "セッションに受注IDがあるか",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "無ければトップページへ戻す",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-01c592164e",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "SPLINKS支払いだが記録が無ければステータスを処理中へ戻し決済記録不整合エラー画面",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-a1ab21a9cd",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "完了処理（メール・在庫・ポイント・タグログ）を行い購入完了画面を表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-42a2cf6650",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "常時表示（正常・静的）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-5883b199f2",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "表示文言（日本語）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-3c8242f21d",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面の表示時",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-a745491ce4",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ご注文番号／TC注文番号（呼び出し番号がある場合）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-3f4d71b81f",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "エラー・警告（画面全体）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-ad7a25fe07",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "表示条件（利用者視点）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-9b64345b51",
+        "category": "いずれでもなければアラートメール送信・セッション初期化・購入処理エラー画面",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入処理エラー（ front.error.shopping_process の文言）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-90ab000c65",
+        "category": "アラートメールを送信し、セッションを初期化する",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "決済記録不整合エラー（ front.error.no_sln_payment_record の文言）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-3457fd3a50",
+        "category": "アラートメールを送信し、セッションを初期化する",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注ステータスを処理中へ戻す",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-4d2af4dc0f",
+        "category": "アラートメールを送信し、セッションを初期化する",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "エラー文言はロケールメッセージを正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-faf14b0e78",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "SPLINKS決済では対応する決済記録の存在を前提とする。無い場合は受注を処理中へ戻す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-9441ba349f",
+        "category": "異常時はセッションの受注情報を初期化し、更新による再通知を避ける。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "店頭受取（呼び出し番号あり）はTC注文番号、それ以外はご注文番号（8桁）を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-0a4ab28265",
+        "category": "異常時はセッションの受注情報を初期化し、更新による再通知を避ける。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注明細ごとに商品の売上分析タグを受注明細へ登録する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-d629d3ca9d",
+        "category": "セッションに受注IDが無い（直接アクセス・完了後再訪）",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "トップページへ戻す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-723deac4d2",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注を処理中へ戻し、エラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-8c62939b67",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "ロケールを合わせたURLへ遷移する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-2d6ebf91cf",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文確定で作成した受注は管理画面の受注として現れる。購入完了処理は当該受注を参照する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-c7e3993811",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了時に在庫数を更新する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-4304f94f8d",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文確定時および決済種別に応じて購入完了時にポイントを使用する。スマレジポイント連携は別プロセスで反映する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-1974602305",
+        "category": "アラートメールを送り、セッションを初期化し、エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文完了メールは購入完了処理で送信する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-bad2aaac71",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "SPLINKS決済の決済記録の有無を確認し、整合しない場合は購入完了を確定しない。購入完了タグログを外部へ送信する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-1b54866ebb",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "消費ポイントがある場合、スマレジポイント連携を別プロセスのコマンドとして実行する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-678c030a27",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文完了メール送信・在庫更新・タグログ送信は購入完了処理で行う。これらの個別失敗時の再実行は本書では仕様確定せず実装を確認値とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-472653799d",
+        "category": "セッションの受注ID、注文確定時の注文内容。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面、注文完了メール送信、在庫更新、ポイント・タグログ連携。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-a393ee5ed0",
+        "category": "セッションの受注ID、注文確定時の注文内容。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注ステータス異常・決済記録不整合のエラー画面、または受注IDなしでトップページへ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-486db840e2",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文受領・入金待ちで購入完了を確定する。異常時は処理中へ戻す場合がある。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-dbac202d08",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注番号（注文番号）。8桁で表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-5c38ef3d32",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "呼び出し番号（TC注文番号、ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-e3159c98b1",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "店頭受取の注文に付く。移行先での保持列は要確認。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-c624a59e7e",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了時に在庫を更新する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-e90c87a327",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注明細・売上分析タグ（ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-1441379ef1",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注明細へ売上分析タグを登録する。補助テーブル名は移行先で要確認。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-94142beadc",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-9ff962b858",
+        "category": "受注作成（確定時）、在庫更新、ポイント使用、スマレジ連携、売上分析タグ登録、セッション初期化。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "本機能は購入完了画面で利用者入力を受け付けない。購入完了の可否は受注ステータスと決済記録の整合で判定する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-536da8b6fe",
+        "category": "セッションに保持した自分の受注についてのみ購入完了処理を行う。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "購入完了画面（ /shopping/complete へリダイレクト）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-4a0bb68591",
+        "category": "セッションに保持した自分の受注についてのみ購入完了処理を行う。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "共通エラー画面（購入処理エラー）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-fe06cfa966",
+        "category": "セッションに保持した自分の受注についてのみ購入完了処理を行う。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "共通エラー画面（決済記録不整合）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-cb9a18ece2",
+        "category": "セッションに保持した自分の受注についてのみ購入完了処理を行う。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-d6f7b5f2da",
+        "category": "セッションに保持した自分の受注についてのみ購入完了処理を行う。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-523ab2df7e",
+        "category": "アラートメールを送信し、セッションを初期化して購入処理エラー画面を表示する。",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "受注を処理中へ戻し、決済記録不整合のエラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-986b0cbfbb",
+        "category": "本機能におけるセッション",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文確定時に保存し、購入完了処理で参照する。完了・異常時に初期化する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04_0304_sheet-7_sheet-req-ee268a497c",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-7",
+        "designRequirement": "注文確定で受注を作成し、購入完了処理で在庫・ポイント・メール等を反映する。受注ステータスの確認により、想定外ステータスでの完了確定を避ける。本機能では楽観ロック・悲観ロックの対象は持たないが、受注ステータスを完了確定の前提条件として用いる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f04-04-store-account-complete-1min-auto-redirect",
+        "category": "業務ルール・画面自動遷移",
+        "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html:2452",
+        "designRequirement": "店内アカウントの場合、画面を表示してから1分後に注文した店舗のTOP画面へ自動的に遷移する。",
+        "source": "explicit_requirement_trace_config",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

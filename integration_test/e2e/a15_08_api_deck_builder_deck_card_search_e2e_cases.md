@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない機能仕様（カード名・種別・色・マナ総量などの条件でカードを検索し一覧と総件数を返すJSON API・GET参照系）であり、**両レイヤで網羅**する。本APIはブラウザ向け画面を持たず（正本md「対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない」）、結果が管理画面に現れる範囲も無いため、**UIレイヤ＝0、API/統合レイヤ中心**で分類する。API/統合レイヤ＝Playwright `request`（APIRequestContext）でエンドポイントへGET送信し、HTTPステータス・ラッパ応答（`code`／`total_count`／`cards`）・絞り込み／並び替え／ページングの結果・該当0件時の空配列・許容値違反時の400で判定する。
 
-**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装のレスポンス形・型・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。pf-apiの正本mdは現行（deck-api）のリバース設計であり、刷新先 ec-cube-enterprise との乖離（エンドポイントパス・応答`mana_value`の型・CORSプリフライト・バリデーションの集約方式等）は**設計書/観点表を上位オラクル**として扱い、付帯表4（不具合候補／要確認）に出す。実装からは位置情報（APIパス・メソッド・許容値定数・バリデーション位置）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。送信先パスは実装の実効パス `GET /api/cards`（`CardController.php:71`）に統一し（テストが実在経路へ届くため）、合否は設計書の意味（正常検索＝条件一致カード配列＋総件数＋200／該当なし＝200・`total_count`0・空`cards`／許容値違反＝400）で判定する。設計⇔実装のパス差異・応答型差異は付帯表4でのみ一元管理し、TSV期待値に実装の現挙動を固定しない。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装のレスポンス形・型・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。pf-apiの正本mdは現行（deck-api）のリバース設計であり、刷新先 ec-cube-enterprise との乖離（エンドポイントパス・応答`mana_value`の型・CORSプリフライト・バリデーションの集約方式等）は**設計書/観点表を上位オラクル**として扱い、付帯表4（不具合候補／要確認）に出す。実装からは位置情報（APIパス・メソッド・許容値定数・バリデーション位置）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。送信先パスは実装の実効パス `GET /api/cards`（`CardController.php:71`）に統一し（テストが実在経路へ届くため）、合否は設計書の意味（正常検索＝条件一致カード配列＋総件数＋200／該当なし＝200・`total_count`0・空`cards`／許容値違反＝400）で判定する。設計⇔実装のパス差異・応答型差異は付帯表4でのみ一元管理し、TSV期待値に実装の現挙動を固定しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -22,95 +22,95 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-001	IT-32	資格情報	P1	資格情報の欠落/不正でも認証起因の拒否なく検索応答が返る	SEED-A15-08-CARDS-KNOWN	jwt-tokenヘッダ無し、または不正な資格情報＋正常な検索条件	"1. 資格情報を付与せず（または不正値で）GET /api/cards へ送信する
-2. HTTPステータスとレスポンス本文を確認する"	本APIは認証を行わないため認証起因の拒否（401）を返さず、HTTPステータス200で条件一致カードのラッパ応答が返ること（認証・認可「認証を行わない／利用者の状態によらず参照できる」）。
+2. HTTPステータスとレスポンス本文を確認する"	本APIは認証を行わないため認証起因の拒否（401）を返さず、HTTPステータス200で条件一致カードのラッパ応答が返ること（認証・認可「認証を行わない／利用者の状態によらず参照できる」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-002	IT-09	実行結果	P2	正常検索時に取得時点の値が再計算されず返る	SEED-A15-08-CARDS-KNOWN	既知カードに一致する正常な検索条件	"1. 対象エンドポイントへGET送信する
-2. レスポンス本文の値を確認する"	マナ総量・パワー等のカード値が再計算・丸めされず、DB／リポジトリ取得時点の値がそのまま返ること（業務ルール「取得後に業務値を再計算しない」）。
+2. レスポンス本文の値を確認する"	マナ総量・パワー等のカード値が再計算・丸めされず、DB／リポジトリ取得時点の値がそのまま返ること（業務ルール「取得後に業務値を再計算しない」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-003	IT-09	HTTPステータス	P2	正常検索時のHTTPステータスが200である	SEED-A15-08-CARDS-KNOWN	正常な検索条件	"1. 対象エンドポイントへGET送信する
-2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること（入出力 レスポンス(成功)HTTP200）。
+2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること（入出力 レスポンス(成功)HTTP200）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-004	IT-09	リクエスト	P1	正常なパラメータ値の検索で条件一致カード配列と総件数が返る	SEED-A15-08-CARDS-KNOWN	既知カードに一致する正常な検索条件	"1. 対象エンドポイントへGET送信する
-2. レスポンス本文を確認する"	クエリの検索条件に一致するカードの配列（`cards`）と総件数（`total_count`）がラッパとともにHTTP200で返ること（利用者視点の入口・処理フロー#9）。
+2. レスポンス本文を確認する"	クエリの検索条件に一致するカードの配列（`cards`）と総件数（`total_count`）がラッパとともにHTTP200で返ること（利用者視点の入口・処理フロー#9）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-005	IT-32	リクエスト	P2	異常なパラメータ値（_condition許容語以外）で400となる	SEED-A15-08-CARDS-KNOWN	name_condition＝許容語以外（例 XYZ）	"1. name_condition=XYZ を付与してGET送信する
-2. HTTPステータスを確認する"	各`_condition`の許容語（AND／OR／NOT）以外は入力不正としてHTTPステータス400が返ること（バリデーション「各`_condition`の許容語以外は入力不正（HTTP400）」）。
+2. HTTPステータスを確認する"	各`_condition`の許容語（AND／OR／NOT）以外は入力不正としてHTTPステータス400が返ること（バリデーション「各`_condition`の許容語以外は入力不正（HTTP400）」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-006	IT-32	リクエスト	P3	想定外のクエリ項目を加えてもサーバエラーで停止しない	SEED-A15-08-CARDS-KNOWN	正常な検索条件＋想定外クエリ項目（項目名と値のセット）	"1. 想定外クエリ項目を付与してGET送信する
-2. HTTPステータスとレスポンスを確認する"	未知のクエリ項目を付与しても想定外項目は検索条件に積まれず（処理フロー#2「値が指定された条件のみを検索条件に積む」）、サーバエラー（5xx）で停止せず正常検索としてHTTPステータス200で応答が返ること。
+2. HTTPステータスとレスポンスを確認する"	未知のクエリ項目を付与しても想定外項目は検索条件に積まれず（処理フロー#2「値が指定された条件のみを検索条件に積む」）、サーバエラー（5xx）で停止せず正常検索としてHTTPステータス200で応答が返ること。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-007	IT-10	エラー	P2	許容値違反のエラー時に400応答が返る	SEED-A15-08-CARDS-KNOWN	format＝数値以外（例 abc）	"1. format=abc を付与してGET送信する
-2. HTTPステータスを確認する"	エラー発生時に入力不正としてHTTPステータス400が返ること（バリデーション「format・各範囲値・page・per_pageは数値のみ許容。数値以外は入力不正（HTTP400）」・エラー処理）。
+2. HTTPステータスを確認する"	エラー発生時に入力不正としてHTTPステータス400が返ること（バリデーション「format・各範囲値・page・per_pageは数値のみ許容。数値以外は入力不正（HTTP400）」・エラー処理）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-008	IT-10	エラー	P3	タイムアウト時に未捕捉例外で停止せず参照系として不整合が残らない	SEED-A15-08-CARDS-KNOWN	タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してGET送信する
-2. 応答とDB状態を確認する"	参照系（副作用「無し」）のため、タイムアウトが発生しても呼び出し前後でDBに更新・不整合が残らず、データ状態が不変であること（エラー処理・副作用「無し」）。
+2. 応答とDB状態を確認する"	参照系（副作用「無し」）のため、タイムアウトが発生しても呼び出し前後でDBに更新・不整合が残らず、データ状態が不変であること（エラー処理・副作用「無し」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-009	IT-09	外部取得	P1	検索条件に一致するカードがリポジトリ検索で取得される	SEED-A15-08-CARDS-KNOWN	既知カードに一致する正常な検索条件	"1. 対象エンドポイントへGET送信する
-2. レスポンスの内容を確認する"	指定条件に一致するカードがリポジトリ検索（mtb_card基点）で取得され、`cards`に該当カードが含まれること（処理フロー#2-7・集計条件「カードを基点に結合」）。
+2. レスポンスの内容を確認する"	指定条件に一致するカードがリポジトリ検索（mtb_card基点）で取得され、`cards`に該当カードが含まれること（処理フロー#2-7・集計条件「カードを基点に結合」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-010	IT-10	HTTPステータス	P1	許容値違反（sort許容外）時のHTTPステータスが400である	SEED-A15-08-CARDS-KNOWN	sort＝許容外（例 unknown）	"1. sort=unknown を付与してGET送信する
-2. HTTPステータスを確認する"	sortが許容値（color／mana_value／power／toughness）以外のとき入力不正としてHTTPステータス400が返ること（バリデーション「sortは…以外は入力不正（HTTP400）」）。
+2. HTTPステータスを確認する"	sortが許容値（color／mana_value／power／toughness）以外のとき入力不正としてHTTPステータス400が返ること（バリデーション「sortは…以外は入力不正（HTTP400）」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-011	IT-10	通信	P1	正常通信で200応答が返る	SEED-A15-08-CARDS-KNOWN	正常な検索条件	"1. 対象エンドポイントへGET送信する
-2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること（入出力 レスポンス(成功)200）。
+2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること（入出力 レスポンス(成功)200）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-012	IT-10	正常	P2	対象条件に該当する正常値で200と検索結果が返る	SEED-A15-08-CARDS-KNOWN	対象条件に該当する正常な検索条件	"1. 正常値でGET送信する
-2. HTTPステータスとレスポンスを確認する"	正常検索としてHTTPステータス200で条件一致カードのラッパ応答が返ること（処理フロー#9・正常系）。
+2. HTTPステータスとレスポンスを確認する"	正常検索としてHTTPステータス200で条件一致カードのラッパ応答が返ること（処理フロー#9・正常系）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-013	IT-10	形式不正	P2	結果キャッシュが利用不可な状態でキャッシュを成功扱いせず再取得して応答する	SEED-A15-08-CARDS-KNOWN／SEED-A15-08-CACHE	結果キャッシュがJSON不正・必須キー欠落・期限切れの状態	"1. 結果キャッシュを利用不可状態にする
 2. 対象エンドポイントへGET送信する
-3. 応答を確認する"	結果キャッシュが利用不可（JSON不正・必須キー欠落・期限切れ等）の場合でも、キャッシュ値を成功として返さず、未定義エラー（5xx）で停止しないこと（副作用「結果キャッシュを用いる」・観点IT-10 形式不正）。
+3. 応答を確認する"	結果キャッシュが利用不可（JSON不正・必須キー欠落・期限切れ等）の場合でも、キャッシュ値を成功として返さず、未定義エラー（5xx）で停止しないこと（副作用「結果キャッシュを用いる」・観点IT-10 形式不正）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-014	IT-10	障害	P2	結果キャッシュへの接続障害時に未定義エラーにならず仕様の代替動作となる	SEED-A15-08-CARDS-KNOWN／SEED-A15-08-CACHE	結果キャッシュへの接続障害・読み書き失敗を誘発するシナリオ	"1. キャッシュ接続障害を誘発する
 2. 対象エンドポイントへGET送信する
-3. 応答を確認する"	結果キャッシュへの接続障害・読み書き失敗が発生しても、応答が未定義エラー（5xx）で停止しないこと（副作用「結果キャッシュを用いる」・観点IT-10 障害）。
+3. 応答を確認する"	結果キャッシュへの接続障害・読み書き失敗が発生しても、応答が未定義エラー（5xx）で停止しないこと（副作用「結果キャッシュを用いる」・観点IT-10 障害）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-015	IT-10	異常系	P2	異常系（許容値違反 order）受信時に400応答が返る	SEED-A15-08-CARDS-KNOWN	order＝許容外（例 up）	"1. order=up を付与してGET送信する
-2. HTTPステータスを確認する"	orderが許容値（asc／desc）以外のとき入力不正としてHTTPステータス400が返ること（バリデーション「orderは asc／desc 以外は入力不正（HTTP400）」・異常系）。
+2. HTTPステータスを確認する"	orderが許容値（asc／desc）以外のとき入力不正としてHTTPステータス400が返ること（バリデーション「orderは asc／desc 以外は入力不正（HTTP400）」・異常系）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-016	IT-32	必須条件	P3	全パラメータ任意でパラメータ無しでも既定値補完で200となる	SEED-A15-08-CARDS-KNOWN	クエリパラメータを一切付与しない	"1. クエリ無しでGET送信する
-2. HTTPステータスとレスポンスを確認する"	全パラメータが任意であり、未指定時は既定値（論理AND・page=1・per_page=20・sort=color・order=asc）を補完してHTTPステータス200で検索結果が返ること（処理フロー#1・入出力 リクエスト 既定値）。
+2. HTTPステータスとレスポンスを確認する"	全パラメータが任意であり、未指定時は既定値（論理AND・page=1・per_page=20・sort=color・order=asc）を補完してHTTPステータス200で検索結果が返ること（処理フロー#1・入出力 リクエスト 既定値）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-017	IT-32	レスポンス	P2	成功レスポンスが仕様のフィールド構成・型契約と一致する	SEED-A15-08-CARDS-KNOWN	既知カードに一致する正常な検索条件	"1. 対象エンドポイントへGET送信する
-2. レスポンス本文のフィールドと型を確認する"	"レスポンスに仕様のフィールド（`code`・`total_count`・`cards`、`cards[]`配下の id・name_jp・name_en・cardtypes・colors・mana_value・is_attraction・is_sticker・image_jp・image_en）が含まれ、各フィールドが仕様の型契約と一致すること：code/total_count/id/mana_value は integer、name_jp/name_en は string、cardtypes/colors は数値配列、is_attraction/is_sticker は該当1・非該当0の integer、image_jp/image_en は string（該当画像が無い場合 null）。応答`mana_value`の型の実装差異（float化）は付帯表4#2で管理する。"
+2. レスポンス本文のフィールドと型を確認する"	レスポンスに仕様のフィールド（`code`・`total_count`・`cards`、`cards[]`配下の id・name_jp・name_en・cardtypes・colors・mana_value・is_attraction・is_sticker・image_jp・image_en）が含まれ、各フィールドが仕様の型契約と一致すること：code/total_count/id/mana_value は integer、name_jp/name_en は string、cardtypes/colors は数値配列、is_attraction/is_sticker は該当1・非該当0の integer、image_jp/image_en は string（該当画像が無い場合 null）。応答`mana_value`の型の実装差異（float化）は付帯表4#2で管理する。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-018	IT-32	データなし	P1	該当0件で200・total_count0・空のcardsが返る	SEED-A15-08-CARDS-NONE	どのカードにも一致しない検索条件	"1. 該当しない条件でGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	該当が一件も無い場合は失敗ではなく、HTTPステータス200で`total_count`が0、`cards`が空配列で返ること（入出力 レスポンス(失敗)注記・エラー処理「該当カードが無い→コード200・total_count0・空のcards」）。
+2. HTTPステータスとレスポンス本文を確認する"	該当が一件も無い場合は失敗ではなく、HTTPステータス200で`total_count`が0、`cards`が空配列で返ること（入出力 レスポンス(失敗)注記・エラー処理「該当カードが無い→コード200・total_count0・空のcards」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-019	IT-32	受信検証	P2	指定条件に一致するカードのみが返る	SEED-A15-08-CARDS-KNOWN	特定種別・色に一致する検索条件	"1. 対象エンドポイントへGET送信する
-2. cards各要素の属性を確認する"	返却された`cards`に指定条件に一致しない無関係なカードが混在せず、指定条件を満たすカードのみが返ること（処理フロー#3「指定条件のみで絞り込む」・集計条件 受信検証）。
+2. cards各要素の属性を確認する"	返却された`cards`に指定条件に一致しない無関係なカードが混在せず、指定条件を満たすカードのみが返ること（処理フロー#3「指定条件のみで絞り込む」・集計条件 受信検証）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-020	IT-10	重複・順序	P2	同一GETの重複呼び出しで同一ラッパ応答（冪等参照）となる	SEED-A15-08-CARDS-KNOWN	同一の検索条件を2回送信	"1. 同一リクエストを1回目GET送信する
 2. 同一リクエストを2回目GET送信する
-3. 2回のレスポンスを比較する"	参照系のため2回の呼び出しで同一のHTTPステータス・ラッパ応答（`code`／`total_count`／`cards`）が返り、副作用（DB更新）が発生しないこと（副作用「無し（参照のみ）」・データ整合性 参照時点）。
+3. 2回のレスポンスを比較する"	参照系のため2回の呼び出しで同一のHTTPステータス・ラッパ応答（`code`／`total_count`／`cards`）が返り、副作用（DB更新）が発生しないこと（副作用「無し（参照のみ）」・データ整合性 参照時点）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-030	IT-09	リクエスト	P1	カード名（name）の部分一致で対象カードに絞り込まれる	SEED-A15-08-CARDS-KNOWN	name＝既知カード名の部分語	"1. name に部分語を指定してGET送信する
-2. cards各要素のカード名を確認する"	name の語が日英の名称／テキストに部分一致するカードのみが返り、一致しないカードが除外されること（処理フロー#2「語ごとに日英の名称／テキストに部分一致」）。
+2. cards各要素のカード名を確認する"	name の語が日英の名称／テキストに部分一致するカードのみが返り、一致しないカードが除外されること（処理フロー#2「語ごとに日英の名称／テキストに部分一致」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-031	IT-09	リクエスト	P2	name_conditionの結合論理（AND/OR/NOT）で結果集合が変わる	SEED-A15-08-CARDS-KNOWN	複数語のname＋name_condition＝AND／OR／NOT を切替	"1. 同一複数語で name_condition を AND／OR／NOT と変えて各GET送信する
-2. 各レスポンスの該当集合を比較する"	複数語を name_condition の論理（AND＝全語含む／OR＝いずれか含む／NOT＝除外）で結合した結果集合になること（処理フロー#2「条件の論理（AND／OR／NOT）で結合」）。
+2. 各レスポンスの該当集合を比較する"	複数語を name_condition の論理（AND＝全語含む／OR＝いずれか含む／NOT＝除外）で結合した結果集合になること（処理フロー#2「条件の論理（AND／OR／NOT）で結合」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-032	IT-09	リクエスト	P1	カード種別・色の配列指定で該当カードに絞り込まれる	SEED-A15-08-CARDS-KNOWN	cardtype＝種別識別子配列、color＝色識別子配列	"1. cardtype・color を配列で指定してGET送信する
-2. cards各要素の cardtypes・colors を確認する"	指定したカード種別・色を持つカードのみが返り、各論理（cardtype_condition／color_condition）で絞り込まれること（処理フロー#3「配列で受け取り各論理で絞り込む」）。
+2. cards各要素の cardtypes・colors を確認する"	指定したカード種別・色を持つカードのみが返り、各論理（cardtype_condition／color_condition）で絞り込まれること（処理フロー#3「配列で受け取り各論理で絞り込む」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-033	IT-09	リクエスト	P2	exclude_colorで指定色を持つカードが除外される	SEED-A15-08-CARDS-KNOWN	exclude_color＝除外する色識別子配列	"1. exclude_color を指定してGET送信する
-2. cards各要素の colors を確認する"	exclude_color に指定した色を持つカードが結果から除外されること（処理フロー#3「除外色は指定色を持つカードを除外する」・集計条件 除外）。
+2. cards各要素の colors を確認する"	exclude_color に指定した色を持つカードが結果から除外されること（処理フロー#3「除外色は指定色を持つカードを除外する」・集計条件 除外）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-034	IT-09	リクエスト	P2	マナ総量の範囲指定（from/to）で該当カードに絞り込まれる	SEED-A15-08-CARDS-KNOWN	mana_value_from・mana_value_to	"1. mana_value_from と mana_value_to を指定してGET送信する
-2. cards各要素の mana_value を確認する"	マナ総量が下限以上・上限以下のカードのみが返ること（処理フロー#5「範囲指定（下限・上限）で絞り込む」）。
+2. cards各要素の mana_value を確認する"	マナ総量が下限以上・上限以下のカードのみが返ること（処理フロー#5「範囲指定（下限・上限）で絞り込む」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-035	IT-09	リクエスト	P2	フォーマット指定で使用可カードに限定され非合法含む指定で禁止も対象になる	SEED-A15-08-CARDS-KNOWN	format＋illegal_condition＝true／false	"1. format を指定（illegal_condition=false）してGET送信する
 2. illegal_condition=true で再度GET送信する
-3. 各該当集合を比較する"	format 指定時は当該フォーマットで使用可（および制限）のカードに限定され、illegal_condition=true のとき禁止区分も対象に加わること（処理フロー#4「フォーマットで使用可に限定／非合法を含める指定で禁止区分も対象」）。
+3. 各該当集合を比較する"	format 指定時は当該フォーマットで使用可（および制限）のカードに限定され、illegal_condition=true のとき禁止区分も対象に加わること（処理フロー#4「フォーマットで使用可に限定／非合法を含める指定で禁止区分も対象」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-036	IT-09	リクエスト	P1	sort・orderで並び順が指定どおりに変わる	SEED-A15-08-CARDS-KNOWN	sort＝mana_value、order＝asc／desc	"1. sort=mana_value&order=asc でGET送信する
 2. order=desc で再度GET送信する
-3. cards の並び順を確認する"	sort（color／mana_value／power／toughness）を order（asc／desc）で並べた順に `cards` が並ぶこと（処理フロー#7・集計条件 並び順）。
+3. cards の並び順を確認する"	sort（color／mana_value／power／toughness）を order（asc／desc）で並べた順に `cards` が並ぶこと（処理フロー#7・集計条件 並び順）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-037	IT-09	リクエスト	P2	name_match_priorityでカード名完全一致行が先頭に寄る	SEED-A15-08-CARDS-KNOWN	name＝完全一致するカード名＋name_match_priority＝true	"1. name に完全一致名、name_match_priority=true でGET送信する
-2. cards 先頭要素を確認する"	完全一致優先が有効（name_match_priority が false 以外かつ name 指定）のとき、カード名が指定語に完全一致する行が `cards` の先頭へ寄ること（処理フロー#7・用語「完全一致優先」）。
+2. cards 先頭要素を確認する"	完全一致優先が有効（name_match_priority が false 以外かつ name 指定）のとき、カード名が指定語に完全一致する行が `cards` の先頭へ寄ること（処理フロー#7・用語「完全一致優先」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-038	IT-09	リクエスト	P1	page・per_pageで対象ページのカードのみが返り総件数は全件である	SEED-A15-08-CARDS-KNOWN（per_pageを超える件数）	per_page＝小さい値、page＝2	"1. per_page=（少数）&page=1 でGET送信する
 2. page=2 で再度GET送信する
-3. cards件数・要素・total_count を確認する"	`cards`は対象ページの分（最大 per_page 件）のみで、page により異なる要素が返り、`total_count`はページングを除いた重複排除後の総件数（全件）であること（処理フロー#7・ページネーション・データ整合性 一覧と総件数）。
+3. cards件数・要素・total_count を確認する"	`cards`は対象ページの分（最大 per_page 件）のみで、page により異なる要素が返り、`total_count`はページングを除いた重複排除後の総件数（全件）であること（処理フロー#7・ページネーション・データ整合性 一覧と総件数）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-039	IT-32	リクエスト	P2	per_pageが上限100超でもエラーとせず100に丸めて処理する	SEED-A15-08-CARDS-KNOWN（100件超）	per_page＝101以上	"1. per_page=200 でGET送信する
-2. HTTPステータスと cards 件数を確認する"	per_page が上限超過でもエラーとせずHTTPステータス200で、1ページ件数が100に丸めて適用されること（バリデーション「per_page は上限100に丸めて適用（超過してもエラーとせず100で処理）」・集計条件 ページング）。
+2. HTTPステータスと cards 件数を確認する"	per_page が上限超過でもエラーとせずHTTPステータス200で、1ページ件数が100に丸めて適用されること（バリデーション「per_page は上限100に丸めて適用（超過してもエラーとせず100で処理）」・集計条件 ページング）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-040	IT-09	リクエスト	P2	特殊文字を含むname（ダブルクォート一語扱い）でも正しく検索される	SEED-A15-08-CARDS-KNOWN	name＝ダブルクォートで囲んだ語・空白/カンマを含む語	"1. ダブルクォートで囲んだ語を name に指定してGET送信する
-2. cards を確認する"	ダブルクォートで囲んだ語は一語扱いとして部分一致検索され、空白・カンマは語分割として解釈されて該当カードが返ること（処理フロー#2・入出力 リクエスト name「ダブルクォートで一語扱い」）。
+2. cards を確認する"	ダブルクォートで囲んだ語は一語扱いとして部分一致検索され、空白・カンマは語分割として解釈されて該当カードが返ること（処理フロー#2・入出力 リクエスト name「ダブルクォートで一語扱い」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-041	IT-32	リクエスト	P2	SQLメタ文字等の特殊文字を含む検索語でもサーバエラーで停止しない	SEED-A15-08-CARDS-KNOWN	name＝SQLメタ文字・記号（例 % _ ' を含む語）	"1. 特殊文字を含む name でGET送信する
-2. HTTPステータスを確認する"	特殊文字を含む検索語でもサーバエラー（5xx）で停止せず、HTTPステータス200でラッパ応答（`code`／`total_count`／`cards`）が返ること（処理フロー#2 部分一致検索・エラー処理）。
+2. HTTPステータスを確認する"	特殊文字を含む検索語でもサーバエラー（5xx）で停止せず、HTTPステータス200でラッパ応答（`code`／`total_count`／`cards`）が返ること（処理フロー#2 部分一致検索・エラー処理）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-042	IT-32	リクエスト	P2	illegal_conditionがtrue/false以外で400となる	SEED-A15-08-CARDS-KNOWN	illegal_condition＝true/false以外（例 yes）	"1. illegal_condition=yes を付与してGET送信する
-2. HTTPステータスを確認する"	illegal_condition が true／false 以外のとき入力不正としてHTTPステータス400が返ること（バリデーション「illegal_condition は true／false 以外は入力不正（HTTP400）」）。
+2. HTTPステータスを確認する"	illegal_condition が true／false 以外のとき入力不正としてHTTPステータス400が返ること（バリデーション「illegal_condition は true／false 以外は入力不正（HTTP400）」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-043	IT-32	リクエスト	P3	color_conditionにNOT（色はAND/ORのみ）を指定すると400となる	SEED-A15-08-CARDS-KNOWN	color_condition＝NOT	"1. color_condition=NOT を付与してGET送信する
-2. HTTPステータスを確認する"	color_condition は許容語が AND／OR のみであり、NOT を指定すると入力不正としてHTTPステータス400が返ること（入出力 リクエスト color_condition「許容値 AND／OR」・バリデーション「色のみ AND／OR」）。
+2. HTTPステータスを確認する"	color_condition は許容語が AND／OR のみであり、NOT を指定すると入力不正としてHTTPステータス400が返ること（入出力 リクエスト color_condition「許容値 AND／OR」・バリデーション「色のみ AND／OR」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-044	IT-09	リクエスト	P2	絞り込み結果が0件のとき200・total_count0・空cardsが返る	SEED-A15-08-CARDS-KNOWN	どのカードも満たさない絞り込み条件（例 範囲外マナ総量）	"1. 該当0件となる絞り込み条件でGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	絞り込み結果が0件でも失敗とせず、HTTPステータス200で`total_count`0・`cards`空配列が返ること（エラー処理「該当カードが無い→コード200・total_count0・空のcards」）。
+2. HTTPステータスとレスポンス本文を確認する"	絞り込み結果が0件でも失敗とせず、HTTPステータス200で`total_count`0・`cards`空配列が返ること（エラー処理「該当カードが無い→コード200・total_count0・空のcards」）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-045	IT-09	リクエスト	P2	総件数を超えるページ番号で空cardsが返り総件数は不変である	SEED-A15-08-CARDS-KNOWN	page＝総ページ数を超える値	"1. 存在しないページ番号でGET送信する
-2. cards と total_count を確認する"	対象ページにカードが無いとき`cards`は空配列で返り、`total_count`はページングを除いた総件数のまま変化しないこと（処理フロー#6-7・データ整合性 一覧と総件数）。
+2. cards と total_count を確認する"	対象ページにカードが無いとき`cards`は空配列で返り、`total_count`はページングを除いた総件数のまま変化しないこと（処理フロー#6-7・データ整合性 一覧と総件数）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-046	IT-09	リクエスト	P2	カードテキスト（text）の部分一致と結合論理（text_condition）で絞り込まれる	SEED-A15-08-CARDS-KNOWN	text＝既知カードテキストの複数語＋text_condition＝AND／OR／NOT を切替	"1. text に複数語を指定し text_condition を AND／OR／NOT と変えて各GET送信する
-2. cards各要素のテキスト該当と各該当集合を確認する"	text の語が日英のカードテキストに部分一致するカードのみが返り、text_condition の論理（AND＝全語含む／OR＝いずれか含む／NOT＝除外）で結合した結果集合になること（処理フロー#2「カード名・テキストは空白・カンマで語分割し日英の名称／テキストに部分一致、条件の論理で結合」・入出力 リクエスト text／text_condition）。
+2. cards各要素のテキスト該当と各該当集合を確認する"	text の語が日英のカードテキストに部分一致するカードのみが返り、text_condition の論理（AND＝全語含む／OR＝いずれか含む／NOT＝除外）で結合した結果集合になること（処理フロー#2「カード名・テキストは空白・カンマで語分割し日英の名称／テキストに部分一致、条件の論理で結合」・入出力 リクエスト text／text_condition）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-047	IT-09	リクエスト	P2	サブタイプ（subtype）の配列指定と結合論理で該当カードに絞り込まれる	SEED-A15-08-CARDS-KNOWN	subtype＝サブタイプ識別子配列＋subtype_condition＝AND／OR／NOT	"1. subtype を配列で指定し subtype_condition を付与してGET送信する
-2. cards各要素のサブタイプ該当を確認する"	指定したサブタイプを持つカードのみが返り、subtype_condition の論理で絞り込まれること（処理フロー#3「サブタイプ…は配列で受け取り各論理で絞り込む」・入出力 リクエスト subtype／subtype_condition）。
+2. cards各要素のサブタイプ該当を確認する"	指定したサブタイプを持つカードのみが返り、subtype_condition の論理で絞り込まれること（処理フロー#3「サブタイプ…は配列で受け取り各論理で絞り込む」・入出力 リクエスト subtype／subtype_condition）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-048	IT-09	リクエスト	P2	レアリティ（rarity）の配列指定と結合論理で該当カードに絞り込まれる	SEED-A15-08-CARDS-KNOWN	rarity＝レアリティ識別子配列＋rarity_condition＝AND／OR／NOT	"1. rarity を配列で指定し rarity_condition を付与してGET送信する
-2. cards各要素のレアリティ該当を確認する"	指定したレアリティを持つカードのみが返り、rarity_condition の論理で絞り込まれること（処理フロー#3「…レアリティは配列で受け取り各論理で絞り込む」・入出力 リクエスト rarity／rarity_condition）。
+2. cards各要素のレアリティ該当を確認する"	指定したレアリティを持つカードのみが返り、rarity_condition の論理で絞り込まれること（処理フロー#3「…レアリティは配列で受け取り各論理で絞り込む」・入出力 リクエスト rarity／rarity_condition）。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-049	IT-09	リクエスト	P2	マナ総量等の一致指定（mana_value配列）で一致値のカードのみに絞り込まれる	SEED-A15-08-CARDS-KNOWN	mana_value＝一致させるマナ総量の配列（範囲ではなく一致）	"1. mana_value に一致値（複数可）を指定してGET送信する
-2. cards各要素の mana_value を確認する"	マナ総量が指定した一致値のいずれかに等しいカードのみが返り、範囲指定（from/to）とは別挙動の一致指定として絞り込まれること（処理フロー#5「…一致指定…で絞り込む」・入出力 リクエスト mana_value「マナ総量の一致指定」）。パワー／タフネス／ロイヤルティの一致指定（power／toughness／loyalty）も同系挙動として本ケースで代表する。
+2. cards各要素の mana_value を確認する"	マナ総量が指定した一致値のいずれかに等しいカードのみが返り、範囲指定（from/to）とは別挙動の一致指定として絞り込まれること（処理フロー#5「…一致指定…で絞り込む」・入出力 リクエスト mana_value「マナ総量の一致指定」）。パワー／タフネス／ロイヤルティの一致指定（power／toughness／loyalty）も同系挙動として本ケースで代表する。				
 a15-08_api_deck_builder_deck_card_search（API_デッキビルダー_カード検索）	E2E-A15-08-050	IT-09	リクエスト	P2	マナ総量等の除外指定（exclude_mana_value）で指定値のカードが除外される	SEED-A15-08-CARDS-KNOWN	exclude_mana_value＝除外するマナ総量の配列	"1. exclude_mana_value を指定してGET送信する
-2. cards各要素の mana_value を確認する"	マナ総量が指定した除外値に等しいカードが結果から除外され、範囲・一致とは別挙動の除外指定として絞り込まれること（処理フロー#5「…除外指定で絞り込む」・集計条件 除外「除外マナ総量…を満たす行を除外」・入出力 リクエスト exclude_mana_value）。パワー／タフネス／ロイヤルティの除外指定（exclude_power／exclude_toughness／exclude_loyalty）も同系挙動として本ケースで代表する。
+2. cards各要素の mana_value を確認する"	マナ総量が指定した除外値に等しいカードが結果から除外され、範囲・一致とは別挙動の除外指定として絞り込まれること（処理フロー#5「…除外指定で絞り込む」・集計条件 除外「除外マナ総量…を満たす行を除外」・入出力 リクエスト exclude_mana_value）。パワー／タフネス／ロイヤルティの除外指定（exclude_power／exclude_toughness／exclude_loyalty）も同系挙動として本ケースで代表する。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

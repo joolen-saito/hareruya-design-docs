@@ -37,6 +37,8 @@ export class OrderOrderTrackingNumberPage {
   readonly editTrackingNumber: Locator; // #order_Shipping_tracking_number
   readonly editTrackingLabel: Locator; // ラベル「送り状No.」（ツールチップ title 付き）
   readonly firstOrderEditLink: Locator; // 一覧の受注編集リンク（先頭）
+  readonly searchButton: Locator; // 検索ボタン #search_submit（結果行を組み立てる）
+  readonly shippingInfoToggle: Locator; // 出荷情報 collapse の開閉リンク
 
   // 受注一覧の出荷行 非同期入力UI（仕様要求。Enterprise一覧では未配置＝不具合候補#1）
   readonly listTrackingInputs: Locator; // input.update_tracking_number
@@ -51,6 +53,8 @@ export class OrderOrderTrackingNumberPage {
       'label[title="お問い合せ番号（出荷伝票番号）がある場合、こちらから入力できます。受注一覧からまとめて入力することも可能です。"]'
     );
     this.firstOrderEditLink = page.locator("a.action-edit").first();
+    this.searchButton = page.locator("#search_submit");
+    this.shippingInfoToggle = page.locator('a[href="#shippingInfo"]');
 
     this.listTrackingInputs = page.locator("input.update_tracking_number");
     this.listUpdateButtons = page.locator("button.update_tracking_number");
@@ -58,7 +62,11 @@ export class OrderOrderTrackingNumberPage {
 
   /** 受注一覧を開く（GET /{admin_route}/order 初期表示）。 */
   async gotoList() {
-    await this.page.goto(this.listUrl);
+    await this.page.goto(this.listUrl, { waitUntil: "domcontentloaded" });
+    if ((await this.firstOrderEditLink.count()) === 0 && (await this.searchButton.count()) > 0) {
+      await this.searchButton.click();
+      await this.firstOrderEditLink.waitFor({ state: "attached", timeout: 15000 }).catch(() => {});
+    }
   }
 
   /** 受注編集URLへ直接アクセス（未認証ガード確認等）。 */
@@ -73,8 +81,17 @@ export class OrderOrderTrackingNumberPage {
       return false;
     }
     await this.firstOrderEditLink.click();
+    await this.openShippingInfo();
     await expect(this.editTrackingNumber).toBeVisible();
     return true;
+  }
+
+  /** 出荷情報セクションを開く。送り状No.欄は初期状態では collapse 内で hidden の場合がある。 */
+  async openShippingInfo() {
+    if (!(await this.editTrackingNumber.isVisible()) && (await this.shippingInfoToggle.count()) > 0) {
+      await this.shippingInfoToggle.first().click();
+      await expect(this.editTrackingNumber).toBeVisible();
+    }
   }
 
   /** 受注編集の送り状No.欄へ入力して受注編集フォームを送信する。 */

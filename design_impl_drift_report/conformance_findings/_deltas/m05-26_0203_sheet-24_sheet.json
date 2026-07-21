@@ -1,0 +1,102 @@
+{
+  "functionId": "m05-26_0203_sheet-24_sheet",
+  "featureNo": "M05-26",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-24:7757",
+      "designExpectation": "admin_shipping_result_csv_upload … POST … /{admin_route}/order/shipping_result_csv/upload （送信されたCSVまたはTSVの検証・一括反映・成功時の付随処理へ進む。）",
+      "implRef": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:263 / src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:45",
+      "implementationActual": "POSTルート名 admin_shipping_result_csv_upload は存在するが、パスは /{admin_route}/order/shipping_result_csv/import。フォームも admin_shipping_result_csv_import のURLへPOSTしており、/shipping_result_csv/upload ではない。",
+      "mismatchReason": "設計の外部HTTP契約はPOST /order/shipping_result_csv/uploadだが、実装ルート定義とフォームactionはいずれも /order/shipping_result_csv/import 系である。反証として shipping_result_csv/upload、admin_shipping_result_csv_upload、shipping_result_csv/import を検索し、uploadパス定義は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "POSTアップロードURL",
+          "design": "POST /{admin_route}/order/shipping_result_csv/upload",
+          "implementation": "POST /{admin_route}/order/shipping_result_csv/import",
+          "mismatch": "パスが upload ではなく import になっている"
+        },
+        {
+          "item": "フォーム送信先",
+          "design": "送信されたCSVまたはTSVを upload エンドポイントへ送信",
+          "implementation": "{{ url('admin_shipping_result_csv_import') }} へPOST",
+          "mismatch": "設計上のuploadエンドポイントへ送信していない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-24:7633",
+      "designExpectation": "配送情報の「出荷日」を登録する。",
+      "implRef": "src/Eccube/Service/Csv/OrderCsv.php:143",
+      "implementationActual": "対象受注の配送一覧を走査しているが、設定しているのは $shipping->setShippingCommitDate($shippingDate) のみ。Shipping::setShippingDate() はこのインポート経路では呼ばれていない。",
+      "mismatchReason": "設計は配送情報の出荷日登録を要求している。実装は受注側には setShippingDate() を行う一方、配送側は shipping_commit_date への代入のみで、dtb_shipping.shipping_date に相当する Shipping::setShippingDate() 更新がない。反証として setShippingDate、Shipping->setShippingDate、shipping_date、setShippingCommitDate を検索し、OrderCsv.php内の配送更新はsetShippingCommitDateのみだった。",
+      "comparisonRows": [
+        {
+          "item": "配送情報の出荷日",
+          "design": "配送情報の「出荷日」を登録する",
+          "implementation": "配送情報にはsetShippingCommitDate($shippingDate)のみ実行",
+          "mismatch": "配送情報のshipping_dateではなくshipping_commit_dateを更新している"
+        },
+        {
+          "item": "受注情報の出荷日",
+          "design": "受注情報の「出荷日」を登録する",
+          "implementation": "$order->setShippingDate($shippingDate) は実装済み",
+          "mismatch": "受注側は満たすが、配送情報側の要求は満たさない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-24:7636",
+      "designExpectation": "出荷完了メールを送信する。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/Order/OrderCsvController.php, src/Eccube/Service/Csv/OrderCsv.php, src/Eccube/Service/Csv/AbstractCsvService.php, src/Eccube/Controller/Admin/Order 配下, MailService/sendShippingNotifyMail/notify_mail/出荷完了メール）",
+      "implementationActual": "出荷実績インポート経路ではMailServiceの注入もsendShippingNotifyMail呼び出しもない。別経路のOrderControllerやShippingControllerにはsendShippingNotifyMailがあるが、本機能からは呼ばれていない。",
+      "mismatchReason": "設計は更新された受注について出荷完了メール送信を要求するが、OrderCsvControllerの成功処理はPointService::gainPoints、flush、commit、成功フラッシュ、リダイレクトのみ。反証としてsendShippingNotifyMail、notifyMail、MailService、出荷完了を検索し、本インポート経路での送信実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "出荷完了メール",
+          "design": "更新された受注について出荷完了メールを送信する",
+          "implementation": "OrderCsvControllerはMailService未注入、sendShippingNotifyMail呼び出しなし",
+          "mismatch": "本機能の成功後副作用からメール送信が欠落している"
+        },
+        {
+          "item": "既存メール送信機能との関係",
+          "design": "本インポート更新受注に対して送信",
+          "implementation": "OrderController.php:512、ShippingController.php:244等の別経路には存在",
+          "mismatch": "別経路の実装であり、本機能の要求を満たす証跡ではない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-24:7637",
+      "designExpectation": "スマレジへ付与ポイントを送信する。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/Order/OrderCsvController.php, src/Eccube/Service/Csv/OrderCsv.php, src/Eccube/Service/PointService.php, src/Eccube/Service/Smaregi 配下, SmaregiCustomerService/postSmaregiPoint/smaregiCustomerService->gainPoints）",
+      "implementationActual": "出荷実績インポート経路ではPointService::gainPointsでローカル会員ポイントを加算するのみ。SmaregiCustomerServiceは注入されておらず、smaregiCustomerService->gainPoints() や postSmaregiPoint() は呼ばれない。",
+      "mismatchReason": "設計は付与ポイントをスマレジへ送信することを要求する。実装はOrderCsvController.php:311でPointService::gainPointsのみを呼び、PointService.php:42-73もローカルPlayer残高とポイント履歴の保存だけを行う。反証としてSmaregiCustomerService、postSmaregiPoint、smaregiCustomerService->gainPointsを検索したが、本インポート経路からの呼び出しは見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "ローカルポイント付加",
+          "design": "ポイント付加処理を行う",
+          "implementation": "PointService::gainPoints($updateOrder['order']) を実行",
+          "mismatch": "この部分は実装済み"
+        },
+        {
+          "item": "スマレジ付与ポイント送信",
+          "design": "スマレジへ付与ポイントを送信する",
+          "implementation": "SmaregiCustomerService未注入、スマレジ送信メソッド未呼び出し",
+          "mismatch": "外部スマレジ連携の副作用が欠落している"
+        }
+      ]
+    }
+  ]
+}

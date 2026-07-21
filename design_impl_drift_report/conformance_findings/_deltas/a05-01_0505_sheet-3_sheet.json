@@ -1,0 +1,162 @@
+{
+  "functionId": "a05-01_0505_sheet-3_sheet",
+  "featureNo": "A05-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3:855",
+      "designExpectation": "A05-01 はエンドポイントURLを /order/prints/{店舗ID}、HTTPメソッドを GET とし、URLに店舗ID(shop_id)を引数として持つ。A05-02とはエンドポイントを分ける。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43",
+      "implementationActual": "実装のルートは #[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', requirements: ['base_info_id' => '\\d+'], methods: ['POST'])] で、A05-01(GetRequest) と A05-02(SetResponse) を同一POSTルート内の ConnectionType 分岐で処理している。",
+      "mismatchReason": "設計は GET /order/prints/{店舗ID} と店舗ID(shop_id)パス引数、および A05-02 とのエンドポイント分離を要求するが、実装は POST /api/order/prints/direct/{base_info_id} の単一路線で、GETルートも /order/prints/{店舗ID} ルートも存在しない。探索範囲: src/Eccube, html の order/prints, prints/direct, order_direct_print, shop_id, base_info_id。",
+      "comparisonRows": [
+        {
+          "item": "URL",
+          "design": "/order/prints/{店舗ID}",
+          "implementation": "/api/order/prints/direct/{base_info_id}",
+          "mismatch": "パスが一致せず、設計の /order/prints/{店舗ID} は未登録。"
+        },
+        {
+          "item": "HTTPメソッド",
+          "design": "GET",
+          "implementation": "POSTのみ",
+          "mismatch": "A05-01のGET取得APIとして呼び出せない。"
+        },
+        {
+          "item": "A05-02との分離",
+          "design": "A05-02とエンドポイントを分ける",
+          "implementation": "ConnectionType === 'GetRequest' / 'SetResponse' を同一メソッドで分岐",
+          "mismatch": "設計の分離要求に反して同一エンドポイントで処理している。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3:903",
+      "designExpectation": "店舗ID(shop_id)が無い、整数以外の型、存在しない店舗ID(shop_id)の場合は 404 を返す。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43",
+      "implementationActual": "実装は base_info_id を \\d+ でルーティングするが、存在しないIDは OrderDirectPrintAction に渡され、BaseInfo が見つからない場合も getDirectPrintOrderList($base_info_id) を実行して、対象なしなら空文字の200応答になり得る。",
+      "mismatchReason": "設計は存在しない店舗IDを404とするが、実装には BaseInfo の存在チェック失敗時に404を返す分岐がない。OrderDirectPrintAction::handle は BaseInfo が無い場合も else 側で検索を続行する。",
+      "comparisonRows": [
+        {
+          "item": "存在しない店舗ID",
+          "design": "404",
+          "implementation": "BaseInfo未存在でも getDirectPrintOrderList を実行し、空なら '' を返す",
+          "mismatch": "404応答が実装されていない。"
+        },
+        {
+          "item": "店舗ID未指定",
+          "design": "404",
+          "implementation": "設計パス /order/prints/{店舗ID} 自体がなく、実装パスは base_info_id 必須の別URL",
+          "mismatch": "設計のエラー契約として実装されていない。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3:1095",
+      "designExpectation": "GetRequestで生成した印刷情報が空でない場合、印刷不具合検証のため印刷情報のXMLを var/log/print_logs/ 配下にタイムスタンプと一意名を付けたファイルとして書き出し、ディレクトリが存在しない場合は作成する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:57",
+      "implementationActual": "該当処理は TODO コメント付きでブロックコメント化されており、file_put_contents は実行されない。",
+      "mismatchReason": "src/Eccube と html を print_logs, file_put_contents, 印刷不具合, print_*.xml, orderDirectPrint で再検索したが、A05-01の有効なXMLログ書き出し実装は見つからない。コメントアウトされたコードは実行されないため未実装。",
+      "comparisonRows": [
+        {
+          "item": "ログディレクトリ作成",
+          "design": "var/log/print_logs/ がなければ作成",
+          "implementation": "コメントアウト内に mkdir があるのみ",
+          "mismatch": "実行されない。"
+        },
+        {
+          "item": "XMLファイル出力",
+          "design": "空でない印刷XMLをタイムスタンプ・一意名で保存",
+          "implementation": "コメントアウト内に file_put_contents があるのみ",
+          "mismatch": "実行されない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3:879",
+      "designExpectation": "バーコード未印刷を防ぐため、注文データをXML形式にする前に受注データにスマレジの商品コードが存在するか確認し、存在しない場合は何もしない。スマレジコードは印刷情報のバーコードにも用いる。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1493",
+      "implementationActual": "本店向け getPrintOrderListMainShop の店頭受取・注文受領分岐には o.smaregi_code IS NOT NULL 条件がない。ブラウザ印刷フラグ分岐にもスマレジコード必須条件がない。支店向け getDirectPrintOrderList でも browser_print_flg = true 分岐にスマレジコード必須条件がない。",
+      "mismatchReason": "実装は一部の分岐では o.smaregi_code IS NOT NULL を条件にしているが、全印刷対象に対してXML生成前のスマレジコード存在確認を保証していない。OrderDirectPrintAction は取得結果の smaregi_code をそのまま barcode に埋め込むため、空コードの印刷XMLが生成され得る。",
+      "comparisonRows": [
+        {
+          "item": "本店・店頭受取分岐",
+          "design": "スマレジコードが無い受注は何もしない",
+          "implementation": "s.Delivery = :otc かつ o.OrderStatus = :orderNew に o.smaregi_code IS NOT NULL がない",
+          "mismatch": "スマレジコードなし受注が抽出され得る。"
+        },
+        {
+          "item": "ブラウザ印刷フラグ分岐",
+          "design": "スマレジコードが無い受注は何もしない",
+          "implementation": "o.browser_print_flg = true のみで smaregi_code 条件なし",
+          "mismatch": "スマレジコードなし受注が抽出され得る。"
+        },
+        {
+          "item": "XMLバーコード",
+          "design": "スマレジコードをバーコードにして印刷",
+          "implementation": "<barcode> に $smaregiCode を直接出力",
+          "mismatch": "抽出段階で未設定除外が保証されず、空バーコードになり得る。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3:1044",
+      "designExpectation": "印刷対象の受注一覧は、店頭受取で注文受領の受注、スムーズ店頭受取で所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注、ブラウザ印刷フラグが立つ受注を対象とし、最大10件を取得する。配送がスムーズ店頭受取の場合は合計金額欄を「スムーズ店頭受取」とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1550",
+      "implementationActual": "支店向け getDirectPrintOrderList は店頭受取分岐と browser_print_flg 分岐のみで、スムーズ店頭受取分岐がない。また OrderDirectPrintAction は payment_total をそのまま印字しており、スムーズ店頭受取時に「スムーズ店頭受取」へ置換する分岐を持たない。",
+      "mismatchReason": "SMOOTH_OTC/smoothOtc/スムーズ店頭/otc_rsv_date/receiptDate を再検索したところ、本店向け getPrintOrderListMainShop には smoothOtc 条件があるが、支店向け getDirectPrintOrderList には存在しない。印字生成側にも配送方法の入力・判定がないため、合計金額欄の文言置換を実行できない。",
+      "comparisonRows": [
+        {
+          "item": "スムーズ店頭受取の抽出",
+          "design": "所定支払方法・未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありを対象",
+          "implementation": "getDirectPrintOrderList は s.delivery_id = :otc と browser_print_flg のUNIONのみ",
+          "mismatch": "支店向け直接印刷でスムーズ店頭受取条件が欠落。"
+        },
+        {
+          "item": "合計金額欄",
+          "design": "スムーズ店頭受取の場合は「スムーズ店頭受取」と表示",
+          "implementation": "$paymentTotal = $Order['payment_total']; <text>{$paymentTotal}</text>",
+          "mismatch": "配送方法判定も文言置換もない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-3:1062",
+      "designExpectation": "ConnectionType が GetRequest・SetResponse のいずれにも一致しない場合は処理を行わず応答を組み立てない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:91",
+      "implementationActual": "ConnectionType が想定値以外の場合、StreamedResponse を作成し、HTTP 400 と Content-Type: text/plain; charset=utf-8 を設定して返している。",
+      "mismatchReason": "設計は応答を組み立てず本文を返さないとしているが、実装は明示的な400応答を組み立てる。ConnectionType, GetRequest, SetResponse, ResponseFile で再検索したが同ルート以外の代替実装は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "想定外ConnectionType",
+          "design": "処理を行わず応答を組み立てない",
+          "implementation": "HTTP_BAD_REQUEST の StreamedResponse を返す",
+          "mismatch": "失敗時の外部API契約が異なる。"
+        },
+        {
+          "item": "Content-Type",
+          "design": "本文を返さない",
+          "implementation": "text/plain; charset=utf-8",
+          "mismatch": "明示的なエラー応答を返している。"
+        }
+      ]
+    }
+  ]
+}

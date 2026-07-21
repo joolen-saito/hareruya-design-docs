@@ -1,0 +1,54 @@
+{
+  "functionId": "a17-02_0517_sheet-4_id",
+  "featureNo": "A17-02",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4:1605,1656",
+      "designExpectation": "記事は dtb_article.deleted_at による論理削除で削除済みは対象外とする。基準記事の特定（wp_post_id）と論理削除判定に用いる。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:75",
+      "implementationActual": "関連記事取得SQLは dtb_article a1 と dtb_article a2 を参照し、WHERE は a1.wp_post_id、a2.wp_post_id 差異、a2.wp_post_id <> 0、共有中間テーブル EXISTS のみで、a1.deleted_at IS NULL / a2.deleted_at IS NULL の条件がない。",
+      "mismatchReason": "設計は基準記事・関連記事とも dtb_article.deleted_at による論理削除を応答対象外判定に用いることを要求しているが、実装の raw SQL には deleted_at 条件が存在しない。探索範囲: src/Eccube/Controller/App/ArticleController.php、src/Eccube/Repository/DtbArticleRepository.php、src/Eccube/Entity/DtbArticle.php、src/Eccube/Service/App/Article/ArticleResponseBuilder.php。別キーワード deleted_at/deletedAt/findOneBy/wpPostId/getRelatedArticles でも関連記事取得側の削除除外処理は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "基準記事の論理削除判定",
+          "design": "dtb_article.wp_post_id で基準記事を特定し、dtb_article.deleted_at による論理削除で削除済みは対象外。",
+          "implementation": "WHERE a1.wp_post_id = :wpPostId のみで a1.deleted_at IS NULL がない。",
+          "mismatch": "削除済みの基準記事でも関連記事検索の基準になり得る。"
+        },
+        {
+          "item": "関連記事の論理削除判定",
+          "design": "記事は dtb_article.deleted_at による論理削除で削除済みは応答対象外。",
+          "implementation": "a2 側にも a2.deleted_at IS NULL がない。",
+          "mismatch": "削除済み関連記事が応答配列に含まれ得る。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html#sheet-4:1623",
+      "designExpectation": "関連記事の配列を返す。同一デッキ・アーキタイプ・カード・イベント詳細のいずれかを共有する記事を関連とみなし、共有度の高い順に並ぶ。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:110",
+      "implementationActual": "ORDER BY は has_same_deck DESC, has_same_archetype DESC, has_same_card DESC, has_same_event_detail DESC, a2.wp_post_id ASC の固定優先順位であり、共有フラグ数の合計や共有度スコアによる降順ではない。",
+      "mismatchReason": "設計は共有度の高い順を要求しているが、実装はデッキ共有を最優先する辞書順ソートであるため、共有数3件（例: archetype/card/eventDetail）より共有数1件（deckのみ）が前に並ぶ可能性がある。探索範囲: src/Eccube/Repository/DtbArticleRepository.php、src/Eccube/Controller/App/ArticleController.php。別キーワード ORDER BY/has_same/getRelatedArticles/relatedArticles でも共有度合計順の別実装は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "並び順",
+          "design": "共有度の高い順。",
+          "implementation": "has_same_deck, has_same_archetype, has_same_card, has_same_event_detail の固定優先順位 DESC。",
+          "mismatch": "共有フラグ数の多さと実装順序が一致しないケースがある。"
+        },
+        {
+          "item": "同順位処理",
+          "design": "明示なし。",
+          "implementation": "最後に a2.wp_post_id ASC。",
+          "mismatch": "同順位処理自体は追加仕様だが、主排序が共有度ではない。"
+        }
+      ]
+    }
+  ]
+}

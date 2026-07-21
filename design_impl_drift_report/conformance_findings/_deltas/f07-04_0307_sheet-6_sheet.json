@@ -1,0 +1,26 @@
+{ "functionId": "f07-04_0307_sheet-6_sheet", "featureNo": "F07-04",
+  "findings": [
+    { "category": "実装違い", "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html#sheet-6（機能欄・部品1-1「選択済みイベント選択」）",
+      "designExpectation": "別日程の同イベントが存在する場合、選択済みイベント選択(1-1)は選択済み状態で「変更可」とし、イベント未選択の状態では次の画面に遷移させない。別日程が存在しない場合のみ(1-1)はデフォルトチェック入りで「変更不可」とする。",
+      "implRef": "src/Eccube/Resource/template/default/Event/entry.twig:37,32, src/Eccube/Controller/Front/Event/EventEntryController.php:100,119,156-172",
+      "implementationActual": "entry.twig:37 の主イベントチェックボックスは others の有無に関係なく常に `checked disabled`。主イベントIDは entry.twig:32 の hidden `name=\"detail\"` で常時送信され、confirm()/register() でも allDetails 先頭に必ず主対象が含まれる。disabled 切替・主未選択バリデーション・主を外す導線は entry.twig/EventEntryController/hareruya-event.js のいずれにも無い。",
+      "mismatchReason": "設計は others 有無で主(1-1)の変更可否を切替え、未選択時は遷移不可を要求するが、実装は常に disabled 固定かつ hidden で主対象を強制送信するため常に変更不可・常に含む。切替ロジックが不在。",
+      "comparisonRows": [
+        { "item": "別日程あり時の主(1-1)", "design": "変更可（外して別日程のみ申込可、未選択なら遷移不可）", "implementation": "checked disabled 固定・変更不可", "mismatch": "変更可への切替が未実装" },
+        { "item": "別日程なし時の主(1-1)", "design": "デフォルトチェック・変更不可", "implementation": "checked disabled", "mismatch": "一致（ただし条件分岐なし）" },
+        { "item": "主イベント送信方法", "design": "選択状態に応じ送信/非送信", "implementation": "hidden name=detail で常時送信", "mismatch": "常に主対象を含めて送信" }
+      ] },
+    { "category": "実装違い", "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html#sheet-6（機能欄・部品1-10申込同意/1-11支払いへ進む）",
+      "designExpectation": "申込同意(1-10)未チェックのまま「支払いへ進む」(1-11)を押しても次画面へ遷移させず、エラーを動的に表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Event/entry.twig:103-109, html/template/default/assets/hareruya/js/hareruya-event.js（data-js-payment-confirm-checkbox 制御部）, src/Eccube/Resource/locale/messages.ja.yaml:6599, src/Eccube/Controller/Front/Event/EventEntryController.php:106-108",
+      "implementationActual": "entry.twig にエラー表示用ノードが無い。hareruya-event.js は `f.disabled=!e` で送信ボタンの disabled を切替え、`f.disabled&&e.preventDefault()` で click を無効化するのみでエラー文言を動的表示しない。専用メッセージ front.event.entry.error.agree_required は ja/en の locale に定義されるだけで src/・html/ から未参照。confirm() は未同意なら event_entry へリダイレクト（動的エラーではない）。",
+      "mismatchReason": "「遷移させない」はボタン無効化で満たすが「エラーを動的に表示する」が未実装（表示要素・呼出しなし、専用メッセージ未参照）。",
+      "comparisonRows": [
+        { "item": "未同意押下時の遷移抑止", "design": "遷移させない", "implementation": "ボタン disabled + preventDefault", "mismatch": "一致" },
+        { "item": "未同意時のエラー動的表示", "design": "エラーを動的表示", "implementation": "表示要素・呼出し無し、agree_required 未参照", "mismatch": "未実装" }
+      ] }
+  ] }

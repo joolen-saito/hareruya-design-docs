@@ -1,0 +1,226 @@
+{
+  "id": "f06-16-deck-entry-edit-mydeck-modal-paging-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-16_0306_sheet-13_sheet.json",
+  "sourceFindingId": "f06-16_0306_sheet-13_sheet-conformance-28af8b937cd0",
+  "classification": "フロント会員",
+  "feature": "大会デッキ登録編集",
+  "issueCategory": "実装漏れ",
+  "issue": "マイデッキ取得ポップアップに検索結果総数・表示件数・20件ページングが表示されない",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "マイデッキを21件以上持つ会員で `http://localhost:8080/ja/mypage/deckentry/{eventDetailId}/edit` を表示する",
+    "「マイデッキを取得」ボタンを押下してマイデッキ取得ポップアップを開く",
+    "検索結果総数、表示件数、ページングリンクが表示され、1ページ最大20件で切り替わるか確認する"
+  ],
+  "expected": [
+    "マイデッキ取得ポップアップに検索結果総数を表示する",
+    "マイデッキ取得ポップアップに現在の表示件数範囲を表示する",
+    "マイデッキ取得ポップアップにページングリンクを表示し、1ページあたり最大20件で動的にページ切り替えする",
+    "フォーマット絞り込み後の件数に合わせて総数・表示範囲・ページングを更新する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise のマイデッキ取得ポップアップは `MyDecks` を全件ループしてボタン表示するだけで、検索結果総数、表示件数範囲、ページングリンクがない。テンプレート内JSも `#select_format` の変更時に `.p-hareruya-deckentry-edit__mydeck-item` を show/hide するだけで、20件単位のページ範囲計算、ページボタン生成、総数表示更新を行っていない。Controllerも `findBy()` の結果を件数制限なしで `MyDecks` として渡しているだけで、ページング用のデータを渡していない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise マイデッキモーダルは全件ループのみ",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+          "start": 358,
+          "end": 421,
+          "language": "twig",
+          "contains": [
+            "{% for MyDeck in MyDecks %}",
+            "<button class=\"p-hareruya-deckentry-edit__mydeck-item\" type=\"button\"",
+            "{% endfor %}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise JSはフォーマット絞り込みのみ",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+          "start": 119,
+          "end": 149,
+          "language": "javascript",
+          "contains": [
+            "$('#select_format').on('change', function() {",
+            "$('.p-hareruya-deckentry-edit__mydeck-item').show();",
+            "$(this).toggle(String($(this).data('format')) === val);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise ControllerはMyDecksを無制限findByで渡す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+          "start": 78,
+          "end": 92,
+          "language": "php",
+          "contains": [
+            "$MyDecks = $this->deckRepository->findBy(",
+            "['createDate' => 'DESC']",
+            "'MyDecks' => $MyDecks,"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の `deckentry.twig` は `perPage = 20`、`maxPage`、ページングボタン、`myDeck_modal_count` / `myDeck_modal_pagination` の件数表示を持っている。さらに `mydeck_modal_js.twig` で `PER_PAGE = 20`、現在ページ、総件数、表示範囲、ページングボタン生成、前後移動を制御しているため、設計の要求に対応するベース挙動が確認できる。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は20件ページングと件数表示を描画",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig",
+          "start": 220,
+          "end": 320,
+          "language": "twig",
+          "contains": [
+            "{% set perPage = 20 %}",
+            "{% set maxPage = (myDecks|length / perPage) | round(0, 'ceil') %}",
+            "<span id=\"myDeck_modal_count\">{{ myDecks|length }}</span>件中<span id=\"myDeck_modal_pagination\"></span>件を表示",
+            "<button name=\"pagination_button\""
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 はmydeck_modal_jsで動的ページングする",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/mydeck_modal_js.twig",
+          "start": 1,
+          "end": 178,
+          "language": "javascript",
+          "contains": [
+            "const PER_PAGE = 20;",
+            "let currentPage = 1;",
+            "totalDeckCount = deckIndex;",
+            "$('#myDeck_modal_pagination').text(range);",
+            "$('#myDeck_modal_count').text(totalDeckCount);",
+            "function createPagination()"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 はmydeck_modal_jsを読み込む",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig",
+          "start": 15,
+          "end": 20,
+          "language": "twig",
+          "contains": [
+            "{% include \"Block/js/mydeck_modal_js.twig\" %}"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ControllerもmyDecksを渡す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/DeckentryController.php",
+          "start": 90,
+          "end": 99,
+          "language": "php",
+          "contains": [
+            "$myDecks = $app['hareruya_ec.repository.deck']->findBy",
+            "$deckbuilderFormats = $app['hareruya_ec.repository.format']->findByDeckbuilderFlg(true);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "マイデッキ取得ポップアップ表示要求",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 4276,
+      "end": 4282,
+      "language": "html",
+      "contains": [
+        "マイデッキを取得ボタン(12)をクリックすると、マイデッキ取得用のポップアップ画面を表示する",
+        "マイデッキ取得用のポップアップ画面"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "検索結果総数・表示件数・ページングの画面部品要求",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 4428,
+      "end": 4436,
+      "language": "html",
+      "contains": [
+        "検索結果総数",
+        "表示件数",
+        "ページング",
+        "1ページあたりの最大表示数は20件ページ切り替えは動的に処理する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "マイデッキ一覧モーダルはフォーマット絞り込み・ページング付き",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 4568,
+      "end": 4572,
+      "language": "html",
+      "contains": [
+        "マイデッキ一覧モーダル（フォーマット絞り込み・ページング付き）"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "モーダルはMyDecks全件のボタン列挙のみ",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+      "start": 358,
+      "end": 421,
+      "language": "twig",
+      "contains": [
+        "{% for MyDeck in MyDecks %}",
+        "p-hareruya-deckentry-edit__mydeck-item"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "JSにページング処理はなくフォーマット絞り込みのみ",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+      "start": 119,
+      "end": 149,
+      "language": "javascript",
+      "contains": [
+        "マイデッキ フォーマット絞り込み",
+        "$(this).toggle(String($(this).data('format')) === val);"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3はポップアップに件数表示とページングを持つ",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig",
+      "start": 220,
+      "end": 320,
+      "language": "twig",
+      "contains": [
+        "{% set perPage = 20 %}",
+        "myDeck_modal_count",
+        "pagination_button"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3はmydeck_modal_jsで20件ごとの動的表示切替を行う",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/mydeck_modal_js.twig",
+      "start": 1,
+      "end": 178,
+      "language": "javascript",
+      "contains": [
+        "const PER_PAGE = 20;",
+        "function displayMyDecks()",
+        "function createPagination()"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-16_0306_sheet-13_sheet.json#f06-16_0306_sheet-13_sheet-conformance-28af8b937cd0'",
+      "rg -n \"マイデッキ取得|検索結果総数|表示件数|ページング|20件|MyDecks|myDecks|deck-modal|deck-select|p-hareruya-deckentry-edit__modal|data-deckentry-mydeck|pagination|pager|paginate|findBy\\(\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig pf-eccube3/app/Plugin/HareruyaEc/Controller/DeckentryController.php pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/mydeck_modal_js.twig",
+      "rg -n \"myDeck_modal|pagination_button|components__pagination|mydeck-filter|p-hareruya-deckentry-edit__mydeck|select_format\" ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-deck.js ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-mypage.js ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-event.js",
+      "rg -n \"myDeck_modal|pagination_button|components__pagination|select_format|myDeckLink|deckentry|deck-entry|data-deck_id|perPage\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/assets/js",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '4276,4282p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '4428,4436p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '4568,4572p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig | sed -n '108,149p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig | sed -n '358,421p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php | sed -n '78,92p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig | sed -n '220,320p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/mydeck_modal_js.twig | sed -n '1,185p'",
+      "rg -n \"mydeck_modal_js|include.*mydeck|Block/js/mydeck\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/*.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/*.twig"
+    ],
+    "review": "review-pack を生成し、設計HTMLのマイデッキ取得ポップアップ部品、ec-cube-enterprise の DeckEntryController/deck_entry_edit.twig と関連JS検索、pf-eccube3 の deckentry.twig/mydeck_modal_js.twig を再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

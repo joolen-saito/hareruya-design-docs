@@ -1,0 +1,253 @@
+{
+  "id": "f06-18-member-change-blacklist-error-page-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-18_0306_sheet-15_sheet.json",
+  "sourceFindingId": "f06-18_0306_sheet-15_sheet-conformance-d6349ce21742",
+  "classification": "フロント会員",
+  "feature": "会員情報変更",
+  "issueCategory": "実装違い",
+  "issue": "ブラックリスト該当時に会員情報更新エラー画面へ遷移せずフラッシュ付きで入力画面を再表示する",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "ブラックリスト管理に、変更後の会員氏名・住所・電話番号のいずれかに一致するキーワードを登録する",
+    "ログイン済み会員で `http://localhost:8080/ja/mypage/change` を表示する",
+    "ブラックリストに一致する氏名・住所・電話番号へ変更し、「変更する」を押下する",
+    "会員情報更新エラー画面へ遷移するか、またフラッシュメッセージが生成されないか確認する"
+  ],
+  "expected": [
+    "ブラックリストに該当する氏名・住所・電話番号へ変更して「変更する」を押下した場合、会員情報更新エラー画面へ遷移する",
+    "本機能ではフラッシュ・トーストを生成しない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `ChangeController::index()` は、ブラックリスト該当時に `addFlash('error', 'front.mypage.change.error.blacklisted')` を積み、`change.twig` を同一再描画する配列を返す。専用の会員情報更新エラー画面へ `redirectToRoute()` する分岐ではない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise ブラックリスト該当時はaddFlashしてchange.twigを再描画",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/ChangeController.php",
+          "start": 116,
+          "end": 132,
+          "language": "php",
+          "contains": [
+            "$Blacklists = $this->blacklistRepository->FindBlacklistByCustomer($Customer);",
+            "if (count($Blacklists) > 0) {",
+            "$this->addFlash('error', 'front.mypage.change.error.blacklisted');",
+            "return [",
+            "'form' => $form->createView(),"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise change.twigはapp.flashesを画面上部に表示する",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change.twig",
+          "start": 75,
+          "end": 84,
+          "language": "twig",
+          "contains": [
+            "{% for label, messages in app.flashes %}",
+            "<div class=\"ec-alertRole p-hareruya-entry__flash\" role=\"alert\">",
+            "{{ message|trans }}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 会員情報変更系Mypageテンプレートに専用エラー画面はない",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change_complete.twig",
+          "start": 41,
+          "end": 49,
+          "language": "twig",
+          "contains": [
+            "{{ 'front.mypage.change_complete.page_title'|trans }}",
+            "{{ 'front.mypage.button.back_to_mypage'|trans }}"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ec-cube-enterprise には会員登録用の `entry_regist_error` ルートと `Entry/regist_error.twig` は存在し、会員登録のブラックリスト該当時はそこへリダイレクトしている。一方、会員情報変更のブラックリスト該当時はこの既存エラー画面にも専用の変更エラー画面にも遷移していない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 会員登録はブラックリスト時にentry_regist_errorへリダイレクト",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php",
+          "start": 128,
+          "end": 142,
+          "language": "php",
+          "contains": [
+            "$Blacklists = $this->blacklistRepository->FindBlacklistByCustomer($Customer);",
+            "if (count($Blacklists) > 0) {",
+            "return $this->redirectToRoute('entry_regist_error');"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 会員登録エラー画面ルート",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php",
+          "start": 419,
+          "end": 426,
+          "language": "php",
+          "contains": [
+            "#[Route(path: '/entry/regist_error', name: 'entry_regist_error', methods: ['GET'])]",
+            "#[Template(template: 'Entry/regist_error.twig')]",
+            "public function entryError(): array"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 会員登録エラー画面テンプレート",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/regist_error.twig",
+          "start": 5,
+          "end": 16,
+          "language": "twig",
+          "contains": [
+            "<div class=\"p-hareruya-error\">",
+            "{{ 'front.entry.blacklist_error'|trans|nl2br }}",
+            "{{ 'front.entry.regist_error_back'|trans }}"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 でも会員登録のブラックリスト該当時は `entry_regist_error` へリダイレクトし、専用の `Entry/regist_error.twig` を表示する。pf-eccube3 の会員情報変更コントローラは更新成功時に `mypage_change_complete` へ進む実装で、検索上 `findBlacklistByCustomer` / `entry_regist_error` の会員情報変更内分岐は存在しない。設計HTMLは会員情報変更にも同種のエラー画面遷移を要求しているが、enterprise はフラッシュ再描画に置き換わっている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 会員登録はブラックリスト時にentry_regist_errorへ遷移",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php",
+          "start": 103,
+          "end": 112,
+          "language": "php",
+          "contains": [
+            "$blacklists = $app['hareruya_ec.repository.blacklist']->findBlacklistByCustomer($Customer);",
+            "if (count($blacklists) > 0) {",
+            "return $app->redirect($app->path('entry_regist_error'));"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 会員登録エラー画面をrender",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php",
+          "start": 274,
+          "end": 282,
+          "language": "php",
+          "contains": [
+            "登録エラー(ブラックリスト)画面",
+            "public function registError(Application $app, Request $request)",
+            "return $app->render('Entry/regist_error.twig', []);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 会員登録エラー画面テンプレート",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Entry/regist_error.twig",
+          "start": 1,
+          "end": 9,
+          "language": "twig",
+          "contains": [
+            "{% extends 'default_frame.twig' %}",
+            "ご入力いただいた内容は使用できません。",
+            "もう一度、登録ページへアクセスして登録情報の変更をお願いいたします。"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 会員情報変更は成功時に完了画面へ遷移",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/ChangeController.php",
+          "start": 184,
+          "end": 197,
+          "language": "php",
+          "contains": [
+            "$branchUpdate->noticeCustomerUpdate([$Customer['id']]);",
+            "$app['eccube.event.dispatcher']->dispatch(EccubeEvents::FRONT_MYPAGE_CHANGE_INDEX_COMPLETE, $event);",
+            "return $app->redirect($app->url('mypage_change_complete'));"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "会員情報変更のブラックリスト該当時は会員情報更新エラー画面へ遷移",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 5068,
+      "end": 5073,
+      "language": "html",
+      "contains": [
+        "ブラックリストに以下1~3に変更されている場合",
+        "会員情報更新エラー画面に遷移する",
+        "会員情報更新エラー画面は、以下を参照"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "フラッシュ・トースト非生成",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 5273,
+      "end": 5277,
+      "language": "html",
+      "contains": [
+        "本機能はフラッシュ・トーストを生成しない"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "ブラックリスト該当時にaddFlashして入力画面再表示",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/ChangeController.php",
+      "start": 116,
+      "end": 132,
+      "language": "php",
+      "contains": [
+        "$this->addFlash('error', 'front.mypage.change.error.blacklisted');",
+        "'form' => $form->createView()"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "入力画面がapp.flashesを描画",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change.twig",
+      "start": 75,
+      "end": 84,
+      "language": "twig",
+      "contains": [
+        "{% for label, messages in app.flashes %}",
+        "{{ message|trans }}"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 会員登録はブラックリスト時に専用エラー画面へ遷移",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php",
+      "start": 103,
+      "end": 112,
+      "language": "php",
+      "contains": [
+        "findBlacklistByCustomer($Customer)",
+        "return $app->redirect($app->path('entry_regist_error'));"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 会員登録エラー画面",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Entry/regist_error.twig",
+      "start": 1,
+      "end": 9,
+      "language": "twig",
+      "contains": [
+        "ご入力いただいた内容は使用できません。"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-18_0306_sheet-15_sheet.json#f06-18_0306_sheet-15_sheet-conformance-d6349ce21742'",
+      "rg -n \"d6349ce21742|ブラックリスト|会員情報更新エラー|エラー画面|フラッシュ|トースト|blacklist|blacklisted|change_error|entry_regist_error\" design_impl_drift_report/findings/f06-18_0306_sheet-15_sheet.json excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"regist_error|blacklist|FindBlacklist|blacklist_not_registered|entry_regist_error|blacklisted|change.error.blacklisted|app\\.flashes\" ec-cube-enterprise/src/Eccube/Controller/Front ec-cube-enterprise/src/Eccube/Resource/template/default/Entry ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+      "rg -n \"blacklist|FindBlacklist|regist_error|entry_regist_error|会員情報更新エラー|会員情報登録エラー|mypage_change_complete\" pf-eccube3/app/Plugin/HareruyaEc/Controller pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default pf-eccube3/app/Plugin/HareruyaEc/Repository",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '5064,5074p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '5273,5278p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/ChangeController.php | sed -n '108,132p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change.twig | sed -n '72,84p'",
+      "find ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage -maxdepth 1 -type f | sed 's#^ec-cube-enterprise/##' | sort | rg \"change|error|regist\"",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php | sed -n '124,144p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php | sed -n '419,426p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/regist_error.twig | sed -n '1,20p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php | sed -n '96,114p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php | sed -n '274,284p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Entry/regist_error.twig | sed -n '1,40p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/ChangeController.php | sed -n '184,197p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLのブラックリスト遷移要求とフラッシュ非生成要求、ec-cube-enterprise の ChangeController/change.twig/EntryController/Entry/regist_error.twig、pf-eccube3 の EntryController/Entry/regist_error.twig/Mypage/ChangeController を再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "id": "f03-02-product-detail-high-price-restock-notify-visible",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f03-02_0303_sheet-4_sheet.json",
+  "sourceFindingId": "f03-02_0303_sheet-4_sheet-conformance-4d5419df6a03",
+  "classification": "フロント商品",
+  "feature": "商品詳細",
+  "issueCategory": "実装漏れ",
+  "issue": "高額商品コードが登録された在庫なし商品の入荷通知ボタンが非表示にならない",
+  "designBook": "0303_基本設計仕様書(フロント_商品).xlsx",
+  "reproSteps": [
+    "本店の商品詳細画面で、高額商品コードが登録されているカード商品を表示する",
+    "該当の商品規格が在庫なしになる状態を確認する",
+    "在庫なし行に「入荷通知/通知待ち」ボタンが表示されるか確認する"
+  ],
+  "expected": [
+    "高額商品コードを登録している商品の場合、入荷通知/通知待ちボタンを非表示にする",
+    "高額商品コード自体は状態表示に表示しても、入荷通知依頼の導線は出さない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では class.highPriceCode を状態表示に出しているが、在庫なし時の入荷通知ボタン表示条件は _show_customer_favorite_and_notify のみで、class.highPriceCode の有無を判定していない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 高額商品コード表示",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Product/detail.twig",
+          "start": 306,
+          "end": 318,
+          "language": "twig",
+          "contains": [
+            "class.highPriceCode",
+            "CardCondition.code"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 入荷通知ボタン表示条件",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Product/detail.twig",
+          "start": 341,
+          "end": 352,
+          "language": "twig",
+          "contains": [
+            "_show_customer_favorite_and_notify",
+            "data-productclass",
+            "front.product.restock_notify"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise ProductClass highPriceCode",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/ProductClass.php",
+          "start": 867,
+          "end": 872,
+          "language": "php",
+          "contains": [
+            "getHighPriceCode",
+            "high_price_code"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 でも highPriceCode は状態表示に使われている一方、在庫なし時の notifyme ボタンに highPriceCode 判定はない。今回の起票根拠は設計書の明記であり、ベース側は同じ観点の近傍実装として確認した。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 高額商品コード表示と通知ボタン",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/detail.twig",
+          "start": 224,
+          "end": 268,
+          "language": "twig",
+          "contains": [
+            "class.highPriceCode",
+            "notifyme",
+            "data-productclass"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 DtbProductSubClass highPriceCode",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbProductSubClass.php",
+          "start": 368,
+          "end": 389,
+          "language": "php",
+          "contains": [
+            "setHighPriceCode",
+            "getHighPriceCode"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "2-14 入荷通知/通知待ちの高額商品コード非表示条件",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 1752,
+      "end": 1756,
+      "language": "html",
+      "contains": [
+        "入荷通知/通知待ち",
+        "高額商品コードを登録している商品の場合、非表示にする",
+        "本店のみ表示する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "高額商品コードは表示している",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Product/detail.twig",
+      "start": 306,
+      "end": 318,
+      "language": "twig",
+      "contains": [
+        "class.highPriceCode"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "入荷通知ボタン表示条件に highPriceCode 判定がない",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Product/detail.twig",
+      "start": 341,
+      "end": 352,
+      "language": "twig",
+      "contains": [
+        "{% if _show_customer_favorite_and_notify %}",
+        "front.product.restock_notify"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "ベース側の近傍実装。highPriceCode 表示と notifyme ボタンはあるが、notifyme 側に highPriceCode 判定はない",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/detail.twig",
+      "start": 224,
+      "end": 268,
+      "language": "twig",
+      "contains": [
+        "class.highPriceCode",
+        "notifyme"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "ベース側の highPriceCode プロパティ",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbProductSubClass.php",
+      "start": 368,
+      "end": 389,
+      "language": "php",
+      "contains": [
+        "getHighPriceCode",
+        "return $this->highPriceCode"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-09",
+    "checkedBy": "codex",
+    "commands": [
+      "rg -n \"高額商品コード|入荷通知/通知待ち|2-14\" hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書\\(フロント_商品\\).html",
+      "rg -n \"highPriceCode.*notify|notify.*highPriceCode|high_price_code.*notify|notify.*high_price_code|class\\.highPriceCode|front\\.product\\.restock_notify\" ec-cube-enterprise/src/Eccube/Resource/template/default/Product/detail.twig ec-cube-enterprise/src/Eccube/Entity/ProductClass.php",
+      "rg -n \"highPriceCode.*notify|notify.*highPriceCode|high_price_code.*notify|notify.*high_price_code|class\\.highPriceCode|notifyme\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/detail.twig pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbProductSubClass.php",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Product/detail.twig | sed -n '306,352p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/detail.twig | sed -n '224,268p'"
+    ],
+    "notes": [
+      "gpt-5.5 high の批判的レビューは利用可能な外部レビュー環境がなく実行できなかったため、review-pack 生成とローカルの設計・base・enterprise ソース照合で確認した。",
+      "ベース実装は設計要求を満たす根拠ではなく、同じ商品詳細の近傍実装として highPriceCode と notifyme の扱いを確認した。設計HTMLが本件の直接根拠。"
+    ]
+  }
+}

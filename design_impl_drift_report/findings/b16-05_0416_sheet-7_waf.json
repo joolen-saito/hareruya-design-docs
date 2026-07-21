@@ -1,0 +1,1349 @@
+{
+  "functionId": "b16-05_0416_sheet-7_waf",
+  "featureNo": "B16-05",
+  "title": "B16-05 WAF不正アクセスログ集計処理",
+  "domain": "b16",
+  "kind": "batch",
+  "designHtml": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+  "sourceBook": "0416_基本設計仕様書(バッチ_インフラ).html",
+  "sheetId": "sheet-7",
+  "sheetName": "WAF不正アクセスログ集計処理",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "functionId": "b16-05_0416_sheet-7_waf",
+      "dimension": "①機能/バッチ未実装",
+      "severity": "high",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html:998-1060",
+      "designQuote": "WAF不正アクセスログ集計処理。晴れる屋EC-CUBEのWAFで不正アクセスと判断されたログを取得し、処理結果をS3にアップロードおよびSlack通知を行う。前日分のログ統合・集計を行い、S3 の WAFLogs 配下から取得、YYMMDD_result.gz と YYMMDD_attach を S3 に保存し、Slack通知用メールサービスでSlackチャンネルに通知する。毎日4時に Step Functions で起動する。",
+      "implRef": "不在 / src/Eccube/Command/*.php / src/Eccube/Service/S3AccessService.php:24 / src/Eccube/Command/TestS3UploadDemoCommand.php:22 / src/Eccube/Service/UniSearch/UniSearchExportService.php:31",
+      "difference": "設計は WAF ログ取得、前日分統合、gzip圧縮、ブロックIP集計、S3保存、Slack通知、毎日4時起動を行うバッチを要求している。監査対象の ec-cube-enterprise 実装には S3 汎用サービスやデモアップロード、UniSearch の gzip 出力はあるが、WAF ログ集計専用の Command/Service、WAFLogs パス処理、IP集計、Slack通知処理は見当たらない。なお Step Functions/Lambda 等の外部インフラリポジトリは今回のソース照合対象外であり、そこに実装があるかは未確認。",
+      "designExpectation": "B16-05 は Step Functions から毎日4時に起動され、AWS S3 の WAFLogs から前日分ログを取得し、1日分の gzip 結果と集計結果ファイルを S3 に保存し、Slackチャンネルへ通知する処理を持つ。",
+      "implementationActual": "監査対象の ec-cube-enterprise では、src/Eccube/Command に複数の AsCommand バッチがあるが、WAF、不正アクセスログ、IP_Block_List、YYMMDD_result.gz、YYMMDD_attach、Slack通知用メールサービスに該当する Command は未検出。S3AccessService はカード画像等のS3汎用アクセス、TestS3UploadDemoCommand は固定キーへ Hello world を putObject するデモ、UniSearchExportService はUniSearch用TSV gzip/SFTP出力であり、WAFログ集計を実行しない。外部の Step Functions/Lambda/インフラ管理リポジトリは未照合。",
+      "comparisonRows": [
+        {
+          "item": "バッチ入口",
+          "design": "WAF不正アクセスログ集計処理を毎日4時に Step Functions から起動する。",
+          "implementation": "監査対象の ec-cube-enterprise/src/Eccube/Command に WAF ログ集計用の AsCommand が未検出。外部インフラ側の実装有無は未確認。",
+          "mismatch": "ec-cube-enterprise 内には設計のバッチ入口が見つからない。ただし実行基盤が別リポジトリの場合は追加確認が必要。"
+        },
+        {
+          "item": "入力取得",
+          "design": "S3://[ログ保存先バケット]/AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD] 配下の時刻ディレクトリを取得する。",
+          "implementation": "S3AccessService や S3 利用箇所はあるが、WAFLogs/IP_Block_List の前日分ログを列挙・取得する処理は未検出。",
+          "mismatch": "設計の入力パスと取得対象に対応する処理が存在しない。"
+        },
+        {
+          "item": "集計・出力・通知",
+          "design": "1日分ログを gzip で S3 に保存し、ブロックIPと出現回数を集計して YYMMDD_attach を保存し、Slackチャンネルへ通知する。",
+          "implementation": "WAFログの gzip 結果作成、IP集計、YYMMDD_attach 保存、Slack通知用メールサービス呼び出しが未検出。",
+          "mismatch": "設計の主要処理と副作用がまとめて未実装。"
+        }
+      ],
+      "comparisonSummary": "①機能/バッチ未実装：設計は「B16-05 は Step Functions から毎日4時に起動され、AWS S3 の WAFLogs から前日分ログを取得し、1日分の gzip 結果と集計結果ファイルを S3 に保存し、Slackチャンネルへ通知する処理を持つ。」。実装は「監査対象の ec-cube-enterprise では、src/Eccube/Command に複数の AsCommand バッチがあるが、WAF、不正アクセスログ、IP_Block_List、YYMMDD_result.gz、YYMMDD_attach、Slack通知用メールサービスに該当する Command は未検出。S3AccessService はカード画像等のS3汎用アクセス、TestS3UploadDemoCommand は固定キーへ Hello world を putObject するデモ、UniS…」。乖離理由は「HTML設計書は B16-05 を具体的な入出力・実行時刻まで定義しているが、監査対象ソースである ec-cube-enterprise に対応する Command/Service と業務処理が確認できないため。外部インフラリポジトリや Step Functions/Lambda 側の実装有無は今回未照合。」。",
+      "mismatchReason": "HTML設計書は B16-05 を具体的な入出力・実行時刻まで定義しているが、監査対象ソースである ec-cube-enterprise に対応する Command/Service と業務処理が確認できないため。外部インフラリポジトリや Step Functions/Lambda 側の実装有無は今回未照合。",
+      "impact": "ec-cube-enterprise 内だけを見る限り、不正アクセスログの前日分集計、S3成果物保存、Slack通知が実行されず、WAF ブロック状況の監視・共有が設計どおり行われない。外部インフラ側で実装済みの場合は、その配置・責務を設計/運用台帳に紐づける必要がある。",
+      "fixTarget": "src/Eccube/Command または外部バッチ実行基盤 / WAFログ集計Service / S3入出力 / Slack通知用メール連携",
+      "requiredChange": "ec-cube-enterprise 側で実装するなら WAFログ集計用 Command/Service を追加し、設計の S3 WAFLogs パスから前日分を取得、日次 gzip 結果とIP集計結果をS3保存、Slack通知用メールサービスで通知する。外部インフラ側で実装する方針なら、そのリポジトリ/Step Functions/Lambda/スケジュール設定を確認し、監査レポートの implRef に追加して所見を解消またはスコープ外へ更新する。",
+      "requirementTrace": [
+        {
+          "requirementId": "b16-05-waf-log-aggregate-batch",
+          "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html:1011-1060",
+          "designRequirement": "WAFログをS3から取得し、前日分を統合・集計して gzip 結果と集計ファイルを S3 に保存し、Slack通知を行う毎日4時起動バッチ。",
+          "implementationSearchTerms": [
+            "WAF",
+            "不正アクセス",
+            "WAFLogs",
+            "IP_Block_List",
+            "YYMMDD_result",
+            "YYMMDD_attach",
+            "Slack",
+            "AsCommand",
+            "S3"
+          ],
+          "implementationRefs": [
+            "src/Eccube/Service/S3AccessService.php:24",
+            "src/Eccube/Command/TestS3UploadDemoCommand.php:22",
+            "src/Eccube/Service/UniSearch/UniSearchExportService.php:31"
+          ],
+          "implementationActual": "監査対象の ec-cube-enterprise では S3汎用処理や別用途のgzip出力はあるが、WAFログ集計バッチ入口と処理本体は未検出。外部インフラ側は未照合。",
+          "traceVerdict": "NOT_FOUND",
+          "traceReason": "監査対象の ec-cube-enterprise には、設計の専用バッチに対応する Command/Service、WAFLogs 入力、IP集計、Slack通知処理がない。外部インフラ実装がある場合は追加証跡が必要。"
+        }
+      ],
+      "implementationRefs": [
+        "src/Eccube/Service/S3AccessService.php:24",
+        "src/Eccube/Command/TestS3UploadDemoCommand.php:22",
+        "src/Eccube/Service/UniSearch/UniSearchExportService.php:31",
+        "src/Eccube/Command/CreateLatestArticleListCommand.php:34"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Service/S3AccessService.php:24\n21: use Eccube\\Entity\\Master\\MtbCardImage;\n22: use Symfony\\Component\\DependencyInjection\\ParameterBag\\ParameterBagInterface;\n23: \n24: class S3AccessService\n25: {\n26:     private S3Client $client;\n27:     private string $s3Directory = '';",
+        "src/Eccube/Command/TestS3UploadDemoCommand.php:22\n19: use Symfony\\Component\\Console\\Input\\InputInterface;\n20: use Symfony\\Component\\Console\\Output\\OutputInterface;\n21: \n22: #[AsCommand(name: 'eccube:demo:s3-upload', description: 'Upload a file to S3')]\n23: class TestS3UploadDemoCommand extends Command\n24: {\n25:     public function __construct(private readonly S3Client $s3Client)",
+        "src/Eccube/Service/UniSearch/UniSearchExportService.php:31\n28: class UniSearchExportService\n29: {\n30:     private const COMPRESS_GZIP = 'gzip';\n31:     private const BACKUP_KEEP_COUNT = 5;\n32:     private string $workDir;\n33:     private string $lockFile;\n34:     private string $projectDir;",
+        "実装検索証跡\n- rg -n \"WAF|不正アクセス|アクセスログ|aws-waf|waf|blocked IP|Slack|gzip\" src/Eccube app/Customize app/config\n- rg -n \"AsCommand|S3|Slack|YYMMDD|deadlock|デッドロック|WAF|gzip\" src/Eccube/Command src/Eccube/Service app/Customize",
+        "不在判定\n監査対象の ec-cube-enterprise 内では該当機能そのものは不在。S3汎用サービス、S3アップロードデモ、UniSearch gzip 出力などの近似実装を確認したが、設計のWAFログ入力・IP集計・S3成果物・Slack通知を満たさない。外部インフラ実装は未確認のため、実装場所が別なら追加証跡が必要。"
+      ],
+      "implementationSearches": [
+        "rg -n \"WAF|不正アクセス|アクセスログ|aws-waf|waf|blocked IP|Slack|gzip\" src/Eccube app/Customize app/config",
+        "rg -n \"AsCommand|S3|Slack|YYMMDD|deadlock|デッドロック|WAF|gzip\" src/Eccube/Command src/Eccube/Service app/Customize"
+      ],
+      "absenceConclusion": "監査対象の ec-cube-enterprise 内では該当機能そのものは不在。S3汎用サービス、S3アップロードデモ、UniSearch gzip 出力などの近似実装を確認したが、設計のWAFログ入力・IP集計・S3成果物・Slack通知を満たさない。外部インフラ実装は未確認のため、実装場所が別なら追加証跡が必要。",
+      "evidence": "設計HTML:1011-1012 は WAF ログ取得、S3アップロード、Slack通知を定義。設計HTML:1017 は前日分ログ統合・集計、:1049-1058 は S3 取得、gzip保存、IP集計、S3保存、Slack通知、:1059-1060 は毎日4時起動と入出力先を定義。ec-cube-enterprise の実装検索では WAF/IP_Block_List/YYMMDD_result/YYMMDD_attach に対応する Command/Service が未検出で、近傍の S3AccessService、TestS3UploadDemoCommand、UniSearchExportService は別用途である。Step Functions/Lambda 等の外部インフラ実装は今回未照合。",
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "reaudit_harness",
+      "id": "b16-05-0416-sheet-7-waf-3bdcda6c65-01",
+      "implementationGap": true,
+      "implementationGapType": "機能・ルート・バッチ未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ルート・Controller",
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html:998\n995:             <div class=\"kv\"><dt>作成日</dt><dd>2025-08-12</dd></div>\n996:             <div class=\"kv\"><dt>更新者</dt><dd>高久</dd></div>\n997:             <div class=\"kv\"><dt>更新日</dt><dd>2025-09-19</dd></div>\n998:             <div class=\"kv\"><dt>機能No</dt><dd>B16-05</dd></div>\n999:             <div class=\"kv\"><dt>機能名</dt><dd>WAF不正アクセスログ集計処理</dd></div>\n1000:             <div class=\"kv\"><dt>概要</dt><dd>晴れる屋サイトへの不正アクセスと判断されたアクセスログを集計</dd></div>\n1001:           </dl>",
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b16-05_0416_sheet-7_waf-conformance-a00083147b62",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1017,1059",
+      "designRefDetail": null,
+      "designExpectation": "晴れる屋EC-CUBEのWAFで不正アクセスした際に生成されるログを元に、前日分のログ統合・集計を毎日4時にStep Functionsから起動するバッチとして実行する。",
+      "designQuote": "晴れる屋EC-CUBEのWAFで不正アクセスした際に生成されるログを元に、前日分のログ統合・集計を毎日4時にStep Functionsから起動するバッチとして実行する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "implementationActual": "src/Eccube/Command の AsCommand 一覧に WAF不正アクセスログ集計、WAFログ、access log aggregate、Step Functions連携に相当するコマンドが存在しない。",
+      "difference": "`waf`, `WAF`, `不正アクセス`, `アクセスログ`, `access_log`, `access log`, `IP_Block_List`, `WAFLogs`, `641007440821`, `Step Functions`, `毎日4時` に翻案して再検索したが、対象バッチ入口が見つからない。既存コマンドは販売集計・店頭買取集計・S3デモ等の別用途のみ。",
+      "mismatchReason": "`waf`, `WAF`, `不正アクセス`, `アクセスログ`, `access_log`, `access log`, `IP_Block_List`, `WAFLogs`, `641007440821`, `Step Functions`, `毎日4時` に翻案して再検索したが、対象バッチ入口が見つからない。既存コマンドは販売集計・店頭買取集計・S3デモ等の別用途のみ。",
+      "comparisonRows": [
+        {
+          "item": "バッチ入口",
+          "design": "WAF不正アクセスログの前日分統合・集計バッチ",
+          "implementation": "該当Command/Serviceなし",
+          "mismatch": "設計されたバッチ処理自体が実装されていない"
+        },
+        {
+          "item": "実行トリガー",
+          "design": "スケジュール起動(Step Functions)、毎日4時",
+          "implementation": "該当設定・呼び出し口なし",
+          "mismatch": "外部スケジュールから起動する実装入口がない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b16-05_0416_sheet-7_waf",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「晴れる屋EC-CUBEのWAFで不正アクセスした際に生成されるログを元に、前日分のログ統合・集計を毎日4時にStep Functionsから起動するバッチとして実行する。」。実装は「src/Eccube/Command の AsCommand 一覧に WAF不正アクセスログ集計、WAFログ、access log aggregate、Step Functions連携に相当するコマンドが存在しない。」。乖離理由は「`waf`, `WAF`, `不正アクセス`, `アクセスログ`, `access_log`, `access log`, `IP_Block_List`, `WAFLogs`, `641007440821`, `Step Functions`, `毎日4時` に翻案して再検索したが、対象バッチ入口が見つからない。既存コマンドは販売集計・店頭買取集計・S3デモ等の別用途のみ。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "業務ロジック・外部連携未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+      ],
+      "implementationSnippets": [],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b16-05_0416_sheet-7_waf-conformance-242f53d92574",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1018-1027",
+      "designRefDetail": null,
+      "designExpectation": "対象サーバは本店ECフロントサーバ(ECFront) / ELB-EC-Prod / WAF名 IP_Block_List / S3://aws-waf-logs-prod-hareruyaec とし、指定のWAFログを処理対象にする。",
+      "designQuote": "対象サーバは本店ECフロントサーバ(ECFront) / ELB-EC-Prod / WAF名 IP_Block_List / S3://aws-waf-logs-prod-hareruyaec とし、指定のWAFログを処理対象にする。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "implementationActual": "`IP_Block_List`, `aws-waf-logs-prod-hareruyaec`, `ELB-EC-Prod`, `ECFront` を保持・参照する実装が存在しない。",
+      "difference": "対象サーバ/WAF/バケット名を直接検索し、さらに `waf`, `block`, `bucket`, `AWSLogs` へ翻案して検索したが、対象WAFログを選別する設定・定数・処理が見つからない。",
+      "mismatchReason": "対象サーバ/WAF/バケット名を直接検索し、さらに `waf`, `block`, `bucket`, `AWSLogs` へ翻案して検索したが、対象WAFログを選別する設定・定数・処理が見つからない。",
+      "comparisonRows": [
+        {
+          "item": "対象WAF",
+          "design": "IP_Block_List",
+          "implementation": "該当なし",
+          "mismatch": "対象WAF名が実装にない"
+        },
+        {
+          "item": "対象S3バケット",
+          "design": "S3://aws-waf-logs-prod-hareruyaec",
+          "implementation": "該当なし",
+          "mismatch": "WAFログ保存先バケットが実装にない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b16-05_0416_sheet-7_waf",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「対象サーバは本店ECフロントサーバ(ECFront) / ELB-EC-Prod / WAF名 IP_Block_List / S3://aws-waf-logs-prod-hareruyaec とし、指定のWAFログを処理対象にする。」。実装は「`IP_Block_List`, `aws-waf-logs-prod-hareruyaec`, `ELB-EC-Prod`, `ECFront` を保持・参照する実装が存在しない。」。乖離理由は「対象サーバ/WAF/バケット名を直接検索し、さらに `waf`, `block`, `bucket`, `AWSLogs` へ翻案して検索したが、対象WAFログを選別する設定・定数・処理が見つからない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html）"
+      ],
+      "implementationSnippets": [],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b16-05_0416_sheet-7_waf-conformance-cc0f58cc6f45",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1034-1045",
+      "designRefDetail": null,
+      "designExpectation": "記事サーバ(Article)、APIサーバ(PROD_API)、ステージング用ECフロントサーバは集計対象外とする。",
+      "designQuote": "記事サーバ(Article)、APIサーバ(PROD_API)、ステージング用ECフロントサーバは集計対象外とする。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "implementationActual": "`Article_IP_Block`, `API-Prod`, `stg-all-search-blocker`, `STG-Branch-Admin-ELB` 等を除外条件として扱う実装が存在しない。",
+      "difference": "対象外サーバ名・WAF名・ロードバランサ名を直接検索したが、WAFログ集計対象から除外する条件定義が見つからない。",
+      "mismatchReason": "対象外サーバ名・WAF名・ロードバランサ名を直接検索したが、WAFログ集計対象から除外する条件定義が見つからない。",
+      "comparisonRows": [
+        {
+          "item": "対象外サーバ",
+          "design": "Article / PROD_API / ステージング用ECフロントサーバ",
+          "implementation": "該当なし",
+          "mismatch": "除外対象の定義がない"
+        },
+        {
+          "item": "対象外WAF/ELB",
+          "design": "Article_IP_Block, API-Prod, stg-all-search-blocker, STG-Branch-Admin-ELB",
+          "implementation": "該当なし",
+          "mismatch": "除外条件の実装がない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b16-05_0416_sheet-7_waf",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「記事サーバ(Article)、APIサーバ(PROD_API)、ステージング用ECフロントサーバは集計対象外とする。」。実装は「`Article_IP_Block`, `API-Prod`, `stg-all-search-blocker`, `STG-Branch-Admin-ELB` 等を除外条件として扱う実装が存在しない。」。乖離理由は「対象外サーバ名・WAF名・ロードバランサ名を直接検索したが、WAFログ集計対象から除外する条件定義が見つからない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html）"
+      ],
+      "implementationSnippets": [],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b16-05_0416_sheet-7_waf-conformance-a3676cd65bc7",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1049-1051",
+      "designRefDetail": null,
+      "designExpectation": "S3に保存されているログから前日分の不正アクセスログをローカルに一時保存し、取得先S3パス `S3://[ログ保存先バケット]/AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD]` 配下の時刻ディレクトリ(HH/MM)をすべて取得する。",
+      "designQuote": "S3に保存されているログから前日分の不正アクセスログをローカルに一時保存し、取得先S3パス `S3://[ログ保存先バケット]/AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD]` 配下の時刻ディレクトリ(HH/MM)をすべて取得する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "implementationActual": "既存のS3AccessServiceは汎用のput/list/get機能を持つが、WAFログパス、前日算出、HH/MM全取得、ローカル一時保存を行う呼び出し実装が存在しない。",
+      "difference": "`AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List`, `HH/MM`, `前日分`, `一時保存`, `listObjects`, `getObject` で反証検索したが、WAFログ取得処理は見つからない。",
+      "mismatchReason": "`AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List`, `HH/MM`, `前日分`, `一時保存`, `listObjects`, `getObject` で反証検索したが、WAFログ取得処理は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "取得元S3パス",
+          "design": "AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD]",
+          "implementation": "該当なし",
+          "mismatch": "設計パスを参照するコードがない"
+        },
+        {
+          "item": "時刻ディレクトリ",
+          "design": "パス以降のHH/MMをすべて取得",
+          "implementation": "該当なし",
+          "mismatch": "日配下の時刻ディレクトリ走査がない"
+        },
+        {
+          "item": "ローカル一時保存",
+          "design": "前日分ログをローカルに一時保存",
+          "implementation": "該当なし",
+          "mismatch": "WAFログの一時保存処理がない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b16-05_0416_sheet-7_waf",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「S3に保存されているログから前日分の不正アクセスログをローカルに一時保存し、取得先S3パス `S3://[ログ保存先バケット]/AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD]` 配下の時刻ディレクトリ(HH/MM)をすべて取得する。」。実装は「既存のS3AccessServiceは汎用のput/list/get機能を持つが、WAFログパス、前日算出、HH/MM全取得、ローカル一時保存を行う呼び出し実装が存在しない。」。乖離理由は「`AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List`, `HH/MM`, `前日分`, `一時保存`, `listObjects`, `getObject` で反証検索したが、WAFログ取得処理は見つからない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ルート・Controller",
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+      ],
+      "implementationSnippets": [],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b16-05_0416_sheet-7_waf-conformance-fef08175e42e",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1052-1053",
+      "designRefDetail": null,
+      "designExpectation": "取得したログを1日分のログファイルに纏め、gzip形式で圧縮してS3の `YYMMDD_result.gz` に保存する。",
+      "designQuote": "取得したログを1日分のログファイルに纏め、gzip形式で圧縮してS3の `YYMMDD_result.gz` に保存する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "implementationActual": "WAFログを日次で結合し、gzip圧縮して `YYMMDD_result.gz` としてS3保存する処理が存在しない。",
+      "difference": "`YYMMDD_result.gz`, `result.gz`, `gzip`, `gzencode`, `gzopen`, `gzwrite`, `putObject`, `uploadContent` を検索したが、WAFログの日次統合・圧縮・保存に該当する実装は見つからない。",
+      "mismatchReason": "`YYMMDD_result.gz`, `result.gz`, `gzip`, `gzencode`, `gzopen`, `gzwrite`, `putObject`, `uploadContent` を検索したが、WAFログの日次統合・圧縮・保存に該当する実装は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "日次ログ統合",
+          "design": "取得ログを1日分のログファイルに纏める",
+          "implementation": "該当なし",
+          "mismatch": "ログ統合処理がない"
+        },
+        {
+          "item": "gzip保存",
+          "design": "gzip形式で圧縮し `YYMMDD_result.gz` としてS3保存",
+          "implementation": "該当なし",
+          "mismatch": "指定ファイル名・圧縮・S3保存がない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b16-05_0416_sheet-7_waf",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「取得したログを1日分のログファイルに纏め、gzip形式で圧縮してS3の `YYMMDD_result.gz` に保存する。」。実装は「WAFログを日次で結合し、gzip圧縮して `YYMMDD_result.gz` としてS3保存する処理が存在しない。」。乖離理由は「`YYMMDD_result.gz`, `result.gz`, `gzip`, `gzencode`, `gzopen`, `gzwrite`, `putObject`, `uploadContent` を検索したが、WAFログの日次統合・圧縮・保存に該当する実装は見つからない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "Repository・Entity・DB",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+      ],
+      "implementationSnippets": [],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b16-05_0416_sheet-7_waf-conformance-33f8c3c27337",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1054",
+      "designRefDetail": null,
+      "designExpectation": "1日分のログファイルから、ブロックしたIPアドレスおよび出現回数を集計する。",
+      "designQuote": "1日分のログファイルから、ブロックしたIPアドレスおよび出現回数を集計する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "implementationActual": "WAFログからブロックIPを抽出し、IPアドレス別の出現回数を集計する実装が存在しない。",
+      "difference": "`ブロックしたIP`, `出現回数`, `IPアドレス`, `blocked IP`, `count`, `terminatingRule`, `clientIp`, `httpRequest` に翻案して検索したが、既存のIP関連実装はアクセス制限・ログイン履歴等の別機能であり、WAFログ集計ではない。",
+      "mismatchReason": "`ブロックしたIP`, `出現回数`, `IPアドレス`, `blocked IP`, `count`, `terminatingRule`, `clientIp`, `httpRequest` に翻案して検索したが、既存のIP関連実装はアクセス制限・ログイン履歴等の別機能であり、WAFログ集計ではない。",
+      "comparisonRows": [
+        {
+          "item": "集計キー",
+          "design": "ブロックしたIPアドレス",
+          "implementation": "該当なし",
+          "mismatch": "WAFログのIP抽出処理がない"
+        },
+        {
+          "item": "集計値",
+          "design": "出現回数",
+          "implementation": "該当なし",
+          "mismatch": "IP別カウント処理がない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b16-05_0416_sheet-7_waf",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「1日分のログファイルから、ブロックしたIPアドレスおよび出現回数を集計する。」。実装は「WAFログからブロックIPを抽出し、IPアドレス別の出現回数を集計する実装が存在しない。」。乖離理由は「`ブロックしたIP`, `出現回数`, `IPアドレス`, `blocked IP`, `count`, `terminatingRule`, `clientIp`, `httpRequest` に翻案して検索したが、既存のIP関連実装はアクセス制限・ログイン履歴等の別機能であり、WAFログ集計ではない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ルート・Controller",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+      ],
+      "implementationSnippets": [],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b16-05_0416_sheet-7_waf-conformance-eb398dce440f",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1055-1057",
+      "designRefDetail": null,
+      "designExpectation": "集計結果をファイルに保存して、S3の `YYMMDD_attach` に保存する。",
+      "designQuote": "集計結果をファイルに保存して、S3の `YYMMDD_attach` に保存する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "implementationActual": "IP別集計結果を添付用ファイルとして作成し、`YYMMDD_attach` にS3保存する処理が存在しない。",
+      "difference": "`YYMMDD_attach`, `attach`, `集計結果`, `putObject`, `uploadContent` で検索したが、WAF集計結果ファイルの保存処理は見つからない。",
+      "mismatchReason": "`YYMMDD_attach`, `attach`, `集計結果`, `putObject`, `uploadContent` で検索したが、WAF集計結果ファイルの保存処理は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "集計結果ファイル",
+          "design": "集計結果をファイルに保存",
+          "implementation": "該当なし",
+          "mismatch": "ファイル生成処理がない"
+        },
+        {
+          "item": "保存先",
+          "design": "S3://[ログ保存先バケット]/YYMMDD_attach",
+          "implementation": "該当なし",
+          "mismatch": "指定S3キーへの保存がない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b16-05_0416_sheet-7_waf",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「集計結果をファイルに保存して、S3の `YYMMDD_attach` に保存する。」。実装は「IP別集計結果を添付用ファイルとして作成し、`YYMMDD_attach` にS3保存する処理が存在しない。」。乖離理由は「`YYMMDD_attach`, `attach`, `集計結果`, `putObject`, `uploadContent` で検索したが、WAF集計結果ファイルの保存処理は見つからない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "Repository・Entity・DB"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+      ],
+      "implementationSnippets": [],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "b16-05_0416_sheet-7_waf-conformance-3d76c4697418",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1058,1060",
+      "designRefDetail": null,
+      "designExpectation": "集計結果をSlack通知用メールサービスを使い、Slackチャンネルに通知する。",
+      "designQuote": "集計結果をSlack通知用メールサービスを使い、Slackチャンネルに通知する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template）",
+      "implementationActual": "MailServiceには多数の業務メール送信メソッドが存在するが、WAF集計結果またはSlack通知用メールサービスへ送るメソッド・テンプレート・呼び出しが存在しない。",
+      "difference": "`Slack`, `slack`, `チャンネル`, `通知用メール`, `WAF`, `不正アクセス`, `sendWaf`, `sendSlack` を検索したが、Slack通知用メールサービスを使ったWAF集計結果通知は見つからない。検索で出たSlack文字列はTODOコメント等で本要求の実装ではない。",
+      "mismatchReason": "`Slack`, `slack`, `チャンネル`, `通知用メール`, `WAF`, `不正アクセス`, `sendWaf`, `sendSlack` を検索したが、Slack通知用メールサービスを使ったWAF集計結果通知は見つからない。検索で出たSlack文字列はTODOコメント等で本要求の実装ではない。",
+      "comparisonRows": [
+        {
+          "item": "通知経路",
+          "design": "Slack通知用メールサービス",
+          "implementation": "該当なし",
+          "mismatch": "メールサービス側の送信メソッド・テンプレートがない"
+        },
+        {
+          "item": "通知先",
+          "design": "Slackチャンネル",
+          "implementation": "該当なし",
+          "mismatch": "Slackチャンネル通知の実装がない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b16-05_0416_sheet-7_waf",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「集計結果をSlack通知用メールサービスを使い、Slackチャンネルに通知する。」。実装は「MailServiceには多数の業務メール送信メソッドが存在するが、WAF集計結果またはSlack通知用メールサービスへ送るメソッド・テンプレート・呼び出しが存在しない。」。乖離理由は「`Slack`, `slack`, `チャンネル`, `通知用メール`, `WAF`, `不正アクセス`, `sendWaf`, `sendSlack` を検索したが、Slack通知用メールサービスを使ったWAF集計結果通知は見つからない。検索で出たSlack文字列はTODOコメント等で本要求の実装ではない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "Service・業務ルール",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Service/MailService.php:69\n66: use Twig\\Error\\SyntaxError;\n67: use Twig\\Markup;\n68: \n69: class MailService\n70: {\n71:     protected BaseInfo $BaseInfo;\n72: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 10,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "b16-05_0416_sheet-7_waf-req-cacee8d66f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "・ S3に保存されているログから前日分の不正アクセスログをローカルに一時保存する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-05_0416_sheet-7_waf-req-6d863c07ab",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "取得先S3パス S3://[ログ保存先バケット]/AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD]",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-05_0416_sheet-7_waf-req-ada43cde57",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "・ 取得したログを1日分のログファイルに纏め、gzip形式でファイルを圧縮してS3に保存する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-05_0416_sheet-7_waf-req-9f36931fa9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "保存先S3パス S3://[ログ保存先バケット]/YYMMDD_result.gz",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-05_0416_sheet-7_waf-req-3b3fe8e561",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "・ 集計結果をファイルに保存して、S3に保存する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-05_0416_sheet-7_waf-req-06a038e54e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "保存先S3パス S3://[ログ保存先バケット]/YYMMDD_attach",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-05_0416_sheet-7_waf-req-cc730f7236",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "入力データ元 AWS S3 出力先(フォーマット) AWS S3 / Slackチャンネル",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-05_0416_sheet-7_waf-req-e453153298",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "入力データ検索条件",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-05_0416_sheet-7_waf-req-a0b0d8ccca",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "実行結果詳細 ※主にDBの登録・更新結果について記載",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-05_0416_sheet-7_waf-req-427deeecf1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "エラーハンドリング",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "aws-waf-logs-prod-hareruyaec",
+        "aws-waf-logs-prod-deckapi",
+        "AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List",
+        "YYMMDD_result.gz",
+        "YYMMDD_attach"
+      ],
+      "businessTerms": [
+        "B16",
+        "WAF不正アクセスログ集計処理",
+        "バッチ機能",
+        "スログを集計",
+        "CUBEで不正アクセスと判断されたアクセスログを",
+        "CUBEのWAFで不正アクセスと判断されたログを",
+        "バッチ処理用EC2インスタンス",
+        "ログを元に",
+        "前日分のログ統合",
+        "S3ログ転送先",
+        "デッキAPI",
+        "APIサーバ",
+        "S3に保存されているログから前日分の不正アクセス",
+        "ログをローカルに一時保存する",
+        "ログ保存先バケット",
+        "取得したログを1日分のログファイルに纏め",
+        "1日分のログファイルから"
+      ]
+    },
+    "candidateCount": 0,
+    "strongSignalCount": 0,
+    "candidateRefs": [],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 18,
+    "implementationGapRequirementCount": 18,
+    "rows": [
+      {
+        "findingId": "b16-05-0416-sheet-7-waf-3bdcda6c65-01",
+        "dimension": "①機能/バッチ未実装",
+        "severity": "high",
+        "implementationGap": true,
+        "implementationGapType": "機能・ルート・バッチ未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html:1011-1060",
+        "designRequirement": "WAFログをS3から取得し、前日分を統合・集計して gzip 結果と集計ファイルを S3 に保存し、Slack通知を行う毎日4時起動バッチ。",
+        "implementationActual": "監査対象の ec-cube-enterprise では S3汎用処理や別用途のgzip出力はあるが、WAFログ集計バッチ入口と処理本体は未検出。外部インフラ側は未照合。",
+        "mismatchReason": "監査対象の ec-cube-enterprise には、設計の専用バッチに対応する Command/Service、WAFLogs 入力、IP集計、Slack通知処理がない。外部インフラ実装がある場合は追加証跡が必要。",
+        "implementationRefs": [
+          "src/Eccube/Service/S3AccessService.php:24",
+          "src/Eccube/Command/TestS3UploadDemoCommand.php:22",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:31"
+        ],
+        "comparisonRows": [
+          {
+            "item": "バッチ入口",
+            "design": "WAF不正アクセスログ集計処理を毎日4時に Step Functions から起動する。",
+            "implementation": "監査対象の ec-cube-enterprise/src/Eccube/Command に WAF ログ集計用の AsCommand が未検出。外部インフラ側の実装有無は未確認。",
+            "mismatch": "ec-cube-enterprise 内には設計のバッチ入口が見つからない。ただし実行基盤が別リポジトリの場合は追加確認が必要。"
+          },
+          {
+            "item": "入力取得",
+            "design": "S3://[ログ保存先バケット]/AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD] 配下の時刻ディレクトリを取得する。",
+            "implementation": "S3AccessService や S3 利用箇所はあるが、WAFLogs/IP_Block_List の前日分ログを列挙・取得する処理は未検出。",
+            "mismatch": "設計の入力パスと取得対象に対応する処理が存在しない。"
+          },
+          {
+            "item": "集計・出力・通知",
+            "design": "1日分ログを gzip で S3 に保存し、ブロックIPと出現回数を集計して YYMMDD_attach を保存し、Slackチャンネルへ通知する。",
+            "implementation": "WAFログの gzip 結果作成、IP集計、YYMMDD_attach 保存、Slack通知用メールサービス呼び出しが未検出。",
+            "mismatch": "設計の主要処理と副作用がまとめて未実装。"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-a00083147b62",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1017,1059",
+        "designRequirement": "WAF不正アクセスログの前日分統合・集計バッチ",
+        "implementationActual": "該当Command/Serviceなし",
+        "mismatchReason": "設計されたバッチ処理自体が実装されていない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "バッチ入口",
+            "design": "WAF不正アクセスログの前日分統合・集計バッチ",
+            "implementation": "該当Command/Serviceなし",
+            "mismatch": "設計されたバッチ処理自体が実装されていない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-a00083147b62",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1017,1059",
+        "designRequirement": "スケジュール起動(Step Functions)、毎日4時",
+        "implementationActual": "該当設定・呼び出し口なし",
+        "mismatchReason": "外部スケジュールから起動する実装入口がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "実行トリガー",
+            "design": "スケジュール起動(Step Functions)、毎日4時",
+            "implementation": "該当設定・呼び出し口なし",
+            "mismatch": "外部スケジュールから起動する実装入口がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-242f53d92574",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1018-1027",
+        "designRequirement": "IP_Block_List",
+        "implementationActual": "該当なし",
+        "mismatchReason": "対象WAF名が実装にない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "対象WAF",
+            "design": "IP_Block_List",
+            "implementation": "該当なし",
+            "mismatch": "対象WAF名が実装にない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-242f53d92574",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1018-1027",
+        "designRequirement": "S3://aws-waf-logs-prod-hareruyaec",
+        "implementationActual": "該当なし",
+        "mismatchReason": "WAFログ保存先バケットが実装にない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "対象S3バケット",
+            "design": "S3://aws-waf-logs-prod-hareruyaec",
+            "implementation": "該当なし",
+            "mismatch": "WAFログ保存先バケットが実装にない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-cc0f58cc6f45",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1034-1045",
+        "designRequirement": "Article / PROD_API / ステージング用ECフロントサーバ",
+        "implementationActual": "該当なし",
+        "mismatchReason": "除外対象の定義がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "対象外サーバ",
+            "design": "Article / PROD_API / ステージング用ECフロントサーバ",
+            "implementation": "該当なし",
+            "mismatch": "除外対象の定義がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-cc0f58cc6f45",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1034-1045",
+        "designRequirement": "Article_IP_Block, API-Prod, stg-all-search-blocker, STG-Branch-Admin-ELB",
+        "implementationActual": "該当なし",
+        "mismatchReason": "除外条件の実装がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "対象外WAF/ELB",
+            "design": "Article_IP_Block, API-Prod, stg-all-search-blocker, STG-Branch-Admin-ELB",
+            "implementation": "該当なし",
+            "mismatch": "除外条件の実装がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-a3676cd65bc7",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1049-1051",
+        "designRequirement": "AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD]",
+        "implementationActual": "該当なし",
+        "mismatchReason": "設計パスを参照するコードがない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "取得元S3パス",
+            "design": "AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD]",
+            "implementation": "該当なし",
+            "mismatch": "設計パスを参照するコードがない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-a3676cd65bc7",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1049-1051",
+        "designRequirement": "パス以降のHH/MMをすべて取得",
+        "implementationActual": "該当なし",
+        "mismatchReason": "日配下の時刻ディレクトリ走査がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "時刻ディレクトリ",
+            "design": "パス以降のHH/MMをすべて取得",
+            "implementation": "該当なし",
+            "mismatch": "日配下の時刻ディレクトリ走査がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-a3676cd65bc7",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1049-1051",
+        "designRequirement": "前日分ログをローカルに一時保存",
+        "implementationActual": "該当なし",
+        "mismatchReason": "WAFログの一時保存処理がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "ローカル一時保存",
+            "design": "前日分ログをローカルに一時保存",
+            "implementation": "該当なし",
+            "mismatch": "WAFログの一時保存処理がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-fef08175e42e",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1052-1053",
+        "designRequirement": "取得ログを1日分のログファイルに纏める",
+        "implementationActual": "該当なし",
+        "mismatchReason": "ログ統合処理がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "日次ログ統合",
+            "design": "取得ログを1日分のログファイルに纏める",
+            "implementation": "該当なし",
+            "mismatch": "ログ統合処理がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-fef08175e42e",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1052-1053",
+        "designRequirement": "gzip形式で圧縮し `YYMMDD_result.gz` としてS3保存",
+        "implementationActual": "該当なし",
+        "mismatchReason": "指定ファイル名・圧縮・S3保存がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "gzip保存",
+            "design": "gzip形式で圧縮し `YYMMDD_result.gz` としてS3保存",
+            "implementation": "該当なし",
+            "mismatch": "指定ファイル名・圧縮・S3保存がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-33f8c3c27337",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1054",
+        "designRequirement": "ブロックしたIPアドレス",
+        "implementationActual": "該当なし",
+        "mismatchReason": "WAFログのIP抽出処理がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "集計キー",
+            "design": "ブロックしたIPアドレス",
+            "implementation": "該当なし",
+            "mismatch": "WAFログのIP抽出処理がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-33f8c3c27337",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1054",
+        "designRequirement": "出現回数",
+        "implementationActual": "該当なし",
+        "mismatchReason": "IP別カウント処理がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "集計値",
+            "design": "出現回数",
+            "implementation": "該当なし",
+            "mismatch": "IP別カウント処理がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-eb398dce440f",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1055-1057",
+        "designRequirement": "集計結果をファイルに保存",
+        "implementationActual": "該当なし",
+        "mismatchReason": "ファイル生成処理がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "集計結果ファイル",
+            "design": "集計結果をファイルに保存",
+            "implementation": "該当なし",
+            "mismatch": "ファイル生成処理がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-eb398dce440f",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1055-1057",
+        "designRequirement": "S3://[ログ保存先バケット]/YYMMDD_attach",
+        "implementationActual": "該当なし",
+        "mismatchReason": "指定S3キーへの保存がない",
+        "implementationRefs": [
+          "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/html）"
+        ],
+        "comparisonRows": [
+          {
+            "item": "保存先",
+            "design": "S3://[ログ保存先バケット]/YYMMDD_attach",
+            "implementation": "該当なし",
+            "mismatch": "指定S3キーへの保存がない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-3d76c4697418",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1058,1060",
+        "designRequirement": "Slack通知用メールサービス",
+        "implementationActual": "該当なし",
+        "mismatchReason": "メールサービス側の送信メソッド・テンプレートがない",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "通知経路",
+            "design": "Slack通知用メールサービス",
+            "implementation": "該当なし",
+            "mismatch": "メールサービス側の送信メソッド・テンプレートがない"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-05_0416_sheet-7_waf-conformance-3d76c4697418",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7:1058,1060",
+        "designRequirement": "Slackチャンネル",
+        "implementationActual": "該当なし",
+        "mismatchReason": "Slackチャンネル通知の実装がない",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "通知先",
+            "design": "Slackチャンネル",
+            "implementation": "該当なし",
+            "mismatch": "Slackチャンネル通知の実装がない"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 10,
+    "verdictedCount": 10,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "counts": {
+      "実装済み": 10,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "b16-05_0416_sheet-7_waf-req-cacee8d66f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "・ S3に保存されているログから前日分の不正アクセスログをローカルに一時保存する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-05_0416_sheet-7_waf-req-6d863c07ab",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "取得先S3パス S3://[ログ保存先バケット]/AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD]",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-05_0416_sheet-7_waf-req-ada43cde57",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "・ 取得したログを1日分のログファイルに纏め、gzip形式でファイルを圧縮してS3に保存する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-05_0416_sheet-7_waf-req-9f36931fa9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "保存先S3パス S3://[ログ保存先バケット]/YYMMDD_result.gz",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-05_0416_sheet-7_waf-req-3b3fe8e561",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "・ 集計結果をファイルに保存して、S3に保存する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-05_0416_sheet-7_waf-req-06a038e54e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "保存先S3パス S3://[ログ保存先バケット]/YYMMDD_attach",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-05_0416_sheet-7_waf-req-cc730f7236",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "入力データ元 AWS S3 出力先(フォーマット) AWS S3 / Slackチャンネル",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-05_0416_sheet-7_waf-req-e453153298",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "入力データ検索条件",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-05_0416_sheet-7_waf-req-a0b0d8ccca",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "実行結果詳細 ※主にDBの登録・更新結果について記載",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-05_0416_sheet-7_waf-req-427deeecf1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-7",
+        "designRequirement": "エラーハンドリング",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

@@ -1,0 +1,2503 @@
+{
+  "functionId": "m08-13_0207_sheet-21_sheet",
+  "featureNo": "M08-13",
+  "title": "M08-13 ブラックリスト管理",
+  "domain": "m08",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+  "sourceBook": "0207_基本設計仕様書(会員管理機能).html",
+  "sheetId": "sheet-21",
+  "sheetName": "ブラックリスト管理",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "m08-13_0207_sheet-21_sheet-conformance-c0501637a4b7",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4723,4724,4729,4730",
+      "designRefDetail": null,
+      "designExpectation": "電話番号の場合、チェックの前にハイフンを除去する。電話番号のみ追加で半角数字のみかのチェックを行う。",
+      "designQuote": "電話番号の場合、チェックの前にハイフンを除去する。電話番号のみ追加で半角数字のみかのチェックを行う。",
+      "implRef": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:78, src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:108",
+      "implementationActual": "電話番号項目の場合、既存行・新規行ともに入力値をそのまま /^[0-9]+$/ で検証している。ハイフン除去処理は BlacklistUpdateType / BlacklistType / BlacklistUpdateAction / BlacklistEntityManager / BlacklistController には存在しない。",
+      "difference": "設計はチェック前にハイフン除去を要求しているが、実装は除去せず数字のみ判定するため、090-1234-5678 のような入力は設計上は除去後に検証対象となる一方、実装ではエラーになる。反証検索で TruncateHyphenListener は見つかったがブラックリストフォームには接続されていない。",
+      "mismatchReason": "設計はチェック前にハイフン除去を要求しているが、実装は除去せず数字のみ判定するため、090-1234-5678 のような入力は設計上は除去後に検証対象となる一方、実装ではエラーになる。反証検索で TruncateHyphenListener は見つかったがブラックリストフォームには接続されていない。",
+      "comparisonRows": [
+        {
+          "item": "電話番号キーワードの正規化",
+          "design": "チェック前にハイフンを除去する",
+          "implementation": "ハイフン除去なしで preg_match('/^[0-9]+$/', $keyword) を実行",
+          "mismatch": "ハイフン付き電話番号の扱いが異なる"
+        },
+        {
+          "item": "探索範囲",
+          "design": "新規登録処理・更新処理の電話番号チェック",
+          "implementation": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php, src/Eccube/Form/Type/Admin/BlacklistType.php, src/Eccube/Service/Admin/Customer, src/Eccube/Service/EntityManager/BlacklistEntityManager.php, src/Eccube/Controller/Admin/Customer/BlacklistController.php",
+          "mismatch": "対象機能内に str_replace('-', '') / preg_replace による除去処理がない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m08-13_0207_sheet-21_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:78, src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:108",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「電話番号の場合、チェックの前にハイフンを除去する。電話番号のみ追加で半角数字のみかのチェックを行う。」。実装は「電話番号項目の場合、既存行・新規行ともに入力値をそのまま /^[0-9]+$/ で検証している。ハイフン除去処理は BlacklistUpdateType / BlacklistType / BlacklistUpdateAction / BlacklistEntityManager / BlacklistController には存在しない。」。乖離理由は「設計はチェック前にハイフン除去を要求しているが、実装は除去せず数字のみ判定するため、090-1234-5678 のような入力は設計上は除去後に検証対象となる一方、実装ではエラーになる。反証検索で TruncateHyphenListener は見つかったがブラックリストフォームには接続されていない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "業務ロジック・外部連携未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ルート・Controller",
+        "Form・入力項目",
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:78",
+        "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:108",
+        "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:78\n75:                     ->addError(new FormError(trans('admin.customer.blacklist.input_error')));\n76:             }\n77: \n78:             if ($BlacklistTag->isTel()) {\n79:                 if (!preg_match('/^[0-9]+$/', $keyword)) {\n80:                     $blacklistsForm->get((string) $index)->get('keyword')\n81:                         ->addError(new FormError(trans('admin.customer.blacklist.input_error')));",
+        "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:108\n105:                     ->addError(new FormError(trans('admin.customer.blacklist.registered_error')));\n106:             }\n107: \n108:             if ($NewBlacklistTag->isTel()) {\n109:                 if (!preg_match('/^[0-9]+$/', $newKeyword)) {\n110:                     $form->get('new_keyword')\n111:                         ->addError(new FormError(trans('admin.customer.blacklist.input_error')));",
+        "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:29\n26: use Symfony\\Component\\Validator\\Constraints as Assert;\n27: use Symfony\\Component\\Validator\\Context\\ExecutionContextInterface;\n28: \n29: class BlacklistUpdateType extends AbstractType\n30: {\n31:     public function buildForm(FormBuilderInterface $builder, array $options): void\n32:     {"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m08-13_0207_sheet-21_sheet-conformance-03906dc997ea",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4747,4749",
+      "designRefDetail": null,
+      "designExpectation": "項目(新規登録用)・項目(更新用)は単一選択(チェックボックス)で、選択肢は住所、電話番号、氏名。",
+      "designQuote": "項目(新規登録用)・項目(更新用)は単一選択(チェックボックス)で、選択肢は住所、電話番号、氏名。",
+      "implRef": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:34, src/Eccube/Form/Type/Admin/BlacklistType.php:32, src/Eccube/Form/Type/Master/BlacklistTagType.php:45, src/Eccube/Form/Type/MasterType.php:29",
+      "implementationActual": "新規用・更新用の項目は BlacklistTagType を使い、BlacklistTagType は MasterType を親にする。MasterType は EntityType かつ expanded=false / multiple=false なのでチェックボックスではなく単一 select として表示される。マスタ投入順も id=1 氏名、id=2 電話番号、id=3 住所で、BlacklistTagType は id ASC で並べる。",
+      "difference": "設計は項目 UI を単一選択チェックボックスとし、選択肢を住所、電話番号、氏名としているが、実装は select 表示で、並びも氏名、電話番号、住所となる。",
+      "mismatchReason": "設計は項目 UI を単一選択チェックボックスとし、選択肢を住所、電話番号、氏名としているが、実装は select 表示で、並びも氏名、電話番号、住所となる。",
+      "comparisonRows": [
+        {
+          "item": "項目(新規登録用) UI",
+          "design": "単一選択(チェックボックス)",
+          "implementation": "BlacklistTagType -> MasterType -> EntityType expanded=false の select",
+          "mismatch": "画面部品種別が異なる"
+        },
+        {
+          "item": "項目(更新用) UI",
+          "design": "単一選択(チェックボックス)",
+          "implementation": "BlacklistType の BlacklistTag も同じ BlacklistTagType select",
+          "mismatch": "画面部品種別が異なる"
+        },
+        {
+          "item": "選択肢の並び",
+          "design": "住所、電話番号、氏名",
+          "implementation": "id ASC: 氏名、電話番号、住所",
+          "mismatch": "表示順が異なる"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m08-13_0207_sheet-21_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:34, src/Eccube/Form/Type/Admin/BlacklistType.php:32, src/Eccube/Form/Type/Master/BlacklistTagType.php:45, src/Eccube/Form/Type/MasterType.php:29",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「項目(新規登録用)・項目(更新用)は単一選択(チェックボックス)で、選択肢は住所、電話番号、氏名。」。実装は「新規用・更新用の項目は BlacklistTagType を使い、BlacklistTagType は MasterType を親にする。MasterType は EntityType かつ expanded=false / multiple=false なのでチェックボックスではなく単一 select として表示される。マスタ投入順も id=1 氏名、id=2 電話番号、id=3 住所で、BlacklistTagType は id ASC で並べる。」。乖離理由は「設計は項目 UI を単一選択チェックボックスとし、選択肢を住所、電話番号、氏名としているが、実装は select 表示で、並びも氏名、電話番号、住所となる。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:34",
+        "src/Eccube/Form/Type/Admin/BlacklistType.php:32",
+        "src/Eccube/Form/Type/Master/BlacklistTagType.php:45",
+        "src/Eccube/Form/Type/MasterType.php:29",
+        "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php",
+        "src/Eccube/Form/Type/Admin/BlacklistType.php",
+        "src/Eccube/Form/Type/Master/BlacklistTagType.php",
+        "src/Eccube/Form/Type/MasterType.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:34\n31:     public function buildForm(FormBuilderInterface $builder, array $options): void\n32:     {\n33:         $builder\n34:             ->add('new_blacklist_tag', BlacklistTagType::class, [\n35:                 'label' => 'admin.customer.blacklist.blacklist_tag',\n36:                 'class' => MtbBlacklistTag::class,\n37:                 'mapped' => false,",
+        "src/Eccube/Form/Type/Admin/BlacklistType.php:32\n29:     public function buildForm(FormBuilderInterface $builder, array $options): void\n30:     {\n31:         $builder\n32:             ->add('BlacklistTag', BlacklistTagType::class, [\n33:                 'label' => 'admin.customer.blacklist.blacklist_tag',\n34:                 'required' => false,\n35:                 'placeholder' => null,",
+        "src/Eccube/Form/Type/Master/BlacklistTagType.php:45\n42:     }\n43: \n44:     #[\\Override]\n45:     public function getParent(): string\n46:     {\n47:         return MasterType::class;\n48:     }"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m08-13_0207_sheet-21_sheet-conformance-cc3a3c38b176",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4820",
+      "designRefDetail": null,
+      "designExpectation": "登録・編集・削除が完了したとき、登録完了メッセージ（ロケールキー admin.register.complete）を表示する。",
+      "designQuote": "登録・編集・削除が完了したとき、登録完了メッセージ（ロケールキー admin.register.complete）を表示する。",
+      "implRef": "src/Eccube/Controller/Admin/Customer/BlacklistController.php:107, src/Eccube/Resource/locale/messages.ja.yaml:1405, src/Eccube/Resource/locale/messages.ja.yaml:1780",
+      "implementationActual": "更新処理成功時は addSuccess('admin.common.save_complete', 'admin') を呼び出し、表示文言は「保存しました」。設計指定の admin.register.complete は「登録が完了しました。」として存在するが、この機能では使用していない。",
+      "difference": "設計が明示した成功メッセージキー admin.register.complete と、実装が使用する admin.common.save_complete が異なるため、利用者に表示される完了文言も異なる。",
+      "mismatchReason": "設計が明示した成功メッセージキー admin.register.complete と、実装が使用する admin.common.save_complete が異なるため、利用者に表示される完了文言も異なる。",
+      "comparisonRows": [
+        {
+          "item": "成功メッセージキー",
+          "design": "admin.register.complete",
+          "implementation": "admin.common.save_complete",
+          "mismatch": "使用ロケールキーが異なる"
+        },
+        {
+          "item": "日本語表示文言",
+          "design": "登録が完了しました。",
+          "implementation": "保存しました",
+          "mismatch": "表示文言が異なる"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m08-13_0207_sheet-21_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/Admin/Customer/BlacklistController.php:107, src/Eccube/Resource/locale/messages.ja.yaml:1405, src/Eccube/Resource/locale/messages.ja.yaml:1780",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「登録・編集・削除が完了したとき、登録完了メッセージ（ロケールキー admin.register.complete）を表示する。」。実装は「更新処理成功時は addSuccess('admin.common.save_complete', 'admin') を呼び出し、表示文言は「保存しました」。設計指定の admin.register.complete は「登録が完了しました。」として存在するが、この機能では使用していない。」。乖離理由は「設計が明示した成功メッセージキー admin.register.complete と、実装が使用する admin.common.save_complete が異なるため、利用者に表示される完了文言も異なる。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Controller/Admin/Customer/BlacklistController.php:107",
+        "src/Eccube/Resource/locale/messages.ja.yaml:1405",
+        "src/Eccube/Resource/locale/messages.ja.yaml:1780",
+        "src/Eccube/Controller/Admin/Customer/BlacklistController.php",
+        "src/Eccube/Resource/locale/messages.ja.yaml"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Customer/BlacklistController.php:107\n104:             ];\n105:         }\n106: \n107:         $this->addSuccess('admin.common.save_complete', 'admin');\n108: \n109:         return $this->redirectToRoute('admin_customer_blacklist');\n110:     }",
+        "src/Eccube/Resource/locale/messages.ja.yaml:1405\n1402: #====================================================================================\n1403: \n1404: # flashメッセージ\n1405: admin.common.save_complete: 保存しました\n1406: admin.common.save_error: 保存に失敗しました\n1407: admin.common.delete_complete: 削除しました\n1408: admin.common.delete_error: 削除に失敗しました",
+        "src/Eccube/Resource/locale/messages.ja.yaml:1780\n1777: admin.product.to_show_complete: \"%id%：対象の商品は既に削除されています。\"\n1778: admin.product.not_found_nm_price: \"%price%円の買取価格は設定できません。\"\n1779: admin.product.buy_price_exceeds_standard: \"ID:%productId%（%language%）の買取価格は基準価格「%standardPrice%」以下を指定してください。\"\n1780: admin.register.complete: 登録が完了しました。\n1781: admin.register.failed: 登録できませんでした。\n1782: admin.product.product_class.error.has_stock_cannot_abolish: 在庫がある商品規格は廃止にできません\n1783: admin.product.product_class.error.smaregi_alignment_flg_off_with_stock: スマレジ内在庫が存在するため、スマレジ連携フラグをOFFに変更できません"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m08-13_0207_sheet-21_sheet-conformance-7f73e9f417b8",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4737,4738,4739",
+      "designRefDetail": null,
+      "designExpectation": "会員登録、買取時の会員登録時にブラックリスト判定を使用し、登録不可の場合は登録エラー(ブラックリスト)画面を表示する。",
+      "designQuote": "会員登録、買取時の会員登録時にブラックリスト判定を使用し、登録不可の場合は登録エラー(ブラックリスト)画面を表示する。",
+      "implRef": "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:380, src/Eccube/Controller/Front/Purchase/OtcBuyController.php:437, src/Eccube/Resource/template/default/OtcBuy/complete.twig:31",
+      "implementationActual": "通常会員登録では blacklist 該当時に entry_regist_error へ遷移するが、買取時の会員登録では registerCustomer が false を返し、買取申込完了画面へ register=2 を付けて遷移し、同画面内に会員登録不可メッセージを表示する。",
+      "difference": "設計は買取時の会員登録も含めて登録不可時に登録エラー(ブラックリスト)画面を表示するとしているが、実装は買取申込完了画面上のメッセージ表示に留まる。",
+      "mismatchReason": "設計は買取時の会員登録も含めて登録不可時に登録エラー(ブラックリスト)画面を表示するとしているが、実装は買取申込完了画面上のメッセージ表示に留まる。",
+      "comparisonRows": [
+        {
+          "item": "通常会員登録のブラックリスト該当時",
+          "design": "登録エラー(ブラックリスト)画面を表示",
+          "implementation": "EntryController で entry_regist_error へ redirect",
+          "mismatch": "通常会員登録は設計に合致"
+        },
+        {
+          "item": "買取時会員登録のブラックリスト該当時",
+          "design": "登録エラー(ブラックリスト)画面を表示",
+          "implementation": "OtcBuy complete へ register=2 付きで遷移し、完了画面内メッセージを表示",
+          "mismatch": "表示画面が異なる"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m08-13_0207_sheet-21_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:380, src/Eccube/Controller/Front/Purchase/OtcBuyController.php:437, src/Eccube/Resource/template/default/OtcBuy/complete.twig:31",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「会員登録、買取時の会員登録時にブラックリスト判定を使用し、登録不可の場合は登録エラー(ブラックリスト)画面を表示する。」。実装は「通常会員登録では blacklist 該当時に entry_regist_error へ遷移するが、買取時の会員登録では registerCustomer が false を返し、買取申込完了画面へ register=2 を付けて遷移し、同画面内に会員登録不可メッセージを表示する。」。乖離理由は「設計は買取時の会員登録も含めて登録不可時に登録エラー(ブラックリスト)画面を表示するとしているが、実装は買取申込完了画面上のメッセージ表示に留まる。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:380",
+        "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:437",
+        "src/Eccube/Resource/template/default/OtcBuy/complete.twig:31",
+        "src/Eccube/Controller/Front/Purchase/OtcBuyController.php",
+        "src/Eccube/Resource/template/default/OtcBuy/complete.twig"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:380\n377:         // 会員情報登録処理\n378:         $registerResult = self::NO_ENTRY;\n379:         if ($request->get('mode') === 'entry') {\n380:             $registerResult = $this->registerCustomer($form) ? self::ENTRY_SUCCESS : self::ENTRY_FAILED;\n381:         }\n382: \n383:         $this->session->remove(self::ENTRY_SESSION_KEY);",
+        "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:437\n434: \n435:         $this->session->set(self::OTC_BUY_ORDER_ID_SESSION_KEY, $otcBuyOrder->getId());\n436:         $urlComplete = $this->generateUrl('otc_buy_complete', ['name' => $name]);\n437:         if ($registerResult !== self::NO_ENTRY) {\n438:             $urlComplete = $urlComplete.'?register='.$registerResult;\n439:         }\n440: ",
+        "src/Eccube/Resource/template/default/OtcBuy/complete.twig:31\n28:         </p>\n29:     </div>\n30:     {% endif %}\n31:     {% if withEntry is not null and withEntry == constant('Eccube\\\\Controller\\\\Front\\\\Purchase\\\\OtcBuyController::ENTRY_FAILED') %}\n32:     <div class=\"buyingForm__comp__text--registration\">\n33:         <p>\n34:             ご入力いただいた内容では会員登録ができませんでした。<br>"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 61,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-b4f3ae05e9",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "概要 登録されているブラックリストの一覧が表示されて編集・削除ができる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-db63b70267",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ ブラックリストを登録、編集、削除できる機能",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-dddd169708",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 登録ボタン押下時、フォーム内容の入力チェックをサーバ側で行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-017854984f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 電話番号の場合、チェックの前にハイフンを除去する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-5e652d2f0f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 電話番号のみ追加で半角数字のみかのチェックを行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-c4c8126649",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 既存の登録と重複する項目・キーワードの場合はエラーとする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-bdbbe887d1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ チェック後、新規項目の登録を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-082e0cbe46",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ チェック後、既存項目の更新を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-4280e3e655",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・削除ボタン押下時、該当レコードを削除する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-09b1b4ffcb",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 確認ダイアログは表示しない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-ddcc2874ba",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "フロント側でのブラックリスト判定処理について",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-693fb4cb08",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 会員登録、買取時の会員登録時に使用する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-bee7c71371",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 会員情報の氏名・電話番号・住所からブラックリストデータを検索しブラックリスト登録がある場合は会員登録不可とする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-57927a3535",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 登録不可の場合は登録エラー(ブラックリスト)画面を表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-6d53db8bc6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "項目(新規登録用)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-b29a168159",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "単一選択(チェックボックス)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-ea45476c5f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワード(新規登録用)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-e3f842f077",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "識別ID:4 項目にて電話番号を選択時は半角数字のみ登録可能",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-a2074a8ac9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワード(更新用)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-88d99bc15c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "識別ID:6 項目にて電話番号を選択時は半角数字のみ更新可能",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-147ea19878",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "M08-13 ブラックリスト登録/編集/削除 / 会員管理 — ブラックリスト登録/編集/削除",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-7525c834f4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "管理画面で、取引を制限する対象を識別するためのブラックリスト（キーワード）を一覧表示し、新規登録・編集・削除する機能である。登録済みキーワードの一覧とあわせて、新規キーワードの追加、既存キーワードの編集・削除を同一画面で行う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-0b00f2890d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの管理画面ブラックリスト処理、テンプレート（ Customer/blacklist.twig ）、ブラックリストを扱うエンティティ・リポジトリを正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-0a0ea4e0b8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリスト一覧の表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-e61911bb9e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワードの新規登録・編集・削除",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-1923eadcca",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワードの妥当性・重複の判定",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-0b039adba3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-dd95f5ad35",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリストを参照した取引制限の判定そのもの（受注・買取処理を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-489f0330d2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリストのテーブル名・列名は現行と移行先で一致するため、移行に伴う列名・テーブル名の差は無い。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-2bb3d133ae",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録済みキーワードの一覧と新規登録・編集用のフォームを表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-cef857a67f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "「登録」「更新」「削除」ボタン",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-7cfdb06160",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "送信内容に応じてキーワードを新規登録・編集・削除し、成功メッセージとともに一覧へ戻る。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-2fa996ef1e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録済みキーワードの一覧、新規キーワードの入力、既存キーワードの編集・削除操作。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-2c121541f2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "本機能では送信中心で、動的な表示切替は主としない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-326388e0c7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリスト一覧を表示する（GET /{admin_route}/customer/blacklist ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-f58008ff1d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録済みキーワードの一覧と編集用フォームを表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-45fb8ce7b3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワードを登録・編集・削除する（POST /{admin_route}/customer/blacklist/update ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-fdf1d0344a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "削除指定の場合は当該キーワードを削除する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-8a6cf4e1ae",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "既存キーワードの編集指定の場合は、キーワードの前後空白を整え、妥当性と重複を確認したうえで保存する。重複・不正がある場合は登録せず一覧へ戻る。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-afaa37aee0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "新規キーワードの追加指定の場合は、前後空白を整え、妥当性と重複を確認したうえで追加する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-4deb6cc6e9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録完了メッセージ（ロケールキー admin.register.complete ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-caa29864f2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録・編集・削除が完了したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-540d161f96",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "重複・不正キーワードの場合は登録せず一覧へ戻る（画面文言は実装を確認値とする）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-98084972e6",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワードが妥当であることを確認する。不正な場合は登録しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-36c9af8630",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "既存キーワードと重複する場合は登録しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-e13aad7345",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "任意（追加時は必須）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-0c395ec0fb",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリスト（ dtb_blacklist ）の列 keyword 。前後空白を除き、妥当性・重複を確認して追加する。フォームキーは新規キーワード。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-6ff7df9d8b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "既存ブラックリスト行（ dtb_blacklist ）の列 keyword 。前後空白を除き、妥当性・重複を確認して保存する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-7b57655a32",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録せず一覧へ戻る。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-d0e32b6473",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "当該キーワードを削除する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-6b6301bbcb",
+        "category": "登録・編集・削除の対象データは、フォーム送信またはCSV取込で検証を通過した単位で更新する。保存対象と副作用は処理フロー、入出力、DBカラムの各節を正とする。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "保存成功後はDBに確定した値を次回表示・検索・出力の基準にする。検証エラーまたは例外時に確定しない入力値は再表示画面のフォーム値に留まる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-ba9699c887",
+        "category": "登録・編集・削除の対象データは、フォーム送信またはCSV取込で検証を通過した単位で更新する。保存対象と副作用は処理フロー、入出力、DBカラムの各節を正とする。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "明示的な楽観ロック・悲観ロックを持たない場合、同一データを複数管理者が同時に更新すると後から保存された内容が残る。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-104bc7ea90",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "新規・既存のキーワード、削除指定、なりすまし対策トークン。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-c77b7f7f4d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワードの登録・編集・削除、成功メッセージ、一覧への遷移。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-0c16de69ad",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "重複・不正時は登録せず一覧へ戻る。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-7033e7ce56",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリストの作成・更新・削除。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-ffc84dc65a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録・編集・削除・重複判定に使用する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-8b74d0888b",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-46b07426fa",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "一覧表示・登録・編集・削除が可能。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-d85914b62d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録・編集・削除後",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-13_0207_sheet-21_sheet-req-5ede2fa14d",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録・編集・削除を確定する。本機能は楽観ロック・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "admin_route"
+      ],
+      "translationKeys": [
+        "admin.register.complete"
+      ],
+      "classNames": [],
+      "paths": [
+        "pf-eccube3/m08-13_admin_customer_customer_blacklist.md",
+        "blacklist.twig",
+        "customer/blacklist",
+        "customer/blacklist/update",
+        "flush"
+      ],
+      "businessTerms": [
+        "M08",
+        "ブラックリスト管理",
+        "会員管理",
+        "会員管理機能",
+        "確認ダイアログは表示しない",
+        "会員登録",
+        "買取時の会員登録時に使用する",
+        "会員情報の氏名",
+        "ト登録がある場合は会員登録不可とする"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 17,
+    "candidateRefs": [
+      {
+        "term": "customer/blacklist",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Customer/BlacklistController.php:38",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/customer/blacklist', name: 'admin_customer_blacklist', methods: ['GET'])]",
+        "weight": 6
+      },
+      {
+        "term": "blacklist.twig",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Customer/BlacklistController.php:39",
+        "snippet": "#[Template(template: '@admin/Customer/blacklist.twig')]",
+        "weight": 6
+      },
+      {
+        "term": "customer/blacklist/update",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Customer/BlacklistController.php:61",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/customer/blacklist/update', name: 'admin_customer_blacklist_update', methods: ['POST'])]",
+        "weight": 6
+      },
+      {
+        "term": "blacklist.twig",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Customer/BlacklistController.php:62",
+        "snippet": "#[Template(template: '@admin/Customer/blacklist.twig')]",
+        "weight": 6
+      },
+      {
+        "term": "admin.register.complete",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:118",
+        "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
+        "weight": 6
+      },
+      {
+        "term": "admin.register.complete",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:339",
+        "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
+        "weight": 6
+      },
+      {
+        "term": "admin.register.complete",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:147",
+        "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CartService.php:242",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CartService.php:83",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CsvExportService.php:202",
+        "snippet": "flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/DeckService.php:285",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "customer/blacklist",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/BaseInfo.php:132",
+        "snippet": "#[ORM\\Column(name: 'option_customer_activate', type: Types::BOOLEAN, options: ['default' => true])]",
+        "weight": 4
+      },
+      {
+        "term": "customer/blacklist",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/BaseInfo.php:133",
+        "snippet": "private ?bool $option_customer_activate = true;",
+        "weight": 4
+      },
+      {
+        "term": "customer/blacklist",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/BaseInfo.php:695",
+        "snippet": "$this->option_customer_activate = $optionCustomerActivate;",
+        "weight": 4
+      },
+      {
+        "term": "customer/blacklist/update",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/BaseInfo.php:705",
+        "snippet": "return $this->option_customer_activate;",
+        "weight": 4
+      },
+      {
+        "term": "customer/blacklist/update",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBlacklist.php:23",
+        "snippet": "#[ORM\\Table(name: 'dtb_blacklist')]",
+        "weight": 4
+      },
+      {
+        "term": "customer/blacklist/update",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBlacklist.php:36",
+        "snippet": "#[ORM\\JoinColumn(name: 'blacklist_tag_id', nullable: false, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => ' '])]",
+        "weight": 4
+      },
+      {
+        "term": "会員情報の氏名",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbBlacklistRepository.php:35",
+        "snippet": "* 会員情報の氏名・電話番号・住所からブラックリストを検索",
+        "weight": 4
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 9,
+    "implementationGapRequirementCount": 2,
+    "rows": [
+      {
+        "findingId": "m08-13_0207_sheet-21_sheet-conformance-c0501637a4b7",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4723,4724,4729,4730",
+        "designRequirement": "チェック前にハイフンを除去する",
+        "implementationActual": "ハイフン除去なしで preg_match('/^[0-9]+$/', $keyword) を実行",
+        "mismatchReason": "ハイフン付き電話番号の扱いが異なる",
+        "implementationRefs": [
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:78",
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:108",
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "電話番号キーワードの正規化",
+            "design": "チェック前にハイフンを除去する",
+            "implementation": "ハイフン除去なしで preg_match('/^[0-9]+$/', $keyword) を実行",
+            "mismatch": "ハイフン付き電話番号の扱いが異なる"
+          }
+        ]
+      },
+      {
+        "findingId": "m08-13_0207_sheet-21_sheet-conformance-c0501637a4b7",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4723,4724,4729,4730",
+        "designRequirement": "新規登録処理・更新処理の電話番号チェック",
+        "implementationActual": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php, src/Eccube/Form/Type/Admin/BlacklistType.php, src/Eccube/Service/Admin/Customer, src/Eccube/Service/EntityManager/BlacklistEntityManager.php, src/Eccube/Controller/Admin/Customer/BlacklistController.php",
+        "mismatchReason": "対象機能内に str_replace('-', '') / preg_replace による除去処理がない",
+        "implementationRefs": [
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:78",
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:108",
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "探索範囲",
+            "design": "新規登録処理・更新処理の電話番号チェック",
+            "implementation": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php, src/Eccube/Form/Type/Admin/BlacklistType.php, src/Eccube/Service/Admin/Customer, src/Eccube/Service/EntityManager/BlacklistEntityManager.php, src/Eccube/Controller/Admin/Customer/BlacklistController.php",
+            "mismatch": "対象機能内に str_replace('-', '') / preg_replace による除去処理がない"
+          }
+        ]
+      },
+      {
+        "findingId": "m08-13_0207_sheet-21_sheet-conformance-03906dc997ea",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4747,4749",
+        "designRequirement": "単一選択(チェックボックス)",
+        "implementationActual": "BlacklistTagType -> MasterType -> EntityType expanded=false の select",
+        "mismatchReason": "画面部品種別が異なる",
+        "implementationRefs": [
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:34",
+          "src/Eccube/Form/Type/Admin/BlacklistType.php:32",
+          "src/Eccube/Form/Type/Master/BlacklistTagType.php:45",
+          "src/Eccube/Form/Type/MasterType.php:29",
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php",
+          "src/Eccube/Form/Type/Admin/BlacklistType.php",
+          "src/Eccube/Form/Type/Master/BlacklistTagType.php",
+          "src/Eccube/Form/Type/MasterType.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "項目(新規登録用) UI",
+            "design": "単一選択(チェックボックス)",
+            "implementation": "BlacklistTagType -> MasterType -> EntityType expanded=false の select",
+            "mismatch": "画面部品種別が異なる"
+          }
+        ]
+      },
+      {
+        "findingId": "m08-13_0207_sheet-21_sheet-conformance-03906dc997ea",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4747,4749",
+        "designRequirement": "単一選択(チェックボックス)",
+        "implementationActual": "BlacklistType の BlacklistTag も同じ BlacklistTagType select",
+        "mismatchReason": "画面部品種別が異なる",
+        "implementationRefs": [
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:34",
+          "src/Eccube/Form/Type/Admin/BlacklistType.php:32",
+          "src/Eccube/Form/Type/Master/BlacklistTagType.php:45",
+          "src/Eccube/Form/Type/MasterType.php:29",
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php",
+          "src/Eccube/Form/Type/Admin/BlacklistType.php",
+          "src/Eccube/Form/Type/Master/BlacklistTagType.php",
+          "src/Eccube/Form/Type/MasterType.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "項目(更新用) UI",
+            "design": "単一選択(チェックボックス)",
+            "implementation": "BlacklistType の BlacklistTag も同じ BlacklistTagType select",
+            "mismatch": "画面部品種別が異なる"
+          }
+        ]
+      },
+      {
+        "findingId": "m08-13_0207_sheet-21_sheet-conformance-03906dc997ea",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4747,4749",
+        "designRequirement": "住所、電話番号、氏名",
+        "implementationActual": "id ASC: 氏名、電話番号、住所",
+        "mismatchReason": "表示順が異なる",
+        "implementationRefs": [
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:34",
+          "src/Eccube/Form/Type/Admin/BlacklistType.php:32",
+          "src/Eccube/Form/Type/Master/BlacklistTagType.php:45",
+          "src/Eccube/Form/Type/MasterType.php:29",
+          "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php",
+          "src/Eccube/Form/Type/Admin/BlacklistType.php",
+          "src/Eccube/Form/Type/Master/BlacklistTagType.php",
+          "src/Eccube/Form/Type/MasterType.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "選択肢の並び",
+            "design": "住所、電話番号、氏名",
+            "implementation": "id ASC: 氏名、電話番号、住所",
+            "mismatch": "表示順が異なる"
+          }
+        ]
+      },
+      {
+        "findingId": "m08-13_0207_sheet-21_sheet-conformance-cc3a3c38b176",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4820",
+        "designRequirement": "admin.register.complete",
+        "implementationActual": "admin.common.save_complete",
+        "mismatchReason": "使用ロケールキーが異なる",
+        "implementationRefs": [
+          "src/Eccube/Controller/Admin/Customer/BlacklistController.php:107",
+          "src/Eccube/Resource/locale/messages.ja.yaml:1405",
+          "src/Eccube/Resource/locale/messages.ja.yaml:1780",
+          "src/Eccube/Controller/Admin/Customer/BlacklistController.php",
+          "src/Eccube/Resource/locale/messages.ja.yaml"
+        ],
+        "comparisonRows": [
+          {
+            "item": "成功メッセージキー",
+            "design": "admin.register.complete",
+            "implementation": "admin.common.save_complete",
+            "mismatch": "使用ロケールキーが異なる"
+          }
+        ]
+      },
+      {
+        "findingId": "m08-13_0207_sheet-21_sheet-conformance-cc3a3c38b176",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4820",
+        "designRequirement": "登録が完了しました。",
+        "implementationActual": "保存しました",
+        "mismatchReason": "表示文言が異なる",
+        "implementationRefs": [
+          "src/Eccube/Controller/Admin/Customer/BlacklistController.php:107",
+          "src/Eccube/Resource/locale/messages.ja.yaml:1405",
+          "src/Eccube/Resource/locale/messages.ja.yaml:1780",
+          "src/Eccube/Controller/Admin/Customer/BlacklistController.php",
+          "src/Eccube/Resource/locale/messages.ja.yaml"
+        ],
+        "comparisonRows": [
+          {
+            "item": "日本語表示文言",
+            "design": "登録が完了しました。",
+            "implementation": "保存しました",
+            "mismatch": "表示文言が異なる"
+          }
+        ]
+      },
+      {
+        "findingId": "m08-13_0207_sheet-21_sheet-conformance-7f73e9f417b8",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4737,4738,4739",
+        "designRequirement": "登録エラー(ブラックリスト)画面を表示",
+        "implementationActual": "EntryController で entry_regist_error へ redirect",
+        "mismatchReason": "通常会員登録は設計に合致",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:380",
+          "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:437",
+          "src/Eccube/Resource/template/default/OtcBuy/complete.twig:31",
+          "src/Eccube/Controller/Front/Purchase/OtcBuyController.php",
+          "src/Eccube/Resource/template/default/OtcBuy/complete.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "通常会員登録のブラックリスト該当時",
+            "design": "登録エラー(ブラックリスト)画面を表示",
+            "implementation": "EntryController で entry_regist_error へ redirect",
+            "mismatch": "通常会員登録は設計に合致"
+          }
+        ]
+      },
+      {
+        "findingId": "m08-13_0207_sheet-21_sheet-conformance-7f73e9f417b8",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4737,4738,4739",
+        "designRequirement": "登録エラー(ブラックリスト)画面を表示",
+        "implementationActual": "OtcBuy complete へ register=2 付きで遷移し、完了画面内メッセージを表示",
+        "mismatchReason": "表示画面が異なる",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:380",
+          "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:437",
+          "src/Eccube/Resource/template/default/OtcBuy/complete.twig:31",
+          "src/Eccube/Controller/Front/Purchase/OtcBuyController.php",
+          "src/Eccube/Resource/template/default/OtcBuy/complete.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "買取時会員登録のブラックリスト該当時",
+            "design": "登録エラー(ブラックリスト)画面を表示",
+            "implementation": "OtcBuy complete へ register=2 付きで遷移し、完了画面内メッセージを表示",
+            "mismatch": "表示画面が異なる"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 61,
+    "verdictedCount": 61,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 61,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-b4f3ae05e9",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "概要 登録されているブラックリストの一覧が表示されて編集・削除ができる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-db63b70267",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ ブラックリストを登録、編集、削除できる機能",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-dddd169708",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 登録ボタン押下時、フォーム内容の入力チェックをサーバ側で行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-017854984f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 電話番号の場合、チェックの前にハイフンを除去する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-5e652d2f0f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 電話番号のみ追加で半角数字のみかのチェックを行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-c4c8126649",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 既存の登録と重複する項目・キーワードの場合はエラーとする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-bdbbe887d1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ チェック後、新規項目の登録を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-082e0cbe46",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ チェック後、既存項目の更新を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-4280e3e655",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・削除ボタン押下時、該当レコードを削除する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-09b1b4ffcb",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 確認ダイアログは表示しない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-ddcc2874ba",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "フロント側でのブラックリスト判定処理について",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-693fb4cb08",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 会員登録、買取時の会員登録時に使用する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-bee7c71371",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 会員情報の氏名・電話番号・住所からブラックリストデータを検索しブラックリスト登録がある場合は会員登録不可とする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-57927a3535",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "・ 登録不可の場合は登録エラー(ブラックリスト)画面を表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-6d53db8bc6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "項目(新規登録用)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-b29a168159",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "単一選択(チェックボックス)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-ea45476c5f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワード(新規登録用)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-e3f842f077",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "識別ID:4 項目にて電話番号を選択時は半角数字のみ登録可能",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-a2074a8ac9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワード(更新用)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-88d99bc15c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "識別ID:6 項目にて電話番号を選択時は半角数字のみ更新可能",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-147ea19878",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "M08-13 ブラックリスト登録/編集/削除 / 会員管理 — ブラックリスト登録/編集/削除",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-7525c834f4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "管理画面で、取引を制限する対象を識別するためのブラックリスト（キーワード）を一覧表示し、新規登録・編集・削除する機能である。登録済みキーワードの一覧とあわせて、新規キーワードの追加、既存キーワードの編集・削除を同一画面で行う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-0b00f2890d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの管理画面ブラックリスト処理、テンプレート（ Customer/blacklist.twig ）、ブラックリストを扱うエンティティ・リポジトリを正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-0a0ea4e0b8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリスト一覧の表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-e61911bb9e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワードの新規登録・編集・削除",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-1923eadcca",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワードの妥当性・重複の判定",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-0b039adba3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-dd95f5ad35",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリストを参照した取引制限の判定そのもの（受注・買取処理を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-489f0330d2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリストのテーブル名・列名は現行と移行先で一致するため、移行に伴う列名・テーブル名の差は無い。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-2bb3d133ae",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録済みキーワードの一覧と新規登録・編集用のフォームを表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-cef857a67f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "「登録」「更新」「削除」ボタン",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-7cfdb06160",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "送信内容に応じてキーワードを新規登録・編集・削除し、成功メッセージとともに一覧へ戻る。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-2fa996ef1e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録済みキーワードの一覧、新規キーワードの入力、既存キーワードの編集・削除操作。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-2c121541f2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "本機能では送信中心で、動的な表示切替は主としない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-326388e0c7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリスト一覧を表示する（GET /{admin_route}/customer/blacklist ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-f58008ff1d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録済みキーワードの一覧と編集用フォームを表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-45fb8ce7b3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワードを登録・編集・削除する（POST /{admin_route}/customer/blacklist/update ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-fdf1d0344a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "削除指定の場合は当該キーワードを削除する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-8a6cf4e1ae",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "既存キーワードの編集指定の場合は、キーワードの前後空白を整え、妥当性と重複を確認したうえで保存する。重複・不正がある場合は登録せず一覧へ戻る。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-afaa37aee0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "新規キーワードの追加指定の場合は、前後空白を整え、妥当性と重複を確認したうえで追加する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-4deb6cc6e9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録完了メッセージ（ロケールキー admin.register.complete ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-caa29864f2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録・編集・削除が完了したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-540d161f96",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "重複・不正キーワードの場合は登録せず一覧へ戻る（画面文言は実装を確認値とする）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-98084972e6",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワードが妥当であることを確認する。不正な場合は登録しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-36c9af8630",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "既存キーワードと重複する場合は登録しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-e13aad7345",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "任意（追加時は必須）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-0c395ec0fb",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリスト（ dtb_blacklist ）の列 keyword 。前後空白を除き、妥当性・重複を確認して追加する。フォームキーは新規キーワード。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-6ff7df9d8b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "既存ブラックリスト行（ dtb_blacklist ）の列 keyword 。前後空白を除き、妥当性・重複を確認して保存する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-7b57655a32",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録せず一覧へ戻る。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-d0e32b6473",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "当該キーワードを削除する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-6b6301bbcb",
+        "category": "登録・編集・削除の対象データは、フォーム送信またはCSV取込で検証を通過した単位で更新する。保存対象と副作用は処理フロー、入出力、DBカラムの各節を正とする。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "保存成功後はDBに確定した値を次回表示・検索・出力の基準にする。検証エラーまたは例外時に確定しない入力値は再表示画面のフォーム値に留まる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-ba9699c887",
+        "category": "登録・編集・削除の対象データは、フォーム送信またはCSV取込で検証を通過した単位で更新する。保存対象と副作用は処理フロー、入出力、DBカラムの各節を正とする。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "明示的な楽観ロック・悲観ロックを持たない場合、同一データを複数管理者が同時に更新すると後から保存された内容が残る。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-104bc7ea90",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "新規・既存のキーワード、削除指定、なりすまし対策トークン。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-c77b7f7f4d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "キーワードの登録・編集・削除、成功メッセージ、一覧への遷移。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-0c16de69ad",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "重複・不正時は登録せず一覧へ戻る。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-7033e7ce56",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "ブラックリストの作成・更新・削除。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-ffc84dc65a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録・編集・削除・重複判定に使用する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-8b74d0888b",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-46b07426fa",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "一覧表示・登録・編集・削除が可能。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-d85914b62d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録・編集・削除後",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-13_0207_sheet-21_sheet-req-5ede2fa14d",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21",
+        "designRequirement": "登録・編集・削除を確定する。本機能は楽観ロック・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "id": "b13-01-payment-status-check-flushes-per-entry-instead-of-finalize-once",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b13-01_0413_sheet-3_sheet.json",
+  "sourceFindingId": "b13-01_0413_sheet-3_sheet-conformance-559eac0b367e",
+  "classification": "バッチイベント",
+  "feature": "決済処理中チェックバッチ",
+  "issueCategory": "実装違い",
+  "issue": "決済処理中チェックバッチが更新を最後に一括確定せず申込ごとに確定する",
+  "designBook": "0413_基本設計仕様書(バッチ_イベント).xlsx",
+  "reproSteps": [
+    "設計書 B13-01 の処理フローで、申込履歴を記録し更新を最後に確定する仕様であることを確認する",
+    "ベース実装 pf-eccube3 の `AbstractCheckPaymentEntry::check()` を確認し、各申込の更新・削除を積んだ後、ループ後に `createEntryHistory()` と `flush()` を実行していることを確認する",
+    "ec-cube-enterprise の `PaymentStatusCheckAction::handle()` を確認し、成功時は申込ごとに `beginTransaction()`、`flush()`、`commit()` を行い、取引不在・失敗時も申込ごとに `flush()` することを確認する"
+  ],
+  "expected": [
+    "決済処理中チェックバッチは、対象申込の照会・更新・削除・履歴記録を処理した後、最後に更新を確定する",
+    "途中の申込単位でDB確定せず、バッチ処理単位で整合した結果を確定する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、取引成功時に申込ごとにトランザクションを開始し、申込ステータス更新と履歴追加を `flush()` して `commit()` する。取引不在・失敗時も申込ごとに `setDeletedAt()` 後に `flush()` するため、バッチ末尾でまとめて確定する設計・ベース実装とは確定タイミングが異なる。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は成功時に申込ごとに beginTransaction/flush/commit する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+          "start": 113,
+          "end": 132,
+          "language": "php",
+          "contains": [
+            "$this->entityManager->getConnection()->beginTransaction();",
+            "$EventEntry->setEntryStatus($EntryStatus);",
+            "$this->entityManager->persist($EventHistory);",
+            "$this->entityManager->flush();",
+            "$this->entityManager->getConnection()->commit();",
+            "$this->entityManager->getConnection()->rollBack();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise は取引不在・失敗時も申込ごとに flush する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+          "start": 154,
+          "end": 162,
+          "language": "php",
+          "contains": [
+            "// 取引が存在しない・失敗している場合（決済画面での離脱やキャンセルを含む）",
+            "$EventEntry->setDeletedAt($time);",
+            "$this->entityManager->persist($EventEntry);",
+            "$this->entityManager->flush();",
+            "$cntDeleted++;"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、ループ内で `execRecordOperation()` や `removeRecord()` により永続化対象を積み、ループ後に `createEntryHistory()` を実行してから `flush()` する。これにより処理した申込の履歴記録と更新確定が末尾に集約されている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 はループ後に履歴記録と flush を行う",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php",
+          "start": 57,
+          "end": 74,
+          "language": "php",
+          "contains": [
+            "$this->execRecordOperation($entry, $newStatus);",
+            "$this->app['hareruya_ec.repository.entry_history']->createEntryHistory($this->app, $entries);",
+            "$this->app['orm.em']->flush();",
+            "return $this->createResult($messages);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の removeRecord は削除対象を積むだけで flush しない",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractPaymentService.php",
+          "start": 38,
+          "end": 49,
+          "language": "php",
+          "contains": [
+            "protected function removeRecord($entry)",
+            "$this->app['orm.em']->remove($eventPlayer);",
+            "$this->app['orm.em']->remove($entry);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "詳細設計は申込履歴を記録し、更新を最後に確定することを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html",
+      "start": 919,
+      "end": 948,
+      "language": "html",
+      "contains": [
+        "申込履歴を記録し、更新を確定する",
+        "申込履歴の記録、想定外エラーの管理者通知"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "成功時は申込ごとにトランザクションを開始して flush/commit する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+      "start": 113,
+      "end": 132,
+      "language": "php",
+      "contains": [
+        "$this->entityManager->getConnection()->beginTransaction();",
+        "$this->entityManager->flush();",
+        "$this->entityManager->getConnection()->commit();"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "削除時も申込ごとに flush する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+      "start": 154,
+      "end": 162,
+      "language": "php",
+      "contains": [
+        "$EventEntry->setDeletedAt($time);",
+        "$this->entityManager->flush();",
+        "$cntDeleted++;"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "ループ後に履歴を作成し、最後に flush する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php",
+      "start": 57,
+      "end": 74,
+      "language": "php",
+      "contains": [
+        "$this->app['hareruya_ec.repository.entry_history']->createEntryHistory($this->app, $entries);",
+        "$this->app['orm.em']->flush();"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"最後に確定|更新を確定|申込履歴を記録|照会・更新\" excel_to_html/output/0413_基本設計仕様書\\(バッチ_イベント\\).html design_impl_drift_report/findings/b13-01_0413_sheet-3_sheet.json",
+      "rg -n \"beginTransaction|commit|rollBack|flush\\(|setDeletedAt|DtbEntryHistory\" ../ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+      "rg -n \"createEntryHistory|flush\\(|removeRecord|execRecordOperation\" ../pf-eccube3/app/Plugin/HareruyaEc/Service/Payment -g '*.php'"
+    ]
+  },
+  "notes": [
+    "B13-01のSP.LINKS取引照会API未実装とは別論点として確認した。API実装後も、DB確定タイミングが申込単位のままであれば設計・ベース実装との差分が残る。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

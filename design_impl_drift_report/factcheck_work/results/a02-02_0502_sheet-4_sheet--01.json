@@ -1,0 +1,42 @@
+{
+  "chunkId": "a02-02_0502_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-02_0502_sheet-4_sheet.json#a02-02_0502_sheet-4_sheet-conformance-aecd2f753766",
+      "functionId": "a02-02_0502_sheet-4_sheet",
+      "featureNo": "A02-02",
+      "title": "A02-02 ポップアップ用カード情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は404失敗本文を {code, message} と定めるが、実装は {code, errors} を返し message キーを持たない。",
+      "reason": "設計書のレスポンス（失敗）表(line 1183)は404本文の形を {code, message}（\"Not Found\"）と明記している。実装のA02-02エンドポイント popup_product_by_card_id (ProductController.php line 265) では該当なし時に NotFoundException('Not Found') をthrowし、catch (BaseApiException) ブロック(line 291-295)で ['code' => $e->getStatusCode(), 'errors' => $e->getErrors()] を返している。NotFoundException は親コンストラクタへ errors: [$message] を渡す実装(line 30)であり、値「Not Found」は errors 配列に格納される。message キーを返す処理はA02-02経路に存在せず、JSON契約のキー名が message ではなく errors になっているため設計と不一致。値(\"Not Found\")自体は同等だが本文キーの形が異なる実装違い。",
+      "designEvidence": {
+        "label": "設計要求（404失敗レスポンス本文の形）",
+        "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+        "start": 1183,
+        "end": 1183,
+        "contains": ["{code, message}", "Not Found", "404"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装: catchでcode/errorsを返す",
+          "note": "A02-02 エンドポイント popup_product_by_card_id の例外整形。message キーではなく errors キーを返す。",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php",
+          "start": 291,
+          "end": 295,
+          "contains": ["'code' => $e->getStatusCode(),", "'errors' => $e->getErrors(),", "catch (BaseApiException $e)"]
+        },
+        {
+          "label": "実装: NotFoundExceptionはメッセージをerrors配列に格納",
+          "note": "'Not Found' は errors: [$message] としてerrors配列へ入るため message キーには現れない。",
+          "path": "ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php",
+          "start": 29,
+          "end": 34,
+          "contains": ["errors: [$message],", "statusCode: Response::HTTP_NOT_FOUND"]
+        }
+      ]
+    }
+  ]
+}

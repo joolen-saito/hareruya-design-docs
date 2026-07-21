@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_34_admin_product_product_discount_csv_import_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・取込結果メッセージ・ファイルダウンロード発火・URL等のブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装の現挙動・Form制約(NotBlank/maxSize)・POM見出し文言をオラクル化しない。TSV は既存IT casesと同一の10列固定。E2E固有情報はTSV後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・取込結果メッセージ・ファイルダウンロード発火・URL等のブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装の現挙動・Form制約(NotBlank/maxSize)・POM見出し文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報はTSV後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 > **重要（刷新先未存在）**: 本機能の設計は現行 pf-eccube3 プラグイン HareruyaEc のリバースである。刷新先 **ec-cube-enterprise には「割引率変更CSV登録」専用画面・取込ハンドラが存在しない**。
 > - 専用ルート `GET/POST /{admin_route}/product/product_discount_csv_upload` は ec-cube-enterprise に無い（`src/Eccube/Controller/Admin/Product/Csv/` を全走査。割引率専用コントローラ無し）。
@@ -32,54 +32,54 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-001	IT-25	UI部品	P1	画面表示でファイル選択・アップロードボタンが表示される	管理ログイン済／SEED-M03-34-ADMIN	—	"1. 商品管理メニューから「割引率変更CSV登録」を開く（GET /{admin_route}/product/product_discount_csv_upload）"	ファイル選択ボタンとCSVアップロード(一括登録)ボタンが表示されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-002	IT-25	UI部品	P2	ボックス見出し「割引率変更CSV」が表示される	管理ログイン済／SEED-M03-34-ADMIN	—	"1. 割引率変更CSV登録画面を表示する"	ボックス見出しに「割引率変更CSV」、サブタイトルに「割引率変更CSVアップロード」が表示されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-003	IT-25	UI部品	P2	フォーマット表に「商品ID」「割引率(ID)」の列説明が表示される	管理ログイン済／SEED-M03-34-ADMIN	—	"1. 割引率変更CSV登録画面を表示する"	フォーマット表に必須列「商品ID」「割引率(ID)」とセル説明が表示されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-004	IT-25	表示結果	P2	雛形ファイルダウンロードリンクが表示される	管理ログイン済／SEED-M03-34-ADMIN	—	"1. 割引率変更CSV登録画面を表示する"	「雛形ファイルダウンロード」リンク（type=discount）が表示されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-005	IT-25	操作起点	P2	当該CSV種別のインポート履歴ブロックが表示される	管理ログイン済／履歴1件以上／SEED-M03-34-HISTORY	—	"1. 割引率変更CSV登録画面を表示する"	「CSVインポート履歴」にファイル名・アップロード日時・作業者が新しい順に表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-001	IT-25	UI部品	P1	画面表示でファイル選択・アップロードボタンが表示される	管理ログイン済／SEED-M03-34-ADMIN	—	1. 商品管理メニューから「割引率変更CSV登録」を開く（GET /{admin_route}/product/product_discount_csv_upload）	ファイル選択ボタンとCSVアップロード(一括登録)ボタンが表示されること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-002	IT-25	UI部品	P2	ボックス見出し「割引率変更CSV」が表示される	管理ログイン済／SEED-M03-34-ADMIN	—	1. 割引率変更CSV登録画面を表示する	ボックス見出しに「割引率変更CSV」、サブタイトルに「割引率変更CSVアップロード」が表示されること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-003	IT-25	UI部品	P2	フォーマット表に「商品ID」「割引率(ID)」の列説明が表示される	管理ログイン済／SEED-M03-34-ADMIN	—	1. 割引率変更CSV登録画面を表示する	フォーマット表に必須列「商品ID」「割引率(ID)」とセル説明が表示されること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-004	IT-25	表示結果	P2	雛形ファイルダウンロードリンクが表示される	管理ログイン済／SEED-M03-34-ADMIN	—	1. 割引率変更CSV登録画面を表示する	「雛形ファイルダウンロード」リンク（type=discount）が表示されること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-005	IT-25	操作起点	P2	当該CSV種別のインポート履歴ブロックが表示される	管理ログイン済／履歴1件以上／SEED-M03-34-HISTORY	—	1. 割引率変更CSV登録画面を表示する	「CSVインポート履歴」にファイル名・アップロード日時・作業者が新しい順に表示されること。				
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-006	IT-15	対象データ	P3	card-csvimport.js と spin.min.js を読み込む	管理ログイン済／SEED-M03-34-ADMIN	—	"1. 割引率変更CSV登録画面を表示する
-2. 読み込まれるスクリプトを確認する"	admin/assets/js/card-csvimport.js と spin.min.js が読み込まれること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-007	IT-25	確認ダイアログ	P3	取込前の確認ダイアログが無い	管理ログイン済／SEED-M03-34-ADMIN	正常CSV	"1. ファイルを選択しアップロードボタンを押下"	取込前の確認ダイアログ（モーダル）が表示されずそのまま送信されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-010	IT-16	実行結果	P1	正常CSVアップロードで成功メッセージが表示される	管理ログイン済／対象商品・割引率ID実在／SEED-M03-34-PRODUCT	"商品ID,割引率(ID) の2列・実在商品ID・実在割引率ID 1行"	"1. 割引率変更CSV登録画面を表示する
-2. 正常CSVを選択しアップロードボタンを押下"	取込成功のフラッシュメッセージが表示されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-011	IT-26	登録内容	P1	取込成功で対象商品の割引率IDが更新される	管理ログイン済／対象商品・割引率ID実在／SEED-M03-34-PRODUCT	"実在商品ID・新しい割引率ID 1行"	"1. 正常CSVをアップロードする
-2. 当該商品の割引率を確認する"	対象商品の割引率（移行先 dtb_product.discount_id）がCSVの値に更新されること。
+2. 読み込まれるスクリプトを確認する"	admin/assets/js/card-csvimport.js と spin.min.js が読み込まれること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-007	IT-25	確認ダイアログ	P3	取込前の確認ダイアログが無い	管理ログイン済／SEED-M03-34-ADMIN	正常CSV	1. ファイルを選択しアップロードボタンを押下	取込前の確認ダイアログ（モーダル）が表示されずそのまま送信されること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-010	IT-16	実行結果	P1	正常CSVアップロードで成功メッセージが表示される	管理ログイン済／対象商品・割引率ID実在／SEED-M03-34-PRODUCT	商品ID,割引率(ID) の2列・実在商品ID・実在割引率ID 1行	"1. 割引率変更CSV登録画面を表示する
+2. 正常CSVを選択しアップロードボタンを押下"	取込成功のフラッシュメッセージが表示されること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-011	IT-26	登録内容	P1	取込成功で対象商品の割引率IDが更新される	管理ログイン済／対象商品・割引率ID実在／SEED-M03-34-PRODUCT	実在商品ID・新しい割引率ID 1行	"1. 正常CSVをアップロードする
+2. 当該商品の割引率を確認する"	対象商品の割引率（移行先 dtb_product.discount_id）がCSVの値に更新されること。				
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-012	IT-26	登録内容	P2	取込成功でインポート履歴が1件追記される	管理ログイン済／SEED-M03-34-PRODUCT	正常CSV	"1. 正常CSVをアップロードする
-2. 画面の履歴ブロックを確認する"	CSVインポート履歴に当該ファイルが1件追記されること。
+2. 画面の履歴ブロックを確認する"	CSVインポート履歴に当該ファイルが1件追記されること。				
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-013	IT-03	画面遷移	P2	アップロード送信後URLは変わらず同一画面が再描画される	管理ログイン済／SEED-M03-34-PRODUCT	正常CSV	"1. 正常CSVをアップロードする
-2. アドレスバーのURLを確認する"	URLは変わらず（PRGパターンではない）POST応答で同一画面が再描画されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-014	IT-26	更新内容	P2	同一商品が複数行のとき最終行の割引率IDが残る	管理ログイン済／対象商品実在／SEED-M03-34-PRODUCT	"同一商品IDを2行・割引率IDが異なる"	"1. 同一商品IDを2行含むCSVをアップロードする
-2. 当該商品の割引率を確認する"	最終行の割引率IDが反映されていること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-020	IT-22	必須バリデーション	P1	ファイル未選択で送信すると必須エラーで再描画される	管理ログイン済／SEED-M03-34-ADMIN	ファイル未選択	"1. ファイルを選択せずアップロードボタンを押下"	ファイル必須のエラーメッセージが表示され、同一画面に留まること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-021	IT-15	CSRF	P2	CSRFトークン不正の送信が拒否される	管理ログイン済／SEED-M03-34-ADMIN	"正常CSV＋不正/欠落CSRFトークン"	"1. CSRFトークンを欠落/改ざんしてアップロード送信"	取込されずエラーとなり、DBが更新されないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-022	IT-22	その他のバリデーション	P2	CSV以外のMIMEファイルはフォームエラーになる	管理ログイン済／SEED-M03-34-ADMIN	"拡張子/MIMEがCSVでないファイル"	"1. CSV以外のファイルを選択しアップロード送信"	MIME不正のフォームエラーが表示され、取込が行われないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-023	IT-22	文字列長バリデーション	P2	サイズ上限超過のファイルはフォームエラーになる	管理ログイン済／SEED-M03-34-ADMIN	"設定 csv_size 超過のファイル"	"1. 上限超過のファイルを選択しアップロード送信"	サイズ上限超過のフォームエラーが表示され、取込が行われないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-024	IT-22	部分入力	P2	行数5010以上で件数超過メッセージが表示される	管理ログイン済／SEED-M03-34-ADMIN	"ヘッダ含め5010行以上のCSV"	"1. 5010行以上のCSVを選択しアップロード送信"	件数超過のメッセージが表示され、同一画面が再描画されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-025	IT-22	その他のバリデーション	P2	ヘッダ/データ行が無いCSVは取込エラーになる	管理ログイン済／SEED-M03-34-ADMIN	"ヘッダのみ又は空CSV"	"1. データ行の無いCSVを選択しアップロード送信"	取込エラーメッセージが errors として表示され、成功フラッシュが出ないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-026	IT-25	UI部品	P2	必須列名が欠落すると列存在エラーで打ち切られる	管理ログイン済／SEED-M03-34-ADMIN	"「商品ID」又は「割引率(ID)」列名が欠けたCSV"	"1. 必須列名を欠いたCSVをアップロード送信"	列存在エラーメッセージが表示され、取込が打ち切られロールバックされること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-027	IT-22	数値バリデーション	P2	商品IDが非数値のとき形式エラーになる	管理ログイン済／SEED-M03-34-ADMIN	"商品ID列に非数値を含むCSV"	"1. 商品IDが非数値のCSVをアップロード送信"	形式エラーメッセージが表示され、取込が完了しないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-028	IT-22	DBとの相関バリデーション	P1	割引率IDがマスタ未存在のときエラーになる	管理ログイン済／mtb_discount実在ID既知／SEED-M03-34-DISCOUNT	"mtb_discountに存在しない割引率IDのCSV"	"1. 不存在の割引率IDのCSVをアップロード送信"	割引率IDのマスタ不存在エラーが表示され、取込が完了しないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-029	IT-22	DBとの相関バリデーション	P1	商品が未削除で存在しないときエラーで打ち切られる	管理ログイン済／SEED-M03-34-ADMIN	"未削除で存在しない商品IDのCSV"	"1. 不存在商品IDのCSVをアップロード送信"	商品不存在エラーが表示され、全行処理が打ち切られロールバックされること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-030	IT-25	確認ダイアログ	P1	取込エラー時は成功フラッシュを積まず errors で表示する	管理ログイン済／SEED-M03-34-ADMIN	"いずれかの検証で失敗するCSV"	"1. 検証失敗するCSVをアップロード送信"	成功フラッシュが表示されず、エラー内容が errors として画面に表示されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-031	IT-26	更新内容	P2	取込失敗時はロールバックしDB・履歴が変わらない	管理ログイン済／対象商品実在／SEED-M03-34-PRODUCT	"途中行で検証失敗するCSV"	"1. 検証失敗するCSVをアップロードする
-2. 対象商品の割引率と履歴を確認する"	対象商品の割引率が変わらず、インポート履歴も増えないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-032	IT-25	操作起点	P3	商品はあるがサブ行が無い場合の挙動	管理ログイン済／商品本体ありサブ行なし／SEED-M03-34-NOSUB	"実在商品IDだがサブ行が無い商品のCSV"	"1. 当該CSVをアップロード送信"	サブ行が取得できないため取込が成功せず、成功フラッシュが表示されないこと（仕様: 判定順序#7「サブ行取得・更新SQL」由来。具体的なエラー表現は刷新先で要確認だが、期待は「取込が完了しない」レベルでオラクル化し実装挙動を確定値としない）。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-040	IT-13	URL直接アクセス	P1	雛形ダウンロードでファイルダウンロード応答が返る	管理ログイン済／SEED-M03-34-ADMIN	—	"1. 「雛形ファイルダウンロード」を押下（GET /{admin_route}/product/product_csv_template/discount）"	ファイルダウンロード応答（product_discount.csv）が発火すること。
+2. アドレスバーのURLを確認する"	URLは変わらず（PRGパターンではない）POST応答で同一画面が再描画されること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-014	IT-26	更新内容	P2	同一商品が複数行のとき最終行の割引率IDが残る	管理ログイン済／対象商品実在／SEED-M03-34-PRODUCT	同一商品IDを2行・割引率IDが異なる	"1. 同一商品IDを2行含むCSVをアップロードする
+2. 当該商品の割引率を確認する"	最終行の割引率IDが反映されていること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-020	IT-22	必須バリデーション	P1	ファイル未選択で送信すると必須エラーで再描画される	管理ログイン済／SEED-M03-34-ADMIN	ファイル未選択	1. ファイルを選択せずアップロードボタンを押下	ファイル必須のエラーメッセージが表示され、同一画面に留まること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-021	IT-15	CSRF	P2	CSRFトークン不正の送信が拒否される	管理ログイン済／SEED-M03-34-ADMIN	正常CSV＋不正/欠落CSRFトークン	1. CSRFトークンを欠落/改ざんしてアップロード送信	取込されずエラーとなり、DBが更新されないこと。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-022	IT-22	その他のバリデーション	P2	CSV以外のMIMEファイルはフォームエラーになる	管理ログイン済／SEED-M03-34-ADMIN	拡張子/MIMEがCSVでないファイル	1. CSV以外のファイルを選択しアップロード送信	MIME不正のフォームエラーが表示され、取込が行われないこと。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-023	IT-22	文字列長バリデーション	P2	サイズ上限超過のファイルはフォームエラーになる	管理ログイン済／SEED-M03-34-ADMIN	設定 csv_size 超過のファイル	1. 上限超過のファイルを選択しアップロード送信	サイズ上限超過のフォームエラーが表示され、取込が行われないこと。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-024	IT-22	部分入力	P2	行数5010以上で件数超過メッセージが表示される	管理ログイン済／SEED-M03-34-ADMIN	ヘッダ含め5010行以上のCSV	1. 5010行以上のCSVを選択しアップロード送信	件数超過のメッセージが表示され、同一画面が再描画されること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-025	IT-22	その他のバリデーション	P2	ヘッダ/データ行が無いCSVは取込エラーになる	管理ログイン済／SEED-M03-34-ADMIN	ヘッダのみ又は空CSV	1. データ行の無いCSVを選択しアップロード送信	取込エラーメッセージが errors として表示され、成功フラッシュが出ないこと。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-026	IT-25	UI部品	P2	必須列名が欠落すると列存在エラーで打ち切られる	管理ログイン済／SEED-M03-34-ADMIN	「商品ID」又は「割引率(ID)」列名が欠けたCSV	1. 必須列名を欠いたCSVをアップロード送信	列存在エラーメッセージが表示され、取込が打ち切られロールバックされること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-027	IT-22	数値バリデーション	P2	商品IDが非数値のとき形式エラーになる	管理ログイン済／SEED-M03-34-ADMIN	商品ID列に非数値を含むCSV	1. 商品IDが非数値のCSVをアップロード送信	形式エラーメッセージが表示され、取込が完了しないこと。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-028	IT-22	DBとの相関バリデーション	P1	割引率IDがマスタ未存在のときエラーになる	管理ログイン済／mtb_discount実在ID既知／SEED-M03-34-DISCOUNT	mtb_discountに存在しない割引率IDのCSV	1. 不存在の割引率IDのCSVをアップロード送信	割引率IDのマスタ不存在エラーが表示され、取込が完了しないこと。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-029	IT-22	DBとの相関バリデーション	P1	商品が未削除で存在しないときエラーで打ち切られる	管理ログイン済／SEED-M03-34-ADMIN	未削除で存在しない商品IDのCSV	1. 不存在商品IDのCSVをアップロード送信	商品不存在エラーが表示され、全行処理が打ち切られロールバックされること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-030	IT-25	確認ダイアログ	P1	取込エラー時は成功フラッシュを積まず errors で表示する	管理ログイン済／SEED-M03-34-ADMIN	いずれかの検証で失敗するCSV	1. 検証失敗するCSVをアップロード送信	成功フラッシュが表示されず、エラー内容が errors として画面に表示されること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-031	IT-26	更新内容	P2	取込失敗時はロールバックしDB・履歴が変わらない	管理ログイン済／対象商品実在／SEED-M03-34-PRODUCT	途中行で検証失敗するCSV	"1. 検証失敗するCSVをアップロードする
+2. 対象商品の割引率と履歴を確認する"	対象商品の割引率が変わらず、インポート履歴も増えないこと。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-032	IT-25	操作起点	P3	商品はあるがサブ行が無い場合の挙動	管理ログイン済／商品本体ありサブ行なし／SEED-M03-34-NOSUB	実在商品IDだがサブ行が無い商品のCSV	1. 当該CSVをアップロード送信	サブ行が取得できないため取込が成功せず、成功フラッシュが表示されないこと（仕様: 判定順序#7「サブ行取得・更新SQL」由来。具体的なエラー表現は刷新先で要確認だが、期待は「取込が完了しない」レベルでオラクル化し実装挙動を確定値としない）。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-040	IT-13	URL直接アクセス	P1	雛形ダウンロードでファイルダウンロード応答が返る	管理ログイン済／SEED-M03-34-ADMIN	—	1. 「雛形ファイルダウンロード」を押下（GET /{admin_route}/product/product_csv_template/discount）	ファイルダウンロード応答（product_discount.csv）が発火すること。				
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-041	IT-27	出力失敗	P2	雛形は列名のみ・BOM付きUTF-8で受け取れる	管理ログイン済／SEED-M03-34-ADMIN	—	"1. 雛形ファイルをダウンロードする
-2. ファイル内容を確認する（内容検査は手動）"	列名のみ（商品ID・割引率(ID)）のCSVがBOM付きUTF-8で受け取れること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-050	IT-15	未認証	P2	未ログインで該当URLへ直接アクセスすると管理ログインへ誘導される	未ログイン	—	"1. /{admin_route}/product/product_discount_csv_upload へ未ログインで直接アクセス"	管理ログイン画面へ誘導されること（取込POSTへ到達しない）。
+2. ファイル内容を確認する（内容検査は手動）"	列名のみ（商品ID・割引率(ID)）のCSVがBOM付きUTF-8で受け取れること。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-050	IT-15	未認証	P2	未ログインで該当URLへ直接アクセスすると管理ログインへ誘導される	未ログイン	—	1. /{admin_route}/product/product_discount_csv_upload へ未ログインで直接アクセス	管理ログイン画面へ誘導されること（取込POSTへ到達しない）。				
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-008	IT-15	状態変化	P3	本機能独自のCookieを発行しない	管理ログイン済／SEED-M03-34-ADMIN	—	"1. 割引率変更CSV登録画面を表示する
-2. 応答のSet-Cookieを確認する"	本機能専用の独自Cookieが発行されないこと（セッションCookie・CSRFのみ。具体的なCookie名はオラクル化しない。設計: Cookie/セッション節）。
+2. 応答のSet-Cookieを確認する"	本機能専用の独自Cookieが発行されないこと（セッションCookie・CSRFのみ。具体的なCookie名はオラクル化しない。設計: Cookie/セッション節）。				
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-009	IT-25	操作起点	P2	履歴は当該CSV種別のみ最新100件が新しい順に表示される	管理ログイン済／他CSV種別の履歴も存在／SEED-M03-34-HISTORY	—	"1. 割引率変更CSV登録画面を表示する
-2. 履歴ブロックの内容を確認する"	割引率変更CSV種別（取込種別ID=10）の履歴のみが作成日時降順で最大100件表示され、他CSV種別の履歴が混入しないこと（処理フロー(GET)#4／集計条件 由来）。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-033	IT-22	その他のバリデーション	P2	列順が異なっても必須列が揃えば正常取込される	管理ログイン済／対象商品・割引率ID実在／SEED-M03-34-PRODUCT	"「割引率(ID)」「商品ID」の順（列順入替）・実在値1行"	"1. 列順を入れ替えた正常CSVをアップロード送信"	ヘッダ名で列解決されるため列順入替でも取込成功のフラッシュが表示されること（エッジケース「列順の厳密一致は不要」由来。026の正常系対）。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-034	IT-22	必須バリデーション	P2	データ行の商品IDが空のとき必須エラーになる	管理ログイン済／SEED-M03-34-ADMIN	"商品ID列が空・割引率(ID)実在の1行"	"1. 商品ID空のCSVをアップロード送信"	商品ID必須のエラーが表示され、取込が完了しないこと（バリデーション「商品ID必須」／判定順序#5 由来）。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-035	IT-22	必須バリデーション	P2	データ行の割引率(ID)が空のとき必須エラーになる	管理ログイン済／SEED-M03-34-ADMIN	"商品ID実在・割引率(ID)列が空の1行"	"1. 割引率(ID)空のCSVをアップロード送信"	割引率(ID)必須のエラーが表示され、取込が完了しないこと（バリデーション「割引率ID必須」／判定順序#5 由来）。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-036	IT-22	数値バリデーション	P2	割引率IDが非数値のとき形式エラーになる	管理ログイン済／SEED-M03-34-ADMIN	"割引率(ID)列に非数値を含むCSV"	"1. 割引率IDが非数値のCSVをアップロード送信"	形式エラーメッセージが表示され、取込が完了しないこと（判定順序#5 割引率ID数値検証 由来。027商品ID非数値の割引率ID側対）。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-037	IT-22	部分入力	P2	5009行（境界内）は件数超過にならず取込される	管理ログイン済／対象商品実在／SEED-M03-34-PRODUCT	"ヘッダ含め5009行（5010未満）のCSV"	"1. 5009行のCSVをアップロード送信"	件数超過メッセージが表示されず取込処理に進むこと（判定順序#2 行数5010未満は通過＝境界の正常側。024の正常系対）。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-051	IT-15	未認証	P2	未ログインでPOST取込URLへ送信しても到達できない	未ログイン	正常CSV	"1. /{admin_route}/product/product_discount_csv_upload へ未ログインでPOST送信"	管理ログイン画面へ誘導され取込が実行されないこと（権限・認可: 未ログインPOST到達不可。050のPOST対）。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-052	IT-13	URL直接アクセス	P2	未ログインで雛形ダウンロードURLへ直接アクセスしても到達できない	未ログイン	—	"1. /{admin_route}/product/product_csv_template/discount へ未ログインで直接アクセス"	管理ログイン画面へ誘導され雛形ダウンロードが実行されないこと（権限・認可: 未ログイン雛形GET到達不可。040の未認証対）。
+2. 履歴ブロックの内容を確認する"	割引率変更CSV種別（取込種別ID=10）の履歴のみが作成日時降順で最大100件表示され、他CSV種別の履歴が混入しないこと（処理フロー(GET)#4／集計条件 由来）。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-033	IT-22	その他のバリデーション	P2	列順が異なっても必須列が揃えば正常取込される	管理ログイン済／対象商品・割引率ID実在／SEED-M03-34-PRODUCT	「割引率(ID)」「商品ID」の順（列順入替）・実在値1行	1. 列順を入れ替えた正常CSVをアップロード送信	ヘッダ名で列解決されるため列順入替でも取込成功のフラッシュが表示されること（エッジケース「列順の厳密一致は不要」由来。026の正常系対）。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-034	IT-22	必須バリデーション	P2	データ行の商品IDが空のとき必須エラーになる	管理ログイン済／SEED-M03-34-ADMIN	商品ID列が空・割引率(ID)実在の1行	1. 商品ID空のCSVをアップロード送信	商品ID必須のエラーが表示され、取込が完了しないこと（バリデーション「商品ID必須」／判定順序#5 由来）。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-035	IT-22	必須バリデーション	P2	データ行の割引率(ID)が空のとき必須エラーになる	管理ログイン済／SEED-M03-34-ADMIN	商品ID実在・割引率(ID)列が空の1行	1. 割引率(ID)空のCSVをアップロード送信	割引率(ID)必須のエラーが表示され、取込が完了しないこと（バリデーション「割引率ID必須」／判定順序#5 由来）。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-036	IT-22	数値バリデーション	P2	割引率IDが非数値のとき形式エラーになる	管理ログイン済／SEED-M03-34-ADMIN	割引率(ID)列に非数値を含むCSV	1. 割引率IDが非数値のCSVをアップロード送信	形式エラーメッセージが表示され、取込が完了しないこと（判定順序#5 割引率ID数値検証 由来。027商品ID非数値の割引率ID側対）。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-037	IT-22	部分入力	P2	5009行（境界内）は件数超過にならず取込される	管理ログイン済／対象商品実在／SEED-M03-34-PRODUCT	ヘッダ含め5009行（5010未満）のCSV	1. 5009行のCSVをアップロード送信	件数超過メッセージが表示されず取込処理に進むこと（判定順序#2 行数5010未満は通過＝境界の正常側。024の正常系対）。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-051	IT-15	未認証	P2	未ログインでPOST取込URLへ送信しても到達できない	未ログイン	正常CSV	1. /{admin_route}/product/product_discount_csv_upload へ未ログインでPOST送信	管理ログイン画面へ誘導され取込が実行されないこと（権限・認可: 未ログインPOST到達不可。050のPOST対）。				
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	E2E-M03-34-052	IT-13	URL直接アクセス	P2	未ログインで雛形ダウンロードURLへ直接アクセスしても到達できない	未ログイン	—	1. /{admin_route}/product/product_csv_template/discount へ未ログインで直接アクセス	管理ログイン画面へ誘導され雛形ダウンロードが実行されないこと（権限・認可: 未ログイン雛形GET到達不可。040の未認証対）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

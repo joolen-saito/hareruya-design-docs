@@ -266,6 +266,11 @@ HareruyaEc プラグインが管理画面に提供する「カード管理」に
 | M14-01-MSG-018 | 警告ダイアログ(alert) | 要ソース確認 | カード名リスト生成中に Exception が発生したとき（`CardController.php:182` の `$e->getMessage()` を alert 表示）。例外由来の可変文言のため固定リテラルは実ソースに存在しない |
 | M14-01-MSG-019 | 削除確認モーダル本文 | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 一覧行/編集画面の「削除」で削除モーダルを開いたとき（`admin.common.delete_modal__message`、%name%=対象カードの `getNameJpWithEn()`。`index.twig:434` / `edit.twig:219` → `delete_modal.twig:15`） |
 | M14-01-MSG-020 | フォーム項目直下インライン | 数字で入力してください。 | 検索フォーム「マナ・コスト」(cmc) が正規表現 `/^\d+(\.\d+)?$/` に一致しないとき（`SearchCardType.php:76`、`form_error.numeric_only`。`index.twig:209` の `form_errors` で表示） |
+| M14-01-MSG-021 | 画面中央(ダイアログ) | 1つ以上のカードを選択してください。 | チェックボックス（name^="cardIds"）が1件も選択されていない状態で一括操作ボタンを押したとき |
+| M14-01-MSG-022 | 画面中央(ダイアログ) | カード名リスト作成バッチを実行しますか？ | ボタンが disabled でない状態で押下したとき |
+| M14-01-MSG-023 | 画面中央(ダイアログ) | エラーが発生しました | admin_card_generate_list への Ajax POST が失敗（.fail）したとき |
+| M14-01-MSG-024 | 画面中央(ダイアログ) | 選択されたカードを削除してもよろしいですか？ | カードを1件以上選択して「一括削除」を押したとき（data-confirm がある場合のみ表示） |
+| M14-01-MSG-025 | 画面中央(モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 対象行の削除アイコン押下で DeleteModal を開いたとき（data-message を p.modal-message へ挿入。%name%=対象カードの getNameJpWithEn()） |
 
 ---
 

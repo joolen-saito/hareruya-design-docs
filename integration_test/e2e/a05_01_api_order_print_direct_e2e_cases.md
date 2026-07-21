@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない機能仕様（受注 直接印刷API。`GetRequest`＝スタック用紙の印刷情報XML送信／`SetResponse`＝印刷完了受注のステータス更新）であり、合否の**一次オラクルはDB副作用・API応答・ログ**とする。API/統合レイヤ＝Playwright `request` でエンドポイントへ送信し、HTTPステータス・Content-Type・応答本体（XML／空応答）・ダウンロード発火・DB副作用（受注ステータス`order_status_id`・`confirm_date`・`picking_date`・`browser_print_flg`／印刷ログファイル）で判定する。`SetResponse` のステータス更新等の副作用と `GetRequest` の不更新は**DB照会（送信前後の値比較）を一次オラクル**とし、管理画面（受注一覧・受注編集）の表示は人手確認用の**補助観測**に留める（画面なしAPIのためUIを一次合否オラクルにしない）。
 
-**期待結果は仕様（設計書・観点表）由来**とし、実装のレスポンス形・フレームワーク既定挙動・Form制約・抽出SQLの現挙動を期待値に流用しない（オラクル独立性）。応答はJSONではなくXML（`GetRequest`）または空応答（`SetResponse`）であり、合否は**HTTPステータス・Content-Type・XML構造/値・受注ステータスの副作用**で判定する。実装からは位置情報（APIパス・メソッド・認証配置・抽出条件）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。設計書と実装の食い違いは付帯表4に出す（パス・メソッド・印刷ログ未実装・未定義status等）。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（設計書・観点表）由来**とし、実装のレスポンス形・フレームワーク既定挙動・Form制約・抽出SQLの現挙動を期待値に流用しない（オラクル独立性）。応答はJSONではなくXML（`GetRequest`）または空応答（`SetResponse`）であり、合否は**HTTPステータス・Content-Type・XML構造/値・受注ステータスの副作用**で判定する。実装からは位置情報（APIパス・メソッド・認証配置・抽出条件）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。設計書と実装の食い違いは付帯表4に出す（パス・メソッド・印刷ログ未実装・未定義status等）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -26,100 +26,100 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-001	IT-09	HTTPステータス	P1	GetRequestで印刷対象ありのとき正常応答ステータスが返る	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET	"ConnectionType=GetRequest
 base_info_id=対象拠点ID"	"1. /api/order/prints/direct/{base_info_id} へ ConnectionType=GetRequest でPOST送信する
-2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-002	IT-09	実行結果	P1	GetRequestの応答Content-Typeがapplication/octet-streamである	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. 応答ヘッダのContent-Typeを確認する"	応答のContent-Typeが application/octet-stream であること。
+2. 応答ヘッダのContent-Typeを確認する"	応答のContent-Typeが application/octet-stream であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-003	IT-24	フォーマット定義	P2	GetRequestの応答本体がPrintRequestInfoルート要素（Version属性）で構成される	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. 応答本体XMLのルート要素を確認する"	応答本体のルート要素が PrintRequestInfo（Version属性付き）であること。
+2. 応答本体XMLのルート要素を確認する"	応答本体のルート要素が PrintRequestInfo（Version属性付き）であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-004	IT-24	出力内容	P1	GetRequestで対象受注ごとにePOSPrint要素が生成される	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET（対象3件）	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. 応答本体XMLのePOSPrint要素数を確認する"	PrintRequestInfo配下に印刷対象受注の件数分のePOSPrint要素が並ぶこと。
+2. 応答本体XMLのePOSPrint要素数を確認する"	PrintRequestInfo配下に印刷対象受注の件数分のePOSPrint要素が並ぶこと。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-005	IT-24	出力内容	P2	ePOSPrintのprintjobidに受注IDが設定される	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. ePOSPrint/Parameter/printjobid を確認する"	各ePOSPrintのprintjobidが対象受注の受注IDと一致すること。
+2. ePOSPrint/Parameter/printjobid を確認する"	各ePOSPrintのprintjobidが対象受注の受注IDと一致すること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-006	IT-24	出力内容	P2	印字欄（注文番号・お客様名・合計金額）の値が受注データと一致する	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET（既知受注）	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. PrintDataの注文番号・お客様名・合計金額欄を確認する"	注文番号・お客様名・合計金額の各印字欄がSEEDで投入した受注の値と一致すること。
+2. PrintDataの注文番号・お客様名・合計金額欄を確認する"	注文番号・お客様名・合計金額の各印字欄がSEEDで投入した受注の値と一致すること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-007	IT-24	出力内容	P2	注文詳細URLのQRコードとスマレジコードのバーコードが出力される	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET（既知受注）	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. PrintDataのsymbol(qrcode)とbarcode(jan13)を確認する"	注文詳細URLのQRコードと、スマレジコードを値に持つJAN13バーコードが出力されること。
+2. PrintDataのsymbol(qrcode)とbarcode(jan13)を確認する"	注文詳細URLのQRコードと、スマレジコードを値に持つJAN13バーコードが出力されること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-008	IT-24	出力内容	P2	お客様名欄は氏名カナを優先し、カナが無ければ氏名を出力する	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET（カナあり受注・カナなし受注）	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. カナあり・カナなし各受注のお客様名欄を確認する"	お客様名欄がカナあり受注は氏名カナ、カナなし受注は氏名で出力されること。
+2. カナあり・カナなし各受注のお客様名欄を確認する"	お客様名欄がカナあり受注は氏名カナ、カナなし受注は氏名で出力されること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-009	IT-24	出力内容	P2	スムーズ店頭受取の受注は合計金額欄が「スムーズ店頭受取」文言になる	SEED-A05-01-BASEINFO／SEED-A05-01-SMOOTH-OTC	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. スムーズ店頭受取受注の合計金額欄を確認する"	スムーズ店頭受取の受注の合計金額欄が金額ではなく「スムーズ店頭受取」の文言であること。
+2. スムーズ店頭受取受注の合計金額欄を確認する"	スムーズ店頭受取の受注の合計金額欄が金額ではなく「スムーズ店頭受取」の文言であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-010	IT-24	出力内容	P1	印刷対象受注が無い場合は200で空のデータを返す	SEED-A05-01-BASEINFO／SEED-A05-01-NO-TARGET	ConnectionType=GetRequest	"1. 印刷対象0件の状態で ConnectionType=GetRequest でPOST送信する
-2. HTTPステータスと応答本体を確認する"	HTTPステータスが200で、応答本体が空のデータ（印刷情報XMLを持たない）であること。
+2. HTTPステータスと応答本体を確認する"	HTTPステータスが200で、応答本体が空のデータ（印刷情報XMLを持たない）であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-011	IT-16	実行結果	P2	印刷対象は最大10件までに制限される	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET（対象11件以上）	ConnectionType=GetRequest	"1. 印刷対象11件以上の状態で ConnectionType=GetRequest でPOST送信する
-2. 応答本体XMLのePOSPrint要素数を確認する"	ePOSPrint要素が最大10件までで、11件目以降が含まれないこと。
+2. 応答本体XMLのePOSPrint要素数を確認する"	ePOSPrint要素が最大10件までで、11件目以降が含まれないこと。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-012	IT-16	実行結果	P3	店頭受取・注文受領・注文番号あり・スマレジコードありの受注が抽出される	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET	ConnectionType=GetRequest	"1. 抽出条件に合致する受注を用意し ConnectionType=GetRequest でPOST送信する
-2. 応答本体XMLに当該受注が含まれるか確認する"	抽出条件（店頭受取・注文受領・注文番号あり・スマレジコードあり）を満たす受注が応答に含まれること。
+2. 応答本体XMLに当該受注が含まれるか確認する"	抽出条件（店頭受取・注文受領・注文番号あり・スマレジコードあり）を満たす受注が応答に含まれること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-013	IT-16	実行結果	P3	ブラウザ印刷フラグが立つ受注も印刷対象に含まれる	SEED-A05-01-BASEINFO／SEED-A05-01-BROWSER-FLG	ConnectionType=GetRequest	"1. ブラウザ印刷フラグが立つ受注を用意し ConnectionType=GetRequest でPOST送信する
-2. 応答本体XMLに当該受注が含まれるか確認する"	ブラウザ印刷フラグが立つ受注が印刷対象として応答に含まれること。
+2. 応答本体XMLに当該受注が含まれるか確認する"	ブラウザ印刷フラグが立つ受注が印刷対象として応答に含まれること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-014	IT-24	出力内容	P2	店頭注文番号欄の値が店頭注文番号（dtb_order_number.value）と一致する	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET（店頭注文番号既知受注）	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. PrintDataの店頭注文番号欄を確認する"	店頭注文番号欄がSEEDで投入した店頭注文番号（dtb_order_number.value）と一致すること（実装は受注のorder_numberを出力する乖離があり仕様どおり期待し失敗で検出＝付帯表4#9。印字部の正確な行は要実機確認）。
+2. PrintDataの店頭注文番号欄を確認する"	店頭注文番号欄がSEEDで投入した店頭注文番号（dtb_order_number.value）と一致すること（実装は受注のorder_numberを出力する乖離があり仕様どおり期待し失敗で検出＝付帯表4#9。印字部の正確な行は要実機確認）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-015	IT-24	出力内容	P2	注文日欄の値が受注の注文日（order_date）と一致する	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET（注文日既知受注）	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. PrintDataの注文日欄を確認する"	注文日欄がSEEDで投入した受注の注文日（order_date）と一致すること。
+2. PrintDataの注文日欄を確認する"	注文日欄がSEEDで投入した受注の注文日（order_date）と一致すること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-016	IT-24	出力内容	P3	問い合わせ有無欄が受注の問い合わせ有無に対応した表示になる	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET（問い合わせ有り受注・無し受注）	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. 問い合わせ有り・無し各受注のPrintDataの問い合わせ有無欄を確認する"	問い合わせ有無欄が受注の問い合わせ有無に対応して出力されること（チェック欄の正確な対応欄は要実機確認＝付帯表4#4）。
+2. 問い合わせ有り・無し各受注のPrintDataの問い合わせ有無欄を確認する"	問い合わせ有無欄が受注の問い合わせ有無に対応して出力されること（チェック欄の正確な対応欄は要実機確認＝付帯表4#4）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-017	IT-16	実行結果	P2	スムーズ店頭受取の全抽出条件を満たす受注が印刷対象に抽出される（正常）	SEED-A05-01-BASEINFO／SEED-A05-01-SMOOTH-OTC	ConnectionType=GetRequest	"1. スムーズ店頭受取で抽出条件を全て満たす受注を用意し ConnectionType=GetRequest でPOST送信する
-2. 応答本体XMLのePOSPrintに当該受注が含まれるか確認する"	スムーズ店頭受取（所定支払方法・未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードあり）の全条件を満たす受注が応答のePOSPrintに含まれること（抽出条件は設計の処理フローGetRequest#2を期待値とする。実装の支店版に当該条件が無い場合は付帯表4#7で検出）。
+2. 応答本体XMLのePOSPrintに当該受注が含まれるか確認する"	スムーズ店頭受取（所定支払方法・未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードあり）の全条件を満たす受注が応答のePOSPrintに含まれること（抽出条件は設計の処理フローGetRequest#2を期待値とする。実装の支店版に当該条件が無い場合は付帯表4#7で検出）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-018	IT-16	実行結果	P2	スムーズ店頭受取で確定済み（confirm_date設定済み）の受注は抽出されない（異常）	SEED-A05-01-BASEINFO／SEED-A05-01-SMOOTH-OTC	ConnectionType=GetRequest	"1. スムーズ店頭受取で確定済み（confirm_date設定済み）の受注を用意し ConnectionType=GetRequest でPOST送信する
-2. 応答本体XMLのePOSPrintに当該受注が含まれないか確認する"	抽出条件「未確定（confirm_date未設定）」を満たさない確定済み受注が応答のePOSPrintに含まれないこと（017の正常に対する異常対）。
+2. 応答本体XMLのePOSPrintに当該受注が含まれないか確認する"	抽出条件「未確定（confirm_date未設定）」を満たさない確定済み受注が応答のePOSPrintに含まれないこと（017の正常に対する異常対）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-019	IT-16	実行結果	P2	スムーズ店頭受取でスマレジコードなしの受注は抽出されない（異常）	SEED-A05-01-BASEINFO／SEED-A05-01-SMOOTH-OTC	ConnectionType=GetRequest	"1. スムーズ店頭受取でスマレジコードなしの受注を用意し ConnectionType=GetRequest でPOST送信する
-2. 応答本体XMLのePOSPrintに当該受注が含まれないか確認する"	抽出条件「スマレジコードあり」を満たさないスマレジコードなし受注が応答のePOSPrintに含まれないこと（017の正常に対する異常対）。
+2. 応答本体XMLのePOSPrintに当該受注が含まれないか確認する"	抽出条件「スマレジコードあり」を満たさないスマレジコードなし受注が応答のePOSPrintに含まれないこと（017の正常に対する異常対）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-020	IT-33	参照系機能	P2	GetRequestは受注ステータスを更新しない（参照系・DB照会で前後不変）	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET	ConnectionType=GetRequest	"1. 対象受注の受注ステータス(order_status_id)をDB照会で記録する
 2. ConnectionType=GetRequest でPOST送信する
-3. 対象受注の受注ステータス(order_status_id)をDB照会で再取得する（管理画面の受注一覧表示は補助観測）"	GetRequest実行後も対象受注の受注ステータス(order_status_id)が送信前と同一（未印刷のまま）であること（一次オラクル＝DB照会の前後比較。管理画面表示は補助観測）。
+3. 対象受注の受注ステータス(order_status_id)をDB照会で再取得する（管理画面の受注一覧表示は補助観測）"	GetRequest実行後も対象受注の受注ステータス(order_status_id)が送信前と同一（未印刷のまま）であること（一次オラクル＝DB照会の前後比較。管理画面表示は補助観測）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-030	IT-09	HTTPステータス	P1	SetResponseの正常受信でHTTP200が返る	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	"ConnectionType=SetResponse
 ResponseFile=ServerDirectPrint=true かつ ePOSPrint(printjobid=受注ID) を含むXML"	"1. ConnectionType=SetResponse・ResponseFile付きでPOST送信する
-2. HTTPステータスを確認する"	HTTPステータスが200であること。
+2. HTTPステータスを確認する"	HTTPステータスが200であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-031	IT-09	実行結果	P1	SetResponseの応答本体は空（本文長0）である	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	ConnectionType=SetResponse／正常なResponseFile	"1. ConnectionType=SetResponse でPOST送信する
-2. 応答本体の長さを確認する"	応答本体が空（本文長0）であること。
+2. 応答本体の長さを確認する"	応答本体が空（本文長0）であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-032	IT-16	エラー	P2	ResponseFileのXML解析失敗時は受注ステータスを更新しない	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	"ConnectionType=SetResponse
 ResponseFile=不正なXML文字列"	"1. 不正なXMLのResponseFileでPOST送信する
-2. 対象受注のステータスを確認する"	更新が行われず受注ステータスが送信前と同一（不変）であること。
+2. 対象受注のステータスを確認する"	更新が行われず受注ステータスが送信前と同一（不変）であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-033	IT-16	実行結果	P2	直接印刷結果が偽の場合は更新せず200空本文を返す	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	"ConnectionType=SetResponse
 ResponseFile=ServerDirectPrint=false のXML"	"1. ServerDirectPrint=false のResponseFileでPOST送信する
-2. 対象受注のステータスと応答を確認する"	更新が行われず受注ステータスが不変で、HTTP200・空本文が返ること。
+2. 対象受注のステータスと応答を確認する"	更新が行われず受注ステータスが不変で、HTTP200・空本文が返ること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-034	IT-17	フォーマット定義	P2	印刷結果要素が1件も無い場合は更新せず200空本文を返す	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	"ConnectionType=SetResponse
 ResponseFile=ePOSPrint要素を持たないXML"	"1. ePOSPrint要素なしのResponseFileでPOST送信する
-2. 対象受注のステータスと応答を確認する"	更新が行われず受注ステータスが不変で、HTTP200・空本文が返ること。
+2. 対象受注のステータスと応答を確認する"	更新が行われず受注ステータスが不変で、HTTP200・空本文が返ること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-035	IT-17	フォーマット定義	P2	受注が見つからない要素はスキップし他要素の処理を継続する	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	"ConnectionType=SetResponse
 ResponseFile=存在しない受注IDと存在する受注IDのprintjobidを混在させたXML"	"1. 不存在・存在の受注IDを混在させたResponseFileでPOST送信する
-2. 存在受注のステータスと応答を確認する"	不存在の受注要素は飛ばされ、存在する受注はピック中へ更新され、HTTP200が返ること。
+2. 存在受注のステータスと応答を確認する"	不存在の受注要素は飛ばされ、存在する受注はピック中へ更新され、HTTP200が返ること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-036	IT-24	実行結果	P2	printjobidの先頭部分から受注IDを取り出して対象受注を特定する	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	"ConnectionType=SetResponse
 ResponseFile=printjobid=「{受注ID}_{連番}」形式のXML"	"1. printjobidが「受注ID_連番」形式のResponseFileでPOST送信する
-2. 受注IDで特定された受注のステータスを確認する"	printjobidの先頭部分の受注IDで特定された受注がピック中へ更新されること。
+2. 受注IDで特定された受注のステータスを確認する"	printjobidの先頭部分の受注IDで特定された受注がピック中へ更新されること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-037	IT-09	実行結果	P1	SetResponseの応答Content-Typeがtext/xml; charset=utf-8である	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	"ConnectionType=SetResponse
 正常なResponseFile"	"1. ConnectionType=SetResponse でPOST送信する
-2. 応答ヘッダのContent-Typeを確認する"	応答のContent-Typeが text/xml; charset=utf-8 であること。
+2. 応答ヘッダのContent-Typeを確認する"	応答のContent-Typeが text/xml; charset=utf-8 であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-038	IT-16	実行結果	P2	ResponseFileのXML解析失敗時もHTTP200を返す	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	"ConnectionType=SetResponse
 ResponseFile=不正なXML文字列"	"1. 不正なXMLのResponseFileでPOST送信する
-2. HTTPステータスを確認する"	HTTPステータスが200であること。
+2. HTTPステータスを確認する"	HTTPステータスが200であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-039	IT-16	実行結果	P2	ResponseFileのXML解析失敗時も応答本体は空である	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	"ConnectionType=SetResponse
 ResponseFile=不正なXML文字列"	"1. 不正なXMLのResponseFileでPOST送信する
-2. 応答本体の長さを確認する"	応答本体が空（本文長0）であること。
+2. 応答本体の長さを確認する"	応答本体が空（本文長0）であること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-040	IT-33	更新結果	P1	SetResponseで該当受注のステータスがピック中へ更新される（DB照会）	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	ConnectionType=SetResponse／ブラウザ印刷フラグなし受注の正常ResponseFile	"1. ConnectionType=SetResponse でPOST送信する
-2. 対象受注の受注ステータス(order_status_id)をDB照会で確認する（管理画面の受注一覧表示は補助観測）"	対象受注の受注ステータス(order_status_id)がピック中（OrderStatus::PICKING）へ更新されること（一次オラクル＝DB照会。管理画面表示は補助観測）。
+2. 対象受注の受注ステータス(order_status_id)をDB照会で確認する（管理画面の受注一覧表示は補助観測）"	対象受注の受注ステータス(order_status_id)がピック中（OrderStatus::PICKING）へ更新されること（一次オラクル＝DB照会。管理画面表示は補助観測）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-041	IT-17	実行結果	P1	ブラウザ印刷フラグが立つ受注はフラグを倒すのみでステータスは不変（DB照会）	SEED-A05-01-BASEINFO／SEED-A05-01-BROWSER-FLG	ConnectionType=SetResponse／ブラウザ印刷フラグが立つ受注のResponseFile	"1. ブラウザ印刷フラグが立つ受注のResponseFileでPOST送信する
-2. 対象受注のbrowser_print_flgと受注ステータス(order_status_id)をDB照会で確認する（管理画面表示は補助観測）"	対象受注のbrowser_print_flgが倒れ（false）、受注ステータス(order_status_id)はピック中へ更新されず送信前と同一であること（一次オラクル＝DB照会。管理画面表示は補助観測）。
+2. 対象受注のbrowser_print_flgと受注ステータス(order_status_id)をDB照会で確認する（管理画面表示は補助観測）"	対象受注のbrowser_print_flgが倒れ（false）、受注ステータス(order_status_id)はピック中へ更新されず送信前と同一であること（一次オラクル＝DB照会。管理画面表示は補助観測）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-042	IT-27	実行結果	P2	ブラウザ印刷フラグなし受注のステータス更新時に確定日時へ現在時刻が設定される（DB照会）	SEED-A05-01-BASEINFO／SEED-A05-01-RESPONSEFILE	ConnectionType=SetResponse／ブラウザ印刷フラグなし受注のResponseFile	"1. ConnectionType=SetResponse でPOST送信する
-2. 対象受注の確定日時(confirm_date)をDB照会で確認する（管理画面の受注編集表示は補助観測）"	ブラウザ印刷フラグなし受注の確定日時(confirm_date)に更新実行時点の日時が設定されること（一次オラクル＝DB照会。管理画面表示は補助観測。設計は本店/支店の別なくブラウザ印刷フラグなし受注一般に確定日時を設定する。実装が本店受注に限定する場合は乖離＝要実機確認）。
+2. 対象受注の確定日時(confirm_date)をDB照会で確認する（管理画面の受注編集表示は補助観測）"	ブラウザ印刷フラグなし受注の確定日時(confirm_date)に更新実行時点の日時が設定されること（一次オラクル＝DB照会。管理画面表示は補助観測。設計は本店/支店の別なくブラウザ印刷フラグなし受注一般に確定日時を設定する。実装が本店受注に限定する場合は乖離＝要実機確認）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-050	IT-32	資格情報	P2	ConnectionTypeがどちらにも一致しない場合は本文を返さない	SEED-A05-01-BASEINFO	ConnectionType=想定外の値（GetRequest/SetResponse以外）	"1. ConnectionTypeに想定外の値を指定してPOST送信する
-2. 応答本体を確認する"	いずれの分岐の処理も行われず、応答本体を返さない（空本文）こと（設計のレスポンス（失敗）は「（応答なし）応答を組み立てず本文を返さない」とのみ定める。実装がHTTP400+text/plainの応答を組み立てる場合は「応答を組み立てない」に反する乖離＝不具合候補・付帯表4#5。HTTPステータスは正典が規定しないため固定せず空本文のみを仕様判定とし、期待ステータスは要実機確認）。
+2. 応答本体を確認する"	いずれの分岐の処理も行われず、応答本体を返さない（空本文）こと（設計のレスポンス（失敗）は「（応答なし）応答を組み立てず本文を返さない」とのみ定める。実装がHTTP400+text/plainの応答を組み立てる場合は「応答を組み立てない」に反する乖離＝不具合候補・付帯表4#5。HTTPステータスは正典が規定しないため固定せず空本文のみを仕様判定とし、期待ステータスは要実機確認）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-052	IT-32	リクエスト	P3	異常なパラメータ値で実行しても仕様どおりの結果となる	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET	ConnectionType=GetRequest／不正な付随パラメータ値	"1. 印刷対象ありの状態で異常なパラメータ値を加えて ConnectionType=GetRequest でPOST送信する
-2. 応答と後続状態を確認する"	未定義のエラー応答を組み立てず、印刷対象が存在するため印刷情報XML（GetRequest仕様）が正常に応答されること（対象あり前提に一意化。対象なしの場合は空応答だが本ケースは対象ありで判定する）。
+2. 応答と後続状態を確認する"	未定義のエラー応答を組み立てず、印刷対象が存在するため印刷情報XML（GetRequest仕様）が正常に応答されること（対象あり前提に一意化。対象なしの場合は空応答だが本ケースは対象ありで判定する）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-053	IT-32	リクエスト	P3	想定外の項目を加えても処理が停止しない	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET	ConnectionType=GetRequest／想定外の項目（項目名と値）を追加	"1. 想定外の項目を加えて ConnectionType=GetRequest でPOST送信する
-2. 応答を確認する"	想定外項目があっても処理が停止せず、GetRequestの印刷情報XMLが正常に応答されること。
+2. 応答を確認する"	想定外項目があっても処理が停止せず、GetRequestの印刷情報XMLが正常に応答されること。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-060	IT-27	ファイル出力	P2	GetRequestで生成した印刷情報XMLが印刷ログファイルへ書き出される	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET	ConnectionType=GetRequest	"1. ConnectionType=GetRequest でPOST送信する
-2. 印刷ログ保存ディレクトリ（var/log/print_logs/配下）を確認する"	印刷情報が空でない場合、印刷情報のXMLがタイムスタンプ・一意名付きで var/log/print_logs/ 配下に書き出されること（実装は当該処理が未実装＝付帯表4#3。仕様どおり失敗で検出見込み・要実機確認）。
+2. 印刷ログ保存ディレクトリ（var/log/print_logs/配下）を確認する"	印刷情報が空でない場合、印刷情報のXMLがタイムスタンプ・一意名付きで var/log/print_logs/ 配下に書き出されること（実装は当該処理が未実装＝付帯表4#3。仕様どおり失敗で検出見込み・要実機確認）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-061	IT-27	実行結果	P3	印刷対象が無い場合は印刷ログファイルを書き出さない	SEED-A05-01-BASEINFO／SEED-A05-01-NO-TARGET	ConnectionType=GetRequest	"1. 印刷対象0件で ConnectionType=GetRequest でPOST送信する
-2. 印刷ログ保存ディレクトリを確認する"	印刷情報が空のため印刷ログファイルが新規に書き出されないこと（要実機確認）。
+2. 印刷ログ保存ディレクトリを確認する"	印刷情報が空のため印刷ログファイルが新規に書き出されないこと（要実機確認）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-062	IT-18	フォーマット定義	P2	スタック用紙の印字レイアウト・フォント・文字サイズ・色が帳票設計書の定義と一致する	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET／実機プリンタ	ConnectionType=GetRequest	"1. ConnectionType=GetRequest で印刷情報を取得する
-2. 実機プリンタでスタック用紙を印字し目視確認する"	スタック用紙の印字レイアウト・フォント・文字サイズ・文字色が帳票設計書に定義された印字仕様と一致すること（物理印字の目視＝手動・要実機確認）。
+2. 実機プリンタでスタック用紙を印字し目視確認する"	スタック用紙の印字レイアウト・フォント・文字サイズ・文字色が帳票設計書に定義された印字仕様と一致すること（物理印字の目視＝手動・要実機確認）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-063	IT-09	HTTPステータス	P2	認証なしで印刷情報取得・ステータス更新を実行できる	SEED-A05-01-BASEINFO／SEED-A05-01-PRINT-TARGET	jwt-tokenヘッダなし・未認証のリクエスト	"1. 認証ヘッダなしで ConnectionType=GetRequest／SetResponse でPOST送信する
-2. 応答と認可拒否の有無を確認する"	認証判定を持たず、未認証でも印刷情報取得・ステータス更新が実行でき、HTTP401の認証拒否を返さないこと（認可方式・到達制御は要実機確認・付帯表4#6）。
+2. 応答と認可拒否の有無を確認する"	認証判定を持たず、未認証でも印刷情報取得・ステータス更新が実行でき、HTTP401の認証拒否を返さないこと（認可方式・到達制御は要実機確認・付帯表4#6）。				
 a05-01_api_order_print_direct（API_受注_直接印刷）	E2E-A05-01-064	IT-17	実行結果	P3	印刷情報生成・データ取得・ファイル書き出し中の例外は共通例外処理に委ねる	SEED-A05-01-BASEINFO	例外を誘発する状態（データ取得失敗・書き出し失敗）	"1. 例外を誘発する状態で ConnectionType=GetRequest でPOST送信する
-2. 応答を確認する"	例外発生時は共通例外処理に委ね、HTTP500相当の応答となること（例外の実再現は要実機確認・手動）。
+2. 応答を確認する"	例外発生時は共通例外処理に委ね、HTTP500相当の応答となること（例外の実再現は要実機確認・手動）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

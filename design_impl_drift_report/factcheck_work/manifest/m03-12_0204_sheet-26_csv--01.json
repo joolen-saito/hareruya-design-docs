@@ -1,0 +1,76 @@
+{
+  "chunkId": "m03-12_0204_sheet-26_csv--01",
+  "functionId": "m03-12_0204_sheet-26_csv",
+  "featureNo": "M03-12",
+  "title": "M03-12 カテゴリCSV出力",
+  "domain": "m03",
+  "designHtml": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+  "designSheet": {
+    "path": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html",
+    "anchor": "sheet-26",
+    "start": 6322,
+    "end": 6483,
+    "lines": 162
+  },
+  "partIndex": 1,
+  "partCount": 1,
+  "itemCount": 1,
+  "items": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/m03-12_0204_sheet-26_csv.json#m03-12_0204_sheet-26_csv-conformance-5715da9b4c08",
+      "candidateType": "finding",
+      "queueStatus": "pending",
+      "functionId": "m03-12_0204_sheet-26_csv",
+      "featureNo": "M03-12",
+      "title": "M03-12 カテゴリCSV出力",
+      "domain": "m03",
+      "designHtml": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+      "designSheet": {
+        "path": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html",
+        "anchor": "sheet-26",
+        "start": 6322,
+        "end": 6483,
+        "lines": 162
+      },
+      "issueCategory": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "priorClaim": {
+        "designExpectation": "対象商品数以外のCSV項目はCSV出力サービスの一般セル値取得に渡し、得られた値がnullまたは空文字のときは空セルに正規化する。一般列は項目定義のエンティティ名・フィールド名に基づいて値を取り出し、関連エンティティは参照フィールド名でスカラ化する。",
+        "implementationActual": "CategoryController::export() は target_product_count だけでなく Parent フィールドも特例扱いし、親カテゴリが無いカテゴリの親カテゴリID列に空セルではなく文字列 '0' を出力する。",
+        "mismatchReason": "設計では対象商品数のみを特例列とし、それ以外は CsvExportService::getData() に渡して null/空文字を空セルに正規化する要求になっている。実装は Parent を別分岐にしており、親なしの場合も CsvExportService の一般列規則を通らず '0' を出力する。反証として CATEGORY_CSV_FIELD_PARENT、親カテゴリID、Parent、最上位、CSV出力、CsvExportService::getData、カテゴリCSV登録/アップロード関連を src/E…"
+      },
+      "disputedExclusion": false,
+      "sourceFindingId": "m03-12_0204_sheet-26_csv-conformance-5715da9b4c08",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26:6415,6426",
+      "designQuote": "対象商品数以外のCSV項目はCSV出力サービスの一般セル値取得に渡し、得られた値がnullまたは空文字のときは空セルに正規化する。一般列は項目定義のエンティティ名・フィールド名に基づいて値を取り出し、関連エンティティは参照フィールド名でスカラ化する。",
+      "implRef": "src/Eccube/Controller/Admin/Product/CategoryController.php:557",
+      "implementationRefs": [
+        "src/Eccube/Controller/Admin/Product/CategoryController.php:557",
+        "src/Eccube/Controller/Admin/Product/CategoryController.php"
+      ],
+      "comparisonRows": [
+        {
+          "item": "特例列の範囲",
+          "design": "フィールド名が対象商品数の定数と一致する場合のみ集計マップ値を出力し、それ以外はCSV出力サービスの一般セル値取得に渡す。",
+          "implementation": "target_product_count に加えて Parent も CategoryController::export() 内で特例処理している。",
+          "mismatch": "設計上の特例列が1列なのに、実装は親カテゴリIDも特例化している。"
+        },
+        {
+          "item": "親なしカテゴリの親カテゴリIDセル",
+          "design": "Parent は対象商品数ではないため一般列規則に従う。関連エンティティが無い場合は null となり、行組み立てで空セルになる。",
+          "implementation": "$Parent !== null ? (string) $Parent->getId() : '0' により、親なしカテゴリは '0' になる。",
+          "mismatch": "空セルになるべきケースで '0' を出力する。"
+        },
+        {
+          "item": "一般列処理の利用",
+          "design": "CSV出力サービスの「項目定義とエンティティからセル値を取り出す」処理を通す。",
+          "implementation": "Parent 分岐では CsvExportService::getData() を呼ばず continue する。",
+          "mismatch": "一般列に求められる CsvExportService 経由の変換規則から外れている。"
+        }
+      ],
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "searchTerms": []
+    }
+  ]
+}

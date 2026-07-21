@@ -1,0 +1,78 @@
+{
+  "chunkId": "f05-02_0305_sheet-4_sheet--01",
+  "functionId": "f05-02_0305_sheet-4_sheet",
+  "featureNo": "F05-02",
+  "title": "F05-02 ネット買取商品検索",
+  "domain": "f05",
+  "designHtml": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+  "designSheet": {
+    "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+    "anchor": "sheet-4",
+    "start": 1366,
+    "end": 1627,
+    "lines": 262
+  },
+  "partIndex": 1,
+  "partCount": 1,
+  "itemCount": 1,
+  "items": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/f05-02_0305_sheet-4_sheet.json#f05-02_0305_sheet-4_sheet-conformance-d263630bbceb",
+      "candidateType": "finding",
+      "queueStatus": "needs_review",
+      "functionId": "f05-02_0305_sheet-4_sheet",
+      "featureNo": "F05-02",
+      "title": "F05-02 ネット買取商品検索",
+      "domain": "f05",
+      "designHtml": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+      "designSheet": {
+        "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+        "anchor": "sheet-4",
+        "start": 1366,
+        "end": 1627,
+        "lines": 262
+      },
+      "issueCategory": "実装漏れ",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "priorClaim": {
+        "designExpectation": "★ SEO対策として、タグやカテゴリの検索条件は「/tag/category」のようにURLのパスに含め、それ以外の検索条件は「?key=value」のようにGETパラメータとして扱う。例: https://~/purchase/search/New%20Items/Single%20Cards（カスタマイズ要件・機能仕様★の両方に明記）",
+        "implementationActual": "買取詳細検索のルートは #[Route(path: '/purchase/search', name: 'purchase_search', methods: ['GET'])] のみで、タグ・カテゴリを含む全条件をGETクエリパラメータ（purchaseFlg=1・tags 等）で受け渡す。パス変数を持つ /purchase/search/{tag}/{category} 相当のSEO用ルートは存在しない。CategorySidebarLinkContext::forPurchase() も listRoute/queryRoute とも 'purchase_search' を指し defaultQueryParams=['purchaseFlg'=>true] とクエリ方式。Twig(search.twig:89, purchase_detailed_search_modal.twig:13, search_purchase.twig:14)のフォームも method=get・action=url('purchase_search')。販売側(ProductController.php:136-138)には /products/search/cate/{categoryId}/tag/{tagId} 等のパス型ルートが存在するがID指定であり買取側には未適用。",
+        "mismatchReason": "設計★が要求するタグ・カテゴリのURLパス埋め込み（/tag/category 形式のSEO対策URL）が買取検索実装に存在しない。PurchaseController の全ルート(:139-1173, search は :399)、CategorySidebarLinkContext、purchase系ルーティング(PHP属性/yaml)を探索したが /purchase/search 配下にパス変数tag/categoryを持つルートは皆無で、Twigフォームも一律 url('purchase_search')…"
+      },
+      "disputedExclusion": false,
+      "sourceFindingId": "f05-02_0305_sheet-4_sheet-conformance-d263630bbceb",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+      "designQuote": "★ SEO対策として、タグやカテゴリの検索条件は「/tag/category」のようにURLのパスに含め、それ以外の検索条件は「?key=value」のようにGETパラメータとして扱う。例: https://~/purchase/search/New%20Items/Single%20Cards（カスタマイズ要件・機能仕様★の両方に明記）",
+      "implRef": "src/Eccube/Controller/Front/Purchase/PurchaseController.php:399 ; src/Eccube/Service/App/Category/CategorySidebarLinkContext.php:42-50",
+      "implementationRefs": [
+        "src/Eccube/Controller/Front/Purchase/PurchaseController.php:399",
+        "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php:42-50",
+        "src/Eccube/Controller/Front/Purchase/PurchaseController.php",
+        "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php"
+      ],
+      "comparisonRows": [
+        {
+          "item": "タグ/カテゴリ検索のURL形式",
+          "design": "URLパスに埋め込む（例: /purchase/search/New%20Items/Single%20Cards）",
+          "implementation": "GETクエリパラメータ（/purchase/search?tags=...&purchaseFlg=1 等）",
+          "mismatch": "パス埋め込みのSEO用ルートが不在、クエリ方式のまま"
+        },
+        {
+          "item": "買取検索ルート定義",
+          "design": "/purchase/search/{tag}/{category} 相当のパス型ルートを想定",
+          "implementation": "PurchaseController.php:399 の /purchase/search のみ（パス変数なし）",
+          "mismatch": "パス変数を持つルートが未定義"
+        },
+        {
+          "item": "カテゴリ/タグ導線の生成",
+          "design": "パス型URLでリンク生成",
+          "implementation": "CategorySidebarLinkContext::forPurchase() が queryRoute='purchase_search'・defaultQueryParams=['purchaseFlg'=>true] でクエリ型リンク生成",
+          "mismatch": "クエリ型リンク生成のためSEO用パスURLにならない"
+        }
+      ],
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "searchTerms": []
+    }
+  ]
+}

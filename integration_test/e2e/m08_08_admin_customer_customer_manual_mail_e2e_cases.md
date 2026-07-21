@@ -6,7 +6,7 @@
 
 期待結果は画面表示・遷移・URL・フラッシュメッセージ・404などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は pf-eccube3（HareruyaEcプラグイン）出自のリバース設計であり、刷新先 ec-cube-enterprise コア（`CustomerMailController::manual_mail`）へ移載されている。**設計（pf-eccube3）と刷新先実装の食い違いは付帯表4（不具合候補）に出し、テストは仕様どおりに書く**（オラクル独立性）。
 
-画面タイプは `mail`。送信操作とフラッシュ「メール送信が完了しました。」までを観測対象とし、**実メール受信・本文・宛先・差出人/Bcc控え・送信履歴(dtb_user_mail_history)のレコード内部値は手動/間接**とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+画面タイプは `mail`。送信操作とフラッシュ「メール送信が完了しました。」までを観測対象とし、**実メール受信・本文・宛先・差出人/Bcc控え・送信履歴(dtb_user_mail_history)のレコード内部値は手動/間接**とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 ## 関連ID対応概要
 
@@ -24,34 +24,34 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-001	IT-25	UI部品	P2	手動メール作成画面に会員名・テンプレ選択・確認ボタン・戻るリンクが表示される	ログイン済み／SEED-M08-08-CUSTOMER	会員IDを指定（テンプレ未選択）	"1. /admin/customer/manual_mail/{会員ID} を開く"	見出し・会員名・メールテンプレート選択欄・「確認」ボタン・「会員編集に戻る」リンクが表示されること。件名・本文の入力欄はテンプレート選択時のみ表示（テンプレ未選択時の非表示は060、選択時の表示は002で検証）。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-001	IT-25	UI部品	P2	手動メール作成画面に会員名・テンプレ選択・確認ボタン・戻るリンクが表示される	ログイン済み／SEED-M08-08-CUSTOMER	会員IDを指定（テンプレ未選択）	1. /admin/customer/manual_mail/{会員ID} を開く	見出し・会員名・メールテンプレート選択欄・「確認」ボタン・「会員編集に戻る」リンクが表示されること。件名・本文の入力欄はテンプレート選択時のみ表示（テンプレ未選択時の非表示は060、選択時の表示は002で検証）。				
 m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-003	IT-25	操作起点	P2	会員編集画面の「手動メール通知」リンクから作成画面へ遷移できる	ログイン済み／SEED-M08-08-CUSTOMER	会員ID	"1. 会員編集画面（/admin/customer/{会員ID}/edit）を開く
-2. 「手動メール通知」リンクを押下"	手動メール作成画面（/admin/customer/manual_mail/{会員ID}）へ遷移すること。
+2. 「手動メール通知」リンクを押下"	手動メール作成画面（/admin/customer/manual_mail/{会員ID}）へ遷移すること。				
 m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-004	IT-25	操作起点	P2	会員一覧の操作メニューから作成画面へ遷移できる	ログイン済み／SEED-M08-08-CUSTOMER	会員ID	"1. 会員一覧画面（/admin/customer）を開く
-2. 対象会員の操作メニューの手動メールリンクを押下"	手動メール作成画面（/admin/customer/manual_mail/{会員ID}）へ遷移すること（設計: 会員一覧の操作メニューからも入口を持つ）。
+2. 対象会員の操作メニューの手動メールリンクを押下"	手動メール作成画面（/admin/customer/manual_mail/{会員ID}）へ遷移すること（設計: 会員一覧の操作メニューからも入口を持つ）。				
 m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-002	IT-03	画面遷移	P2	メールテンプレートを選択すると当該テンプレIDを付けたURLへ遷移し件名・本文が差し込まれる	ログイン済み／SEED-M08-08-CUSTOMER／SEED-M08-08-TEMPLATE	会員向けベースのメールテンプレートを選択	"1. 手動メール作成画面を開く
-2. メールテンプレート選択を会員向けテンプレートに変更"	テンプレIDを付けたURL（/admin/customer/manual_mail/{会員ID}/{テンプレID}）へ遷移し、件名にテンプレートの件名が差し込まれ、本文も組み立てた本文（非空）が差し込まれること（本文差し込み内容の詳細＝ヘッダ・フッタ・会員・店舗情報は手動）。
+2. メールテンプレート選択を会員向けテンプレートに変更"	テンプレIDを付けたURL（/admin/customer/manual_mail/{会員ID}/{テンプレID}）へ遷移し、件名にテンプレートの件名が差し込まれ、本文も組み立てた本文（非空）が差し込まれること（本文差し込み内容の詳細＝ヘッダ・フッタ・会員・店舗情報は手動）。				
 m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-070	IT-03	画面遷移	P3	テンプレート選択を未選択へ戻すと会員IDのみのURLへ遷移する	ログイン済み／SEED-M08-08-CUSTOMER／SEED-M08-08-TEMPLATE	テンプレ選択済み→未選択へ戻す	"1. テンプレ選択済みの作成画面（/admin/customer/manual_mail/{会員ID}/{テンプレID}）を開く
-2. メールテンプレート選択を未選択（先頭の空選択肢）に戻す"	会員IDのみを付けたURL（/admin/customer/manual_mail/{会員ID}、テンプレIDなし）へ遷移すること（設計フロント挙動: 未選択へ戻すと会員IDのみのURLへ遷移）。
+2. メールテンプレート選択を未選択（先頭の空選択肢）に戻す"	会員IDのみを付けたURL（/admin/customer/manual_mail/{会員ID}、テンプレIDなし）へ遷移すること（設計フロント挙動: 未選択へ戻すと会員IDのみのURLへ遷移）。				
 m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-011	IT-25	操作起点	P2	「確認」押下で確認画面へ遷移し送信ボタンが表示される	ログイン済み／SEED-M08-08-CUSTOMER／SEED-M08-08-TEMPLATE	件名・本文に有効値	"1. テンプレ選択済みの作成画面で件名・本文を入力
-2. 「確認」ボタンを押下"	確認画面へ遷移し「メール送信」ボタンが表示されること。
+2. 「確認」ボタンを押下"	確認画面へ遷移し「メール送信」ボタンが表示されること。				
 m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-010	IT-26	登録内容	P1	件名・本文を入力し確認→送信すると成功フラッシュが表示される	ログイン済み／SEED-M08-08-CUSTOMER／SEED-M08-08-TEMPLATE	件名・本文に有効値	"1. テンプレ選択済みの作成画面で件名・本文を入力
 2. 「確認」ボタンを押下
-3. 確認画面で「メール送信」ボタンを押下"	フラッシュ「メール送信が完了しました。」が表示されること（実メール受信・本文・履歴レコード値は手動/間接）。
+3. 確認画面で「メール送信」ボタンを押下"	フラッシュ「メール送信が完了しました。」が表示されること（実メール受信・本文・履歴レコード値は手動/間接）。				
 m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-020	IT-22	必須バリデーション	P1	件名を空にして確認するとエラーが表示され送信されない	ログイン済み／SEED-M08-08-CUSTOMER／SEED-M08-08-TEMPLATE	件名＝空、本文＝有効値	"1. テンプレ選択済みの作成画面で件名を空、本文を入力
-2. 「確認」ボタンを押下"	件名にエラーが表示され、確認画面へ進まず作成画面に留まること。
+2. 「確認」ボタンを押下"	件名にエラーが表示され、確認画面へ進まず作成画面に留まること。				
 m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-021	IT-22	必須バリデーション	P1	本文を空にして確認するとエラーが表示され送信されない	ログイン済み／SEED-M08-08-CUSTOMER／SEED-M08-08-TEMPLATE	件名＝有効値、本文＝空	"1. テンプレ選択済みの作成画面で件名を入力、本文を空
-2. 「確認」ボタンを押下"	本文にエラーが表示され、確認画面へ進まず作成画面に留まること。
+2. 「確認」ボタンを押下"	本文にエラーが表示され、確認画面へ進まず作成画面に留まること。				
 m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-050	IT-03	画面遷移	P2	「会員編集に戻る」リンクで会員編集画面へ遷移する	ログイン済み／SEED-M08-08-CUSTOMER	会員ID	"1. 手動メール作成画面を開く
-2. 「会員編集に戻る」リンクを押下"	会員編集画面（/admin/customer/{会員ID}/edit、M08-04）へ遷移すること。
-m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-040	IT-15	未認証	P1	未ログインで作成画面URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	会員ID	"1. ログアウト状態で /admin/customer/manual_mail/{会員ID} へ直接アクセス"	管理ログイン画面へ誘導されること。
-m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-031	IT-13	URL直接アクセス	P2	存在しない会員IDを指定すると404となる	ログイン済み	存在しない会員ID	"1. /admin/customer/manual_mail/{存在しない会員ID} へアクセス"	ページが見つからない扱い（HTTP 404）となること。
-m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-032	IT-25	HTTPステータス	P2	存在しないテンプレートIDを指定すると404となる	ログイン済み／SEED-M08-08-CUSTOMER	存在しないテンプレID	"1. /admin/customer/manual_mail/{会員ID}/{存在しないテンプレID} へアクセス"	ページが見つからない扱い（HTTP 404）となること。
-m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-033	IT-13	URL直接アクセス	P2	会員ID指定なしで作成画面URLにアクセスすると404となる	ログイン済み	会員ID指定なし	"1. /admin/customer/manual_mail へ会員ID指定なしでアクセス"	ページが見つからない扱い（HTTP 404）となること（設計エッジケース: 会員ID指定なしは404）。
-m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-030	IT-22	DBとの相関バリデーション	P2	会員向けベース外のテンプレートIDを指定すると404となる	ログイン済み／SEED-M08-08-CUSTOMER／SEED-M08-08-TEMPLATE-NONBASE	会員向けベース外（例: 注文向け）のテンプレID	"1. /admin/customer/manual_mail/{会員ID}/{ベース外テンプレID} へアクセス"	ページが見つからない扱い（HTTP 404）となること（設計: 会員向けベース外は404）。
-m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-051	IT-03	画面遷移	P1	送信成功後は同じ会員・テンプレートの作成画面へ戻る	ログイン済み／SEED-M08-08-CUSTOMER／SEED-M08-08-TEMPLATE	件名・本文に有効値	"1. 作成画面で件名・本文を入力し確認→送信"	送信成功後、同じ会員・テンプレートの手動メール作成画面（m08-08_admin_customer_customer_manual_mail_edit）へ戻ること（設計）。
-m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-060	IT-25	送信可否制御	P3	テンプレート未選択のとき件名・本文の入力欄を表示しない	ログイン済み／SEED-M08-08-CUSTOMER	テンプレ未選択	"1. /admin/customer/manual_mail/{会員ID}（テンプレ未指定）を開く"	件名・本文の入力欄が表示されないこと（設計エッジケース: 本文textareaはテンプレート選択時のみ）。
+2. 「会員編集に戻る」リンクを押下"	会員編集画面（/admin/customer/{会員ID}/edit、M08-04）へ遷移すること。				
+m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-040	IT-15	未認証	P1	未ログインで作成画面URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	会員ID	1. ログアウト状態で /admin/customer/manual_mail/{会員ID} へ直接アクセス	管理ログイン画面へ誘導されること。				
+m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-031	IT-13	URL直接アクセス	P2	存在しない会員IDを指定すると404となる	ログイン済み	存在しない会員ID	1. /admin/customer/manual_mail/{存在しない会員ID} へアクセス	ページが見つからない扱い（HTTP 404）となること。				
+m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-032	IT-25	HTTPステータス	P2	存在しないテンプレートIDを指定すると404となる	ログイン済み／SEED-M08-08-CUSTOMER	存在しないテンプレID	1. /admin/customer/manual_mail/{会員ID}/{存在しないテンプレID} へアクセス	ページが見つからない扱い（HTTP 404）となること。				
+m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-033	IT-13	URL直接アクセス	P2	会員ID指定なしで作成画面URLにアクセスすると404となる	ログイン済み	会員ID指定なし	1. /admin/customer/manual_mail へ会員ID指定なしでアクセス	ページが見つからない扱い（HTTP 404）となること（設計エッジケース: 会員ID指定なしは404）。				
+m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-030	IT-22	DBとの相関バリデーション	P2	会員向けベース外のテンプレートIDを指定すると404となる	ログイン済み／SEED-M08-08-CUSTOMER／SEED-M08-08-TEMPLATE-NONBASE	会員向けベース外（例: 注文向け）のテンプレID	1. /admin/customer/manual_mail/{会員ID}/{ベース外テンプレID} へアクセス	ページが見つからない扱い（HTTP 404）となること（設計: 会員向けベース外は404）。				
+m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-051	IT-03	画面遷移	P1	送信成功後は同じ会員・テンプレートの作成画面へ戻る	ログイン済み／SEED-M08-08-CUSTOMER／SEED-M08-08-TEMPLATE	件名・本文に有効値	1. 作成画面で件名・本文を入力し確認→送信	送信成功後、同じ会員・テンプレートの手動メール作成画面（m08-08_admin_customer_customer_manual_mail_edit）へ戻ること（設計）。				
+m08-08_admin_customer_customer_manual_mail（手動メール通知）	E2E-M08-08-060	IT-25	送信可否制御	P3	テンプレート未選択のとき件名・本文の入力欄を表示しない	ログイン済み／SEED-M08-08-CUSTOMER	テンプレ未選択	1. /admin/customer/manual_mail/{会員ID}（テンプレ未指定）を開く	件名・本文の入力欄が表示されないこと（設計エッジケース: 本文textareaはテンプレート選択時のみ）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

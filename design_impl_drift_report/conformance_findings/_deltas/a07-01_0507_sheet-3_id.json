@@ -1,0 +1,36 @@
+{
+  "functionId": "a07-01_0507_sheet-3_id",
+  "featureNo": "A07-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-3:968,980,993",
+      "designExpectation": "まとめ買取商品IDの設定がオプションマスタに存在しない場合は、設定値の参照で例外となり、共通例外処理に委ねる（HTTP 500相当）。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:38",
+      "implementationActual": "GET /%eccube_api_v1_route%/admin/optionBulkPurchaseId.json の実装は mtb_option から MtbOption::BULK_PURCHASE_ID を検索するが、未設定時は `$Option?->getOptionValue() ?? ''` により空文字列を作り、`new JsonResponse($value)` で HTTP 200 を返す。",
+      "mismatchReason": "設計のレスポンス失敗・データ整合性・エラー処理では、まとめ買取商品ID設定が無い場合は値を取得できず処理失敗（HTTP 500相当）と定義されている。一方、実装は未設定を例外化せず空文字列の正常応答にしている。反証として `optionBulkPurchaseId`、`BULK_PURCHASE_ID`、`BulkPurchaseIdService`、`mtb_option` を検索し、BulkPurchaseIdService には未設定時例外があるが当該APIからは使用されておらず、OptionController の直接実装が有効であることを確認した。",
+      "comparisonRows": [
+        {
+          "item": "未設定時のHTTPステータス",
+          "design": "HTTP 500相当（共通例外処理）",
+          "implementation": "HTTP 200（JsonResponse のデフォルト）",
+          "mismatch": "未設定を失敗扱いにしていない"
+        },
+        {
+          "item": "未設定時の応答値",
+          "design": "設定値参照で例外となり、通常の値は返さない",
+          "implementation": "空文字列をJSON応答として返す",
+          "mismatch": "欠落設定が正常な空値として外部公開される"
+        },
+        {
+          "item": "対象キー",
+          "design": "mtb_option.option_key のまとめ買取商品IDキー（MtbOption::BULK_PURCHASE_ID）",
+          "implementation": "MtbOption::BULK_PURCHASE_ID を findOneBy で参照",
+          "mismatch": "キー参照自体は一致"
+        }
+      ]
+    }
+  ]
+}

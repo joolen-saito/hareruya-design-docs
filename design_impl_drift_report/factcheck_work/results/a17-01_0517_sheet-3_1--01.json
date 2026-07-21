@@ -1,0 +1,112 @@
+{
+  "chunkId": "a17-01_0517_sheet-3_1--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-01_0517_sheet-3_1.json#a17-01_0517_sheet-3_1-conformance-184faf10601f",
+      "functionId": "a17-01_0517_sheet-3_1",
+      "featureNo": "A17-01",
+      "title": "A17-01 検索クエリに一致する記事情報1件を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "単記事取得が wpPostId のみで findOneBy しており、論理削除(deleted_at)済み記事を応答対象外にする条件が無い。",
+      "reason": "設計はdtb_article.deleted_atによる論理削除で削除済みは応答対象外・wp_post_idを検索条件に用いる(HTML 1426/1475)と明記。実装はArticleController::getSingleArticleByParamsActionが $this->dtbArticleRepository->findOneBy(['wpPostId' => (int) $wpPostIdParam]) のみで取得し(58行)、deletedAt IS NULL 条件が無い。Gedmo SoftDeleteableFilter は doctrine.yaml で enabled: true だが、この filter は #[Gedmo\\...SoftDeleteable] 注釈を持つエンティティ(Order/Shipping/MtbFormat 等)にのみ適用される。DtbArticle.php には Gedmo 注釈が無く(rg で該当ゼロ)、deleted_at は素の ORM\\Column(50行)のため filter 対象外。DtbArticleRepository にも単記事取得メソッドや deletedAt 絞り込みは無い。ArticleResponseBuilder は取得済み Article をそのまま応答化するため、論理削除済み記事が返却され得る。設計要求の削除済み除外が実装されていない。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html",
+        "start": 1475,
+        "end": 1475,
+        "contains": ["deleted_at", "検索条件に用いる", "応答対象外"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装",
+          "note": "削除済み除外条件のない単記事取得",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php",
+          "start": 58,
+          "end": 60,
+          "contains": ["findOneBy(['wpPostId'", "NotFoundException('記事が見つかりません')"]
+        },
+        {
+          "label": "実装(エンティティ)",
+          "note": "DtbArticle は Gedmo SoftDeleteable 注釈を持たず SoftDeleteableFilter の対象外",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/DtbArticle.php",
+          "start": 25,
+          "end": 50,
+          "contains": ["ORM\\Table(name: 'dtb_article')", "class DtbArticle", "deleted_at"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -n 'Gedmo|SoftDelete' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbArticle.php",
+        "rg -n 'deletedAt|deleted_at' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Article/ArticleResponseBuilder.php"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-01_0517_sheet-3_1.json#a17-01_0517_sheet-3_1-conformance-b1534aada51f",
+      "functionId": "a17-01_0517_sheet-3_1",
+      "featureNo": "A17-01",
+      "title": "A17-01 検索クエリに一致する記事情報1件を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は公開プロパティをcamelCaseと明記するが、ArticleResponseBuilder はトップレベル・ネストとも snake_case キーで応答を生成している。",
+      "reason": "設計は成功応答フィールドを articleId/wpPostId/wpTypeId/updateDate/createDate/cards/archetypes/decks/eventDetails の camelCase(HTML 1445-1446)、サンプル応答も camelCase(1452-1463)、副作用節で『プロパティはcamelCase、日時はISO8601とする』(1466)と明記。実装 ArticleResponseBuilder::build は 'article_id'/'wp_post_id'/'wp_type_id'/'update_date'/'create_date'/'event_details' と snake_case で配列を生成(37-46行)、ネストの buildCard 等も name_jp/card_details など snake_case。日時は formatDateTime('Y-m-d\\TH:i:sP') で ISO8601 相当だが、プロパティ名の外部契約が設計の camelCase と一致しない。articleId/wpPostId/eventDetails での再検索でも単記事応答生成に該当は無く snake_case のみ確認。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html",
+        "start": 1466,
+        "end": 1466,
+        "contains": ["プロパティはcamelCase", "ISO8601"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装",
+          "note": "トップレベル応答が snake_case キー",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/Article/ArticleResponseBuilder.php",
+          "start": 34,
+          "end": 46,
+          "contains": ["public function build(DtbArticle", "'article_id' =>", "'wp_post_id' =>", "'event_details' =>"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-01_0517_sheet-3_1.json#a17-01_0517_sheet-3_1-conformance-977d566c2358",
+      "functionId": "a17-01_0517_sheet-3_1",
+      "featureNo": "A17-01",
+      "title": "A17-01 検索クエリに一致する記事情報1件を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は404本文を {code, message}(message=\"Not Found\") とするが、実装は {code, errors:[...]} かつ日本語メッセージを返す。",
+      "reason": "設計は該当記事なし時の404本文の形を {code, message}（\"Not Found\"）と明記(HTML 1449、エラー処理 1484)。実装は NotFoundException('記事が見つかりません') を投げ(ArticleController 60行)、catch で ['code' => $e->getStatusCode(), 'errors' => $e->getErrors()] を返す(67-68行)。NotFoundException/BaseApiException は errors 配列にメッセージを格納する構造で、body キーは message ではなく errors、値も日本語 '記事が見つかりません' で英語 'Not Found' ではない。message キーで 'Not Found' を返す単記事用実装は存在しない。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html",
+        "start": 1449,
+        "end": 1449,
+        "contains": ["{code, message}", "Not Found", "該当記事なし"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(例外送出)",
+          "note": "日本語メッセージで NotFoundException",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php",
+          "start": 60,
+          "end": 60,
+          "contains": ["NotFoundException('記事が見つかりません')"]
+        },
+        {
+          "label": "実装(応答本文)",
+          "note": "message キーではなく errors 配列を返す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php",
+          "start": 66,
+          "end": 68,
+          "contains": ["'code' => $e->getStatusCode()", "'errors' => $e->getErrors()"]
+        }
+      ]
+    }
+  ]
+}

@@ -6,7 +6,7 @@
 
 母集合の定義: 上流の観点表 `integration-test-viewpoints.md` は全機能共通のより広い観点集合であり、本機能向けに具体化（インスタンス化）した結果が既存IT cases の90観点行である。本E2Eの未分類0監査は「本機能に適用された90行」を母集合とする。上流観点表のうち本機能に非該当の観点（試行制限・Cookie発行等）は既存IT casesへ展開されず、`付帯表5`の設計書節マトリクスで「対象外(理由付き)」として監査する。**要確認**: 90行が上流観点表の本機能適用分を漏れなく具体化しているかは生成元スクリプト側の保証に依存する。
 
-期待結果は画面表示・遷移・URL・HTTPステータス・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・ec-cube-enterprise確認値）由来**とし、実装/POM由来の表示文言をオラクル化しない（設計書はpf-eccube3のリバースだが、DB・メッセージの確認値は刷新先ec-cube-enterprise=正典）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・HTTPステータス・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・ec-cube-enterprise確認値）由来**とし、実装/POM由来の表示文言をオラクル化しない（設計書はpf-eccube3のリバースだが、DB・メッセージの確認値は刷新先ec-cube-enterprise=正典）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 刷新先ec-cube-enterprise に当該画面は存在する（`Controller/Admin/Purchase/PurchaseController.php` edit:199 / update:352、Twig `Resource/template/admin/Purchase/detail.twig`、Form `Form/Type/Admin/Purchase/{PurchaseDetailType,BankAccountType,QualifiedInvoiceIssuerAccountType}.php`）。screenExists=true。
 
@@ -23,64 +23,64 @@
 | IT-23 | DB検索（本機能はユーザー向け一覧検索を主題としない＝別機能へ委譲。保存後レコードは間接） |
 | IT-26 | 登録内容（保存の永続化＝画面はフラッシュで観測、DB値は間接） |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-001	IT-25	UI部品	P1	買取詳細(編集GET)が表示され保存ボタン・一覧戻りが見える	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	編集可能な買取注文ID	"1. 管理者でログインする
-2. /admin/purchase/{id}/edit を開く"	買取詳細が表示され、保存ボタン・一覧戻りリンクが表示されること。
+2. /admin/purchase/{id}/edit を開く"	買取詳細が表示され、保存ボタン・一覧戻りリンクが表示されること。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-002	IT-25	UI部品	P2	フッタの保存・一括売却・手動メール・一覧戻りボタンが表示される	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	編集可能な買取注文ID	"1. 買取詳細を開く
-2. フッタ(変換エリア)を確認する"	保存・一括売却登録・手動メール通知・一覧戻りの各ボタン/リンクが表示されること。
+2. フッタ(変換エリア)を確認する"	保存・一括売却登録・手動メール通知・一覧戻りの各ボタン/リンクが表示されること。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-003	IT-25	操作起点	P2	買取情報ブロックに商品追加・査定編集・CSVボタンが表示される	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	編集可能な買取注文ID	"1. 買取詳細を開く
-2. 買取情報ブロックを確認する"	商品追加・査定編集・CSVエクスポートの各ボタンが表示されること。
+2. 買取情報ブロックを確認する"	商品追加・査定編集・CSVエクスポートの各ボタンが表示されること。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-005	IT-25	操作起点	P3	選んで買取の商品追加モーダルが開く	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	編集可能な買取注文ID	"1. 買取詳細を開く
-2. 「商品追加」を押下"	商品検索モーダルが開き、検索ボタンが表示されること。
+2. 「商品追加」を押下"	商品検索モーダルが開き、検索ボタンが表示されること。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-006	IT-25	UI部品	P3	実在庫の商品検索モーダル(商品追加／実在庫情報登録)が開く	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	編集可能な買取注文ID	"1. 買取詳細を開く
-2. 実在庫情報ブロックの「商品追加／実在庫情報登録」を押下"	実在庫用の商品検索モーダル(admin_search_product)が開くこと（起点セレクタは要実機確認）。
+2. 実在庫情報ブロックの「商品追加／実在庫情報登録」を押下"	実在庫用の商品検索モーダル(admin_search_product)が開くこと（起点セレクタは要実機確認）。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-004	IT-25	確認ダイアログ	P3	まとめて買取アコーディオン初回展開でXHR行が生成される	ログイン済み管理者／SEED-M07-03-ORDER-BULK	bulk明細を持つ買取注文ID	"1. 買取詳細を開く
-2. 「まとめて買取」アコーディオンを初めて開く"	XHR(admin_purchase_bulk_purchase_load)で取得した明細行がテーブルに挿入されること。
-m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-010	IT-15	未認証	P1	未ログインで買取詳細URLへアクセスすると管理ログイン画面へ誘導	未ログイン	任意の買取注文URL	"1. 未ログインで /admin/purchase/1/edit へアクセス"	管理ログイン画面へ誘導されること。
-m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-011	IT-25	HTTPステータス	P1	存在しないidの買取詳細GETは404	ログイン済み管理者	存在しない買取注文ID	"1. 存在しないidで /admin/purchase/{id}/edit を開く"	HTTP 404 が返ること。
-m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-012	IT-13	URL直接アクセス	P2	存在しないidのupdate POSTは404	ログイン済み管理者	存在しない買取注文ID	"1. 存在しないidへ /admin/purchase/{id}/update をPOST"	HTTP 404 が返ること。
+2. 「まとめて買取」アコーディオンを初めて開く"	XHR(admin_purchase_bulk_purchase_load)で取得した明細行がテーブルに挿入されること。				
+m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-010	IT-15	未認証	P1	未ログインで買取詳細URLへアクセスすると管理ログイン画面へ誘導	未ログイン	任意の買取注文URL	1. 未ログインで /admin/purchase/1/edit へアクセス	管理ログイン画面へ誘導されること。				
+m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-011	IT-25	HTTPステータス	P1	存在しないidの買取詳細GETは404	ログイン済み管理者	存在しない買取注文ID	1. 存在しないidで /admin/purchase/{id}/edit を開く	HTTP 404 が返ること。				
+m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-012	IT-13	URL直接アクセス	P2	存在しないidのupdate POSTは404	ログイン済み管理者	存在しない買取注文ID	1. 存在しないidへ /admin/purchase/{id}/update をPOST	HTTP 404 が返ること。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-013	IT-03	画面遷移	P2	一覧戻りリンクはネット買取一覧へ遷移する	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	編集可能な買取注文ID	"1. 買取詳細を開く
-2. 一覧戻りリンクを押下"	ネット買取一覧(/admin/purchase/page/{page_no})へ遷移すること。
+2. 一覧戻りリンクを押下"	ネット買取一覧(/admin/purchase/page/{page_no})へ遷移すること。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-014	IT-25	確認ダイアログ	P2	査定編集ボタンで商品系入力の編集可否が切り替わる	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	編集可能な買取注文ID	"1. 買取詳細を開く
-2. 「査定編集」を押下"	商品系入力(.product)の編集可否(readonly/pointer-events)が切り替わること。
+2. 「査定編集」を押下"	商品系入力(.product)の編集可否(readonly/pointer-events)が切り替わること。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-015	IT-25	確認ダイアログ	P3	依頼者編集ボタンで会員系入力が切り替わる	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	編集可能な買取注文ID	"1. 買取詳細を開く
-2. 依頼者情報の「編集」を押下"	会員系入力(.customer)のreadonly/疑似readonlyが切り替わること。
+2. 依頼者情報の「編集」を押下"	会員系入力(.customer)のreadonly/疑似readonlyが切り替わること。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-020	IT-26	登録内容	P1	正常保存で「登録が完了しました。」が表示される	ログイン済み管理者／SEED-M07-03-ORDER-SAVE（使い捨て）	全必須を満たす有効な編集値	"1. 買取詳細を開く
-2. 妥当な値で保存ボタンを押下"	成功フラッシュ「登録が完了しました。」が表示されること。
+2. 妥当な値で保存ボタンを押下"	成功フラッシュ「登録が完了しました。」が表示されること。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-021	IT-26	画面遷移	P1	正常保存後に同一買取詳細へリダイレクトする	ログイン済み管理者／SEED-M07-03-ORDER-SAVE（使い捨て）	全必須を満たす有効な編集値	"1. 買取詳細を開く
-2. 妥当な値で保存ボタンを押下"	同一買取詳細(/admin/purchase/{id}/edit)へリダイレクトされること。
+2. 妥当な値で保存ボタンを押下"	同一買取詳細(/admin/purchase/{id}/edit)へリダイレクトされること。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-022	IT-22	必須バリデーション	P1	口座名義未入力で保存するとエラーで保存されない	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	口座名義＝空	"1. 買取詳細を開く
-2. 口座名義を空にして保存"	エラーとなり成功メッセージが出ず、保存されないこと（200で詳細再表示）。
+2. 口座名義を空にして保存"	エラーとなり成功メッセージが出ず、保存されないこと（200で詳細再表示）。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-023	IT-22	その他のバリデーション	P2	E-mail形式不正で保存するとエラーで保存されない	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	E-mail＝不正形式	"1. 買取詳細を開く
-2. E-mailを不正形式にして保存"	エラーとなり成功メッセージが出ず、保存されないこと。
+2. E-mailを不正形式にして保存"	エラーとなり成功メッセージが出ず、保存されないこと。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-024	IT-22	必須バリデーション	P2	適格請求書 事業者選択で登録番号未入力なら必須エラー	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	事業者状況＝事業者／登録番号＝空	"1. 買取詳細を開く
-2. 事業者を選び登録番号を空にして保存"	必須エラーとなり成功メッセージが出ず、保存されないこと。
+2. 事業者を選び登録番号を空にして保存"	必須エラーとなり成功メッセージが出ず、保存されないこと。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-025	IT-22	文字列長バリデーション	P2	適格請求書 登録番号が14文字以外なら形式エラー	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	事業者状況＝事業者／登録番号＝14文字以外	"1. 買取詳細を開く
-2. 登録番号に14文字以外を入力して保存"	形式エラーとなり成功メッセージが出ず、保存されないこと。
+2. 登録番号に14文字以外を入力して保存"	形式エラーとなり成功メッセージが出ず、保存されないこと。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-026	IT-22	必須バリデーション	P2	口座番号未入力で保存するとエラーで保存されない	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	口座番号＝空	"1. 買取詳細を開く
-2. 口座番号を空にして保存"	エラーとなり成功メッセージが出ず、保存されないこと（200で詳細再表示）。
+2. 口座番号を空にして保存"	エラーとなり成功メッセージが出ず、保存されないこと（200で詳細再表示）。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-027	IT-22	その他のバリデーション	P3	適格請求書 事業者選択＋登録番号14文字英数字なら検証エラーが出ない（正常系）	ログイン済み管理者／SEED-M07-03-ORDER-SAVE（使い捨て）	事業者状況＝事業者／登録番号＝14文字英数字	"1. 買取詳細を開く
-2. 事業者を選び登録番号に14文字英数字を入力して保存"	適格請求書の必須／形式エラーが出ないこと（024・025の正常対）。
+2. 事業者を選び登録番号に14文字英数字を入力して保存"	適格請求書の必須／形式エラーが出ないこと（024・025の正常対）。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-030	IT-22	DBとの相関バリデーション	P1	入庫済みからのステータス変更は拒否される	ログイン済み管理者／SEED-M07-03-ORDER-STOCKED	入庫済み注文／別ステータスへ変更	"1. 入庫済みの買取詳細を開く
-2. 買取状況を別ステータスへ変更して保存"	「入庫済みステータスは他のステータスに変更できません。」が表示され、保存されないこと。
+2. 買取状況を別ステータスへ変更して保存"	「入庫済みステータスは他のステータスに変更できません。」が表示され、保存されないこと。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-031	IT-22	相関バリデーション	P1	実在庫編集不可ステータスで増減を入れるとエラー	ログイン済み管理者／SEED-M07-03-ORDER-NOSTOCKEDIT	実在庫編集不可ステータス／増減≠0	"1. 該当買取詳細を開く
-2. 実在庫の増減に0以外を入れて保存"	「実在庫情報の登録は「査定内容承諾」〜「入庫待ち」のステータスの場合のみ可能です。」が表示され、保存されないこと。
+2. 実在庫の増減に0以外を入れて保存"	「実在庫情報の登録は「査定内容承諾」〜「入庫待ち」のステータスの場合のみ可能です。」が表示され、保存されないこと。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-032	IT-03	外部画面	P1	振込依頼済みへ遷移で身分証未登録だとエラー	ログイン済み管理者／SEED-M07-03-ORDER-TRANSFERREADY	身分証未登録／振込依頼済みへ変更	"1. 該当買取詳細を開く
-2. 身分証未選択のまま買取状況を振込依頼済みへ変更して保存"	「買取依頼者の身分証明書が未登録です。」が表示され、保存されないこと。
+2. 身分証未選択のまま買取状況を振込依頼済みへ変更して保存"	「買取依頼者の身分証明書が未登録です。」が表示され、保存されないこと。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-033	IT-22	文字列長バリデーション	P2	実在庫増減で数量が負になると保存失敗（ロールバック）	ログイン済み管理者／SEED-M07-03-ORDER-NEGSTOCK	既存数量を超える減算	"1. 該当買取詳細を開く
-2. 既存数量を超える減算を入れて保存"	保存に失敗し、成功メッセージが出ないこと（例外でロールバック）。
+2. 既存数量を超える減算を入れて保存"	保存に失敗し、成功メッセージが出ないこと（例外でロールバック）。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-034	IT-03	外部画面	P2	振込依頼済みへ遷移で高額時に会員本人確認未完了だとエラー	ログイン済み管理者／SEED-M07-03-ORDER-TRANSFERHIGH	高額査定／本人確認未完了／振込依頼済みへ変更	"1. 該当買取詳細を開く
-2. 買取状況を振込依頼済みへ変更して保存"	エラーとなり成功メッセージが出ず、保存されないこと（身分証032の本人確認分岐の対）。
+2. 買取状況を振込依頼済みへ変更して保存"	エラーとなり成功メッセージが出ず、保存されないこと（身分証032の本人確認分岐の対）。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-040	IT-25	操作起点	P2	CSVエクスポートボタンでダウンロードが発火する	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	編集可能な買取注文ID	"1. 買取詳細を開く
-2. CSVエクスポートボタンを押下"	ダウンロードが発火すること（ファイル内容の検査は手動）。
+2. CSVエクスポートボタンを押下"	ダウンロードが発火すること（ファイル内容の検査は手動）。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-042	IT-26	操作起点	P3	商品一覧CSV(type=sale)エクスポートでダウンロードが発火する	ログイン済み管理者／SEED-M07-03-ORDER-EDITABLE	編集可能な買取注文ID	"1. 買取詳細を開く
-2. 商品一覧CSVエクスポートボタンを押下"	ダウンロードが発火すること（ファイル内容の検査は手動）。
+2. 商品一覧CSVエクスポートボタンを押下"	ダウンロードが発火すること（ファイル内容の検査は手動）。				
 m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-041	IT-15	状態変化	P2	一括売却登録ボタンで確認後に別ルートへ送信される	ログイン済み管理者／SEED-M07-03-ORDER-BULK（使い捨て）	bulk明細を持つ買取注文ID	"1. 買取詳細を開く
-2. 「一括売却登録」を押下し確認ダイアログを承認"	別ルート(admin_purchase_bulk_detail_sell)へ送信され売却フラグ一括更新後に詳細へ戻ること。
-m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-043	IT-13	URL直接アクセス	P3	個別入力商品の実在庫紐付け別ルートの不正IDは404	ログイン済み管理者	存在しない買取ID／個別入力商品ID	"1. 存在しないIDで /admin/purchase/{buyOrderId}/register-individual-stock/{individualProductId} をPOST"	HTTP 404 が返ること（別トークン経路・正常系の起点はモーダル内動的フォームで手動）。
+2. 「一括売却登録」を押下し確認ダイアログを承認"	別ルート(admin_purchase_bulk_detail_sell)へ送信され売却フラグ一括更新後に詳細へ戻ること。				
+m07-03_admin_online_purchase_purchase_online_buy_order_edit（ネット買取管理_買取情報編集）	E2E-M07-03-043	IT-13	URL直接アクセス	P3	個別入力商品の実在庫紐付け別ルートの不正IDは404	ログイン済み管理者	存在しない買取ID／個別入力商品ID	1. 存在しないIDで /admin/purchase/{buyOrderId}/register-individual-stock/{individualProductId} をPOST	HTTP 404 が返ること（別トークン経路・正常系の起点はモーダル内動的フォームで手動）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象セレクタ・仕様根拠・元ITケースID（TSV外）

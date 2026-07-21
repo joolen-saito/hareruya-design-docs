@@ -1,0 +1,108 @@
+{
+  "functionId": "b08-02_0408_sheet-4_sheet",
+  "featureNo": "B08-02",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1180",
+      "designExpectation": "コンソールのバッチコマンドは customer:batch lostPoint で実行する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php:25",
+      "implementationActual": "実装の Symfony Console コマンド名は eccube:customer:lost-points。customer:batch lostPoint の AsCommand 名または aliases は確認できない。",
+      "mismatchReason": "設計の利用者視点入口は customer:batch lostPoint だが、実装入口は eccube:customer:lost-points で外部契約が一致しない。反証として customer:batch/lostPoint/lost-point/lost-points/aliases を src/Eccube と html 配下で検索したが、該当する別名は LostPointsCommand.php:25 以外に存在しない。",
+      "comparisonRows": [
+        {
+          "item": "コマンド名",
+          "design": "customer:batch lostPoint",
+          "implementation": "eccube:customer:lost-points",
+          "mismatch": "起動コマンドの外部契約が異なる"
+        },
+        {
+          "item": "別名",
+          "design": "設計コマンドで起動可能",
+          "implementation": "aliases 指定なし",
+          "mismatch": "設計コマンド名での起動根拠がない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1134",
+      "designExpectation": "ユーザーの失効ポイントの値をスマレジのポイント増減APIに送信し、失効ポイント分を差し引く。連携が成功しない場合は当該会員をスキップする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php:59, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiCustomerService.php:31",
+      "implementationActual": "LostPointsAction は $losePoint を算出するが、postSmaregiPoint() を引数なしで呼び出す。SmaregiCustomerService::postSmaregiPoint は smaregiId/point を受け取れるシグネチャだが、TODO コメントの固定成功レスポンスを返すのみで実API送信を行わない。",
+      "mismatchReason": "設計は会員のスマレジIDと失効ポイントをポイント増減APIへ送信することを要求しているが、実装は送信先・送信ポイントを渡しておらず、サービス本体も固定成功レスポンスであるため、失効分のスマレジ差し引きと失敗時スキップの実効性がない。反証として postSmaregiPoint 呼び出し、SmaregiCustomerApiClient、失効ポイント/losePoint/ポイント増減/API 関連を検索したが、LostPointsAction から実APIに失効値を渡す実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "送信先会員",
+          "design": "対象ユーザーのスマレジ会員へ送信",
+          "implementation": "postSmaregiPoint() に smaregiId を渡していない",
+          "mismatch": "対象ユーザーを指定していない"
+        },
+        {
+          "item": "送信ポイント",
+          "design": "失効ポイントの値を送信し差し引く",
+          "implementation": "$losePoint は算出するが postSmaregiPoint() に渡していない",
+          "mismatch": "失効ポイントがAPIリクエストに反映されない"
+        },
+        {
+          "item": "API実行",
+          "design": "スマレジのポイント増減API通信を行う",
+          "implementation": "SmaregiCustomerService.php:33-39 は TODO と固定成功レスポンス",
+          "mismatch": "実API通信が未実装"
+        },
+        {
+          "item": "失敗時スキップ",
+          "design": "連携失敗会員をスキップし翌日以降に持ち越す",
+          "implementation": "サービスが常に result を返すため、失敗分岐が実API結果で駆動されない",
+          "mismatch": "失敗判定が実API結果に基づかない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1210",
+      "designExpectation": "開始・完了のコンソール出力（日時付き）。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php:38, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php:51",
+      "implementationActual": "開始時は「ポイント失効バッチ開始」、完了時は「ポイント失効処理が完了しました。」を出力するが、日時を付与していない。",
+      "mismatchReason": "設計は開始・完了のコンソール出力に日時付きであることを要求している。LostPointsCommand 内に DateTime/format 等を使った日時出力はなく、反証検索でも当該コマンドの開始・完了メッセージに日時を付ける実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "開始ログ",
+          "design": "開始を日時付きでコンソール出力",
+          "implementation": "ポイント失効バッチ開始",
+          "mismatch": "日時がない"
+        },
+        {
+          "item": "完了ログ",
+          "design": "完了を日時付きでコンソール出力",
+          "implementation": "ポイント失効処理が完了しました。",
+          "mismatch": "日時がない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-4:1185",
+      "designExpectation": "リクエスト上限に配慮し、会員ごとに短いインターバルを挟む。流量制御のため会員ごとにインターバルを挟む。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbPointHistoryRepository.php; キーワード: usleep, sleep, interval, インターバル, 流量制御, リクエスト上限）",
+      "implementationActual": "LostPointsAction は foreach で会員ごとに処理するが、会員間の sleep/usleep 等の待機処理はない。",
+      "mismatchReason": "設計はスマレジ連携の流量制御として会員ごとの短いインターバルを要求しているが、対象バッチ実装内に待機処理が存在しない。反証として英日キーワードと sleep/usleep を検索したが、ポイント失効バッチ内のインターバル実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "会員ごとのインターバル",
+          "design": "リクエスト上限に配慮し短いインターバルを挟む",
+          "implementation": "foreach 内で連続処理し待機なし",
+          "mismatch": "流量制御が未実装"
+        }
+      ]
+    }
+  ]
+}

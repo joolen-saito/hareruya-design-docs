@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m05_10_admin_order_order_print_delivery_slips_en_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・HTTPステータス・別ウィンドウ表示などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は**設計源リポが pf-eccube3（旧）であり、基本設計・観点表を上位オラクル**とする。挙動は現行リポ、DBスキーマは ec-cube-enterprise を正典とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・HTTPステータス・別ウィンドウ表示などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は**設計源リポが pf-eccube3（旧）であり、基本設計・観点表を上位オラクル**とする。挙動は現行リポ、DBスキーマは ec-cube-enterprise を正典とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 刷新先確認: ec-cube-enterprise に本機能は実在する（`screenExists=true`）。ルート `admin_delivery_slips_export`＝`GET,POST /<route>/order/print/delivery_slips/{lang}`（`OrderController.php:731`、`lang=ja|en`）、`ids` が非配列/空なら `NotFoundHttpException`＝HTTP404（`OrderController.php:737-741`）、`en` は `delivery_slips.en.twig` をレンダリング（:746）。入口は受注一覧 `admin_order`＝`/<route>/order`（:136）。
 
@@ -24,36 +24,36 @@
 | IT-23 | 受注検索は本機能で行わない（別機能m05_01へ委譲）。海外限定抽出は間接/手動 |
 | IT-26 | 参照系で更新なし（間接/手動） |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-001	IT-25	操作起点	P1	受注一覧に「納品書印刷（英語）」ボタンが表示される	管理ログイン済み／受注データあり／SEED-M05-10-ORDER	—	"1. 受注一覧（/admin/order）を表示する"	一括処理エリアに「納品書印刷（英語）」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-001	IT-25	操作起点	P1	受注一覧に「納品書印刷（英語）」ボタンが表示される	管理ログイン済み／受注データあり／SEED-M05-10-ORDER	—	1. 受注一覧（/admin/order）を表示する	一括処理エリアに「納品書印刷（英語）」ボタンが表示されること。				
 m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-002	IT-25	確認ダイアログ	P1	配送行を未チェックで押下するとアラートが出て送信しない	管理ログイン済み／受注データあり／SEED-M05-10-ORDER	配送行チェック＝なし	"1. 受注一覧を表示する
-2. どの配送行もチェックせず「納品書印刷（英語）」を押下"	アラート「チェックボックスが選択されていません」が表示され、送信されず一覧に留まること。
+2. どの配送行もチェックせず「納品書印刷（英語）」を押下"	アラート「チェックボックスが選択されていません」が表示され、送信されず一覧に留まること。				
 m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-003	IT-25	操作起点	P1	配送行をチェックして押下すると名前付き子ウィンドウに英語納品書が開く	管理ログイン済み／受注データあり／SEED-M05-10-ORDER	配送行チェック＝1件以上	"1. 受注一覧を表示する
 2. 配送行を1件以上チェック
-3. 「納品書印刷（英語）」を押下"	名前付き子ウィンドウが開き、英語納品書HTML（タイトル「納品書」）が表示されること。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-004	IT-03	外部画面	P2	英語納品書ページに印刷ボタン「印刷する」が表示される	管理ログイン済み／受注データあり／SEED-M05-10-ORDER	配送行チェック＝1件以上	"1. 受注一覧から英語納品書の子ウィンドウを開く"	英語納品書ページに印刷ボタン「印刷する」が表示されること。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-005	IT-25	HTTPステータス	P2	有効なidsで英語印刷URLへPOSTするとHTTP200で英語見出しが返る	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	"ids[]＝海外配送のdtb_shipping.id"	"1. 英語印刷URL（/admin/order/print/delivery_slips/en）へ ids 付きで POST"	HTTP200が返り、英語見出し「Delivery Slip」を含むHTMLであること。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-006	IT-13	URL直接アクセス	P3	GET形式 ids[] で英語印刷URLへアクセスするとHTTP200のHTMLが返る	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	"クエリ ids[]＝海外配送のdtb_shipping.id"	"1. /admin/order/print/delivery_slips/en?ids[]=<id> へGETアクセス"	HTTP200で英語納品書HTMLが返ること（GET/POST両許容）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-007	IT-15	状態変化	P1	idsを付けずに英語印刷URLへアクセスするとHTTP404	管理ログイン済み	ids＝なし	"1. /admin/order/print/delivery_slips/en へ ids なしでアクセス"	HTTP404となること（判定順序#1）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-008	IT-15	状態変化	P2	ids空または非配列で英語印刷URLへアクセスするとHTTP404	管理ログイン済み	ids＝空/非配列	"1. /admin/order/print/delivery_slips/en?ids= へアクセス"	HTTP404となること（判定順序#1）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-009	IT-25	URL	P2	lang要件外のパスは解決されずHTTP404	管理ログイン済み	lang＝ja|en以外	"1. /admin/order/print/delivery_slips/xx?ids[]=1 へアクセス"	ルート要件（lang=ja|en）に合致せずHTTP404となること（判定順序#2）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-010	IT-15	未認証	P1	未ログインで英語印刷URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/order/print/delivery_slips/en?ids[]=1 へアクセス"	管理ログイン画面へ誘導されること（権限・認可）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-011	IT-20	識別子	P3	成功応答のContent-Typeがtext/html(UTF-8想定)	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	"ids[]＝海外配送のdtb_shipping.id"	"1. 英語印刷URLへ ids 付きで POST し応答ヘッダを確認"	応答が text/html（UTF-8想定）であること（ファイルダウンロードでなく画面表示）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-012	IT-22	DBとの相関バリデーション	P2	国内配送のみ選択して英語へ送ると明細が空整形になる	管理ログイン済み／国内配送のみ／SEED-M05-10-DOMESTIC	"ids[]＝国内発送のdtb_shipping.id"	"1. 国内発送のみの配送IDで英語印刷URLへアクセス"	発送方法.is_abroadの内部結合に合致せず、英語レイアウトだが納品書明細が空であること（判定順序#3）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-013	IT-26	更新内容	P2	英語納品書表示後も受注・配送データは更新されない	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	"ids[]＝海外配送のdtb_shipping.id"	"1. 英語納品書を表示する
-2. 対象受注・配送のレコードを表示前後で比較する"	参照系のため対象レコードの値が変更されないこと（副作用なし）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-014	IT-22	状態変化	P2	非空だが存在しない配送IDで英語へ送ると404にならずHTTP200・本文は空整形	管理ログイン済み／SEED-M05-10-ORDER	"ids[]＝DBに存在しない配送ID（非空配列）"	"1. /admin/order/print/delivery_slips/en へ 存在しない ids[] 付きでPOST"	idsは非空配列のため判定順序#1の404とはならずHTTP200が返り、該当レコードが無いため納品書本文が空整形であること（判定順序#3で0件）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-015	IT-18	フォーマット定義	P2	英語納品書本文に宛先・送り主・金額サマリ表・明細表・ページ番号が表示される	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	"ids[]＝海外配送のdtb_shipping.id"	"1. 英語納品書の子ウィンドウを開き本文を目視確認する"	設計書フロント挙動・集計条件のとおり、宛先(Delivery)・送り主(Sender)・金額サマリ(Subtotal/Postage/Charge/Total)・明細表・ページ番号が英語レイアウトで表示されること（帳票内容＝目視）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-016	IT-27	実行結果	P2	明細が30行で改ページしヘッダ・脚注が繰り返される（境界30/31/余り行）	管理ログイン済み／明細31行以上の海外配送／SEED-M05-10-ABROAD	"ids[]＝明細多数の海外配送のdtb_shipping.id"	"1. 明細が31行以上となる海外配送で英語納品書を開く
-2. 改ページ・ヘッダ再掲・脚注を目視確認する"	明細が最大30行ごとに改ページし、各チャンク先頭でヘッダブロック、チャンク末/最終で小計脚注（subtotal_quantity/total_quantity）が繰り返されること（帳票内容＝目視。30行ちょうど/31行/30の倍数でない余り行を含む）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-017	IT-25	操作起点	P2	英語納品書の印刷ボタン押下でブラウザ印刷ダイアログが起動する	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	"ids[]＝海外配送のdtb_shipping.id"	"1. 英語納品書ページで印刷ボタンを押下する"	印刷ボタン押下でブラウザのネイティブ印刷ダイアログ（window.print 相当）が起動すること（ネイティブUIは目視）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-018	IT-22	DBとの相関バリデーション	P2	会員・プレイヤー結合を満たさない配送は納品書に出ない（判定順序#4）	管理ログイン済み／会員またはプレイヤー未結合の海外配送	"ids[]＝会員/プレイヤー未結合の海外配送のdtb_shipping.id"	"1. 会員・プレイヤーの内部結合を満たさない海外配送IDで英語納品書を開く"	サマリの会員・プレイヤー内部結合を満たさない配送は納品書に載らないこと（判定順序#4。データ準備困難のため手動/間接）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-019	IT-15	状態変化	P2	検索条件を変えても選択配送IDのみで構成され子ウィンドウURLに検索状態が載らない	管理ログイン済み／受注検索条件適用済み一覧／SEED-M05-10-ORDER	"配送行チェック＝1件以上（検索条件適用後）"	"1. 受注一覧で検索条件を適用する
-2. 配送行を選び英語印刷を押下し子ウィンドウのリクエストURLを確認する"	設計書データ整合性のとおり、検索状態を読まず選択した配送IDのみで納品書が構成され、子ウィンドウのリクエストに検索条件がクエリ載せされないこと（手動/間接）。
-m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-020	IT-25	操作起点	P3	同一注文の複数配送IDを選択時に結果が注文主キーで上書きされうる	管理ログイン済み／同一注文に複数配送の受注	"ids[]＝同一注文に属する複数のdtb_shipping.id"	"1. 同一注文の複数配送行をチェックして英語印刷を押下する"	同一注文の複数配送IDは結果連想配列キーが注文主キーのためエントリが上書きされうること（既知リスク・付帯表4 #3。帳票内容＝目視）。
+3. 「納品書印刷（英語）」を押下"	名前付き子ウィンドウが開き、英語納品書HTML（タイトル「納品書」）が表示されること。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-004	IT-03	外部画面	P2	英語納品書ページに印刷ボタン「印刷する」が表示される	管理ログイン済み／受注データあり／SEED-M05-10-ORDER	配送行チェック＝1件以上	1. 受注一覧から英語納品書の子ウィンドウを開く	英語納品書ページに印刷ボタン「印刷する」が表示されること。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-005	IT-25	HTTPステータス	P2	有効なidsで英語印刷URLへPOSTするとHTTP200で英語見出しが返る	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	ids[]＝海外配送のdtb_shipping.id	1. 英語印刷URL（/admin/order/print/delivery_slips/en）へ ids 付きで POST	HTTP200が返り、英語見出し「Delivery Slip」を含むHTMLであること。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-006	IT-13	URL直接アクセス	P3	GET形式 ids[] で英語印刷URLへアクセスするとHTTP200のHTMLが返る	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	クエリ ids[]＝海外配送のdtb_shipping.id	1. /admin/order/print/delivery_slips/en?ids[]=<id> へGETアクセス	HTTP200で英語納品書HTMLが返ること（GET/POST両許容）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-007	IT-15	状態変化	P1	idsを付けずに英語印刷URLへアクセスするとHTTP404	管理ログイン済み	ids＝なし	1. /admin/order/print/delivery_slips/en へ ids なしでアクセス	HTTP404となること（判定順序#1）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-008	IT-15	状態変化	P2	ids空または非配列で英語印刷URLへアクセスするとHTTP404	管理ログイン済み	ids＝空/非配列	1. /admin/order/print/delivery_slips/en?ids= へアクセス	HTTP404となること（判定順序#1）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-009	IT-25	URL	P2	lang要件外のパスは解決されずHTTP404	管理ログイン済み	lang＝ja|en以外	1. /admin/order/print/delivery_slips/xx?ids[]=1 へアクセス	ルート要件（lang=ja|en）に合致せずHTTP404となること（判定順序#2）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-010	IT-15	未認証	P1	未ログインで英語印刷URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/order/print/delivery_slips/en?ids[]=1 へアクセス	管理ログイン画面へ誘導されること（権限・認可）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-011	IT-20	識別子	P3	成功応答のContent-Typeがtext/html(UTF-8想定)	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	ids[]＝海外配送のdtb_shipping.id	1. 英語印刷URLへ ids 付きで POST し応答ヘッダを確認	応答が text/html（UTF-8想定）であること（ファイルダウンロードでなく画面表示）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-012	IT-22	DBとの相関バリデーション	P2	国内配送のみ選択して英語へ送ると明細が空整形になる	管理ログイン済み／国内配送のみ／SEED-M05-10-DOMESTIC	ids[]＝国内発送のdtb_shipping.id	1. 国内発送のみの配送IDで英語印刷URLへアクセス	発送方法.is_abroadの内部結合に合致せず、英語レイアウトだが納品書明細が空であること（判定順序#3）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-013	IT-26	更新内容	P2	英語納品書表示後も受注・配送データは更新されない	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	ids[]＝海外配送のdtb_shipping.id	"1. 英語納品書を表示する
+2. 対象受注・配送のレコードを表示前後で比較する"	参照系のため対象レコードの値が変更されないこと（副作用なし）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-014	IT-22	状態変化	P2	非空だが存在しない配送IDで英語へ送ると404にならずHTTP200・本文は空整形	管理ログイン済み／SEED-M05-10-ORDER	ids[]＝DBに存在しない配送ID（非空配列）	1. /admin/order/print/delivery_slips/en へ 存在しない ids[] 付きでPOST	idsは非空配列のため判定順序#1の404とはならずHTTP200が返り、該当レコードが無いため納品書本文が空整形であること（判定順序#3で0件）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-015	IT-18	フォーマット定義	P2	英語納品書本文に宛先・送り主・金額サマリ表・明細表・ページ番号が表示される	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	ids[]＝海外配送のdtb_shipping.id	1. 英語納品書の子ウィンドウを開き本文を目視確認する	設計書フロント挙動・集計条件のとおり、宛先(Delivery)・送り主(Sender)・金額サマリ(Subtotal/Postage/Charge/Total)・明細表・ページ番号が英語レイアウトで表示されること（帳票内容＝目視）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-016	IT-27	実行結果	P2	明細が30行で改ページしヘッダ・脚注が繰り返される（境界30/31/余り行）	管理ログイン済み／明細31行以上の海外配送／SEED-M05-10-ABROAD	ids[]＝明細多数の海外配送のdtb_shipping.id	"1. 明細が31行以上となる海外配送で英語納品書を開く
+2. 改ページ・ヘッダ再掲・脚注を目視確認する"	明細が最大30行ごとに改ページし、各チャンク先頭でヘッダブロック、チャンク末/最終で小計脚注（subtotal_quantity/total_quantity）が繰り返されること（帳票内容＝目視。30行ちょうど/31行/30の倍数でない余り行を含む）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-017	IT-25	操作起点	P2	英語納品書の印刷ボタン押下でブラウザ印刷ダイアログが起動する	管理ログイン済み／海外配送1件／SEED-M05-10-ABROAD	ids[]＝海外配送のdtb_shipping.id	1. 英語納品書ページで印刷ボタンを押下する	印刷ボタン押下でブラウザのネイティブ印刷ダイアログ（window.print 相当）が起動すること（ネイティブUIは目視）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-018	IT-22	DBとの相関バリデーション	P2	会員・プレイヤー結合を満たさない配送は納品書に出ない（判定順序#4）	管理ログイン済み／会員またはプレイヤー未結合の海外配送	ids[]＝会員/プレイヤー未結合の海外配送のdtb_shipping.id	1. 会員・プレイヤーの内部結合を満たさない海外配送IDで英語納品書を開く	サマリの会員・プレイヤー内部結合を満たさない配送は納品書に載らないこと（判定順序#4。データ準備困難のため手動/間接）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-019	IT-15	状態変化	P2	検索条件を変えても選択配送IDのみで構成され子ウィンドウURLに検索状態が載らない	管理ログイン済み／受注検索条件適用済み一覧／SEED-M05-10-ORDER	配送行チェック＝1件以上（検索条件適用後）	"1. 受注一覧で検索条件を適用する
+2. 配送行を選び英語印刷を押下し子ウィンドウのリクエストURLを確認する"	設計書データ整合性のとおり、検索状態を読まず選択した配送IDのみで納品書が構成され、子ウィンドウのリクエストに検索条件がクエリ載せされないこと（手動/間接）。				
+m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）	E2E-M05-10-020	IT-25	操作起点	P3	同一注文の複数配送IDを選択時に結果が注文主キーで上書きされうる	管理ログイン済み／同一注文に複数配送の受注	ids[]＝同一注文に属する複数のdtb_shipping.id	1. 同一注文の複数配送行をチェックして英語印刷を押下する	同一注文の複数配送IDは結果連想配列キーが注文主キーのためエントリが上書きされうること（既知リスク・付帯表4 #3。帳票内容＝目視）。				
 ```
 
 ### 列の対応

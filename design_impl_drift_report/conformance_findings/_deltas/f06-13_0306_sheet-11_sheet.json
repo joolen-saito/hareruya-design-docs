@@ -1,0 +1,51 @@
+{
+  "functionId": "f06-13_0306_sheet-11_sheet",
+  "featureNo": "F06-13",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-11（3685-3687行目）",
+      "designExpectation": "撮影する身分証明書の種類セレクトは「自動車運転免許証」「パスポート」「外国人登録証明書」「学生証・社員証」「身体障害者手帳」「マイナンバーカード」の6種類。現行の「住民基本台帳カード」は2025/12/31全カード有効期限切れのため除外。",
+      "implRef": "src/Eccube/Form/Type/Master/IdentificationType.php:36-37, src/Eccube/Form/Type/Front/IdentificationSelectType.php:44-50, src/Eccube/Entity/Master/MtbIdentification.php:31-54, app/DoctrineMigrations/Version20251125145015.php:62-95",
+      "implementationActual": "IdentificationType の query_builder は mtb_identification を id昇順で全件取得(WHERE無し)。MtbIdentification は id/name のみで有効フラグ無し、後続マイグレーションでの削除も無い。マスタは8件(1自動車運転免許証/2パスポート/3健康保険被保険者証/4外国人登録証明書/5住民基本台帳カード/6学生証・会社員証/7身体障害者手帳/8マイナンバーカード)を保持し、SPセレクトに8種全てが表示される。",
+      "mismatchReason": "設計で除外指定された『住民基本台帳カード』(id5)と、設計6種に無い『健康保険被保険者証』(id3)が利用者に選択可能。Controller/Twig/FormType のいずれにも6種へ絞る処理が無い。",
+      "comparisonRows": [
+        {"item": "選択肢件数", "design": "6種類", "implementation": "8種類(マスタ全件)", "mismatch": "2種多い"},
+        {"item": "住民基本台帳カード", "design": "除外", "implementation": "表示(id5)", "mismatch": "除外未実装"},
+        {"item": "健康保険被保険者証", "design": "選択肢に無し", "implementation": "表示(id3)", "mismatch": "設計外の選択肢"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-11（3877,3886,3919,3921行目）",
+      "designExpectation": "申請(POST /mypage/identification/complete)で撮影フォーム検証失敗時は、身分証種別とエラー状態を引き継ぎ、エラー状態を付けて撮影画面を再表示する。",
+      "implRef": "src/Eccube/Controller/Front/Mypage/IdentificationController.php:155-159, :72, :82-90",
+      "implementationActual": "complete() は検証失敗時に redirectToRoute('mypage_identification_photograph', ['mypage_identification'=>['identification'=>$identificationId],'isError'=>1]) で302リダイレクト。ブラウザはGET再要求するが photograph ルートは methods:['POST'] のみで405となる。photograph() は POSTボディの 'identification_select' と 'isError' を参照するが、リダイレクトは 'mypage_identification' キーの query で渡すため再生成条件も満たさない。",
+      "mismatchReason": "POST限定ルートへGETリダイレクトのため撮影画面の再表示(エラー状態反映)が成立せず、入力キー参照(identification_select/isError)とも不整合で設計の遷移・状態引き継ぎが機能しない。",
+      "comparisonRows": [
+        {"item": "検証失敗時の遷移", "design": "エラー状態付きで撮影画面を再表示", "implementation": "POST限定ルートへGETリダイレクト→405", "mismatch": "撮影画面を再表示できない"},
+        {"item": "引継ぎキー", "design": "身分証種別・エラー状態を撮影画面へ引継ぎ", "implementation": "'mypage_identification' query で渡すが photograph は 'identification_select'/'isError' をPOSTボディから参照", "mismatch": "参照キー不一致"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-11（3644,3683,3784行目）",
+      "designExpectation": "本人確認状況のステータスは「未確認」「現在、確認中です」「オンラインで本人確認済み」「簡易書留で本人確認済み」のいずれかが表示される。",
+      "implRef": "src/Eccube/Resource/template/default/Mypage/online_identification.twig:54, app/DoctrineMigrations/Version20251125145047.php:62-83",
+      "implementationActual": "twig:54 で Customer.Player.IdentityConfirmStatus.nameJp をそのまま表示。マスタ name_jp は id1='未確認'/id2='確認中'/id3='オンライン本人確認済み'/id4='簡易書留確認済み'。",
+      "mismatchReason": "確認中・オンライン確認済み・簡易書留確認済みの3ステータスで設計文言と表記が相違(「現在、確認中です」「オンラインで本人確認済み」「簡易書留で本人確認済み」)。",
+      "comparisonRows": [
+        {"item": "未確認", "design": "未確認", "implementation": "未確認", "mismatch": "一致"},
+        {"item": "確認中", "design": "現在、確認中です", "implementation": "確認中", "mismatch": "文言相違"},
+        {"item": "オンライン確認済み", "design": "オンラインで本人確認済み", "implementation": "オンライン本人確認済み", "mismatch": "文言相違"},
+        {"item": "簡易書留確認済み", "design": "簡易書留で本人確認済み", "implementation": "簡易書留確認済み", "mismatch": "文言相違"}
+      ]
+    }
+  ]
+}

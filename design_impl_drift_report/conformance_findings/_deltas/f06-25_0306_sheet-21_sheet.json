@@ -1,0 +1,34 @@
+{
+  "functionId": "f06-25_0306_sheet-21_sheet",
+  "featureNo": "F06-25",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-21（★カスタマイズ要件「本店ではWiFiパスワードを表示する」「支店ではWiFiパスワードを非表示にする」「本店のみに表示する」/ materialGapRows row3,row4,row9）",
+      "designExpectation": "WiFiパスワードは本店ではWiFiパスワードを表示し、支店では非表示にする（本店のみに表示する）",
+      "implRef": "src/Eccube/Resource/template/default/Waiting/waiting_number.twig:43-53 / html/template/default/assets/js/waiting_monitor.js:3-27",
+      "implementationActual": "waiting_number.twig は店舗種別で分岐せず無条件に #wifi セクション(.wifiText)を描画し、waiting_monitor.js の passUpdate() も無条件に .wifiText へ hareruya{mmdd} を書き込む。両所に『本店のみWifi表示するようにする』の TODO コメントが残存。isMainShop グローバル(TwigInitializeListener.php:69 登録・他Twigでは活用済み)がWiFi表示部に一切適用されておらず、支店モニターでもWiFiパスワードが表示される。",
+      "mismatchReason": "WaitingNumberController.php・waiting_number.twig・waiting_monitor.js・TwigInitializeListener.php を確認。本店/支店を分岐する条件(isMainShop 等)がWiFi表示部(twig #wifi・JS .wifiText)に一切存在せず、TODOコメントで未対応が明示。設計の『支店では非表示(本店のみ表示)』に対し実装は全店で常時表示するため未実装と確定。",
+      "comparisonRows": [
+        {"item": "WiFiパスワード表示条件", "design": "本店のみ表示・支店は非表示", "implementation": "全店で無条件表示(twig #wifi 無条件描画・JS .wifiText 無条件書込)", "mismatch": "支店でも表示される(本店限定分岐なし)"},
+        {"item": "isMainShop 分岐の適用", "design": "本店/支店で表示可否を切替", "implementation": "WiFi表示部には未適用・TODOコメント残存", "mismatch": "分岐未実装"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-21（★URLについて「本店のURLは以下とする https://www.hareruyamtg.com/ja/waiting_number_1」）",
+      "designExpectation": "本店のURLは https://www.hareruyamtg.com/ja/waiting_number_1 とする（現行の waiting_number_2 は不要のため除去。支店URLは /ja/{支店名(英)}/waiting_number 形式）",
+      "implRef": "src/Eccube/Controller/Front/WaitingNumberController.php:42 / app/config/eccube/routes.yaml (prefix /{_locale}{_shop})",
+      "implementationActual": "モニター画面のルートは path '/waiting_number'(name: waiting_number)1本のみ。front_controllers の prefix /{_locale}{_shop}(本店は _shop='')により本店URLは /ja/waiting_number に解決される。waiting_number_1 というパス/ルートは src/ html/ app/ 全体を grep しても存在しない(0件)。",
+      "mismatchReason": "WaitingNumberController.php のルート定義と routes.yaml の prefix を確認し、src/ html/ app/ 全体を『waiting_number_1』『waiting_number_2』で grep(0件)。支店URL /ja/{shop}/waiting_number は設計と一致するが、本店URLは設計が waiting_number_1 を明示要求するのに対し実装は /ja/waiting_number であり、設計どおりの /ja/waiting_number_1 へアクセスすると404となるため実装違いと確定。",
+      "comparisonRows": [
+        {"item": "本店モニターURL", "design": "/ja/waiting_number_1", "implementation": "/ja/waiting_number (path '/waiting_number')", "mismatch": "設計URLは404・パス名不一致"},
+        {"item": "支店モニターURL", "design": "/ja/{支店名(英)}/waiting_number", "implementation": "/ja/{_shop}/waiting_number", "mismatch": "一致(差異なし)"}
+      ]
+    }
+  ]
+}

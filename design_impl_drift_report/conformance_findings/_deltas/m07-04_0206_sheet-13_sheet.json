@@ -1,0 +1,60 @@
+{
+  "functionId": "m07-04_0206_sheet-13_sheet",
+  "featureNo": "M07-04",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-13:3366",
+      "designExpectation": "テンプレ選択のフォームブロック接頭辞は `m07-04_admin_online_purchase_purchase_manual_mail`。フィールドキーは `template`。確認・送信では hidden で値を維持する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Purchase/PurchaseManualMailType.php:91",
+      "implementationActual": "PurchaseManualMailType::getBlockPrefix() は `admin_purchase_manual_mail` を返す。`m07-04_admin_online_purchase_purchase_manual_mail` のフォーム接頭辞・別名・互換受け口は src/Eccube と html から確認できない。",
+      "mismatchReason": "設計のPOSTフィールド接頭辞は `m07-04_admin_online_purchase_purchase_manual_mail` だが、実装のSymfonyフォーム接頭辞は `admin_purchase_manual_mail` であり、生成されるフィールド名/idの外部契約が一致しない。探索範囲: PurchaseManualMailType、manual_mail.twig、manual_mail_confirm.twig、Purchase/MailController、src/Eccube・html全体の `m07-04_admin_online_purchase_purchase_manual_mail` 検索。",
+      "comparisonRows": [
+        {
+          "item": "フォームブロック接頭辞",
+          "design": "m07-04_admin_online_purchase_purchase_manual_mail",
+          "implementation": "admin_purchase_manual_mail",
+          "mismatch": "設計値と実装値が異なる。"
+        },
+        {
+          "item": "フィールドキー",
+          "design": "template / subject / body",
+          "implementation": "template / subject / body",
+          "mismatch": "キー名は一致するが、親接頭辞が異なるためPOST名は設計どおりにならない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-13:3371; /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-13:3377; /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-13:3383",
+      "designExpectation": "送信成功時のみ `dtb_mail_history` の履歴行が増え、条件が整えばメール送信とメール履歴 INSERT、成功フラッシュ、Doctrine の永続化キューへの追加が行われる。DB操作は persist/flush による即時反映で確定する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1588; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:67; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Purchase/MailController.php:99; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/TransactionListener.php:119",
+      "implementationActual": "sendManualPurchaseMail() は送信成功後に MailHistoryEntityManager::save() を呼び、save() は MailHistory を persist するだけで flush しない。Purchase/MailController は sendManualPurchaseMail() 後に成功フラッシュを積んで詳細へリダイレクトするが flush しない。TransactionListener も terminate で commit のみを呼ぶ。",
+      "mismatchReason": "設計は履歴INSERTの確定と送信成功時の履歴行増加を要求しているが、買取手動メール送信経路では `persist` 後に `flush()` へ到達する実装証跡がない。反証検索では Controller/Admin/Purchase/MailController.php、Service/MailService.php、Service/EntityManager/MailHistoryEntityManager.php、EventListener 配下に sendManualPurchaseMail 後の flush は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "送信成功後の履歴保存",
+          "design": "dtb_mail_history に履歴行が増える。",
+          "implementation": "MailHistoryEntityManager::save() が MailHistory を persist する。",
+          "mismatch": "persistのみでINSERT確定に必要なflushがない。"
+        },
+        {
+          "item": "HTTP経路の確定処理",
+          "design": "persist/flush による即時反映で確定する。",
+          "implementation": "controllerは sendManualPurchaseMail() 後に addSuccess と redirect を行う。TransactionListener は commit のみ。",
+          "mismatch": "この経路でflushする実装根拠がない。"
+        },
+        {
+          "item": "送信失敗・送信元未設定時",
+          "design": "履歴は増えない。",
+          "implementation": "送信元未設定・TransportException時は return して save に到達しない。",
+          "mismatch": "失敗側は設計どおりだが、成功側の履歴INSERT確定が不足している。"
+        }
+      ]
+    }
+  ]
+}

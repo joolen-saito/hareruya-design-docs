@@ -1,0 +1,25 @@
+{
+  "chunkId": "a06-01_0506_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-01_0506_sheet-3_sheet.json#a06-01_0506_sheet-3_sheet-conformance-20b1b16c5681",
+      "refuted": false,
+      "reason": "別ルート探索を実施したが該当なし。grep -rn 'login.json' と 'api_admin_login' を src/ app/config/ 全体に掛けたところ、ヒットは LoginController.php:45 の #[Route('/%eccube_api_v1_route%/admin/login.json', name: 'api_admin_login', methods:['POST'])] とファイアウォール eccube.yaml:314 の '/api/v1/admin/login.json' のみ。eccube.yaml で ECCUBE_API_V1_ROUTE 既定値='api/v1'（該当行を実確認）のため実URLは /api/v1/admin/login.json 一択。設計HTML887-889行の基本設計『/api/admin/login.json』、984行の詳細設計『POST /admin/login.json / POST /admin/login』のいずれの実ルートも、リダイレクト/エイリアス/別Controllerを含めて存在しない。引用も正確。指摘は維持。（なお設計は現行pf-api挙動の記述だが、観測可能なURL契約が実装と異なる事実は動かない）"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-01_0506_sheet-3_sheet.json#a06-01_0506_sheet-3_sheet-conformance-16e5a539edac",
+      "refuted": false,
+      "reason": "引用を実確認。UnauthenticatedException.php:29-34 は parent::__construct(errors:[$message], statusCode:HTTP_UNAUTHORIZED) で errors 配列を持つ。ExceptionListener.php:136-139 は isAppApi 経路で JsonResponse(['code'=>$statusCode,'errors'=>$errors]) を返し、フィールド名は明確に 'errors'（配列）。さらに:98 で 401 は固定文言['認証エラー']へ強制、LoginController.php:58,70 も独自固定文言。設計1004-1005行は本文の形 {code, message} で message は中継先画面エラー文言。message→errors のリネーム箇所やシリアライザによる変換は存在せず（別Listener経路も探したが APIは:72 の isAppApi 分岐一本）。中継先文言抽出も中継自体が無いため未実装。構造的にも文言由来的にも不一致。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-01_0506_sheet-3_sheet.json#a06-01_0506_sheet-3_sheet-conformance-03e74a89e57b",
+      "refuted": false,
+      "reason": "JwtTokenService.php:79-87 を実確認。payload は json_encode(['sub'=>(string)$memberId]) のみで、addSignature(...,['alg'=>'HS256']) を付与。iss/aud を注入する別箇所を探すため grep \"'iss'|'aud'\" を src/Eccube/Security/ に掛けたがヒット0。設計988行は『ペイロードは発行者と利用者ID（管理者会員のID）を持つ・署名HS256』を要求し、サンプルjwtToken(948行)のペイロード部をbase64デコードすると {\"iss\":\"Sekappy Inc.\",\"aud\":825} を実際に確認。実装は iss 欠落・aud を sub（文字列型・別クレーム名）で代替。HS256のみ一致。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-01_0506_sheet-3_sheet.json#a06-01_0506_sheet-3_sheet-conformance-50ab5349484e",
+      "refuted": false,
+      "reason": "引用を実確認。Member.php:188-190 は #[JoinColumn(nullable:false)] かつ 'public BaseInfo $baseInfo'（非null型）、setBaseInfo(BaseInfo $baseInfo):static（:205）で null 不可。LoginController.php:67 は setBaseInfo(entityManager->find(BaseInfo::class, $viewMember->getBaseInfoId())) を呼ぶが、LoginMemberView.php:63-64 の base_info_id は nullable:true・getBaseInfoId():?int（:121）。base_info_id が null の会員では find が null を返し、非nullable引数へ渡って TypeError（500）となる。続く:73-85 も $baseInfo->getAddr01()/getAddr02()/getShopName() を無条件に呼ぶだけで、店舗未紐付け時に空文字を返す分岐は存在しない（getShopName()??'' や array_filter は null列対策であって baseInfo自体のnull対策ではない）。設計1003・1023行の『店舗が紐づかない場合は空文字』を満たす別実装・別分岐は無い。むしろ Member 側 nullable:false が設計の未紐付けシナリオと構造的に矛盾。指摘は維持。"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "functionId": "m05-18_0203_sheet-17_sheet",
+  "featureNo": "M05-18",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17:6294,6304",
+      "designExpectation": "注文番号レンジ条件は、フォームキー order_id_from / order_id_to の入力時に dtb_order.order_no に対して order_no >= パラメータ、order_no <= パラメータを適用する。",
+      "implRef": "src/Eccube/Repository/OrderRepository.php:1157,1159,1162,1164 / src/Eccube/Entity/Order.php:450,633",
+      "implementationActual": "getOrdersForStandby() は order_id_from / order_id_to を受け取るが、条件列は o.order_no ではなく o.order_number に対して >= / <= を適用している。Order エンティティ上、order_no は dtb_order.order_no の別プロパティ、order_number は dtb_order.order_number の別プロパティとして定義されている。",
+      "mismatchReason": "設計HTMLは集計条件と入力項目で order_no の上下限条件を明記している。一方、実装の出荷指示対象抽出では order_id_from が o.order_number >= :order_id_from、order_id_to が o.order_number <= :order_id_to になっており、設計が指定する dtb_order.order_no とは異なる列を参照している。反証検索として order_id_from/order_id_to/order_no/order_number/getOrderNo/getOrderNumber/admin_generate_shipping_standby/getOrdersForStandby を src/Eccube と html で確認したが、出荷指示リスト生成の注文番号レンジに order_no を使う別経路は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "注文番号From条件",
+          "design": "order_id_from 入力時のみ order_no >= パラメータ",
+          "implementation": "OrderRepository.php:1157-1160 で order_id_from 入力時に o.order_number >= :order_id_from",
+          "mismatch": "設計列 order_no ではなく実装列 order_number を比較している。"
+        },
+        {
+          "item": "注文番号To条件",
+          "design": "order_id_to 入力時のみ order_no <= パラメータ",
+          "implementation": "OrderRepository.php:1162-1165 で order_id_to 入力時に o.order_number <= :order_id_to",
+          "mismatch": "設計列 order_no ではなく実装列 order_number を比較している。"
+        },
+        {
+          "item": "対象DB列",
+          "design": "dtb_order.order_no は注文番号レンジ条件の参照列",
+          "implementation": "Order.php:450 に order_no、Order.php:633 に order_number が別カラムとして存在する",
+          "mismatch": "同一列の別名ではなく、別プロパティ・別DB列であるため設計条件と実装条件が一致しない。"
+        }
+      ]
+    }
+  ]
+}

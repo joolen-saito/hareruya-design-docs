@@ -1,0 +1,183 @@
+{
+  "id": "f05-03-purchase-tag-free-area-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f05-03_0305_sheet-5_sheet.json",
+  "sourceFindingId": "f05-03_0305_sheet-5_sheet-conformance-cd2a1cba08fe",
+  "classification": "フロントネット買取",
+  "feature": "ネット買取商品一覧",
+  "issueCategory": "実装漏れ",
+  "issue": "買取特集タグが1件指定されたときにタグ説明文が一覧上部へ表示されない",
+  "designBook": "0305_基本設計仕様書(フロント_ネット買取).xlsx",
+  "reproSteps": [
+    "管理画面の商品管理＞タグ登録で、買取特集タグのフリーエリアに説明文を登録する",
+    "http://localhost:8080/ja/purchase/search?tags[]=<対象タグID>&purchaseFlg=1 で買取商品一覧を表示する",
+    "一覧上部に対象タグの説明文（フリーエリア）が表示されるか確認する"
+  ],
+  "expected": [
+    "買取特集タグが1件指定された場合、そのタグの説明文（フリーエリア）を取得する",
+    "取得したタグ説明文を買取商品一覧の上部に表示する",
+    "買取特集タグが複数指定された場合、タグ説明文の表示は行わない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `Tag` エンティティには `free_area_jp` / `free_area_en` が存在するが、買取検索の `buildPurchaseSearchBreadcrumbVariables()` はカテゴリ、パンくず文言、検索名だけを返しており、タグ1件時の `Tag::getFreeAreaJp()` / `getFreeAreaEn()` を解決していない。`Purchase/search.twig` も検索フォームと一覧領域を描画するだけで、タグ説明文を表示する変数や `freeArea` の出力を持たない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise Tag はフリーエリア列を持つ",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/Tag.php",
+          "start": 191,
+          "end": 216,
+          "language": "php",
+          "contains": [
+            "free_area_jp",
+            "getFreeAreaJp",
+            "free_area_en",
+            "getFreeAreaEn"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 買取検索の戻り値にタグ説明文がない",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/PurchaseController.php",
+          "start": 575,
+          "end": 605,
+          "language": "php",
+          "contains": [
+            "$category = $searchForm->get('category_id')->getData();",
+            "$productListDetailedSearchBreadcrumbText = '';",
+            "$searchName = '';",
+            "'category' => $category",
+            "'searchName' => $searchName"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 買取一覧テンプレートはタグ説明文を描画しない",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/search.twig",
+          "start": 83,
+          "end": 120,
+          "language": "twig",
+          "contains": [
+            "id=\"purchase-list-related-keywords\"",
+            "action=\"{{ url('purchase_search') }}\"",
+            "form_widget(search_form.tags)",
+            "ec-purchaseSearch__content"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、買取検索時に `tags` が指定されていれば `tag_sub` リポジトリから `tagSubs` を取得し、テンプレートへ渡す。`Purchase/product_list.twig` は `tagSubs|length == 1` の場合に `tagSubs[0].getFreeAreaJp|raw` を一覧上部へ表示している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 買取検索で tagSubs を取得",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/PurchaseController.php",
+          "start": 497,
+          "end": 508,
+          "language": "php",
+          "contains": [
+            "$query = $request->query->all();",
+            "if (isset($query['tags'])) {",
+            "$tagSubs = $app['hareruya_ec.repository.tag_sub']->findByTagId($query['tags']);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 tagSubs をテンプレートへ渡す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/PurchaseController.php",
+          "start": 532,
+          "end": 540,
+          "language": "php",
+          "contains": [
+            "'query' => array_filter($query)",
+            "'tagSubs' => $tagSubs ?? null"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 買取一覧上部にタグフリーエリアを表示",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/product_list.twig",
+          "start": 125,
+          "end": 127,
+          "language": "twig",
+          "contains": [
+            "{% if tagSubs is defined and tagSubs|length == 1 %}",
+            "<div class=\"evMessage\">{{ tagSubs[0].getFreeAreaJp|raw }}</div>"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "買取特集タグ説明を表示要素とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 1996,
+      "end": 1996,
+      "language": "html",
+      "contains": [
+        "買取特集タグ説明（該当時）",
+        "商品数",
+        "商品サブクラスの一覧"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "タグ1件時は説明文を一覧上部に表示",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 2014,
+      "end": 2014,
+      "language": "html",
+      "contains": [
+        "買取特集タグが1件指定のときは、タグの説明文（フリーエリア）を一覧上部に表示する。"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "複数タグでは表示しない",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 2020,
+      "end": 2020,
+      "language": "html",
+      "contains": [
+        "買取特集タグが複数",
+        "タグ説明文の表示は1件のときに限る"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "Tagにはフリーエリアがあるが買取検索に渡していない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/PurchaseController.php",
+      "start": 575,
+      "end": 605,
+      "language": "php",
+      "contains": [
+        "'category' => $category",
+        "'searchName' => $searchName"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3ではタグ1件時にフリーエリアを表示",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/product_list.twig",
+      "start": 125,
+      "end": 127,
+      "language": "twig",
+      "contains": [
+        "tagSubs|length == 1",
+        "getFreeAreaJp|raw"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f05-03_0305_sheet-5_sheet.json#f05-03_0305_sheet-5_sheet-conformance-cd2a1cba08fe'",
+      "rg -n \"買取特集タグ説明|タグ説明|フリーエリア|free_area|freeArea|getFreeArea|tagSubs|Tag.*free|説明文\" hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書\\(フロント_ネット買取\\).html ec-cube-enterprise/src/Eccube/Controller/Front/Purchase ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase ec-cube-enterprise/src/Eccube/Entity/Tag.php pf-eccube3/app/Plugin/HareruyaEc/Controller/PurchaseController.php pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase pf-eccube3/app/Plugin/HareruyaEc/Entity/MtbTagSub.php",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書\\(フロント_ネット買取\\).html | sed -n '1996,2020p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Entity/Tag.php | sed -n '191,216p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/PurchaseController.php | sed -n '575,606p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/search.twig | sed -n '80,120p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/PurchaseController.php | sed -n '497,508p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/PurchaseController.php | sed -n '532,540p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/product_list.twig | sed -n '125,127p'"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。"
+  }
+}

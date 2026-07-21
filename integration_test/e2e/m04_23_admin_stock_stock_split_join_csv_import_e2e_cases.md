@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m04_23_admin_stock_stock_split_join_csv_import_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火/応答ヘッダ・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・基本設計仕様書(在庫管理機能 M04-23シート)・観点表）由来**とし、実装の現挙動・Form制約(NotBlank/File)・POM由来文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報（セレクタ・自動化区分・仕様根拠・シード・不具合候補）は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火/応答ヘッダ・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・基本設計仕様書(在庫管理機能 M04-23シート)・観点表）由来**とし、実装の現挙動・Form制約(NotBlank/File)・POM由来文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報（セレクタ・自動化区分・仕様根拠・シード・不具合候補）は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 刷新先 ec-cube-enterprise に該当画面・ルートが存在することを確認済み（`StockSplitJoinController` ＋ `stock_split_join_index.twig` のモーダル ＋ `stock_split_csv_modal_body.twig`/`stock_join_csv_modal_body.twig`）。screenExists=true。
 
@@ -23,60 +23,60 @@
 | IT-20 | ログ出力抑止＝ブラウザ観測外（対象外） |
 | IT-23 | 本機能はDB検索を行わない（一覧検索はM04-12へ委譲）＝対象外 |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-001	IT-25	UI部品	P2	一覧に分割/結合CSV登録ボタンが表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 在庫分割結合一覧（/%admin%/product/stock/split-join）を開く"	「在庫分割CSV登録」「在庫結合CSV登録」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-001	IT-25	UI部品	P2	一覧に分割/結合CSV登録ボタンが表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	1. 在庫分割結合一覧（/%admin%/product/stock/split-join）を開く	「在庫分割CSV登録」「在庫結合CSV登録」ボタンが表示されること。				
 m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-002	IT-25	UI部品	P2	分割モーダルに店舗・在庫区分・ファイル選択・「CSVから登録」が表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 一覧を開く
-2. 「在庫分割CSV登録」を押下しモーダルを開く"	店舗セレクト・在庫区分ラジオ・ファイル選択・送信ボタン「CSVから登録」が表示されること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-003	IT-25	UI部品	P3	分割モーダルに承認通知先メンバー欄が表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 分割CSV登録モーダルを開く"	「承認通知先」ラベルとメンバー選択欄が表示されること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-004	IT-25	表示結果	P3	分割モーダルのCSVフォーマット表に4列の項目名が表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 分割CSV登録モーダルを開く"	フォーマット表に「分割元商品コード」「分割数」「分割先商品コード」「分割先在庫数」が表示されること。
+2. 「在庫分割CSV登録」を押下しモーダルを開く"	店舗セレクト・在庫区分ラジオ・ファイル選択・送信ボタン「CSVから登録」が表示されること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-003	IT-25	UI部品	P3	分割モーダルに承認通知先メンバー欄が表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	1. 分割CSV登録モーダルを開く	「承認通知先」ラベルとメンバー選択欄が表示されること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-004	IT-25	表示結果	P3	分割モーダルのCSVフォーマット表に4列の項目名が表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	1. 分割CSV登録モーダルを開く	フォーマット表に「分割元商品コード」「分割数」「分割先商品コード」「分割先在庫数」が表示されること。				
 m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-005	IT-25	UI部品	P2	結合モーダルに店舗・在庫区分・ファイル選択・「CSVから登録」が表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 一覧を開く
-2. 「在庫結合CSV登録」を押下しモーダルを開く"	店舗セレクト・在庫区分ラジオ・ファイル選択・送信ボタン「CSVから登録」が表示されること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-007	IT-25	UI部品	P3	分割モーダルに承認通知先「所属」セレクトが表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 分割CSV登録モーダルを開く"	承認通知先の「所属」セレクト（所属選択）が表示されること（設計のアップロードフォーム項目 承認通知先所属）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-006	IT-25	表示結果	P3	結合モーダルのCSVフォーマット表に5列（結合数を含む）が表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 結合CSV登録モーダルを開く"	フォーマット表に「結合先商品コード」「結合数」「結合元商品コード」「結合元在庫区分」「結合元在庫数」が表示されること（基本設計の列名。実装は「結合数」を表示しないため不具合候補#1で検出見込み）。
+2. 「在庫結合CSV登録」を押下しモーダルを開く"	店舗セレクト・在庫区分ラジオ・ファイル選択・送信ボタン「CSVから登録」が表示されること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-007	IT-25	UI部品	P3	分割モーダルに承認通知先「所属」セレクトが表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	1. 分割CSV登録モーダルを開く	承認通知先の「所属」セレクト（所属選択）が表示されること（設計のアップロードフォーム項目 承認通知先所属）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-006	IT-25	表示結果	P3	結合モーダルのCSVフォーマット表に5列（結合数を含む）が表示される	管理者ログイン済／SEED-M04-23-ADMIN	—	1. 結合CSV登録モーダルを開く	フォーマット表に「結合先商品コード」「結合数」「結合元商品コード」「結合元在庫区分」「結合元在庫数」が表示されること（基本設計の列名。実装は「結合数」を表示しないため不具合候補#1で検出見込み）。				
 m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-010	IT-27	実行結果	P2	分割CSV雛形ダウンロードが発火する	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 分割CSV登録モーダルを開く
-2. 「雛形ファイルダウンロード」を押下"	ダウンロードが発火すること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-011	IT-25	操作起点	P2	分割CSV雛形がCSV形式（拡張子.csv）でダウンロードされる	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 分割CSV雛形をダウンロードする"	ダウンロードファイルの拡張子が .csv であること（CSV雛形。厳密名 stock_split_template.csv は設計書未規定の実装確認値でありオラクル化しない＝手動/要確認）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-012	IT-25	HTTPステータス	P2	分割CSV雛形応答がHTTP200を返す	管理者ログイン済／SEED-M04-23-ADMIN	GET /%admin%/product/stock/split-join/split-csv-template	"1. 分割CSV雛形URLへGETする"	HTTP200が返ること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-013	IT-25	表示結果	P3	分割CSV雛形応答がダウンロード（添付）として返る	管理者ログイン済／SEED-M04-23-ADMIN	GET split-csv-template	"1. 分割CSV雛形URLへGETする"	Content-Disposition が attachment であること（ダウンロード=添付。Content-Type=application/octet-stream は設計書未規定の実装確認値でありオラクル化しない）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-014	IT-25	表示結果	P3	分割CSV雛形応答が attachment かつ CSV(.csv) ファイル名を返す	管理者ログイン済／SEED-M04-23-ADMIN	GET split-csv-template	"1. 分割CSV雛形URLへGETする"	Content-Disposition が attachment かつ拡張子 .csv を含むこと（厳密名 stock_split_template.csv は実装確認値でありオラクル化しない）。
+2. 「雛形ファイルダウンロード」を押下"	ダウンロードが発火すること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-011	IT-25	操作起点	P2	分割CSV雛形がCSV形式（拡張子.csv）でダウンロードされる	管理者ログイン済／SEED-M04-23-ADMIN	—	1. 分割CSV雛形をダウンロードする	ダウンロードファイルの拡張子が .csv であること（CSV雛形。厳密名 stock_split_template.csv は設計書未規定の実装確認値でありオラクル化しない＝手動/要確認）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-012	IT-25	HTTPステータス	P2	分割CSV雛形応答がHTTP200を返す	管理者ログイン済／SEED-M04-23-ADMIN	GET /%admin%/product/stock/split-join/split-csv-template	1. 分割CSV雛形URLへGETする	HTTP200が返ること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-013	IT-25	表示結果	P3	分割CSV雛形応答がダウンロード（添付）として返る	管理者ログイン済／SEED-M04-23-ADMIN	GET split-csv-template	1. 分割CSV雛形URLへGETする	Content-Disposition が attachment であること（ダウンロード=添付。Content-Type=application/octet-stream は設計書未規定の実装確認値でありオラクル化しない）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-014	IT-25	表示結果	P3	分割CSV雛形応答が attachment かつ CSV(.csv) ファイル名を返す	管理者ログイン済／SEED-M04-23-ADMIN	GET split-csv-template	1. 分割CSV雛形URLへGETする	Content-Disposition が attachment かつ拡張子 .csv を含むこと（厳密名 stock_split_template.csv は実装確認値でありオラクル化しない）。				
 m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-015	IT-27	実行結果	P2	結合CSV雛形ダウンロードが発火する	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 結合CSV登録モーダルを開く
-2. 「雛形ファイルダウンロード」を押下"	ダウンロードが発火すること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-016	IT-25	操作起点	P2	結合CSV雛形がCSV形式（拡張子.csv）でダウンロードされる	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 結合CSV雛形をダウンロードする"	ダウンロードファイルの拡張子が .csv であること（厳密名 stock_join_template.csv は実装確認値でありオラクル化しない＝手動/要確認）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-017	IT-25	HTTPステータス	P2	結合CSV雛形応答がHTTP200を返す	管理者ログイン済／SEED-M04-23-ADMIN	GET /%admin%/product/stock/split-join/join-csv-template	"1. 結合CSV雛形URLへGETする"	HTTP200が返ること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-018	IT-27	実行結果	P3	分割CSV雛形の内容がヘッダ4列のみ・UTF-8 BOM付きである	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 分割CSV雛形をダウンロードし内容を開く"	1行目に「分割元商品コード,分割数,分割先商品コード,分割先在庫数」のヘッダのみが含まれデータ行が無く、UTF-8 BOM付きであること（設計: ヘッダのみ・UTF-8 BOM付き。BOM/文字コードはバイナリ確認＝手動）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-019	IT-27	出力失敗	P3	結合CSV雛形の内容がヘッダ5列のみ・UTF-8 BOM付きである／出力失敗系	管理者ログイン済／SEED-M04-23-ADMIN	—	"1. 結合CSV雛形をダウンロードし内容を開く"	1行目に基本設計表記「結合先商品コード,結合数,結合元商品コード,結合元在庫区分,結合元在庫数」のヘッダのみが含まれ、UTF-8 BOM付きであること。雛形出力失敗（ディレクトリ不在/権限/容量不足）はサーバ内部事象でブラウザ観測外、BOM/文字コードはバイナリ確認＝いずれも手動。
+2. 「雛形ファイルダウンロード」を押下"	ダウンロードが発火すること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-016	IT-25	操作起点	P2	結合CSV雛形がCSV形式（拡張子.csv）でダウンロードされる	管理者ログイン済／SEED-M04-23-ADMIN	—	1. 結合CSV雛形をダウンロードする	ダウンロードファイルの拡張子が .csv であること（厳密名 stock_join_template.csv は実装確認値でありオラクル化しない＝手動/要確認）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-017	IT-25	HTTPステータス	P2	結合CSV雛形応答がHTTP200を返す	管理者ログイン済／SEED-M04-23-ADMIN	GET /%admin%/product/stock/split-join/join-csv-template	1. 結合CSV雛形URLへGETする	HTTP200が返ること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-018	IT-27	実行結果	P3	分割CSV雛形の内容がヘッダ4列のみ・UTF-8 BOM付きである	管理者ログイン済／SEED-M04-23-ADMIN	—	1. 分割CSV雛形をダウンロードし内容を開く	1行目に「分割元商品コード,分割数,分割先商品コード,分割先在庫数」のヘッダのみが含まれデータ行が無く、UTF-8 BOM付きであること（設計: ヘッダのみ・UTF-8 BOM付き。BOM/文字コードはバイナリ確認＝手動）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-019	IT-27	出力失敗	P3	結合CSV雛形の内容がヘッダ5列のみ・UTF-8 BOM付きである／出力失敗系	管理者ログイン済／SEED-M04-23-ADMIN	—	1. 結合CSV雛形をダウンロードし内容を開く	1行目に基本設計表記「結合先商品コード,結合数,結合元商品コード,結合元在庫区分,結合元在庫数」のヘッダのみが含まれ、UTF-8 BOM付きであること。雛形出力失敗（ディレクトリ不在/権限/容量不足）はサーバ内部事象でブラウザ観測外、BOM/文字コードはバイナリ確認＝いずれも手動。				
 m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-020	IT-22	その他のバリデーション	P1	分割: 列数/ヘッダ不一致CSV取込でエラー表示・一覧へ・登録されない	管理者ログイン済／SEED-M04-23-ADMIN	必須4列でないCSV（例: 列A,列B）	"1. 分割CSV登録モーダルを開く
 2. 店舗・在庫区分(EC-CUBE)を選び不正CSVを添付
-3. 「CSVから登録」を押下"	エラーメッセージが表示され、成功メッセージは出ず、一覧画面に留まること（全件ロールバック）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-021	IT-22	必須バリデーション	P1	分割: 必須ヘッダ欠落CSV取込でエラー表示・一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	必須ヘッダ「分割先在庫数」欠落のCSV	"1. 分割CSV登録モーダルでヘッダ欠落CSVを添付し送信"	エラーメッセージが表示され、一覧画面に留まること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-022	IT-22	数値バリデーション	P1	分割: 数値不正行(分割数0)取込でエラー表示・全件ロールバック	管理者ログイン済／SEED-M04-23-ADMIN	分割数=0 を含むCSV	"1. 分割CSV登録モーダルで数値不正CSVを添付し送信"	エラーメッセージが表示され、成功メッセージは出ず、一覧画面に留まること。
+3. 「CSVから登録」を押下"	エラーメッセージが表示され、成功メッセージは出ず、一覧画面に留まること（全件ロールバック）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-021	IT-22	必須バリデーション	P1	分割: 必須ヘッダ欠落CSV取込でエラー表示・一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	必須ヘッダ「分割先在庫数」欠落のCSV	1. 分割CSV登録モーダルでヘッダ欠落CSVを添付し送信	エラーメッセージが表示され、一覧画面に留まること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-022	IT-22	数値バリデーション	P1	分割: 数値不正行(分割数0)取込でエラー表示・全件ロールバック	管理者ログイン済／SEED-M04-23-ADMIN	分割数=0 を含むCSV	1. 分割CSV登録モーダルで数値不正CSVを添付し送信	エラーメッセージが表示され、成功メッセージは出ず、一覧画面に留まること。				
 m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-023	IT-15	CSRF	P1	分割: CSRFトークン不正POSTでセッションタイムアウト表示・一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	不正なCSRFトークン	"1. 分割CSV登録フォームのCSRFトークンを不正値に書き換える
-2. 「CSVから登録」を押下"	「セッションがタイムアウトしました。もう一度やり直してください。」が表示され、一覧画面に留まること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-024	IT-22	必須バリデーション	P1	分割: ファイル未添付POSTでアップロード失敗メッセージ	管理者ログイン済／SEED-M04-23-ADMIN	import_file 未指定	"1. ファイル未添付で分割CSV登録をPOSTする（直POST）"	「CSVファイルのアップロードに失敗しました」が表示され、一覧画面に留まること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-025	IT-22	その他のバリデーション	P2	分割: 在庫区分が1/2以外のPOSTでアップロード失敗メッセージ	管理者ログイン済／SEED-M04-23-ADMIN	inventory_category=99（1/2以外）	"1. 在庫区分を1/2以外にして分割CSV登録をPOSTする（直POST）"	「CSVファイルのアップロードに失敗しました」が表示され、一覧画面に留まること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-026	IT-22	その他のバリデーション	P2	分割: 店舗未解決POSTでアップロード失敗メッセージ	管理者ログイン済／SEED-M04-23-ADMIN	store=存在しないID（解決不可）	"1. 店舗を存在しないIDにして分割CSV登録をPOSTする（直POST）"	「CSVファイルのアップロードに失敗しました」が表示され、一覧画面に留まること（検証順序#3 店舗解決不可）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-028	IT-22	その他のバリデーション	P2	分割: 非CSV(画像等)ファイル取込でエラー／アップロード失敗	管理者ログイン済／SEED-M04-23-ADMIN	CSV以外のファイル（例: PNG）	"1. 分割CSV登録モーダルでCSV以外のファイルを添付し送信（必要に応じ直POST）"	フォーマット不一致またはアップロード失敗のエラーが表示され、登録されず一覧画面に留まること（設計「csv以外のファイルはエラー」。実装はMIME未検証の可能性＝不具合候補#4で検出見込み・要実機）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-030	IT-22	その他のバリデーション	P1	結合: 列数/ヘッダ不一致CSV取込でエラー表示・一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	必須5列でないCSV	"1. 結合CSV登録モーダルで不正CSVを添付し送信"	エラーメッセージが表示され、成功メッセージは出ず、一覧画面に留まること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-035	IT-22	必須バリデーション	P1	結合: 必須ヘッダ欠落CSV取込でエラー表示・一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	必須ヘッダ「結合元在庫数」欠落のCSV	"1. 結合CSV登録モーダルでヘッダ欠落CSVを添付し送信"	エラーメッセージが表示され、成功メッセージは出ず、一覧画面に留まること（分割021と対の結合側異常系）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-029	IT-22	その他のバリデーション	P3	分割/結合: 登録上限(2,000件)超のCSV取込で中断・エラー	管理者ログイン済／SEED-M04-23-ADMIN	2,001行のCSV	"1. 2,000件を超えるCSVを添付し送信"	取込が中断されエラーが表示され、全件登録されないこと（MAX_ROWS=2000。上限値は性能試験で確定＝手動/性能依存・大容量CSV要）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-034	IT-22	数値バリデーション	P1	結合: 数値不正行(結合数0)取込でエラー表示・全件ロールバック	管理者ログイン済／SEED-M04-23-ADMIN	結合数=0 を含むCSV（ヘッダはExcel正典表記）	"1. 結合CSV登録モーダルで数値不正CSVを添付し送信"	エラーメッセージが表示され、成功メッセージは出ず、一覧画面に留まること（分割022と対の結合側異常系）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-031	IT-15	CSRF	P1	結合: CSRFトークン不正POSTでセッションタイムアウト表示・一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	不正なCSRFトークン	"1. 結合CSV登録フォームのCSRFトークンを不正値に書き換え送信"	「セッションがタイムアウトしました。もう一度やり直してください。」が表示され、一覧画面に留まること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-032	IT-22	必須バリデーション	P2	結合: ファイル未添付POSTでアップロード失敗メッセージ	管理者ログイン済／SEED-M04-23-ADMIN	import_file 未指定	"1. ファイル未添付で結合CSV登録をPOSTする（直POST）"	「CSVファイルのアップロードに失敗しました」が表示され、一覧画面に留まること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-033	IT-22	その他のバリデーション	P2	結合: 在庫区分が1未満のPOSTでアップロード失敗メッセージ	管理者ログイン済／SEED-M04-23-ADMIN	inventory_category=0	"1. 在庫区分を1未満にして結合CSV登録をPOSTする（直POST）"	「CSVファイルのアップロードに失敗しました」が表示され、一覧画面に留まること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-040	IT-26	登録内容	P1	分割: 正常CSV取込で分割登録＋承認申請の成功メッセージ表示	管理者ログイン済／SEED-M04-23-SPLIT-OK	分割元/分割先が実在する正常な分割CSV	"1. 分割CSV登録モーダルで正常CSVを添付し送信"	「（件数）件の分割を登録し、承認申請まで進めました。」が表示され、一覧画面へ遷移すること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-041	IT-26	登録内容	P1	結合: 正常CSV取込で結合登録＋欠品入力遷移の成功メッセージ表示	管理者ログイン済／SEED-M04-23-JOIN-OK	結合先/結合元が実在する正常な結合CSV	"1. 結合CSV登録モーダルで正常CSVを添付し送信"	「（件数）件の結合を登録し、欠品入力まで進めました。」が表示され、一覧画面へ遷移すること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-050	IT-13	URL直接アクセス	P2	未ログインで分割CSV雛形URL直接アクセスで管理ログインへ誘導	未ログイン	—	"1. /%admin%/product/stock/split-join/split-csv-template へ直接GET"	管理ログイン画面へ誘導されること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-051	IT-13	URL直接アクセス	P2	未ログインで分割CSV登録POSTで管理ログインへ誘導	未ログイン	—	"1. /%admin%/product/stock/split-join/list-split-csv-import へ未ログインでPOST"	管理ログイン画面へ誘導されること（取込されない）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-052	IT-13	URL直接アクセス	P2	未ログインで結合CSV雛形URL直接アクセスで管理ログインへ誘導	未ログイン	—	"1. /%admin%/product/stock/split-join/join-csv-template へ直接GET"	管理ログイン画面へ誘導されること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-053	IT-15	未認証	P2	未ログインで承認通知先メンバー取得URLで管理ログインへ誘導	未ログイン	—	"1. /%admin%/product/stock/split-join/approval-members?store_id=1 へ直接GET"	管理ログイン画面へ誘導されること。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-054	IT-13	URL直接アクセス	P2	未ログインで結合CSV登録POSTで管理ログインへ誘導	未ログイン	—	"1. /%admin%/product/stock/split-join/list-join-csv-import へ未ログインでPOST"	管理ログイン画面へ誘導されること（取込されない。分割051と対の結合側異常系）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-060	IT-15	対象データ	P2	承認通知先メンバー取得が application/json をHTTP200で返す	管理者ログイン済／SEED-M04-23-ADMIN	GET approval-members?store_id=1	"1. 承認通知先メンバー取得URLへGETする"	HTTP200かつ Content-Type が application/json であること（分割CSV登録モーダル用に承認権限メンバーをJSONで返す）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-061	IT-15	対象データ	P3	承認通知先メンバー取得が編集不可店舗のstore_idで権限外応答（対象メンバー無し）を返す	管理者ログイン済／SEED-M04-23-NOEDIT-STORE	GET approval-members?store_id=（編集不可店舗）	"1. 編集権限のない店舗IDで承認通知先メンバー取得URLへGETする"	承認権限メンバーが返らない（権限外＝対象データ無し）こと（編集可能店舗 M11-03 に基づく権限制御。編集不可店舗のseedが必要＝要実機/手動。HTTPステータスの厳密値はオラクル化しない）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-070	IT-22	その他のバリデーション	P3	取込処理の例外発生時に取込エラーメッセージを表示し一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	取込中に例外を誘発する条件	"1. 取込処理で例外が発生する条件でCSVを取り込む"	取込エラーメッセージが表示され一覧画面に留まること（検証順序#6 例外時 admin.common.csv_import_error。例外誘発条件の構築が必要＝手動/要確認。固有文言はオラクル化しない）。
-m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-071	IT-26	登録内容	P3	取込エラー後にモーダル選択内容がリセットされ一覧の状態が維持される	管理者ログイン済／SEED-M04-23-ADMIN	不正CSV	"1. 不正CSVで分割CSV登録を送信しエラー後の一覧を確認する"	エラー後はリダイレクトでモーダルの選択内容がリセットされ、一覧の検索条件・状態が維持されること（基本設計「エラー時はモーダル選択内容リセット」。間接観測＝手動/間接）。
+2. 「CSVから登録」を押下"	「セッションがタイムアウトしました。もう一度やり直してください。」が表示され、一覧画面に留まること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-024	IT-22	必須バリデーション	P1	分割: ファイル未添付POSTでアップロード失敗メッセージ	管理者ログイン済／SEED-M04-23-ADMIN	import_file 未指定	1. ファイル未添付で分割CSV登録をPOSTする（直POST）	「CSVファイルのアップロードに失敗しました」が表示され、一覧画面に留まること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-025	IT-22	その他のバリデーション	P2	分割: 在庫区分が1/2以外のPOSTでアップロード失敗メッセージ	管理者ログイン済／SEED-M04-23-ADMIN	inventory_category=99（1/2以外）	1. 在庫区分を1/2以外にして分割CSV登録をPOSTする（直POST）	「CSVファイルのアップロードに失敗しました」が表示され、一覧画面に留まること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-026	IT-22	その他のバリデーション	P2	分割: 店舗未解決POSTでアップロード失敗メッセージ	管理者ログイン済／SEED-M04-23-ADMIN	store=存在しないID（解決不可）	1. 店舗を存在しないIDにして分割CSV登録をPOSTする（直POST）	「CSVファイルのアップロードに失敗しました」が表示され、一覧画面に留まること（検証順序#3 店舗解決不可）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-028	IT-22	その他のバリデーション	P2	分割: 非CSV(画像等)ファイル取込でエラー／アップロード失敗	管理者ログイン済／SEED-M04-23-ADMIN	CSV以外のファイル（例: PNG）	1. 分割CSV登録モーダルでCSV以外のファイルを添付し送信（必要に応じ直POST）	フォーマット不一致またはアップロード失敗のエラーが表示され、登録されず一覧画面に留まること（設計「csv以外のファイルはエラー」。実装はMIME未検証の可能性＝不具合候補#4で検出見込み・要実機）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-030	IT-22	その他のバリデーション	P1	結合: 列数/ヘッダ不一致CSV取込でエラー表示・一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	必須5列でないCSV	1. 結合CSV登録モーダルで不正CSVを添付し送信	エラーメッセージが表示され、成功メッセージは出ず、一覧画面に留まること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-035	IT-22	必須バリデーション	P1	結合: 必須ヘッダ欠落CSV取込でエラー表示・一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	必須ヘッダ「結合元在庫数」欠落のCSV	1. 結合CSV登録モーダルでヘッダ欠落CSVを添付し送信	エラーメッセージが表示され、成功メッセージは出ず、一覧画面に留まること（分割021と対の結合側異常系）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-029	IT-22	その他のバリデーション	P3	分割/結合: 登録上限(2,000件)超のCSV取込で中断・エラー	管理者ログイン済／SEED-M04-23-ADMIN	2,001行のCSV	1. 2,000件を超えるCSVを添付し送信	取込が中断されエラーが表示され、全件登録されないこと（MAX_ROWS=2000。上限値は性能試験で確定＝手動/性能依存・大容量CSV要）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-034	IT-22	数値バリデーション	P1	結合: 数値不正行(結合数0)取込でエラー表示・全件ロールバック	管理者ログイン済／SEED-M04-23-ADMIN	結合数=0 を含むCSV（ヘッダはExcel正典表記）	1. 結合CSV登録モーダルで数値不正CSVを添付し送信	エラーメッセージが表示され、成功メッセージは出ず、一覧画面に留まること（分割022と対の結合側異常系）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-031	IT-15	CSRF	P1	結合: CSRFトークン不正POSTでセッションタイムアウト表示・一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	不正なCSRFトークン	1. 結合CSV登録フォームのCSRFトークンを不正値に書き換え送信	「セッションがタイムアウトしました。もう一度やり直してください。」が表示され、一覧画面に留まること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-032	IT-22	必須バリデーション	P2	結合: ファイル未添付POSTでアップロード失敗メッセージ	管理者ログイン済／SEED-M04-23-ADMIN	import_file 未指定	1. ファイル未添付で結合CSV登録をPOSTする（直POST）	「CSVファイルのアップロードに失敗しました」が表示され、一覧画面に留まること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-033	IT-22	その他のバリデーション	P2	結合: 在庫区分が1未満のPOSTでアップロード失敗メッセージ	管理者ログイン済／SEED-M04-23-ADMIN	inventory_category=0	1. 在庫区分を1未満にして結合CSV登録をPOSTする（直POST）	「CSVファイルのアップロードに失敗しました」が表示され、一覧画面に留まること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-040	IT-26	登録内容	P1	分割: 正常CSV取込で分割登録＋承認申請の成功メッセージ表示	管理者ログイン済／SEED-M04-23-SPLIT-OK	分割元/分割先が実在する正常な分割CSV	1. 分割CSV登録モーダルで正常CSVを添付し送信	「（件数）件の分割を登録し、承認申請まで進めました。」が表示され、一覧画面へ遷移すること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-041	IT-26	登録内容	P1	結合: 正常CSV取込で結合登録＋欠品入力遷移の成功メッセージ表示	管理者ログイン済／SEED-M04-23-JOIN-OK	結合先/結合元が実在する正常な結合CSV	1. 結合CSV登録モーダルで正常CSVを添付し送信	「（件数）件の結合を登録し、欠品入力まで進めました。」が表示され、一覧画面へ遷移すること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-050	IT-13	URL直接アクセス	P2	未ログインで分割CSV雛形URL直接アクセスで管理ログインへ誘導	未ログイン	—	1. /%admin%/product/stock/split-join/split-csv-template へ直接GET	管理ログイン画面へ誘導されること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-051	IT-13	URL直接アクセス	P2	未ログインで分割CSV登録POSTで管理ログインへ誘導	未ログイン	—	1. /%admin%/product/stock/split-join/list-split-csv-import へ未ログインでPOST	管理ログイン画面へ誘導されること（取込されない）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-052	IT-13	URL直接アクセス	P2	未ログインで結合CSV雛形URL直接アクセスで管理ログインへ誘導	未ログイン	—	1. /%admin%/product/stock/split-join/join-csv-template へ直接GET	管理ログイン画面へ誘導されること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-053	IT-15	未認証	P2	未ログインで承認通知先メンバー取得URLで管理ログインへ誘導	未ログイン	—	1. /%admin%/product/stock/split-join/approval-members?store_id=1 へ直接GET	管理ログイン画面へ誘導されること。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-054	IT-13	URL直接アクセス	P2	未ログインで結合CSV登録POSTで管理ログインへ誘導	未ログイン	—	1. /%admin%/product/stock/split-join/list-join-csv-import へ未ログインでPOST	管理ログイン画面へ誘導されること（取込されない。分割051と対の結合側異常系）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-060	IT-15	対象データ	P2	承認通知先メンバー取得が application/json をHTTP200で返す	管理者ログイン済／SEED-M04-23-ADMIN	GET approval-members?store_id=1	1. 承認通知先メンバー取得URLへGETする	HTTP200かつ Content-Type が application/json であること（分割CSV登録モーダル用に承認権限メンバーをJSONで返す）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-061	IT-15	対象データ	P3	承認通知先メンバー取得が編集不可店舗のstore_idで権限外応答（対象メンバー無し）を返す	管理者ログイン済／SEED-M04-23-NOEDIT-STORE	GET approval-members?store_id=（編集不可店舗）	1. 編集権限のない店舗IDで承認通知先メンバー取得URLへGETする	承認権限メンバーが返らない（権限外＝対象データ無し）こと（編集可能店舗 M11-03 に基づく権限制御。編集不可店舗のseedが必要＝要実機/手動。HTTPステータスの厳密値はオラクル化しない）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-070	IT-22	その他のバリデーション	P3	取込処理の例外発生時に取込エラーメッセージを表示し一覧へ	管理者ログイン済／SEED-M04-23-ADMIN	取込中に例外を誘発する条件	1. 取込処理で例外が発生する条件でCSVを取り込む	取込エラーメッセージが表示され一覧画面に留まること（検証順序#6 例外時 admin.common.csv_import_error。例外誘発条件の構築が必要＝手動/要確認。固有文言はオラクル化しない）。				
+m04-23_admin_stock_stock_split_join_csv_import（在庫分割結合CSV登録）	E2E-M04-23-071	IT-26	登録内容	P3	取込エラー後にモーダル選択内容がリセットされ一覧の状態が維持される	管理者ログイン済／SEED-M04-23-ADMIN	不正CSV	1. 不正CSVで分割CSV登録を送信しエラー後の一覧を確認する	エラー後はリダイレクトでモーダルの選択内容がリセットされ、一覧の検索条件・状態が維持されること（基本設計「エラー時はモーダル選択内容リセット」。間接観測＝手動/間接）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象セレクタ・仕様根拠・元ITケースID（TSV外）

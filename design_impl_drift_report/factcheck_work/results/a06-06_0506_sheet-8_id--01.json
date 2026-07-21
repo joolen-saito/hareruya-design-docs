@@ -1,0 +1,41 @@
+{
+  "chunkId": "a06-06_0506_sheet-8_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-06_0506_sheet-8_id.json#a06-06_0506_sheet-8_id-conformance-7efe186e5261",
+      "functionId": "a06-06_0506_sheet-8_id",
+      "featureNo": "A06-06",
+      "title": "A06-06 カード詳細IDから買取用商品情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計はエンドポイントを /api/buying/{detailId}.json と定義するが、実装は /api/v1 版数プレフィックス付きの別URLで公開している。",
+      "reason": "設計HTML sheet-8 の1958行目に『/api/buying/{detailId}.json』、サンプルURL『https://stg-api.hareruyamtg.com/api/buying/173634.json』が明記され、v1等の版数プレフィックスへの読み替え指定は設計側に無い。実装 BuyingController.php:46 のRoute属性は '/%eccube_api_v1_route%/buying/{cardDetailId}.json' (name=api_buying) で、app/config/eccube/packages/eccube.yaml:6 の env(ECCUBE_API_V1_ROUTE) 既定値が 'api/v1' のため実際の既定パスは /api/v1/buying/{cardDetailId}.json となる。設計の /api/buying と実装の /api/v1/buying はパスプレフィックスが一致しない。",
+      "designEvidence": {"label": "設計要求(エンドポイントURL)", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1958, "end": 1958, "contains": ["/api/buying/{detailId}.json"]},
+      "implEvidence": [
+        {"label": "実装ルート定義", "note": "版数プレフィックス付きURL", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php", "start": 46, "end": 46, "contains": ["/%eccube_api_v1_route%/buying/{cardDetailId}.json", "api_buying"]},
+        {"label": "プレフィックス既定値", "note": "ECCUBE_API_V1_ROUTE 既定 api/v1", "path": "ec-cube-enterprise/app/config/eccube/packages/eccube.yaml", "start": 6, "end": 6, "contains": ["env(ECCUBE_API_V1_ROUTE): 'api/v1'"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-06_0506_sheet-8_id.json#a06-06_0506_sheet-8_id-conformance-a6bcf8a2863f",
+      "functionId": "a06-06_0506_sheet-8_id",
+      "featureNo": "A06-06",
+      "title": "A06-06 カード詳細IDから買取用商品情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は conditionClasses 配下のキーを productCode（商品コード）と定義するが、実装は同値を productClassCode というキーで返す。",
+      "reason": "設計HTML sheet-8 の2024行目のレスポンス項目表に『productCode 文字列 商品コード』が定義され、サンプルJSON(2044行)でも conditionClasses 配下に \"productCode\":\"TDM00233ENNM\" が示される。実装 BuyingCardsFormatter.php:115 は conditionClasses 配下に 'productClassCode' => $dto->productClassCode を出力しており、外部JSONキーは productClassCode。MTGBuyer サービス配下および MtbCardRepository を productCode で再検索したが、当該APIで productCode キーへ変換する実装は存在しない（rg で0件）。値の由来は商品規格コードだが外部契約の項目名が設計と一致しない。",
+      "designEvidence": {"label": "設計要求(レスポンス項目名)", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 2024, "end": 2024, "contains": ["productCode", "商品コード"]},
+      "implEvidence": [
+        {"label": "実装Formatter出力キー", "note": "productClassCode で返却", "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php", "start": 115, "end": 115, "contains": ["'productClassCode' => $dto->productClassCode,"]}
+      ],
+      "absenceCommands": [
+        "rg -n 'productCode' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/ /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/MtbCardRepository.php"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "id": "a06-04-otc-buy-order-free-comment-extensionless-route-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a06-04_0506_sheet-6_sheet.json",
+  "sourceFindingId": "a06-04_0506_sheet-6_sheet-conformance-c3ac198f9319",
+  "classification": "API店頭買取管理",
+  "feature": "店頭買取情報コメント更新",
+  "issueCategory": "実装漏れ",
+  "issue": "店頭買取情報コメント更新の拡張子なしPUT /admin/otcBuyOrder/{id}/freeCommentが実装されていない",
+  "designBook": "0506_基本設計仕様書(API_店頭買取管理).xlsx",
+  "reproSteps": [
+    "JWT認証済みの状態で、PUT http://localhost:8080/api/v1/admin/otcBuyOrder/{id}/freeComment に free_comment をフォーム値で送信する",
+    "同じ受注ID・同じリクエストで PUT http://localhost:8080/api/v1/admin/otcBuyOrder/{id}/freeComment.json は Controller に到達することを確認する",
+    "ec-cube-enterprise の route 定義と pf-api の routes.yaml を比較し、拡張子なし別名が enterprise 側に存在するか確認する"
+  ],
+  "expected": [
+    "店頭買取受注コメント更新は、PUT /admin/otcBuyOrder/{id}/freeComment と PUT /admin/otcBuyOrder/{id}/freeComment.json の両方を同一処理として提供する",
+    "拡張子なし別名でも、受注IDの店頭買取受注のフリーコメントと更新担当者を保存し、成功時は code: 200 のJSONを返す"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、店頭買取情報コメント更新APIの route が `/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json` のみとして定義されている。`%eccube_api_v1_route%` の既定値は `api/v1` のため実URLは `/api/v1/admin/otcBuyOrder/{id}/freeComment.json` になるが、同じ `updateFreeComment()` に到達する `/api/v1/admin/otcBuyOrder/{id}/freeComment` の属性 route や YAML route は確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は freeComment.json の属性Routeだけを定義する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php",
+          "start": 153,
+          "end": 184,
+          "language": "php",
+          "contains": [
+            "フリーコメントの更新",
+            "#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json'",
+            "public function updateFreeComment",
+            "$this->updateFreeCommentAction->handle"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise のAPI v1 prefix は api/v1",
+          "path": "ec-cube-enterprise/app/config/eccube/packages/eccube.yaml",
+          "start": 1,
+          "end": 6,
+          "language": "yaml",
+          "contains": [
+            "env(ECCUBE_API_V1_ROUTE): 'api/v1'"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の更新処理本体は freeComment を保存するが route alias は持たない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateFreeCommentAction.php",
+          "start": 31,
+          "end": 45,
+          "language": "php",
+          "contains": [
+            "public function handle(UpdateFreeCommentInput $input): void",
+            "$input->OtcBuyOrder->setFreeComment($input->freeComment)",
+            "->setMember($input->Member)",
+            "$this->entityManager->flush()"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、`/admin/otcBuyOrder/{id}/freeComment.json` と `/admin/otcBuyOrder/{id}/freeComment` の2本をどちらも `OtcBuyOrderFreeCommentController::putAction` に向けている。`putAction()` は認証、受注取得、`free_comment` 必須チェック、フリーコメントと更新担当者の保存、code 200 応答を行うため、拡張子なし別名も `.json` 付きと同じ処理になる。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は .json と拡張子なしを同一controller/actionへ定義する",
+          "path": "pf-api/config/routes.yaml",
+          "start": 41,
+          "end": 48,
+          "language": "yaml",
+          "contains": [
+            "put_otcbuy_free_comment_json:",
+            "path: /admin/otcBuyOrder/{id}/freeComment.json",
+            "controller: App\\Controller\\Admin\\OtcBuyOrderFreeCommentController::putAction",
+            "put_otcbuy_free_comment:",
+            "path: /admin/otcBuyOrder/{id}/freeComment"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api の同一putActionはコメントと更新担当者を保存する",
+          "path": "pf-api/src/Controller/Admin/OtcBuyOrderFreeCommentController.php",
+          "start": 19,
+          "end": 51,
+          "language": "php",
+          "contains": [
+            "public function putAction(Request $request, int $id) : Response",
+            "$this->authAdminToken($request)",
+            "setFreeComment($request->get('free_comment'))",
+            "->setMember($this->member)",
+            "\"code\" => Response::HTTP_OK"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "基本設計は店頭買取情報コメント更新APIのエンドポイントと現行踏襲を示す",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 1587,
+      "end": 1621,
+      "language": "html",
+      "contains": [
+        "店頭買取情報コメント更新",
+        "/api/admin/otcBuyOrder/{id}/freeComment.json",
+        "現行踏襲",
+        "入力されたコメントをECCUBE側のフリーコメントに登録する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計は pf-api のルート定義を正とし、拡張子なしと .json を同一処理として明記する",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 1667,
+      "end": 1699,
+      "language": "html",
+      "contains": [
+        "確認値はpf-apiのコメント更新処理、ルート定義",
+        "PUT /admin/otcBuyOrder/{id}/freeComment",
+        "PUT /admin/otcBuyOrder/{id}/freeComment.json",
+        "上と同一処理"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は freeComment.json route のみを定義する",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php",
+      "start": 153,
+      "end": 184,
+      "language": "php",
+      "contains": [
+        "#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json'",
+        "public function updateFreeComment",
+        "$raw = $request->request->get('free_comment')"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "API v1 prefix の既定値は api/v1",
+      "path": "ec-cube-enterprise/app/config/eccube/packages/eccube.yaml",
+      "start": 1,
+      "end": 6,
+      "language": "yaml",
+      "contains": [
+        "env(ECCUBE_API_V1_ROUTE): 'api/v1'"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は .json と拡張子なしの両方を同じ putAction に向ける",
+      "path": "pf-api/config/routes.yaml",
+      "start": 41,
+      "end": 48,
+      "language": "yaml",
+      "contains": [
+        "path: /admin/otcBuyOrder/{id}/freeComment.json",
+        "path: /admin/otcBuyOrder/{id}/freeComment",
+        "App\\Controller\\Admin\\OtcBuyOrderFreeCommentController::putAction"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "同一 putAction は free_comment を保存して code 200 を返す",
+      "path": "pf-api/src/Controller/Admin/OtcBuyOrderFreeCommentController.php",
+      "start": 19,
+      "end": 51,
+      "language": "php",
+      "contains": [
+        "setFreeComment($request->get('free_comment'))",
+        "->setMember($this->member)",
+        "\"code\" => Response::HTTP_OK"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"A06-04|freeComment|otcBuyOrder/.*/freeComment|店頭買取情報コメント更新|コメント更新|/admin/otcBuyOrder\" excel_to_html/output/0506_基本設計仕様書\\(API_店頭買取管理\\).html ../pf-api ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/app/config/eccube --glob '!vendor/**' --glob '!var/**'",
+      "rg -n \"otcBuyOrder/\\{id\\}/freeComment|freeComment\\.json|api_admin_otc_buy_order_update_free_comment|freeComment\" ../ec-cube-enterprise/src ../ec-cube-enterprise/app/config ../ec-cube-enterprise/tests --glob '!var/**'",
+      "rg -n \"put_otcbuy_free_comment|/admin/otcBuyOrder/\\{id\\}/freeComment|OtcBuyOrderFreeCommentController\" ../pf-api/config/routes.yaml ../pf-api/src/Controller/Admin/OtcBuyOrderFreeCommentController.php",
+      "rg -n \"eccube_api_v1_route|ECCUBE_API_V1_ROUTE|api/v1\" ../ec-cube-enterprise/app/config/eccube/packages/eccube.yaml ../ec-cube-enterprise/app/config/eccube/routes.yaml"
+    ],
+    "review": "gpt-5.5 high reviewer VERDICT: VERIFIED. 設計は拡張子なしと .json を同一処理として明記し、pf-api は同一 action へ2本 route を定義する。enterprise は .json route のみで、拡張子なし別名・YAML追加route・代替controllerは見当たらない。/api/admin と /api/v1/admin の差は別論点として扱う。A06-05/A06-13 は同じ原因だが別機能の個別項目として扱うのが妥当。"
+  }
+}

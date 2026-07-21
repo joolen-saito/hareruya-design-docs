@@ -1,0 +1,188 @@
+{
+  "id": "f06-16-deck-entry-edit-shop-label-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-16_0306_sheet-13_sheet.json",
+  "sourceFindingId": "f06-16_0306_sheet-13_sheet-conformance-6b562a2a4205",
+  "classification": "フロント会員",
+  "feature": "大会デッキ登録編集",
+  "issueCategory": "実装漏れ",
+  "issue": "大会デッキ登録編集画面に開催店舗が表示されない",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "デッキ登録可能なイベントを持つ会員で `http://localhost:8080/ja/mypage/deckentry/{eventDetailId}/edit` を表示する",
+    "大会情報エリアの大会名、開催日時、プレイヤー名付近を確認する",
+    "開催店舗のラベルと店舗名が表示されるか確認する"
+  ],
+  "expected": [
+    "大会デッキ登録編集画面に No.5「開催店舗」をラベルとして表示する",
+    "開催店舗には対象イベントの店舗名を表示する",
+    "本項目はカスタマイズ対応・新規追加として表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `deck_entry_edit.twig` は大会情報エリアで大会名、開催日時、お名前だけを描画しており、開催店舗の `<dt>` / `<dd>` が存在しない。`DeckEntryController::edit()` も `EventDetail`、`Player`、`Customer`、`Formats`、`deckByFormats`、`MyDecks` を返すだけで、店舗名表示用の `shopName` などを view へ渡していない。一方、同じ enterprise のイベント詳細画面 `Event/detail.twig` では `Event.BaseInfo` から `shopName` を作って店舗名を表示しているため、店舗名の取得経路自体はあるがデッキ編集画面には移植されていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise デッキ編集画面の大会情報は開催日時とお名前のみ",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+          "start": 164,
+          "end": 176,
+          "language": "twig",
+          "contains": [
+            "<h2 class=\"p-hareruya-deckentry-edit__event-title\">{{ EventDetail.event.nameJp }}</h2>",
+            "<dt class=\"p-hareruya-deckentry-edit__event-label\">開催日時：</dt>",
+            "<dt class=\"p-hareruya-deckentry-edit__event-label\">お名前：</dt>"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise デッキ編集Controllerは店舗名view変数を返さない",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+          "start": 60,
+          "end": 92,
+          "language": "php",
+          "contains": [
+            "$EventDetail = $this->eventDetailRepository->find($eventDetailId);",
+            "'EventDetail' => $EventDetail,",
+            "'Player' => $Player,",
+            "'Customer' => $Customer,",
+            "'MyDecks' => $MyDecks"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise イベント詳細画面には店舗名表示経路がある",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig",
+          "start": 16,
+          "end": 23,
+          "language": "twig",
+          "contains": [
+            "{% set Shop = Event.BaseInfo %}",
+            "{% set shopName = Shop ? (isEn and Shop.shopNameEng ? Shop.shopNameEng : Shop.shopName) : '' %}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise イベント詳細画面はshopNameを表示",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig",
+          "start": 92,
+          "end": 98,
+          "language": "twig",
+          "contains": [
+            "{% if shopName %}",
+            "{{ 'front.event.detail.info.shop'|trans }}",
+            "<dd class=\"p-hareruya-event-detail__info-value\">{{ shopName }}</dd>"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の大会デッキ登録編集画面も、大会名、開催日時、DCIナンバー、お名前を表示するだけで開催店舗は表示していない。設計HTMLは「現行機能をベースに以下カスタマイズを行う」としたうえで「開催店舗を表示する」を追加しているため、これはベース踏襲ではなく追加カスタマイズ要求の未実装として確認した。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 デッキ編集画面は開催店舗を表示しない",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig",
+          "start": 40,
+          "end": 44,
+          "language": "twig",
+          "contains": [
+            "<h2 class=\"tournamentName\">{{ eventDetail.event.nameJp }}(",
+            "<p class=\"tournamentDate\"",
+            "<p class=\"tournamentDciNumber\">DCIナンバー",
+            "<p class=\"tournamentDciName\">お名前"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ControllerはeventDetail等を渡す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/DeckentryController.php",
+          "start": 124,
+          "end": 139,
+          "language": "php",
+          "contains": [
+            "return $app->render('Mypage/deckentry.twig', [",
+            "'eventDetail' => $eventDetail,",
+            "'player' => $player"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "カスタマイズ説明で開催店舗表示を追加要求",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 4262,
+      "end": 4270,
+      "language": "html",
+      "contains": [
+        "現行機能をベースに以下カスタマイズを行う",
+        "開催店舗を表示する",
+        "カスタマイズ要件に記載の内容以外は現行踏襲とする"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "画面部品 No.5 開催店舗",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 4304,
+      "end": 4309,
+      "language": "html",
+      "contains": [
+        "id=\"item-sheet-13-5\"",
+        "<td>開催店舗</td><td>ラベル</td>",
+        "※カスタマイズ対応、開催店舗を表示する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "デッキ編集画面の大会情報には開催店舗がない",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+      "start": 164,
+      "end": 176,
+      "language": "twig",
+      "contains": [
+        "開催日時：",
+        "お名前："
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "イベント詳細画面ではEvent.BaseInfoから店舗名を表示できる",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig",
+      "start": 16,
+      "end": 23,
+      "language": "twig",
+      "contains": [
+        "{% set Shop = Event.BaseInfo %}",
+        "shopName"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3のデッキ編集画面も開催店舗表示なし",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig",
+      "start": 40,
+      "end": 44,
+      "language": "twig",
+      "contains": [
+        "tournamentName",
+        "tournamentDate",
+        "tournamentDciName"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-16_0306_sheet-13_sheet.json#f06-16_0306_sheet-13_sheet-conformance-6b562a2a4205'",
+      "rg -n \"開催店舗|shopName|BaseInfo|shopNameEng|p-hareruya-deckentry-edit__event-section|EventDetail.event.nameJp|開催日時：|お名前：\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig pf-eccube3/app/Plugin/HareruyaEc/Controller/DeckentryController.php",
+      "rg -n \"item-sheet-13-5|開催店舗を表示する|No\\.5 開催店舗|開催店舗\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '4262,4272p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '4304,4309p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig | sed -n '160,176p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php | sed -n '55,92p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig | sed -n '16,23p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Event/detail.twig | sed -n '91,98p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig | sed -n '34,45p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/DeckentryController.php | sed -n '120,160p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLのカスタマイズ説明/画面部品 No.5、ec-cube-enterprise の DeckEntryController/deck_entry_edit.twig/Event/detail.twig、pf-eccube3 の DeckentryController/deckentry.twig を再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

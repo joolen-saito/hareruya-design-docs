@@ -1,0 +1,39 @@
+{
+  "chunkId": "b02-02_0404_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-02_0404_sheet-4_sheet.json#b02-02_0404_sheet-4_sheet-conformance-58e634881784",
+      "functionId": "b02-02_0404_sheet-4_sheet",
+      "featureNo": "B02-02",
+      "title": "B02-02 入荷通知キャンセル",
+      "dimension": "⑦要求網羅・未実装",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "medium",
+      "summary": "設計が★カスタマイズ項目として求める『入荷通知リクエストデータに商品IDを追加』が、dtb_product_request(DtbProductRequest) に product_id 列/Product 関連として実装されていない。",
+      "reason": "設計HTML line 996 は処理概要の★（カスタマイズ）項目として『入荷通知リクエストデータに「商品ID」を追加』を明示する。実装 src/Eccube/Entity/DtbProductRequest.php を確認すると、テーブル dtb_product_request の列は product_class_id(ProductClass 関連, L34-36)・player_id(L38-40)・create_date(L42-43)・deleted_at(L45-46) のみで、product_id 列も Product への ManyToOne 関連も存在しない(`rg product_id`/`targetEntity: Product::class` いずれもヒットなし)。app/DoctrineMigrations にも dtb_product_request へ product_id を追加する記述はない。埋め込み詳細設計(L1062-1064)自体もリバースで dtb_product_request は product_class_id・deleted_at のみと記載しており、商品へは product_class_id→dtb_product_class→dtb_product の結合で到達している(Repository::cancelRequestByProductStatus / deleteRequestByNonProduct の JOIN)。この結合は移行元から既存であり、★で新規追加要求された『リクエストデータへの商品ID項目追加』とは別物であるため、当該データ項目追加は未実装と判断した。なお商品単位の通知キャンセル『機能』自体は結合経由で成立しているため、指摘は追加要求された商品IDデータ項目の不在に限定する（confidence medium: 列追加要求か機能要求かの解釈余地あり）。",
+      "designEvidence": {
+        "label": "設計要求(★カスタマイズ項目)",
+        "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+        "start": 996,
+        "end": 996,
+        "contains": ["入荷通知リクエストデータに", "商品ID", "追加"]
+      },
+      "implEvidence": [
+        {
+          "label": "要求を満たさない最寄りの実装(Entity 定義)",
+          "note": "dtb_product_request の列は product_class_id/player_id/create_date/deleted_at のみ。product_id 列・Product 関連なし。",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/DtbProductRequest.php",
+          "start": 34,
+          "end": 46,
+          "contains": ["product_class_id", "player_id", "deleted_at"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -n 'product_id' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbProductRequest.php",
+        "rg -n 'targetEntity: Product::class' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbProductRequest.php",
+        "rg -rni 'product_request' /home/y-saito/Developments/ec-cube-enterprise/app/DoctrineMigrations | rg -i 'product_id'"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "chunkId": "a17-04_0517_sheet-6_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-04_0517_sheet-6_id.json#a17-04_0517_sheet-6_id-conformance-1921aa5b190e",
+      "functionId": "a17-04_0517_sheet-6_id",
+      "featureNo": "A17-04",
+      "title": "A17-04 商品IDに紐づく商品詳細の情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は商品IDと言語で商品詳細を絞り込む要求だが、実装は言語をLEFT JOIN条件に留め抽出条件は p.id と pc.id IS NOT NULL のみで、指定言語以外の商品規格も混入し得る。",
+      "reason": "設計(2049,2111)は『商品IDと言語で商品詳細を取得する』『指定言語に対応する商品詳細を返す』と明記。実装 findProductById の SQL(ProductRepository.php)は mtb_language を LEFT JOIN lang ON pc.language_id = lang.id AND lang.code = :languageCode とするのみで、WHERE は p.id = :productId AND pc.id IS NOT NULL だけ。lang.code による絞り込みが WHERE に無いため、指定言語に一致しない商品規格も抽出される。さらに応答 languageCode は COALESCE(lang.code, :languageCode) のため、非一致行は指定言語コードとして返り得る。ProductController は lang クエリを受けて findProductById に渡すのみで言語絞り込みは加えていない。別ルート・別メソッドでの絞り込みは確認できず、指摘は事実。",
+      "designEvidence": {"label":"設計要求（言語で絞り込み）","path":"hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html","start":2111,"end":2111,"contains":["指定言語に対応する商品詳細を返す","未指定時は日本語を返す"]},
+      "implEvidence": [
+        {"label":"抽出条件（言語絞り込み無し）","note":"WHERE は productId と pc.id IS NOT NULL のみ","path":"ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php","start":320,"end":322,"contains":["p.id = :productId","AND pc.id IS NOT NULL"]},
+        {"label":"言語はLEFT JOIN条件に留まる","path":"ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php","start":301,"end":301,"contains":["LEFT JOIN mtb_language lang ON pc.language_id = lang.id AND lang.code = :languageCode"]},
+        {"label":"応答言語コードの補完","path":"ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php","start":267,"end":267,"contains":["COALESCE(lang.code, :languageCode) AS languageCode"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-04_0517_sheet-6_id.json#a17-04_0517_sheet-6_id-conformance-66979b939116",
+      "functionId": "a17-04_0517_sheet-6_id",
+      "featureNo": "A17-04",
+      "title": "A17-04 商品IDに紐づく商品詳細の情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計の404失敗本文は {code, message}（\"Not Found\"）だが、実装は共通例外ハンドラ経由で {code, errors} を返す。",
+      "reason": "設計(2061,2125)は該当なし時 HTTP 404 で {code, message}（\"Not Found\"）を返すと明記。実装 ProductController::getProductDetailByProductId は該当なし時 line64 で NotFoundException('Not Found') を try ブロック外で throw する。この例外は ExceptionListener に伝播し、isAppApi() 分岐で line136-139 の JsonResponse(['code'=>$statusCode,'errors'=>$errors]) に変換される。404 の errors は match で [$exception->getMessage() ?: ...] = ['Not Found']。つまり本文キーは message ではなく errors。同コントローラの商品名検索メソッドは catch で {code, message} を返すが、詳細取得メソッドにはその個別 catch が無く共通ハンドラの {code, errors} になる。指摘は事実。",
+      "designEvidence": {"label":"設計要求（失敗本文形）","path":"hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html","start":2061,"end":2061,"contains":["{code, message}","Not Found"]},
+      "implEvidence": [
+        {"label":"try外でNotFoundExceptionをthrow","path":"ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php","start":60,"end":65,"contains":["throw new NotFoundException('Not Found')"]},
+        {"label":"共通ハンドラが{code, errors}に変換","note":"isAppApi分岐の応答生成","path":"ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php","start":136,"end":139,"contains":["'code' => $statusCode","'errors' => $errors"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-04_0517_sheet-6_id.json#a17-04_0517_sheet-6_id-conformance-6f2e28c2145d",
+      "functionId": "a17-04_0517_sheet-6_id",
+      "featureNo": "A17-04",
+      "title": "A17-04 商品IDに紐づく商品詳細の情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は card_detail.formats を array で返す要求だが、実装は STRING_AGG のカンマ区切り文字列をそのまま設定しており型が異なる。",
+      "reason": "設計(2059の型定義=array, 2086のサンプル=[\"スタンダード\"])は card_detail.formats を配列として示す。実装 SQL(ProductRepository.php:292)は STRING_AGG(DISTINCT fmt.name_en, ',') AS formats で文字列として取得し、ResultSetMapping も 'formats' を 'string' で addScalarResult。ProductDetailResponseBuilder::buildCardDetail(line139)は 'formats' => $detail['formats'] ?? '' と文字列をそのまま設定。配列化(explode/array_values等)は同ビルダ内に見当たらず、応答はカンマ区切り文字列となる。指摘は事実。",
+      "designEvidence": {"label":"設計要求（formatsはarray）","path":"hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html","start":2086,"end":2086,"contains":["\"formats\": [\"スタンダード\"]"]},
+      "implEvidence": [
+        {"label":"SQLで文字列連結取得","path":"ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php","start":292,"end":292,"contains":["STRING_AGG(DISTINCT fmt.name_en, ',') AS formats"]},
+        {"label":"ビルダで文字列のまま設定","path":"ec-cube-enterprise/src/Eccube/Service/App/ProductDetail/ProductDetailResponseBuilder.php","start":139,"end":139,"contains":["'formats' => $detail['formats'] ?? ''"]}
+      ]
+    }
+  ]
+}

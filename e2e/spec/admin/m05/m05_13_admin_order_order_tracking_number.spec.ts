@@ -85,9 +85,9 @@ test.describe(
       await lp.goto();
       await lp.login(ADMIN_USER, ADMIN_PASS);
       // ログイン成立後にログアウト（admin_logout）。以降は認証無効。
-      await page.goto(`/${ECCUBE_ADMIN_ROUTE}/logout`);
+      await page.goto(`/${ECCUBE_ADMIN_ROUTE}/logout`, { waitUntil: "domcontentloaded" });
       // 受注編集URLへ再アクセス→未認証としてログインへ誘導される（継続利用できない）。
-      await page.goto(`/${ECCUBE_ADMIN_ROUTE}/order/1/edit`);
+      await page.goto(`/${ECCUBE_ADMIN_ROUTE}/order/1/edit`, { waitUntil: "domcontentloaded" });
       await expect(page).toHaveURL(LOGIN_RE);
       await expect(page.locator("#login_id")).toBeVisible();
     });

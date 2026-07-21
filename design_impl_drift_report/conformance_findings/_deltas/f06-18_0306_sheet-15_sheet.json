@@ -1,0 +1,73 @@
+{
+  "functionId": "f06-18_0306_sheet-15_sheet",
+  "featureNo": "F06-18",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-15 (1-28 戻る／完了画面 2-2 戻る:『押下すると、ECTOP画面へ遷移する』)",
+      "designExpectation": "1-28『戻る』ボタン・完了画面 2-2『戻る』は押下するとECTOP画面（本店ECTOP＝url('homepage')）へ遷移する。",
+      "implRef": "src/Eccube/Resource/template/default/Mypage/change.twig:700 ; src/Eccube/Resource/template/default/Mypage/change_complete.twig:48",
+      "implementationActual": "change.twig:700 の戻るリンクは href=url('mypage')、change_complete.twig:48 の back_to_mypage も href=url('mypage') で、いずれもマイページTOPへ遷移する。ECTOP(homepage) への戻り導線は存在しない。",
+      "mismatchReason": "設計は 1-28/2-2 の戻る遷移先をECTOP画面(url('homepage'))と規定するが、両twigとも url('mypage') を指す。ChangeController・両twigを確認し homepage への戻り導線は不在。遷移先が設計と異なる実装違い。",
+      "comparisonRows": [
+        {"item": "1-28 戻る 遷移先", "design": "ECTOP画面 (url('homepage'))", "implementation": "url('mypage')", "mismatch": "マイページTOPへ遷移しECTOPへ遷移しない"},
+        {"item": "2-2 完了画面 戻る 遷移先", "design": "ECTOP画面 (url('homepage'))", "implementation": "url('mypage')", "mismatch": "マイページTOPへ遷移しECTOPへ遷移しない"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-15 (カスタマイズ説明『ブラックリストに…変更するを押下すると、会員情報更新エラー画面に遷移する』／業務ルール『本機能はフラッシュ・トーストを生成しない』)",
+      "designExpectation": "ブラックリスト該当値へ変更して変更するを押下すると専用の会員情報更新エラー画面へ遷移する。かつ本機能はフラッシュ・トーストを生成しない。",
+      "implRef": "src/Eccube/Controller/Front/Mypage/ChangeController.php:116-133",
+      "implementationActual": "ブラックリスト該当時 addFlash('error','front.mypage.change.error.blacklisted') を積み同一 change.twig(mypage_change) を再描画するのみ。専用の会員情報更新エラー画面へのルート/テンプレート(change_error/customer_update_error 相当)は不在。",
+      "mismatchReason": "設計は専用エラー画面への遷移かつフラッシュ非生成を規定するが、実装は画面遷移せずフラッシュ付き再描画する。ChangeController・change.twig・default_frame.twig を確認し会員情報変更用エラー画面は不在。遷移仕様とフラッシュ非生成方針の双方に反する。",
+      "comparisonRows": [
+        {"item": "ブラックリスト該当時の遷移", "design": "会員情報更新エラー画面へ遷移", "implementation": "同一編集画面を再描画", "mismatch": "専用エラー画面へ遷移しない"},
+        {"item": "エラー通知方式", "design": "フラッシュ・トーストを生成しない", "implementation": "addFlash('error',...) を生成", "mismatch": "フラッシュを生成している"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-15 (処理フロー『国・郵便番号・都道府県・住所が変更され…未確認へ戻す』／DBカラム『住所…addr01／addr02／addr03…住所系変更で本人確認ステータスを未確認化』)",
+      "designExpectation": "住所系（国・郵便番号・都道府県・住所）変更時に確認済み・簡易書留確認済みなら本人確認ステータスを未確認へ戻す。住所にはカスタマイズ追加の海外住所3カラム目(1-19 住所3/addr03)を含む。",
+      "implRef": "src/Eccube/Controller/Front/Mypage/ChangeController.php:139-143",
+      "implementationActual": "$isAddressChanged は country・郵便番号・pref・addr01・addr02 の変更のみで判定し addr03 を含めない。海外会員が addr03 のみ変更した場合、本人確認ステータスが未確認へ戻らない。",
+      "mismatchReason": "設計の住所系変更トリガーの『住所』には addr03(dtb_customer.addr03、既定配送先へ 164 行で反映される正規の住所項目)が含まれるが、$isAddressChanged の比較に addr03 が欠落。海外住所3のみ変更時に未確認化が発火しない業務ルールの部分的不充足。",
+      "comparisonRows": [
+        {"item": "未確認化トリガーの住所範囲", "design": "addr01/addr02/addr03 の変更", "implementation": "addr01/addr02 の変更のみ", "mismatch": "addr03 変更が判定対象外"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-15 (画面部品 1-18 住所(住所2) 必須◯)",
+      "designExpectation": "1-18 住所(住所2)は必須。未入力で変更するを押下すると必須入力エラーを表示する（海外住所表示時も3カラム構成で住所1・住所2を持つ）。",
+      "implRef": "src/Eccube/Form/Type/Front/EntryType.php:219-231",
+      "implementationActual": "POST_SUBMIT の住所検証は日本分岐で addr01・addr02 の空チェックを行うが、海外(else)分岐では addr01 の空チェックのみで addr02 の必須検証が無い。クライアント change.twig は海外欄でも addr02 に data-validation:required を付与する。",
+      "mismatchReason": "設計は住所2を必須と規定し海外表示時も住所1・住所2を持つ（住所3のみ任意）。共有フォーム EntryType の海外分岐(226-230)は addr01 のみ必須検証し addr02 を検証しないため、サーバ側で必須要件が担保されない。AddressType/EntryType を確認し他に addr02 必須制約は無い。",
+      "comparisonRows": [
+        {"item": "住所2(addr02) サーバ側必須検証（海外時）", "design": "必須（未入力でエラー）", "implementation": "検証なし（未入力で通過）", "mismatch": "海外時にサーバ側必須検証が欠落"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-15 (表示メッセージ『国と都道府県の組み合わせが不正である旨のエラー…国の項目直下…国にエラーを付す』／エラー処理『国・都道府県の不整合→国にエラーを付し再描画』)",
+      "designExpectation": "国と都道府県の組み合わせが不正（国が日本かつ都道府県が海外、または国が海外かつ都道府県が国内）のとき、フォーム送信後の検証で更新せず国の項目直下に組み合わせ不整合エラーを表示する。",
+      "implRef": "src/Eccube/Form/Type/Front/EntryType.php:197-207,219-231 (不在)",
+      "implementationActual": "海外(非Japan)時は pref を Pref::PREF_ABROAD へ強制上書き(EntryType.php:205)、日本時は pref===null の必須チェックのみ。国=日本かつ都道府県=国外／国=海外かつ都道府県=国内の組み合わせを拒否せず、国欄へ不整合エラーを付与する処理が無い。",
+      "mismatchReason": "設計は国・都道府県の不整合を送信後検証で拒否し国欄にエラーを表示すると規定するが、実装は海外→PREF_ABROAD強制・日本→null判定のみで組み合わせ整合検証・国欄エラー付与を行わない。ChangeController・EntryType・AddressType を確認したが該当検証は不在。",
+      "comparisonRows": [
+        {"item": "国・都道府県の組み合わせ整合検証", "design": "不整合を送信後検証で拒否し国欄にエラー", "implementation": "海外はPREF_ABROAD強制/日本はnull判定のみ", "mismatch": "組み合わせ不整合の検証・国欄エラー付与が未実装"}
+      ]
+    }
+  ]
+}

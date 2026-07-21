@@ -1,0 +1,154 @@
+{
+  "id": "a05-01-print-log-file-write-commented-out",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json",
+  "sourceFindingId": "a05-01-0505-sheet-3-sheet-87982d4875-04",
+  "classification": "API受注管理",
+  "feature": "注文印刷_印刷情報をプリンタへ送信",
+  "issueCategory": "実装漏れ",
+  "issue": "GetRequest 成功時に印刷情報XMLのログファイルが書き出されない",
+  "designBook": "0505_基本設計仕様書(API_受注管理).xlsx",
+  "reproSteps": [
+    "A05-01 の印刷対象条件を満たす受注を用意する",
+    "ec-cube-enterprise の注文印刷 API で ConnectionType=GetRequest の印刷情報を取得する（例: POST http://localhost:8080/api/order/prints/direct/{base_info_id} に ConnectionType=GetRequest を指定）",
+    "レスポンスの印刷情報 XML が空でないことを確認し、var/log/print_logs/ 配下に print_*.xml が作成されるか確認する"
+  ],
+  "expected": [
+    "GetRequest で生成した印刷情報 XML が空でない場合、ログ保存ディレクトリ var/log/print_logs/ 配下へ XML ファイルを書き出す",
+    "ログ保存ディレクトリが存在しない場合は作成する",
+    "ファイル名はタイムスタンプと一意名を含む print_*.xml とする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、GetRequest で印刷情報 XML を生成した後のログファイル書き出し処理が `// TODO :後ほど対応` としてコメントアウトされている。`mkdir()` と `file_put_contents()` はコメント内にあり、実行されない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise ログファイル書き出し処理は TODO コメントアウト",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php",
+          "start": 48,
+          "end": 67,
+          "language": "php",
+          "contains": [
+            "// TODO :後ほど対応",
+            "/* 印刷不具合検証のためXMLデータをファイル出力する",
+            "file_put_contents($filename, $xmlData)",
+            "*/"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、GetRequest で生成した XML が空でない場合に print_logs ディレクトリを作成し、`print_YYYYmmdd_HHMMSS_<uniqid>.xml` に `file_put_contents()` で書き出している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は print_logs ディレクトリ作成と XML 書き出しを実行する",
+          "path": "pf-api/src/Controller/Admin/OrderController.php",
+          "start": 34,
+          "end": 48,
+          "language": "php",
+          "contains": [
+            "$connectionType === 'GetRequest'",
+            "$dir = '/var/www/html/api/var/log/print_logs/'",
+            "mkdir($dir, 0777, true)",
+            "file_put_contents($filename, $xmlData)"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "A05-01 は印刷情報 XML ログファイル書き出しを扱う",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1019,
+      "end": 1020,
+      "language": "html",
+      "contains": [
+        "印刷情報のXMLログファイルへの書き出しという副作用"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "GetRequest で印刷情報が空でない場合にログファイルへ書き出す",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1043,
+      "end": 1044,
+      "language": "html",
+      "contains": [
+        "GetRequest",
+        "生成した印刷情報が空でない場合",
+        "印刷情報のXMLをログファイルへ書き出す"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "ログ保存ディレクトリとファイル名要件",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1095,
+      "end": 1095,
+      "language": "html",
+      "contains": [
+        "var/log/print_logs/",
+        "タイムスタンプと一意名",
+        "ディレクトリが存在しない場合は作成する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "ログ監査でも GetRequest の XML ログ書き出しを定義",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1119,
+      "end": 1119,
+      "language": "html",
+      "contains": [
+        "GetRequest",
+        "印刷不具合検証用のログファイル",
+        "var/log/print_logs/"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "ログファイル書き出し処理がコメントアウトされ実行されない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php",
+      "start": 48,
+      "end": 67,
+      "language": "php",
+      "contains": [
+        "// TODO :後ほど対応",
+        "/* 印刷不具合検証のためXMLデータをファイル出力する",
+        "file_put_contents($filename, $xmlData)",
+        "*/"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "XML が空でない場合に print_logs へ書き出す",
+      "path": "pf-api/src/Controller/Admin/OrderController.php",
+      "start": 34,
+      "end": 48,
+      "language": "php",
+      "contains": [
+        "if (!empty($xmlData))",
+        "$dir = '/var/www/html/api/var/log/print_logs/'",
+        "mkdir($dir, 0777, true)",
+        "file_put_contents($filename, $xmlData)"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex",
+    "commands": [
+      "rg -n \"印刷ログ|print_logs|ログファイル|file_put_contents|mkdir|TODO|後ほど対応|GetRequest|OrderDirectPrintAction\" hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html pf-api/src/Controller/Admin/OrderController.php ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php",
+      "rg -n \"print_logs|file_put_contents|mkdir|TODO|後ほど対応\" ec-cube-enterprise/src/Eccube pf-api/src",
+      "nl -ba pf-api/src/Controller/Admin/OrderController.php | sed -n '28,48p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php | sed -n '43,72p'"
+    ],
+    "notes": [
+      "設計HTMLは GetRequest で生成した印刷情報XMLが空でない場合の print_logs 書き出しを要求している。",
+      "pf-api はディレクトリ作成と file_put_contents を実行している。",
+      "ec-cube-enterprise は同等処理が TODO コメントアウト内にあり、実行経路に乗っていない。"
+    ]
+  }
+}

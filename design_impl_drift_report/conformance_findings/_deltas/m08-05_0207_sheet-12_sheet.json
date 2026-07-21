@@ -1,0 +1,114 @@
+{
+  "functionId": "m08-05_0207_sheet-12_sheet",
+  "featureNo": "M08-05",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12:3118,3127",
+      "designExpectation": "「登録」ボタン（付与）は POST /{admin_route}/customer/point/{id}/update/{type} に送信し、入力したポイント変動を履歴に追加してポイント履歴画面へ戻る。",
+      "implRef": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51, src/Eccube/Resource/template/admin/Customer/point_update.twig:17",
+      "implementationActual": "POST ルート admin_customer_point_update は /{admin_route}/customer/point/{id}/{type} で定義され、フォーム action もそのルートへ送信する。設計の /update/{type} セグメントが存在しない。",
+      "mismatchReason": "設計は POST URL を /customer/point/{id}/update/{type} と明記しているが、実装の Route は GET と同じ /customer/point/{id}/{type} に POST を割り当てている。反証として customer/point/{id}/update、update/{type}、admin_customer_point_update を Controller/Twig/Route 定義範囲で検索したが、/update/{type} の実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "付与 POST エンドポイント",
+          "design": "POST /{admin_route}/customer/point/{id}/update/{type}",
+          "implementation": "POST /{admin_route}/customer/point/{id}/{type}",
+          "mismatch": "URL パターンに /update が無い"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12:3118,3131",
+      "designExpectation": "当該会員・種別のポイント履歴一覧を表示し、ポイント種別ごとにポイント履歴を表示する。",
+      "implRef": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53, src/Eccube/Resource/template/admin/Customer/point_update.twig:123, src/Eccube/Entity/Customer.php:1292",
+      "implementationActual": "Controller は type を受け取るが履歴取得条件には使用していない。Twig は Customer.PointHistories をそのまま全件ループし、Customer 側関連は id 降順のみで point_type_id 条件が無い。",
+      "mismatchReason": "設計はポイント種別ごとの履歴表示を要求しているが、実装は point_type_id / PointType で履歴一覧を絞り込んでいない。反証として PointHistoryRepository, getQueryBuilderByCustomer, PointType, point_type_id, Customer.PointHistories を Controller/Twig/Repository/Entity 範囲で検索したが、管理画面ポイント履歴表示に種別フィルタを適用する箇所は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "履歴一覧の対象",
+          "design": "当該会員・種別のポイント履歴一覧",
+          "implementation": "当該会員の Customer.PointHistories 全件",
+          "mismatch": "ポイント種別で絞り込まない"
+        },
+        {
+          "item": "並び順",
+          "design": "新しい順、ポイント種別ごと",
+          "implementation": "Customer.PointHistories は id 降順のみ",
+          "mismatch": "種別条件が欠落"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12:3133",
+      "designExpectation": "入力項目「備考」は任意、初期値は空、保存先はポイント履歴の備考。",
+      "implRef": "src/Eccube/Form/Type/Admin/CustomerPointType.php:85, src/Eccube/Form/Type/Admin/CustomerPointType.php:91, src/Eccube/Resource/template/admin/Customer/point_update.twig:67",
+      "implementationActual": "note は ChoiceType で required=true、NotBlank 制約付き。テンプレートでも備考に必須バッジを表示している。",
+      "mismatchReason": "設計は備考を任意としているが、実装はサーバ側バリデーションと画面表示の両方で必須扱いにしている。反証として note, admin.customer.point.note, NotBlank, required を FormType/Twig/翻訳キー範囲で確認したが、任意入力として扱う分岐は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "備考の必須性",
+          "design": "任意",
+          "implementation": "required=true かつ NotBlank",
+          "mismatch": "任意項目が必須化されている"
+        },
+        {
+          "item": "画面表示",
+          "design": "備考は任意入力",
+          "implementation": "備考ラベル横に admin.common.required バッジを表示",
+          "mismatch": "利用者に必須として表示される"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12:3128,3156,3159",
+      "designExpectation": "会員・選手情報が無い場合はページが見つからない扱い（404）とする。",
+      "implRef": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53, src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85, src/Eccube/Entity/Customer.php:1107",
+      "implementationActual": "Customer は引数の型解決で取得しているが、Player の存在確認は無い。getPlayer() は ?DtbPlayer を返すため null になり得るが、登録時に $Customer->getPlayer()->addPoint(...) を直接呼び出す。",
+      "mismatchReason": "設計は会員または選手情報が無い場合の 404 を要求しているが、実装は Player null を 404 に変換せずメソッド呼び出しへ進む。反証として getPlayer, Player, notFound, createNotFoundException, 404 を CustomerPointController/Customer Entity 周辺で確認したが、選手情報なしを 404 とする処理は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "会員なし",
+          "design": "404",
+          "implementation": "Customer 型解決に依存",
+          "mismatch": "会員側は概ね実装済みと見られる"
+        },
+        {
+          "item": "選手情報なし",
+          "design": "404",
+          "implementation": "null 可能な getPlayer() に対して addPoint() を直接呼ぶ",
+          "mismatch": "404 ではなく実行時エラーになり得る"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12:3091,3133",
+      "designExpectation": "機能名・付与種別は「ポイント付与（余剰入金へのご返金、注文金額変更によるご返金）」として表示する。",
+      "implRef": "src/Eccube/Resource/locale/messages.ja.yaml:2631, src/Eccube/Controller/Admin/Customer/CustomerPointController.php:100",
+      "implementationActual": "purchase 種別の画面タイトル用翻訳 admin.customer.point_update.purchase が「ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）」になっている。Controller は purchase 種別でこの翻訳キーを画面タイトルへ渡す。",
+      "mismatchReason": "設計およびフォーム選択肢は「注文金額変更によるご返金」だが、画面タイトルの翻訳だけ「ご送金」になっており利用者表示文言が異なる。反証として ご返金, ご送金, point_update.purchase, NOTE_CHOICES_REFUND を翻訳/FormType/Controller 範囲で確認し、FormType の選択肢はご返金だがタイトル表示はご送金であることを確認した。",
+      "comparisonRows": [
+        {
+          "item": "purchase 種別の表示文言",
+          "design": "注文金額変更によるご返金",
+          "implementation": "注文金額変更によるご送金",
+          "mismatch": "返金/送金の文言差異"
+        }
+      ]
+    }
+  ]
+}

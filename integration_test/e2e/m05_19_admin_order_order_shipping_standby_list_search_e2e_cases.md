@@ -6,7 +6,7 @@
 
 母集合の定義: 観点表 `integration-test-viewpoints.md`（汎用516行）は全機能共通の観点マスタであり、本機能に該当する観点を射影したものが既存IT cases（90行）である。よって本E2Eの監査母集合は当該機能のIT cases 90行（射影後）とする。射影後のI/FID内訳は IT-03=7／IT-13=1／IT-15=4／IT-20=2／IT-22=35／IT-23=22／IT-25=9／IT-26=10＝計90 で、付帯表2の母集合列と一致する（IT cases の I/FID列を機械集計して検証済み）。
 
-期待結果は画面表示・遷移・URL・結果領域の有無などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約（required/maxlength）をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・結果領域の有無などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約（required/maxlength）をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は pf-eccube3（HareruyaEc プラグイン）のリバース設計であり、刷新先 ec-cube-enterprise コアに同名画面（route `admin_shipping_standby` / `@admin/ShippingStandby/index.twig`）が実在するためセレクタを導出した。設計書（pf-eccube3）と実装（ec-cube-enterprise）の乖離は **基本設計・観点表を上位オラクル**として扱い、付帯表4「不具合候補」に出す。テストは仕様どおりに書き、実装が違えば落ちて検出する。
 
@@ -23,53 +23,53 @@
 | IT-23 | 検索条件の絞り込み・実行結果（特定レコードの該当/非該当は要シード＝間接） |
 | IT-26 | 本機能は参照系で登録/更新/削除なし（登録系観点は対象外） |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-001	IT-03	画面遷移	P1	ナビから開くとページタイトル「出荷指示」が表示される	管理ログイン済／SEED-M05-19-ADMIN	—	"1. 管理ログインする
-2. GET /{admin_route}/standby/search（ページクエリなし）を開く"	出荷指示リスト検索画面に遷移し、ページタイトル「出荷指示」が表示されること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-002	IT-03	画面遷移	P2	出荷指示リスト検索画面にサブタイトル「受注管理」が表示される	管理ログイン済／SEED-M05-19-ADMIN	—	"1. 出荷指示リスト検索画面を開く"	サブタイトル「受注管理」が表示されること。
+2. GET /{admin_route}/standby/search（ページクエリなし）を開く"	出荷指示リスト検索画面に遷移し、ページタイトル「出荷指示」が表示されること。				
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-002	IT-03	画面遷移	P2	出荷指示リスト検索画面にサブタイトル「受注管理」が表示される	管理ログイン済／SEED-M05-19-ADMIN	—	1. 出荷指示リスト検索画面を開く	サブタイトル「受注管理」が表示されること。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-003	IT-25	UI部品	P1	検索フォーム部品（出荷指示番号/注文番号/登録日From-To/最終更新日From-To/注文区分/検索ボタン/クリアリンク）が表示される	管理ログイン済／SEED-M05-19-ADMIN	—	"1. 出荷指示リスト検索画面を開く
-2. 「出荷指示リスト検索」カードの各入力欄とボタンを確認する"	出荷指示番号・注文番号・登録日From/To・最終更新日From/To・注文区分・「検索する」ボタン・「検索条件をクリア」リンクが表示されること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-004	IT-03	画面遷移	P2	ページクエリなしの初期表示では一覧ブロックを描画しない	管理ログイン済／SEED-M05-19-ADMIN	—	"1. GET /{admin_route}/standby/search（ページクエリなし）を開く"	検索フォームは表示されるが一覧ブロック（結果一覧）が描画されないこと（pagination が空相当）。
+2. 「出荷指示リスト検索」カードの各入力欄とボタンを確認する"	出荷指示番号・注文番号・登録日From/To・最終更新日From/To・注文区分・「検索する」ボタン・「検索条件をクリア」リンクが表示されること。				
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-004	IT-03	画面遷移	P2	ページクエリなしの初期表示では一覧ブロックを描画しない	管理ログイン済／SEED-M05-19-ADMIN	—	1. GET /{admin_route}/standby/search（ページクエリなし）を開く	検索フォームは表示されるが一覧ブロック（結果一覧）が描画されないこと（pagination が空相当）。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-005	IT-25	UI部品	P2	「検索条件をクリア」リンクで入力済みの検索条件が空に戻る	管理ログイン済／SEED-M05-19-ADMIN	出荷指示番号欄に任意の整数を入力	"1. 出荷指示番号欄に値を入力する
-2. 「検索条件をクリア」リンクを押下する"	出荷指示番号欄の入力値が空に戻ること。
+2. 「検索条件をクリア」リンクを押下する"	出荷指示番号欄の入力値が空に戻ること。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-010	IT-13	URL直接アクセス	P1	検索送信すると同一URL（standby/search）上で結果領域が描画される	管理ログイン済／SEED-M05-19-ADMIN	検索条件なし（既定のまま）	"1. 出荷指示リスト検索画面を開く
-2. 「検索する」ボタンを押下する"	同一URL（/{admin_route}/standby/search）上で結果領域が描画されること。
+2. 「検索する」ボタンを押下する"	同一URL（/{admin_route}/standby/search）上で結果領域が描画されること。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-011	IT-23	実行結果	P2	該当のない条件で検索すると0件として件数見出しを描画せず結果なし領域になる	管理ログイン済／SEED-M05-19-ADMIN	出荷指示番号＝実在しない巨大な整数	"1. 出荷指示番号に該当しない巨大な整数を入力する
-2. 「検索する」ボタンを押下する"	件数見出し（検索結果件数）が描画されず、結果なし領域（該当データなし）が表示されること。
+2. 「検索する」ボタンを押下する"	件数見出し（検索結果件数）が描画されず、結果なし領域（該当データなし）が表示されること。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-012	IT-23	検索条件	P2	出荷指示番号で絞り込むと当該出荷指示行のみが一覧に含まれる	管理ログイン済／SEED-M05-19-STANDBY（既知の出荷指示1件）	出荷指示番号＝既知の出荷指示ID	"1. 既知の出荷指示番号を入力する
-2. 「検索する」ボタンを押下する"	当該出荷指示番号の行が一覧に含まれ、件数見出しが表示されること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-020	IT-15	未認証	P2	未ログインで検索URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログイン状態で GET /{admin_route}/standby/search へ直接アクセスする"	管理ログイン画面へ誘導されること。
+2. 「検索する」ボタンを押下する"	当該出荷指示番号の行が一覧に含まれ、件数見出しが表示されること。				
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-020	IT-15	未認証	P2	未ログインで検索URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログイン状態で GET /{admin_route}/standby/search へ直接アクセスする	管理ログイン画面へ誘導されること。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-021	IT-03	画面遷移	P2	一覧の出荷指示番号リンク押下で編集画面（standby/{id}/edit）へ遷移する	管理ログイン済／SEED-M05-19-STANDBY（一覧に1件以上）	—	"1. 検索を実行して一覧を表示する
-2. 先頭行の出荷指示番号リンクを押下する"	編集画面（/{admin_route}/standby/{id}/edit）へ遷移すること。
+2. 先頭行の出荷指示番号リンクを押下する"	編集画面（/{admin_route}/standby/{id}/edit）へ遷移すること。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-022	IT-15	対象データ	P2	ページ番号付きGET（standby/page/N）でセッションの検索条件を復元し該当ページを表示する	管理ログイン済／SEED-M05-19-STANDBY（複数ページ分のデータ）	page_no=2	"1. 検索を実行して検索条件をセッションへ確立する
-2. ページネーションのリンク（pager.twig 由来 GET /{admin_route}/standby/search?page_no=2）を開く"	セッションの検索条件・並び順を復元して2ページ目の一覧が表示されること。（設計入口表：ページネーションのリンクは同一ルートにクエリ page_no を付与した GET。別経路 /standby/page/2 も設計入口表に定義あり）
+2. ページネーションのリンク（pager.twig 由来 GET /{admin_route}/standby/search?page_no=2）を開く"	セッションの検索条件・並び順を復元して2ページ目の一覧が表示されること。（設計入口表：ページネーションのリンクは同一ルートにクエリ page_no を付与した GET。別経路 /standby/page/2 も設計入口表に定義あり）				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-030	IT-03	画面遷移	P2	表示件数プルダウンは選択しただけでは自動遷移しない（設計仕様）	管理ログイン済／SEED-M05-19-STANDBY（一覧に1件以上）	表示件数プルダウンで別の件数を選択	"1. 検索を実行して一覧と表示件数プルダウンを表示する
-2. 表示件数プルダウンで別の値を選択する（送信操作はしない）"	URLが変わらず同一画面に留まること（設計：当 index.twig の javascript ブロックは空で change ハンドラを持たないため。付帯表4 不具合候補#1）。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-040	IT-25	送信可否制御	P3	並び順パラメータが許容形式でないとエラー扱いとなり一覧を組み立てない	管理ログイン済／SEED-M05-19-ADMIN	order=不正値（例 XXX）	"1. GET /{admin_route}/standby/search?page_no=1&order=XXX を開く"	並び順エラー（admin.error.sort）として扱われ、一覧（件数見出し）が組み立てられないこと。
+2. 表示件数プルダウンで別の値を選択する（送信操作はしない）"	URLが変わらず同一画面に留まること（設計：当 index.twig の javascript ブロックは空で change ハンドラを持たないため。付帯表4 不具合候補#1）。				
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-040	IT-25	送信可否制御	P3	並び順パラメータが許容形式でないとエラー扱いとなり一覧を組み立てない	管理ログイン済／SEED-M05-19-ADMIN	order=不正値（例 XXX）	1. GET /{admin_route}/standby/search?page_no=1&order=XXX を開く	並び順エラー（admin.error.sort）として扱われ、一覧（件数見出し）が組み立てられないこと。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-013	IT-15	対象データ	P3	パスパラメータ経路 /standby/page/2 でセッション検索条件を復元し2ページ目を表示する	管理ログイン済／SEED-M05-19-STANDBY（複数ページ分）	—	"1. 検索を実行して検索条件をセッションへ確立する
-2. GET /{admin_route}/standby/page/2（route admin_shipping_standby_page）を開く"	セッションの検索条件・並び順を復元して2ページ目の一覧が表示されること（設計入口表line32 のパスパラメータ経路。E2E-022 の主経路 ?page_no=2 とは別経路）。
+2. GET /{admin_route}/standby/page/2（route admin_shipping_standby_page）を開く"	セッションの検索条件・並び順を復元して2ページ目の一覧が表示されること（設計入口表line32 のパスパラメータ経路。E2E-022 の主経路 ?page_no=2 とは別経路）。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-031	IT-23	検索条件	P3	表示件数クエリ page_count 指定で一覧の表示件数が反映され、許容外のセッション値は既定件数に矯正される	管理ログイン済／SEED-M05-19-STANDBY（既定表示件数超のデータ）	page_count＝mtb_page_max の許容値／許容外の値	"1. 検索を実行して一覧を表示する
 2. GET /{admin_route}/standby/search?page_no=1&page_count=（許容値）を開く
-3. 続けて許容外の page_count を与える"	許容値のときは1ページの一覧行数が当該件数以下に収まり、許容外のときは既定ページ件数（または一覧先頭値）に矯正されること（処理フロー#6・#7）。
+3. 続けて許容外の page_count を与える"	許容値のときは1ページの一覧行数が当該件数以下に収まり、許容外のときは既定ページ件数（または一覧先頭値）に矯正されること（処理フロー#6・#7）。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-050	IT-23	検索条件	P2	注文番号(order_id)で絞り込むと当該受注を紐付けた出荷指示のみが残り、別order_idでは非該当となる	管理ログイン済／SEED-M05-19-STANDBY（既知order_idの受注を紐付けた出荷指示）	order_id＝既知の受注主キー／非該当の受注主キー	"1. 注文番号欄に既知の受注主キーを入力して検索する
-2. 続けて非該当の受注主キーで検索する"	既知order_idでは当該出荷指示行が含まれ、非該当order_idでは結果なし領域になること（判定順序#5：dtb_order.id 一致）。
+2. 続けて非該当の受注主キーで検索する"	既知order_idでは当該出荷指示行が含まれ、非該当order_idでは結果なし領域になること（判定順序#5：dtb_order.id 一致）。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-051	IT-23	検索条件	P2	登録日From-Toの範囲で境界内の登録日を持つ出荷指示のみが抽出される	管理ログイン済／SEED-M05-19-STANDBY（境界前後のcreate_dateを持つレコード）	create_date_from/to＝境界日時	"1. 登録日From-Toに境界日時を入力して検索する
-2. 範囲外のみになる日時で再検索する"	範囲内の登録日を持つ行のみが一覧に含まれ、範囲外のみのときは結果なし領域になること（判定順序#6 createDate下限・#7 上限）。
+2. 範囲外のみになる日時で再検索する"	範囲内の登録日を持つ行のみが一覧に含まれ、範囲外のみのときは結果なし領域になること（判定順序#6 createDate下限・#7 上限）。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-052	IT-23	検索条件	P2	最終更新日From-Toの範囲で境界内の更新日を持つ出荷指示のみが抽出される	管理ログイン済／SEED-M05-19-STANDBY（境界前後のupdate_dateを持つレコード）	update_date_from/to＝境界日時	"1. 最終更新日From-Toに境界日時を入力して検索する
-2. 範囲外のみになる日時で再検索する"	範囲内の更新日を持つ行のみが一覧に含まれ、範囲外のみのときは結果なし領域になること（判定順序#8 updateDate下限・#9 上限）。
+2. 範囲外のみになる日時で再検索する"	範囲内の更新日を持つ行のみが一覧に含まれ、範囲外のみのときは結果なし領域になること（判定順序#8 updateDate下限・#9 上限）。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-053	IT-23	検索条件	P2	注文区分(order_type)で指定区分のみ抽出され、複数選択はOR、未選択は無条件となる	管理ログイン済／SEED-M05-19-STANDBY（異なるorder_type_idのレコード）	order_type＝単一選択／複数選択／未選択	"1. 注文区分で1区分のみ選択して検索する
 2. 複数区分を選択して検索する
-3. 未選択で検索する"	単一選択では当該order_type_idの行のみ、複数選択では選択IDのいずれかに一致する行（OR）、未選択では区分条件なしで全件対象となること（判定順序#10：order_type_id IN）。
+3. 未選択で検索する"	単一選択では当該order_type_idの行のみ、複数選択では選択IDのいずれかに一致する行（OR）、未選択では区分条件なしで全件対象となること（判定順序#10：order_type_id IN）。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-060	IT-23	実行結果	P3	最終ページで件数が尽きた直後はページ番号を1減らして再ページ分割し空画面を回避する	管理ログイン済／SEED-M05-19-STANDBY（最終ページが空になる総件数）	最終ページ相当の page_no	"1. 総件数が直前ページまでで尽きる条件にする
-2. 最終ページ相当の page_no で表示する"	空の最終ページにならず、直前ページの行集合が表示されること（処理フロー#11：page_no-1 で再ページ分割）。
+2. 最終ページ相当の page_no で表示する"	空の最終ページにならず、直前ページの行集合が表示されること（処理フロー#11：page_no-1 で再ページ分割）。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-070	IT-23	検索条件	P3	並び順パラメータ正常（sort=create_date/update_date・order=ASC/DESC）で一覧の並び順が反映される	管理ログイン済／SEED-M05-19-STANDBY（並び順が判別できる複数レコード）	sort＝create_date/update_date／order＝ASC・DESC	"1. sort・order を正常値で与えて検索する
-2. order=ASC と DESC を切り替える"	指定列・指定方向で一覧の並び順が変化すること（判定順序#2 sort既定化・#3 order方向：ASCのみ昇順・他は降順）。
+2. order=ASC と DESC を切り替える"	指定列・指定方向で一覧の並び順が変化すること（判定順序#2 sort既定化・#3 order方向：ASCのみ昇順・他は降順）。				
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	E2E-M05-19-080	IT-15	対象データ	P3	別画面へ離脱後クエリ付きGETで戻るとセッションが残れば同条件で復元、消失時はフォームのみの初期表示へ戻る	管理ログイン済／SEED-M05-19-STANDBY	—	"1. 検索でセッション検索ビューを確立する
 2. 別画面へ離脱後、クエリ付きGETで戻る
-3. セッション破棄後に同URLへ戻る"	セッションが残っていれば同条件で一覧を復元し、消失していれば index 初期表示（フォームのみ・一覧非描画）へ戻ること（遷移時引継ぎ状態 設計line205-208）。
+3. セッション破棄後に同URLへ戻る"	セッションが残っていれば同条件で一覧を復元し、消失していれば index 初期表示（フォームのみ・一覧非描画）へ戻ること（遷移時引継ぎ状態 設計line205-208）。				
 ```
 
 ### 列の対応（E2E固有→納品10列）

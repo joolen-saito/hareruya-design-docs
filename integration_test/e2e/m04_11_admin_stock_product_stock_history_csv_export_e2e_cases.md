@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m04_11_admin_stock_product_stock_history_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・ダウンロード発火・HTTP応答・遷移・URLなどブラウザで観測できる結果で判定する。**期待結果は仕様（pf-eccube3 基本設計＝一次オラクル・観点表）由来**とし、実装の現挙動・固定ヘッダ列・ファイル名prefixを写さない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・ダウンロード発火・HTTP応答・遷移・URLなどブラウザで観測できる結果で判定する。**期待結果は仕様（pf-eccube3 基本設計＝一次オラクル・観点表）由来**とし、実装の現挙動・固定ヘッダ列・ファイル名prefixを写さない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 > **screenExists=true**: 刷新先 `ec-cube-enterprise` に該当機能が存在する。在庫履歴一覧（`admin_stock_history` = `/<route>/product/stock/history`、`StockHistoryController.php:64` / `@admin/Stock/history.twig`）の「CSVダウンロード」ボタン（`history.twig:598-603`）から、一覧表示中の在庫履歴ID（hidden `ids[]`）をPOST送信し、`admin_stock_history_csv_export` = POST `/<route>/product/stock/history/csv_export`（`StockHistoryController.php:269`）が `StreamedResponse` でCSVを返す。本機能は **画面上に入力フォームを持たず**（検索条件は在庫履歴一覧側のセッションに従う）、ダウンロードのみで画面遷移しない。
 > **入口URLの一次オラクルは設計の `GET/POST /<route>/product/history/stock/export`** とする。E2Eは screenExists=true の実態（在庫履歴一覧の「CSVダウンロード」ボタン）を起点に**観測可能な結果（download発火・添付/.csv・画面遷移なし）**で判定し、**実装ルート `/product/stock/history/csv_export` を成功条件のオラクルに固定しない**。設計の入口URL `/product/history/stock/export` への直接アクセス可否は要実機確認（付帯表4#1）。
@@ -27,37 +27,37 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-001	IT-25	操作起点	P1	在庫履歴一覧（CSV出力の起点画面）が表示される	管理者ログイン済／SEED-M04-11-ADMIN	—	"1. 在庫履歴一覧URL（/<route>/product/stock/history）を開く"	在庫履歴一覧画面（タイトル「在庫履歴一覧」）が表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-001	IT-25	操作起点	P1	在庫履歴一覧（CSV出力の起点画面）が表示される	管理者ログイン済／SEED-M04-11-ADMIN	—	1. 在庫履歴一覧URL（/<route>/product/stock/history）を開く	在庫履歴一覧画面（タイトル「在庫履歴一覧」）が表示されること。				
 m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-002	IT-25	UI部品	P2	検索結果がある場合に「CSVダウンロード」ボタンが表示される	管理者ログイン済／SEED-M04-11-ADMIN／SEED-M04-11-HISTORY	—	"1. 在庫履歴一覧で検索を実行する
-2. 一覧に検索結果が表示された状態を確認する"	「CSVダウンロード」ボタンが表示されること。
+2. 一覧に検索結果が表示された状態を確認する"	「CSVダウンロード」ボタンが表示されること。				
 m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-003	IT-25	UI部品	P2	検索結果がゼロ件のとき「CSVダウンロード」ボタンが表示されない	管理者ログイン済／SEED-M04-11-ADMIN	0件ヒットする検索条件（存在しない商品コード等）	"1. 在庫履歴一覧で0件ヒットの検索を実行する
-2. 一覧が0件の状態を確認する"	「CSVダウンロード」ボタンが表示されないこと。
+2. 一覧が0件の状態を確認する"	「CSVダウンロード」ボタンが表示されないこと。				
 m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-010	IT-16	実行結果	P1	「CSVダウンロード」ボタン押下でCSVダウンロードが発火する	管理者ログイン済／SEED-M04-11-ADMIN／SEED-M04-11-HISTORY	—	"1. 在庫履歴一覧で検索を実行する
-2. 「CSVダウンロード」ボタンを押下する"	CSVファイルのダウンロードが発火すること。
+2. 「CSVダウンロード」ボタンを押下する"	CSVファイルのダウンロードが発火すること。				
 m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-011	IT-25	HTTPステータス	P2	CSV出力が添付ファイル（.csvファイル）として発火する	管理者ログイン済／SEED-M04-11-ADMIN／SEED-M04-11-HISTORY	—	"1. 在庫履歴一覧で検索を実行する
 2. 「CSVダウンロード」ボタンを押下する
-3. 発火したダウンロードのファイル名を確認する"	拡張子 .csv の添付ファイル（CSVファイル）のダウンロードが発火すること（画面遷移を伴わない）。※実装のForm項目名 ids[]・content-type値・filename prefixは期待値に固定しない。
+3. 発火したダウンロードのファイル名を確認する"	拡張子 .csv の添付ファイル（CSVファイル）のダウンロードが発火すること（画面遷移を伴わない）。※実装のForm項目名 ids[]・content-type値・filename prefixは期待値に固定しない。				
 m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-012	IT-03	画面遷移	P2	CSV出力は画面遷移せず一覧に滞留しダウンロードのみ行われる	管理者ログイン済／SEED-M04-11-ADMIN／SEED-M04-11-HISTORY	—	"1. 在庫履歴一覧で検索を実行する
 2. 「CSVダウンロード」ボタンを押下する
-3. ダウンロード後の画面URLを確認する"	ダウンロード後も在庫履歴一覧に滞留し、画面遷移しないこと。
-m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-020	IT-15	未認証	P1	未ログインで在庫履歴一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで在庫履歴一覧URLへ直接アクセスする"	管理ログイン画面へ誘導され、出力導線にアクセスできないこと。
-m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-021	IT-13	URL直接アクセス	P2	未ログインでCSV出力URLへアクセスするとアクセス不可となる	未ログイン	—	"1. 未ログインでCSV出力URLへ直接アクセスする"	出力されず、管理ログイン画面へ誘導される（アクセス不可）こと。
-m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-030	IT-25	送信可否制御	P2	出力対象が無い状態でCSV出力すると出力されず一覧へ戻る	管理者ログイン済／SEED-M04-11-ADMIN	出力対象ID＝無し	"1. 出力対象IDを付さずCSV出力URLへPOSTする"	CSVが出力されず、エラー表示とともに在庫履歴一覧へ戻ること。
+3. ダウンロード後の画面URLを確認する"	ダウンロード後も在庫履歴一覧に滞留し、画面遷移しないこと。				
+m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-020	IT-15	未認証	P1	未ログインで在庫履歴一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで在庫履歴一覧URLへ直接アクセスする	管理ログイン画面へ誘導され、出力導線にアクセスできないこと。				
+m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-021	IT-13	URL直接アクセス	P2	未ログインでCSV出力URLへアクセスするとアクセス不可となる	未ログイン	—	1. 未ログインでCSV出力URLへ直接アクセスする	出力されず、管理ログイン画面へ誘導される（アクセス不可）こと。				
+m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-030	IT-25	送信可否制御	P2	出力対象が無い状態でCSV出力すると出力されず一覧へ戻る	管理者ログイン済／SEED-M04-11-ADMIN	出力対象ID＝無し	1. 出力対象IDを付さずCSV出力URLへPOSTする	CSVが出力されず、エラー表示とともに在庫履歴一覧へ戻ること。				
 m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-022	IT-03	権限制御	P2	権限の無いログイン済み管理者ではCSV出力できない	在庫履歴メニュー権限を持たない管理者でログイン済／SEED-M04-11-ADMIN-NOPERM	—	"1. 在庫履歴メニュー権限を持たない管理者でログインする
-2. 在庫履歴一覧URLまたはCSV出力URLへアクセスする"	権限不足によりアクセスできず（出力導線に到達できず）、CSVが出力されないこと（設計: 認証・権限不足＝アクセス不可／出力しない）。
-m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-023	IT-13	URL直接アクセス	P2	設計の入口URL（/<route>/product/history/stock/export）への直接アクセス挙動	管理者ログイン済／SEED-M04-11-ADMIN	—	"1. 設計の入口URL /<route>/product/history/stock/export へ直接アクセスする（GET）"	設計の入口URLでCSV出力導線（在庫変更履歴のCSV出力）へ到達できること。※実装ルートは /product/stock/history/csv_export（POST専用）で乖離（付帯表4#1）。実装の応答（405等）を成功条件のオラクルに固定せず、可否は要実機確認。
+2. 在庫履歴一覧URLまたはCSV出力URLへアクセスする"	権限不足によりアクセスできず（出力導線に到達できず）、CSVが出力されないこと（設計: 認証・権限不足＝アクセス不可／出力しない）。				
+m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-023	IT-13	URL直接アクセス	P2	設計の入口URL（/<route>/product/history/stock/export）への直接アクセス挙動	管理者ログイン済／SEED-M04-11-ADMIN	—	1. 設計の入口URL /<route>/product/history/stock/export へ直接アクセスする（GET）	設計の入口URLでCSV出力導線（在庫変更履歴のCSV出力）へ到達できること。※実装ルートは /product/stock/history/csv_export（POST専用）で乖離（付帯表4#1）。実装の応答（405等）を成功条件のオラクルに固定せず、可否は要実機確認。				
 m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-090	IT-26	更新内容	P2	CSV出力は参照のみで在庫・業務データを更新しない	管理者ログイン済／SEED-M04-11-ADMIN／SEED-M04-11-HISTORY	—	"1. 出力前後で在庫履歴・在庫データを比較する
-2. CSV出力を実行する"	出力実行により在庫・業務データが更新されないこと（参照・出力のみ）。
+2. CSV出力を実行する"	出力実行により在庫・業務データが更新されないこと（参照・出力のみ）。				
 m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-091	IT-23	検索条件	P2	在庫履歴一覧の検索条件がCSV出力に反映される	管理者ログイン済／SEED-M04-11-ADMIN／SEED-M04-11-HISTORY	検索条件（対象データに合致する値）	"1. 在庫履歴一覧で検索条件を指定して検索する
 2. CSV出力を実行する
-3. ダウンロードしたCSVの明細を確認する"	検索条件に合致する在庫変更履歴のみがCSVに出力されること。
+3. ダウンロードしたCSVの明細を確認する"	検索条件に合致する在庫変更履歴のみがCSVに出力されること。				
 m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-092	IT-16	実行結果	P2	カスタムCSV設定で変更した出力項目が出力CSVに反映され内容が在庫変更履歴データと一致する	管理者ログイン済／SEED-M04-11-ADMIN／SEED-M04-11-HISTORY／カスタムCSV出力項目設定で出力項目を変更済（出力項目設定は別機能を正典）	出力項目を変更したカスタムCSV設定	"1. カスタムCSV出力項目設定で出力する項目を変更する（一部項目を選択/非選択にする）
 2. 在庫履歴を検索しCSV出力を実行する
-3. ダウンロードしたCSVのヘッダ列・各値を在庫履歴データおよび設定内容と突き合わせる"	カスタムCSV設定で選択した出力項目のみがCSVに出力され（変更が反映され）、未選択の項目は出力されないこと。出力された各項目の値が対象の在庫変更履歴データと一致すること。
+3. ダウンロードしたCSVのヘッダ列・各値を在庫履歴データおよび設定内容と突き合わせる"	カスタムCSV設定で選択した出力項目のみがCSVに出力され（変更が反映され）、未選択の項目は出力されないこと。出力された各項目の値が対象の在庫変更履歴データと一致すること。				
 m04-11_admin_stock_product_stock_history_csv_export（在庫移動・振替情報カスタムCSV出力）	E2E-M04-11-093	IT-25	データ整合性	P2	CSV出力は実行時点のDB値を基準とし画面表示後の更新は再出力まで反映しない	管理者ログイン済／SEED-M04-11-ADMIN／SEED-M04-11-HISTORY	—	"1. 在庫履歴を検索しCSV出力する
 2. 在庫履歴のデータを更新する（別操作）
-3. 再検索せず再度CSV出力し、前回出力と比較する"	各CSV出力はその実行時点のDB値を出力し、画面表示後に更新された値は再検索・再出力するまで反映されないこと。出力中の同時更新に対するスナップショット保証は持たない（行ロックを取らず読み取り時点の値を出力＝同時更新の挙動はブラウザ観測対象外）。
+3. 再検索せず再度CSV出力し、前回出力と比較する"	各CSV出力はその実行時点のDB値を出力し、画面表示後に更新された値は再検索・再出力するまで反映されないこと。出力中の同時更新に対するスナップショット保証は持たない（行ロックを取らず読み取り時点の値を出力＝同時更新の挙動はブラウザ観測対象外）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

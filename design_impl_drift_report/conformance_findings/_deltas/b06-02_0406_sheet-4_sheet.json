@@ -1,0 +1,84 @@
+{
+  "functionId": "b06-02_0406_sheet-4_sheet",
+  "featureNo": "B06-02",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1074",
+      "designExpectation": "入口はコンソールのバッチコマンド `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` とし、引数に集計日（YYYY-MM-DD形式）を1つ指定できる。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:45",
+      "implementationActual": "Symfony コマンド名は `eccube:otc-buy-order:aggregate-summary`。`otcBuyOrder:batch` / `updateSummary` / alias 実装は `src/Eccube` と `html` の再検索でも不在。",
+      "mismatchReason": "設計は外部契約として `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` を指定しているが、実装の `#[AsCommand]` は別名で登録されており、設計コマンド名で起動できる根拠がない。探索範囲: src/Eccube, html。検索語: `otcBuyOrder:batch`, `updateSummary`, `aggregate-summary`, `AsCommand`, `alias`。",
+      "comparisonRows": [
+        {
+          "item": "コマンド名",
+          "design": "otcBuyOrder:batch updateSummary [YYYY-MM-DD]",
+          "implementation": "eccube:otc-buy-order:aggregate-summary [date]",
+          "mismatch": "設計された起動コマンドと実装登録名が一致しない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1039",
+      "designExpectation": "部門が登録されていない商品が存在する場合は、エラーメールを送信する。部門未設定商品通知メールには商品名・商品コードの一覧を本文に載せる。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:956",
+      "implementationActual": "`BatchAggregateSummaryAction` は `getNoSectionProducts()` の戻り値があれば `sendNoSectionAlertMail()` を呼ぶが、`getNoSectionProducts()` の SQL は `WHERE AND obo.complete_date ...` となっており、WHERE 直後の AND により SQL として実行不能。",
+      "mismatchReason": "設計は部門未設定商品一覧を取得して通知することを要求しているが、実装の一覧取得 SQL が構文不正のため、通知判定・商品名/商品コード本文生成まで到達できない。加えて同メソッドには集計対象ステータス条件もなく、集計対象内の商品一覧という設計条件との対応が不足している。",
+      "comparisonRows": [
+        {
+          "item": "部門未設定商品一覧取得",
+          "design": "集計日の店頭買取の中から部門未設定商品の一覧を取得する",
+          "implementation": "`WHERE` 直後に `AND obo.complete_date >= :from` があり SQL 構文不正",
+          "mismatch": "一覧取得が実行できず通知条件を満たせない"
+        },
+        {
+          "item": "通知本文",
+          "design": "商品名・商品コードの一覧を本文に載せる",
+          "implementation": "テンプレートは `product_name`, `product_code` を出すが、元データ取得が失敗する",
+          "mismatch": "本文テンプレート以前の取得処理が破綻している"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1079",
+      "designExpectation": "実行時間制限を解除する。長時間処理に備えて実行時間制限を解除する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php, src/Eccube/Service/Admin/OtcBuyOrder, src/Eccube/Repository/DtbOtcBuyOrderRepository.php, src/Eccube/Repository/DtbOtcBuyOrderSummaryRepository.php）",
+      "implementationActual": "該当バッチ経路に `set_time_limit(0)`、`ini_set('max_execution_time', ...)`、同等の実行時間制限解除処理が見つからない。",
+      "mismatchReason": "設計の処理フローと排他制御・トランザクション節にある実行時間制限解除が、Command/Action/Aggregator/Repository のいずれにも実装されていない。検索語: `set_time_limit`, `max_execution_time`, `時間制限`。",
+      "comparisonRows": [
+        {
+          "item": "実行時間制限解除",
+          "design": "バッチ開始時に実行時間制限を解除する",
+          "implementation": "解除処理なし",
+          "mismatch": "長時間処理前提の設計処理が欠落"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html#sheet-4:1110",
+      "designExpectation": "部門未設定商品通知メールは送信開始・送信完了・件数、宛先未設定時の送信せず終了をログに記録する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1190",
+      "implementationActual": "`sendNoSectionAlertMail()` は送信開始、宛先未設定、送信完了を `log_info` するが、部門未設定商品の件数をログ出力していない。",
+      "mismatchReason": "設計で明示されたログ項目のうち件数だけが実装されていない。反証検索で `件数`、`count($products)`、部門未設定商品通知周辺のログを確認したが、該当ログは不在。",
+      "comparisonRows": [
+        {
+          "item": "部門未設定商品通知ログ",
+          "design": "送信開始・送信完了・件数・宛先未設定時の送信せず終了",
+          "implementation": "送信開始・送信完了・宛先未設定時の送信せず終了のみ",
+          "mismatch": "件数ログが欠落"
+        }
+      ]
+    }
+  ]
+}

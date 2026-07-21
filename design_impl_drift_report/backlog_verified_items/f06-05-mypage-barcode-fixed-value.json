@@ -1,0 +1,208 @@
+{
+  "id": "f06-05-mypage-barcode-fixed-value",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-05_0306_sheet-7_sheet.json",
+  "sourceFindingId": "f06-05_0306_sheet-7_sheet-conformance-9c3c441601cf",
+  "classification": "フロント会員",
+  "feature": "マイページ",
+  "issueCategory": "実装違い",
+  "issue": "マイページの会員バーコードが各会員のスマレジ会員コードではなく固定値で表示される",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "スマレジIDを持つ会員で `http://localhost:8080/ja/mypage` にログインする",
+    "マイページ上部のバーコード表示を確認する",
+    "別のスマレジIDを持つ会員でも同じ画面を表示し、生成されるバーコード値が会員ごとに変わるか確認する"
+  ],
+  "expected": [
+    "マイページのバーコードは、店頭POSで会員本人を識別できる値を表示する",
+    "店頭受取注文時にバーコードを読み取ると、スマレジと連携して会員の注文履歴登録とポイント付与に利用できる",
+    "バーコード値は各会員のスマレジ会員コードから生成する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise のマイページは `Mypage/index.twig` で `Block/js/point_barcode_js.twig` を読み込み、同JSでバーコードを生成する。しかし `Customer.getSmaregiMemberCode` を使う行は Twig コメントアウトされ、実際には全会員共通の固定値 `2900065596792` を `jquery-barcode` に渡している。`Customer::getSmaregiMemberCode()` にはスマレジIDからEAN13の会員コードを生成する実装があるが、バーコード描画では使われていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise マイページでバーコードJSを読み込む",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/index.twig",
+          "start": 17,
+          "end": 23,
+          "language": "twig",
+          "contains": [
+            "jquery-barcode.min.js",
+            "{% include 'Block/js/point_barcode_js.twig' %}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise バーコード値が固定値",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig",
+          "start": 21,
+          "end": 24,
+          "language": "twig",
+          "contains": [
+            "{#$(\"#js-ec_point_barcode\").barcode('{{ Customer.getSmaregiMemberCode }}', \"ean13\", { barWidth:2, fontSize:14 });#}",
+            "$(\"#js-ec_point_barcode\").barcode('2900065596792', \"ean13\", { barWidth:2, fontSize:14 });"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise Customerにはスマレジ会員コード生成メソッドがある",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/Customer.php",
+          "start": 1069,
+          "end": 1088,
+          "language": "php",
+          "contains": [
+            "スマレジ会員コード(EAN13)を生成して返す",
+            "public function getSmaregiMemberCode(): string",
+            "$smaregiId = $Player->getSmaregiId();",
+            "return self::buildSmaregiMemberCode($smaregiId);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise DtbPlayer側のスマレジ会員コード生成は空文字返却",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/DtbPlayer.php",
+          "start": 532,
+          "end": 545,
+          "language": "php",
+          "contains": [
+            "public function getSmaregiMemberCode(): string",
+            "// return $strNum . StringUtil::calcCheckDigit($strNum);",
+            "return '';"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、マイページに `js-ec_point_barcode` の表示領域を置き、`Block/js/point_barcode_js.twig` で `player.getSmaregiMemberCode` を `jquery-barcode` に渡している。`DtbPlayer::getSmaregiMemberCode()` は固定番号、ゼロ埋めした `smaregiId`、チェックデジットから会員ごとのEAN13を返す。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 マイページのバーコード表示領域",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/index.twig",
+          "start": 26,
+          "end": 31,
+          "language": "twig",
+          "contains": [
+            "<span class=\"ec-transPoint-barcode__number\">会員番号 {{ player.smaregiId }}</span>",
+            "<div id=\"js-ec_point_barcode\" class=\"ec-transPoint-barcode__inner__barcode\"></div>",
+            "バーコードは"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 会員ごとのスマレジ会員コードをバーコード化",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/point_barcode_js.twig",
+          "start": 11,
+          "end": 13,
+          "language": "twig",
+          "contains": [
+            "$(\"#js-ec_point_barcode\").barcode('{{ player.getSmaregiMemberCode }}', \"ean13\", { barWidth:2, fontSize:14 });"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 スマレジ会員コード生成",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbPlayer.php",
+          "start": 934,
+          "end": 945,
+          "language": "php",
+          "contains": [
+            "public function getSmaregiMemberCode()",
+            "$fixNo = $app['config']['HareruyaEc']['const']['smaregi']['customer_code']['fix_no'];",
+            "$strNum = $fixNo . sprintf(\"%0{$zeroPaddingLength}d\", $this->getSmaregiId());",
+            "return $strNum . StringUtil::calcCheckDigit($strNum);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "バーコードを店頭読み取りしスマレジ連携・注文履歴登録・ポイント付与に使う",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 2653,
+      "end": 2655,
+      "language": "html",
+      "contains": [
+        "店頭受取注文の際にバーコードを店頭で読み取ると、スマレジと連携して会員の注文履歴に登録する",
+        "ポイントも付与される"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "画面部品5はバーコードとして定義される",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 2660,
+      "end": 2670,
+      "language": "html",
+      "contains": [
+        "id=\"item-sheet-7-5\"",
+        "<td>バーコード</td><td>バーコード</td>",
+        "店頭受取注文の際にバーコードを店頭で読み取ると、スマレジと連携して会員の注文履歴に登録する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "会員コード生成呼び出しはコメントアウトされ、固定値を描画",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig",
+      "start": 21,
+      "end": 24,
+      "language": "twig",
+      "contains": [
+        "Customer.getSmaregiMemberCode",
+        "2900065596792"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "CustomerにはスマレジIDから会員コードを生成するメソッドがある",
+      "path": "ec-cube-enterprise/src/Eccube/Entity/Customer.php",
+      "start": 1075,
+      "end": 1087,
+      "language": "php",
+      "contains": [
+        "public function getSmaregiMemberCode(): string",
+        "getSmaregiId",
+        "buildSmaregiMemberCode"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は会員ごとのスマレジ会員コードをバーコード化する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/point_barcode_js.twig",
+      "start": 11,
+      "end": 13,
+      "language": "twig",
+      "contains": [
+        "player.getSmaregiMemberCode",
+        "ean13"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3はsmaregiIdからチェックデジット付き会員コードを生成する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbPlayer.php",
+      "start": 934,
+      "end": 945,
+      "language": "php",
+      "contains": [
+        "getSmaregiMemberCode",
+        "sprintf",
+        "StringUtil::calcCheckDigit"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-05_0306_sheet-7_sheet.json#f06-05_0306_sheet-7_sheet-conformance-9c3c441601cf'",
+      "rg -n \"バーコード|スマレジ会員コード|SmaregiMemberCode|smaregi_member_code|2900065596792|barcode\\(\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html ec-cube-enterprise/src/Eccube ec-cube-enterprise/html pf-eccube3/app/Plugin/HareruyaEc",
+      "rg -n \"2900065596792|barcode\\(|getSmaregiMemberCode|SmaregiMemberCode|スマレジ会員\" ec-cube-enterprise/src/Eccube/Resource/template ec-cube-enterprise/src/Eccube/Entity ec-cube-enterprise/src/Eccube/Controller ec-cube-enterprise/src/Eccube/Service pf-eccube3/app/Plugin/HareruyaEc",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '2640,2672p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/index.twig | sed -n '1,70p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig | sed -n '1,35p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Entity/Customer.php | sed -n '1068,1115p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Entity/DtbPlayer.php | sed -n '532,550p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/index.twig | sed -n '20,35p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/point_barcode_js.twig | sed -n '1,20p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbPlayer.php | sed -n '934,950p'"
+    ],
+    "review": "review-pack を生成し、設計HTML、ec-cube-enterprise のマイページテンプレート・バーコードJS・Customer/DtbPlayer、pf-eccube3 のマイページテンプレート・バーコードJS・DtbPlayerを手動で再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

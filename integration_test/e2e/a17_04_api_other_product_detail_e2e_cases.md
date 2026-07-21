@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない機能仕様（商品IDと言語に対応する商品詳細〔商品本体・カード情報・商品規格・画像〕を返すJSON API・GET参照系）であり、**両レイヤで網羅**する。本APIはブラウザ向け画面を持たず（正本md「対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない」）、結果が管理画面に現れる範囲も無いため、**UIレイヤ＝0、API/統合レイヤ中心**で分類する。API/統合レイヤ＝Playwright `request`（APIRequestContext）でエンドポイントへGET送信し、HTTPステータス・レスポンス本文の構造／フィールド／型・データ整合・該当なし時の404で判定する。
 
-**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装のレスポンス形・型・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。pf-apiの正本mdは現行（旧システム）のリバース設計であり、刷新先 ec-cube-enterprise との乖離（エンドポイントパス・404本文形・週間販売数の集計元・表示下限値・認可方式等）は**設計書/観点表を上位オラクル**として扱い、付帯表4（不具合候補／要確認）に出す。実装からは位置情報（APIパス・メソッド・ルート要件）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。送信先パスは実装の実効パス `GET /api/product/detail/{productId}`（`ProductController.php:50`）に統一し（テストが実在経路へ届くため）、合否は設計書の意味（正常取得＝商品詳細JSON＋200／該当なし＝404 Not Found／不正パラメータ〔欠落・0以下・非数値〕は正しい商品詳細が取得されない＝正常取得200とならない）で判定する。仕様で固定される404は該当なし時のみであり、型不正・不正パラメータ時の具体ステータス（ルート不一致/404等）は要実機確認とする。設計⇔実装のパス・本文・集計元・型の差異は付帯表4でのみ一元管理し、TSV期待値に実装の現挙動を固定しない。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装のレスポンス形・型・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。pf-apiの正本mdは現行（旧システム）のリバース設計であり、刷新先 ec-cube-enterprise との乖離（エンドポイントパス・404本文形・週間販売数の集計元・表示下限値・認可方式等）は**設計書/観点表を上位オラクル**として扱い、付帯表4（不具合候補／要確認）に出す。実装からは位置情報（APIパス・メソッド・ルート要件）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。送信先パスは実装の実効パス `GET /api/product/detail/{productId}`（`ProductController.php:50`）に統一し（テストが実在経路へ届くため）、合否は設計書の意味（正常取得＝商品詳細JSON＋200／該当なし＝404 Not Found／不正パラメータ〔欠落・0以下・非数値〕は正しい商品詳細が取得されない＝正常取得200とならない）で判定する。仕様で固定される404は該当なし時のみであり、型不正・不正パラメータ時の具体ステータス（ルート不一致/404等）は要実機確認とする。設計⇔実装のパス・本文・集計元・型の差異は付帯表4でのみ一元管理し、TSV期待値に実装の現挙動を固定しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -22,67 +22,67 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-001	IT-09	リクエスト	P1	正常なproductIdの指定で200と商品詳細JSONが返る	SEED-A17-04-PRODUCT-KNOWN	実在する商品ID（productId）・lang=JP	"1. GET /api/product/detail/{productId} を送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200が返り、当該商品IDに対応する商品詳細（商品本体・カード情報・商品規格・画像）がJSONで返ること。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200が返り、当該商品IDに対応する商品詳細（商品本体・カード情報・商品規格・画像）がJSONで返ること。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-002	IT-09	実行結果	P2	正常取得時に取得時点の値が再計算/丸めされず返る	SEED-A17-04-PRODUCT-KNOWN	実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. レスポンス本文の値を確認する"	price・stock・sale_limit 等が再計算・丸めされず、DB／リポジトリ取得時点の値がそのまま返ること（業務ルール「金額・税・ポイント・在庫数量の再計算や丸めを行わない」）。
+2. レスポンス本文の値を確認する"	price・stock・sale_limit 等が再計算・丸めされず、DB／リポジトリ取得時点の値がそのまま返ること（業務ルール「金額・税・ポイント・在庫数量の再計算や丸めを行わない」）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-003	IT-09	HTTPステータス	P2	正常取得時のHTTPステータスが200である	SEED-A17-04-PRODUCT-KNOWN	実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-004	IT-09	外部取得	P1	productIdに紐づく商品本体・商品規格を取得する	SEED-A17-04-PRODUCT-KNOWN	実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. レスポンスの内容を確認する"	指定商品IDの商品本体・商品規格がリポジトリから取得され、product_id が指定IDと一致すること（処理フロー#2）。
+2. レスポンスの内容を確認する"	指定商品IDの商品本体・商品規格がリポジトリから取得され、product_id が指定IDと一致すること（処理フロー#2）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-005	IT-32	リクエスト	P2	異常なパラメータ値（productId≦0）で正しい商品詳細が取得されない	SEED-A17-04-NONE	0以下の商品ID	"1. productId=0 もしくは負値でGET送信する
-2. HTTPステータスを確認する"	0以下の商品IDでは正しい商品詳細（正常取得＝200）が取得されないこと（productId は integer・必須。仕様で固定される404は該当なし時のみで、0以下の値に対する具体ステータスは要実機確認＝付帯表4#5）。
+2. HTTPステータスを確認する"	0以下の商品IDでは正しい商品詳細（正常取得＝200）が取得されないこと（productId は integer・必須。仕様で固定される404は該当なし時のみで、0以下の値に対する具体ステータスは要実機確認＝付帯表4#5）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-006	IT-32	リクエスト	P3	想定外のクエリ項目を加えてもサーバエラーで停止しない（無視可否は要実機確認）	SEED-A17-04-PRODUCT-KNOWN	正常なパス＋想定外クエリ項目（項目名と値のセット）	"1. 想定外クエリ項目を付与してGET送信する
-2. HTTPステータスとレスポンスを確認する"	未知のクエリ項目があってもサーバエラー（5xx）で停止しないことのみを判定する。想定外クエリ項目の扱いは正本に明記が無いため期待値を固定せず、200で無視され正常取得と同一内容となるかは要実機確認とする。
+2. HTTPステータスとレスポンスを確認する"	未知のクエリ項目があってもサーバエラー（5xx）で停止しないことのみを判定する。想定外クエリ項目の扱いは正本に明記が無いため期待値を固定せず、200で無視され正常取得と同一内容となるかは要実機確認とする。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-007	IT-32	必須条件	P2	パス変数（productId）欠落で正しい商品詳細が取得されない	SEED-A17-04-NONE	productId を欠いたパス	"1. productId を欠いたパスへGET送信する
-2. HTTPステータスを確認する"	必須パス変数を欠いたリクエストでは正しい商品詳細（正常取得＝200）が取得されないこと（仕様で固定される404は該当なし時のみ。欠落時の具体ステータス＝ルート不一致/404等は要実機確認）。
+2. HTTPステータスを確認する"	必須パス変数を欠いたリクエストでは正しい商品詳細（正常取得＝200）が取得されないこと（仕様で固定される404は該当なし時のみ。欠落時の具体ステータス＝ルート不一致/404等は要実機確認）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-008	IT-32	レスポンス	P2	成功レスポンスが仕様のフィールド構成・型契約と一致する	SEED-A17-04-PRODUCT-KNOWN	実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. レスポンス本文のフィールドと型を確認する"	レスポンスに仕様の成功フィールド（code・weekly_sold・product_id・product_name・language_code・description_detail・categories・region_restriction・card_detail・product_classes〔product_class_id・product_code・high_price_code・card_condition_code・price・sale_limit・stock・product_class_images〕）が含まれ、各フィールドが仕様の型契約と一致すること：code・weekly_sold・product_id・price・stock・product_class_id は integer、product_name・language_code・description_detail・region_restriction・product_code・high_price_code・card_condition_code は string、categories・product_class_images は array、card_detail は object（カード商品でない場合 null）、sale_limit は integer（未設定時 null）。
+2. レスポンス本文のフィールドと型を確認する"	レスポンスに仕様の成功フィールド（code・weekly_sold・product_id・product_name・language_code・description_detail・categories・region_restriction・card_detail・product_classes〔product_class_id・product_code・high_price_code・card_condition_code・price・sale_limit・stock・product_class_images〕）が含まれ、各フィールドが仕様の型契約と一致すること：code・weekly_sold・product_id・price・stock・product_class_id は integer、product_name・language_code・description_detail・region_restriction・product_code・high_price_code・card_condition_code は string、categories・product_class_images は array、card_detail は object（カード商品でない場合 null）、sale_limit は integer（未設定時 null）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-009	IT-32	データなし	P1	該当する商品詳細が無い場合に404 Not Found が返る	SEED-A17-04-NONE	該当商品の無い商品ID	"1. 該当商品の無い商品IDでGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス404が返り、本文が仕様の失敗応答（code・message を含み message が "Not Found" のJSON）であること（実装の本文キー構成差異は付帯表4#3）。
+2. HTTPステータスとレスポンス本文を確認する"	"HTTPステータス404が返り、本文が仕様の失敗応答（code・message を含み message が ""Not Found"" のJSON）であること（実装の本文キー構成差異は付帯表4#3）。"				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-010	IT-32	受信検証	P2	指定productId・言語に紐づく商品詳細のみが返る	SEED-A17-04-PRODUCT-KNOWN	実在する商品ID・lang=JP	"1. 対象エンドポイントへGET送信する
-2. レスポンスの product_id・language_code・商品規格を確認する"	返却された商品本体・商品規格が指定商品ID・指定言語に対応するもののみで、無関係な商品の情報が混在しないこと（処理フロー#2「商品IDと言語で商品詳細を取得」）。
+2. レスポンスの product_id・language_code・商品規格を確認する"	返却された商品本体・商品規格が指定商品ID・指定言語に対応するもののみで、無関係な商品の情報が混在しないこと（処理フロー#2「商品IDと言語で商品詳細を取得」）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-011	IT-10	エラー	P2	エラー発生時（該当なし）に仕様のエラー応答（404）が返る	SEED-A17-04-NONE	該当商品なしを誘発するリクエスト	"1. 該当なしリクエストでGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	該当商品なしのエラーで、HTTPステータス404と message を含むJSONが返ること（エラー処理「該当なし→HTTP 404・Not Found」）。
+2. HTTPステータスとレスポンス本文を確認する"	該当商品なしのエラーで、HTTPステータス404と message を含むJSONが返ること（エラー処理「該当なし→HTTP 404・Not Found」）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-012	IT-10	HTTPステータス	P1	異常（該当なし）時のHTTPステータスが仕様の404と一致する	SEED-A17-04-NONE	該当なしリクエスト	"1. 該当なしリクエストでGET送信する
-2. HTTPステータスを確認する"	HTTPステータスが該当なしを示す404であること。
+2. HTTPステータスを確認する"	HTTPステータスが該当なしを示す404であること。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-013	IT-10	通信	P1	正常通信で200応答が返る	SEED-A17-04-PRODUCT-KNOWN	実在する商品ID	"1. 対象エンドポイントへGET送信する
-2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-014	IT-10	正常	P2	対象条件に該当する正常値で200と商品詳細が返る	SEED-A17-04-PRODUCT-KNOWN	対象条件に該当する正常な商品ID	"1. 正常値でGET送信する
-2. HTTPステータスとレスポンスを確認する"	正常取得としてHTTPステータス200で商品詳細が返ること。
+2. HTTPステータスとレスポンスを確認する"	正常取得としてHTTPステータス200で商品詳細が返ること。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-015	IT-10	異常系	P2	異常系（不正値）受信時に正しい商品詳細が取得されない	SEED-A17-04-NONE	不正な商品IDのリクエスト	"1. 不正値でGET送信する
-2. HTTPステータスを確認する"	不正値の商品IDでは正しい商品詳細（正常取得＝200）が取得されないこと（仕様で固定される404は該当なし時のみで、不正パラメータ・型不正時の具体ステータスは要実機確認）。
+2. HTTPステータスを確認する"	不正値の商品IDでは正しい商品詳細（正常取得＝200）が取得されないこと（仕様で固定される404は該当なし時のみで、不正パラメータ・型不正時の具体ステータスは要実機確認）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-016	IT-10	重複・順序	P1	同一GETの重複呼び出しで同一レスポンス（冪等参照）となる	SEED-A17-04-PRODUCT-KNOWN	同一の商品ID・言語を2回送信	"1. 同一リクエストを1回目GET送信する
 2. 同一リクエストを2回目GET送信する
-3. 2回のレスポンスを比較する"	参照系のため2回の呼び出しで同一のHTTPステータス・レスポンス本文が返り、副作用（DB更新）が発生しないこと（副作用「無し（参照のみ）」）。
+3. 2回のレスポンスを比較する"	参照系のため2回の呼び出しで同一のHTTPステータス・レスポンス本文が返り、副作用（DB更新）が発生しないこと（副作用「無し（参照のみ）」）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-017	IT-32	資格情報	P2	資格情報の前提（認可方式）が仕様外のため拒否応答を自動で固定しない	SEED-A17-04-PRODUCT-KNOWN	資格情報を付与/欠落させたリクエスト（認可方式は仕様未確定＝要確認）	"1. 資格情報の有無を変えて対象エンドポイントへGET送信する
-2. 応答を確認する（自動判定はしない）"	本APIは認証を行わず（認証・認可「jwt-token等による認証を行わない」）、アクセス制御はAPI外（ネットワーク・配置）で仕様確定しないため、資格情報の欠落・不正時の拒否応答を自動テストで固定しないこと（認可方式の実体は手動・要実機確認＝付帯表4#2）。
+2. 応答を確認する（自動判定はしない）"	本APIは認証を行わず（認証・認可「jwt-token等による認証を行わない」）、アクセス制御はAPI外（ネットワーク・配置）で仕様確定しないため、資格情報の欠落・不正時の拒否応答を自動テストで固定しないこと（認可方式の実体は手動・要実機確認＝付帯表4#2）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-018	IT-10	エラー	P3	タイムアウト時に未捕捉例外で停止せず参照系としてDB不整合が残らない	SEED-A17-04-PRODUCT-KNOWN	タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してGET送信する
-2. 応答とDB状態を確認する"	タイムアウト時の応答仕様は正典に定義が無いため期待値を固定せず（未定義挙動を仕様化しない）、参照系のため呼び出しでDBに不整合が残らないことのみを判定する。タイムアウト時の具体応答とその実再現は要実機確認。
+2. 応答とDB状態を確認する"	タイムアウト時の応答仕様は正典に定義が無いため期待値を固定せず（未定義挙動を仕様化しない）、参照系のため呼び出しでDBに不整合が残らないことのみを判定する。タイムアウト時の具体応答とその実再現は要実機確認。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-030	IT-09（母集合外）	レスポンス	P2	言語未指定でJP既定の商品詳細が返る	SEED-A17-04-PRODUCT-KNOWN	lang を付与しない（または空）リクエスト＋実在商品ID	"1. lang を付与せずGET送信する
-2. language_code とレスポンスを確認する"	lang 未指定時は日本語（JP）の商品詳細が返り、language_code が "JP" であること（処理フロー#1・データ整合性「未指定時は日本語を返す」）。
+2. language_code とレスポンスを確認する"	"lang 未指定時は日本語（JP）の商品詳細が返り、language_code が ""JP"" であること（処理フロー#1・データ整合性「未指定時は日本語を返す」）。"				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-031	IT-09（母集合外）	レスポンス	P2	カード商品で商品名先頭に言語コードが付きcard_detailが構築される	SEED-A17-04-CARD	カード商品の商品ID・lang=JP	"1. カード商品の商品IDでGET送信する
-2. product_name と card_detail を確認する"	カード商品の場合、product_name が「【JP】」始まりとなり、card_detail に card_name・colors・mana_cost・rarity 等のカード情報が設定されること（処理フロー#3）。
+2. product_name と card_detail を確認する"	カード商品の場合、product_name が「【JP】」始まりとなり、card_detail に card_name・colors・mana_cost・rarity 等のカード情報が設定されること（処理フロー#3）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-032	IT-09（母集合外）	レスポンス	P3	非カード商品でcard_detailがnullで返る	SEED-A17-04-NONCARD	カードに紐づかない商品ID	"1. 非カード商品の商品IDでGET送信する
-2. card_detail を確認する"	カード商品でない商品では card_detail が null で返ること（入出力 レスポンス「カード商品でない場合はnull」）。
+2. card_detail を確認する"	カード商品でない商品では card_detail が null で返ること（入出力 レスポンス「カード商品でない場合はnull」）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-033	IT-09（母集合外）	実行結果	P2	weekly_soldが各商品規格の数量の合算で返る	SEED-A17-04-PRODUCT-KNOWN	複数規格・既知販売数を持つ商品ID	"1. 対象エンドポイントへGET送信する
-2. weekly_sold の値を確認する"	weekly_sold が各明細（商品規格）の数量を合算した整数で返ること（処理フロー#4・用語「商品規格ごとの数量を合算」。集計元列・期間は付帯表4#4＝要確認）。
+2. weekly_sold の値を確認する"	weekly_sold が各明細（商品規格）の数量を合算した整数で返ること（処理フロー#4・用語「商品規格ごとの数量を合算」。集計元列・期間は付帯表4#4＝要確認）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-034	IT-32（母集合外）	表示条件	P2	良品(NM)/表示下限以上の規格のみが商品規格に含まれる	SEED-A17-04-COND	NM規格・非NM低価格規格・非NM高価格規格を持つ商品ID	"1. 対象エンドポイントへGET送信する
-2. product_classes に含まれる規格を確認する"	非NMかつ価格が表示下限未満の商品規格は product_classes に含まれず、NMまたは表示下限以上の規格のみが含まれる（実在規格の部分集合となる）こと（処理フロー#5・データ整合性「表示下限価格や良品（NM）判定」。表示下限値は付帯表4#6＝要確認）。
+2. product_classes に含まれる規格を確認する"	非NMかつ価格が表示下限未満の商品規格は product_classes に含まれず、NMまたは表示下限以上の規格のみが含まれる（実在規格の部分集合となる）こと（処理フロー#5・データ整合性「表示下限価格や良品（NM）判定」。表示下限値は付帯表4#6＝要確認）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-035	IT-32（母集合外）	レスポンス	P3	商品規格画像がファイル名からURLへ変換され並ぶ	SEED-A17-04-PRODUCT-KNOWN	画像を持つ商品規格の商品ID	"1. 対象エンドポイントへGET送信する
-2. product_class_images を確認する"	product_class_images が画像ファイル名からURL文字列へ変換され、配列で返ること（処理フロー#5「画像はファイル名からURLへ変換して並べる」）。
+2. product_class_images を確認する"	product_class_images が画像ファイル名からURL文字列へ変換され、配列で返ること（処理フロー#5「画像はファイル名からURLへ変換して並べる」）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-036	IT-09（母集合外）	実行結果	P2	参照のみで副作用が無い（再取得で対象データ不変）	SEED-A17-04-PRODUCT-KNOWN	実在する商品ID	"1. 対象商品・商品規格の現在値を取得する
 2. 対象エンドポイントへGET送信する
-3. 対象データを再取得し比較する"	API呼び出し前後で対象商品・商品規格の値（price・stock 等）が変化しないこと（副作用「無し（参照のみ）」・DB操作は参照系のみ）。
+3. 対象データを再取得し比較する"	API呼び出し前後で対象商品・商品規格の値（price・stock 等）が変化しないこと（副作用「無し（参照のみ）」・DB操作は参照系のみ）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-037	IT-32（母集合外）	レスポンス	P3	未設定の任意フィールドがnullで返る	SEED-A17-04-CARD	power/toughness・loyalty・sale_limit が未設定の商品ID	"1. 対象エンドポイントへGET送信する
-2. 未設定フィールドの値を確認する"	sale_limit・card_detail.power_toughness・card_detail.loyalty が未設定のとき各フィールドが null で返ること（入出力 レスポンス「該当が無い場合はnull」）。
+2. 未設定フィールドの値を確認する"	sale_limit・card_detail.power_toughness・card_detail.loyalty が未設定のとき各フィールドが null で返ること（入出力 レスポンス「該当が無い場合はnull」）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-038	IT-32（母集合外）	レスポンス	P3	categoriesが配列・region_restrictionが名称で返る	SEED-A17-04-PRODUCT-KNOWN	カテゴリ・地域制限を持つ商品ID	"1. 対象エンドポイントへGET送信する
-2. categories と region_restriction を確認する"	categories がカテゴリ名の配列、region_restriction が地域制限の名称（文字列）で返ること（入出力 レスポンス フィールド定義）。
+2. categories と region_restriction を確認する"	categories がカテゴリ名の配列、region_restriction が地域制限の名称（文字列）で返ること（入出力 レスポンス フィールド定義）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-039	IT-10（母集合外）	形式不正	P2	非数値（型不正）のproductIdで正しい商品詳細が取得されない	SEED-A17-04-NONE	非数値の商品ID（例 abc）	"1. 非数値 productId でGET送信する
-2. HTTPステータスを確認する"	productId が integer 型でない場合は正しい商品詳細（正常取得＝200）が取得されないこと（productId は型integer・必須。ルート要件は数値のみ。仕様で固定される404は該当なし時のみで、型不正時の具体ステータス＝ルート不一致/404等は要実機確認＝付帯表4#5）。
+2. HTTPステータスを確認する"	productId が integer 型でない場合は正しい商品詳細（正常取得＝200）が取得されないこと（productId は型integer・必須。ルート要件は数値のみ。仕様で固定される404は該当なし時のみで、型不正時の具体ステータス＝ルート不一致/404等は要実機確認＝付帯表4#5）。				
 a17-04_api_other_product_detail（API_商品詳細取得）	E2E-A17-04-040	IT-10（母集合外）	障害	P2	DB接続障害時に未捕捉エラーで停止しない（代替応答仕様は要実機確認）	SEED-A17-04-PRODUCT-KNOWN	DB接続障害・読み取り失敗を誘発するシナリオ	"1. 接続障害を誘発してGET送信する
-2. 応答を確認する"	DB接続障害時の代替応答仕様は正典に定義が無いため期待値を固定せず（未定義挙動を仕様化しない）、未捕捉例外（500）でプロセス停止せずエラー応答へ分岐することのみを判定する。具体応答・障害実再現は要実機確認。
+2. 応答を確認する"	DB接続障害時の代替応答仕様は正典に定義が無いため期待値を固定せず（未定義挙動を仕様化しない）、未捕捉例外（500）でプロセス停止せずエラー応答へ分岐することのみを判定する。具体応答・障害実再現は要実機確認。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

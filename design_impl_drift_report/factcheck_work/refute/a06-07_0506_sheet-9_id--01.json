@@ -1,0 +1,10 @@
+{
+  "chunkId": "a06-07_0506_sheet-9_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-07_0506_sheet-9_id.json#a06-07_0506_sheet-9_id-conformance-801b87708c80",
+      "refuted": false,
+      "reason": "反証を試みたが指摘は維持。(1)引用検証: 設計側は 2280行『0件のときは空配列を返す』, 2281行フィールド表『0件のときは応答全体が空配列』, 2283行『0件時もHTTP 200で空配列を返す』, 2324行の0件応答例が literal `[]` と、トップレベル空配列を4回明記。実装側も Controller:81 `return new JsonResponse(['cards' => []]);`（JSON上 {\"cards\":[]}）と Formatter:123 `return ['cards' => empty($cards) ? new \\stdClass() : $cards];`（0件で {\"cards\":{}}）を実ファイルで確認、いずれもトップレベル [] を返さない。引用は全て正確。(2)別実装: `rg buying/products|api_buying_products|getByProductIds` の結果、当該応答を返すのは BuyingController::getByProductIds(67-94) の単一ルートのみ。V2や別Controllerは無し。KernelEvents::VIEW/RESPONSE のリスナはテンプレート系(MissingLocaleTemplateRedirectListener/TemplateUpdateListener)のみで JSON応答を再整形するSubscriber・Normalizerは MTGBuyer 名前空間に存在せず、JsonResponse の json_encode を経て {\"cards\":...} がそのまま出力される。(3)設計側除外の検討: 2261行『挙動（取得条件・0件許容）は現行（pf-api）を正とする』は“0件をエラーにしない許容挙動”を pf-api準拠とする注記であり、応答の形（[] vs cardsオブジェクト）を実装任せにする免責ではない。むしろ設計は形を [] と明示。加えて同名前空間の他エンドポイント(BuyOrderIndivisualInputProductController:44/56, BuyMainCardController:44/56)は0件で `new JsonResponse([])` とトップレベル [] を返しており、[] が想定慣習である裏付けとなる（本エンドポイントだけが逸脱）。(4)要求読み違い・重複も該当なし。設計が [] を要求し実装が {\"cards\":[]}/{\"cards\":{}} を返す外部JSON契約の相違は実在する。"
+    }
+  ]
+}

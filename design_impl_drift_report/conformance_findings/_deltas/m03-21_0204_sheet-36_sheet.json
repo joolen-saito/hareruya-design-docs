@@ -1,0 +1,60 @@
+{
+  "functionId": "m03-21_0204_sheet-36_sheet",
+  "featureNo": "M03-21",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-36:8203",
+      "designExpectation": "一覧の「並び順」は、押下すると該当行の情報を名称(3)と並び順(4)に反映する。",
+      "implRef": "src/Eccube/Resource/template/admin/Product/shelf_number.twig:134",
+      "implementationActual": "一覧の並び順セルは `{{ shelfNumber.sortNo }}` のテキスト表示のみ。ID、名称、編集は編集ルートへのリンクだが、並び順にはリンクやクリック処理がない。",
+      "mismatchReason": "設計は並び順列の押下で編集フォームへ反映することを要求しているが、実装では押下可能な要素が実装されていない。探索範囲: ShelfNumberController、shelf_number.twig、関連JS。",
+      "comparisonRows": [
+        {
+          "item": "一覧・並び順セルの押下",
+          "design": "押下で該当行の情報を名称(3)と並び順(4)に反映する。",
+          "implementation": "並び順セルはプレーンテキスト表示のみ。",
+          "mismatch": "押下操作とフォーム反映ができない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-36:8198",
+      "designExpectation": "入力項目「並び順」は必須で、最大値は 0〜32767 とする。",
+      "implRef": "src/Eccube/Form/Type/Admin/ShelfNumberType.php:46; src/Eccube/Entity/DtbShelfNumber.php:37",
+      "implementationActual": "`sortNo` は `IntegerType` かつ `NotBlank()` のみで、0〜32767 の `Range` 制約や最大値属性はない。DBカラムも unsigned integer で、32767 上限は定義されていない。",
+      "mismatchReason": "設計の最大値 0〜32767 がフォームバリデーション、HTML属性、エンティティ定義のいずれにも存在しない。探索範囲: ShelfNumberType、DtbShelfNumber、shelf_number.twig、ShelfNumberController。",
+      "comparisonRows": [
+        {
+          "item": "並び順の範囲制約",
+          "design": "0〜32767",
+          "implementation": "必須と整数型のみ。32767 上限なし。",
+          "mismatch": "設計上の最大値を超える値をフォーム制約として拒否しない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-36:8275",
+      "designExpectation": "CSV取込の名称は、画面の正規表現相当の検証をCSVハンドラでは行わず、DBのユニーク制約・長さ制約に依存する。CSVでは画面の形式に合わない名称も保存され得る。",
+      "implRef": "src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:45; src/Eccube/Service/Csv/Importer/Validator/RegexValidator.php:40",
+      "implementationActual": "CSV名称列に `RegexValidator('/^[A-Z][-][0-9]{3}$/')` が設定され、形式不一致時はCSV取込バリデーションエラーになる。",
+      "mismatchReason": "設計はCSV側で画面正規表現を適用しない外部契約を記載しているが、実装はCSV取込にも同じ形式制約を適用している。探索範囲: ShelfNumberMasterImportHandler、RegexValidator、BaseCsvImportHandler、ShelfNumberController CSV import。",
+      "comparisonRows": [
+        {
+          "item": "CSV名称の形式検証",
+          "design": "CSVハンドラでは画面Regex相当の検証なし。",
+          "implementation": "CSVハンドラで `^[A-Z][-][0-9]{3}$` を検証する。",
+          "mismatch": "CSV取込が設計より厳しく、設計上保存され得る非形式一致名称を拒否する。"
+        }
+      ]
+    }
+  ]
+}

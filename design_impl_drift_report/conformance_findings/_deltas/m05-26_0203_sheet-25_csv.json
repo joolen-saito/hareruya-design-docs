@@ -1,0 +1,54 @@
+{
+  "functionId": "m05-26_0203_sheet-25_csv",
+  "featureNo": "M05-26",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25:7837",
+      "designExpectation": "出荷実績登録CSVフォーマットは、識別ID43〜64の配送先項目として「配送先_住所1」「配送先_住所2」の後に「配送先_TEL1」「配送先_TEL2」「配送先_TEL3」「配送先_FAX1」「配送先_FAX2」「配送先_FAX3」「配送方法(ID)」「配送方法(名称)」「送り状No.」「お届け時間ID」「お届け時間(名称)」を並べ、配送先_住所3列は定義しない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/OrderCsvController.php:95, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1418, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:82",
+      "implementationActual": "実装のCSV_HEADERは「配送先_住所2」の後に設計にない「配送先_住所3」を追加し、画面のフォーマット表も headers|keys をそのまま表示する。出力SQLも s.addr03 AS shipping_addr03 を含むため、設計64列に対して実装は配送先_住所3を含む65列の契約になる。",
+      "mismatchReason": "設計CSV表の配送先側は line 7837〜7849 で住所2の次が配送先_TEL1であり、配送先_住所3は存在しない。一方、実装は OrderCsvController::CSV_HEADER/NOT_REQUIRED_CSV_HEADER に配送先_住所3を定義し、テンプレートがその定義を表示する。別経路として admin_shipping_csv_import も確認したが3列の出荷CSVアップロードであり、本出荷実績登録CSVフォーマットの反証にはならない。",
+      "comparisonRows": [
+        {
+          "item": "配送先住所列",
+          "design": "配送先_住所1、配送先_住所2まで",
+          "implementation": "配送先_住所1、配送先_住所2、配送先_住所3",
+          "mismatch": "実装に設計外列が追加され、以降の列位置が設計と1列ずれる"
+        },
+        {
+          "item": "CSVフォーマット表示",
+          "design": "sheet-25の64項目を表示する契約",
+          "implementation": "OrderCsvController::CSV_HEADERのキーをそのまま表示",
+          "mismatch": "設計にない配送先_住所3が利用者に表示される"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-25:7847",
+      "designExpectation": "出荷実績登録CSVフォーマットの「送り状No.」は書式・制限が「数値(整数)」である。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/OrderCsv.php:130, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Order.php:679, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/AbstractCsvService.php:288",
+      "implementationActual": "実装は row['送り状No.'] を文字列のまま invoiceNumber に代入し、Order.invoice_number は string length 64。AbstractCsvService側も必須項目の空チェックのみで、送り状No.の数値(整数)チェックはない。",
+      "mismatchReason": "対象実装範囲（OrderCsvController、OrderCsv、AbstractCsvService、OrderRepository、shipping_result_csv_import.twig、別名の CsvImportController）を確認した。旧系の admin_shipping_csv_import には tracking_number の半角英数字ハイフン検証があるが、これは出荷ID/お問い合わせ番号/出荷日の3列CSVであり、sheet-25の「送り状No.」数値(整数)制約ではない。対象ルート admin_shipping_result_csv_import では数値整数制約が実装されていない。",
+      "comparisonRows": [
+        {
+          "item": "送り状No.書式",
+          "design": "数値(整数)",
+          "implementation": "文字列としてそのまま setInvoiceNumber に渡す",
+          "mismatch": "英字・記号などの非整数値を設計通り拒否する実装がない"
+        },
+        {
+          "item": "保存先型",
+          "design": "数値(整数)として扱うCSV項目",
+          "implementation": "Order.invoice_number は string length 64",
+          "mismatch": "CSV制約と保存・検証の型が一致していない"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "chunkId": "f04-01_0304_sheet-3_sheet--01",
+  "functionId": "f04-01_0304_sheet-3_sheet",
+  "featureNo": "F04-01",
+  "title": "F04-01 買い物かご",
+  "domain": "f04",
+  "designHtml": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-3",
+  "designSheet": {
+    "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+    "anchor": "sheet-3",
+    "start": 844,
+    "end": 1179,
+    "lines": 336
+  },
+  "partIndex": 1,
+  "partCount": 1,
+  "itemCount": 1,
+  "items": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/f04-01_0304_sheet-3_sheet.json#f04-01_0304_sheet-3_sheet-conformance-572e7346a28e",
+      "candidateType": "finding",
+      "queueStatus": "pending",
+      "functionId": "f04-01_0304_sheet-3_sheet",
+      "featureNo": "F04-01",
+      "title": "F04-01 買い物かご",
+      "domain": "f04",
+      "designHtml": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-3",
+      "designSheet": {
+        "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+        "anchor": "sheet-3",
+        "start": 844,
+        "end": 1179,
+        "lines": 336
+      },
+      "issueCategory": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "priorClaim": {
+        "designExpectation": "カート内の数量変更時、画面再読み込みせずに購入上限数を超える商品数を入力できないようにする。カート遷移時点の購入上限数で＋ボタン・数量入力を制御する。",
+        "implementationActual": "数量入力欄の max は maxQty = ProductClass.stockUnlimited ? 99999 : (eccubeStock|default(99999)) で在庫数のみを反映（index.twig:203,226）。購入上限（sale_limit / getSaleLimit）は数量入力・＋ボタン制御に未使用。＋ボタン(data-operation='up')のクリックハンドラ(index.twig:94-107)にも上限判定なし。CartService.setProductQuantity()(388)は removeProduct→addProduct のみで購入上限比較なし。getMaxOrderQuantity()=min(stock,saleLimit)(ProductClass.php:1292)はテンプレート未使用。",
+        "mismatchReason": "設計は在庫数と購入上限数の双方でクライアント側の＋ボタン・数量入力を非リロード制御する★カスタマイズを明記しているが、実装の max 算出は在庫のみを参照し購入上限を無視。よって在庫内であれば購入上限を超える数量をクライアントで入力・送信でき、入力制御要件を満たさない。sale_limit のサーバ側検証(SaleLimitValidator/over_sale_limit)は購入フロー側であり本要件とは別物。"
+      },
+      "disputedExclusion": false,
+      "sourceFindingId": "f04-01_0304_sheet-3_sheet-conformance-572e7346a28e",
+      "designRef": "excel_to_html/output/0304_基本設計仕様書(フロント_注文).html#sheet-3",
+      "designQuote": "カート内の数量変更時、画面再読み込みせずに購入上限数を超える商品数を入力できないようにする。カート遷移時点の購入上限数で＋ボタン・数量入力を制御する。",
+      "implRef": "src/Eccube/Resource/template/default/Cart/index.twig:202-203,226,94-107 / src/Eccube/Entity/ProductClass.php:1292 / src/Eccube/Service/CartService.php:388",
+      "implementationRefs": [
+        "src/Eccube/Resource/template/default/Cart/index.twig:202-203,226,94",
+        "src/Eccube/Entity/ProductClass.php:1292",
+        "src/Eccube/Service/CartService.php:388",
+        "src/Eccube/Resource/template/default/Cart/index.twig",
+        "src/Eccube/Entity/ProductClass.php",
+        "src/Eccube/Service/CartService.php"
+      ],
+      "comparisonRows": [
+        {
+          "item": "数量入力 max 属性の算出根拠",
+          "design": "min(在庫数, 購入上限数)＝カート遷移時点の購入上限",
+          "implementation": "maxQty = stockUnlimited ? 99999 : eccubeStock（在庫のみ）",
+          "mismatch": "購入上限(sale_limit)を反映していない"
+        },
+        {
+          "item": "＋ボタン押下時の上限制御",
+          "design": "購入上限を超える増加を非リロードで抑止",
+          "implementation": "index.twig:94-107 のハンドラに購入上限判定なし（sendCartRequest('up')送信のみ）",
+          "mismatch": "クライアント側の購入上限抑止が未実装"
+        },
+        {
+          "item": "既存資産の活用",
+          "design": "購入上限を加味した上限値で制御",
+          "implementation": "ProductClass.getMaxOrderQuantity()=min(stock,saleLimit) は存在するがテンプレート未使用",
+          "mismatch": "利用可能な上限算出メソッドを使っていない"
+        }
+      ],
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "searchTerms": []
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は `csv_export` 型のため、CSVの各列値・住所/年齢/電話形式・数量集計・並び順・BOM/エンコードといった**ファイル内容の照合は手動**とする（ダウンロード発火・ファイル名・応答ヘッダのみ自動化）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は `csv_export` 型のため、CSVの各列値・住所/年齢/電話形式・数量集計・並び順・BOM/エンコードといった**ファイル内容の照合は手動**とする（ダウンロード発火・ファイル名・応答ヘッダのみ自動化）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 設計源は pf-eccube3（HareruyaEcプラグイン）のリバースだが、刷新先 **ec-cube-enterprise に同一画面（買取一覧 `admin_otcbuyorder` ＋ CSV出力 `admin_otcbuyorder_export`）が実在**するためE2E化した。設計（pf-eccube3）と実装（ec-cube-enterprise）の乖離は付帯表4に出し、テストは仕様どおりに書く。
 
@@ -26,33 +26,33 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-001	IT-03	外部画面	P1	検索結果から注文を1件チェックし古物台帳入力用CSVを選ぶとCSVダウンロードが発火する	管理者ログイン済／SEED-M06-02-OTC-ORDERS（買取注文1件以上）	export_type=old_goods_account、otcBuyOrderIds[]＝チェックした1件	"1. 買取一覧（/admin/otcbuyorder）を開き検索して結果を表示する
 2. 一覧の任意の行のチェックボックス（otcBuyOrderIds[]）をオンにする
-3. 「CSVダウンロード」ドロップダウンを開き「古物台帳入力用CSV」を押下する"	ブラウザのダウンロードが発火すること（HTML画面遷移を伴わない）。
+3. 「CSVダウンロード」ドロップダウンを開き「古物台帳入力用CSV」を押下する"	ブラウザのダウンロードが発火すること（HTML画面遷移を伴わない）。				
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-002	IT-13	URL直接アクセス	P2	ダウンロードファイル名が old_goods_account_<日時>.csv 形式である	管理者ログイン済／SEED-M06-02-OTC-ORDERS	export_type=old_goods_account、otcBuyOrderIds[]＝1件	"1. 検索結果から1件チェックする
-2. 「古物台帳入力用CSV」を押下しダウンロードを取得する"	ダウンロードファイル名が接頭辞 old_goods_account_ ＋ 14桁の日時 ＋ 拡張子 .csv であること（例 old_goods_account_20260619123000.csv）。
+2. 「古物台帳入力用CSV」を押下しダウンロードを取得する"	ダウンロードファイル名が接頭辞 old_goods_account_ ＋ 14桁の日時 ＋ 拡張子 .csv であること（例 old_goods_account_20260619123000.csv）。				
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-003	IT-03	外部画面	P2	エクスポート応答のContent-Typeがoctet-streamである	管理者ログイン済／SEED-M06-02-OTC-ORDERS	export_type=old_goods_account（リンク押下でJS代入）、otcBuyOrderIds[]＝チェックした1件	"1. 検索結果から1件チェックし「古物台帳入力用CSV」を押下する（実UIフォーム送信）
-2. /admin/otcbuyorder/export への応答ヘッダを確認する"	Content-Type が application/octet-stream であること。
+2. /admin/otcbuyorder/export への応答ヘッダを確認する"	Content-Type が application/octet-stream であること。				
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-004	IT-13	URL直接アクセス	P2	エクスポート応答のContent-Dispositionがattachmentでファイル名を含む	管理者ログイン済／SEED-M06-02-OTC-ORDERS	export_type=old_goods_account（リンク押下でJS代入）、otcBuyOrderIds[]＝チェックした1件	"1. 検索結果から1件チェックし「古物台帳入力用CSV」を押下する（実UIフォーム送信）
-2. /admin/otcbuyorder/export への応答ヘッダを確認する"	Content-Disposition が attachment; filename=old_goods_account_<日時>.csv であること。
+2. /admin/otcbuyorder/export への応答ヘッダを確認する"	Content-Disposition が attachment; filename=old_goods_account_<日時>.csv であること。				
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-010	IT-25	UI部品	P2	検索結果が1件以上のとき「CSVダウンロード」ドロップダウンと「古物台帳入力用CSV」リンクが表示される	管理者ログイン済／SEED-M06-02-OTC-ORDERS	—	"1. 買取一覧を開き検索して結果（1件以上）を表示する
-2. 「CSVダウンロード」ドロップダウンを開く"	「CSVダウンロード」ドロップダウンと配下の「古物台帳入力用CSV」（data-type=old_goods_account）リンクが表示されること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-011	IT-25	UI部品	P3	検索結果の各行にチェックボックスと表頭の全選択チェックが表示される	管理者ログイン済／SEED-M06-02-OTC-ORDERS	—	"1. 買取一覧を開き検索して結果を表示する"	各行に name=otcBuyOrderIds[] のチェックボックスがあり、表頭に全選択チェック（#allCheck）が表示されること。
+2. 「CSVダウンロード」ドロップダウンを開く"	「CSVダウンロード」ドロップダウンと配下の「古物台帳入力用CSV」（data-type=old_goods_account）リンクが表示されること。				
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-011	IT-25	UI部品	P3	検索結果の各行にチェックボックスと表頭の全選択チェックが表示される	管理者ログイン済／SEED-M06-02-OTC-ORDERS	—	1. 買取一覧を開き検索して結果を表示する	各行に name=otcBuyOrderIds[] のチェックボックスがあり、表頭に全選択チェック（#allCheck）が表示されること。				
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-012	IT-25	確認ダイアログ	P3	古物台帳入力用CSVの出力前に確認ダイアログがない	管理者ログイン済／SEED-M06-02-OTC-ORDERS	—	"1. 買取一覧を開き検索して結果を表示する
-2. 「CSVダウンロード」ドロップダウンを開く"	「古物台帳入力用CSV」は通常のリンク（確認モーダル属性 data-bs-toggle=modal を持たない）で、押下前に確認ダイアログが出ないこと。
+2. 「CSVダウンロード」ドロップダウンを開く"	「古物台帳入力用CSV」は通常のリンク（確認モーダル属性 data-bs-toggle=modal を持たない）で、押下前に確認ダイアログが出ないこと。				
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-013	IT-25	UI部品	P3	表頭の全選択チェックを押すと全行のチェックが一括でオンになる	管理者ログイン済／SEED-M06-02-OTC-ORDERS（2件以上推奨）	—	"1. 買取一覧を開き検索して結果を表示する
-2. 表頭の全選択チェック（#allCheck）をオンにする"	一覧の全行のチェックボックス（otcBuyOrderId 属性を持つ要素）が一括でオンになること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-014	IT-16	実行結果	P2	検索結果が0件のとき「CSVダウンロード」ドロップダウンが表示されない	管理者ログイン済／SEED-M06-02-OTC-EMPTY（該当0件になる検索条件）	該当0件となる検索条件	"1. 買取一覧を開き、該当0件となる条件で検索する"	「検索条件に該当するデータがありませんでした。」が表示され、「CSVダウンロード」ドロップダウンが描画されないこと（この入口から実行できない）。
+2. 表頭の全選択チェック（#allCheck）をオンにする"	一覧の全行のチェックボックス（otcBuyOrderId 属性を持つ要素）が一括でオンになること。				
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-014	IT-16	実行結果	P2	検索結果が0件のとき「CSVダウンロード」ドロップダウンが表示されない	管理者ログイン済／SEED-M06-02-OTC-EMPTY（該当0件になる検索条件）	該当0件となる検索条件	1. 買取一覧を開き、該当0件となる条件で検索する	「検索条件に該当するデータがありませんでした。」が表示され、「CSVダウンロード」ドロップダウンが描画されないこと（この入口から実行できない）。				
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-020	IT-27	出力失敗	P1	チェックを1つも付けずに古物台帳入力用CSVを選ぶと選択なしエラーが表示される	管理者ログイン済／SEED-M06-02-OTC-ORDERS	otcBuyOrderIds[]＝なし（未選択）	"1. 買取一覧を開き検索して結果を表示する
-2. どの行もチェックせずに「CSVダウンロード」→「古物台帳入力用CSV」を押下する"	選択なしのエラーフラッシュ（仕様: admin.purchase.online.csv_export.no_selection）が表示されること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-021	IT-25	HTTPステータス	P2	選択なし送信は買取一覧の該当ページへリダイレクトされる	管理者ログイン済／SEED-M06-02-OTC-ORDERS	otcBuyOrderIds[]＝なし（未選択）	"1. 検索後どの行もチェックせず「古物台帳入力用CSV」を押下する"	買取一覧ページ（admin_otcbuyorder_page／ページ番号はセッション値）へHTTPリダイレクトされ、ダウンロードは発火しないこと。
+2. どの行もチェックせずに「CSVダウンロード」→「古物台帳入力用CSV」を押下する"	選択なしのエラーフラッシュ（仕様: admin.purchase.online.csv_export.no_selection）が表示されること。				
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-021	IT-25	HTTPステータス	P2	選択なし送信は買取一覧の該当ページへリダイレクトされる	管理者ログイン済／SEED-M06-02-OTC-ORDERS	otcBuyOrderIds[]＝なし（未選択）	1. 検索後どの行もチェックせず「古物台帳入力用CSV」を押下する	買取一覧ページ（admin_otcbuyorder_page／ページ番号はセッション値）へHTTPリダイレクトされ、ダウンロードは発火しないこと。				
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-022	IT-25	URL	P2	export_typeが許可リスト外だとエラー応答になり一覧リダイレクトにならない	管理者ログイン済／SEED-M06-02-OTC-ORDERS	export_type＝不正値（例 invalid）、otcBuyOrderIds[]＝1件、CSRFトークン	"1. 隠し項目 #export_type を許可リスト外の値に書き換える
-2. 1件チェックして result_form を送信する"	種別不正の例外によりエラー応答（システムエラー相当・HTTP 500）となり、買取一覧へのアプリ制御リダイレクトにはならないこと。
+2. 1件チェックして result_form を送信する"	種別不正の例外によりエラー応答（システムエラー相当・HTTP 500）となり、買取一覧へのアプリ制御リダイレクトにはならないこと。				
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-023	IT-22	その他のバリデーション	P2	otcBuyOrderIdsに非整数値のみを送ると整数化後に空になり選択なしエラーでリダイレクトされる	管理者ログイン済／SEED-M06-02-OTC-ORDERS	otcBuyOrderIds[]＝非整数のみ（例 abc）、export_type=old_goods_account	"1. 隠しフォーム #result_form に otcBuyOrderIds[]=非整数（整数化で0→array_filterで除去され空になる値）を注入する
-2. 「古物台帳入力用CSV」を押下して result_form を送信する"	整数化（intval→array_filter）後に対象が空となり、選択なしエラーフラッシュ（仕様: admin.purchase.online.csv_export.no_selection）付きで買取一覧ページへリダイレクトされ、ダウンロードが発火しないこと（未選択＝空配列とは別経路だが同一の失敗分岐＝処理フロー#4）。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-030	IT-15	未認証	P1	未ログインで買取一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/otcbuyorder へ直接アクセスする"	管理ログイン画面へ誘導されること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-031	IT-15	未認証	P2	未ログインでエクスポートエンドポイントへ送信すると管理ログイン画面へ誘導される	未ログイン	export_type=old_goods_account	"1. 未ログインで /admin/otcbuyorder/export へPOST送信する"	エクスポート処理に到達せず管理ログイン画面へ誘導されること。
+2. 「古物台帳入力用CSV」を押下して result_form を送信する"	整数化（intval→array_filter）後に対象が空となり、選択なしエラーフラッシュ（仕様: admin.purchase.online.csv_export.no_selection）付きで買取一覧ページへリダイレクトされ、ダウンロードが発火しないこと（未選択＝空配列とは別経路だが同一の失敗分岐＝処理フロー#4）。				
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-030	IT-15	未認証	P1	未ログインで買取一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/otcbuyorder へ直接アクセスする	管理ログイン画面へ誘導されること。				
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	E2E-M06-02-031	IT-15	未認証	P2	未ログインでエクスポートエンドポイントへ送信すると管理ログイン画面へ誘導される	未ログイン	export_type=old_goods_account	1. 未ログインで /admin/otcbuyorder/export へPOST送信する	エクスポート処理に到達せず管理ログイン画面へ誘導されること。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象セレクタ・仕様根拠・元ITケースID（TSV外）

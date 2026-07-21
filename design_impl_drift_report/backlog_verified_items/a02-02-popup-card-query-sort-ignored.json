@@ -1,0 +1,209 @@
+{
+  "id": "a02-02-popup-card-query-sort-ignored",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a02-02_0502_sheet-4_sheet.json",
+  "sourceFindingId": "a02-02_0502_sheet-4_sheet-conformance-9bf3c4e01752",
+  "classification": "API商品管理",
+  "feature": "ポップアップ用カード情報取得",
+  "issueCategory": "実装漏れ",
+  "issue": "ポップアップ用カード情報取得で foil_flg と price クエリが取得条件・並び順に反映されない",
+  "designBook": "0502_基本設計仕様書(API_商品管理).xlsx",
+  "reproSteps": [
+    "カードIDに紐づく通常版・フォイル版、または販売価格の異なる商品規格が存在する状態で、GET http://localhost:8080/api/popup/card/ja/{cardId}?foil_flg=1&price=high を実行する",
+    "同じ cardId に対して GET http://localhost:8080/api/popup/card/ja/{cardId}?foil_flg=0&price=low を実行する",
+    "返却される商品規格が foil_flg と price の指定に応じて切り替わるか、または並び優先が変わるかを確認する"
+  ],
+  "expected": [
+    "パスの cardId と lang に加えて、クエリの foil_flg と price を受け取る",
+    "foil_flg 指定時はフォイル区分の並び順に反映する。真値は降順、偽値は昇順、未指定時は非フォイル優先で並べる",
+    "price=high の場合は販売価格 price02 の降順、それ以外の値では昇順に並べる。未指定時は価格での並びを行わない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、A02-02 の controller が Request を受け取らず、cardId/lang だけを ProductRepository::findPopupProductByCardId($cardId, $languageCode) に渡している。repository も引数が cardId と languageCode のみで、SQL は cd.foil_flg ASC 固定、price02 の昇降順切替はない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise controller は Request/query を受け取らない",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php",
+          "start": 265,
+          "end": 278,
+          "language": "php",
+          "contains": [
+            "/api/popup/card/{lang}/{cardId}",
+            "public function getPopupProductByCardId(string $lang, string $cardId): JsonResponse",
+            "findPopupProductByCardId((int) $cardId, $languageCode)"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise repository は cardId/languageCode のみで固定ソート",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php",
+          "start": 2226,
+          "end": 2291,
+          "language": "php",
+          "contains": [
+            "public function findPopupProductByCardId(int $cardId, string $languageCode): ?array",
+            "WHERE c.id = :cardId",
+            "cd.foil_flg ASC",
+            "$query->setParameter('languageCode', $languageCode)"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、同じポップアップ用カード情報取得で Request から foil_flg と price を取得し、DtbProductSubClassRepository::findPopupProductByCardIdAndLang($cardId, $lang, $foilFlg, $price) に渡す。repository 側では foil_flg 指定時に cardDetail.foilFlg の昇降順を切り替え、price 指定時に productClass.price02 の昇降順を切り替えている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api controller は foil_flg/price を取得して repository へ渡す",
+          "path": "pf-api/src/Controller/ProductController.php",
+          "start": 87,
+          "end": 93,
+          "language": "php",
+          "contains": [
+            "$foilFlg = $request->get('foil_flg')",
+            "$price = $request->get('price')",
+            "findPopupProductByCardIdAndLang($cardId, $lang, $foilFlg, $price)"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api repository は foil_flg/price で並び順を切り替える",
+          "path": "pf-api/src/Repository/DtbProductSubClassRepository.php",
+          "start": 91,
+          "end": 122,
+          "language": "php",
+          "contains": [
+            "public function findPopupProductByCardIdAndLang($cardId, $lang, $foilFlg, $price)",
+            "$qb->addOrderBy('cardDetail.foilFlg', $foilFlg ? 'DESC' : 'ASC')",
+            "$qb->addOrderBy('productClass.price02', $price === 'high' ? 'DESC' : 'ASC')",
+            "$qb->addOrderBy('cardDetail.foilFlg', 'ASC')"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "pf-api を正とし、フォイル有無・価格の条件も受け取る",
+      "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+      "start": 1145,
+      "end": 1147,
+      "language": "html",
+      "contains": [
+        "pf-apiが提供するJSON API",
+        "フォイル有無・価格の条件も受け取る",
+        "挙動の参照リポはpf-api"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "処理フローで foil_flg/price を受け取り取得条件に含める",
+      "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+      "start": 1166,
+      "end": 1178,
+      "language": "html",
+      "contains": [
+        "GET /popup/card/{lang}/{cardId}",
+        "クエリのフォイル有無・価格を条件に加える",
+        "foil_flg",
+        "price",
+        "high"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "データ整合性で言語・フォイル有無・価格を条件に商品情報を選ぶ",
+      "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+      "start": 1205,
+      "end": 1211,
+      "language": "html",
+      "contains": [
+        "言語・フォイル有無・価格を条件に商品情報を選ぶ",
+        "dtb_product_class",
+        "price02",
+        "mtb_card_detail",
+        "foil_flg"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "controller は Request/query を読まず cardId/lang のみ渡す",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php",
+      "start": 265,
+      "end": 278,
+      "language": "php",
+      "contains": [
+        "public function getPopupProductByCardId(string $lang, string $cardId): JsonResponse",
+        "findPopupProductByCardId((int) $cardId, $languageCode)"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "repository は固定 ORDER BY で price02 のクエリ連動ソートがない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php",
+      "start": 2226,
+      "end": 2291,
+      "language": "php",
+      "contains": [
+        "public function findPopupProductByCardId(int $cardId, string $languageCode): ?array",
+        "ORDER BY",
+        "cd.foil_flg ASC",
+        "pc.price02 AS price02"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "route は /popup/card/{lang}/{cardId} を ProductController に割り当てる",
+      "path": "pf-api/config/routes.yaml",
+      "start": 85,
+      "end": 91,
+      "language": "yaml",
+      "contains": [
+        "get_popup_product",
+        "path: /popup/card/{lang}/{cardId}",
+        "ProductController::getPopupCardProductAction"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "controller は foil_flg/price を repository に渡す",
+      "path": "pf-api/src/Controller/ProductController.php",
+      "start": 87,
+      "end": 93,
+      "language": "php",
+      "contains": [
+        "$foilFlg = $request->get('foil_flg')",
+        "$price = $request->get('price')",
+        "findPopupProductByCardIdAndLang($cardId, $lang, $foilFlg, $price)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "repository は foil_flg/price 指定に応じて addOrderBy を切り替える",
+      "path": "pf-api/src/Repository/DtbProductSubClassRepository.php",
+      "start": 91,
+      "end": 122,
+      "language": "php",
+      "contains": [
+        "if (!is_null($foilFlg))",
+        "$qb->addOrderBy('cardDetail.foilFlg', $foilFlg ? 'DESC' : 'ASC')",
+        "if (!is_null($price))",
+        "$qb->addOrderBy('productClass.price02', $price === 'high' ? 'DESC' : 'ASC')"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex",
+    "commands": [
+      "rg -n \"A02-02|ポップアップ用カード|popup/card|foil_flg|price=high|cardId|findPopupProductByCardId|フォイル|販売価格\" hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+      "rg -n \"popup/card|findPopupProductByCardId|foil_flg|price|cardId|Popup.*Card|ProductByCard\" ec-cube-enterprise/src/Eccube pf-api/src pf-api/config",
+      "rg -n \"findPopupProductByCardIdAndLang|foilFlg|foil_flg|price\" pf-api/src",
+      "rg -n \"findPopupProductByCardId|foil_flg|price02|Request|query->get\" ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php"
+    ],
+    "notes": [
+      "設計HTMLは A02-02 の確認値を pf-api とし、foil_flg と price を外部契約のクエリ条件として定義している。",
+      "pf-api は controller で foil_flg/price を取得して repository に渡し、repository でフォイル区分と販売価格の ORDER BY を条件分岐している。",
+      "ec-cube-enterprise の A02-02 controller/repository には foil_flg/price を受け取る引数・query 取得・SQL条件がなく、固定の cd.foil_flg ASC のみ確認できた。"
+    ]
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "functionId": "m04-19_0202_sheet-25_sheet",
+  "featureNo": "M04-19",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10732",
+      "designExpectation": "検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:143",
+      "implementationActual": "disposal_search 時は MtbStockChangeType::DISPOSAL 配下の全子区分を取得して sh.StockChangeTypeDetail IN 条件にしている。マスタ上の「欠品減算(受注)」id=19 と「欠品減算(移動)」id=21 は MtbStockChangeType::OUT_OF_STOCK 配下であり、この条件に含まれない。",
+      "mismatchReason": "DtbStockHistoryRepository、MtbStockChangeTypeDetail 定数、DoctrineMigrations を 欠品減算 / OUT_OF_STOCK / DISPOSAL / ORDER_STOCKOUT_DECREASE / MOVE_SHORTAGE_SUBTRACT で再検索したが、M04-19 の検索条件で id=19,21 を指定する実装はなく、廃棄親区分の一括抽出になっている。",
+      "comparisonRows": [
+        {
+          "item": "抽出対象の子区分",
+          "design": "欠品減算（受注）・欠品減算（移動）",
+          "implementation": "MtbStockChangeType::DISPOSAL 配下の子区分全体",
+          "mismatch": "設計対象の欠品減算(受注/移動)を抽出せず、廃棄(破損/他事業移動/イベント商品/その他/欠品)側を抽出する。"
+        },
+        {
+          "item": "実装上のマスタ配置",
+          "design": "欠品減算（受注）・欠品減算（移動）を欠品履歴一覧に出す",
+          "implementation": "app/DoctrineMigrations/Version20260108130821.php:173-187 で欠品減算(受注/移動)は OUT_OF_STOCK 配下",
+          "mismatch": "Repository の DISPOSAL 親区分フィルタでは対象外になる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10737",
+      "designExpectation": "第三ソートを各レコードの「登録日時」の降順（最新順）で表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:332",
+      "implementationActual": "並び順は pc.code DESC、ps.baseInfo DESC、sh.createDate DESC。画面の登録日表示は Stock.registeredAt を使っているが、ソートは registeredAt ではなく createDate を使っている。",
+      "mismatchReason": "DtbStockHistoryRepository と history.twig を registeredAt / createDate / orderBy で再検索した結果、第三ソートに sh.registeredAt を使う実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "第三ソートキー",
+          "design": "各レコードの登録日時の降順",
+          "implementation": "sh.createDate の降順",
+          "mismatch": "表示される登録日時 registeredAt と異なる作成日時 createDate で並ぶ。"
+        },
+        {
+          "item": "登録日表示",
+          "design": "登録日時を基準に最新順",
+          "implementation": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:726 で Stock.registeredAt を表示",
+          "mismatch": "表示基準とソート基準が一致しない。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10762",
+      "designExpectation": "商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:661",
+      "implementationActual": "商品名列は {{ productSub.name }} のプレーンテキスト表示で、在庫編集画面への a タグや target=\"_blank\" がない。",
+      "mismatchReason": "history.twig、admin_stock_approval_new、stock_list_index.twig、ProductStock.id で再検索した。stock_list_index.twig には admin_stock_approval_new へのリンク実装があるが、M04-19 の history.twig 商品名列には適用されていない。",
+      "comparisonRows": [
+        {
+          "item": "商品名列の操作",
+          "design": "商品名リンク押下で在庫編集画面を別タブ表示",
+          "implementation": "商品名はプレーンテキスト",
+          "mismatch": "利用者が欠品履歴一覧の商品名から在庫編集へ遷移できない。"
+        },
+        {
+          "item": "リンク先",
+          "design": "押下した商品在庫の在庫編集画面",
+          "implementation": "該当リンクなし",
+          "mismatch": "ProductStock.id を使った admin_stock_approval_new 等へのリンクが M04-19 行に存在しない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10771",
+      "designExpectation": "欠品時販売価格は、欠品登録時の販売価格を表示し、受注の場合は受注情報で保持している販売価格、移動の場合も移動情報で保持している販売価格を参照する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:713",
+      "implementationActual": "欠品検索モードの「欠品時販売価格」列は productClassSub.buy_price|price を表示している。これは仕入単価であり、在庫履歴に保存された sell_price ではない。",
+      "mismatchReason": "history.twig、StockHistoryDisposalCsv、DtbStockHistory::sell_price を再検索した。CSV は getSellPrice() を使うが、画面一覧だけ buy_price を表示している。",
+      "comparisonRows": [
+        {
+          "item": "欠品時販売価格の値",
+          "design": "受注/移動情報で保持している欠品時の販売価格",
+          "implementation": "ProductClass.buy_price",
+          "mismatch": "販売価格ではなく仕入単価を表示する。"
+        },
+        {
+          "item": "在庫履歴の販売価格",
+          "design": "欠品発生時点の販売価格を参照",
+          "implementation": "DtbStockHistory.sell_price は存在し CSV では使用されるが、画面では未使用",
+          "mismatch": "画面とCSVで同じ欠品時販売価格にならない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10903",
+      "designExpectation": "検索結果0件時は「検索条件に該当するデータがありませんでした。」の見出しを表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:220",
+      "implementationActual": "検索成功後の戻り値で has_errors が true 固定になっているため、pagination.totalItemCount が0件の場合、history.twig の has_errors 分岐に入り admin.common.search_invalid_condition を表示する。",
+      "mismatchReason": "StockHistoryController と history.twig を has_errors / search_no_result / search_invalid_condition で再検索した。0件時に設計文言へ到達するには has_errors=false が必要だが、検索後の実装は true を返している。",
+      "comparisonRows": [
+        {
+          "item": "0件時メッセージ",
+          "design": "検索条件に該当するデータがありませんでした。",
+          "implementation": "検索条件が不正である旨の admin.common.search_invalid_condition 分岐",
+          "mismatch": "0件を入力不正として表示する。"
+        },
+        {
+          "item": "分岐条件",
+          "design": "検索結果0件時に該当データなし見出し",
+          "implementation": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:746-756 で has_errors が優先される",
+          "mismatch": "正常な0件検索が設計どおりの0件表示にならない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10743",
+      "designExpectation": "識別ID:2-7 として「在庫区分」列を表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:624",
+      "implementationActual": "列値は Stock.ProductStock.locationName を表示しているが、列見出しは admin.stock.history.stock_location を使い、ロケール上は「在庫場所」と表示される。",
+      "mismatchReason": "history.twig と messages.ja.yaml を 在庫区分 / stock_location / locationName で再検索したが、M04-19 一覧列の見出しとして「在庫区分」を出す実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "列ラベル",
+          "design": "在庫区分",
+          "implementation": "在庫場所",
+          "mismatch": "利用者に見える列名が設計と異なる。"
+        },
+        {
+          "item": "列値",
+          "design": "在庫区分（EC-CUBE/スマレジ）",
+          "implementation": "ProductStock.locationName（EC-CUBE/スマレジ）",
+          "mismatch": "値の方向性は近いが、画面ラベルが設計語に一致しない。"
+        }
+      ]
+    }
+  ]
+}

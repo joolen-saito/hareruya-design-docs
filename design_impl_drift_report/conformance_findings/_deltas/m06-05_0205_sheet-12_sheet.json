@@ -1,0 +1,60 @@
+{
+  "functionId": "m06-05_0205_sheet-12_sheet",
+  "featureNo": "M06-05",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-12:3395-3397",
+      "designExpectation": "申込者名検索は、空白が含まれている場合（姓と名の間に空白等）空白で区切ったいずれかの入力が一致していれば検索結果に出力する。",
+      "implRef": "src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php:105",
+      "implementationActual": "申込者名を空白・カンマで分割した後、各キーワードごとに andWhere(...) を追加しているため、分割後キーワード間は AND 条件になる。各キーワード内では姓・名・姓カナ・名カナへの OR 部分一致。",
+      "mismatchReason": "設計は空白分割した語のいずれかが一致すれば検索結果に出す仕様だが、実装は foreach でキーワードごとに andWhere を積むため、複数語入力時は全キーワードがいずれかの氏名項目に一致しないと出力されない。反証として customer_name、申込者名、lastName/firstName、PurchaseHistory 側の同種実装も検索したが、当該店頭買取履歴検索では OR 化する実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "空白分割語の結合条件",
+          "design": "分割したいずれかの入力が一致すれば出力",
+          "implementation": "DtbOtcBuyOrderStockHistoryRepository.php:111-128 で分割語ごとに andWhere(...orX(...)) を追加",
+          "mismatch": "OR 期待に対し、実装はキーワード間 AND"
+        },
+        {
+          "item": "検索対象項目",
+          "design": "申込者姓、申込者名、申込者姓カナ、申込者名カナに部分一致",
+          "implementation": "DtbOtcBuyOrderStockHistoryRepository.php:119-126 で lastName / firstName / lastNameKana / firstNameKana に LIKE",
+          "mismatch": "対象項目は一致しているが、分割語間の結合条件が異なる"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-12:3429",
+      "designExpectation": "買取日時(From)>買取日時(To)の場合エラーにする。",
+      "implRef": "不在（探索範囲: src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php, src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderHistoryController.php, src/Eccube/Controller/Admin/SearchControllerTrait.php, src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php, html/template/admin/assets/js/OtcBuyOrder/otc-buy-order-history.js, src/Eccube/Resource/locale）",
+      "implementationActual": "complete_date_from / complete_date_to は DateTimeType の単一テキスト入力として定義されるが、From と To の大小関係を検証する Callback/Constraint/Controller 判定/JS 判定がない。Repository は From 条件と To 条件を独立に追加するだけで、From > To の場合もエラーにせず検索条件として実行する。",
+      "mismatchReason": "設計は買取日時 From が To より後ならエラー表示を要求している。実装では FormType に相関バリデーションがなく、SearchControllerTrait も form isValid 判定や日付大小チェックを行わず、専用 JS も datetimepicker・全選択・CSV submit のみ。反証として complete_date_from/complete_date_to、completeDateFrom/completeDateTo、Callback、GreaterThan/LessThan、買取日時、From/To の別キーワードで検索したが当該チェックは不在。",
+      "comparisonRows": [
+        {
+          "item": "入力定義",
+          "design": "買取日時(From)>買取日時(To)の場合エラー",
+          "implementation": "OtcBuyOrderHistoryType.php:103-122 で from/to を DateTimeType として追加するのみ",
+          "mismatch": "大小関係の制約がない"
+        },
+        {
+          "item": "検索実行時の扱い",
+          "design": "不正範囲はエラー",
+          "implementation": "DtbOtcBuyOrderStockHistoryRepository.php:191-211 で >= From と <= To を独立に付与",
+          "mismatch": "エラーではなく矛盾した検索条件として処理される"
+        },
+        {
+          "item": "クライアント側",
+          "design": "不正範囲は利用者にエラー",
+          "implementation": "otc-buy-order-history.js:8-14 は datepicker 初期化のみ",
+          "mismatch": "From > To のクライアント検証がない"
+        }
+      ]
+    }
+  ]
+}

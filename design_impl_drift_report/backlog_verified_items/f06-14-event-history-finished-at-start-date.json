@@ -1,0 +1,176 @@
+{
+  "id": "f06-14-event-history-finished-at-start-date",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-14_0306_sheet-12_sheet.json",
+  "sourceFindingId": "f06-14_0306_sheet-12_sheet-conformance-68b9125e8ede",
+  "classification": "フロント会員",
+  "feature": "マイイベント・デッキ登録",
+  "issueCategory": "実装違い",
+  "issue": "イベント終了表示が開催日の23:59:59後ではなく開催開始時刻後に切り替わる",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "開始日時が当日 10:00 の予約済みイベントを持つ会員で、同日 10:01 から 23:59:59 までの間に `http://localhost:8080/ja/mypage/event_history` を表示する",
+    "対象イベントの「処理状態」欄を確認する",
+    "処理状態が申込状態名のままか、「イベント終了」に切り替わっているか確認する"
+  ],
+  "expected": [
+    "開催日の 23:59:59 を過ぎたイベントだけ、処理状態に「イベント終了」と表示する",
+    "開催日当日の開始時刻経過後でも、23:59:59 まではイベント終了扱いにしない",
+    "決済中以外のイベントは、終了済みでない場合は申込状態の名称を表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では `event_history.twig` が各行で `detail.hasFinished()` を呼び、true の場合に `front.mypage.event_history.status__finished`、すなわち「イベント終了」を表示する。`DtbEventDetail::hasFinished()` は `return $this->startDate < new \\DateTime();` のため、開催日の 23:59:59 ではなく開催開始日時 `startDate` を過ぎた時点で終了扱いになる。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 終了判定はstartDate基準",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/DtbEventDetail.php",
+          "start": 551,
+          "end": 557,
+          "language": "php",
+          "contains": [
+            "public function hasFinished(): bool",
+            "return $this->startDate < new \\DateTime();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise マイイベント一覧でhasFinishedを処理状態に使用",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig",
+          "start": 91,
+          "end": 121,
+          "language": "twig",
+          "contains": [
+            "{% set isFinished = detail.hasFinished() %}",
+            "{% if isFinished %}",
+            "{{ 'front.mypage.event_history.status__finished'|trans }}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise イベント終了の翻訳値",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 659,
+          "end": 659,
+          "language": "yaml",
+          "contains": [
+            "front.mypage.event_history.status__finished: イベント終了"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 でも、`Mypage/event_history.twig` は `detail.hasFinished() ? 'イベント終了' : entry.getEntryStatus().getName()` で処理状態を出し分け、`DtbEventDetail::hasFinished()` は `startDate < new \\DateTime()` を返している。したがってこの候補は、ベース実装由来の差ではなく、設計HTMLで追加された 23:59:59 基準の要求に対して enterprise もベースも開始時刻基準のままになっている差分として確認した。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 終了判定はstartDate基準",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbEventDetail.php",
+          "start": 909,
+          "end": 916,
+          "language": "php",
+          "contains": [
+            "public function hasFinished()",
+            "return $this->startDate < new \\DateTime();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 マイイベント一覧でhasFinishedを処理状態に使用",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/event_history.twig",
+          "start": 46,
+          "end": 54,
+          "language": "twig",
+          "contains": [
+            "{% if entry.getEntryStatus().id == 1 %}",
+            "{{ detail.hasFinished() ? 'イベント終了' : entry.getEntryStatus().getName() }}"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "処理概要で開催日23:59:59後にイベント終了表示と指定",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 4006,
+      "end": 4014,
+      "language": "html",
+      "contains": [
+        "開催日の23:59:59を過ぎたイベントは処理状態に「イベント終了」と表示する",
+        "(4)ステータスが「イベント終了」"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "リバース詳細でも終了時はイベント終了、未終了時は申込状態名と定義",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 4102,
+      "end": 4115,
+      "language": "html",
+      "contains": [
+        "それ以外はイベントが終了済みなら「イベント終了」、未終了なら申込状態の名称を表示する",
+        "ステータス（終了）",
+        "イベント終了"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "終了判定は開催開始日時startDateを現在時刻と比較",
+      "path": "ec-cube-enterprise/src/Eccube/Entity/DtbEventDetail.php",
+      "start": 551,
+      "end": 557,
+      "language": "php",
+      "contains": [
+        "return $this->startDate < new \\DateTime();"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "マイイベント一覧はhasFinishedの結果でイベント終了表示へ分岐",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig",
+      "start": 91,
+      "end": 121,
+      "language": "twig",
+      "contains": [
+        "{% set isFinished = detail.hasFinished() %}",
+        "{{ 'front.mypage.event_history.status__finished'|trans }}"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3も終了判定は開催開始日時startDateを現在時刻と比較",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbEventDetail.php",
+      "start": 909,
+      "end": 916,
+      "language": "php",
+      "contains": [
+        "return $this->startDate < new \\DateTime();"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3の一覧もhasFinishedでイベント終了表示へ分岐",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/event_history.twig",
+      "start": 46,
+      "end": 54,
+      "language": "twig",
+      "contains": [
+        "{{ detail.hasFinished() ? 'イベント終了' : entry.getEntryStatus().getName() }}"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-14_0306_sheet-12_sheet.json#f06-14_0306_sheet-12_sheet-conformance-68b9125e8ede'",
+      "rg -n \"開催日の23:59:59|イベント終了|hasFinished|startDate < new|front\\.mypage\\.event_history\\.status__finished\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html ec-cube-enterprise/src/Eccube/Entity/DtbEventDetail.php ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbEventDetail.php pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/event_history.twig",
+      "rg -n \"23:59|イベント終了|終了済み|開催日の|開催日.*23|ステータス.*終了|No\\.4|item-sheet-12\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"23:59:59|イベント終了|hasFinished|startDate|endDate|終了|デッキ登録状況|status\" pf-eccube3/app/Plugin/HareruyaEc/Controller pf-eccube3/app/Plugin/HareruyaEc/Entity pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage",
+      "rg -n \"23:59:59|イベント終了|hasFinished|startDate|endDate|event_history|mypage_event|デッキ登録状況|deckRegist\" ec-cube-enterprise/src/Eccube/Controller/Front/Mypage ec-cube-enterprise/src/Eccube/Entity/DtbEventDetail.php ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage ec-cube-enterprise/src/Eccube/Repository",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '4006,4014p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '4102,4116p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Entity/DtbEventDetail.php | sed -n '540,562p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig | sed -n '91,121p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbEventDetail.php | sed -n '907,917p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/event_history.twig | sed -n '46,54p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLの処理概要/リバース詳細、ec-cube-enterprise の Entity/Twig/locale、pf-eccube3 の Entity/Twig を再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

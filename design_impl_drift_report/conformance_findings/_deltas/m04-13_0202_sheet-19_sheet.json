@@ -1,0 +1,74 @@
+{
+  "functionId": "m04-13_0202_sheet-19_sheet",
+  "featureNo": "M04-13",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19 (識別ID 2-11 結合数)",
+      "designExpectation": "結合先商品の結合数(2-11)は必須○・最大値1～99999999。在庫数を超える数値が入力された場合はエラーとする。",
+      "implRef": "src/Eccube/Resource/template/admin/Stock/stock_join_new.twig:128 / src/Eccube/Service/Admin/Stock/StockJoinRegisterAction.php:43-45,64 / src/Eccube/Controller/Admin/Stock/StockJoinController.php:1014-1026",
+      "implementationActual": "入力は min=1 のみで max 属性なし。StockJoinRegisterAction は destinationStock<=0 のみをエラーとし、上限99999999も在庫超過チェックも行わずそのまま保存する。",
+      "mismatchReason": "設計2-11が明記する2つのバリデーション（最大値99999999・在庫数超過エラー）が実装に存在しない。Twig/Action/Controllerを直接確認し不在を確認。",
+      "comparisonRows": [
+        {"item": "最大値", "design": "1～99999999", "implementation": "min=1のみ、max属性・上限チェックなし", "mismatch": "上限99999999が未実装"},
+        {"item": "在庫数超過エラー", "design": "結合先在庫数を超える結合数入力はエラー", "implementation": "destinationStock<=0のみエラー", "mismatch": "在庫超過判定が未実装"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19 (識別ID 1-5 ステータス)",
+      "designExpectation": "基本情報ステータス(1-5)の表示候補は7区分『新規登録／結合元登録／結合計画承認待ち／却下／結合計画承認済み／結合完了承認待ち／入庫完了』。",
+      "implRef": "app/DoctrineMigrations/Version20260519100000.php:66-72 / src/Eccube/Entity/Master/MtbStockSplitJoinStatus.php:27-35",
+      "implementationActual": "mtb_stock_split_join_status は6件のみ（1新規登録/2結合元登録/3分割承認待ち/4結合承認待ち/5入庫済み/6却下）。",
+      "mismatchReason": "設計の7区分と実装マスタ6区分が一致せず、『結合計画承認済み』『結合完了承認待ち』『入庫完了』が存在しない。二段階承認が単一承認→入庫済みに集約。migration/Entityを直接確認。",
+      "comparisonRows": [
+        {"item": "ステータス区分数", "design": "7区分", "implementation": "6区分", "mismatch": "計画承認済み/完了承認待ち/入庫完了が欠落"},
+        {"item": "文言", "design": "結合計画承認待ち/入庫完了", "implementation": "結合承認待ち/入庫済み", "mismatch": "ラベル名相違"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19 (識別ID 6-1/6-2 承認通知先)",
+      "designExpectation": "承認通知先の所属(6-1)・メンバー(6-2)は店舗間移動時は必須（店舗間移動時のみ通知先を必須入力）。",
+      "implRef": "src/Eccube/Controller/Admin/Stock/StockJoinController.php:583,773-778 / src/Eccube/Form/Type/Admin/StockSplitJoinType.php:53-77",
+      "implementationActual": "applyApproval は店舗間移動か否かに関わらず通知先メンバーが空なら常時エラーで必須化（approval_required を無条件true指定）。所属は常に required=false。",
+      "mismatchReason": "設計は店舗間移動時のみ必須の条件付き必須だが、実装はメンバーを条件無視で常時必須にし、所属は一度も必須化されない。店舗間移動判定自体が存在しない。Controller/Formを直接確認。",
+      "comparisonRows": [
+        {"item": "承認通知先メンバー(6-2)", "design": "店舗間移動時のみ必須", "implementation": "常時必須", "mismatch": "条件付き必須が無条件必須化"},
+        {"item": "承認通知先所属(6-1)", "design": "店舗間移動時のみ必須", "implementation": "常に required=false", "mismatch": "必須化されない"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19 (結合元商品CSV登録の項)",
+      "designExpectation": "結合元商品CSV登録はCSVを10,000件を登録上限とする（上限超過は登録不可）。",
+      "implRef": "src/Eccube/Service/Csv/Importer/Event/StockJoinCsvImportHandler.php:141 / src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:46,206 / src/Eccube/Resource/locale/messages.ja.yaml:5046",
+      "implementationActual": "UI文言は『登録上限は 10,000 件』と表示するが、結合元CSV取込ハンドラには行数上限(MAX_ROWS)判定が無く全行を処理する。MAX_ERROR_COUNT=20のみ実装。",
+      "mismatchReason": "設計の10,000件上限がバックエンドで未実装。分割側は2,000件のMAX_ROWSがあるが結合側は上限定数自体が存在しない。両ハンドラを直接確認し行数チェック不在を確認。",
+      "comparisonRows": [
+        {"item": "CSV登録上限", "design": "10,000件上限（超過は登録不可）", "implementation": "行数上限チェックなし（全行処理）", "mismatch": "MAX_ROWS未実装"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-19 (識別ID 7-14 結合元在庫数)",
+      "designExpectation": "結合元在庫数(7-14)は0を許容し、0が入力された場合は商品行を削除する。",
+      "implRef": "src/Eccube/Controller/Admin/Stock/StockJoinController.php:1068-1082,1104-1117 / src/Eccube/Service/Admin/Stock/Util/StockJoinApplyPostedSourceStocks.php:26",
+      "implementationActual": "結合元在庫数Ajax更新は数量を max(0,int) でSessionに保存するのみで、0入力時に商品行を削除・画面除去しない（details_were_removed を返さず reload も起きない）。0削除用Util は当該経路で未使用。",
+      "mismatchReason": "設計7-14は0入力=即時行削除を要求するが、実装は0を保持したまま行を残す。編集画面のAjax更新Controllerを直接確認し0削除処理が呼ばれないことを確認。",
+      "comparisonRows": [
+        {"item": "0入力時の挙動", "design": "商品行を削除", "implementation": "0を保持し行を残す", "mismatch": "即時行削除が未実装"}
+      ]
+    }
+  ]
+}

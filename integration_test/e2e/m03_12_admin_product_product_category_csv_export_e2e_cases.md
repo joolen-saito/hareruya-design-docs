@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_12_admin_product_product_category_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・ファイル名・HTTP応答ヘッダなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約をオラクル化しない。本機能は pf-eccube3 のリバース設計だが、刷新先 ec-cube-enterprise に同等画面・ルート（`admin_product_category_export`）が存在することを確認済み（`CategoryController.php:519-580` / `category.twig:243`）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・ファイル名・HTTP応答ヘッダなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約をオラクル化しない。本機能は pf-eccube3 のリバース設計だが、刷新先 ec-cube-enterprise に同等画面・ルート（`admin_product_category_export`）が存在することを確認済み（`CategoryController.php:519-580` / `category.twig:243`）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 **画面タイプ csv_export の方針**: 自動化はダウンロード発火・HTTP応答（Content-Type／Content-Disposition）・ファイル名・UI部品（ダウンロードリンク・CSV設定リンク）・未認証ガード・確認ダイアログ無し（押下後の画面挙動）に限る。**CSVの中身（ヘッダ列＝有効`dtb_csv`項目・行＝全カテゴリ・並び＝`sort_no`降順・対象商品数列＝`dtb_product_category`のDISTINCT集計・空セル正規化・UTF-8/BOM/区切り・0件時ヘッダのみ）は手動**。本機能はリクエストパラメータ検証を持たず、GETにクエリボディは無い（常に全カテゴリ）。
 
@@ -27,51 +27,51 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-001	IT-25	UI部品	P1	カテゴリ一覧に「CSVダウンロード」ボタン（エクスポートリンク）が表示される	ログイン済／SEED-M03-12-ADMIN	—	"1. カテゴリ一覧（/{admin_route}/product/category）を開く"	パンくず右側に「CSVダウンロード」リンク（href がカテゴリエクスポートルート）が表示されること。
-m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-002	IT-25	操作起点	P3	カテゴリ一覧に「CSV出力項目設定」リンクが表示される	ログイン済／SEED-M03-12-ADMIN	—	"1. カテゴリ一覧を開く"	「CSV出力項目設定」リンク（href がカテゴリCSV種別のCSV設定画面）が表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-001	IT-25	UI部品	P1	カテゴリ一覧に「CSVダウンロード」ボタン（エクスポートリンク）が表示される	ログイン済／SEED-M03-12-ADMIN	—	1. カテゴリ一覧（/{admin_route}/product/category）を開く	パンくず右側に「CSVダウンロード」リンク（href がカテゴリエクスポートルート）が表示されること。				
+m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-002	IT-25	操作起点	P3	カテゴリ一覧に「CSV出力項目設定」リンクが表示される	ログイン済／SEED-M03-12-ADMIN	—	1. カテゴリ一覧を開く	「CSV出力項目設定」リンク（href がカテゴリCSV種別のCSV設定画面）が表示されること。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-010	IT-27	実行結果	P1	「CSVダウンロード」押下でファイルダウンロードが発火する	ログイン済／SEED-M03-12-ADMIN	—	"1. カテゴリ一覧を開く
-2. 「CSVダウンロード」リンクを押下"	ブラウザのダウンロードが発火すること（HTML一覧に遷移しない）。
+2. 「CSVダウンロード」リンクを押下"	ブラウザのダウンロードが発火すること（HTML一覧に遷移しない）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-011	IT-25	URL	P1	ダウンロードファイル名が category_<日時>.csv 形式である	ログイン済／SEED-M03-12-ADMIN	—	"1. カテゴリ一覧を開く
-2. 「CSVダウンロード」を押下しダウンロードを取得"	ダウンロードファイル名が「category_」＋14桁日時（YYYYMMDDhhmmss）＋「.csv」の形式であること。
-m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-012	IT-13	URL直接アクセス	P2	エクスポートURLへ直接GETするとダウンロードが発火する	ログイン済／SEED-M03-12-ADMIN	—	"1. /{admin_route}/product/category/export へ直接GETアクセス"	HTML一覧を返さずダウンロードが発火すること。
+2. 「CSVダウンロード」を押下しダウンロードを取得"	ダウンロードファイル名が「category_」＋14桁日時（YYYYMMDDhhmmss）＋「.csv」の形式であること。				
+m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-012	IT-13	URL直接アクセス	P2	エクスポートURLへ直接GETするとダウンロードが発火する	ログイン済／SEED-M03-12-ADMIN	—	1. /{admin_route}/product/category/export へ直接GETアクセス	HTML一覧を返さずダウンロードが発火すること。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-013	IT-25	HTTPステータス	P2	エクスポート応答が添付ファイルのHTTP応答ヘッダを返す	ログイン済／SEED-M03-12-ADMIN	—	"1. 認証済みコンテキストでエクスポートURLにGETリクエストを送る
-2. 応答ヘッダを確認する"	応答が 200 で、Content-Type が application/octet-stream、Content-Disposition が attachment（filename=category_<日時>.csv）であること。
-m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-020	IT-15	未認証	P1	未ログインでエクスポートURLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログイン状態で /{admin_route}/product/category/export へアクセス"	ダウンロードされず管理ログイン画面へ誘導されること。
+2. 応答ヘッダを確認する"	応答が 200 で、Content-Type が application/octet-stream、Content-Disposition が attachment（filename=category_<日時>.csv）であること。				
+m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-020	IT-15	未認証	P1	未ログインでエクスポートURLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログイン状態で /{admin_route}/product/category/export へアクセス	ダウンロードされず管理ログイン画面へ誘導されること。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-030	IT-03	画面遷移	P2	ダウンロード押下後も確認ダイアログを介さず一覧画面に留まる	ログイン済／SEED-M03-12-ADMIN	—	"1. カテゴリ一覧を開く
-2. 「CSVダウンロード」を押下"	出力前の確認ダイアログが出ず、ダウンロード後もカテゴリ一覧URLに留まること。
+2. 「CSVダウンロード」を押下"	出力前の確認ダイアログが出ず、ダウンロード後もカテゴリ一覧URLに留まること。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-040	IT-23	実行結果	P2	CSV本文が全カテゴリ・sort_no降順で出力される	ログイン済／SEED-M03-12-CATEGORIES	—	"1. カテゴリCSVをダウンロードする
-2. ファイルを開き行順を確認する（手動）"	データ行が条件なしの全カテゴリで、sort_no 降順に並ぶこと（CSV内容＝手動確認）。
+2. ファイルを開き行順を確認する（手動）"	データ行が条件なしの全カテゴリで、sort_no 降順に並ぶこと（CSV内容＝手動確認）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-041	IT-16	実行結果	P2	有効なdtb_csv項目に対応するヘッダ列・データ列が出力される	ログイン済／SEED-M03-12-CSVDEF	—	"1. カテゴリCSVをダウンロードする
-2. 1行目ヘッダと各列を確認する（手動）"	ヘッダがカテゴリ種別かつ有効な dtb_csv 行の表示名（sort_no昇順）で並び、各データ列が対応値であること（CSV内容＝手動確認）。
+2. 1行目ヘッダと各列を確認する（手動）"	ヘッダがカテゴリ種別かつ有効な dtb_csv 行の表示名（sort_no昇順）で並び、各データ列が対応値であること（CSV内容＝手動確認）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-042	IT-26	登録内容	P2	対象商品数列が dtb_product_category の DISTINCT 集計値になる	ログイン済／SEED-M03-12-PRODUCTCATEGORY	—	"1. カテゴリCSVをダウンロードする
-2. 対象商品数列を確認する（手動）"	対象商品数列が当該カテゴリの product_id DISTINCT 件数（紐づきなしは0）であること（CSV内容＝手動確認）。
+2. 対象商品数列を確認する（手動）"	対象商品数列が当該カテゴリの product_id DISTINCT 件数（紐づきなしは0）であること（CSV内容＝手動確認）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-043	IT-23	実行結果（境界:0件）	P3	カテゴリ0件のときヘッダ1行のみのファイルが出力される	ログイン済／SEED-M03-12-NOCATEGORY（dtb_categoryが0件）	—	"1. カテゴリCSVをダウンロードする
-2. ファイルを開き内容を確認する（手動）"	データ行が無くヘッダ1行のみのファイルになること（処理フロー「カテゴリ0件のとき」。CSV内容＝手動確認）。
+2. ファイルを開き内容を確認する（手動）"	データ行が無くヘッダ1行のみのファイルになること（処理フロー「カテゴリ0件のとき」。CSV内容＝手動確認）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-044	IT-16	実行結果（境界:0件）	P3	有効CSV項目0件のときヘッダが空・各カテゴリ分の空列行になる	ログイン済／SEED-M03-12-NOCSVDEF（カテゴリ種別の有効dtb_csvが0件）	—	"1. カテゴリCSVをダウンロードする
-2. ファイルを開き内容を確認する（手動）"	1行目ヘッダが空配列となり、続くデータ行は各カテゴリ分だけ空列が並ぶこと（処理フロー「CSV項目が1件も有効で無いとき」。CSV内容＝手動確認）。
+2. ファイルを開き内容を確認する（手動）"	1行目ヘッダが空配列となり、続くデータ行は各カテゴリ分だけ空列が並ぶこと（処理フロー「CSV項目が1件も有効で無いとき」。CSV内容＝手動確認）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-003	IT-25	UI部品	P2	カテゴリ編集画面でも同一の「CSVダウンロード」リンクが表示される	ログイン済／SEED-M03-12-CATEGORIES	—	"1. カテゴリ一覧を開く
-2. いずれかのカテゴリ編集画面（/{admin_route}/product/category/{id}/edit）へ遷移する"	編集画面でもパンくず右側に「CSVダウンロード」リンク（href がカテゴリエクスポートルート）が表示されること（設計書 入口節「編集時も右上に同じCSVダウンロードリンクが出る」）。
+2. いずれかのカテゴリ編集画面（/{admin_route}/product/category/{id}/edit）へ遷移する"	編集画面でもパンくず右側に「CSVダウンロード」リンク（href がカテゴリエクスポートルート）が表示されること（設計書 入口節「編集時も右上に同じCSVダウンロードリンクが出る」）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-049	IT-13	入口（絞り込まれない）	P3	カテゴリ配下表示や編集画面からエクスポートしても全カテゴリが出力される	ログイン済／SEED-M03-12-CATEGORIES	—	"1. 親カテゴリ配下の一覧（/{admin_route}/product/category/{parent_id}）または編集画面を開く
 2. 「CSVダウンロード」を押下しダウンロードを取得
-3. ファイル内容を確認する（手動）"	どの入口から出力しても親IDや検索条件で絞り込まれず、データ行が全カテゴリ（sort_no降順）であること（設計書 入出力「検索条件やツリーの親IDはエクスポートに渡らない＝常に全カテゴリ」。発火は010で自動化、件数=全件はCSV内容＝手動確認）。
+3. ファイル内容を確認する（手動）"	どの入口から出力しても親IDや検索条件で絞り込まれず、データ行が全カテゴリ（sort_no降順）であること（設計書 入出力「検索条件やツリーの親IDはエクスポートに渡らない＝常に全カテゴリ」。発火は010で自動化、件数=全件はCSV内容＝手動確認）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-045	IT-16	実行結果（文字コード/区切り/BOM）	P3	CSV本文の文字コード・区切り・BOMが設定どおりである	ログイン済／SEED-M03-12-CSVDEF	—	"1. カテゴリCSVをダウンロードする
-2. ファイルをバイナリ/エディタで開き先頭バイト・区切り・エンコーディングを確認する（手動）"	文字コードが設定（eccube_csv_export_encoding、既定UTF-8）に従い、UTF-8指定時は先頭にBOMが付き、フィールド区切りが設定（eccube_csv_export_separator）どおりであること（業務ルール・計算「文字コード・区切り」。CSV内容＝手動確認、設定値は実装由来のため固定オラクル化しない）。
+2. ファイルをバイナリ/エディタで開き先頭バイト・区切り・エンコーディングを確認する（手動）"	文字コードが設定（eccube_csv_export_encoding、既定UTF-8）に従い、UTF-8指定時は先頭にBOMが付き、フィールド区切りが設定（eccube_csv_export_separator）どおりであること（業務ルール・計算「文字コード・区切り」。CSV内容＝手動確認、設定値は実装由来のため固定オラクル化しない）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-046	IT-16	実行結果（値変換分岐）	P3	一般列の値変換（真偽・日時・コレクション・不一致）が仕様どおり出力される	ログイン済／SEED-M03-12-CSVDEF	—	"1. 真偽・日時・コレクション型および対象カテゴリに存在しない項目を含むdtb_csv構成でカテゴリCSVをダウンロードする
-2. 各データ列の値を確認する（手動）"	真偽は1/0文字列、日時は設定の日付書式、コレクションは設定の連結区切り、項目定義のエンティティ名/フィールド名がカテゴリに一致しない・存在しない場合は空セルになること（業務ルール・計算「セル値（一般列）」。CSV内容＝手動確認）。
+2. 各データ列の値を確認する（手動）"	真偽は1/0文字列、日時は設定の日付書式、コレクションは設定の連結区切り、項目定義のエンティティ名/フィールド名がカテゴリに一致しない・存在しない場合は空セルになること（業務ルール・計算「セル値（一般列）」。CSV内容＝手動確認）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-047	IT-26	実行結果（境界:重複紐づけ）	P3	対象商品数列が同一商品の重複紐づけを1件として数える	ログイン済／SEED-M03-12-PRODUCTCATEGORY-DUP（同一product_idが同一カテゴリに複数行で紐づく）	—	"1. カテゴリCSVをダウンロードする
-2. 対象商品数列を確認する（手動）"	同一カテゴリに同じ product_id が複数行で紐づいても対象商品数は DISTINCT で1と数えること（集計条件「対象商品数：product_id を DISTINCT して件数」。CSV内容＝手動確認）。
+2. 対象商品数列を確認する（手動）"	同一カテゴリに同じ product_id が複数行で紐づいても対象商品数は DISTINCT で1と数えること（集計条件「対象商品数：product_id を DISTINCT して件数」。CSV内容＝手動確認）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-048	IT-25	実行結果（項目定義変更の反映）	P3	CSV出力項目設定の変更が次回エクスポートのヘッダ・列に反映される	ログイン済／SEED-M03-12-CSVDEF	—	"1. 「CSV出力項目設定」で任意のカテゴリCSV項目を無効化（または有効化）して保存する
 2. 再びカテゴリCSVをダウンロードする
-3. ヘッダ列と各データ列を確認する（手動）"	設定変更後の次回エクスポートでヘッダ・列内容が変更どおりに増減すること（データ整合性「項目定義変更の反映」。設定変更は別機能。CSV内容＝手動確認）。
+3. ヘッダ列と各データ列を確認する（手動）"	設定変更後の次回エクスポートでヘッダ・列内容が変更どおりに増減すること（データ整合性「項目定義変更の反映」。設定変更は別機能。CSV内容＝手動確認）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-050	IT-15	状態変化（セッション/Cookie不変）	P2	ダウンロード後も認証セッションが維持され再ログインを要しない	ログイン済／SEED-M03-12-ADMIN	—	"1. カテゴリ一覧を開く
 2. 「CSVダウンロード」を押下しダウンロードを取得
-3. 認証が必要な画面（カテゴリ一覧）へ再アクセスする"	ダウンロード後に管理ログイン画面へ戻されず認証状態が維持されること（セッション「エクスポート処理はセッションを更新しない」・Cookie「新たなCookieを設定しない」の間接観測。Cookie名/Set-Cookie固定値はオラクル化しない）。
+3. 認証が必要な画面（カテゴリ一覧）へ再アクセスする"	ダウンロード後に管理ログイン画面へ戻されず認証状態が維持されること（セッション「エクスポート処理はセッションを更新しない」・Cookie「新たなCookieを設定しない」の間接観測。Cookie名/Set-Cookie固定値はオラクル化しない）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-051	IT-23	副作用（DB不変）	P3	ダウンロード前後でDBレコードが変化しない	ログイン済／SEED-M03-12-CATEGORIES	—	"1. dtb_category / dtb_csv / dtb_product_category の件数・値のスナップショットを取る
 2. カテゴリCSVをダウンロードする
-3. 同テーブルの件数・値を再取得し比較する（手動・DB参照）"	ダウンロード前後で対象テーブルのレコード件数・値が一切変化しないこと（入出力「副作用＝DB更新は行わない」・DB操作「参照系」。DB照合＝手動）。
+3. 同テーブルの件数・値を再取得し比較する（手動・DB参照）"	ダウンロード前後で対象テーブルのレコード件数・値が一切変化しないこと（入出力「副作用＝DB更新は行わない」・DB操作「参照系」。DB照合＝手動）。				
 m03-12_admin_product_product_category_csv_export（商品管理 — カテゴリ CSV 出力）	E2E-M03-12-052	IT-15	権限不足	P2	権限不足ユーザーはエクスポートに到達できず共通の拒否となる	権限不足の管理ユーザーでログイン済（要ロール設定）	—	"1. エクスポート操作権限を持たない管理ユーザーでログインする
-2. エクスポートURLへアクセスする"	ダウンロードされず管理画面共通の拒否（権限不足のログイン案内/アクセス拒否）になること（エラー処理「未ログイン・権限不足は管理画面共通のログイン案内や拒否」。個別ロール制御は本機能固有でなく管理ファイアウォール/ロール設計に委譲＝手動、資格情報はコミットしない）。
+2. エクスポートURLへアクセスする"	ダウンロードされず管理画面共通の拒否（権限不足のログイン案内/アクセス拒否）になること（エラー処理「未ログイン・権限不足は管理画面共通のログイン案内や拒否」。個別ロール制御は本機能固有でなく管理ファイアウォール/ロール設計に委譲＝手動、資格情報はコミットしない）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠（TSV外）

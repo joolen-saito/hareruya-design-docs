@@ -1,0 +1,228 @@
+{
+  "id": "b05-03-truncate-waiting-number-command-name-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b05-03_0405_sheet-5_sheet.json",
+  "sourceFindingId": "b05-03_0405_sheet-5_sheet-conformance-535d20f06099",
+  "classification": "バッチ受注管理",
+  "feature": "店頭注文番号初期化",
+  "issueCategory": "実装違い",
+  "issue": "店頭注文番号初期化バッチを設計どおり `order:batch truncateWaitingNumber` で起動できない",
+  "designBook": "0405_基本設計仕様書(バッチ_受注管理).xlsx",
+  "reproSteps": [
+    "設計書 B05-03 の利用者視点の入口で、実行方法が `order:batch truncateWaitingNumber` とされていることを確認する",
+    "ベース実装 pf-eccube3 の `OrderBatch` が `order:batch` コマンドの `batch_name` として `truncateWaitingNumber` を受け付けることを確認する",
+    "ec-cube-enterprise の `src/Eccube/Command` と設定を検索し、`order:batch truncateWaitingNumber` または同等 alias が登録されているか確認する",
+    "ec-cube-enterprise では `eccube:order:truncate-waiting-number` だけが登録され、設計どおりの起動名では到達できないことを確認する"
+  ],
+  "expected": [
+    "店頭注文番号初期化バッチは `order:batch truncateWaitingNumber` で起動できる",
+    "コマンド名が未指定または不一致の場合は、店頭注文番号初期化処理を行わずに終了する",
+    "起動後の処理では店頭注文番号テーブルを空にし、採番カウンタを初期値に戻す"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では店頭注文番号初期化の本体処理は存在するが、Symfony Console の登録名は `eccube:order:truncate-waiting-number` であり、設計とベース実装が外部入口としている `order:batch truncateWaitingNumber` や alias は確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は別名の Symfony コマンドだけを登録している",
+          "path": "ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php",
+          "start": 25,
+          "end": 53,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:order:truncate-waiting-number', description: '店舗注文番号初期化')]",
+            "class TruncateWaitingNumberCommand extends Command",
+            "$this->truncateWaitingNumberAction->handle();",
+            "$io->success('店舗注文番号初期化処理が完了しました。');"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の本体処理は存在するため、差分は起動名に限定する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php",
+          "start": 34,
+          "end": 59,
+          "language": "php",
+          "contains": [
+            "public function handle(): void",
+            "$this->waitingNumberRepository->truncateWaitingNumber();",
+            "$this->waitingNumberCounterRepository->truncateWaitingNumberCounter();",
+            "->setCurrentValue(0)",
+            "$this->entityManager->commit();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise は dtb_waiting_number を TRUNCATE する",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbWaitingNumberRepository.php",
+          "start": 32,
+          "end": 41,
+          "language": "php",
+          "contains": [
+            "public function truncateWaitingNumber(): void",
+            "$connection->executeStatement('TRUNCATE TABLE dtb_waiting_number');"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `order:batch` が `batch_name` 引数を受け取り、`truncateWaitingNumber` を `TruncateWaitingNumber` サービスへ対応付ける。未指定・不一致の場合は `Nothing args or command.` を出して処理せず終了するため、設計の起動契約と一致している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は order:batch truncateWaitingNumber を登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php",
+          "start": 12,
+          "end": 30,
+          "language": "php",
+          "contains": [
+            "'truncateWaitingNumber' => 'Plugin\\HareruyaEc\\Service\\Order\\TruncateWaitingNumber'",
+            "$this->setName('order:batch')",
+            "->addArgument('batch_name', InputArgument::OPTIONAL);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 はコマンド名不一致時に処理せず終了する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php",
+          "start": 41,
+          "end": 54,
+          "language": "php",
+          "contains": [
+            "$name = $input->getArgument('batch_name');",
+            "if (!isset($batchNames[$name])) {",
+            "Nothing args or command.",
+            "$batch = new $batchNames[$name]($app, $this->createOptions($input));",
+            "$batch->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の店頭注文番号初期化サービス",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Order/TruncateWaitingNumber.php",
+          "start": 7,
+          "end": 31,
+          "language": "php",
+          "contains": [
+            "class TruncateWaitingNumber",
+            "protected $commandName = 'truncateWaitingNumber';",
+            "$this->app['hareruya_ec.repository.waiting_number']->truncateWaitingNumber();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は dtb_waiting_number を削除し AUTO_INCREMENT を1へ戻す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbWaitingNumberRepository.php",
+          "start": 15,
+          "end": 20,
+          "language": "php",
+          "contains": [
+            "public function truncateWaitingNumber()",
+            "$connection->query('DELETE FROM dtb_waiting_number');",
+            "$connection->query('ALTER TABLE dtb_waiting_number AUTO_INCREMENT = 1');"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B05-03 は pf-eccube3 を挙動の参照元とし、利用者視点の入口を `order:batch truncateWaitingNumber` と明記している",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1306,
+      "end": 1335,
+      "language": "html",
+      "contains": [
+        "B05-03 店頭注文番号初期化",
+        "確認値はpf-eccube3",
+        "<code>order:batch truncateWaitingNumber</code>",
+        "コマンド名が一致しない場合は処理を行わずに終了する",
+        "店頭注文番号初期化を実行する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B05-03 は入力をコマンド名とし、未指定・不一致なら処理しないことをエラー処理として定義している",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1341,
+      "end": 1360,
+      "language": "html",
+      "contains": [
+        "入力</td><td>コマンド名",
+        "店頭注文番号テーブルが空になり、採番カウンタが1へ戻る",
+        "コマンド名が未指定・不一致",
+        "処理を行わずに終了する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は `eccube:order:truncate-waiting-number` として登録しており、`order:batch truncateWaitingNumber` ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php",
+      "start": 25,
+      "end": 53,
+      "language": "php",
+      "contains": [
+        "#[AsCommand(name: 'eccube:order:truncate-waiting-number'",
+        "$this->truncateWaitingNumberAction->handle();"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の店頭注文番号初期化本体は存在するため、本件は起動入口の差分に限定する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php",
+      "start": 34,
+      "end": 59,
+      "language": "php",
+      "contains": [
+        "$this->waitingNumberRepository->truncateWaitingNumber();",
+        "$this->waitingNumberCounterRepository->truncateWaitingNumberCounter();",
+        "->setCurrentValue(0)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `order:batch` の batch_name として `truncateWaitingNumber` を受け付ける",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php",
+      "start": 12,
+      "end": 30,
+      "language": "php",
+      "contains": [
+        "'truncateWaitingNumber' => 'Plugin\\HareruyaEc\\Service\\Order\\TruncateWaitingNumber'",
+        "$this->setName('order:batch')"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の `order:batch` は未指定・不一致の場合に処理せず終了する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php",
+      "start": 41,
+      "end": 54,
+      "language": "php",
+      "contains": [
+        "if (!isset($batchNames[$name])) {",
+        "Nothing args or command.",
+        "$batch->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の実処理は店頭注文番号の全削除とAUTO_INCREMENT初期化を行う",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbWaitingNumberRepository.php",
+      "start": 15,
+      "end": 20,
+      "language": "php",
+      "contains": [
+        "$connection->query('DELETE FROM dtb_waiting_number');",
+        "$connection->query('ALTER TABLE dtb_waiting_number AUTO_INCREMENT = 1');"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B05-03|店頭注文番号初期化|truncateWaitingNumber|truncate-waiting-number|コマンド名\" excel_to_html/output/0405_基本設計仕様書\\(バッチ_受注管理\\).html",
+      "rg -n \"order:batch|truncateWaitingNumber|eccube:order:truncate-waiting-number|setAliases|aliases\" ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/app/config 2>/dev/null",
+      "rg -n \"truncateWaitingNumber|TruncateWaitingNumber|WaitingNumber|order:batch\" ../pf-eccube3/app/Plugin/HareruyaEc"
+    ],
+    "review": [
+      "codex gpt-5.5 high reviewer Euler: VERIFIED。設計はpf-eccube3を挙動参照元として `order:batch truncateWaitingNumber` を明記し、ベースもそのdispatcherを実装している。enterpriseは本体処理を持つが `eccube:order:truncate-waiting-number` のみで、`order:batch` / `truncateWaitingNumber` alias がない。別の承認済み移行仕様がない限り、設計上の実行契約を破る差分として起票対象。"
+    ],
+    "notes": [
+      "本件は店頭注文番号初期化ロジックの欠落ではなく、設計・ベース実装の外部起動名との互換性差分に限定する。"
+    ]
+  }
+}

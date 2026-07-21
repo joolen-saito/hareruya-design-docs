@@ -1,0 +1,109 @@
+{
+  "chunkId": "a05-02_0505_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02-0505-sheet-4-sheet-38aeaf4def-01",
+      "functionId": "a05-02_0505_sheet-4_sheet",
+      "featureNo": "A05-02",
+      "title": "A05-02 注文印刷_該当受注のステータスを印刷済みに変更",
+      "dimension": "①ルート/HTTPメソッド",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は同一パス /order/print/direct を GET と POST の両方で受けるが、実装は /api/order/prints/direct/{base_info_id} を POST のみで受ける。",
+      "reason": "設計(埋め込み詳細設計・利用者視点の入口)は A05-01=GET /order/print/direct、A05-02=POST /order/print/direct とし、同一パス /order/print/direct が GET/POST 両方に割り当てられているとする(HTML 1269-1270行)。実装 OrderController::orderDirectPrint のルート属性は path が /api/ 接頭辞付き・prints(複数形)・末尾に必須の {base_info_id} を持ち、methods は ['POST'] のみで GET を許可しない(OrderController.php 43行)。パス形状・HTTP メソッド集合・必須パラメータのいずれも設計と異なる。",
+      "designEvidence": {"label": "設計要求(利用者視点の入口)", "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html", "start": 1269, "end": 1270, "contains": ["GET /order/print/direct", "POST /order/print/direct", "同一パス"]},
+      "implEvidence": [{"label": "実装ルート定義", "note": "POST のみ・/api/ 接頭辞・{base_info_id} 必須", "path": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php", "start": 43, "end": 44, "contains": ["/api/order/prints/direct/{base_info_id}", "methods: ['POST']", "order_direct_print"]}]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02-0505-sheet-4-sheet-c3771c630b-04",
+      "functionId": "a05-02_0505_sheet-4_sheet",
+      "featureNo": "A05-02",
+      "title": "A05-02 注文印刷_該当受注のステータスを印刷済みに変更",
+      "dimension": "②業務ルール・抽出条件",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "支店向け抽出クエリ getDirectPrintOrderList にスムーズ店頭受取の抽出分岐が無く、支店ではスムーズ店頭受取受注が印刷対象から漏れる。",
+      "reason": "設計(処理フロー ステップ2)は印刷対象を『店頭受取で注文受領』『スムーズ店頭受取で所定支払方法かつ各種未設定・スマレジコードあり』『ブラウザ印刷フラグあり』の単一条件集合(最大10件)とし、本店/支店分岐の記載は無い(HTML 1278行)。実装 OrderDirectPrintAction は BaseInfo->isMainShop() で分岐し(44-48行)、本店 getPrintOrderListMainShop はスムーズ店頭受取(SMOOTH_OTC)分岐を持つ(OrderRepository 1571-1587行)が、支店 getDirectPrintOrderList は (OTC+NEW+smaregi_code IS NOT NULL) UNION (browser_print_flg=true) の2分岐のみでスムーズ店頭受取分岐が無い(OrderRepository 1626-1651行)。よって支店ではスムーズ店頭受取受注が抽出されず設計と異なる。",
+      "designEvidence": {"label": "設計要求(処理フロー抽出条件)", "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html", "start": 1278, "end": 1278, "contains": ["印刷対象の受注一覧を取得する", "スムーズ店頭受取", "最大10件"]},
+      "implEvidence": [
+        {"label": "支店向けクエリ(スムーズ店頭受取分岐なし)", "note": "OTC+NEW と browser_print_flg の2分岐のみ", "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php", "start": 1626, "end": 1651, "contains": ["s.delivery_id = :otc", "o.order_status_id = :orderNew", "o.browser_print_flg = true"]},
+        {"label": "本店向けクエリ(スムーズ店頭受取分岐あり・対照)", "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php", "start": 1576, "end": 1588, "contains": ["s.Delivery = :smoothOtc", "o.otc_rsv_date IS NULL"]},
+        {"label": "本店/支店分岐", "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php", "start": 44, "end": 48, "contains": ["isMainShop()", "getPrintOrderListMainShop", "getDirectPrintOrderList"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02-0505-sheet-4-sheet-084b8e0ff9-06",
+      "functionId": "a05-02_0505_sheet-4_sheet",
+      "featureNo": "A05-02",
+      "title": "A05-02 注文印刷_該当受注のステータスを印刷済みに変更",
+      "dimension": "④DBカラム・DB操作",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "印刷情報の店頭注文番号欄に設計は dtb_order_number.value を求めるが、実装は dtb_order_number を参照せず o.order_number を出力している。",
+      "reason": "設計 DBカラム表は『店頭注文番号 dtb_order_number の value（現行は dtb_order_sub の waiting_number）を印刷情報の店頭注文番号欄に受注IDで引いて印字する』とする(HTML 1341行)。実装 OrderDirectPrintAction::getPrintData は $orderNumber = o.order_number を取り(77行)、店頭注文番号ラベル直後の欄に {$orderNumber}(=注文番号)を出力している(94-97行)。抽出クエリ getPrintOrderListMainShop / getDirectPrintOrderList のいずれも dtb_order_number を join・参照せず(OrderRepository で dtb_order_number の参照なし)、dtb_order_number.value は取得も印字もされない。",
+      "designEvidence": {"label": "設計要求(DBカラム 店頭注文番号)", "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html", "start": 1341, "end": 1341, "contains": ["店頭注文番号<code>dtb_order_number</code>", "印刷情報の店頭注文番号欄。受注IDで引く"]},
+      "implEvidence": [{"label": "店頭注文番号欄に order_number を出力", "note": "$orderNumber は o.order_number", "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php", "start": 77, "end": 97, "contains": ["$orderNumber = htmlspecialchars((string) $Order['order_number']", "<text>店頭注文番号</text>", "{$orderNumber}"]}],
+      "absenceCommands": ["rg -n 'dtb_order_number|OrderNumber' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php"]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02-0505-sheet-4-sheet-f51c39b763-07",
+      "functionId": "a05-02_0505_sheet-4_sheet",
+      "featureNo": "A05-02",
+      "title": "A05-02 注文印刷_該当受注のステータスを印刷済みに変更",
+      "dimension": "⑦エラー処理・応答",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "ConnectionType がいずれにも一致しない場合、設計は応答を組み立てないとするが、実装は HTTP 400 text/plain の空応答を返す。",
+      "reason": "設計はレスポンス(失敗)表・バリデーション・エラー処理表のいずれでも『ConnectionType が GetRequest・SetResponse のいずれにも一致しない場合は応答を組み立てず本文を返さない/処理を行わず応答を組み立てない』とする(HTML 1296行, 1333行, 1350行)。実装 OrderController::orderDirectPrint は両分岐に該当しない場合に StreamedResponse を生成し setStatusCode(HTTP_BAD_REQUEST=400)・Content-Type text/plain を設定して明示的に返す(OrderController.php 78-84行)。応答を組み立てない設計に対し 400 応答を返す点が差分。",
+      "designEvidence": {"label": "設計要求(応答なし)", "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html", "start": 1296, "end": 1296, "contains": ["いずれにも一致しない", "応答を組み立てず本文を返さない"]},
+      "implEvidence": [{"label": "HTTP 400 空応答を返す", "path": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php", "start": 78, "end": 84, "contains": ["Response::HTTP_BAD_REQUEST", "text/plain; charset=utf-8", "return $response"]}]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02-0505-sheet-4-sheet-dfef725817-08",
+      "functionId": "a05-02_0505_sheet-4_sheet",
+      "featureNo": "A05-02",
+      "title": "A05-02 注文印刷_該当受注のステータスを印刷済みに変更",
+      "dimension": "④DBカラム・DB操作",
+      "verdict": "UNCERTAIN",
+      "confidence": "medium",
+      "reason": "本件は設計書内部の矛盾であり、実装が設計に違反していると断定できない。DB操作節(HTML 1343行)は『本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない』とする一方、同じ設計の処理フロー(1280行 ステップ5-6)・副作用(1329行『受注ステータスの更新(SetResponse)…データベースへの更新である』)・DBカラム表(1341行 picking_date/confirm_date を『SetResponse でステータス更新時に設定』)は、SetResponse で受注ステータスと日時を DB 更新することを明示的に要求している。実装 UpdatePrintedOrderStatusAction はまさに後者の主要フローどおり setOrderStatus/setConfirmDate/setPickingDate を persist・flush している(87-100行)。すなわち実装は設計の支配的記述(処理フロー・副作用・DBカラム)に合致しており、矛盾する DB操作節のみに照らして『実装違い』とは断定できない。設計側の記述整合の確認が必要(設計内矛盾)。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02_0505_sheet-4_sheet-conformance-f7b7c67f2e23",
+      "functionId": "a05-02_0505_sheet-4_sheet",
+      "featureNo": "A05-02",
+      "title": "A05-02 注文印刷_該当受注のステータスを印刷済みに変更",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "high",
+      "summary": "設計は A05-02 専用エンドポイント /order/prints/status/printed を分離するよう要求するが、実装は ConnectionType 分岐の単一入口のままで当該URLが存在しない。",
+      "reason": "設計シート本体(Excel)は A05-02 のエンドポイントURLを /order/prints/status/printed とし(HTML 1152行)、カスタマイズ説明で『現状はA05-02と処理を受けるメソッドが共通でクエリ ConnectionType で分岐しているので、A05-02とエンドポイントを分ける』と明記する(1155行)。実装は OrderController::orderDirectPrint の単一ルート /api/order/prints/direct/{base_info_id} 内で ConnectionType==='GetRequest'/'SetResponse' を分岐し続けており(OrderController.php 43,46,63行)、/order/prints/status/printed というルート・パスは src/Eccube・html いずれにも存在しない(rg で該当なし)。要求された入口分離が未実装。",
+      "designEvidence": {"label": "設計要求(A05-02 専用URL・入口分離)", "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html", "start": 1151, "end": 1155, "contains": ["/order/prints/status/printed", "A05-02とエンドポイントを分ける"]},
+      "implEvidence": [{"label": "分離されず単一ルートで ConnectionType 分岐", "path": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php", "start": 43, "end": 63, "contains": ["/api/order/prints/direct/{base_info_id}", "$connectionType === 'GetRequest'", "$connectionType === 'SetResponse'"]}],
+      "absenceCommands": ["rg -n 'prints/status/printed' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube /home/y-saito/Developments/ec-cube-enterprise/html", "rg -n 'status/printed|orderPrintedStatus|prints_status' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube"]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-02_0505_sheet-4_sheet.json#a05-02_0505_sheet-4_sheet-conformance-4734c8af59f4",
+      "functionId": "a05-02_0505_sheet-4_sheet",
+      "featureNo": "A05-02",
+      "title": "A05-02 注文印刷_該当受注のステータスを印刷済みに変更",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "high",
+      "summary": "設計は印刷結果XMLの各印刷結果要素の成功/失敗(success)と失敗理由code(EX_BADPORT等)を参照してログ追記するカスタマイズを要求するが、実装は個別要素の success/code を一切参照しない。",
+      "reason": "設計は『プリンタ側でエラーがあった場合、レスポンスデータの中にエラーコードが返ってくるのでログに追記する』(HTML 1164行)『既存は基本書式不備等はログするが、印刷結果の詳細を参照してエラー有無を確認していない』(1165-1166行)とし、印刷結果XMLは success(true/false)と失敗時 code(EX_BADPORT/EX_TIMEOUT 等)を含む(1182-1183,1193-1194,1224-1225行)ため詳細参照が改善要求。実装 UpdatePrintedOrderStatusAction は XMLパース失敗時に本文と『XMLパースエラー』を、ServerDirectPrint==='false' または count(ePOSPrint)<1 の場合に本文をログ出力するのみ(48-59行)。各 ePOSPrint/PrintResponse/response の success 属性・code 属性を読まず、foreach で printjobid から受注IDを取り出してステータス更新へ進む(78-101行)。PrintResponse・EX_BADPORT・code 属性の参照処理は src/Eccube 全体に存在しない(rg で該当なし)。要求された詳細エラー参照・code ログ追記が未実装。",
+      "designEvidence": {"label": "設計要求(エラーcode詳細参照・ログ追記)", "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html", "start": 1164, "end": 1166, "contains": ["レスポンスデータの中にエラーコードが返ってくる", "印刷結果の詳細を参照してエラーの有無を確認していない"]},
+      "implEvidence": [
+        {"label": "根本問題のみログ・詳細参照なし", "note": "ServerDirectPrint と件数のみ判定", "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php", "start": 48, "end": 59, "contains": ["XMLパースエラー", "$xml->ServerDirectPrint === 'false'", "count($xml->ePOSPrint) < 1"]},
+        {"label": "各要素の success/code を見ず更新へ進む", "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php", "start": 78, "end": 90, "contains": ["foreach ($xml->ePOSPrint as $print)", "$print->Parameter->printjobid", "setOrderStatus($pickingStatus)"]}
+      ],
+      "absenceCommands": ["rg -n 'PrintResponse|EX_BADPORT|EX_TIMEOUT' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube", "rg -n 'success|->code|PrintResponse|->response' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php"]
+    }
+  ]
+}

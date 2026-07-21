@@ -1,0 +1,131 @@
+{
+  "id": "b13-01-payment-status-check-duplicate-payment-no-cache-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b13-01_0413_sheet-3_sheet.json",
+  "sourceFindingId": "b13-01_0413_sheet-3_sheet-conformance-de81ce591db5",
+  "classification": "バッチイベント",
+  "feature": "決済処理中チェックバッチ",
+  "issueCategory": "実装漏れ",
+  "issue": "同一決済番号のイベント申込で前回の照会結果を流用しない",
+  "designBook": "0413_基本設計仕様書(バッチ_イベント).xlsx",
+  "reproSteps": [
+    "設計書 B13-01 の処理フローで、直前と同じ決済番号の申込みは前回の照会結果に従って同様の処理を行う仕様であることを確認する",
+    "ベース実装 pf-eccube3 の `AbstractCheckPaymentEntry::check()` を確認し、`$prePaymentNo` と前回の `$message` / `$newStatus` により同一決済番号では取引照会を繰り返さず同様の処理を行うことを確認する",
+    "ec-cube-enterprise の `PaymentStatusCheckAction::handle()` を確認し、`paymentNo` 順に取得した申込をループしているが、前回の決済番号・照会結果を保持する変数や、同一決済番号時に前回結果を流用する分岐がないことを確認する"
+  ],
+  "expected": [
+    "決済処理中チェックバッチは、直前と同じ決済番号のイベント申込について、前回の取引照会結果に従って同様の更新・削除・保留処理を行う",
+    "同一決済番号の連続申込では、決済サービスへの重複照会を避け、前回結果を再利用する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `PaymentStatusCheckAction::handle()` は、対象イベント申込をループし、各申込ごとに `$paymentNo = $EventEntry->getPaymentNo()` を取得して `getApiResponse($paymentNo)` を呼ぶ。前回の `paymentNo`、前回の照会結果、前回の新ステータスを保持する変数や、同一決済番号を検出して照会結果を流用する分岐はない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は申込ごとに paymentNo を取得して getApiResponse を呼ぶ",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+          "start": 76,
+          "end": 108,
+          "language": "php",
+          "contains": [
+            "$EventEntries = $this->eventEntryRepository->getBeforeMinutesEntry(30);",
+            "foreach ($EventEntries as $EventEntry) {",
+            "$paymentNo = $EventEntry->getPaymentNo();",
+            "$resultApi = $this->getApiResponse($paymentNo);",
+            "if ($resultApi === 'OK') {"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の分岐は現在申込の resultApi のみで処理する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+          "start": 149,
+          "end": 163,
+          "language": "php",
+          "contains": [
+            "} elseif (array_key_exists($resultApi, $this->pendingResponseCds)) {",
+            "$cntPending++;",
+            "$EventEntry->setDeletedAt($time);",
+            "$this->entityManager->flush();",
+            "$cntDeleted++;"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、`AbstractCheckPaymentEntry::check()` が `$prePaymentNo` を保持し、現在申込の決済番号が直前と同じ場合は `$message` の前回値を見て `execRecordOperation()` または `removeRecord()` を実行し、`execSearch()` による取引照会をスキップする。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は同一 paymentNo の場合に前回結果を流用する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php",
+          "start": 23,
+          "end": 43,
+          "language": "php",
+          "contains": [
+            "$prePaymentNo = '';",
+            "if ($prePaymentNo === $entry->getPaymentNo()) {",
+            "switch ($message) {",
+            "$this->execRecordOperation($entry, $newStatus);",
+            "$this->removeRecord($entry);",
+            "continue;",
+            "$result = $this->execSearch($entry, true);",
+            "$prePaymentNo = $entry->getPaymentNo();"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "詳細設計は同一決済番号の申込で前回の照会結果を流用することを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html",
+      "start": 919,
+      "end": 943,
+      "language": "html",
+      "contains": [
+        "決済処理中チェックを実行する（<code>entry:batch checkProssesingPayment</code>）",
+        "直前と同じ決済番号の申込みは、前回の照会結果に従って同様の処理を行う",
+        "同一決済番号は前回結果を流用する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "対象申込をループして毎回 getApiResponse を呼び、前回結果流用用の変数・分岐がない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+      "start": 76,
+      "end": 108,
+      "language": "php",
+      "contains": [
+        "foreach ($EventEntries as $EventEntry) {",
+        "$paymentNo = $EventEntry->getPaymentNo();",
+        "$resultApi = $this->getApiResponse($paymentNo);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "前回の決済番号と照会結果を保持し、同一決済番号では照会せず前回結果で処理する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php",
+      "start": 23,
+      "end": 43,
+      "language": "php",
+      "contains": [
+        "$prePaymentNo = '';",
+        "if ($prePaymentNo === $entry->getPaymentNo()) {",
+        "switch ($message) {",
+        "continue;",
+        "$result = $this->execSearch($entry, true);"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"直前と同じ決済番号|同一決済番号|前回結果|checkProssesingPayment\" excel_to_html/output/0413_基本設計仕様書\\(バッチ_イベント\\).html design_impl_drift_report/findings/b13-01_0413_sheet-3_sheet.json",
+      "rg -n \"prePaymentNo|前回|同じ決済番号|execSearch\\(|getPaymentNo\\(\\)\" ../pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php",
+      "rg -n \"prePaymentNo|previous|前回|同一決済番号|getApiResponse\\(|getPaymentNo\\(\\)\" ../ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php ../ec-cube-enterprise/src/Eccube/Repository/DtbEventEntryRepository.php"
+    ]
+  },
+  "notes": [
+    "B13-01のSP.LINKS取引照会API未実装とは別論点として確認した。SP.LINKS照会実装後も、同一決済番号の前回結果流用がない場合は設計・ベース実装との差分が残る。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

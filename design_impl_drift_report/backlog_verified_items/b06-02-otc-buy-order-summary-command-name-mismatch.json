@@ -1,0 +1,180 @@
+{
+  "id": "b06-02-otc-buy-order-summary-command-name-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b06-02_0406_sheet-4_sheet.json",
+  "sourceFindingId": "b06-02_0406_sheet-4_sheet-conformance-482aeb7360eb",
+  "classification": "バッチ店頭買取管理",
+  "feature": "買取集計バッチ",
+  "issueCategory": "実装漏れ",
+  "issue": "買取集計バッチを設計どおり `otcBuyOrder:batch updateSummary` で起動できない",
+  "designBook": "0406_基本設計仕様書(バッチ_店頭買取管理).xlsx",
+  "reproSteps": [
+    "設計書 B06-02 の利用者視点の入口で、実行方法が `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` とされていることを確認する",
+    "ベース実装 pf-eccube3 の `OtcBuyOrderBatch` が `otcBuyOrder:batch` を登録し、`updateSummary` を `SummaryService` に対応付けていることを確認する",
+    "ec-cube-enterprise の `src/Eccube/Command` と設定を検索し、`otcBuyOrder:batch`、`updateSummary`、または同等aliasが登録されているか確認する",
+    "ec-cube-enterprise では集計本体は `eccube:otc-buy-order:aggregate-summary [date]` として実装されているが、設計コマンド名の互換入口がないことを確認する"
+  ],
+  "expected": [
+    "買取集計バッチは `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` で実行できる",
+    "任意の集計日引数を指定した場合はその日付を集計し、未指定時は前日を集計する",
+    "設計コマンド名で、集計日の店頭買取データを店舗・部門単位で集計し、既存集計を入れ替える処理へ到達できる"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise には買取集計バッチ本体は存在するが、登録されているSymfonyコマンド名は `eccube:otc-buy-order:aggregate-summary` である。`otcBuyOrder:batch`、`updateSummary`、`aliases`、`setAliases` を検索しても設計コマンド名を受ける互換入口は確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の買取集計コマンドは別名で登録されている",
+          "path": "ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php",
+          "start": 45,
+          "end": 90,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:otc-buy-order:aggregate-summary', description: '店頭買取集計バッチ')]",
+            "$this->addArgument('date', InputArgument::OPTIONAL, '集計対象日 (Y-m-d形式)。省略時は前日');",
+            "$this->batchAggregateSummaryAction->handle($summaryDate);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の集計本体はActionとして存在する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php",
+          "start": 34,
+          "end": 60,
+          "language": "php",
+          "contains": [
+            "public function handle(\\DateTime $summaryDate): void",
+            "SummaryByDateAggregator::aggregate(",
+            "$noSectionProducts = $this->otcBuyOrderRepository->getNoSectionProducts($summaryDate);",
+            "$this->mailService->sendNoSectionAlertMail($noSectionProducts);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `OtcBuyOrderBatch` が `otcBuyOrder:batch` を登録し、第一引数 `updateSummary` を `SummaryService` に対応付ける。`SummaryService` は追加引数から集計日を受け取り、集計・既存削除・登録・部門未設定通知まで実行する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は otcBuyOrder:batch updateSummary を登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OtcBuyOrderBatch.php",
+          "start": 10,
+          "end": 47,
+          "language": "php",
+          "contains": [
+            "'updateSummary' => 'Plugin\\HareruyaEc\\Service\\OtcBuyOrder\\SummaryService'",
+            "$this->setName('otcBuyOrder:batch')",
+            "$batch = new $batchNames[$name]($app, $this->createOptions($input));",
+            "$batch->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の SummaryService は集計日引数を使って集計処理を実行する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/OtcBuyOrder/SummaryService.php",
+          "start": 29,
+          "end": 61,
+          "language": "php",
+          "contains": [
+            "set_time_limit(0);",
+            "$summaryDate = isset($this->options[0])",
+            "$this->app['hareruya_ec.repository.otc_buy_order']->getSectionSummary($summaryDate);",
+            "$this->app['hareruya_ec.repository.otc_buy_order_summary']->deleteOtcBuyOrderSummary($summaryDate);",
+            "$this->app['hareruya_ec.repository.otc_buy_order_summary']->insertOtcBuyOrderSummary($summary, $summaryDate);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B06-02 は利用者視点の入口として `otcBuyOrder:batch updateSummary [YYYY-MM-DD]` を要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html",
+      "start": 1053,
+      "end": 1080,
+      "language": "html",
+      "contains": [
+        "確認値はpf-eccube3",
+        "<code>otcBuyOrder:batch updateSummary [YYYY-MM-DD]</code>",
+        "買取集計を実行する（<code>otcBuyOrder:batch updateSummary</code>）",
+        "引数が指定されていればその日付、無ければ前日を用いる"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B06-02 は入力としてコマンド名と任意の集計日引数を定義している",
+      "path": "hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html",
+      "start": 1089,
+      "end": 1094,
+      "language": "html",
+      "contains": [
+        "入力</td><td>コマンド名と任意の集計日引数",
+        "成功結果</td><td>同じ集計日の既存集計を削除し、当日分の集計を登録する",
+        "部門未設定商品がある場合の管理者通知メール"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の登録コマンド名は設計と異なる `eccube:otc-buy-order:aggregate-summary`",
+      "path": "ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php",
+      "start": 45,
+      "end": 90,
+      "language": "php",
+      "contains": [
+        "eccube:otc-buy-order:aggregate-summary",
+        "$this->addArgument('date'",
+        "$this->batchAggregateSummaryAction->handle($summaryDate);"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の集計本体は存在するため、差分は本体欠落ではなく設計コマンド名の入口互換欠落に限定する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php",
+      "start": 34,
+      "end": 60,
+      "language": "php",
+      "contains": [
+        "public function handle(\\DateTime $summaryDate): void",
+        "SummaryByDateAggregator::aggregate(",
+        "$this->mailService->sendNoSectionAlertMail($noSectionProducts);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `otcBuyOrder:batch` の batch_name として `updateSummary` を受け付ける",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OtcBuyOrderBatch.php",
+      "start": 10,
+      "end": 47,
+      "language": "php",
+      "contains": [
+        "'updateSummary' => 'Plugin\\HareruyaEc\\Service\\OtcBuyOrder\\SummaryService'",
+        "$this->setName('otcBuyOrder:batch')",
+        "$batch->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の SummaryService は設計の集計日引数・集計・既存削除・登録へ到達する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/OtcBuyOrder/SummaryService.php",
+      "start": 29,
+      "end": 61,
+      "language": "php",
+      "contains": [
+        "$summaryDate = isset($this->options[0])",
+        "getSectionSummary($summaryDate)",
+        "deleteOtcBuyOrderSummary($summaryDate)",
+        "insertOtcBuyOrderSummary($summary, $summaryDate)"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B06-02|買取集計|otcBuyOrder:batch|updateSummary|実行時間|set_time_limit|部門未設定|件数|送信開始|送信完了\" \"excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html\"",
+      "rg -n \"OtcBuyOrderAggregateSummary|aggregate-summary|otcBuyOrder:batch|updateSummary|set_time_limit|max_execution_time|sendNoSectionAlertMail|部門未設定|noSection|NoSection|count\\(|log_info\" ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/app -g '*.php' -g '*.yaml' -g '*.yml'",
+      "rg -n \"otcBuyOrder:batch|updateSummary|setAliases|aliases|aggregate-summary|OtcBuyOrderAggregateSummaryCommand\" ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/app -g '*.php' -g '*.yaml' -g '*.yml'",
+      "rg -n \"OtcBuyOrderBatch|otcBuyOrder:batch|updateSummary|SummaryService|sendNoSectionAlertMail|部門未設定|set_time_limit|max_execution_time|件数\" ../pf-eccube3/app/Plugin/HareruyaEc ../pf-api ../ec-cube -g '*.php' -g '*.yml' -g '*.yaml'"
+    ]
+  },
+  "notes": [
+    "本件は買取集計処理本体の未実装ではなく、設計コマンド名 `otcBuyOrder:batch updateSummary` の互換入口がない差分として扱う。",
+    "B06-02内の実行時間制限解除、部門未設定通知ログ件数、部門未設定商品取得SQLなどの候補は修正対象が異なるため、このチケットには統合しない。"
+  ]
+}

@@ -1,0 +1,199 @@
+{
+  "id": "f06-04-forgot-reset-complete-redirect-login",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-04_0306_sheet-6_sheet.json",
+  "sourceFindingId": "f06-04_0306_sheet-6_sheet-conformance-9199e13f4fd1",
+  "classification": "フロント会員",
+  "feature": "パスワード再発行",
+  "issueCategory": "実装違い",
+  "issue": "パスワード再設定後、完了画面ではなくログイン画面に遷移する",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "パスワード再発行画面( http://localhost:8080/ja/forgot )から手続きを行い、受信メールから再設定URLに遷移する",
+    "新しいパスワードを入力して「変更する」ボタンを押下する",
+    "遷移先と表示文言を確認する"
+  ],
+  "expected": [
+    "パスワード更新成功後、更新完了画面を表示する",
+    "更新完了画面には見出し「パスワード再設定」、文言「パスワードを変更しました。」、トップページへ戻る「戻る」リンクを表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterpriseでは、パスワード更新後に完了画面をrenderせず、flashに「パスワードを更新しました。」を積んでログイン画面(mypage_login)へリダイレクトしている。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 更新成功後のリダイレクト",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php",
+          "start": 211,
+          "end": 215,
+          "language": "php",
+          "contains": [
+            "password_reset_complete",
+            "front.forgot.reset_complete",
+            "mypage_login"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise ログイン画面のフラッシュ表示",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/login.twig",
+          "start": 88,
+          "end": 90,
+          "language": "twig",
+          "contains": [
+            "password_reset_complete"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 実装文言",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 500,
+          "end": 501,
+          "language": "yaml",
+          "contains": [
+            "パスワードを更新しました。"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では、/forgot/resetcomplete/{resetKey} を独立ルートとして持ち、更新成功時に Forgot/resetcomplete.twig をrenderして完了画面を表示している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 完了画面ルート",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php",
+          "start": 116,
+          "end": 121,
+          "language": "php",
+          "contains": [
+            "forgot/resetcomplete",
+            "forgot_resetcomplete"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 更新成功後の完了画面render",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ForgotController.php",
+          "start": 150,
+          "end": 157,
+          "language": "php",
+          "contains": [
+            "reset password complete",
+            "Forgot/resetcomplete.twig"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 完了画面テンプレート",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Forgot/resetcomplete.twig",
+          "start": 4,
+          "end": 12,
+          "language": "twig",
+          "contains": [
+            "パスワード再設定",
+            "パスワードを変更しました。",
+            "戻る"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "更新成功時は完了画面を表示",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 2461,
+      "end": 2465,
+      "language": "html",
+      "contains": [
+        "更新完了画面を表示する",
+        "パスワードを変更しました。",
+        "戻る"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "画面遷移の更新完了画面要求",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 2513,
+      "end": 2514,
+      "language": "html",
+      "contains": [
+        "更新完了画面",
+        "Forgot/resetcomplete.twig"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "更新成功後はログイン画面へリダイレクト",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php",
+      "start": 211,
+      "end": 215,
+      "language": "php",
+      "contains": [
+        "addFlash('password_reset_complete'",
+        "return $this->redirectToRoute('mypage_login')"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "ログイン画面でフラッシュ表示",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/login.twig",
+      "start": 88,
+      "end": 90,
+      "language": "twig",
+      "contains": [
+        "flashbag.get('password_reset_complete')",
+        "reset_complete|trans"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "完了画面ルート",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php",
+      "start": 116,
+      "end": 121,
+      "language": "php",
+      "contains": [
+        "/forgot/resetcomplete",
+        "forgot_resetcomplete"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "完了画面render",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ForgotController.php",
+      "start": 150,
+      "end": 157,
+      "language": "php",
+      "contains": [
+        "resetcomplete",
+        "Forgot/resetcomplete.twig"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "完了画面テンプレート",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Forgot/resetcomplete.twig",
+      "start": 4,
+      "end": 12,
+      "language": "twig",
+      "contains": [
+        "パスワード再設定",
+        "パスワードを変更しました。",
+        "戻る"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex",
+    "commands": [
+      "rg -n \"F06-04|f06-04|forgot_reset|resetcomplete|パスワード再発行|パスワード変更完了\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "rg -n \"class Forgot|forgot_reset|password_reset_complete|reset_complete|redirectToRoute\\\\('mypage_login|パスワードを更新しました|front.forgot.reset_complete\" ec-cube-enterprise/src/Eccube/Controller/Front ec-cube-enterprise/src/Eccube/Resource/template/default/Forgot ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/login.twig ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/ForgotController.php | sed -n '125,175p'"
+    ],
+    "notes": [
+      "ec-cube-enterpriseにはForgot/resetcomplete相当の完了画面テンプレート遷移がなく、更新成功時はログイン画面にフラッシュを表示する実装になっている。",
+      "設計とベース実装の文言は「パスワードを変更しました。」だが、ec-cube-enterpriseのフラッシュ文言は「パスワードを更新しました。」である。"
+    ]
+  }
+}

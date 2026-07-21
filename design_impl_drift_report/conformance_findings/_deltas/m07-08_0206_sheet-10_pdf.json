@@ -1,0 +1,54 @@
+{
+  "functionId": "m07-08_0206_sheet-10_pdf",
+  "featureNo": "M07-08",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-10:2232",
+      "designExpectation": "本機能はPDF出力（参照のみ）でありDB更新を伴わない。",
+      "implRef": "src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:54",
+      "implementationActual": "PDFビュー生成 buildPdfViewData() が getBuyOrderRestockListCsvExportData() と buildSections() で表示データを組み立てた後、markBuyOrdersAsRestocked($buyOrderIds) を呼び出し、対象買取の restocked_flg を true に更新している。更新本体は同ファイル:68-80 のトランザクション内で DtbBuyOrder::setRestockedFlg(true) を persist/flush している。",
+      "mismatchReason": "設計はPDF出力を参照のみ・DB更新なしと明記しているが、実装はPDF出力用データ生成時に棚戻し済みフラグをDB更新する。反証検索として pdfExportReturnList / buildPdfViewData / markBuyOrdersAsRestocked / setRestockedFlg / restocked_flg / 参照のみ / DB更新 を Controller・Service・Repository・Twig・JS 範囲で確認し、PDF経路から更新呼び出しが到達することを確認した。",
+      "comparisonRows": [
+        {
+          "item": "副作用",
+          "design": "PDF出力（参照のみ）でありDB更新を伴わない",
+          "implementation": "buildPdfViewData() が markBuyOrdersAsRestocked($buyOrderIds) を呼ぶ",
+          "mismatch": "PDF出力操作でDB更新が発生する"
+        },
+        {
+          "item": "更新対象",
+          "design": "なし",
+          "implementation": "DtbBuyOrder::setRestockedFlg(true) により対象買取を棚戻し済みにする",
+          "mismatch": "参照のみ要求に対して restocked_flg を変更する"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-10:2169",
+      "designExpectation": "4 作成日時ラベル: ピッキングリストを作成した日時。※「ピッキングリスト印刷」ボタンを押した日時",
+      "implRef": "不在（探索範囲: src/Eccube/Resource/template/admin/Purchase/restock_list.twig, src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php, src/Eccube/Service/Csv/Exporter/RestockListPdfSectionBuilder.php, src/Eccube/Repository/DtbBuyOrderRepository.php, html/template/admin/assets/js/Purchase/purchase.js）",
+      "implementationActual": "restock_list.twig は印刷ボタン、閾値別タイトル、ページ数、棚番号、言語/状態、略称、色/R、数、商品名、価格、備考を描画するが、作成日時ラベルまたは印刷ボタン押下日時の表示フィールドを持たない。Service/SectionBuilder も日時値をTwig変数へ渡していない。JS側の Date.now() はポップアップウィンドウ名生成にのみ使われ、帳票へ表示されない。",
+      "mismatchReason": "設計上、利用者が帳票上で見る作成日時ラベルが必要だが、実装のテンプレート・ビュー生成・JSに作成日時表示の根拠がない。反証検索として 作成日時 / ピッキングリストを作成 / create_date / created / DateTime / now / date / printButton / restockListSections を対象範囲で確認し、帳票表示に使われる日時実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "作成日時ラベル",
+          "design": "ピッキングリストを作成した日時を表示する",
+          "implementation": "該当ラベル・値の描画なし",
+          "mismatch": "帳票項目が欠落している"
+        },
+        {
+          "item": "日時の基準",
+          "design": "「ピッキングリスト印刷」ボタンを押した日時",
+          "implementation": "Date.now() はポップアップ名にのみ使用",
+          "mismatch": "印刷日時が帳票データとして渡されない"
+        }
+      ]
+    }
+  ]
+}

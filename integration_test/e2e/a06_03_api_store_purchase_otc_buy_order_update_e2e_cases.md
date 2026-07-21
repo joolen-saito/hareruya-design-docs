@@ -7,7 +7,7 @@
 
 本機能は**ブラウザ向けの画面を持たない**機能仕様（JWT認証つきPUT API＝店頭買取受注の詳細更新。正本md「対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない」）であり、**API/統合レイヤ単独で網羅**する。Playwright `request` で `PUT /api/v1/admin/otcBuyOrder/{id}.json` へ送信し、HTTPステータス・レスポンス本文（`{code}`／`{code, errors}`）で判定する。更新副作用（ステータス・買取合計金額・明細全置換・個別入力商品・在庫・在庫履歴・ステータス変更履歴・査定担当者）は永続化先テーブルを直接DB照合（DB副作用観測）して判定する。本機能は画面を持たないため、別機能（管理画面 店頭買取受注詳細）の表示は合否条件にしない。
 
-**期待結果は仕様（正本md・観点表・基本設計）由来**とし、実装のレスポンス形・バリデーション機構・HTTPライブラリ既定値・Form/DTO制約を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdを上位オラクル、観点表（基本設計）と食い違う箇所も上位オラクルとして扱い、乖離は付帯表4に出す。実装からは位置情報（APIパス・メソッド・認証方式・セレクタ）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（正本md・観点表・基本設計）由来**とし、実装のレスポンス形・バリデーション機構・HTTPライブラリ既定値・Form/DTO制約を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdを上位オラクル、観点表（基本設計）と食い違う箇所も上位オラクルとして扱い、乖離は付帯表4に出す。実装からは位置情報（APIパス・メソッド・認証方式・セレクタ）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 更新系のため、DB更新観点（IT-23/IT-26）を網羅に含める。正本md・実装には入力検証とDB更新が存在するが、既存IT casesの対象外観点表は「本機能に入力検証対象がないため」「該当する処理・I/Fがないため」と誤って除外している。これを上位オラクル（正本md・基本設計）に照らして補正し、入力検証（IT-22）・DB更新（IT-26/IT-05）を設計書補完ケースとして追加した（母集合外・別管理）。当該誤分類は付帯表4#9に記録する。
 
@@ -26,108 +26,108 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-001	IT-09	リクエスト	P1	正常パラメータでPUTし200が返る	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB／SEED-A06-03-SECTION	"有効なjwt-tokenヘッダ
 order_status=成立(1)・order_details=1件以上の正常明細・qualified_invoice_issuer_confirmation_flg"	"1. 対象受注IDへPUTでリクエストを送信する
-2. HTTPステータスを確認する"	正常更新としてHTTPステータス200が返ること。
+2. HTTPステータスを確認する"	正常更新としてHTTPステータス200が返ること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-002	IT-09	実行結果	P3	更新実行後の処理結果が一致する	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・正常な更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. レスポンスと後続状態を確認する"	更新処理が実行され、処理結果（成功）がレスポンスと一致すること。
+2. レスポンスと後続状態を確認する"	更新処理が実行され、処理結果（成功）がレスポンスと一致すること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-003	IT-09	HTTPステータス	P3	成功時のHTTPステータスが200である	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・正常な更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. HTTPステータスを確認する"	HTTPステータスが成功（200）であること。
+2. HTTPステータスを確認する"	HTTPステータスが成功（200）であること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-004	IT-09	外部取得	P1	成功レスポンス本文がcode=200を含む	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・正常な更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. レスポンス本文を確認する"	成功時のレスポンス本文が `{code:200}` であること。
+2. レスポンス本文を確認する"	成功時のレスポンス本文が `{code:200}` であること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-005	IT-10	通信	P1	正常通信で200が返る	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・正常な更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-006	IT-10	正常	P2	対象条件に該当する正常値で200が返る	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	対象条件に該当する正常な更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. HTTPステータスと後続状態を確認する"	正常更新としてHTTPステータスが200（成功）であること。
+2. HTTPステータスと後続状態を確認する"	正常更新としてHTTPステータスが200（成功）であること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-007	IT-32	レスポンス	P3	成功レスポンス書式がcode:200と一致する	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・正常な更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. レスポンス本文の書式を確認する"	成功時のレスポンス書式が仕様の `{code:200}`（codeフィールドのみ・camelCase）と一致すること。
+2. レスポンス本文の書式を確認する"	成功時のレスポンス書式が仕様の `{code:200}`（codeフィールドのみ・camelCase）と一致すること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-008	IT-32	受信検証	P1	入力検証を満たすリクエストで更新成功200となる	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB／SEED-A06-03-SECTION	ステータス・明細・明細各項目すべて検証を満たすリクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. HTTPステータスを確認する"	受注全体・明細各件の入力検証を満たし、HTTPステータス200で更新が成功すること。
+2. HTTPステータスを確認する"	受注全体・明細各件の入力検証を満たし、HTTPステータス200で更新が成功すること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-009	IT-32	リクエスト	P3	想定外項目追加時の挙動が要実機確認・仕様化待ちである	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	正常リクエストに仕様未定義の想定外項目（項目名と値のセット）を追加	"1. 想定外項目を含むリクエストをPUTで送信する
-2. HTTPステータスを確認する"	正本mdに未定義項目の許容/無視/エラーの仕様が無いため、想定外項目追加時の更新成否を固定期待にできず、許容・無視・エラーいずれの挙動とするかは要実機確認・仕様化待ちであること。
+2. HTTPステータスを確認する"	正本mdに未定義項目の許容/無視/エラーの仕様が無いため、想定外項目追加時の更新成否を固定期待にできず、許容・無視・エラーいずれの挙動とするかは要実機確認・仕様化待ちであること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-020	IT-32	資格情報	P1	有効なJWTで更新が成功する	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token（該当する管理者会員あり）・正常リクエスト	"1. 有効なjwt-tokenを付与してPUTで送信する
-2. HTTPステータスを確認する"	資格情報が有効な場合、HTTPステータス200で更新が成功すること。
+2. HTTPステータスを確認する"	資格情報が有効な場合、HTTPステータス200で更新が成功すること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-021	IT-32	資格情報	P1	jwt-tokenヘッダ欠落で401となり更新されない	SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	jwt-tokenヘッダを付与しないリクエスト	"1. jwt-tokenヘッダ無しでPUTで送信する
-2. HTTPステータスと受注状態を確認する"	認証拒否を示すHTTPステータス401が返り、対象受注が更新されないこと。
+2. HTTPステータスと受注状態を確認する"	認証拒否を示すHTTPステータス401が返り、対象受注が更新されないこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-022	IT-10	重複・順序	P1	該当する管理者会員が無いJWTで401となる	SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	利用者IDに該当する管理者会員が存在しないjwt-token	"1. 該当会員なしのjwt-tokenでPUTで送信する
-2. HTTPステータスと受注状態を確認する"	JWTの利用者IDから管理者会員を特定できず、HTTPステータス401が返り更新されないこと。
+2. HTTPステータスと受注状態を確認する"	JWTの利用者IDから管理者会員を特定できず、HTTPステータス401が返り更新されないこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-023	IT-32	資格情報	P1	署名不正のJWTで401となり更新されない	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	署名検証に失敗するjwt-token（署名シークレット不正）	"1. 署名不正のjwt-tokenでPUTで送信する
-2. HTTPステータスと受注状態を確認する"	署名検証に失敗し、認証拒否を示すHTTPステータス401が返り、対象受注が更新されないこと。
+2. HTTPステータスと受注状態を確認する"	署名検証に失敗し、認証拒否を示すHTTPステータス401が返り、対象受注が更新されないこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-030	IT-32	データなし	P1	存在しない受注IDで404となり更新されない	SEED-A06-03-JWT-ADMIN／SEED-A06-03-STATUS-MTB	有効なjwt-token・該当しない受注ID	"1. 存在しない受注IDへPUTで送信する
-2. HTTPステータスと後続状態を確認する"	該当なしを示すHTTPステータス404が返り、明細・在庫・受注の更新が行われないこと。
+2. HTTPステータスと後続状態を確認する"	該当なしを示すHTTPステータス404が返り、明細・在庫・受注の更新が行われないこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-040	IT-10	エラー	P2	order_status未指定で400となりerrorsを含む	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER	有効なjwt-token・order_status未指定・order_detailsは正常	"1. order_statusを未指定にしてPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400が返り、レスポンス本文 `errors` 配列にステータス必須の検証メッセージを含むこと。
+2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400が返り、レスポンス本文 `errors` 配列にステータス必須の検証メッセージを含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-041	IT-10	エラー	P2	複数の検証エラーをerrors配列に全件まとめて返す	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER	有効なjwt-token・ステータス未指定かつ明細の複数項目が不正なリクエスト	"1. 複数項目が不正なリクエストをPUTで送信する
-2. レスポンス本文のerrorsを確認する"	受注全体と明細各件で検出した全検証メッセージが `errors` 配列にまとめて返ること。
+2. レスポンス本文のerrorsを確認する"	受注全体と明細各件で検出した全検証メッセージが `errors` 配列にまとめて返ること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-042	IT-10	エラー	P2	ステータスマスタ照合エラーを含む検証結果をerrorsで返す	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・ステータスマスタに存在しないorder_statusと他の不正項目	"1. マスタ非存在ステータスを含むリクエストをPUTで送信する
-2. レスポンス本文のerrorsを確認する"	ステータスマスタとのDB照合エラーを含む全検証メッセージが `errors` 配列に返ること。
+2. レスポンス本文のerrorsを確認する"	ステータスマスタとのDB照合エラーを含む全検証メッセージが `errors` 配列に返ること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-043	IT-10	異常系	P2	異常リクエストで4xxとなり更新されない	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER	有効なjwt-token・検証に失敗する異常リクエスト	"1. 異常リクエストをPUTで送信する
-2. HTTPステータスと受注状態を確認する"	異常を示すHTTPステータス4xxが返り、削除・登録・保存が行われず受注が更新されないこと。
+2. HTTPステータスと受注状態を確認する"	異常を示すHTTPステータス4xxが返り、削除・登録・保存が行われず受注が更新されないこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-044	IT-10	HTTPステータス	P1	入力不正時のHTTPステータスが400である	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER	有効なjwt-token・入力検証に失敗するリクエスト	"1. 入力不正リクエストをPUTで送信する
-2. HTTPステータスを確認する"	入力不正を示すHTTPステータスが400であること。
+2. HTTPステータスを確認する"	入力不正を示すHTTPステータスが400であること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-045	IT-32	必須条件	P3	order_details未指定で400となり必須メッセージを返す	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_details未指定または空・order_statusは正常	"1. order_detailsを空にしてPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス400が返り、`errors` 配列に「1つ以上の商品を選んでください。」を含むこと。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス400が返り、`errors` 配列に「1つ以上の商品を選んでください。」を含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-046	IT-32	リクエスト	P3	整数でない明細項目を含むと400となる	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・明細のquantity等に整数でない値を指定	"1. 整数でない明細項目を含むリクエストをPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス400が返り、`errors` 配列に該当項目の整数形式メッセージを含むこと。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス400が返り、`errors` 配列に該当項目の整数形式メッセージを含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-050	IT-33	区分整合	P1	更新後に更新対象外の他受注・区分の在庫数量と金額が不変	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER（対象受注＋別受注）／SEED-A06-03-STATUS-MTB／SEED-A06-03-SECTION／SEED-M01-ADMIN	有効なjwt-token・対象受注のみを更新する正常リクエスト	"1. 対象受注IDへPUTで送信し200と成功応答を確認する
-2. 一次オラクルとしてDB副作用（別受注・対象外区分の在庫数量・買取合計金額）を照合する"	別受注・対象外区分の在庫数量と買取合計金額が更新前と一致し、変動しないこと（DB副作用で判定）。
+2. 一次オラクルとしてDB副作用（別受注・対象外区分の在庫数量・買取合計金額）を照合する"	別受注・対象外区分の在庫数量と買取合計金額が更新前と一致し、変動しないこと（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-051	IT-33	エラー	P1	検証エラー時に明細・在庫・金額・履歴が部分更新されない	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB／SEED-M01-ADMIN	有効なjwt-token・入力検証に失敗するリクエスト	"1. 検証エラーとなるリクエストをPUTで送信し4xxを確認する
-2. 一次オラクルとしてDB副作用（対象受注の明細・在庫・買取合計金額・ステータス変更履歴）を受信前と照合する"	検証エラー時は削除・登録・保存が行われず、明細・在庫・買取合計金額・ステータス変更履歴がDB副作用上で受信前と一致（部分更新されない）こと（DB副作用で判定）。
+2. 一次オラクルとしてDB副作用（対象受注の明細・在庫・買取合計金額・ステータス変更履歴）を受信前と照合する"	検証エラー時は削除・登録・保存が行われず、明細・在庫・買取合計金額・ステータス変更履歴がDB副作用上で受信前と一致（部分更新されない）こと（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-060	IT-19	同時実行数の制限	P3	同一受注の同時更新で片側更新の不整合が残らない	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・同一受注への並行する2リクエスト	"1. 同一受注へ2リクエストを並行してPUTで送信する
-2. 最終状態を確認する"	本APIは排他制御を持たず同時更新は後勝ちとなり、いずれか一方の更新が一貫して反映され、明細・在庫・金額・履歴が片側だけ更新された不整合が残らないこと（並行送信の実再現は要実機確認）。
+2. 最終状態を確認する"	本APIは排他制御を持たず同時更新は後勝ちとなり、いずれか一方の更新が一貫して反映され、明細・在庫・金額・履歴が片側だけ更新された不整合が残らないこと（並行送信の実再現は要実機確認）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-061	IT-10	エラー	P3	処理タイムアウト時に仕様どおりの応答となる	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してPUTで送信する
-2. 応答と受注状態を確認する"	サーバ無応答・未定義例外で停止せず、エラー応答が返り、対象受注が部分更新されず一致すること（タイムアウト実再現は要実機確認）。
+2. 応答と受注状態を確認する"	サーバ無応答・未定義例外で停止せず、エラー応答が返り、対象受注が部分更新されず一致すること（タイムアウト実再現は要実機確認）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-100	IT-22	必須バリデーション	P2	order_status未指定でステータス必須メッセージを返す	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER	有効なjwt-token・order_status未指定	"1. order_statusを未指定にしてPUTで送信する
-2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「ステータスを選択してください。」を含むこと。
+2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「ステータスを選択してください。」を含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-101	IT-22	その他のバリデーション	P2	マスタに無いステータスIDでマスタ非存在メッセージを返す	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・店頭買取ステータスマスタに存在しないorder_status	"1. マスタ非存在のorder_statusでPUTで送信する
-2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「MtbOtcBuyOrderStatusに{指定ID}が見つかりません。」を含むこと。
+2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「MtbOtcBuyOrderStatusに{指定ID}が見つかりません。」を含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-102	IT-22	必須バリデーション	P2	order_details空で明細必須メッセージを返す	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_detailsが空配列	"1. order_detailsを空にしてPUTで送信する
-2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「1つ以上の商品を選んでください。」を含むこと。
+2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「1つ以上の商品を選んでください。」を含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-103	IT-22	必須バリデーション	P2	明細の商品名未入力で商品名必須エラーとなる	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_details[].nameが未入力	"1. 商品名未入力の明細でPUTで送信する
-2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に商品名必須の検証メッセージを含むこと。
+2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に商品名必須の検証メッセージを含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-104	IT-22	文字列長バリデーション	P3	商品名が最大長(65535文字)では更新が成功する	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_details[].nameが65535文字（境界内）	"1. 商品名65535文字の明細でPUTで送信する
-2. HTTPステータスを確認する"	境界内のためエラーとならず、HTTPステータス200で更新が成功すること。
+2. HTTPステータスを確認する"	境界内のためエラーとならず、HTTPステータス200で更新が成功すること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-105	IT-22	文字列長バリデーション	P2	商品名が最大長+1(65536文字)で最大長超過エラーとなる	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_details[].nameが65536文字（境界外）	"1. 商品名65536文字の明細でPUTで送信する
-2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「商品名は、 65535 以下で入力してください。」を含むこと。
+2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「商品名は、 65535 以下で入力してください。」を含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-106	IT-22	数値バリデーション	P3	product_class_idが整数でない場合に整数形式エラーとなる	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_details[].product_class_idが非整数	"1. 非整数のproduct_class_idでPUTで送信する
-2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「商品規格IDは、整数で入力してください。」を含むこと。
+2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「商品規格IDは、整数で入力してください。」を含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-107	IT-22	数値バリデーション	P3	quantityが整数でない場合に整数形式エラーとなる	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_details[].quantityが非整数	"1. 非整数のquantityでPUTで送信する
-2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「数量は、整数で入力してください。」を含むこと。
+2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「数量は、整数で入力してください。」を含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-108	IT-22	数値バリデーション	P3	priceが整数でない場合に整数形式エラーとなる	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_details[].priceが非整数	"1. 非整数のpriceでPUTで送信する
-2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「単価は、整数で入力してください。」を含むこと。
+2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「単価は、整数で入力してください。」を含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-109	IT-22	数値バリデーション	P3	sell_priceが整数でない場合に整数形式エラーとなる	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_details[].sell_priceが非整数	"1. 非整数のsell_priceでPUTで送信する
-2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「販売価格は、整数で入力してください。」を含むこと。
+2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「販売価格は、整数で入力してください。」を含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-110	IT-22	数値バリデーション	P3	section_idが整数でない場合に整数形式エラーとなる	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_details[].section_idが非整数	"1. 非整数のsection_idでPUTで送信する
-2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「部門IDは、整数で入力してください。」を含むこと。
+2. レスポンス本文のerrorsを確認する"	HTTPステータス400が返り、`errors` 配列に「部門IDは、整数で入力してください。」を含むこと。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-111	IT-22	任意未入力	P2	任意項目を未指定にしても更新が成功する	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_status正常・order_details[].nameあり・quantity/price/sell_price/section_id/qualified_invoice_issuer_confirmation_flgを未指定	"1. 任意項目を未指定にしてPUTで送信する
-2. HTTPステータスを確認する"	任意項目（数量・単価・販売価格・部門ID・確認済みフラグ）を未指定にしても検証エラーとならず、HTTPステータス200で更新が成功すること。
+2. HTTPステータスを確認する"	任意項目（数量・単価・販売価格・部門ID・確認済みフラグ）を未指定にしても検証エラーとならず、HTTPステータス200で更新が成功すること。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-120	IT-26	更新内容	P1	更新後に店頭買取受注のステータスが指定値へ更新される	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB／SEED-M01-ADMIN	有効なjwt-token・更新後ステータスを指定する正常リクエスト	"1. 対象受注IDへPUTで送信する
-2. DB副作用（店頭買取受注のステータス）を照合する"	店頭買取受注のステータスが指定したステータスに更新されること（DB副作用で判定）。
+2. DB副作用（店頭買取受注のステータス）を照合する"	店頭買取受注のステータスが指定したステータスに更新されること（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-121	IT-26	更新内容	P1	買取合計金額が明細から10円単位切り上げした額で更新される	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB／SEED-M01-ADMIN	有効なjwt-token・単価×数量の合計が10円単位でない明細	"1. 対象受注IDへPUTで送信する
-2. DB副作用（店頭買取受注の買取合計金額）を照合する"	買取合計金額が明細の単価×数量の総和を10円単位へ切り上げた額で更新されること（DB副作用で判定）。
+2. DB副作用（店頭買取受注の買取合計金額）を照合する"	買取合計金額が明細の単価×数量の総和を10円単位へ切り上げた額で更新されること（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-122	IT-26	更新内容	P1	明細が送信内容で全置換され送信外の旧明細が残らない	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER（既存明細あり）／SEED-A06-03-STATUS-MTB／SEED-M01-ADMIN	有効なjwt-token・既存明細と異なる明細を送信	"1. 対象受注IDへPUTで送信する
-2. DB副作用（店頭買取受注明細）を照合する"	既存明細が削除され送信した明細で全置換され、送信しなかった旧明細が残らないこと（DB副作用で判定）。
+2. DB副作用（店頭買取受注明細）を照合する"	既存明細が削除され送信した明細で全置換され、送信しなかった旧明細が残らないこと（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-123	IT-26	登録内容	P1	商品規格ごとに集計した数量で在庫が作り直される	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB／SEED-A06-03-SECTION／SEED-M01-ADMIN	有効なjwt-token・同一商品規格を複数含む明細	"1. 対象受注IDへPUTで送信する
-2. DB副作用（在庫の商品規格別集計数量）を照合する"	商品規格に紐づく明細が商品規格ごとに数量集計され、その集計数量で在庫が作り直されること（個別入力商品は集計に含まれない・DB副作用で判定）。
+2. DB副作用（在庫の商品規格別集計数量）を照合する"	商品規格に紐づく明細が商品規格ごとに数量集計され、その集計数量で在庫が作り直されること（個別入力商品は集計に含まれない・DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-124	IT-26	登録内容	P2	在庫登録時に在庫履歴が1件追加される	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB／SEED-A06-03-SECTION／SEED-M01-ADMIN	有効なjwt-token・商品規格に紐づく明細を含むリクエスト	"1. 対象受注IDへPUTで送信する
-2. DB副作用（在庫履歴）を照合する"	在庫登録に伴い、更新後数量・登録者・登録日時を記録した在庫履歴が1件追加されること（DB副作用で判定）。
+2. DB副作用（在庫履歴）を照合する"	在庫登録に伴い、更新後数量・登録者・登録日時を記録した在庫履歴が1件追加されること（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-125	IT-26	登録内容	P2	商品規格IDなしの明細が個別入力商品として登録される	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB／SEED-M01-ADMIN	有効なjwt-token・product_class_idが空の明細を含むリクエスト	"1. 対象受注IDへPUTで送信する
-2. DB副作用（個別入力商品）を照合する"	商品規格IDが空の明細が個別入力商品として登録されること（DB副作用で判定）。
+2. DB副作用（個別入力商品）を照合する"	商品規格IDが空の明細が個別入力商品として登録されること（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-126	IT-26	更新内容	P2	成立(1)で成立日時、それ以外でキャンセル日時が更新される	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・order_status=成立(1)／成立以外それぞれのリクエスト	"1. 成立(1)とそれ以外でそれぞれPUTで送信する
-2. 受注の成立日時・キャンセル日時を確認する"	成立(1)指定時は成立日時、それ以外の指定時はキャンセル日時が現在日時で更新されること（日時カラムの観測は要実機確認）。
+2. 受注の成立日時・キャンセル日時を確認する"	成立(1)指定時は成立日時、それ以外の指定時はキャンセル日時が現在日時で更新されること（日時カラムの観測は要実機確認）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-127	IT-26	登録内容	P1	更新前後でステータスが異なる場合に変更履歴が1件登録される	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER（更新前ステータス既知）／SEED-A06-03-STATUS-MTB／SEED-M01-ADMIN	有効なjwt-token・更新前と異なるステータスを指定	"1. 更新前と異なるステータスでPUTで送信する
-2. DB副作用（ステータス変更履歴）を照合する"	受注ID・更新後ステータスID・更新担当者ID・登録日時を記録したステータス変更履歴が1件登録されること（DB副作用で判定）。
+2. DB副作用（ステータス変更履歴）を照合する"	受注ID・更新後ステータスID・更新担当者ID・登録日時を記録したステータス変更履歴が1件登録されること（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-128	IT-26	更新内容	P2	更新前後で同一ステータスでは変更履歴を登録せず明細は作り直す	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER（更新前ステータス既知）／SEED-A06-03-STATUS-MTB／SEED-M01-ADMIN	有効なjwt-token・更新前と同一のステータスを指定	"1. 更新前と同一ステータスでPUTで送信する
-2. DB副作用（明細・在庫・ステータス変更履歴）を照合する"	ステータス変更履歴は登録されず、明細・在庫の作り直しと受注更新は実施されること（DB副作用で判定）。
+2. DB副作用（明細・在庫・ステータス変更履歴）を照合する"	ステータス変更履歴は登録されず、明細・在庫の作り直しと受注更新は実施されること（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-129	IT-26	更新内容	P2	査定担当者に認証した管理者会員が記録される	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB／SEED-M01-ADMIN	認証した管理者会員のjwt-token・正常リクエスト	"1. 認証管理者会員のjwt-tokenでPUTで送信する
-2. DB副作用（査定担当者）を照合する"	査定担当者にjwt-tokenから特定した認証管理者会員が記録されること（DB副作用で判定）。
+2. DB副作用（査定担当者）を照合する"	査定担当者にjwt-tokenから特定した認証管理者会員が記録されること（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-130	IT-26	更新内容	P3	適格請求書発行事業者該当時のみ確認済みフラグが更新される	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER（適格該当／非該当の2種）／SEED-A06-03-STATUS-MTB	有効なjwt-token・qualified_invoice_issuer_confirmation_flgを指定	"1. 適格該当・非該当それぞれの受注へPUTで送信する
-2. 確認済みフラグを確認する"	受注が適格請求書発行事業者に該当する場合のみ確認済みフラグが指定値で更新され、非該当の場合は更新されないこと（フラグの観測は要実機確認）。
+2. 確認済みフラグを確認する"	受注が適格請求書発行事業者に該当する場合のみ確認済みフラグが指定値で更新され、非該当の場合は更新されないこと（フラグの観測は要実機確認）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-131	IT-26	登録内容	P2	該当部門が存在しないsection_idでは明細に部門が設定されない	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB／SEED-A06-03-SECTION／SEED-M01-ADMIN	有効なjwt-token・order_details[].section_idに該当部門が存在しない整数を指定	"1. 該当部門なしのsection_idでPUTで送信する
-2. DB副作用（明細・個別入力商品の部門）を照合する"	該当部門が存在しないsection_idを指定した明細・個別入力商品では部門が設定されず、更新自体は成功すること（DB副作用で判定）。
+2. DB副作用（明細・個別入力商品の部門）を照合する"	該当部門が存在しないsection_idを指定した明細・個別入力商品では部門が設定されず、更新自体は成功すること（DB副作用で判定）。				
 a06-03_api_store_purchase_otc_buy_order_update（API_店頭仕入_店頭買取注文更新）	E2E-A06-03-150	IT-05	実行結果	P3	保存処理中の例外時に部分更新が残らない	SEED-A06-03-JWT-ADMIN／SEED-A06-03-ORDER／SEED-A06-03-STATUS-MTB	有効なjwt-token・削除登録保存中の例外を誘発するシナリオ	"1. 保存例外を誘発してPUTで送信する
-2. 応答と受注状態を確認する"	共通例外処理に委ね（HTTP 500相当）、対象受注の明細・在庫・金額・履歴が受信前と一致し部分更新が残らないこと（例外の実再現は要実機確認）。
+2. 応答と受注状態を確認する"	共通例外処理に委ね（HTTP 500相当）、対象受注の明細・在庫・金額・履歴が受信前と一致し部分更新が残らないこと（例外の実再現は要実機確認）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

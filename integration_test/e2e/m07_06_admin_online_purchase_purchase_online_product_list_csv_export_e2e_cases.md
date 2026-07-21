@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m07_06_admin_online_purchase_purchase_online_product_list_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果はダウンロード発火・HTTP応答ヘッダ（Content-Disposition のファイル名接頭辞）・フラッシュ表示・画面遷移（リダイレクト先URL）・UI部品表示などブラウザで観測できる結果で判定する。**CSVの中身（行・列・値・文字コード・区切り）の厳密検査は手動**とする。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない（pf-eccube3はリバース設計のため設計書・観点表を上位オラクルとし、刷新先ec-cube-enterpriseとの乖離は付帯表4に不具合候補として出す）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果はダウンロード発火・HTTP応答ヘッダ（Content-Disposition のファイル名接頭辞）・フラッシュ表示・画面遷移（リダイレクト先URL）・UI部品表示などブラウザで観測できる結果で判定する。**CSVの中身（行・列・値・文字コード・区切り）の厳密検査は手動**とする。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない（pf-eccube3はリバース設計のため設計書・観点表を上位オラクルとし、刷新先ec-cube-enterpriseとの乖離は付帯表4に不具合候補として出す）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 ## 関連ID対応概要
 
@@ -24,55 +24,55 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-001	IT-25	UI部品	P2	一覧のダウンロードメニューに「買取商品一覧CSV」が表示される	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	—	"1. /admin/purchase/list を開く
-2. 「ダウンロード」ドロップダウンを開く"	ドロップダウン内に「買取商品一覧CSV」項目が表示されること。
+2. 「ダウンロード」ドロップダウンを開く"	ドロップダウン内に「買取商品一覧CSV」項目が表示されること。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-002	IT-25	UI部品	P2	一覧のダウンロードメニューに「買取商品（キャンセル）CSV」が表示される	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	—	"1. /admin/purchase/list を開く
-2. 「ダウンロード」ドロップダウンを開く"	ドロップダウン内に「買取商品（キャンセル）CSV」項目が表示されること。
-m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-003	IT-03	外部画面	P2	買取詳細に「買取商品一覧CSV出力」ボタンと隠しbuyOrderIdsが表示される	管理者ログイン済／買取注文1件／SEED-M07-06-BUYORDER	—	"1. 買取詳細（/admin/purchase/{id}/edit）を開く"	送信ボタン「買取商品一覧CSV出力」と、当該買取IDを値に持つ隠し入力 name=\"buyOrderIds[]\" が存在すること。
+2. 「ダウンロード」ドロップダウンを開く"	ドロップダウン内に「買取商品（キャンセル）CSV」項目が表示されること。				
+m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-003	IT-03	外部画面	P2	買取詳細に「買取商品一覧CSV出力」ボタンと隠しbuyOrderIdsが表示される	管理者ログイン済／買取注文1件／SEED-M07-06-BUYORDER	—	1. 買取詳細（/admin/purchase/{id}/edit）を開く	"送信ボタン「買取商品一覧CSV出力」と、当該買取IDを値に持つ隠し入力 name=\""buyOrderIds[]\"" が存在すること。"				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-010	IT-16	実行結果	P1	一覧で1件選択し売却CSVを押すとダウンロードが発火する	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	buyOrderIds[]＝選択した1件／type=sale	"1. /admin/purchase/list を開く
 2. 行頭チェックボックスを1件オンにする
-3. ダウンロード→「買取商品一覧CSV」を押下"	ブラウザのファイルダウンロードが発火すること（CSV内容の一致確認は手動）。
+3. ダウンロード→「買取商品一覧CSV」を押下"	ブラウザのファイルダウンロードが発火すること（CSV内容の一致確認は手動）。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-011	IT-25	URL	P1	売却CSVのファイル名接頭辞が purchase_product_list_ である	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	buyOrderIds[]＝選択した1件／type=sale	"1. 一覧で1件選択し「買取商品一覧CSV」を押下
-2. ダウンロードファイル名を確認"	ダウンロードファイル名が purchase_product_list_ で始まり拡張子 .csv であること。
+2. ダウンロードファイル名を確認"	ダウンロードファイル名が purchase_product_list_ で始まり拡張子 .csv であること。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-012	IT-25	操作起点	P2	一覧で1件選択しキャンセルCSVを押すとダウンロードが発火する	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	buyOrderIds[]＝選択した1件／type=notSale	"1. /admin/purchase/list を開く
 2. 行頭チェックボックスを1件オンにする
-3. ダウンロード→「買取商品（キャンセル）CSV」を押下"	ブラウザのファイルダウンロードが発火すること（CSV内容の一致確認は手動）。
+3. ダウンロード→「買取商品（キャンセル）CSV」を押下"	ブラウザのファイルダウンロードが発火すること（CSV内容の一致確認は手動）。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-013	IT-25	URL	P2	キャンセルCSVのファイル名接頭辞が purchase_product_cancel_list_ である	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	buyOrderIds[]＝選択した1件／type=notSale	"1. 一覧で1件選択し「買取商品（キャンセル）CSV」を押下
-2. ダウンロードファイル名を確認"	ダウンロードファイル名が purchase_product_cancel_list_ で始まり拡張子 .csv であること。
+2. ダウンロードファイル名を確認"	ダウンロードファイル名が purchase_product_cancel_list_ で始まり拡張子 .csv であること。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-014	IT-27	実行結果	P1	買取詳細から売却CSVを押すとダウンロードが発火する	管理者ログイン済／買取注文1件／SEED-M07-06-BUYORDER	隠し buyOrderIds[]＝当該買取ID／type=sale	"1. 買取詳細を開く
-2. 「買取商品一覧CSV出力」ボタンを押下"	ブラウザのファイルダウンロードが発火すること（CSV内容の一致確認は手動）。
+2. 「買取商品一覧CSV出力」ボタンを押下"	ブラウザのファイルダウンロードが発火すること（CSV内容の一致確認は手動）。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-020	IT-03	画面遷移	P2	一覧の#allCheckで同フォーム内の行チェックが一括オンになる	管理者ログイン済／買取一覧に複数件／SEED-M07-06-BUYORDER	—	"1. /admin/purchase/list を開く
-2. ヘッダの全選択チェックボックス（#allCheck）をオンにする"	同フォーム内の buyOrderIds[] 行チェックボックスがすべてオンになること。
-m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-030	IT-22	必須制御	P1	buyOrderIds未選択でサーバ到達時に未選択フラッシュが表示される	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	buyOrderIds 空／type=sale	"1. クライアントJSを介さずに csv_export_product_list?type=sale へ buyOrderIds なしでPOSTする"	設計書エラー処理の翻訳キー admin.purchase.online.csv_export.no_selection に対応する未選択エラーフラッシュが表示されること（具体文言「1つ以上の買取注文情報を選択してください。」は messages.ja.yaml 実装由来＝参考・要確認、付帯表4#7）。
-m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-031	IT-25	URL	P1	buyOrderIds未選択でサーバ到達時に買取一覧へリダイレクトされる	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds 空／type=sale	"1. クライアントJSを介さずに csv_export_product_list?type=sale へ buyOrderIds なしでPOSTする"	買取一覧（/admin/purchase/page/{page_no}）へリダイレクトされること。
-m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-032	IT-25	確認ダイアログ	P1	type が sale/notSale 以外だと不正種別フラッシュが表示される	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds[]＝1件／type=foo	"1. csv_export_product_list?type=foo へ buyOrderIds 付きでPOSTする"	フラッシュに「不正なCSV種別です。」が表示されること（設計書の固定文言。実装乖離は付帯表4#1）。
-m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-033	IT-25	URL	P2	不正type のとき買取一覧へリダイレクトされる	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds[]＝1件／type=foo	"1. csv_export_product_list?type=foo へ buyOrderIds 付きでPOSTする"	買取一覧（/admin/purchase/page/{page_no}）へリダイレクトされること。
-m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-034	IT-27	出力失敗	P1	存在しないIDのみ指定時に存在しないID含むフラッシュが表示される	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds[]＝DBに存在しない大きな整数／type=sale	"1. csv_export_product_list?type=sale へ存在しないIDのみでPOSTする"	設計書エラー処理の翻訳キー admin.purchase.online.csv_export.not_registered_buy_order_id に対応するエラーフラッシュが表示され、ダウンロードされないこと（具体文言「存在しない買取注文情報IDが含まれています。」は messages.ja.yaml 実装由来＝参考・要確認、付帯表4#7）。
+2. ヘッダの全選択チェックボックス（#allCheck）をオンにする"	同フォーム内の buyOrderIds[] 行チェックボックスがすべてオンになること。				
+m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-030	IT-22	必須制御	P1	buyOrderIds未選択でサーバ到達時に未選択フラッシュが表示される	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	buyOrderIds 空／type=sale	1. クライアントJSを介さずに csv_export_product_list?type=sale へ buyOrderIds なしでPOSTする	設計書エラー処理の翻訳キー admin.purchase.online.csv_export.no_selection に対応する未選択エラーフラッシュが表示されること（具体文言「1つ以上の買取注文情報を選択してください。」は messages.ja.yaml 実装由来＝参考・要確認、付帯表4#7）。				
+m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-031	IT-25	URL	P1	buyOrderIds未選択でサーバ到達時に買取一覧へリダイレクトされる	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds 空／type=sale	1. クライアントJSを介さずに csv_export_product_list?type=sale へ buyOrderIds なしでPOSTする	買取一覧（/admin/purchase/page/{page_no}）へリダイレクトされること。				
+m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-032	IT-25	確認ダイアログ	P1	type が sale/notSale 以外だと不正種別フラッシュが表示される	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds[]＝1件／type=foo	1. csv_export_product_list?type=foo へ buyOrderIds 付きでPOSTする	フラッシュに「不正なCSV種別です。」が表示されること（設計書の固定文言。実装乖離は付帯表4#1）。				
+m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-033	IT-25	URL	P2	不正type のとき買取一覧へリダイレクトされる	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds[]＝1件／type=foo	1. csv_export_product_list?type=foo へ buyOrderIds 付きでPOSTする	買取一覧（/admin/purchase/page/{page_no}）へリダイレクトされること。				
+m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-034	IT-27	出力失敗	P1	存在しないIDのみ指定時に存在しないID含むフラッシュが表示される	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds[]＝DBに存在しない大きな整数／type=sale	1. csv_export_product_list?type=sale へ存在しないIDのみでPOSTする	設計書エラー処理の翻訳キー admin.purchase.online.csv_export.not_registered_buy_order_id に対応するエラーフラッシュが表示され、ダウンロードされないこと（具体文言「存在しない買取注文情報IDが含まれています。」は messages.ja.yaml 実装由来＝参考・要確認、付帯表4#7）。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-035	IT-25	送信可否制御	P2	一覧で未選択のままCSVボタンを押すとJSのalertで中断される	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	行チェックなし	"1. /admin/purchase/list を開く
-2. どの行も選択せずダウンロード→「買取商品一覧CSV」を押下"	ブラウザのalert（未選択案内）が表示され、ダウンロードもPOSTも発生しないこと。
-m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-040	IT-15	未認証	P2	未ログインで買取一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/purchase/list へアクセスする"	管理ログイン画面へ誘導されること。
-m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-041	IT-13	未認証	P1	未ログインでCSV出力ルートへアクセスすると管理ログイン画面へ誘導される	未ログイン	type=sale（クエリ）	"1. 未ログインで /admin/purchase/csv_export_product_list?type=sale へアクセスする"	設計書「管理画面の認証・共通制約を通過」（処理フロー#1）どおり管理ログイン画面へ誘導され、CSVがダウンロードされないこと（一覧URLだけでなく出力ルート自体の認可ガードを確認）。
+2. どの行も選択せずダウンロード→「買取商品一覧CSV」を押下"	ブラウザのalert（未選択案内）が表示され、ダウンロードもPOSTも発生しないこと。				
+m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-040	IT-15	未認証	P2	未ログインで買取一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/purchase/list へアクセスする	管理ログイン画面へ誘導されること。				
+m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-041	IT-13	未認証	P1	未ログインでCSV出力ルートへアクセスすると管理ログイン画面へ誘導される	未ログイン	type=sale（クエリ）	1. 未ログインで /admin/purchase/csv_export_product_list?type=sale へアクセスする	設計書「管理画面の認証・共通制約を通過」（処理フロー#1）どおり管理ログイン画面へ誘導され、CSVがダウンロードされないこと（一覧URLだけでなく出力ルート自体の認可ガードを確認）。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-015	IT-25	HTTPステータス	P2	売却CSV応答のContent-Typeがapplication/octet-streamである	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	buyOrderIds[]＝選択した1件／type=sale	"1. 一覧で1件選択し「買取商品一覧CSV」を押下
-2. 応答ヘッダ Content-Type / Content-Disposition を確認"	応答の Content-Type が application/octet-stream、Content-Disposition が attachment であること（処理フロー#13）。Playwright の download API ではヘッダ取得が制約のため手動/要確認。
+2. 応答ヘッダ Content-Type / Content-Disposition を確認"	応答の Content-Type が application/octet-stream、Content-Disposition が attachment であること（処理フロー#13）。Playwright の download API ではヘッダ取得が制約のため手動/要確認。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-016	IT-25	URL	P2	エラー時のリダイレクト先ページ番号がセッションのpage_no（無ければ1）である	管理者ログイン済／SEED-M07-06-BUYORDER／一覧で特定ページを閲覧しセッション eccube.admin.purchase.search.page_no を設定済	buyOrderIds 空／type=sale	"1. 一覧の特定ページを表示し page_no をセッションに残す
-2. 未選択でPOSTしリダイレクト先URLのページ番号を確認"	/admin/purchase/page/{page_no} の page_no がセッション値（未設定時は1）と一致すること（処理フロー#4・セッション節）。セッション値の確認が必要なため手動/間接。
+2. 未選択でPOSTしリダイレクト先URLのページ番号を確認"	/admin/purchase/page/{page_no} の page_no がセッション値（未設定時は1）と一致すること（処理フロー#4・セッション節）。セッション値の確認が必要なため手動/間接。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-017	IT-25	URL	P2	売却CSVのファイル名が接頭辞＋7桁ゼロ埋めID＋_日時＋.csv形式である	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	buyOrderIds[]＝選択した1件／type=sale	"1. 一覧で1件選択し「買取商品一覧CSV」を押下
-2. ダウンロードファイル名を確認"	ファイル名が purchase_product_list_ ＋ 7桁ゼロ埋め番号（指定IDの最小値）＋ _ ＋ 14桁日時（YmdHis）＋ .csv の形式であること（処理フロー#12）。番号・日時の具体値は実行時刻/データ依存のため形式（正規表現）で判定する。
-m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-036	IT-25	確認ダイアログ	P1	typeクエリ欠損だと不正種別フラッシュが表示される	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds[]＝1件／type なし	"1. csv_export_product_list へ type を付けず buyOrderIds 付きでPOSTする"	設計書「欠損やその他の値は固定文言のフラッシュとリダイレクト」（POSTパラメータ節）どおり、フラッシュに「不正なCSV種別です。」が表示され買取一覧へリダイレクトされること（設計＝句点あり。実装は句点なし＝付帯表4#1で検出見込み）。
-m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-037	IT-22	必須制御	P1	buyOrderIdsが0のみだと正規化後に空となり未選択フラッシュが表示される	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds[]=0／type=sale	"1. csv_export_product_list?type=sale へ buyOrderIds[]=0 でPOSTする"	intval→array_filter で 0 が除かれ空配列となり（処理フロー#3）、翻訳キー admin.purchase.online.csv_export.no_selection の未選択エラーフラッシュが表示され一覧へリダイレクトされること（処理フロー#4。具体文言は messages.ja.yaml 実装由来＝参考・付帯表4#7）。
+2. ダウンロードファイル名を確認"	ファイル名が purchase_product_list_ ＋ 7桁ゼロ埋め番号（指定IDの最小値）＋ _ ＋ 14桁日時（YmdHis）＋ .csv の形式であること（処理フロー#12）。番号・日時の具体値は実行時刻/データ依存のため形式（正規表現）で判定する。				
+m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-036	IT-25	確認ダイアログ	P1	typeクエリ欠損だと不正種別フラッシュが表示される	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds[]＝1件／type なし	1. csv_export_product_list へ type を付けず buyOrderIds 付きでPOSTする	設計書「欠損やその他の値は固定文言のフラッシュとリダイレクト」（POSTパラメータ節）どおり、フラッシュに「不正なCSV種別です。」が表示され買取一覧へリダイレクトされること（設計＝句点あり。実装は句点なし＝付帯表4#1で検出見込み）。				
+m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-037	IT-22	必須制御	P1	buyOrderIdsが0のみだと正規化後に空となり未選択フラッシュが表示される	管理者ログイン済／SEED-M07-06-BUYORDER	buyOrderIds[]=0／type=sale	1. csv_export_product_list?type=sale へ buyOrderIds[]=0 でPOSTする	intval→array_filter で 0 が除かれ空配列となり（処理フロー#3）、翻訳キー admin.purchase.online.csv_export.no_selection の未選択エラーフラッシュが表示され一覧へリダイレクトされること（処理フロー#4。具体文言は messages.ja.yaml 実装由来＝参考・付帯表4#7）。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-038	IT-25	送信可否制御	P2	一覧で未選択のままキャンセルCSVボタンを押すとJSのalertで中断される	管理者ログイン済／買取一覧に1件以上／SEED-M07-06-BUYORDER	行チェックなし	"1. /admin/purchase/list を開く
-2. どの行も選択せずダウンロード→「買取商品（キャンセル）CSV」を押下"	ブラウザのalert（未選択案内）が表示され、ダウンロードもPOSTも発生しないこと（フロント挙動: #csv_export_product_cancel も .searched_buy_order_id:checked==0 で alert 中断＝売却ボタン035と対になる異常系）。
+2. どの行も選択せずダウンロード→「買取商品（キャンセル）CSV」を押下"	ブラウザのalert（未選択案内）が表示され、ダウンロードもPOSTも発生しないこと（フロント挙動: #csv_export_product_cancel も .searched_buy_order_id:checked==0 で alert 中断＝売却ボタン035と対になる異常系）。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-091	IT-25	UI部品	P3	CSV列見出しが売却=「在庫増減数」/非売却=「キャンセル数」で差し替わる	SEED-M07-06-BUYORDER（売却・非売却双方の明細）	type=sale および type=notSale	"1. 売却CSV/キャンセルCSVをそれぞれ出力
-2. 1行目ヘッダの数量列見出しを比較"	売却側は数量列見出しが「在庫増減数」、非売却側は同一キー product_count の見出しが「キャンセル数」に置換され、列数は同一であること（出力列とデータの対応）。CSV内容のため手動。
+2. 1行目ヘッダの数量列見出しを比較"	売却側は数量列見出しが「在庫増減数」、非売却側は同一キー product_count の見出しが「キャンセル数」に置換され、列数は同一であること（出力列とデータの対応）。CSV内容のため手動。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-092	IT-23	実行結果	P2	CSV列順と各列の値が設計の内部キー対応どおりである	SEED（状態あり通常/状態なし通常/個別入力の各明細）	type=sale	"1. 売却CSVを出力
-2. 列順・各セル値をDB値と突合"	ヘッダキー順に9列（商品コード/在庫増減数/商品名/基準価格/買取価格/言語ID/略称タグ/レアリティ/状態）が並び、状態なし・個別入力枝では商品コード・基準価格・状態等が空文字、個別入力枝の言語IDが1となるなど設計どおりであること（出力列とデータの対応）。CSV内容のため手動。
+2. 列順・各セル値をDB値と突合"	ヘッダキー順に9列（商品コード/在庫増減数/商品名/基準価格/買取価格/言語ID/略称タグ/レアリティ/状態）が並び、状態なし・個別入力枝では商品コード・基準価格・状態等が空文字、個別入力枝の言語IDが1となるなど設計どおりであること（出力列とデータの対応）。CSV内容のため手動。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-093	IT-23	実行結果	P2	明細が条件に合致しない買取注文を指定するとヘッダのみのCSVが返る	SEED（存在するが売却/非売却条件に合致する明細を持たない買取注文）	buyOrderIds[]＝当該注文／type=sale	"1. 当該注文を選択し売却CSVを出力
-2. CSV行数を確認"	データ行が出力されずヘッダ行のみのCSVとなること（エッジケース「存在するが明細が条件に合わない」）。CSV内容のため手動。
+2. CSV行数を確認"	データ行が出力されずヘッダ行のみのCSVとなること（エッジケース「存在するが明細が条件に合わない」）。CSV内容のため手動。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-094	IT-26	登録内容	P2	CSVの文字コード・区切り・クォートが既存CSV仕様どおりである	eccube_csv_export_encoding / eccube_csv_export_separator 既定	type=sale	"1. 売却CSVを出力
-2. バイナリで先頭BOM・区切り文字・クォートを確認"	eccube_csv_export_encoding がUTF-8（大小無視）のときのみ先頭BOMを付与、区切りは eccube_csv_export_separator（既定カンマ）、引用・エスケープは fputcsv 相当であること（エッジケース）。CSV内容のため手動。
+2. バイナリで先頭BOM・区切り文字・クォートを確認"	eccube_csv_export_encoding がUTF-8（大小無視）のときのみ先頭BOMを付与、区切りは eccube_csv_export_separator（既定カンマ）、引用・エスケープは fputcsv 相当であること（エッジケース）。CSV内容のため手動。				
 m07-06_admin_online_purchase_purchase_online_product_list_csv_export（管理画面_ネット買取管理_買取商品一覧CSV出力）	E2E-M07-06-095	IT-23	検索条件	P2	抽出SQLの集約・並び順・キャンセル除外がCSV行集合に反映される	SEED（同一規格・同一単価で集約される明細／単価違いで別行になる明細／非売却側でキャンセルステータスの注文）	type=sale / type=notSale	"1. 各CSVを出力
-2. 行の集約（SUM(count)）・ORDER BY並び順・非売却側キャンセル注文除外を確認"	同一キー・同一単価は1行に集約され単価違いは別行、ORDER BY（個別入力でない行優先→product_id昇順→商品コードNULL後置→カード状態ID昇順）順、非売却側ではキャンセル注文が通常枝・個別入力枝の両方から除外されること（集計条件）。CSV内容のため手動。
+2. 行の集約（SUM(count)）・ORDER BY並び順・非売却側キャンセル注文除外を確認"	同一キー・同一単価は1行に集約され単価違いは別行、ORDER BY（個別入力でない行優先→product_id昇順→商品コードNULL後置→カード状態ID昇順）順、非売却側ではキャンセル注文が通常枝・個別入力枝の両方から除外されること（集計条件）。CSV内容のため手動。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

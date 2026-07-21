@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m06_09_admin_store_purchase_otc_buy_order_summary_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・HTTP応答ヘッダ・ダウンロード発火などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約（required/csrf_protection=false）・Cookie名をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・HTTP応答ヘッダ・ダウンロード発火などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約（required/csrf_protection=false）・Cookie名をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は **参照系のCSV出力**（POST /otcbuyorder/summary/export）であり、出力前にセッション（`eccube.admin.otcbuyorder_summary.search`）へ保存された検索条件を再走査してストリーム応答を返す。出力の**発火・HTTP応答・ファイル名・失敗時リダイレクト・ヘッダ列順（設計書の固定列ラベル）・0件時ヘッダ行のみは自動化**で観測する。CSVの**各行の値・件数の対象データ一致は手動（CSV内容照合・要DBシード）**とする。BOM・区切り文字・引用符は設定（`eccube_csv_export_encoding` 等）依存のため期待値固定（オラクル化）しない。
 
@@ -25,34 +25,34 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-001	IT-25	操作起点	P1	買取集計データ画面に検索フォーム（集計日・検索ボタン）が表示される	ログイン済み／SEED-M06-09-ADMIN	—	"1. /admin/otcbuyorder/summary を開く"	集計日入力欄と「検索する」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-001	IT-25	操作起点	P1	買取集計データ画面に検索フォーム（集計日・検索ボタン）が表示される	ログイン済み／SEED-M06-09-ADMIN	—	1. /admin/otcbuyorder/summary を開く	集計日入力欄と「検索する」ボタンが表示されること。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-002	IT-03	画面遷移	P2	集計日を指定して検索すると集計結果領域が表示される	ログイン済み／SEED-M06-09-ADMIN	集計日（開始）=2000/01/01、集計日（終了）=2030/12/31	"1. 買取集計データ画面を開く
 2. 集計日（開始・終了）を入力
-3. 「検索する」を押下"	検索結果領域（期間全体／日別）が表示されること。
+3. 「検索する」を押下"	検索結果領域（期間全体／日別）が表示されること。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-003	IT-22	必須バリデーション	P2	集計日を空にした無効検索は結果領域を描画せずCSVダウンロードボタンも出ない	ログイン済み／SEED-M06-09-ADMIN	集計日（開始・終了）＝空	"1. 買取集計データ画面を開く
-2. 集計日を空のまま検索POSTする"	HTTP200で買取集計データ画面が再描画され（リダイレクト・エラー画面にならない）、日別CSVダウンロードボタンが描画されないこと（無効検索は結果なしテンプレートを返す）。
+2. 集計日を空のまま検索POSTする"	HTTP200で買取集計データ画面が再描画され（リダイレクト・エラー画面にならない）、日別CSVダウンロードボタンが描画されないこと（無効検索は結果なしテンプレートを返す）。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-010	IT-27	実行結果	P1	検索成功後のexportでCSVが添付ダウンロードされる	ログイン済み／検索成功でセッションに条件保存済／SEED-M06-09-ADMIN	—	"1. 集計日を指定して検索する
-2. CSV出力（POST /export）を実行する"	HTTP200の添付（attachment）応答が返り、本文1行目に設計書「出力列とデータの対応」の固定列ラベル（集計日／部門コード／部門／買取金額／販売金額）が並ぶこと（各行の値・件数照合は要DBシードで手動）。
+2. CSV出力（POST /export）を実行する"	HTTP200の添付（attachment）応答が返り、本文1行目に設計書「出力列とデータの対応」の固定列ラベル（集計日／部門コード／部門／買取金額／販売金額）が並ぶこと（各行の値・件数照合は要DBシードで手動）。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-011	IT-25	操作起点	P2	出力ファイル名が otc_buy_order_summary_<日時>.csv 形式である	ログイン済み／検索成功済／SEED-M06-09-ADMIN	—	"1. 集計日を指定して検索する
-2. CSV出力を実行する"	Content-Disposition のファイル名が otc_buy_order_summary_+YmdHis(14桁)+.csv 形式であること。
+2. CSV出力を実行する"	Content-Disposition のファイル名が otc_buy_order_summary_+YmdHis(14桁)+.csv 形式であること。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-012	IT-25	HTTPステータス	P2	export応答が octet-stream / attachment のヘッダを返す	ログイン済み／検索成功済／SEED-M06-09-ADMIN	—	"1. 集計日を指定して検索する
-2. CSV出力を実行する"	Content-Type が application/octet-stream、Content-Disposition が attachment であること。
+2. CSV出力を実行する"	Content-Type が application/octet-stream、Content-Disposition が attachment であること。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-013	IT-20	出力抑止	P2	該当0件想定の期間でもexportはCSV応答（ヘッダのみ）を返す	ログイン済み／0件になりやすい期間で検索成功済／SEED-M06-09-ADMIN	集計日（開始）=1990/01/01、集計日（終了）=1990/01/02	"1. 0件想定の期間で検索する
-2. CSV出力を実行する"	HTTP200のCSV応答が返り（エラー・リダイレクトにならない）、本文は固定列ラベルのヘッダ行のみ1行（データ行なし）であること。
-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-020	IT-27	出力失敗	P1	検索条件なしでexportすると買取集計データ画面へリダイレクトされる	ログイン済み／未検索（セッションに条件なし）／SEED-M06-09-ADMIN	—	"1. 一度も検索せずCSV出力（POST /export）を直接実行する"	HTTP302で admin_otcbuyorder_summary（/otcbuyorder/summary）へリダイレクトすること。
+2. CSV出力を実行する"	HTTP200のCSV応答が返り（エラー・リダイレクトにならない）、本文は固定列ラベルのヘッダ行のみ1行（データ行なし）であること。				
+m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-020	IT-27	出力失敗	P1	検索条件なしでexportすると買取集計データ画面へリダイレクトされる	ログイン済み／未検索（セッションに条件なし）／SEED-M06-09-ADMIN	—	1. 一度も検索せずCSV出力（POST /export）を直接実行する	HTTP302で admin_otcbuyorder_summary（/otcbuyorder/summary）へリダイレクトすること。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-026	IT-03	画面遷移	P1	検索条件なしexport後の画面表示で固定エラーフラッシュが出る	ログイン済み／未検索／SEED-M06-09-ADMIN	—	"1. 未検索でCSV出力を実行する
-2. リダイレクト先の買取集計データ画面を表示する"	「検索条件がありません。先に検索を実行してください。」が表示されること。
-m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-021	IT-13	URL直接アクセス	P2	未ログインでCSV出力URLへ直接POSTすると管理ログインへ誘導される	未ログイン	—	"1. /admin/otcbuyorder/summary/export へ直接POSTする"	管理ログイン画面へ誘導（302→/login）されること。
+2. リダイレクト先の買取集計データ画面を表示する"	「検索条件がありません。先に検索を実行してください。」が表示されること。				
+m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-021	IT-13	URL直接アクセス	P2	未ログインでCSV出力URLへ直接POSTすると管理ログインへ誘導される	未ログイン	—	1. /admin/otcbuyorder/summary/export へ直接POSTする	管理ログイン画面へ誘導（302→/login）されること。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-030	IT-22	必須バリデーション	P1	集計日未入力の検索はセッションに保存されずexportが条件なし扱いになる	ログイン済み／SEED-M06-09-ADMIN	集計日（開始・終了）＝空	"1. 集計日を空で検索POSTする
-2. 続けてCSV出力を実行する"	export がHTTP302で買取集計データ画面へリダイレクトすること（検索条件が保存されていない）。
+2. 続けてCSV出力を実行する"	export がHTTP302で買取集計データ画面へリダイレクトすること（検索条件が保存されていない）。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-031	IT-22	その他のバリデーション	P2	日付として解釈不可な集計日の検索はセッションに保存されない	ログイン済み／SEED-M06-09-ADMIN	集計日（開始・終了）＝日付不可文字列	"1. 日付不可な集計日で検索POSTする
-2. 続けてCSV出力を実行する"	export がHTTP302で買取集計データ画面へリダイレクトすること（無効入力でセッション未更新）。
+2. 続けてCSV出力を実行する"	export がHTTP302で買取集計データ画面へリダイレクトすること（無効入力でセッション未更新）。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-032	IT-25	UI部品	P2	成功検索後に無効検索をしても直前の検索条件が残りexportは成功する	ログイン済み／SEED-M06-09-ADMIN	1回目=有効な集計日／2回目=集計日（開始・終了）＝空	"1. 有効な集計日で検索する（セッションに保存）
 2. 続けて集計日を空で検索POSTする（無効＝未更新）
-3. CSV出力を実行する"	export がHTTP200のCSV添付応答を返すこと（直前の成功条件が残るため条件なし302にならない）。
+3. CSV出力を実行する"	export がHTTP200のCSV添付応答を返すこと（直前の成功条件が残るため条件なし302にならない）。				
 m06-09_admin_store_purchase_otc_buy_order_summary_csv_export（管理画面_店頭買取管理_買取集計データCSV出力）	E2E-M06-09-022	IT-25	確認ダイアログ	P3	CSVダウンロード送信前に確認ダイアログがない	ログイン済み／日別データあり（CSVボタン描画済）／SEED-M06-09-SUMMARY-DATA	—	"1. 日別データが出る条件で検索する
-2. 「CSVダウンロード」ボタンの送信挙動を確認する"	出力前の確認ダイアログ／モーダルが表示されないこと（通常のPOST送信）。
+2. 「CSVダウンロード」ボタンの送信挙動を確認する"	出力前の確認ダイアログ／モーダルが表示されないこと（通常のPOST送信）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

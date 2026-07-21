@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_06_admin_product_product_custom_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は CSV ダウンロード（GET）であり、**CSVの中身（列・行・列順 rank・検索条件一致）は手動確認**とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は CSV ダウンロード（GET）であり、**CSVの中身（列・行・列順 rank・検索条件一致）は手動確認**とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は pf-eccube3 リバース設計のため、**基本設計・観点表を上位オラクル**とし、刷新先 ec-cube-enterprise との乖離は付帯表4（不具合候補）に出す。設定画面（出力名保存・削除・バリデーション）は別機能 `m10-13`（カスタムCSV出力項目設定）へ委譲し、本機能では「一覧プルダウンから設定画面へ遷移できること」までを範囲とする。
 
@@ -24,28 +24,28 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-001	IT-20	識別子	P2	商品一覧にプルダウン#csv_pulldownと先頭オプションが表示される	管理ログイン済／SEED-M03-06-ADMIN	—	"1. 管理ログインする
-2. 商品一覧（/admin/product）を開く"	select#csv_pulldown が表示され、先頭オプションに「カスタムデータ CSV ダウンロード」相当の文言（空白有無は問わず意味一致）が表示されること。※実装trans固定でなく仕様の意味で部分一致判定（付帯表4#1）。
+2. 商品一覧（/admin/product）を開く"	select#csv_pulldown が表示され、先頭オプションに「カスタムデータ CSV ダウンロード」相当の文言（空白有無は問わず意味一致）が表示されること。※実装trans固定でなく仕様の意味で部分一致判定（付帯表4#1）。				
 m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-002	IT-25	UI部品	P3	プルダウン末尾に「カスタムCSV出力項目設定」オプションが表示される	管理ログイン済／SEED-M03-06-ADMIN	—	"1. 商品一覧を開く
-2. プルダウンの選択肢を確認する"	末尾に「カスタム CSV 出力項目設定」相当（空白有無は問わず意味一致）の設定オプションが1件表示されること。設定オプションは value に設定画面ルート（setting/shop/custom_csv）を持つ（文言ではなくルートで識別可能）。
+2. プルダウンの選択肢を確認する"	末尾に「カスタム CSV 出力項目設定」相当（空白有無は問わず意味一致）の設定オプションが1件表示されること。設定オプションは value に設定画面ルート（setting/shop/custom_csv）を持つ（文言ではなくルートで識別可能）。				
 m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-003	IT-15	状態変化	P2	先頭の空値オプションは選択しても遷移しない	管理ログイン済／SEED-M03-06-ADMIN	プルダウン選択値＝空（先頭オプション）	"1. 商品一覧を開く
-2. プルダウンで空値の先頭オプションを選ぶ"	画面遷移せず商品一覧URLに留まること（changeで値が非空のときのみ遷移する）。
+2. プルダウンで空値の先頭オプションを選ぶ"	画面遷移せず商品一覧URLに留まること（changeで値が非空のときのみ遷移する）。				
 m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-010	IT-27	実行結果	P1	拡張選択でCSVダウンロードが発火しファイル名がproduct_custom{YmdHis}.csv	管理ログイン済／SEED-M03-06-PRODUCT-CSV-EXT	—	"1. 商品一覧を開く
-2. プルダウンで商品用CSV拡張を選ぶ"	CSVダウンロードが発火し、ファイル名が product_custom{YmdHis}.csv 形式であること。
+2. プルダウンで商品用CSV拡張を選ぶ"	CSVダウンロードが発火し、ファイル名が product_custom{YmdHis}.csv 形式であること。				
 m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-011	IT-03	画面遷移	P2	有効拡張のダウンロード応答がtext/csvでattachment配信される	管理ログイン済／SEED-M03-06-PRODUCT-CSV-EXT	有効な拡張のダウンロードURL	"1. 商品一覧で有効な拡張のダウンロードURLを取得する
-2. 認証済みコンテキストでGETする"	応答が200で Content-Type が text/csv、Content-Disposition に product_custom を含むこと。
+2. 認証済みコンテキストでGETする"	応答が200で Content-Type が text/csv、Content-Disposition に product_custom を含むこと。				
 m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-012	IT-25	確認ダイアログ	P3	ダウンロード前に確認ダイアログが表示されない	管理ログイン済／SEED-M03-06-PRODUCT-CSV-EXT	—	"1. 商品一覧を開く
-2. プルダウンで拡張を選ぶ"	確認ダイアログ・モーダルが介在せずダウンロードが発火すること。
+2. プルダウンで拡張を選ぶ"	確認ダイアログ・モーダルが介在せずダウンロードが発火すること。				
 m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-013	IT-03	画面遷移	P2	設定オプション選択でカスタムCSV設定画面(GET)へ遷移	管理ログイン済／SEED-M03-06-ADMIN	—	"1. 商品一覧を開く
-2. プルダウンで「カスタムCSV出力項目設定」を選ぶ"	/admin/setting/shop/custom_csv/ で始まる設定画面（GET）へ遷移すること。
-m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-020	IT-13	URL直接アクセス	P2	ダウンロードURL直接GET（有効拡張）でCSVが添付配信される	管理ログイン済／SEED-M03-06-PRODUCT-CSV-EXT	有効な拡張のダウンロードURL	"1. 有効な拡張のダウンロードURLへ認証済みで直接GETする"	応答が200で Content-Disposition が attachment であること。
-m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-021	IT-03	画面遷移	P1	存在しない拡張IDのダウンロードURL直接GET→404	管理ログイン済／SEED-M03-06-ADMIN	存在しない拡張ID（例 999999999）	"1. 存在しない拡張IDのダウンロードURLへ認証済みで直接GETする"	HTTP 404 が返ること。
-m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-030	IT-15	未認証	P1	未ログインでダウンロードURL直接アクセス→管理ログイン画面へ誘導	未ログイン	—	"1. /admin/product/product_all_csv_custom_export/1 へ直接アクセス"	管理ログイン画面へ誘導されること。
-m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-031	IT-15	未認証	P2	未ログインで商品一覧URL直接アクセス→管理ログイン画面へ誘導	未ログイン	—	"1. /admin/product へ直接アクセス"	管理ログイン画面へ誘導されること。
-m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-040	IT-27	出力失敗	P1	削除済(deleted_at)拡張IDの直接GET→404	管理ログイン済／SEED-M03-06-DELETED-EXT	論理削除済み拡張ID	"1. 論理削除済み拡張のダウンロードURLへ直接GETする"	HTTP 404 が返ること（deleted_at 非nullは404）。
-m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-041	IT-27	出力失敗	P1	列名(column_name)が全て空の拡張IDの直接GET→404	管理ログイン済／SEED-M03-06-EMPTYCOL-EXT	列名皆無の拡張ID	"1. 出力項目の column_name が全て空の拡張のダウンロードURLへ直接GETする"	HTTP 404 が返ること（有効列キーが皆無は404）。
-m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-042	IT-03	画面遷移	P1	CSV種別が商品以外の拡張IDの直接GET→404	管理ログイン済／SEED-M03-06-NONPRODUCT-EXT	商品以外のCSV種別を持つ拡張ID	"1. 商品以外（csv_type≠商品）のCSV種別を持つ拡張のダウンロードURLへ直接GETする"	HTTP 404 が返ること（CSV種別が商品以外は404）。
+2. プルダウンで「カスタムCSV出力項目設定」を選ぶ"	/admin/setting/shop/custom_csv/ で始まる設定画面（GET）へ遷移すること。				
+m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-020	IT-13	URL直接アクセス	P2	ダウンロードURL直接GET（有効拡張）でCSVが添付配信される	管理ログイン済／SEED-M03-06-PRODUCT-CSV-EXT	有効な拡張のダウンロードURL	1. 有効な拡張のダウンロードURLへ認証済みで直接GETする	応答が200で Content-Disposition が attachment であること。				
+m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-021	IT-03	画面遷移	P1	存在しない拡張IDのダウンロードURL直接GET→404	管理ログイン済／SEED-M03-06-ADMIN	存在しない拡張ID（例 999999999）	1. 存在しない拡張IDのダウンロードURLへ認証済みで直接GETする	HTTP 404 が返ること。				
+m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-030	IT-15	未認証	P1	未ログインでダウンロードURL直接アクセス→管理ログイン画面へ誘導	未ログイン	—	1. /admin/product/product_all_csv_custom_export/1 へ直接アクセス	管理ログイン画面へ誘導されること。				
+m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-031	IT-15	未認証	P2	未ログインで商品一覧URL直接アクセス→管理ログイン画面へ誘導	未ログイン	—	1. /admin/product へ直接アクセス	管理ログイン画面へ誘導されること。				
+m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-040	IT-27	出力失敗	P1	削除済(deleted_at)拡張IDの直接GET→404	管理ログイン済／SEED-M03-06-DELETED-EXT	論理削除済み拡張ID	1. 論理削除済み拡張のダウンロードURLへ直接GETする	HTTP 404 が返ること（deleted_at 非nullは404）。				
+m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-041	IT-27	出力失敗	P1	列名(column_name)が全て空の拡張IDの直接GET→404	管理ログイン済／SEED-M03-06-EMPTYCOL-EXT	列名皆無の拡張ID	1. 出力項目の column_name が全て空の拡張のダウンロードURLへ直接GETする	HTTP 404 が返ること（有効列キーが皆無は404）。				
+m03-06_admin_product_product_custom_csv_export（商品管理 — カスタムデータ CSV ダウンロード（商品情報））	E2E-M03-06-042	IT-03	画面遷移	P1	CSV種別が商品以外の拡張IDの直接GET→404	管理ログイン済／SEED-M03-06-NONPRODUCT-EXT	商品以外のCSV種別を持つ拡張ID	1. 商品以外（csv_type≠商品）のCSV種別を持つ拡張のダウンロードURLへ直接GETする	HTTP 404 が返ること（CSV種別が商品以外は404）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

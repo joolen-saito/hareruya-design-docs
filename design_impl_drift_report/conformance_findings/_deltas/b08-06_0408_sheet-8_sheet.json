@@ -1,0 +1,114 @@
+{
+  "functionId": "b08-06_0408_sheet-8_sheet",
+  "featureNo": "B08-06",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1706,1710",
+      "designExpectation": "スマレジ使用ポイント連携を実行する（ smaregi:batch updatePoint <受注ID> ）",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:26",
+      "implementationActual": "実装コマンド名は `eccube:smaregi:update-point`。購入完了処理からの別プロセス呼び出しも `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php:605` で `eccube:smaregi:update-point` を実行している。",
+      "mismatchReason": "設計の外部契約は `smaregi:batch updatePoint <受注ID>` だが、Symfony コマンド登録名と呼び出し側が別名になっている。`smaregi:batch updatePoint` / `updatePoint` / `smaregi:batch` で src/Eccube と html を再検索したが、設計名の実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "コンソールコマンド名",
+          "design": "smaregi:batch updatePoint <受注ID>",
+          "implementation": "eccube:smaregi:update-point orderId",
+          "mismatch": "設計された起動方法では実装コマンドに到達しない。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1646-1647,1711,1717",
+      "designExpectation": "スマレジ連携ポイント増減APIに「使用ポイント」を送信し、ポイント減算処理を行う。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiCustomerService.php:31",
+      "implementationActual": "`SmaregiUpdatePointAction` は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:54` で `postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false)` を呼ぶが、呼び先は TODO コメント付きの固定成功レスポンスを返すだけで、スマレジAPIへ通信していない。",
+      "mismatchReason": "`SmaregiCustomerService::postSmaregiPoint` は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiCustomerService.php:33-35` で「スマレジAPIを実行する実装を追加」「未実装のため仮の固定レスポンス」と明記し、`result.status=success` を返すだけ。`postSmaregiPoint`、`ポイント増減`、`SmaregiCustomerApiClient`、Guzzle クライアント経由の会員ポイント更新を再検索したが、この使用ポイント減算APIの実通信実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "スマレジポイント減算API",
+          "design": "使用ポイントをスマレジ連携ポイント増減APIへ送信し、スマレジ側で減算処理を行う。",
+          "implementation": "固定の `result.status=success` を返す仮実装。",
+          "mismatch": "外部API送信とスマレジ側の減算処理が実装されていない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1711,1717,1733",
+      "designExpectation": "入力はコマンド名と受注ID。受注IDが不正なら何もせず終了する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:47",
+      "implementationActual": "受注ID未入力時は成功終了するが、数値でない場合は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:53-56` でエラーを出力し `Command::FAILURE` を返す。",
+      "mismatchReason": "設計は「受注IDが未指定・数値でない」どちらも処理を行わず終了する扱いだが、実装は非数値入力を失敗終了として扱う。",
+      "comparisonRows": [
+        {
+          "item": "受注ID未指定",
+          "design": "処理を行わずに終了する。",
+          "implementation": "success メッセージを出して `Command::SUCCESS`。",
+          "mismatch": "大きな差異なし。"
+        },
+        {
+          "item": "受注IDが数値でない",
+          "design": "処理を行わずに終了する。",
+          "implementation": "error メッセージを出して `Command::FAILURE`。",
+          "mismatch": "終了ステータスと出力が設計と異なる。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1685",
+      "designExpectation": "購入完了処理や購入完了再処理から別プロセスとして呼び出される。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html; 検索語: SmaregiUpdatePoint, update-point, updatePoint, smaregi:batch, eccube:smaregi:update-point, Process::fromShellCommandline, 再処理, reprocess）",
+      "implementationActual": "通常の購入完了処理では `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php:602-606` に別プロセス起動がある。一方、購入完了再処理に相当する管理受注更新系では `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:627-630` と `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php:798-801` に発生ポイント連携はあるが、使用ポイント連携バッチの別プロセス起動はない。",
+      "mismatchReason": "設計は購入完了処理と購入完了再処理の双方から別プロセス呼び出しを要求している。反証検索で使用ポイント連携コマンドの呼び出し箇所は ShoppingController の1件のみで、再処理側の起動実装は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "購入完了処理からの起動",
+          "design": "別プロセスで呼び出す。",
+          "implementation": "ShoppingController で `nohup php ... eccube:smaregi:update-point` を起動。",
+          "mismatch": "実装あり。ただしコマンド名は別指摘のとおり設計と異なる。"
+        },
+        {
+          "item": "購入完了再処理からの起動",
+          "design": "別プロセスで呼び出す。",
+          "implementation": "使用ポイント連携バッチの起動なし。",
+          "mismatch": "再処理側の呼び出しが未実装。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html#sheet-8:1714,1730",
+      "designExpectation": "失敗時はエラー状態を残し、スマレジEC受注連携エラー再連携バッチで再試行できる。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html; 検索語: getSmaregiErrorOrder, point_error_message, smaregi_error_flg, エラー再連携, 再試行, retry, SmaregiUpdatePointAction）",
+      "implementationActual": "失敗時のエラー保存は `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:57-60` と `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:75-78` にある。`smaregi_error_flg = 1` の受注取得メソッドは `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:877-885` にあるが、このメソッドを呼び出すコマンド/サービスは見つからない。",
+      "mismatchReason": "設計は失敗記録だけでなく後続のスマレジEC受注連携エラー再連携バッチによる再試行可能性まで要求している。実装はエラー受注抽出メソッド止まりで、使用ポイント連携を再試行するバッチ入口・Action・呼び出しが不在。なお `SmaregiStockBackfillCommand` は在庫変動Webhook再連携であり、使用ポイント連携の再試行ではない。",
+      "comparisonRows": [
+        {
+          "item": "失敗時のエラー状態保存",
+          "design": "エラーメッセージとエラーフラグを残す。",
+          "implementation": "`point_error_message` と `smaregi_error_flg` を保存。",
+          "mismatch": "実装あり。"
+        },
+        {
+          "item": "後続再連携対象化",
+          "design": "スマレジEC受注連携エラー再連携バッチで再試行できる。",
+          "implementation": "エラー受注取得メソッドはあるが、使用ポイント連携を再試行するバッチ/Action がない。",
+          "mismatch": "再試行経路が未実装。"
+        }
+      ]
+    }
+  ]
+}

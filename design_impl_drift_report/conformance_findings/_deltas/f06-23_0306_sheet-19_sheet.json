@@ -1,0 +1,45 @@
+{
+  "functionId": "f06-23_0306_sheet-19_sheet",
+  "featureNo": "F06-23",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-19（業務ルール・計算/日時書式）",
+      "designExpectation": "日時書式：一覧は Y年m月d日 H:i で送信日時を表示する（詳細は Y/m/d H:i）。",
+      "implRef": "src/Eccube/Resource/template/default/Contact/history.twig:31-37",
+      "implementationActual": "一覧テンプレートは日本語ロケール時に {{ contactHistory.createDate|date('Y/m/d H:i') }}（33行）でスラッシュ区切り表示。詳細(history_detail.twig:18)は Y/m/d H:i で設計通り。",
+      "mismatchReason": "設計は一覧の送信日時書式を『Y年m月d日 H:i』と規定するが、実装 history.twig の isLocaleJa 分岐は 'Y/m/d H:i' を用い年月日表記になっていない。書式は history.twig のみで決定され設計と差異がある。",
+      "comparisonRows": [
+        { "item": "一覧の送信日時書式", "design": "Y年m月d日 H:i", "implementation": "Y/m/d H:i (history.twig:33)", "mismatch": "年月日表記ではなくスラッシュ区切り" }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-19（業務ルール・計算/エッジケース：お問い合わせが0件）",
+      "designExpectation": "件数：総件数は当該会員のお問い合わせ件数。0件のときも見出しと総件数『0件』を表示し、明細を出さない。",
+      "implRef": "src/Eccube/Resource/template/default/Contact/history.twig:11-25",
+      "implementationActual": "contactHistories が空の場合は front.contact_history.empty『お問い合わせ履歴はありません。』(messages.ja.yaml:412)を表示(11-15行)。総件数 toolbar_count『N件』(messages.ja.yaml:413)は not empty ブロック内(17-25行)にあり0件時は出力されない。",
+      "mismatchReason": "設計は0件でも『0件』を表示すると業務ルール・エッジケースで二重明記。実装は0件を空状態メッセージへ分岐し件数を出さないため設計要求を満たさない。",
+      "comparisonRows": [
+        { "item": "0件時の総件数表示", "design": "見出し＋総件数『0件』を表示", "implementation": "empty メッセージのみ、件数非表示", "mismatch": "0件時に『0件』の総件数が出ない" }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-19（利用者視点の入口/JS挙動/画面遷移）",
+      "designExpectation": "詳細の『戻る』はブラウザ履歴を1つ戻すリンクのみ（history.go(-1)）。サーバへのリクエストは発生しない。",
+      "implRef": "src/Eccube/Resource/template/default/Contact/history_detail.twig:47-51",
+      "implementationActual": "『戻る』は href=\"{{ url('contact_history') }}\"(48-49行、ラベル common.back)の通常リンク。押下で一覧(contact_history)へGETが発生。history.go(-1)を呼ぶJS/onclickは history_detail.twig にも html 配下にも存在しない。",
+      "mismatchReason": "設計は『戻る』を history.go(-1) によるブラウザ履歴戻り・サーバリクエストなしと明記。実装は一覧URLへの固定リンクでGETが発生し遷移機構が設計と異なる。",
+      "comparisonRows": [
+        { "item": "詳細『戻る』の遷移機構", "design": "history.go(-1)（サーバリクエストなし）", "implementation": "url('contact_history') への通常リンク（GET発生）", "mismatch": "ブラウザ履歴戻りではなく固定URLへのGET遷移" }
+      ]
+    }
+  ]
+}

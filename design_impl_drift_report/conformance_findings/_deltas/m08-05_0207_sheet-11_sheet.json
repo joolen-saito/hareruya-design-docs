@@ -1,0 +1,156 @@
+{
+  "functionId": "m08-05_0207_sheet-11_sheet",
+  "featureNo": "M08-05",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-11:2937,2946,3118,3127",
+      "designExpectation": "「登録」ボタン（付与）は POST /{admin_route}/customer/point/{id}/update/{type} に送信し、入力したポイント変動を履歴に追加してポイント履歴画面へ戻る。",
+      "implRef": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51; src/Eccube/Resource/template/admin/Customer/point_update.twig:18",
+      "implementationActual": "POST の admin_customer_point_update は /%eccube_admin_route%/customer/point/{id}/{type} に定義され、フォームも同ルートへ送信する。設計にある /customer/point/{id}/update/{type} ではない。",
+      "mismatchReason": "設計は POST エンドポイントの外部契約として /update/{type} を含むパスを指定しているが、実装ルートとフォーム action は /{id}/{type} であり、パス構造が一致しない。反証として customer/point/{id}/update/{type}、admin_customer_point_update、point_update.twig を検索したが /update/{type} のルート定義は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "POST URL",
+          "design": "POST /{admin_route}/customer/point/{id}/update/{type}",
+          "implementation": "POST /%eccube_admin_route%/customer/point/{id}/{type}",
+          "mismatch": "/update セグメントが実装に存在しない。"
+        },
+        {
+          "item": "フォーム送信先",
+          "design": "登録ボタンから設計POST URLへ送信",
+          "implementation": "url('admin_customer_point_update', { id: Customer.id, type: type })",
+          "mismatch": "生成される送信先が実装ルート定義に従うため、設計URLと異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-11:2937,2950,3126,3131",
+      "designExpectation": "ポイント種別ごとにポイント履歴を表示し、当該会員・種別のポイント履歴一覧と付与フォームを表示する。",
+      "implRef": "src/Eccube/Resource/template/admin/Customer/point_update.twig:123; src/Eccube/Entity/Customer.php:1292; src/Eccube/Controller/Admin/Customer/CustomerPointController.php:104",
+      "implementationActual": "画面は Customer.PointHistories をそのままループ表示する。Customer 側の PointHistories は id 降順の OneToMany で、point_type_id による種別絞り込みはない。Controller も type を表示ラベル/フォーム種別に使うのみで、一覧取得条件には使っていない。",
+      "mismatchReason": "設計はポイント種別ごとの履歴表示を要求しているが、実装は会員の全ポイント履歴を表示しており、type=granted/purchase/history に応じた一覧フィルタが確認できない。反証として DtbPointHistoryRepository::getQueryBuilderByCustomer、PointType、pointType、Customer.PointHistories を検索したが、管理画面ポイント履歴表示で point_type_id を条件にする実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "一覧データ取得",
+          "design": "当該会員・種別のポイント履歴を取得する。",
+          "implementation": "Customer.PointHistories を表示する。",
+          "mismatch": "会員条件のみで、ポイント種別条件がない。"
+        },
+        {
+          "item": "表示順",
+          "design": "新しい順、かつ画面部品仕様ではID降順。",
+          "implementation": "Customer.PointHistories は #[ORM\\OrderBy(['id' => Criteria::DESC])]。",
+          "mismatch": "ID降順は満たすが、種別ごとの履歴表示は満たさない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-11:2858",
+      "designExpectation": "ポイント増減量は必須の数値で、最大値は 999999999（スマレジ連携に合わせる）。",
+      "implRef": "src/Eccube/Form/Type/Admin/CustomerPointType.php:74; src/Eccube/Form/Type/Admin/CustomerPointType.php:80",
+      "implementationActual": "pointChange は IntegerType、NotBlank、整数Regexのみで、999999999 以下に制限する Range/LessThanOrEqual 等のバリデーションがない。",
+      "mismatchReason": "設計の最大値 999999999 に対応するサーバ側入力チェックが確認できない。反証として pointChange、Range、999999999、スマレジ連携、CustomerPointType を検索したが、当該フォームの最大値制約は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "必須",
+          "design": "必須",
+          "implementation": "NotBlankあり",
+          "mismatch": "一致。"
+        },
+        {
+          "item": "数値形式",
+          "design": "数値",
+          "implementation": "IntegerType と整数Regex",
+          "mismatch": "概ね一致。"
+        },
+        {
+          "item": "最大値",
+          "design": "999999999",
+          "implementation": "最大値制約なし",
+          "mismatch": "設計上限を超える値をフォーム制約で拒否しない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-11:2947,2962,3156,3159",
+      "designExpectation": "会員・選手情報が無い場合は404。",
+      "implRef": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53; src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85; src/Eccube/Resource/template/admin/Customer/point_update.twig:105; src/Eccube/Entity/Customer.php:1107",
+      "implementationActual": "Controller は Customer 引数で会員取得を行うが、Customer::getPlayer() は nullable であるにもかかわらず、POST時は $Customer->getPlayer()->addPoint(...)、表示時は Customer.Player.point を参照する。選手情報なしを404に変換する分岐はない。",
+      "mismatchReason": "会員なしはParamConverter相当で404になり得るが、選手情報なしの場合の明示的な404処理が実装されていない。反証として getPlayer、Player === null、createNotFoundException、NotFoundHttpException、point_update.twig を検索したが、管理画面ポイント付与で選手情報欠落を404にする実装は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "会員なし",
+          "design": "404",
+          "implementation": "Customer 型引数で取得",
+          "mismatch": "会員なしは実装済み相当。"
+        },
+        {
+          "item": "選手情報なし",
+          "design": "404",
+          "implementation": "nullable な getPlayer() を null チェックなしで参照",
+          "mismatch": "404ではなく実行時エラー/表示不整合になり得る。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-11:2847",
+      "designExpectation": "追加するポイント履歴はスマレジ側の会員情報に連携する。",
+      "implRef": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:90",
+      "implementationActual": "ポイント履歴と会員側ポイントは persist/flush されるが、スマレジ連携は TODO コメントのみで未反映。",
+      "mismatchReason": "設計は追加したポイント履歴をスマレジ側会員情報へ連携することを要求している。実装には「ECCUBE_HARERUYA-112 ポイント付与 スマレジ連携の会員ポイント処理機能が作成されたら反映する」というTODOがあり、当該処理から Smaregi サービス/Command/API 呼び出しへの接続は確認できない。反証として Smaregi、スマレジ、PointGranterAction、PointHistoryEntityManager、CustomerPointController を検索したが、この管理画面POST後にスマレジへ連携する呼び出しは見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "履歴保存",
+          "design": "ポイント履歴にフォーム入力内容を登録",
+          "implementation": "DtbPointHistory を persist/flush",
+          "mismatch": "一致。"
+        },
+        {
+          "item": "スマレジ連携",
+          "design": "スマレジ側の会員情報に連携",
+          "implementation": "TODOのみで呼び出しなし",
+          "mismatch": "外部連携が未実装。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-11:2861",
+      "designExpectation": "識別ID:6「保存ボタン」はボタンとして表示される。",
+      "implRef": "src/Eccube/Resource/template/admin/Customer/point_update.twig:82; src/Eccube/Resource/locale/messages.ja.yaml:1443",
+      "implementationActual": "ボタンは admin.common.registration を表示しており、日本語翻訳は「登録」。設計上の「保存ボタン」文言ではない。",
+      "mismatchReason": "設計の画面部品ラベルは保存ボタンだが、実装画面では登録ボタンとして表示される。反証として 保存、登録、admin.common.registration、point_update.twig を検索したが、当該フォームの送信ボタンに「保存」を表示する実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "ボタン文言",
+          "design": "保存",
+          "implementation": "登録",
+          "mismatch": "利用者に見えるボタンラベルが異なる。"
+        },
+        {
+          "item": "押下時処理",
+          "design": "サーバ側入力チェック後に登録/更新",
+          "implementation": "form->isSubmitted() && form->isValid() 後に保存",
+          "mismatch": "処理自体は概ね一致し、表示文言が差異。"
+        }
+      ]
+    }
+  ]
+}

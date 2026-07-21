@@ -1,0 +1,84 @@
+{
+  "functionId": "m06-08_0205_sheet-15_sheet",
+  "featureNo": "M06-08",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-15:4033,4034",
+      "designExpectation": "集計日(From)・集計日(To)は日付(yyyy/mm/dd)形式の必須入力とする。",
+      "implRef": "src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:58, src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:63, html/template/admin/assets/js/OtcBuyOrder/otc-buy-order-summary.js:4",
+      "implementationActual": "summary_date_from / summary_date_to は DateType single_text の必須項目として実装されているが、日付ピッカーの表示形式は YYYY-MM-DD である。",
+      "mismatchReason": "設計は入力書式を yyyy/mm/dd と指定している。実装は DateType single_text に加え、otc-buy-order-summary.js の datetimepicker で format: \"YYYY-MM-DD\" を設定しており、スラッシュ区切りではなくハイフン区切りの入力UIになっている。",
+      "comparisonRows": [
+        {
+          "item": "集計日(From) 書式",
+          "design": "日付(yyyy/mm/dd)",
+          "implementation": "DateType single_text + datetimepicker format YYYY-MM-DD",
+          "mismatch": "区切り文字と表示形式が異なる"
+        },
+        {
+          "item": "集計日(To) 書式",
+          "design": "日付(yyyy/mm/dd)",
+          "implementation": "DateType single_text + datetimepicker format YYYY-MM-DD",
+          "mismatch": "区切り文字と表示形式が異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-15:4035",
+      "designExpectation": "部門は単一選択(セレクトボックス)とし、リスト内容は部門マスタから全部門を取得する。",
+      "implRef": "src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:75",
+      "implementationActual": "section は EntityType / MtbSection として実装されているが、multiple => true の複数選択である。Twig は searchForm.section をそのまま描画し、JS は select2 を付与するだけで単一選択へ変更していない。",
+      "mismatchReason": "設計は部門を単一選択セレクトボックスと指定している。実装は FormType で multiple => true を指定しており、Repository も複数部門を配列/Collectionとして受け、s.id IN (:section) で絞り込むため、設計より複数選択可能な挙動になっている。",
+      "comparisonRows": [
+        {
+          "item": "部門の選択方式",
+          "design": "単一選択(セレクトボックス)",
+          "implementation": "EntityType multiple => true",
+          "mismatch": "複数選択になっている"
+        },
+        {
+          "item": "部門の検索条件",
+          "design": "1部門を選択する想定",
+          "implementation": "複数部門を s.id IN (:section) で検索",
+          "mismatch": "複数部門合算検索が可能"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-15:4036",
+      "designExpectation": "買取店舗は単一選択(セレクトボックス)とし、リスト内容は店舗マスタから取得し、初期表示時はログインしているメンバーのデフォルト検索表示店舗を選択状態にする。",
+      "implRef": "src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:68",
+      "implementationActual": "shop は EntityType / BaseInfo として実装され、ログインメンバーの defaultSearchBaseInfo があれば初期値に入るが、multiple => true の複数選択である。Twig は searchForm.shop をそのまま描画し、JS は select2 を付与するだけで単一選択へ変更していない。",
+      "mismatchReason": "設計は買取店舗を単一選択セレクトボックスと指定している。実装は FormType で multiple => true を指定し、初期値も単一エンティティではなく配列 [$DefaultShop] として渡している。Repository も複数店舗を配列/Collectionとして受け、otcs.BaseInfo IN (:shop) で絞り込むため、設計より複数選択可能な挙動になっている。",
+      "comparisonRows": [
+        {
+          "item": "買取店舗の選択方式",
+          "design": "単一選択(セレクトボックス)",
+          "implementation": "EntityType multiple => true",
+          "mismatch": "複数選択になっている"
+        },
+        {
+          "item": "初期値の持ち方",
+          "design": "ログインメンバーのデフォルト検索表示店舗を1件選択",
+          "implementation": "$DefaultShop !== null ? [$DefaultShop] : []",
+          "mismatch": "複数選択用の配列として初期化している"
+        },
+        {
+          "item": "買取店舗の検索条件",
+          "design": "1店舗を選択する想定",
+          "implementation": "複数店舗を otcs.BaseInfo IN (:shop) で検索",
+          "mismatch": "複数店舗合算検索が可能"
+        }
+      ]
+    }
+  ]
+}

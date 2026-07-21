@@ -1,0 +1,60 @@
+{
+  "functionId": "a06-04_0506_sheet-6_sheet",
+  "featureNo": "A06-04",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-6:1613-1618",
+      "designExpectation": "店頭買取情報コメント更新APIのエンドポイントURLは PUT /api/admin/otcBuyOrder/{id}/freeComment.json とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:156, /home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube.yaml:6",
+      "implementationActual": "実装ルートは #[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json', ... methods: ['PUT'])] で、既定の eccube_api_v1_route は api/v1 のため、実際のパスは /api/v1/admin/otcBuyOrder/{id}/freeComment.json となる。",
+      "mismatchReason": "設計HTMLのシート本文は /api/admin/otcBuyOrder/{id}/freeComment.json を外部契約として示しているが、実装は /api/v1/admin/otcBuyOrder/{id}/freeComment.json に版数プレフィックスを挿入する。/api/admin/otcBuyOrder/{id}/freeComment.json の別ルートは src/Eccube, html, app/config の探索で確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "URLエンドポイント",
+          "design": "PUT /api/admin/otcBuyOrder/{id}/freeComment.json",
+          "implementation": "PUT /api/v1/admin/otcBuyOrder/{id}/freeComment.json（eccube_api_v1_route=api/v1）",
+          "mismatch": "設計の /api/admin と実装の /api/v1/admin が一致しない。"
+        },
+        {
+          "item": "HTTPメソッド",
+          "design": "PUT",
+          "implementation": "PUT",
+          "mismatch": "差異なし。"
+        },
+        {
+          "item": "処理本体",
+          "design": "入力された free_comment を店頭買取受注のフリーコメントへ登録する。",
+          "implementation": "OtcBuyOrderController::updateFreeComment が UpdateFreeCommentAction を呼び、setFreeComment/setMember/setUpdateDate 後に flush する。",
+          "mismatch": "処理本体は確認できたが、公開URLが設計値と異なる。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-6:1689-1691,1697-1699",
+      "designExpectation": "店頭買取受注のコメント更新は拡張子なし別名 PUT /admin/otcBuyOrder/{id}/freeComment でも、拡張子ありと同一処理として呼び出せること。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html, /home/y-saito/Developments/ec-cube-enterprise/app/config; 検索語: otcBuyOrder/{id}/freeComment, freeComment.json, api_admin_otc_buy_order_update_free_comment, /api/admin/otcBuyOrder）",
+      "implementationActual": "実装されているのは拡張子ありの #[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json', name: 'api_admin_otc_buy_order_update_free_comment', methods: ['PUT'])] のみ。拡張子なし /admin/otcBuyOrder/{id}/freeComment または /api/v1/admin/otcBuyOrder/{id}/freeComment の Route 定義は確認できない。",
+      "mismatchReason": "詳細設計の利用者視点の入口では拡張子なしパスと拡張子あり別名を同一処理として定義しているが、実装 Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php には .json 付きルートしかなく、app/config の追加 route も存在しない。",
+      "comparisonRows": [
+        {
+          "item": "拡張子なし入口",
+          "design": "PUT /admin/otcBuyOrder/{id}/freeComment",
+          "implementation": "該当 Route なし",
+          "mismatch": "設計上の別名入口が未実装。"
+        },
+        {
+          "item": "拡張子あり入口",
+          "design": "PUT /admin/otcBuyOrder/{id}/freeComment.json は拡張子なしと同一処理",
+          "implementation": "PUT /%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json のみ実装",
+          "mismatch": "片方の別名だけ実装されている。"
+        }
+      ]
+    }
+  ]
+}

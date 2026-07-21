@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m01_02_admin_login_two_factor_auth_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 ## 関連ID対応概要
 
@@ -22,56 +22,56 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-001	IT-25	UI部品	P2	追加認証画面にトークン入力欄・認証ボタンが表示される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	—	"1. 当該管理者でID/PW認証する
-2. 追加認証画面（/admin/two_factor_auth/auth）を表示する"	見出し「2段階認証」・6桁トークン入力欄・送信ボタン「認証」が表示されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-002	IT-25	表示結果	P3	追加認証画面のトークン欄にプレースホルダ「トークン」が表示される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	—	"1. 追加認証画面を表示する"	トークン入力欄にプレースホルダ「トークン」が表示されること。
+2. 追加認証画面（/admin/two_factor_auth/auth）を表示する"	見出し「2段階認証」・6桁トークン入力欄・送信ボタン「認証」が表示されること。	Codex	2026-07-06	〇	
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-002	IT-25	表示結果	P3	追加認証画面のトークン欄にプレースホルダ「トークン」が表示される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	—	1. 追加認証画面を表示する	トークン入力欄にプレースホルダ「トークン」が表示されること。	Codex	2026-07-06	〇	
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-003	IT-25	UI部品	P2	初回設定画面にQR説明文・トークン欄・登録ボタンが表示される	個別2FA ON／秘密鍵未設定／未認証／SEED-M01-02-2FA-NOSECRET	—	"1. 当該管理者でID/PW認証する
-2. 初回設定画面（/admin/two_factor_auth/set）を表示する"	見出し「2段階認証」・説明文「QRコードを2段階認証用スマートフォンアプリで読み込み、表示された6桁の数字を入力してください。」・QR表示領域・トークン入力欄・送信ボタン「登録」が表示されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-004	IT-25	UI部品	P3	本人の再設定画面に見出し・QRラベル・必須トークン・登録ボタンが表示される	個別2FA ON／秘密鍵設定済／認証済みCookie有効／SEED-M01-02-2FA-SECRET	—	"1. 認証済みの管理者で本人再設定画面（/admin/setting/system/two_factor_auth/edit）を表示する"	サブタイトル「システム設定」・カード見出し「2段階認証」・「QRコード」ラベル・「トークン」ラベル（必須バッジ付）・送信ボタン「登録」が表示されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-005	IT-03	表示結果	P2	本人再設定画面で秘密鍵設定済のとき再設定警告が表示される	個別2FA ON／秘密鍵設定済／認証済みCookie有効／SEED-M01-02-2FA-SECRET	—	"1. 認証済みの管理者で本人再設定画面をGET表示する"	警告「既に2段階認証の設定が行われています。再設定すると登録済みのデバイスが使用出来なくなります。」が表示されること。
+2. 初回設定画面（/admin/two_factor_auth/set）を表示する"	見出し「2段階認証」・説明文「QRコードを2段階認証用スマートフォンアプリで読み込み、表示された6桁の数字を入力してください。」・QR表示領域・トークン入力欄・送信ボタン「登録」が表示されること。	Codex	2026-07-06	×	初回設定画面GETで500。実装例外: TwoFactorAuthController::set(): Return value must be of type RedirectResponse, array returned (/var/ec-cube/src/Eccube/Controller/Admin/Setting/System/TwoFactorAuthController.php:97)。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-004	IT-25	UI部品	P3	本人の再設定画面に見出し・QRラベル・必須トークン・登録ボタンが表示される	個別2FA ON／秘密鍵設定済／認証済みCookie有効／SEED-M01-02-2FA-SECRET	—	1. 認証済みの管理者で本人再設定画面（/admin/setting/system/two_factor_auth/edit）を表示する	サブタイトル「システム設定」・カード見出し「2段階認証」・「QRコード」ラベル・「トークン」ラベル（必須バッジ付）・送信ボタン「登録」が表示されること。	Codex	2026-07-06	×	本人再設定画面GETで500。実装例外: TwoFactorAuthController::edit(): Return value must be of type RedirectResponse, array returned (/var/ec-cube/src/Eccube/Controller/Admin/Setting/System/TwoFactorAuthController.php:114)。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-005	IT-03	表示結果	P2	本人再設定画面で秘密鍵設定済のとき再設定警告が表示される	個別2FA ON／秘密鍵設定済／認証済みCookie有効／SEED-M01-02-2FA-SECRET	—	1. 認証済みの管理者で本人再設定画面をGET表示する	警告「既に2段階認証の設定が行われています。再設定すると登録済みのデバイスが使用出来なくなります。」が表示されること。	Codex	2026-07-06	×	本人再設定画面GETで500。実装例外: TwoFactorAuthController::edit(): Return value must be of type RedirectResponse, array returned (/var/ec-cube/src/Eccube/Controller/Admin/Setting/System/TwoFactorAuthController.php:114)。
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-010	IT-03	画面遷移	P1	正しい6桁トークンで追加認証に成功しホームへ遷移する	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	既知秘密鍵から算出した現在時刻の有効な6桁トークン	"1. 追加認証画面を表示する
 2. 有効な6桁トークンを入力
-3. 認証ボタンを押下"	ホーム画面相当へ遷移すること。
+3. 認証ボタンを押下"	ホーム画面相当へ遷移すること。	Codex	2026-07-06	〇	
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-011	IT-26	登録内容	P1	初回設定で6桁トークンが一致すると秘密鍵が確定し成功メッセージが表示される	個別2FA ON／秘密鍵未設定／未認証／SEED-M01-02-2FA-NOSECRET-ONCE（使い捨て）	画面の隠し秘密鍵候補から算出した有効な6桁トークン	"1. 初回設定画面を表示する
 2. 隠し項目の秘密鍵候補から有効な6桁トークンを算出し入力
-3. 登録ボタンを押下"	成功メッセージ「2段階認証の設定が完了しました。」が表示され、ホーム画面相当へ遷移すること。
+3. 登録ボタンを押下"	成功メッセージ「2段階認証の設定が完了しました。」が表示され、ホーム画面相当へ遷移すること。	Codex	2026-07-06	×	初回設定画面GETで500となり #admin_two_factor_auth_auth_key が出現せずタイムアウト。原因は TwoFactorAuthController::set() の戻り値型不整合（RedirectResponse指定にarray返却）。
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-012	IT-26	更新内容	P1	本人再設定で6桁トークンが一致すると秘密鍵が更新され成功メッセージが表示される	個別2FA ON／秘密鍵設定済／認証済みCookie有効／SEED-M01-02-2FA-RESET（使い捨て）	画面の隠し秘密鍵候補から算出した有効な6桁トークン	"1. 本人再設定画面を表示する
 2. 隠し項目の新秘密鍵候補から有効な6桁トークンを算出し入力
-3. 登録ボタンを押下"	成功メッセージ「2段階認証の設定が完了しました。」が表示され、ホーム画面相当へ遷移すること。
+3. 登録ボタンを押下"	成功メッセージ「2段階認証の設定が完了しました。」が表示され、ホーム画面相当へ遷移すること。	Codex	2026-07-06	×	本人再設定画面GETで500となり #admin_two_factor_auth_auth_key が出現せずタイムアウト。原因は TwoFactorAuthController::edit() の戻り値型不整合（RedirectResponse指定にarray返却）。
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-020	IT-22	必須バリデーション	P1	追加認証でトークン未入力だと再入力メッセージが表示される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	トークン＝空	"1. 追加認証画面を表示する
-2. トークンを空のまま認証ボタンを押下"	「トークンに誤りがあります。再度入力してください。」が表示され、追加認証画面に留まること。
+2. トークンを空のまま認証ボタンを押下"	「トークンに誤りがあります。再度入力してください。」が表示され、追加認証画面に留まること。	Codex	2026-07-06	×	トークン空送信時、ブラウザのHTML5 required制約で送信が止まり .text-danger が出現しないため期待メッセージ検出に失敗。入力欄は追加認証画面に留まる。
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-021	IT-22	文字列長バリデーション	P2	追加認証で6桁以外を入力すると再入力メッセージが表示される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	トークン＝6桁未満（例 12345）	"1. 追加認証画面を表示する
-2. 6桁未満を入力し認証ボタンを押下"	「トークンに誤りがあります。再度入力してください。」が表示され、追加認証画面に留まること。
+2. 6桁未満を入力し認証ボタンを押下"	「トークンに誤りがあります。再度入力してください。」が表示され、追加認証画面に留まること。	Codex	2026-07-06	〇	
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-022	IT-22	DBとの相関バリデーション	P1	追加認証でTOTP不一致だと再入力メッセージが表示される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	トークン＝形式は正しいが不一致の6桁	"1. 追加認証画面を表示する
-2. 不一致の6桁を入力し認証ボタンを押下"	「トークンに誤りがあります。再度入力してください。」が表示され、追加認証画面に留まること。
+2. 不一致の6桁を入力し認証ボタンを押下"	「トークンに誤りがあります。再度入力してください。」が表示され、追加認証画面に留まること。	Codex	2026-07-06	〇	
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-030	IT-22	文字列長バリデーション	P1	初回設定で6桁以外を入力すると形式不正メッセージが表示される	個別2FA ON／秘密鍵未設定／未認証／SEED-M01-02-2FA-NOSECRET	トークン＝6桁未満（例 12345）	"1. 初回設定画面を表示する
-2. 6桁未満を入力し登録ボタンを押下"	「トークンに誤りがあります。数字6桁で入力してください。」が表示され、初回設定画面に留まること。
+2. 6桁未満を入力し登録ボタンを押下"	「トークンに誤りがあります。数字6桁で入力してください。」が表示され、初回設定画面に留まること。	Codex	2026-07-06	×	初回設定画面GETで500となり #admin_two_factor_auth_device_token が出現せずタイムアウト。原因は TwoFactorAuthController::set() の戻り値型不整合（RedirectResponse指定にarray返却）。
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-031	IT-22	DBとの相関バリデーション	P1	初回設定でTOTP不一致だと再入力メッセージが表示される	個別2FA ON／秘密鍵未設定／未認証／SEED-M01-02-2FA-NOSECRET	画面の秘密鍵候補と一致しない有効書式の6桁	"1. 初回設定画面を表示する
-2. 形式は正しいが不一致の6桁を入力し登録ボタンを押下"	「トークンに誤りがあります。再度入力してください。」が表示され、初回設定画面に留まること。
+2. 形式は正しいが不一致の6桁を入力し登録ボタンを押下"	「トークンに誤りがあります。再度入力してください。」が表示され、初回設定画面に留まること。	Codex	2026-07-06	×	初回設定画面GETで500となり #admin_two_factor_auth_auth_key が出現せずタイムアウト。原因は TwoFactorAuthController::set() の戻り値型不整合（RedirectResponse指定にarray返却）。
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-040	IT-22	文字列長バリデーション	P2	本人再設定で6桁以外を入力すると形式不正メッセージが表示される	個別2FA ON／秘密鍵設定済／認証済みCookie有効／SEED-M01-02-2FA-SECRET	トークン＝6桁未満（例 12345）	"1. 本人再設定画面を表示する
-2. 6桁未満を入力し登録ボタンを押下"	「トークンに誤りがあります。数字6桁で入力してください。」が表示され、本人再設定画面に留まること。
+2. 6桁未満を入力し登録ボタンを押下"	「トークンに誤りがあります。数字6桁で入力してください。」が表示され、本人再設定画面に留まること。	Codex	2026-07-06	×	本人再設定画面GETで500となり #admin_two_factor_auth_device_token が出現せずタイムアウト。原因は TwoFactorAuthController::edit() の戻り値型不整合（RedirectResponse指定にarray返却）。
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-041	IT-22	DBとの相関バリデーション	P2	本人再設定でTOTP不一致だと再入力メッセージが表示される	個別2FA ON／秘密鍵設定済／認証済みCookie有効／SEED-M01-02-2FA-SECRET	画面の秘密鍵候補と一致しない有効書式の6桁	"1. 本人再設定画面を表示する
-2. 形式は正しいが不一致の6桁を入力し登録ボタンを押下"	「トークンに誤りがあります。再度入力してください。」が表示され、本人再設定画面に留まること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-050	IT-03	画面遷移	P1	個別2FA ON・秘密鍵あり・未認証で保護URLへ進むと追加認証画面へ誘導される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	保護された管理URL	"1. 当該管理者でID/PW認証後、保護された管理URLへアクセス"	追加認証画面（/admin/two_factor_auth/auth）へ誘導されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-051	IT-03	画面遷移	P1	個別2FA ON・秘密鍵なし・未認証で保護URLへ進むと初回設定画面へ誘導される	個別2FA ON／秘密鍵未設定／未認証／SEED-M01-02-2FA-NOSECRET	保護された管理URL	"1. 当該管理者でID/PW認証後、保護された管理URLへアクセス"	初回設定画面（/admin/two_factor_auth/set）へ誘導されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-052	IT-13	URL直接アクセス	P2	秘密鍵設定済が初回設定画面へ入ろうとすると追加認証画面へ誘導される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	—	"1. 未認証のまま初回設定画面（/admin/two_factor_auth/set）へ直接アクセス"	初回設定画面を表示せず追加認証画面へ誘導されること（未認証での秘密鍵再設定を防ぐ）。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-053	IT-03	画面遷移	P1	個別2FA OFFの管理者は追加認証なしで保護画面を利用できる	個別2FA OFF／SEED-M01-02-2FA-OFF	—	"1. 当該管理者でID/PW認証後、保護された管理URLへアクセス"	追加認証へ誘導されず保護画面を利用できること。
+2. 形式は正しいが不一致の6桁を入力し登録ボタンを押下"	「トークンに誤りがあります。再度入力してください。」が表示され、本人再設定画面に留まること。	Codex	2026-07-06	×	本人再設定画面GETで500となり #admin_two_factor_auth_auth_key が出現せずタイムアウト。原因は TwoFactorAuthController::edit() の戻り値型不整合（RedirectResponse指定にarray返却）。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-050	IT-03	画面遷移	P1	個別2FA ON・秘密鍵あり・未認証で保護URLへ進むと追加認証画面へ誘導される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	保護された管理URL	1. 当該管理者でID/PW認証後、保護された管理URLへアクセス	追加認証画面（/admin/two_factor_auth/auth）へ誘導されること。	Codex	2026-07-06	〇	
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-051	IT-03	画面遷移	P1	個別2FA ON・秘密鍵なし・未認証で保護URLへ進むと初回設定画面へ誘導される	個別2FA ON／秘密鍵未設定／未認証／SEED-M01-02-2FA-NOSECRET	保護された管理URL	1. 当該管理者でID/PW認証後、保護された管理URLへアクセス	初回設定画面（/admin/two_factor_auth/set）へ誘導されること。	Codex	2026-07-06	〇	
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-052	IT-13	URL直接アクセス	P2	秘密鍵設定済が初回設定画面へ入ろうとすると追加認証画面へ誘導される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	—	1. 未認証のまま初回設定画面（/admin/two_factor_auth/set）へ直接アクセス	初回設定画面を表示せず追加認証画面へ誘導されること（未認証での秘密鍵再設定を防ぐ）。	Codex	2026-07-06	〇	
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-053	IT-03	画面遷移	P1	個別2FA OFFの管理者は追加認証なしで保護画面を利用できる	個別2FA OFF／SEED-M01-02-2FA-OFF	—	1. 当該管理者でID/PW認証後、保護された管理URLへアクセス	追加認証へ誘導されず保護画面を利用できること。	Codex	2026-07-06	〇	
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-054	IT-15	状態変化	P2	追加認証成功後はCookie有効期間内は再度追加認証を要求されない	個別2FA ON／秘密鍵設定済／追加認証成功直後／SEED-M01-02-2FA-SECRET	—	"1. 追加認証に成功する
-2. 同一ブラウザで保護された管理URLへ再アクセス"	追加認証画面へ誘導されず保護画面を利用できること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-055	IT-13	URL直接アクセス	P2	認証済みCookie有効で追加認証画面へ直接アクセスするとホームへ遷移する	個別2FA ON／秘密鍵設定済／認証済みCookie有効／SEED-M01-02-2FA-SECRET	—	"1. 認証済みのまま追加認証画面（/admin/two_factor_auth/auth）へ直接アクセス"	追加認証画面を表示せずホーム画面相当へリダイレクトされること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-056	IT-03	画面遷移	P2	本人再設定で認証済みCookieが無効だとホームへ送られガードで再誘導される	個別2FA ON／秘密鍵設定済／認証済みCookie無効／SEED-M01-02-2FA-SECRET	—	"1. 認証済みCookie無効の状態で本人再設定画面（/admin/setting/system/two_factor_auth/edit）へアクセス"	本人再設定画面を表示せずホーム画面相当へ送られ、以降のガードで追加認証画面へ誘導されること。
+2. 同一ブラウザで保護された管理URLへ再アクセス"	追加認証画面へ誘導されず保護画面を利用できること。	Codex	2026-07-06	〇	
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-055	IT-13	URL直接アクセス	P2	認証済みCookie有効で追加認証画面へ直接アクセスするとホームへ遷移する	個別2FA ON／秘密鍵設定済／認証済みCookie有効／SEED-M01-02-2FA-SECRET	—	1. 認証済みのまま追加認証画面（/admin/two_factor_auth/auth）へ直接アクセス	追加認証画面を表示せずホーム画面相当へリダイレクトされること。	Codex	2026-07-06	〇	
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-056	IT-03	画面遷移	P2	本人再設定で認証済みCookieが無効だとホームへ送られガードで再誘導される	個別2FA ON／秘密鍵設定済／認証済みCookie無効／SEED-M01-02-2FA-SECRET	—	1. 認証済みCookie無効の状態で本人再設定画面（/admin/setting/system/two_factor_auth/edit）へアクセス	本人再設定画面を表示せずホーム画面相当へ送られ、以降のガードで追加認証画面へ誘導されること。	Codex	2026-07-06	〇	
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-057	IT-03	画面遷移	P2	システム2FAが無効なら個別2FA状態によらず追加認証なしで保護画面を利用できる	システム2FA無効／個別2FA ON／SEED-M01-02-2FA-SECRET	—	"1. システム2FAを無効にする
-2. 当該管理者でID/PW認証後、保護された管理URLへアクセス"	追加認証・初回設定へ誘導されず保護画面を利用できること（判定順序#1）。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-060	IT-13	URL直接アクセス	P2	未ログインで追加認証URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/two_factor_auth/auth へ直接アクセス"	管理ログイン画面へ誘導されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-061	IT-13	URL直接アクセス	P2	未ログインで初回設定・本人再設定URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/two_factor_auth/set または /admin/setting/system/two_factor_auth/edit へ直接アクセス"	管理ログイン画面へ誘導されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-070	IT-25	操作起点	P3	個別2FA ONの管理者はヘッダに「2段階認証 設定」リンクが表示される	個別2FA ON／認証済み／SEED-M01-02-2FA-SECRET	—	"1. ログイン後ヘッダのユーザーメニューを開く"	ユーザーメニュー内に「2段階認証 設定」リンクが表示されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-071	IT-25	操作起点	P3	個別2FA OFFの管理者はヘッダに「2段階認証 設定」リンクが表示されない	個別2FA OFF／SEED-M01-02-2FA-OFF	—	"1. ログイン後ヘッダのユーザーメニューを開く"	ユーザーメニュー内に「2段階認証 設定」リンクが表示されないこと。
+2. 当該管理者でID/PW認証後、保護された管理URLへアクセス"	追加認証・初回設定へ誘導されず保護画面を利用できること（判定順序#1）。	Codex	2026-07-06	×	未実施。システム2FA無効化は共有設定変更を伴う手動/隔離環境ケースで、今回の自動実行specなし。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-060	IT-13	URL直接アクセス	P2	未ログインで追加認証URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/two_factor_auth/auth へ直接アクセス	管理ログイン画面へ誘導されること。	Codex	2026-07-06	〇	
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-061	IT-13	URL直接アクセス	P2	未ログインで初回設定・本人再設定URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/two_factor_auth/set または /admin/setting/system/two_factor_auth/edit へ直接アクセス	管理ログイン画面へ誘導されること。	Codex	2026-07-06	〇	
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-070	IT-25	操作起点	P3	個別2FA ONの管理者はヘッダに「2段階認証 設定」リンクが表示される	個別2FA ON／認証済み／SEED-M01-02-2FA-SECRET	—	1. ログイン後ヘッダのユーザーメニューを開く	ユーザーメニュー内に「2段階認証 設定」リンクが表示されること。	Codex	2026-07-06	〇	
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-071	IT-25	操作起点	P3	個別2FA OFFの管理者はヘッダに「2段階認証 設定」リンクが表示されない	個別2FA OFF／SEED-M01-02-2FA-OFF	—	1. ログイン後ヘッダのユーザーメニューを開く	ユーザーメニュー内に「2段階認証 設定」リンクが表示されないこと。	Codex	2026-07-06	〇	
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-080	IT-22	必須制御	P2	追加認証POSTがユーザー単位5回/30分の上限を超えると制限メッセージが表示される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-LOCK	誤った6桁での連続失敗	"1. 誤トークンで5回失敗
-2. 6回目を送信"	「試行回数の上限を超過しました。しばらくお待ちいただき、再度お試しください。」が表示されること。
-m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-090	IT-15	対象データ	P2	追加認証成功時にHTTPOnlyの認証済みCookieが付与される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	有効な6桁トークン	"1. 追加認証成功の前後でブラウザのCookieを比較する"	追加認証成功後に新規の認証済みCookieが付与され、当該CookieがHttpOnly属性であること（Cookie名は仕様固定でないため名称一致では判定しない）。
+2. 6回目を送信"	「試行回数の上限を超過しました。しばらくお待ちいただき、再度お試しください。」が表示されること。	Codex	2026-07-06	×	test.fixmeで未実行。専用IP隔離とRateLimiter/Redis状態初期化ハーネスが未実装。
+m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-090	IT-15	対象データ	P2	追加認証成功時にHTTPOnlyの認証済みCookieが付与される	個別2FA ON／秘密鍵設定済／未認証／SEED-M01-02-2FA-SECRET	有効な6桁トークン	1. 追加認証成功の前後でブラウザのCookieを比較する	追加認証成功後に新規の認証済みCookieが付与され、当該CookieがHttpOnly属性であること（Cookie名は仕様固定でないため名称一致では判定しない）。	Codex	2026-07-06	〇	
 m01-02_admin_login_two_factor_auth（管理画面_二段階認証）	E2E-M01-02-091	IT-26	更新内容	P2	本人再設定成功後は旧秘密鍵に基づくトークンでは追加認証できない	個別2FA ON／秘密鍵設定済→再設定済／SEED-M01-02-2FA-SECRET	旧秘密鍵から算出した6桁	"1. 本人再設定で秘密鍵を更新する
-2. 認証済みCookieを破棄し追加認証画面で旧秘密鍵由来のトークンを入力"	旧秘密鍵由来のトークンでは認証に失敗し「トークンに誤りがあります。再度入力してください。」が表示されること。
+2. 認証済みCookieを破棄し追加認証画面で旧秘密鍵由来のトークンを入力"	旧秘密鍵由来のトークンでは認証に失敗し「トークンに誤りがあります。再度入力してください。」が表示されること。	Codex	2026-07-06	×	未実施。本人再設定成功後の旧秘密鍵無効化は、再設定画面が500で到達不能かつ複数手順の手動/間接ケースのため今回の自動実行specなし。
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）
@@ -179,7 +179,7 @@ DOM id は Symfony Form の getBlockPrefix=`admin_two_factor_auth`（`TwoFactorA
 
 集計（付帯表2と一致）: 自動化 27（002,003,007,009,014,015,016,017,018,019,020,021,024,025,026-031=6,055,056,057,082,083,086,089）／ 手動・間接 3（006,080,084）／ 対象外 60（残り）。**未分類 0**。
 
-## 付帯表3：シードデータ要件（個別流し込み・独立・べき等。実装は後）
+## 付帯表3：シードデータ（個別流し込み・独立・べき等。実装済み）
 
 | シードセットID | 対象/キー | 必要レコードの要点 | データ源 | 独立性・べき等・後始末 | 使用テストID |
 |----------------|-----------|--------------------|----------|------------------------|--------------|
@@ -191,6 +191,19 @@ DOM id は Symfony Form の getBlockPrefix=`admin_two_factor_auth`（`TwoFactorA
 | SEED-M01-02-2FA-LOCK | 試行制限状態 / 専用login_id＋専用IP | 追加認証POSTで失敗5回到達。**専用ID＋IP隔離＋テスト前にリミッタ(Redis)初期化でべき等化** | synthetic＋setup(初期化) | 専用・再現可能・隔離 | 080 |
 
 注: TOTP秘密鍵は base32（RobThree\Auth\TwoFactorAuth 既定＝SHA1/30秒/6桁）。`createSecret()`（TwoFactorAuthService.php:120-122）が生成し `verifyCode($authKey,$token,2)`（同:114-117）が許容ウィンドウ±2で検証する。SECRETシードは秘密鍵原値をテスト環境変数で受け渡し、設計書・ログには原値を書かない。`migration` 時はDB=ec-cube-enterprise正典。共通ログインは `config/default.config.ts`／秘密鍵は環境変数で供給する。
+
+### M01-02 シード適用・再利用手順
+
+M01-02 のシード実体は `e2e/seed/sets/m01/SEED-M01-02-*.sql`、登録情報は `e2e/seed/manifest.json`、Playwright から参照する環境変数は `e2e/config/seed.config.ts` に定義済み。テスト前に以下を実行して、正常系・異常系・破壊系を同じ状態へ戻してから使う。
+
+```bash
+e2e/seed/lib/apply.sh SEED-M01-02-2FA-SECRET SEED-M01-02-2FA-RESET SEED-M01-02-2FA-NOSECRET SEED-M01-02-2FA-NOSECRET-ONCE SEED-M01-02-2FA-OFF SEED-M01-02-2FA-LOCK
+eval "$(e2e/seed/lib/seed-env.sh)"
+cd e2e
+npx playwright test spec/admin/two_factor_auth.spec.ts --reporter=list
+```
+
+`SEED-M01-02-2FA-RESET` と `SEED-M01-02-2FA-NOSECRET-ONCE` は成功系テストで `two_factor_auth_key` が更新されるため、再実行前に上記 `apply.sh` を再実行して既知状態へ戻す。`SEED-M01-02-2FA-LOCK` は専用管理者と既知秘密鍵までを提供する。RateLimiter/Redis のカウンタ状態はDBシード外のため、E2E-M01-02-080 の完全自動化には専用IP隔離とリミッタ初期化ハーネスを併用する。
 
 ## 付帯表4：不具合候補（仕様乖離）／要確認
 

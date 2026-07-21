@@ -1,0 +1,138 @@
+{
+  "functionId": "b02-07_0404_sheet-10_tsv",
+  "featureNo": "B02-07",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-10:1693",
+      "designExpectation": "ユニサーチフィードTSVの項目は設計表の列順・項目名で出力する。識別ID34は branch_status（支店表示フラグ）であり、設計表には category_name_en と search_word は存在しない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/UniSearch/UniSearchExportService.php:126",
+      "implementationActual": "getHeader() は category_name_en、is_branch_published、search_word を含む39項目を出力する。設計の branch_status は is_branch_published という別名で出力される。",
+      "mismatchReason": "設計TSV表の外部契約は項目名・列順そのものだが、実装ヘッダは設計外の category_name_en/search_word を追加し、branch_status を is_branch_published に変更している。反証検索として branch_status/is_branch_published/category_name_en/search_word を UniSearchExportService/ProductClassRepository/UniSearchService で確認したが、branch_status 名での出力は無い。",
+      "comparisonRows": [
+        {
+          "item": "識別ID34",
+          "design": "branch_status",
+          "implementation": "is_branch_published",
+          "mismatch": "TSV項目名が設計と異なる。"
+        },
+        {
+          "item": "追加列",
+          "design": "category_name_en、search_word は設計表に無い",
+          "implementation": "getHeader() に category_name_en と search_word が存在する",
+          "mismatch": "設計外列が外部連携TSVに混入する。"
+        },
+        {
+          "item": "列数",
+          "design": "設計表は reservation_flg までの37項目",
+          "implementation": "getHeader() は39項目",
+          "mismatch": "外部契約の列数が一致しない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-10:1720",
+      "designExpectation": "stock は「本店ECの在庫数、リニューアル後は本店ECだけでなく店舗のEC在庫を反映する」としてTSVへ出力する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:366",
+      "implementationActual": "実装の stock_agg は在庫数ではなく、在庫がある base_info_id を ^A 区切りで string_agg し、UniSearchExportService はその値を stock 列へそのまま出力する。",
+      "mismatchReason": "設計は在庫数の連携を要求しているが、実装は stock_unlimited または stock>=1 の base_info_id 集合を出力しており、数値の在庫数ではない。stock / stock_agg / base_info_id / UniSearchExportService の別キーワードで反証検索しても、stock列へ店舗EC在庫数を数値連携する処理は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "stockの値",
+          "design": "本店ECおよび店舗ECの在庫数",
+          "implementation": "在庫ありの base_info_id を E'\\x01' 区切りで出力",
+          "mismatch": "数量ではなく検索用の在庫あり拠点IDになっている。"
+        },
+        {
+          "item": "取得ロジック",
+          "design": "店舗のEC在庫を反映",
+          "implementation": "dtb_product_class の stock/base_info_id を集約",
+          "mismatch": "設計文言どおりの店舗EC在庫数連携としては確認できない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-10:1768",
+      "designExpectation": "週間在庫履歴更新を product:batch exportWeeklyStockHistoryCsv で実行し、全商品規格の週次在庫を在庫履歴から集計して設定された出力パスへCSVを出力する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:35",
+      "implementationActual": "実装コマンド名は eccube:update-weekly-stock-history で、product:batch exportWeeklyStockHistoryCsv は実装されていない。",
+      "mismatchReason": "設計の利用者視点入口で指定されたコンソールコマンド名と実装の AsCommand 名が異なる。exportWeeklyStockHistoryCsv / product:batch / weekly_stock_history.csv / UpdateWeeklyStockHistoryCommand の別名検索でも設計コマンド名は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "コマンド名",
+          "design": "product:batch exportWeeklyStockHistoryCsv",
+          "implementation": "eccube:update-weekly-stock-history",
+          "mismatch": "運用・呼び出し契約が一致しない。"
+        },
+        {
+          "item": "入口の説明",
+          "design": "設定された出力パスへCSVを出力",
+          "implementation": "週間在庫履歴テーブルを洗い替えするコマンド",
+          "mismatch": "入口名だけでなく処理結果の契約も異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-10:1785",
+      "designExpectation": "出力パス（設定キー HareruyaEc.const.weekly_stock_history.csv_path、既定 /html/csv/weekly_stock_history.csv）へのCSV書き出し。ヘッダは商品規格IDと週次在庫列。CSVファイルの生成・上書き。DBは更新しない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:27",
+      "implementationActual": "実装は dtb_weekly_stock_history_temp をTRUNCATEしてINSERTし、dtb_weekly_stock_history をTRUNCATEして一時テーブルからコピーする。CSVファイル出力パス、weekly_stock_history.csv、HareruyaEc.const.weekly_stock_history.csv_path は確認できない。",
+      "mismatchReason": "設計はCSV生成・上書きかつDB非更新を要求するが、実装はDBテーブル更新方式でCSVを生成しない。weekly_stock_history.csv / HareruyaEc.const.weekly_stock_history / fputcsv / SplFileObject / dtb_weekly_stock_history の反証検索でも、設計CSV出力の実装は無い。",
+      "comparisonRows": [
+        {
+          "item": "出力先",
+          "design": "/html/csv/weekly_stock_history.csv へのCSV書き出し",
+          "implementation": "dtb_weekly_stock_history_temp と dtb_weekly_stock_history を更新",
+          "mismatch": "ファイル出力ではなくDB更新になっている。"
+        },
+        {
+          "item": "副作用",
+          "design": "CSVファイルの生成・上書き。DBは更新しない",
+          "implementation": "TRUNCATE/INSERT/COPYでDBを更新する",
+          "mismatch": "副作用が設計と逆。"
+        },
+        {
+          "item": "ヘッダ",
+          "design": "商品規格IDと週次在庫列のCSVヘッダ",
+          "implementation": "DB列 product_stock_id, stock_01〜stock_11",
+          "mismatch": "CSVヘッダ出力が存在しない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-10:1779",
+      "designExpectation": "対象データは商品在庫に存在する全商品規格ID。該当する在庫履歴が無い場合は0とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:64",
+      "implementationActual": "getStockData() は dtb_stock_history sh をFROMにして sh.product_stock_id BETWEENで集計するため、在庫履歴が1件も無い商品在庫は結果行自体が生成されない。各週の履歴が無い場合だけ NULL を0へ変換する。",
+      "mismatchReason": "設計は商品在庫に存在する全商品規格IDを対象にし、履歴なしは0とする要求だが、実装はdtb_product_stockを起点にLEFT JOINしていないため、履歴が全く無い商品在庫を0行として出力・登録できない。product_stock / dtb_stock_history / getLastProductStockId / getStockData の反証検索でも全商品在庫を0埋めする処理は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "対象母集団",
+          "design": "商品在庫に存在する全商品規格ID",
+          "implementation": "dtb_stock_history に存在する product_stock_id",
+          "mismatch": "履歴未作成の商品在庫が対象外になる。"
+        },
+        {
+          "item": "履歴なしの扱い",
+          "design": "該当する在庫履歴が無い場合は0",
+          "implementation": "週ごとのNULLは0にするが、履歴が1件も無い商品在庫は行が無い",
+          "mismatch": "全欠損ケースで0行が作られない。"
+        }
+      ]
+    }
+  ]
+}

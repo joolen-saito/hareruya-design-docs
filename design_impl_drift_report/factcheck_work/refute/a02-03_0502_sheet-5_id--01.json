@@ -1,0 +1,15 @@
+{
+  "chunkId": "a02-03_0502_sheet-5_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-03_0502_sheet-5_id.json#a02-03_0502_sheet-5_id-conformance-f696cbc983f0",
+      "refuted": false,
+      "reason": "反証を試みたが不成立。(1)引用検証: 設計 HTML 1381行に 404 本文の形 `{code, message}`（\"Not Found\"）の記載を確認。実装 ProductController の旧商品ID両ルート（getPopupCardByOldProductId:319-350 / getPopupProductByOldProductId:363-399）は該当なし時に throw new NotFoundException('Not Found') し、catch(BaseApiException) で ['code'=>$e->getStatusCode(),'errors'=>$e->getErrors()] を JSON 返却。両ルートともキーは errors で message ではない。(2)別実装探索: NotFoundException.php:29-31 は parent に errors:[$message] を渡す。BaseApiException.php:25-32 は $message を implode で内部例外メッセージにするのみで getErrors() は errors 配列を返し、message キーで外部返却する経路は無い。JSON 応答は controller が catch 内で直接組み立てており、message キーへ変換する Subscriber/正規化層は介在しない。(3)結論: 外部 JSON の本文キーは errors 配列であり設計の message キーと不一致。HTTP404・文言\"Not Found\"は一致するが契約キー相違は実在。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-03_0502_sheet-5_id.json#a02-03_0502_sheet-5_id-conformance-a04cfa7b043f",
+      "refuted": false,
+      "reason": "反証を試みたが不成立。(1)引用検証: 設計 HTML 1379行の成功レスポンス表で price01/price02/stock は型 string、『Doctrineのdecimal値のため数値文字列で返す』と明記、1388-1390行サンプルも \"500.00\"/\"480.00\"/\"12.00\" と文字列。(2)実装検証: A02-03 該当関数 findPopupProductByOldProductId(2404行) の RSM 2463-2465 は price01/price02/stock を addScalarResult(...,'integer') で取得（Doctrine IntegerType が (int) 変換）。別経路 findPopupProductByOldProductIdWithoutLang(2491行) の RSM 2543-2545 も同一の integer マッピング。PopupResponseBuilder::build(33-35) は price01/price02 を int のまま透過、stock は (int) キャスト。よって数値文字列化する箇所は無い。(3)別実装探索: 兄弟 popup 関数（ByProductId/ByCardId 等 2163-2165,2376-2378 ほか）も全て integer マッピングで、string を返す代替実装は存在しない。$this->json() の Symfony シリアライズも int を int のまま出力。結論: price01/price02/stock は整数型で応答され設計の string と不一致。指摘は維持。"
+    }
+  ]
+}

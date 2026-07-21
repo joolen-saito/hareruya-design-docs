@@ -1,0 +1,108 @@
+{
+  "functionId": "m10-09_0209_sheet-10_sheet",
+  "featureNo": "M10-09",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-10:2937",
+      "designExpectation": "テンプレート項目の選択肢は「登録されているメールテンプレート全種」とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/MailType.php:52",
+      "implementationActual": "メール設定メニューは admin_mall_mail へ到達するが、MailType のテンプレート選択肢は baseInfo 一致かつ isAutoSend=false のテンプレートだけを抽出している。自動送信メールは AutoMailType 側で別画面に分離されている。",
+      "mismatchReason": "設計は登録済みメールテンプレート全種を1つのテンプレート選択肢に含める要求だが、実装は isAutoSend=false で絞り込み、isAutoSend=true の登録済みテンプレートを除外する。",
+      "comparisonRows": [
+        {
+          "item": "テンプレート選択肢",
+          "design": "登録されているメールテンプレート全種",
+          "implementation": "MailType の query_builder で mt.baseInfo=:baseInfo かつ mt.isAutoSend=false に限定",
+          "mismatch": "自動送信テンプレートが選択肢から除外される"
+        },
+        {
+          "item": "分離実装",
+          "design": "同一テンプレート選択欄で全種を選択",
+          "implementation": "AutoMailType.php:49 では mt.isAutoSend=SEND_AUTO の別フォームを定義",
+          "mismatch": "設計の「全種」ではなく、通常メール/自動送信メールを別画面に分割している"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-10:2939",
+      "designExpectation": "本文項目はラベル「本文」、最大値65536文字として表示・入力できる。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/mall/mail/detail.twig:197, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/MailType.php:71",
+      "implementationActual": "画面ラベルは翻訳キー admin.setting.shop.mail.mail_text（日本語: テキスト）で表示され、tpl_data は TextareaType だが Length(65536) や maxlength はなく TwigLint のみを検証している。",
+      "mismatchReason": "設計の表示ラベル「本文」と最大値65536文字に対し、実装は表示ラベルが「テキスト」で、本文長の上限検証が実装されていない。",
+      "comparisonRows": [
+        {
+          "item": "本文ラベル",
+          "design": "本文",
+          "implementation": "admin.setting.shop.mail.mail_text = テキスト",
+          "mismatch": "利用者に見えるラベル文言が異なる"
+        },
+        {
+          "item": "本文最大長",
+          "design": "65536文字",
+          "implementation": "tpl_data の constraints は TwigLint のみ。Length(65536) または maxlength 指定なし",
+          "mismatch": "設計上の最大文字数制限が実装されていない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-10:2996",
+      "designExpectation": "「基本情報編集」見出し直下のブロック内で、店舗営業時間の直下にメール4欄を、送信元メールアドレス（From）→問い合わせ受付メールアドレス（From, ReplyTo）→返信受付メールアドレス（ReplyTo）→送信エラー受付メールアドレス（ReturnPath）の順に表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:143, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:150, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:160, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:170, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:180",
+      "implementationActual": "店舗営業時間の後に business_hour_en が入り、その後のメール欄順は email01（送信元）→email03（返信先）→email04（送信エラー通知）→email02（問い合わせ専用）である。",
+      "mismatchReason": "設計のメール4欄表示順と直下配置に対し、実装は追加項目を挟み、email02 を4番目に表示している。",
+      "comparisonRows": [
+        {
+          "item": "直下配置",
+          "design": "店舗営業時間の直下にメール4欄",
+          "implementation": "business_hour_en を挟んだ後にメール欄を表示",
+          "mismatch": "メール欄が店舗営業時間の直下ではない"
+        },
+        {
+          "item": "表示順",
+          "design": "email01 → email02 → email03 → email04",
+          "implementation": "email01 → email03 → email04 → email02",
+          "mismatch": "問い合わせ受付メールアドレスの表示位置が設計と異なる"
+        },
+        {
+          "item": "ラベル文言",
+          "design": "問い合わせ受付／返信受付／送信エラー受付",
+          "implementation": "問い合わせ専用／返信先／送信エラー通知",
+          "mismatch": "利用者に見えるメール欄ラベルが設計文言と一致しない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html#sheet-10:3027",
+      "designExpectation": "MailService のヘッダ割当は、問い合わせ受付メールでは From/Bcc/Reply-To に email02、管理画面からの仮会員確認メール再送では From に email03 を使用する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:343, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:357, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:542",
+      "implementationActual": "sendContactMail は問い合わせ種別の email があればそれを adminEmail とし、From/Bcc/Reply-To に使用する。sendAdminCustomerConfirmMail は From に email01 を使用する。",
+      "mismatchReason": "設計の固定ヘッダ割当と異なり、問い合わせ受付メールは email02 固定ではなく問い合わせ種別メールで上書きされ、管理画面からの仮会員確認メール再送は From が email03 ではなく email01 になっている。",
+      "comparisonRows": [
+        {
+          "item": "お問い合わせ受付 From/Bcc/Reply-To",
+          "design": "email02",
+          "implementation": "MtbContactSubject の email があればその値、なければ email02",
+          "mismatch": "email02 固定ではない"
+        },
+        {
+          "item": "管理画面からの仮会員確認メール再送 From",
+          "design": "email03",
+          "implementation": "email01",
+          "mismatch": "From に使うメール列が異なる"
+        }
+      ]
+    }
+  ]
+}

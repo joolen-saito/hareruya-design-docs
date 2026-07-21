@@ -1,0 +1,35 @@
+{
+  "chunkId": "a06-02_0506_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-e31161ef4383",
+      "refuted": false,
+      "reason": "反証を試みたが崩せず。src全体で `rg -n \"admin/otcBuyOrders\"` は OtcBuyOrderController.php:69 の #[Route('/%eccube_api_v1_route%/admin/otcBuyOrders.json', methods:['GET'])] 1件のみ。拡張子なし別名 '/admin/otcBuyOrders' を `rg` しても0件。eccube.yaml:6 の env(ECCUBE_API_V1_ROUTE) 既定値は 'api/v1' で確認済み（他に 'api' 単独の上書きも無し）。実効パスは /api/v1/admin/otcBuyOrders.json となり、設計の /api/admin/otcBuyOrders.json および拡張子なし別名は実装されていない。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-092ff312e7c3",
+      "refuted": false,
+      "reason": "MtbOtcBuyOrderStatus.php:84-89 の ASSESSMENT_UNCOMPLETED_STATUSES を実際に開いて確認: STATUS_ASSESSMENT_PENDING(5)/IN_PROGRESS(6)/PAUSED(8)/RESUMED(9) のみで STATUS_BEFORE_PAY(7) は含まれず、7 は :53-54,:76 で DEPRECATED_STATUSES 扱い。Controller.php:79 は一覧APIでこの定数のみを渡す。7 を加える別定数・別呼び出しは無い（ASSESSMENT_ACTIVE_STATUSES=6,9 / COMPLETED=1,2,10 のいずれも7を含まない）。設計は 5,6,7,8,9 を要求。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-4dcf720d3010",
+      "refuted": false,
+      "reason": "Repository を実読。getOtcBuyOrdersByShopIdAndStatus は :998 で int $shopId 必須、:1001 で empty($shopId) なら [] を返し、:1047 で常に where('baseInfo.id = :shopId') を付与。Controller.php:77 は常に $Member->getBaseInfo()->getId() を渡す（null分岐無し、そのまま->getId()呼び出し）。店舗が紐づかない場合に絞り込みを外して全査定対象を一律返す経路は実装に存在しない（存在すれば空配列でなく全件になるはずだが、コード上は空配列固定）。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-d2bc0805a817",
+      "refuted": false,
+      "reason": "Controller.php:97 は applyDate を format('Y/m/d H:i:s')（例 2024/01/15 10:30:00）で整形しており、これは ISO8601 の日時表記（YYYY-MM-DDThh:mm:ss）とは明確に異なる。format('c')/DATE_ATOM 等の使用は当該整形箇所に無し。したがって applyDate について確かな乖離が残るため本 key は反証不能。ただし :113 の birth=format('Y-m-d')（例 2024-01-15）は ISO8601 の日付形式そのものであり、この1フィールドに限れば指摘は過剰。とはいえ本 key は applyDate を含む単一指摘のため全体としては維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-92f6fa682dfe",
+      "refuted": false,
+      "reason": "Repository:1011 で otcBuyOrder.Identification を leftJoin し :1041 で identification.id as identificationId を取得（未一致時は null）。Controller.php:106 は 'identificationId' => $otcBuyOrder['identificationId'] ?? null と明示的に null を維持しており、?? 0 / COALESCE 等の 0 補正は無い。設計は未登録時 0 を要求。未登録時に null が返るため指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-02_0506_sheet-4_sheet.json#a06-02_0506_sheet-4_sheet-conformance-41ef44b084c2",
+      "refuted": false,
+      "reason": "ExceptionListener.php を実読。:72 で isAppApi() 分岐に入り、:98 で HTTP_UNAUTHORIZED の errors を固定 ['認証エラー'] とし、:136-139 で必ず JsonResponse(['code'=>$statusCode,'errors'=>$errors], $statusCode) を返す。App API では 401 でも (code, errors) の JSON 本文が付与される経路に集約され、本文なしで返す分岐は当該リスナーに存在しない。設計は 401 本文なしを要求。指摘は維持。（懐疑点として、実際の未認証リクエストは Symfony firewall のエントリポイントが先に応答する可能性はあるが、App API 例外は本リスナーで JSON 本文化される構造が確認できるため反証には至らず。）"
+    }
+  ]
+}

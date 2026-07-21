@@ -1,0 +1,46 @@
+{
+  "chunkId": "b08-01_0408_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b08-01_0408_sheet-3_sheet.json#b08-01_0408_sheet-3_sheet-conformance-5a3e116d905b",
+      "functionId": "b08-01_0408_sheet-3_sheet",
+      "featureNo": "B08-01",
+      "title": "B08-01 リニューアル時パスワードリセットメール送信",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "UNCERTAIN",
+      "confidence": "medium",
+      "summary": "設計書自体が「dtb_user_mail_history へ履歴保存」と「本機能はDB書込を行わない」で内部矛盾しており、かつ B08-01 送信バッチが enterprise 未実装のため、指摘の『実装違い（保存先テーブルが異なる）』を確定できない。",
+      "reason": "検証事実は概ね裏付けられた。(1) 基本設計 sheet-3 の line 906-911 は『メール送信後、dtb_user_mail_history に送信日時・件名・本文全文・使用テンプレートファイル名・送信相手ユーザーIDを登録』と明記。(2) 実装側では /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbUserMailHistory.php:24 が `@deprecated dtb_mail_historyに統合されたため、使用しない` で未使用、共通履歴保存は src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39 の `new MailHistory()`（dtb_mail_history）で行われる。(3) しかし B08-01 の送信バッチ自体が enterprise に未実装。`customer_migration.twig`/`customer_migration.en.twig` テンプレートと DB シード（app/DoctrineMigrations/Version20251204111453.php, Version20251223094816.php の eccube.mail.customer_migration / _en）は存在するが、これを送信するコマンド・サービスは src/ に一切参照が無い（`rg -rn 'customer_migration' src/` が 0 件）。B08-04 は CheckBlankRequiredItemCustomerCommand として移植済みだが、B08-01 送信経路は無い。したがって『どのテーブルにも履歴が保存されない＝実装漏れ』が実態で、finding が主張する『別テーブル(dtb_mail_history)へ保存する実装違い』という観測対象は存在しない（送信経路自体が無いため仮定的）。加えて、同シート末尾の詳細設計（リバース詳細設計）では line 984 で『本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない』、line 978 で副作用は『移行通知メール送信』のみ、さらに図形注記 line 925『パスワードは移行する想定のため…そのためこちらのバッチは不要』と、基本設計の履歴保存要求と真っ向から矛盾する。詳細設計は『DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする』と宣言しており、これに従えば履歴無保存は仕様どおりとなり finding は成立しない。基本設計を正とすれば要求未達（実装漏れ）となる。設計内で要求の有無が矛盾し、かつ検査すべき B08-01 送信実装が存在しないため、指摘の issueCategory『実装違い』を事実として確定できず UNCERTAIN とする。",
+      "designEvidence": {
+        "label": "設計要求（基本設計）",
+        "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+        "start": 906,
+        "end": 911,
+        "contains": ["dtb_user_mail_history", "送信日時", "送信した相手のユーザーID"]
+      },
+      "implEvidence": [
+        {
+          "label": "dtb_user_mail_history は deprecated 未使用",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/DtbUserMailHistory.php",
+          "start": 21,
+          "end": 25,
+          "contains": ["dtb_user_mail_history", "deprecated"]
+        },
+        {
+          "label": "共通履歴保存は MailHistory(dtb_mail_history) へ",
+          "path": "ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php",
+          "start": 39,
+          "end": 44,
+          "contains": ["new MailHistory()", "setMailSubject"]
+        },
+        {
+          "label": "設計内矛盾：詳細設計は本機能をDB書込なしと明記",
+          "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+          "start": 984,
+          "end": 984,
+          "contains": ["参照系（検索）", "DBへの登録・更新・削除は行わない"]
+        }
+      ]
+    }
+  ]
+}

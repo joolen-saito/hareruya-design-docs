@@ -1,0 +1,35 @@
+{
+  "functionId": "f06-11_0305_sheet-10_sheet",
+  "featureNo": "F06-11",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-10（画面部品説明 識別ID10『処理状態＝画像』／カスタマイズ『処理状態の画像を変更する』『紐付けシート参照』／リバース詳細設計『処理状態は状態識別子に対応する画像で示す』）",
+      "designExpectation": "処理状態を状態別の『画像』で表示する。マッピング後6状態（受付完了/査定中/査定完了/振込待ち/買取完了/キャンセル）に対応する状態画像を一覧の各行に表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Mypage/purchase_history.twig:133-147（特に144）",
+      "implementationActual": "一覧Twigは処理状態を <img> ではなく <span class=\"c-hareruya-label--status c-hareruya-label--status-{completed|cancelled|pending}\">{{ row.statusIconAlt }}</span> の色付きテキストラベルで表示し、状態画像を描画しない。CSSモディファイアは3種のみ。StatusMapper::resolveStatusIcon()(StatusMapper.php:95-127)が6状態の iconPath(assets/img/mypage/*.svg)を返し RowBuilder(RowBuilder.php:104,144)が DTO statusIconPath に詰めるが一覧Twigは statusIconPath を参照しない（死にコード）。詳細画面(purchase_history_detail_net.twig:46-49, _otc.twig:24-27)は d.statusIconPath を <img> 描画する。",
+      "mismatchReason": "設計は処理状態を状態別『画像』表示と一貫して明記（識別ID10=画像、リバース節も状態画像）。実装は一覧では画像を一切描画せず色付きテキストラベル(3配色)に置換。状態画像アセット・パス算出・詳細画面のimg描画は存在するのに一覧側のみ画像描画が欠落。purchase_history.twig / StatusMapper.php / RowBuilder.php を確認し一覧側に画像描画が存在しないことを確認済み。",
+      "comparisonRows": [
+        {"item": "処理状態の表示形式", "design": "状態別の画像(<img> assets/img/mypage/*.svg 6種)", "implementation": "色付きテキストラベル <span class=\"c-hareruya-label--status-*\"> にstatusIconAltを描画", "mismatch": "一覧で画像を描画せずテキストラベルに置換（statusIconPathは死にコード）"},
+        {"item": "状態別バリエーション数", "design": "6状態それぞれに対応する画像", "implementation": "CSSモディファイアはcompleted/cancelled/pendingの3種のみ", "mismatch": "6状態→3配色に集約され状態別画像が失われる"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "low",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-10（画面部品説明 識別ID5=買取依頼日／6=買取店舗／8=買取依頼内容）",
+      "designExpectation": "一覧列ラベル文言は識別ID5『買取依頼日』、識別ID6『買取店舗』、識別ID8『買取依頼内容』。",
+      "implRef": "src/Eccube/Resource/locale/messages.ja.yaml:829,830,832（col.order_date/col.shop/col.summary）, purchase_history.twig:96,102,112",
+      "implementationActual": "col.order_date=『依頼日』, col.shop=『店舗』, col.summary=『依頼内容』と定義され描画される。設計の『買取』接頭辞が3列で欠落。識別ID7『買取番号』(col.order_id)、ID9『買取金額合計』(col.application_total)、ID10『処理状態』(col.status)は設計文言と一致。",
+      "mismatchReason": "設計の画面部品ラベル（利用者が直接目にする列見出し）と実装ロケール文言が3列で不一致（買取依頼日→依頼日、買取店舗→店舗、買取依頼内容→依頼内容）。低重要度の文言差。messages.ja.yaml と purchase_history.twig と設計HTMLを確認。",
+      "comparisonRows": [
+        {"item": "列ラベル 識別ID5", "design": "買取依頼日", "implementation": "依頼日(col.order_date)", "mismatch": "『買取』接頭辞欠落"},
+        {"item": "列ラベル 識別ID6", "design": "買取店舗", "implementation": "店舗(col.shop)", "mismatch": "『買取』接頭辞欠落"},
+        {"item": "列ラベル 識別ID8", "design": "買取依頼内容", "implementation": "依頼内容(col.summary)", "mismatch": "『買取』接頭辞欠落"}
+      ]
+    }
+  ]
+}

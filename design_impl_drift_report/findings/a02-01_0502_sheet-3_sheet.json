@@ -1,0 +1,1548 @@
+{
+  "functionId": "a02-01_0502_sheet-3_sheet",
+  "featureNo": "A02-01",
+  "title": "A02-01 ポップアップ用商品情報取得",
+  "domain": "a02",
+  "kind": "api",
+  "designHtml": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+  "sourceBook": "0502_基本設計仕様書(API_商品管理).html",
+  "sheetId": "sheet-3",
+  "sheetName": "ポップアップ用商品情報取得",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "a02-01_0502_sheet-3_sheet-conformance-e5483f20696d",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:872,983",
+      "designRefDetail": null,
+      "designExpectation": "言語区分は jp または en を想定し、EC-CUBEサーバURLでは jp で表記する。",
+      "designQuote": "言語区分は jp または en を想定し、EC-CUBEサーバURLでは jp で表記する。",
+      "implRef": "src/Eccube/Controller/App/ProductController.php:158",
+      "implementationActual": "getPopupProductByProductId は strtolower($lang) の match で 'ja' => 'JP', 'en' => 'EN' のみを許可し、'jp' は default で NotFoundException になる。",
+      "difference": "設計は jp/en を外部契約としているが、実装は ja/en を受け付ける。/api/popup/product/jp/{productId} は設計上有効な言語指定だが実装では404扱いになる。反証として popup_product_by_product_id、/api/popup/product、getPopupProductByProductId、言語変換、mtb_language を検索したが jp を受け付ける別ルート・別変換は見当たらない。",
+      "mismatchReason": "設計は jp/en を外部契約としているが、実装は ja/en を受け付ける。/api/popup/product/jp/{productId} は設計上有効な言語指定だが実装では404扱いになる。反証として popup_product_by_product_id、/api/popup/product、getPopupProductByProductId、言語変換、mtb_language を検索したが jp を受け付ける別ルート・別変換は見当たらない。",
+      "comparisonRows": [
+        {
+          "item": "lang=jp",
+          "design": "jp を想定する。EC-CUBEサーバURLでは jp 表記。",
+          "implementation": "'ja' のみ JP に変換し、'jp' は NotFoundException。",
+          "mismatch": "設計上有効な jp が拒否される。"
+        },
+        {
+          "item": "lang=en",
+          "design": "en を想定する。",
+          "implementation": "'en' を EN に変換する。",
+          "mismatch": "差異なし。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "a02-01_0502_sheet-3_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/App/ProductController.php:158",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「言語区分は jp または en を想定し、EC-CUBEサーバURLでは jp で表記する。」。実装は「getPopupProductByProductId は strtolower($lang) の match で 'ja' => 'JP', 'en' => 'EN' のみを許可し、'jp' は default で NotFoundException になる。」。乖離理由は「設計は jp/en を外部契約としているが、実装は ja/en を受け付ける。/api/popup/product/jp/{productId} は設計上有効な言語指定だが実装では404扱いになる。反証として popup_product_by_product_id、/api/popup/product、getPopupProductByProductId、言語変換、mtb_language を検索したが jp を受け付ける別ルート・別変換は見当たらない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Controller/App/ProductController.php:158",
+        "src/Eccube/Controller/App/ProductController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/App/ProductController.php:158\n155:                 throw new NotFoundException('Not Found');\n156:             }\n157: \n158:             $languageCode = match (strtolower($lang)) {\n159:                 'ja' => 'JP',\n160:                 'en' => 'EN',\n161:                 default => throw new NotFoundException('Not Found'),",
+        "src/Eccube/Controller/App/ProductController.php:32\n29: use Symfony\\Component\\Routing\\Attribute\\Route;\n30: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n31: \n32: class ProductController extends AbstractController\n33: {\n34:     public function __construct(\n35:         private readonly ProductRepository $productRepository,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "a02-01_0502_sheet-3_sheet-conformance-b97fef7cc1b9",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:976,988,1024",
+      "designRefDetail": null,
+      "designExpectation": "取得できない場合はコード404・メッセージ「Not Found」のJSONを返す。失敗時本文は {code, message}（\"Not Found\"）。",
+      "designQuote": "取得できない場合はコード404・メッセージ「Not Found」のJSONを返す。失敗時本文は {code, message}（\"Not Found\"）。",
+      "implRef": "src/Eccube/Controller/App/ProductController.php:177",
+      "implementationActual": "NotFoundException は errors: ['Not Found'] を保持し、BaseApiException catch は {'code': $e->getStatusCode(), 'errors': $e->getErrors()} を返す。",
+      "difference": "HTTPステータス404と Not Found 文言は実装されているが、レスポンス本文キーが設計の message ではなく errors 配列になっている。反証として NotFoundException、BaseApiException、ProductController の popup 例外処理、Not Found 文字列を検索したが、このAPIの404で {code, message} を返す経路は見当たらない。",
+      "mismatchReason": "HTTPステータス404と Not Found 文言は実装されているが、レスポンス本文キーが設計の message ではなく errors 配列になっている。反証として NotFoundException、BaseApiException、ProductController の popup 例外処理、Not Found 文字列を検索したが、このAPIの404で {code, message} を返す経路は見当たらない。",
+      "comparisonRows": [
+        {
+          "item": "HTTPステータス",
+          "design": "404",
+          "implementation": "404",
+          "mismatch": "差異なし。"
+        },
+        {
+          "item": "本文キー",
+          "design": "{code, message}",
+          "implementation": "{code, errors}",
+          "mismatch": "message が errors 配列に置き換わっている。"
+        },
+        {
+          "item": "本文メッセージ",
+          "design": "\"Not Found\"",
+          "implementation": "errors[0] = \"Not Found\"",
+          "mismatch": "文言は同じだが格納フィールドが異なる。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "a02-01_0502_sheet-3_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/App/ProductController.php:177",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「取得できない場合はコード404・メッセージ「Not Found」のJSONを返す。失敗時本文は {code, message}（\"Not Found\"）。」。実装は「NotFoundException は errors: ['Not Found'] を保持し、BaseApiException catch は {'code': $e->getStatusCode(), 'errors': $e->getErrors()} を返す。」。乖離理由は「HTTPステータス404と Not Found 文言は実装されているが、レスポンス本文キーが設計の message ではなく errors 配列になっている。反証として NotFoundException、BaseApiException、ProductController の popup 例外処理、Not Found 文字列を検索したが、このAPIの404で {code, message} を返す経路は見当たらない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "ルート・Controller",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Controller/App/ProductController.php:177",
+        "src/Eccube/Controller/App/ProductController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/App/ProductController.php:177\n174:             );\n175: \n176:             return $this->json($this->popupResponseBuilder->build($result, $productUrl), Response::HTTP_OK);\n177:         } catch (BaseApiException $e) {\n178:             return $this->json([\n179:                 'code' => $e->getStatusCode(),\n180:                 'errors' => $e->getErrors(),",
+        "src/Eccube/Controller/App/ProductController.php:32\n29: use Symfony\\Component\\Routing\\Attribute\\Route;\n30: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n31: \n32: class ProductController extends AbstractController\n33: {\n34:     public function __construct(\n35:         private readonly ProductRepository $productRepository,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "a02-01_0502_sheet-3_sheet-conformance-1e958e1ab870",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:986",
+      "designRefDetail": null,
+      "designExpectation": "成功レスポンスの price01、price02、stock、weeklySold は string として返す。price01/price02/stock は Doctrine の decimal 値、weeklySold は SUM 結果のため数値文字列で返す。",
+      "designQuote": "成功レスポンスの price01、price02、stock、weeklySold は string として返す。price01/price02/stock は Doctrine の decimal 値、weeklySold は SUM 結果のため数値文字列で返す。",
+      "implRef": "src/Eccube/Repository/ProductRepository.php:2081",
+      "implementationActual": "ProductRepository は price01、price02、stock、weeklySold を integer scalar として取得し、PopupResponseBuilder も stock と weeklySold を int にキャストして返す。",
+      "difference": "設計は数値文字列を外部JSON契約としているが、実装は整数型に変換して返す。反証として PopupResponseBuilder、ProductRepository の findPopupProductByProductId、レスポンスフィールド名、price01/price02/weeklySold を検索したが、このAPIで文字列へ整形する別処理は見当たらない。",
+      "mismatchReason": "設計は数値文字列を外部JSON契約としているが、実装は整数型に変換して返す。反証として PopupResponseBuilder、ProductRepository の findPopupProductByProductId、レスポンスフィールド名、price01/price02/weeklySold を検索したが、このAPIで文字列へ整形する別処理は見当たらない。",
+      "comparisonRows": [
+        {
+          "item": "price01",
+          "design": "string",
+          "implementation": "integer scalar の値をそのまま返す。",
+          "mismatch": "文字列ではなく数値になる。"
+        },
+        {
+          "item": "price02",
+          "design": "string",
+          "implementation": "integer scalar の値をそのまま返す。",
+          "mismatch": "文字列ではなく数値になる。"
+        },
+        {
+          "item": "stock",
+          "design": "string",
+          "implementation": "PopupResponseBuilder で (int) にキャスト。",
+          "mismatch": "文字列ではなく数値になる。"
+        },
+        {
+          "item": "weeklySold",
+          "design": "string",
+          "implementation": "PopupResponseBuilder で (int) にキャスト。",
+          "mismatch": "文字列ではなく数値になる。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "a02-01_0502_sheet-3_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Repository/ProductRepository.php:2081",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「成功レスポンスの price01、price02、stock、weeklySold は string として返す。price01/price02/stock は Doctrine の decimal 値、weeklySold は SUM 結果のため数値文字列で返す。」。実装は「ProductRepository は price01、price02、stock、weeklySold を integer scalar として取得し、PopupResponseBuilder も stock と weeklySold を int にキャストして返す。」。乖離理由は「設計は数値文字列を外部JSON契約としているが、実装は整数型に変換して返す。反証として PopupResponseBuilder、ProductRepository の findPopupProductByProductId、レスポンスフィールド名、price01/price02/weeklySold を検索したが、このAPIで文字列へ整形する別処理は見当たらない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Repository/ProductRepository.php:2081",
+        "src/Eccube/Repository/ProductRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/ProductRepository.php:2081\n2078:         $rsm->addScalarResult('productname', 'productName', 'string');\n2079:         $rsm->addScalarResult('nameen', 'nameEn', 'string');\n2080:         $rsm->addScalarResult('productclassid', 'productClassId', 'integer');\n2081:         $rsm->addScalarResult('price01', 'price01', 'integer');\n2082:         $rsm->addScalarResult('price02', 'price02', 'integer');\n2083:         $rsm->addScalarResult('stock', 'stock', 'integer');\n2084:         $rsm->addScalarResult('languagecode', 'languageCode', 'string');",
+        "src/Eccube/Repository/ProductRepository.php:59\n56:  *\n57:  * @extends AbstractEnterpriseRepository<Product>\n58:  */\n59: class ProductRepository extends AbstractEnterpriseRepository implements ServiceEntityRepositoryInterface\n60: {\n61:     public const COLUMNS = [\n62:         'product_id' => 'p.id',"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 31,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-b33659b1eb",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "概要 記事内表示ポップアップ用商品情報取得",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-687816d86e",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "通販・記事画面内にあるカード画像の上にマウスカーソルを置いたときポップアップ表示する商品情報をJSON形式で出力する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-ef922e3aca",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "・ 言語・商品IDを元に商品ページURLを含む商品情報をJSON出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-4d7337b1ae",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "・ 商品情報を出力できるのは、シングルカードのみ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-c80ac2ae55",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "グッズ・サプライなどの商品情報は出力できない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-b68ed4d4c7",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "404 該当データがない場合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-a1d7c47e17",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "記事内に表示する商品ポップアップ用に、商品IDと言語を指定して商品情報を取得するAPIである。pf-api（記事・買取連携用のAPIアプリケーション）が提供するJSON APIで、記事サイト等から呼び出される。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-0336f2b536",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの商品ポップアップ取得処理、ルート定義（ config/routes.yaml ）、商品規格を扱うリポジトリを正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-32787970d4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "本機能のカスタマイズ区分は現行踏襲であり、挙動の確認はpf-apiを参照する。DB関連の記述はec-cube-enterpriseを正とする方針だが、当機能が参照する商品サブ規格・カード詳細・カードコンディション等のHareruya独自テーブルはec-cube-enterpriseに該当が見当たらないため、現行（pf-api）の名称を残し「ec-cube-enterprise実装で要確認」とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-a2d3fda324",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "該当が無い場合の応答",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-c2053184d2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-83584614d5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "記事サイト側のポップアップ表示の仕様",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-39a11e205e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "商品の登録・編集（商品管理を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-0894615fcc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "該当が見当たらない（ec-cube-enterprise実装で要確認）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-d050ea21c9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "dtb_product_class（同名・price01・price02・stock を確認値とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-6793c74e64",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "商品規格（dtb_product_class）は現行と移行先で同名。商品サブ規格をはじめとするHareruya独自のカード関連テーブルはec-cube-enterpriseに対応する実装が見当たらないため、現行（pf-api）の名称を主とし、推測でスキーマ化せずec-cube-enterprise実装で要確認とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-a4cd6d46df",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "記事内ポップアップ表示に必要な商品情報。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-b10a76006a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "商品IDと言語に対応するポップアップ用商品情報をJSONで返す。該当が無い場合は404を返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-09f46e8e1f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "取得できない場合はコード404・メッセージ「Not Found」のJSONを返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-2f3be7114f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "取得できた場合は商品情報をJSONで返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-e0e33d1459",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。DBまたはリポジトリから取得した値をJSON応答へ整形して返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-3089f8cbe3",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "応答フィールドは取得時点の値を返す。表示用の加工やフロントエンド側の表示制御は呼び出し元クライアントの設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-842f36eb86",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "言語区分。 jp または en を想定する（言語ランク判定に用いる）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-e862051d6c",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "商品規格画像のファイル名。該当が無い場合はnull。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-f819b0b0ec",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "商品画像のファイル名。該当が無い場合はnull。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-0f3afad4c0",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "成功時の応答例（実装確認値に基づく代表値）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-3dbe5ab0cb",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "呼び出し時点の商品規格情報を返す。本APIはデータを更新しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-9dfa69e8a0",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。商品規格（dtb_product_class）はec-cube-enterpriseと同名。商品サブ規格・カード関連テーブルはec-cube-enterpriseに該当が見当たらないため現行（pf-api）の名称を残し要確認とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-3dcba9cdba",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "dtb_product_sub_class（商品サブ規格。ec-cube-enterprise実装で要確認）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-74608c06d6",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "カード詳細・カードコンディション・言語・商品サブ規格画像（ec-cube-enterprise実装で要確認）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a02-01_0502_sheet-3_sheet-req-d059b28b05",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "designDerivedTerms": {
+      "routeNames": [
+        "product_id",
+        "productId",
+        "productClassId",
+        "productUrl",
+        "productSubImage"
+      ],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "api/popup/product/{",
+        "www.hareruyamtg.com/ja/goods_api/get_goods",
+        "api/popup/product/ja/180498",
+        "Solemn",
+        "www.hareruyamtg.com/ja/products/detail/14357",
+        "pf-api/a02-01_api_product_popup_product.md",
+        "routes.yaml",
+        "popup/product/{lang}/{productId}"
+      ],
+      "businessTerms": [
+        "A02",
+        "ポップアップ用商品情報取得",
+        "商品管理API機能",
+        "記事内表示ポップアップ用商品情報取得",
+        "エンドポイントURL",
+        "商品ID",
+        "置いたときポップアップ表示する商品情報をJSON",
+        "商品IDを元に商品ページURLを含む商品情報をJ",
+        "CUBE側のAPIへアクセスが行われ",
+        "CUBEサーバを経由して間接的にAPIサーバにア",
+        "外部からAPIサーバに直接アクセスはできない",
+        "APIサーバ通信時にjaに差し替えられる",
+        "商品情報を出力できるのは",
+        "サプライなどの商品情報は出力できない",
+        "商品規格ID",
+        "商品詳細URL"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "productUrl",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Deck/usage_ranking.en.twig:79",
+        "snippet": "$('.popupName', $modalRoot).parent('a').attr('href', data.productUrl || '#');",
+        "weight": 7
+      },
+      {
+        "term": "productUrl",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Deck/usage_ranking.en.twig:81",
+        "snippet": "$('.goodsUrl', $modalRoot).attr('href', (data.productUrl || '#') + (lang === 'en' ? '?lang=EN' : '?lang=JP'));",
+        "weight": 7
+      },
+      {
+        "term": "productUrl",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/App/Popup/PopupResponseBuilder.php:27",
+        "snippet": "public function build(array $result, string $productUrl, bool $includeBeltUrl = false): array",
+        "weight": 7
+      },
+      {
+        "term": "productUrl",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/App/Popup/PopupResponseBuilder.php:42",
+        "snippet": "'productUrl' => $productUrl,",
+        "weight": 7
+      },
+      {
+        "term": "www.hareruyamtg.com/ja/goods_api/get_goods",
+        "termType": "path",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/ShippingStandby/delivery_slips.ja.twig:101",
+        "snippet": "http://www.hareruyamtg.com/jp/<br/>",
+        "weight": 6
+      },
+      {
+        "term": "www.hareruyamtg.com/ja/goods_api/get_goods",
+        "termType": "path",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Mail/Mall/id_expire_notification.twig:7",
+        "snippet": "https://www.hareruyamtg.com/ja/mypage/identification",
+        "weight": 6
+      },
+      {
+        "term": "www.hareruyamtg.com/ja/goods_api/get_goods",
+        "termType": "path",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Purchase/detail.twig:195",
+        "snippet": "<a href=\"https://www.hareruyamtg.com/ja/user_data/purchase_example\" class=\"joutaiWrapper\">",
+        "weight": 6
+      },
+      {
+        "term": "www.hareruyamtg.com/ja/goods_api/get_goods",
+        "termType": "path",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Shopping/index.twig:564",
+        "snippet": "<p class=\"c-hareruya-text u-hareruya-mt10\"><a class=\"c-hareruya-text--link\" href=\"https://www.hareruyamtg.com/ja/user_data/card_condition\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.hareruyamtg.com/ja/user_da…",
+        "weight": 6
+      },
+      {
+        "term": "api/popup/product/ja/180498",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/App/Popup/PopupResponseBuilder.php:1",
+        "snippet": "src/Eccube/Service/App/Popup/PopupResponseBuilder.php",
+        "weight": 6
+      },
+      {
+        "term": "api/popup/product/ja/180498",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Cart/CartHeaderItemView.php:21",
+        "snippet": "* カート hover popup の 1 行分の表示用 DTO。",
+        "weight": 6
+      },
+      {
+        "term": "api/popup/product/ja/180498",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Cart/CartHeaderViewService.php:23",
+        "snippet": "* カート hover popup の表示モデルを構築する。",
+        "weight": 6
+      },
+      {
+        "term": "api/popup/product/ja/180498",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Cart/CartHeaderViewService.php:34",
+        "snippet": "* カート 1 件分の各 CartItem を hover popup 表示用の DTO に変換する。",
+        "weight": 6
+      },
+      {
+        "term": "product_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/CustomerFavoriteProduct.php:51",
+        "snippet": "#[ORM\\JoinColumn(name: 'product_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "product_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBuyMainCard.php:55",
+        "snippet": "#[ORM\\JoinColumn(name: 'product_id', nullable: false, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '商品ID'])]",
+        "weight": 5
+      },
+      {
+        "term": "productClassId",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:412",
+        "snippet": "$productClassId = $ProductOrderItem->getProductClass()->getId();",
+        "weight": 5
+      },
+      {
+        "term": "productClassId",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:413",
+        "snippet": "if (array_key_exists($productClassId, $orderItemArray)) {",
+        "weight": 5
+      },
+      {
+        "term": "productClassId",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:416",
+        "snippet": "$OrderItem = $orderItemArray[$productClassId];",
+        "weight": 5
+      },
+      {
+        "term": "productClassId",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:423",
+        "snippet": "$orderItemArray[$productClassId] = $OrderItem;",
+        "weight": 5
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 9,
+    "implementationGapRequirementCount": 0,
+    "rows": [
+      {
+        "findingId": "a02-01_0502_sheet-3_sheet-conformance-e5483f20696d",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:872,983",
+        "designRequirement": "jp を想定する。EC-CUBEサーバURLでは jp 表記。",
+        "implementationActual": "'ja' のみ JP に変換し、'jp' は NotFoundException。",
+        "mismatchReason": "設計上有効な jp が拒否される。",
+        "implementationRefs": [
+          "src/Eccube/Controller/App/ProductController.php:158",
+          "src/Eccube/Controller/App/ProductController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "lang=jp",
+            "design": "jp を想定する。EC-CUBEサーバURLでは jp 表記。",
+            "implementation": "'ja' のみ JP に変換し、'jp' は NotFoundException。",
+            "mismatch": "設計上有効な jp が拒否される。"
+          }
+        ]
+      },
+      {
+        "findingId": "a02-01_0502_sheet-3_sheet-conformance-e5483f20696d",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:872,983",
+        "designRequirement": "en を想定する。",
+        "implementationActual": "'en' を EN に変換する。",
+        "mismatchReason": "差異なし。",
+        "implementationRefs": [
+          "src/Eccube/Controller/App/ProductController.php:158",
+          "src/Eccube/Controller/App/ProductController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "lang=en",
+            "design": "en を想定する。",
+            "implementation": "'en' を EN に変換する。",
+            "mismatch": "差異なし。"
+          }
+        ]
+      },
+      {
+        "findingId": "a02-01_0502_sheet-3_sheet-conformance-b97fef7cc1b9",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:976,988,1024",
+        "designRequirement": "404",
+        "implementationActual": "404",
+        "mismatchReason": "差異なし。",
+        "implementationRefs": [
+          "src/Eccube/Controller/App/ProductController.php:177",
+          "src/Eccube/Controller/App/ProductController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "HTTPステータス",
+            "design": "404",
+            "implementation": "404",
+            "mismatch": "差異なし。"
+          }
+        ]
+      },
+      {
+        "findingId": "a02-01_0502_sheet-3_sheet-conformance-b97fef7cc1b9",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:976,988,1024",
+        "designRequirement": "{code, message}",
+        "implementationActual": "{code, errors}",
+        "mismatchReason": "message が errors 配列に置き換わっている。",
+        "implementationRefs": [
+          "src/Eccube/Controller/App/ProductController.php:177",
+          "src/Eccube/Controller/App/ProductController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "本文キー",
+            "design": "{code, message}",
+            "implementation": "{code, errors}",
+            "mismatch": "message が errors 配列に置き換わっている。"
+          }
+        ]
+      },
+      {
+        "findingId": "a02-01_0502_sheet-3_sheet-conformance-b97fef7cc1b9",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:976,988,1024",
+        "designRequirement": "\"Not Found\"",
+        "implementationActual": "errors[0] = \"Not Found\"",
+        "mismatchReason": "文言は同じだが格納フィールドが異なる。",
+        "implementationRefs": [
+          "src/Eccube/Controller/App/ProductController.php:177",
+          "src/Eccube/Controller/App/ProductController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "本文メッセージ",
+            "design": "\"Not Found\"",
+            "implementation": "errors[0] = \"Not Found\"",
+            "mismatch": "文言は同じだが格納フィールドが異なる。"
+          }
+        ]
+      },
+      {
+        "findingId": "a02-01_0502_sheet-3_sheet-conformance-1e958e1ab870",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:986",
+        "designRequirement": "string",
+        "implementationActual": "integer scalar の値をそのまま返す。",
+        "mismatchReason": "文字列ではなく数値になる。",
+        "implementationRefs": [
+          "src/Eccube/Repository/ProductRepository.php:2081",
+          "src/Eccube/Repository/ProductRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "price01",
+            "design": "string",
+            "implementation": "integer scalar の値をそのまま返す。",
+            "mismatch": "文字列ではなく数値になる。"
+          }
+        ]
+      },
+      {
+        "findingId": "a02-01_0502_sheet-3_sheet-conformance-1e958e1ab870",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:986",
+        "designRequirement": "string",
+        "implementationActual": "integer scalar の値をそのまま返す。",
+        "mismatchReason": "文字列ではなく数値になる。",
+        "implementationRefs": [
+          "src/Eccube/Repository/ProductRepository.php:2081",
+          "src/Eccube/Repository/ProductRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "price02",
+            "design": "string",
+            "implementation": "integer scalar の値をそのまま返す。",
+            "mismatch": "文字列ではなく数値になる。"
+          }
+        ]
+      },
+      {
+        "findingId": "a02-01_0502_sheet-3_sheet-conformance-1e958e1ab870",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:986",
+        "designRequirement": "string",
+        "implementationActual": "PopupResponseBuilder で (int) にキャスト。",
+        "mismatchReason": "文字列ではなく数値になる。",
+        "implementationRefs": [
+          "src/Eccube/Repository/ProductRepository.php:2081",
+          "src/Eccube/Repository/ProductRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "stock",
+            "design": "string",
+            "implementation": "PopupResponseBuilder で (int) にキャスト。",
+            "mismatch": "文字列ではなく数値になる。"
+          }
+        ]
+      },
+      {
+        "findingId": "a02-01_0502_sheet-3_sheet-conformance-1e958e1ab870",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3:986",
+        "designRequirement": "string",
+        "implementationActual": "PopupResponseBuilder で (int) にキャスト。",
+        "mismatchReason": "文字列ではなく数値になる。",
+        "implementationRefs": [
+          "src/Eccube/Repository/ProductRepository.php:2081",
+          "src/Eccube/Repository/ProductRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "weeklySold",
+            "design": "string",
+            "implementation": "PopupResponseBuilder で (int) にキャスト。",
+            "mismatch": "文字列ではなく数値になる。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 31,
+    "verdictedCount": 31,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 31,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-b33659b1eb",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "概要 記事内表示ポップアップ用商品情報取得",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-687816d86e",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "通販・記事画面内にあるカード画像の上にマウスカーソルを置いたときポップアップ表示する商品情報をJSON形式で出力する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-ef922e3aca",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "・ 言語・商品IDを元に商品ページURLを含む商品情報をJSON出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-4d7337b1ae",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "・ 商品情報を出力できるのは、シングルカードのみ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-c80ac2ae55",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "グッズ・サプライなどの商品情報は出力できない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-b68ed4d4c7",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "404 該当データがない場合",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-a1d7c47e17",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "記事内に表示する商品ポップアップ用に、商品IDと言語を指定して商品情報を取得するAPIである。pf-api（記事・買取連携用のAPIアプリケーション）が提供するJSON APIで、記事サイト等から呼び出される。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-0336f2b536",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiの商品ポップアップ取得処理、ルート定義（ config/routes.yaml ）、商品規格を扱うリポジトリを正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-32787970d4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "本機能のカスタマイズ区分は現行踏襲であり、挙動の確認はpf-apiを参照する。DB関連の記述はec-cube-enterpriseを正とする方針だが、当機能が参照する商品サブ規格・カード詳細・カードコンディション等のHareruya独自テーブルはec-cube-enterpriseに該当が見当たらないため、現行（pf-api）の名称を残し「ec-cube-enterprise実装で要確認」とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-a2d3fda324",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "該当が無い場合の応答",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-c2053184d2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-83584614d5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "記事サイト側のポップアップ表示の仕様",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-39a11e205e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "商品の登録・編集（商品管理を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-0894615fcc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "該当が見当たらない（ec-cube-enterprise実装で要確認）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-d050ea21c9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "dtb_product_class（同名・price01・price02・stock を確認値とする）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-6793c74e64",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "商品規格（dtb_product_class）は現行と移行先で同名。商品サブ規格をはじめとするHareruya独自のカード関連テーブルはec-cube-enterpriseに対応する実装が見当たらないため、現行（pf-api）の名称を主とし、推測でスキーマ化せずec-cube-enterprise実装で要確認とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-a4cd6d46df",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "記事内ポップアップ表示に必要な商品情報。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-b10a76006a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "商品IDと言語に対応するポップアップ用商品情報をJSONで返す。該当が無い場合は404を返す。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-09f46e8e1f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "取得できない場合はコード404・メッセージ「Not Found」のJSONを返す。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-2f3be7114f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "取得できた場合は商品情報をJSONで返す。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-e0e33d1459",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "本APIでは金額・税・ポイント・在庫数量の再計算や丸めを行わない。DBまたはリポジトリから取得した値をJSON応答へ整形して返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-3089f8cbe3",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "応答フィールドは取得時点の値を返す。表示用の加工やフロントエンド側の表示制御は呼び出し元クライアントの設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-842f36eb86",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "言語区分。 jp または en を想定する（言語ランク判定に用いる）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-e862051d6c",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "商品規格画像のファイル名。該当が無い場合はnull。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-f819b0b0ec",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "商品画像のファイル名。該当が無い場合はnull。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-0f3afad4c0",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "成功時の応答例（実装確認値に基づく代表値）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-3dbe5ab0cb",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "呼び出し時点の商品規格情報を返す。本APIはデータを更新しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-9dfa69e8a0",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。商品規格（dtb_product_class）はec-cube-enterpriseと同名。商品サブ規格・カード関連テーブルはec-cube-enterpriseに該当が見当たらないため現行（pf-api）の名称を残し要確認とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-3dcba9cdba",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "dtb_product_sub_class（商品サブ規格。ec-cube-enterprise実装で要確認）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-74608c06d6",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "カード詳細・カードコンディション・言語・商品サブ規格画像（ec-cube-enterprise実装で要確認）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "a02-01_0502_sheet-3_sheet-req-d059b28b05",
+        "category": "リクエストで指定されたID・条件に一致するデータを取得対象とする。抽出条件と該当なし時の扱いは処理フロー・入出力の各節を正とする。",
+        "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-3",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

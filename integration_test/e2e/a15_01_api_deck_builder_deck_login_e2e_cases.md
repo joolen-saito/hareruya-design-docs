@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない機能仕様（デッキビルダーアプリ向けの会員ログイン JSON API。`POST`）であり、**両レイヤで網羅**する。本APIの観測可能な結果はJSONレスポンス（成功＝`code`/`message`/`access_token`/`session_id`／入力不正＝HTTP400／認証拒否＝HTTP401）であり、結果は管理画面に現れずデッキビルダーアプリ側に返るため、主レイヤは **API/統合**（Playwright `request` でエンドポイントへPOST送信し、HTTPステータス・レスポンス本文のフィールド存在/型/既知値一致・トークン取得可否で判定）。UIレイヤは0件（本APIの結果が EC-CUBE 管理画面に現れず、トークンを用いる各デッキビルダーAPIの認可・会員データの登録編集・ログアウトは正本md「本書で扱わないこと」で別機能委譲のため）。
 
-**期待結果は仕様（正本md＝pf-api挙動／観点表）由来**とし、実装のレスポンス形・フレームワーク既定値・Form制約を期待値に流用しない（オラクル独立性）。正本mdはリバース設計のため、基本設計・観点表を上位オラクルとし、移行先 ec-cube-enterprise 実装からは位置情報（APIパス・メソッド・認証方式・応答組み立て元）のみを `file:line` 根拠で取得し、取れないもの・刷新先の独自挙動・正本md未定義の挙動は `要実機確認` とする。設計（pf-api `POST /user/login`・形式バリデーション・Cookie設定・JWTペイロードiss/aud）と実装（ec-cube-enterprise `POST /api/user/login`・非空検証のみ・Cookie未設定・JWT sub のみ）の食い違いは付帯表4に出す。型契約（`code`＝integer、`message`/`access_token`/`session_id`＝string）は正本mdの仕様型で期待値化し、実装のキャスト差異があれば付帯表4へ出す。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。送信先パスは実装の実効パスに統一し、設計パスとの差異は付帯表4でのみ管理する（本体期待値に設計パスを混在させない）。
+**期待結果は仕様（正本md＝pf-api挙動／観点表）由来**とし、実装のレスポンス形・フレームワーク既定値・Form制約を期待値に流用しない（オラクル独立性）。正本mdはリバース設計のため、基本設計・観点表を上位オラクルとし、移行先 ec-cube-enterprise 実装からは位置情報（APIパス・メソッド・認証方式・応答組み立て元）のみを `file:line` 根拠で取得し、取れないもの・刷新先の独自挙動・正本md未定義の挙動は `要実機確認` とする。設計（pf-api `POST /user/login`・形式バリデーション・Cookie設定・JWTペイロードiss/aud）と実装（ec-cube-enterprise `POST /api/user/login`・非空検証のみ・Cookie未設定・JWT sub のみ）の食い違いは付帯表4に出す。型契約（`code`＝integer、`message`/`access_token`/`session_id`＝string）は正本mdの仕様型で期待値化し、実装のキャスト差異があれば付帯表4へ出す。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。送信先パスは実装の実効パスに統一し、設計パスとの差異は付帯表4でのみ管理する（本体期待値に設計パスを混在させない）。
 
 ## 関連ID対応概要
 
@@ -22,60 +22,60 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-001	IT-09	リクエスト	P1	正常な資格情報で認証成功しアクセストークンを取得する	SEED-A15-01-CUSTOMER	正しいid（メールアドレス）・password	"1. ログインAPIへPOST送信する
-2. レスポンス本文を確認する"	認証が成功し、応答本文のaccess_tokenが空でない文字列で返ること。
+2. レスポンス本文を確認する"	認証が成功し、応答本文のaccess_tokenが空でない文字列で返ること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-002	IT-09	HTTPステータス	P1	認証成功時のHTTPステータスが200である	SEED-A15-01-CUSTOMER	正しいid・password	"1. ログインAPIへPOST送信する
-2. HTTPステータスを確認する"	認証成功時のHTTPステータスが200であること。
+2. HTTPステータスを確認する"	認証成功時のHTTPステータスが200であること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-003	IT-09	実行結果	P2	認証成功時にcode・message・access_token・session_idが返る	SEED-A15-01-CUSTOMER	正しいid・password	"1. ログインAPIへPOST送信する
-2. レスポンス本文のフィールドを確認する"	応答本文にcode・message・access_token・session_idの4フィールドが揃って返ること。
+2. レスポンス本文のフィールドを確認する"	応答本文にcode・message・access_token・session_idの4フィールドが揃って返ること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-004	IT-09	外部取得	P2	成功本文のcodeとmessageが仕様の固定値と一致する	SEED-A15-01-CUSTOMER	正しいid・password	"1. ログインAPIへPOST送信する
-2. 成功本文のcode・messageを確認する"	codeが200、messageが認証成功を表す固定メッセージで返ること。
+2. 成功本文のcode・messageを確認する"	codeが200、messageが認証成功を表す固定メッセージで返ること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-005	IT-32	資格情報	P1	正しい資格情報のときのみアクセストークンを取得できる	SEED-A15-01-CUSTOMER	正しいid・password	"1. ログインAPIへPOST送信する
-2. 応答のaccess_token取得可否を確認する"	資格情報が正しい場合のみaccess_tokenが発行され取得できること。
+2. 応答のaccess_token取得可否を確認する"	資格情報が正しい場合のみaccess_tokenが発行され取得できること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-006	IT-32	受信検証	P1	認証が成立しアクセストークンとセッションIDが返る	SEED-A15-01-CUSTOMER	正しいid・password	"1. ログインAPIへPOST送信する
-2. レスポンス本文を確認する"	認証が成立し、access_tokenとsession_idがJSONで返ること。
+2. レスポンス本文を確認する"	認証が成立し、access_tokenとsession_idがJSONで返ること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-007	IT-32	レスポンス	P2	成功レスポンスの型契約（code=integer・他=string）を満たす	SEED-A15-01-CUSTOMER	正しいid・password	"1. ログインAPIへPOST送信する
-2. レスポンス各フィールドの型を確認する"	codeがinteger型、message・access_token・session_idがstring型で返ること。
+2. レスポンス各フィールドの型を確認する"	codeがinteger型、message・access_token・session_idがstring型で返ること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-008	IT-32	必須条件	P1	id（メールアドレス）未入力で入力不正となる	SEED-A15-01-CUSTOMER	id＝空、password＝任意	"1. idを空にしてログインAPIへPOST送信する
-2. HTTPステータスとトークン取得可否を確認する"	入力不正（HTTP400）となり、access_tokenが返らないこと。
+2. HTTPステータスとトークン取得可否を確認する"	入力不正（HTTP400）となり、access_tokenが返らないこと。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-009	IT-32	必須条件	P1	password未入力で入力不正となる	SEED-A15-01-CUSTOMER	id＝任意、password＝空	"1. passwordを空にしてログインAPIへPOST送信する
-2. HTTPステータスとトークン取得可否を確認する"	入力不正（HTTP400）となり、access_tokenが返らないこと。
+2. HTTPステータスとトークン取得可否を確認する"	入力不正（HTTP400）となり、access_tokenが返らないこと。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-010	IT-32	リクエスト	P2	誤ったパスワードで認証拒否となる	SEED-A15-01-CUSTOMER	正しいid・誤ったpassword	"1. 誤ったパスワードでログインAPIへPOST送信する
-2. HTTPステータスを確認する"	異常な資格情報（誤パスワード）で認証拒否（HTTP401）となること。
+2. HTTPステータスを確認する"	異常な資格情報（誤パスワード）で認証拒否（HTTP401）となること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-011	IT-32	リクエスト	P3	想定外項目を加えても無視され認証成功する	SEED-A15-01-CUSTOMER	正しいid・passwordに想定外の項目（項目名と値のセット）を追加	"1. 想定外項目を含めてログインAPIへPOST送信する
-2. HTTPステータスを確認する"	想定外項目を加えても無視され、正しい資格情報なら認証成功（HTTP200）すること。
+2. HTTPステータスを確認する"	想定外項目を加えても無視され、正しい資格情報なら認証成功（HTTP200）すること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-012	IT-32	データなし	P2	存在しないid（メールアドレス）で認証拒否となる	SEED-A15-01-CUSTOMER	存在しないid・任意のpassword	"1. 存在しないidでログインAPIへPOST送信する
-2. HTTPステータスを確認する"	該当会員が存在しない場合、認証拒否（HTTP401）となること。
+2. HTTPステータスを確認する"	該当会員が存在しない場合、認証拒否（HTTP401）となること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-013	IT-10	エラー	P2	認証失敗時にcodeとmessageを含む本文が返る	SEED-A15-01-CUSTOMER	誤った資格情報	"1. 誤った資格情報でログインAPIへPOST送信する
-2. レスポンス本文を確認する"	認証失敗時、本文にcode（401）とmessageを含むJSONが返ること。
+2. レスポンス本文を確認する"	認証失敗時、本文にcode（401）とmessageを含むJSONが返ること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-014	IT-10	HTTPステータス	P1	認証失敗時のHTTPステータスが401である	SEED-A15-01-CUSTOMER	誤った資格情報	"1. 誤った資格情報でログインAPIへPOST送信する
-2. HTTPステータスを確認する"	認証失敗時のHTTPステータスが401であること。
+2. HTTPステータスを確認する"	認証失敗時のHTTPステータスが401であること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-015	IT-10	通信	P1	POST通信が成立し認証結果に応じた応答が返る	SEED-A15-01-CUSTOMER	正しいid・password	"1. ログインAPIへPOST送信する
-2. 通信成立とHTTPステータスを確認する"	POST通信が成立し、認証結果に応じたHTTPステータス（成功＝200）が返ること。
+2. 通信成立とHTTPステータスを確認する"	POST通信が成立し、認証結果に応じたHTTPステータス（成功＝200）が返ること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-016	IT-10	正常	P2	対象条件に該当する正しい資格情報で200と成功本文が返る	SEED-A15-01-CUSTOMER	対象条件に該当する正しいid・password	"1. ログインAPIへPOST送信する
-2. HTTPステータスとレスポンス本文を確認する"	対象条件に該当する正しい資格情報でHTTP200と成功本文が返ること。
+2. HTTPステータスとレスポンス本文を確認する"	対象条件に該当する正しい資格情報でHTTP200と成功本文が返ること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-017	IT-10	異常系	P2	資格情報が誤りのときトークンを取得できない	SEED-A15-01-CUSTOMER	誤った資格情報	"1. 誤った資格情報でログインAPIへPOST送信する
-2. HTTPステータスとトークン取得可否を確認する"	資格情報が誤りのとき認証拒否（HTTP401）となり、access_tokenを取得できないこと。
+2. HTTPステータスとトークン取得可否を確認する"	資格情報が誤りのとき認証拒否（HTTP401）となり、access_tokenを取得できないこと。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-018	IT-10	重複・順序	P1	非本会員（有効状態でない）会員は認証拒否となる	SEED-A15-01-CUSTOMER-NONREGULAR	非本会員（有効状態でない）会員の正しいid・password	"1. 非本会員の資格情報でログインAPIへPOST送信する
-2. HTTPステータスを確認する"	有効状態（本会員）の会員のみが照合対象となり、非本会員は該当無しとして認証拒否（HTTP401）となること。
+2. HTTPステータスを確認する"	有効状態（本会員）の会員のみが照合対象となり、非本会員は該当無しとして認証拒否（HTTP401）となること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-019	IT-10	エラー	P3	処理中の例外時の応答を確認する	SEED-A15-01-CUSTOMER	処理中の例外／タイムアウトを誘発する状態	"1. 例外／タイムアウトを誘発してログインAPIへPOST送信する
-2. 応答を確認する"	処理中の例外時は正本mdが共通例外処理（HTTP500）と定めるが、例外固有の応答は正本md未定義かつ再現が外部依存のため、観測された応答を要実機確認で記録すること（合否は実機確認の結果による）。
+2. 応答を確認する"	処理中の例外時は正本mdが共通例外処理（HTTP500）と定めるが、例外固有の応答は正本md未定義かつ再現が外部依存のため、観測された応答を要実機確認で記録すること（合否は実機確認の結果による）。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-050	IT-32	リクエスト	P2	メールアドレス形式不正で入力不正となる	SEED-A15-01-CUSTOMER	メールアドレス形式でないid・正しいpassword	"1. 形式不正のidでログインAPIへPOST送信する
-2. HTTPステータスを確認する"	id（メールアドレス）が形式不正のとき入力不正（HTTP400）となること。
+2. HTTPステータスを確認する"	id（メールアドレス）が形式不正のとき入力不正（HTTP400）となること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-051	IT-32	リクエスト	P2	パスワードに許容外の文字を含むと入力不正となる	SEED-A15-01-CUSTOMER	正しいid・許容外文字（半角表示可能文字以外）を含むpassword	"1. 許容外文字を含むpasswordでログインAPIへPOST送信する
-2. HTTPステータスを確認する"	passwordが半角の表示可能文字（!〜~）以外を含むとき入力不正（HTTP400）となること。
+2. HTTPステータスを確認する"	passwordが半角の表示可能文字（!〜~）以外を含むとき入力不正（HTTP400）となること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-052	IT-09	実行結果	P3	認証成功時にアクセストークンが有効期限付きCookieに設定される	SEED-A15-01-CUSTOMER	正しいid・password	"1. ログインAPIへPOST送信する
-2. 応答のSet-Cookieヘッダを確認する"	認証成功時、アクセストークンが有効期限付きのCookie（Cookie名＝cookie_nameとtoken_nameの結合）として設定されること。
+2. 応答のSet-Cookieヘッダを確認する"	認証成功時、アクセストークンが有効期限付きのCookie（Cookie名＝cookie_nameとtoken_nameの結合）として設定されること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-053	IT-32	資格情報	P3	アクセストークンのペイロードが発行者・利用者ID（会員ID）・発行時刻を持つ	SEED-A15-01-CUSTOMER／SEED-A15-01-JWT-SECRET	正しいid・password	"1. ログインAPIへPOST送信する
-2. 取得したaccess_tokenのペイロードを確認する"	発行されたアクセストークンのペイロードが、仕様どおり発行者（iss相当のクレーム）・利用者ID（＝認証した会員のID＝aud相当）・発行時刻（iat相当のクレーム）を持つこと（HS256署名検証はシークレット設定/実装差分のため要実機確認）。
+2. 取得したaccess_tokenのペイロードを確認する"	発行されたアクセストークンのペイロードが、仕様どおり発行者（iss相当のクレーム）・利用者ID（＝認証した会員のID＝aud相当）・発行時刻（iat相当のクレーム）を持つこと（HS256署名検証はシークレット設定/実装差分のため要実機確認）。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-054	IT-09	実行結果	P3	本会員・正パスワードであればプレイヤー未紐付けでも認証成功する	SEED-A15-01-CUSTOMER-NOPLAYER	プレイヤー未紐付けの本会員の正しいid・password	"1. プレイヤー未紐付け会員でログインAPIへPOST送信する
-2. HTTPステータスを確認する"	正本mdではログインはメールアドレスとパスワードの照合で判定され、認証成功（HTTP200）でアクセストークンが返ること。
+2. HTTPステータスを確認する"	正本mdではログインはメールアドレスとパスワードの照合で判定され、認証成功（HTTP200）でアクセストークンが返ること。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-055	IT-10	エラー	P3	会員不存在とパスワード不一致で同一の認証拒否メッセージが返る	SEED-A15-01-CUSTOMER	（A）存在しないid・任意password／（B）正しいid・誤password	"1. 存在しないidでPOST送信する
 2. 正しいid・誤passwordでPOST送信する
-3. 両応答のmessageを比較する"	会員不存在とパスワード不一致のいずれも同一の認証拒否（HTTP401）メッセージで返り、両者を区別しないこと。
+3. 両応答のmessageを比較する"	会員不存在とパスワード不一致のいずれも同一の認証拒否（HTTP401）メッセージで返り、両者を区別しないこと。				
 a15-01_api_deck_builder_deck_login（API_デッキビルダー_ログイン）	E2E-A15-01-056	IT-10	重複・順序	P1	削除済みの本会員は認証拒否となる	SEED-A15-01-CUSTOMER-DELETED	削除済みの本会員（有効状態だが削除済み）の正しいid・password	"1. 削除済み本会員の資格情報でログインAPIへPOST送信する
-2. HTTPステータスを確認する"	未削除の会員のみが照合対象となり、削除済みの本会員は該当無しとして認証拒否（HTTP401）となること。
+2. HTTPステータスを確認する"	未削除の会員のみが照合対象となり、削除済みの本会員は該当無しとして認証拒否（HTTP401）となること。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

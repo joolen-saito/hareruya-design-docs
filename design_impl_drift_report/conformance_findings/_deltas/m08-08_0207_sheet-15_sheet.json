@@ -1,0 +1,234 @@
+{
+  "functionId": "m08-08_0207_sheet-15_sheet",
+  "featureNo": "M08-08",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3598",
+      "designExpectation": "手動メール作成画面は GET /{admin_route}/customer/manual_mail（クエリで会員IDを指定）および GET /{admin_route}/customer/manual_mail/{customerId}/{templateId} で表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:150",
+      "implementationActual": "実装ルートは `/%eccube_admin_route%/customer/manual_mail/{id}/{template_id}` の `admin_customer_manual_mail` のみ。会員IDをクエリで受ける `/customer/manual_mail` 入口は確認できない。",
+      "mismatchReason": "設計はクエリ指定の作成画面入口を外部契約として定義しているが、実装はパスパラメータ必須のルートに変更されている。再検索範囲: CustomerMailController.php、Customer/edit.twig、Customer/index.twig、Twig内 `admin_customer_manual_mail`、`customer/manual_mail`。",
+      "comparisonRows": [
+        {
+          "item": "作成画面GET入口",
+          "design": "GET /{admin_route}/customer/manual_mail（クエリで会員ID）",
+          "implementation": "GET|POST /{admin_route}/customer/manual_mail/{id}/{template_id}",
+          "mismatch": "URL契約が一致しない"
+        },
+        {
+          "item": "テンプレート選択後URL",
+          "design": "/customer/manual_mail/{customerId}/{templateId}",
+          "implementation": "/customer/manual_mail/{id}/{template_id}",
+          "mismatch": "会員IDなし入口がなく、ルート名も設計補助の `m08-08_admin_customer_customer_manual_mail*` ではない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3608",
+      "designExpectation": "テンプレートID指定がある場合、会員向けベース（会員・会員英語・ベースなし）に該当するテンプレートのみを対象とし、該当が無い場合は404とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:152",
+      "implementationActual": "`#[MapEntity(id: 'template_id')] ?MailTemplate $MailTemplate` で任意の MailTemplate を解決し、`CustomerManualMailType` の選択肢は file_name で絞るが、URLで渡されたテンプレート自体のベース種別を検証して404にする処理はない。",
+      "mismatchReason": "フォーム選択肢の query_builder は候補表示を絞るだけで、パス指定された非会員向けテンプレートIDを404にする実装証跡がない。再検索範囲: CustomerMailController.php、CustomerManualMailType.php、MailTemplateRepository.php。",
+      "comparisonRows": [
+        {
+          "item": "対象テンプレート",
+          "design": "会員・会員英語・ベースなしのみ",
+          "implementation": "MapEntityで取得したテンプレートをそのまま本文レンダリングに使用",
+          "mismatch": "URL指定テンプレートのベース検証がない"
+        },
+        {
+          "item": "範囲外ID",
+          "design": "404",
+          "implementation": "404化する分岐なし",
+          "mismatch": "不正テンプレートIDの扱いが設計と異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3619",
+      "designExpectation": "テンプレート未選択で表示する場合、件名・本文の入力欄は出さない。本文はテンプレート選択時のみ表示する複数行入力（textarea）。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual.twig:71",
+      "implementationActual": "`mail_manual.twig` は MailTemplate の有無で分岐せず、件名入力 `form.mail_subject` と本文 textarea `form.body` を常に表示する。",
+      "mismatchReason": "設計のテンプレート未選択時非表示条件がTwigに存在しない。再検索範囲: Customer/mail_manual.twig、CustomerManualMailType.php、CustomerMailController.php。",
+      "comparisonRows": [
+        {
+          "item": "件名欄",
+          "design": "テンプレート未選択時は出さない",
+          "implementation": "常に `form.mail_subject` を表示",
+          "mismatch": "表示条件がない"
+        },
+        {
+          "item": "本文textarea",
+          "design": "テンプレート選択時のみ表示",
+          "implementation": "常に `form.body` を rows=20 で表示",
+          "mismatch": "テンプレート未選択でも本文欄が出る"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3616",
+      "designExpectation": "フォームキーは件名 `mail[subject]`、本文 `mail_body`、ヘッダ・フッタ `mail[header]`・`mail[footer]` とし、テンプレートのヘッダ・フッタは隠し入力として送信に含める。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CustomerManualMailType.php:62",
+      "implementationActual": "フォームは `admin_customer_manual_mail` プレフィックス配下の `mail_subject` と `body` を定義し、`header`/`footer` フィールドは定義していない。Twigにもヘッダ・フッタ hidden の送信がない。",
+      "mismatchReason": "設計されたフォームキーおよび hidden header/footer の外部契約と実装のSymfonyフォーム項目が一致しない。再検索範囲: CustomerManualMailType.php、Customer/mail_manual.twig、Customer/mail_manual_confirm.twig、`mail[header]`、`mail[footer]`、`form.header`、`form.footer`。",
+      "comparisonRows": [
+        {
+          "item": "件名キー",
+          "design": "mail[subject]",
+          "implementation": "admin_customer_manual_mail[mail_subject]",
+          "mismatch": "フォームキー違い"
+        },
+        {
+          "item": "本文キー",
+          "design": "mail_body",
+          "implementation": "admin_customer_manual_mail[body]",
+          "mismatch": "フォームキー違い"
+        },
+        {
+          "item": "ヘッダ・フッタ",
+          "design": "mail[header]・mail[footer] を hidden 送信",
+          "implementation": "該当フィールドなし",
+          "mismatch": "hidden送信が未実装"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3610",
+      "designExpectation": "手動メール送信成功後は送信成功を表示し、同じ会員・テンプレートの作成画面へ戻る。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Customer/CustomerMailController.php:201",
+      "implementationActual": "成功フラッシュ追加後、`admin_customer_edit`（会員編集画面）へリダイレクトする。",
+      "mismatchReason": "設計は `m08-08_admin_customer_customer_manual_mail_edit` 相当の同じ作成画面へ戻すが、実装は会員編集画面へ遷移する。再検索範囲: CustomerMailController.php、Customer/mail_manual_confirm.twig、`redirectToRoute`、`admin_customer_manual_mail`。",
+      "comparisonRows": [
+        {
+          "item": "送信成功後遷移",
+          "design": "同じ会員・テンプレートの作成画面",
+          "implementation": "admin_customer_edit",
+          "mismatch": "遷移先違い"
+        },
+        {
+          "item": "成功表示",
+          "design": "作成画面への再表示と成功フラッシュ",
+          "implementation": "会員編集画面へのリダイレクト先で成功フラッシュ",
+          "mismatch": "表示される画面が違う"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3593",
+      "designExpectation": "送信したメールは会員向けメール送信履歴テーブル `dtb_user_mail_history` に、customer_id、template_id、subject、mail_body、send_date として記録する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39",
+      "implementationActual": "実装は `MailHistory` エンティティを生成して `dtb_mail_history` に保存する。`DtbUserMailHistory` は存在するが deprecated コメント付きで、保存処理からは使われていない。",
+      "mismatchReason": "設計の永続化先テーブル・列名と実装の保存先が異なる。再検索範囲: MailHistoryEntityManager.php、MailHistory.php、DtbUserMailHistory.php、CustomerMailController.php、`dtb_user_mail_history`、`dtb_mail_history`。",
+      "comparisonRows": [
+        {
+          "item": "保存先テーブル",
+          "design": "dtb_user_mail_history",
+          "implementation": "dtb_mail_history",
+          "mismatch": "テーブル違い"
+        },
+        {
+          "item": "件名列",
+          "design": "subject",
+          "implementation": "mail_subject",
+          "mismatch": "列名違い"
+        },
+        {
+          "item": "旧エンティティ",
+          "design": "使用対象",
+          "implementation": "DtbUserMailHistory は deprecated で未使用",
+          "mismatch": "設計の対象テーブルに保存されない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3613",
+      "designExpectation": "送信履歴は会員・テンプレート・件名・本文・送信日時を保持する。手動メールでは作成者の記録は持たない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:51",
+      "implementationActual": "`MailHistory` には `setCreator()` があり、Doctrine prePersist/preUpdate の共通処理が `setCreator($creator)` を呼ぶため、ログイン管理者がいる場合 creator_id が設定される。",
+      "mismatchReason": "個別の MailHistoryEntityManager は creator を明示設定していないが、共通の保存イベントにより作成者が記録される。設計の「作成者の記録は持たない」と異なる。",
+      "comparisonRows": [
+        {
+          "item": "作成者記録",
+          "design": "手動メールでは持たない",
+          "implementation": "prePersist が setCreator を自動実行",
+          "mismatch": "creator_id が記録される"
+        },
+        {
+          "item": "対象エンティティ",
+          "design": "メール送信履歴は creator 対象外",
+          "implementation": "MailHistory.php に setCreator が存在",
+          "mismatch": "共通監査項目の対象になる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3610",
+      "designExpectation": "手動メール送信では、件名と本文は送信内容を用いる。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1028",
+      "implementationActual": "`sendCustomerManualMail()` は送信件名を `'['.$shopName.'] '.$formData['mail_subject']` に組み立て、入力件名に店舗名プレフィックスを追加する。",
+      "mismatchReason": "設計はフォーム送信内容の件名を送信メールの件名として扱うが、実装は送信時に件名を書き換える。履歴も Message の件名を保存するため、記録件名にもプレフィックスが入る。",
+      "comparisonRows": [
+        {
+          "item": "送信件名",
+          "design": "入力された件名",
+          "implementation": "[店舗名] + 入力件名",
+          "mismatch": "件名が改変される"
+        },
+        {
+          "item": "履歴件名",
+          "design": "送信時点の件名",
+          "implementation": "Message->getSubject() を保存",
+          "mismatch": "改変後件名が保存される"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-15:3603",
+      "designExpectation": "フロント挙動の表示要素として、見出し「手動メール送信」を表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/mail_manual.twig:43",
+      "implementationActual": "入力画面のタイトル・カードタイトルは `admin.customer.manual_mail` を表示し、翻訳値は「手動メール通知」。顧客手動メール用の「手動メール送信」見出しは確認できない。",
+      "mismatchReason": "設計の見出し文言と実装の表示文言が異なる。再検索範囲: Customer/mail_manual.twig、messages.ja.yaml、`手動メール送信`、`admin.customer.manual_mail`。",
+      "comparisonRows": [
+        {
+          "item": "入力画面見出し",
+          "design": "手動メール送信",
+          "implementation": "手動メール通知",
+          "mismatch": "表示文言違い"
+        },
+        {
+          "item": "翻訳キー",
+          "design": "顧客手動メール見出し相当",
+          "implementation": "admin.customer.manual_mail: 手動メール通知",
+          "mismatch": "設計文言の翻訳キーがない"
+        }
+      ]
+    }
+  ]
+}

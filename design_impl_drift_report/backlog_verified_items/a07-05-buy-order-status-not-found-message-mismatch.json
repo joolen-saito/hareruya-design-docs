@@ -1,0 +1,239 @@
+{
+  "id": "a07-05-buy-order-status-not-found-message-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a07-05_0507_sheet-7_sheet.json",
+  "sourceFindingId": "a07-05_0507_sheet-7_sheet-conformance-c5f28c4939eb",
+  "classification": "APIネット買取管理",
+  "feature": "ネット買取注文の査定終了処理",
+  "issueCategory": "実装違い",
+  "issue": "存在しない買取ステータスID指定時のエラーメッセージが設計と異なる",
+  "designBook": "0507_基本設計仕様書(API_ネット買取管理).xlsx",
+  "reproSteps": [
+    "JWT認証済みの状態で、存在するネット買取受注IDを指定して PUT http://localhost:8080/api/v1/admin/buyOrder/{id}.json を実行する",
+    "JSONボディに order_status: 999999 のような mtb_buy_order_status に存在しないIDと、1件以上の有効な order_details を指定する",
+    "レスポンスのHTTPステータスと errors の文言を確認する"
+  ],
+  "expected": [
+    "存在しない order_status は入力不正として HTTP 400 を返す",
+    "errors には「MtbBuyOrderStatusに（指定値）が見つかりません。」形式の検証メッセージを返す",
+    "入力検証エラーが1件以上ある場合は更新を行わない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、`BuyOrderController::updateBuyOrder` が `buyOrderStatusRepository->find($updateBuyOrderDto->orderStatusId)` でステータスマスタを検索し、見つからない場合は `InvalidParameterException('正しい買取ステータスIDを入力してください')` を投げる。`InvalidParameterException` は HTTP 400 の `BaseApiException` で、例外リスナーがその `errors` をそのまま返すため、HTTP 400 は一致するが、設計とベース実装が返す `MtbBuyOrderStatusに（値）が見つかりません。` 形式の文言にはならない。enterprise のテストも存在しない `order_status` に対してこの別文言を期待している。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise Controller は存在しない orderStatusId で別文言の InvalidParameterException を投げる",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php",
+          "start": 170,
+          "end": 186,
+          "language": "php",
+          "contains": [
+            "#[Route('/%eccube_api_v1_route%/admin/buyOrder/{id}.json'",
+            "public function updateBuyOrder",
+            "$BuyOrderStatus = $this->buyOrderStatusRepository->find($updateBuyOrderDto->orderStatusId)",
+            "throw new InvalidParameterException('正しい買取ステータスIDを入力してください')"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise InvalidParameterException は HTTP 400 の errors として文言を保持する",
+          "path": "ec-cube-enterprise/src/Eccube/Exception/App/InvalidParameterException.php",
+          "start": 20,
+          "end": 35,
+          "language": "php",
+          "contains": [
+            "class InvalidParameterException extends BaseApiException",
+            "errors: [$message]",
+            "statusCode: Response::HTTP_BAD_REQUEST"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise テストは存在しない order_status で別文言を期待する",
+          "path": "ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php",
+          "start": 650,
+          "end": 683,
+          "language": "php",
+          "contains": [
+            "order_statusがマスタに存在しないIDの場合は、400エラーを返すこと",
+            "'order_status' => 999",
+            "$this->assertSame(Response::HTTP_BAD_REQUEST",
+            "$this->assertContains('正しい買取ステータスIDを入力してください', $response['errors'])"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、`PUT /admin/buyOrder/{id}.json` が `BuyOrderController::putBuyOrderEndAction` に入り、リクエストの `order_status` を `BuyOrderEdit::$orderStatusId` に設定して Symfony Validator に渡す。`BuyOrderEdit::$orderStatusId` には `@MasterValue(table=\"MtbBuyOrderStatus\")` が付いており、`MasterValue` の既定メッセージ `{{ table }}に{{ id }}が見つかりません。` にテーブル名と指定値を埋めて検証違反を作る。Controller は収集した検証メッセージ配列を HTTP 400 の `{code, errors}` で返す。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は buyOrder 更新ルートを putBuyOrderEndAction へ定義する",
+          "path": "pf-api/config/routes.yaml",
+          "start": 25,
+          "end": 28,
+          "language": "yaml",
+          "contains": [
+            "put_buy_order_end:",
+            "path: /admin/buyOrder/{id}.json",
+            "controller: App\\Controller\\Admin\\BuyOrderController::putBuyOrderEndAction",
+            "methods: PUT"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api Controller は検証メッセージをHTTP 400で返す",
+          "path": "pf-api/src/Controller/Admin/BuyOrderController.php",
+          "start": 69,
+          "end": 99,
+          "language": "php",
+          "contains": [
+            "->setOrderStatusId($request->get('order_status'))",
+            "$errorsArray[] = $this->get('validator')->validate($buyOrderEditEntity)",
+            "$messages[] = $error->getMessage()",
+            "'code' => Response::HTTP_BAD_REQUEST",
+            "'errors' => $messages"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api BuyOrderEdit は orderStatusId に MasterValue(MtbBuyOrderStatus) を付ける",
+          "path": "pf-api/src/Entity/Api/BuyOrderEdit.php",
+          "start": 10,
+          "end": 20,
+          "language": "php",
+          "contains": [
+            "class BuyOrderEdit",
+            "@AppAssert\\MasterValue(",
+            "table = \"MtbBuyOrderStatus\"",
+            "@Assert\\NotBlank(",
+            "message = \"ステータスを選択してください。\""
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api MasterValue は MtbBuyOrderStatusに<値>が見つかりません。形式の文言を生成する",
+          "path": "pf-api/src/Validator/Constraints/MasterValue.php",
+          "start": 11,
+          "end": 26,
+          "language": "php",
+          "contains": [
+            "class MasterValue extends Constraint",
+            "public $message = \"{{ table }}に{{ id }}が見つかりません。\"",
+            "$this->table = $options['table']"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api MasterValueValidator は指定IDが見つからない場合に table/id を埋めて違反を追加する",
+          "path": "pf-api/src/Validator/Constraints/MasterValueValidator.php",
+          "start": 19,
+          "end": 37,
+          "language": "php",
+          "contains": [
+            "public function validate($value, Constraint $constraint)",
+            "->findOneBy([",
+            "'id' => $value",
+            "if (is_null($masterEntity))",
+            "->setParameter('{{ table }}', $constraint->getTable())",
+            "->setParameter('{{ id }}', $value)"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "バリデーション定義は存在しない order_status のエラーメッセージを MtbBuyOrderStatusに（値）が見つかりません。とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html",
+      "start": 1731,
+      "end": 1733,
+      "language": "html",
+      "contains": [
+        "order_status",
+        "買取受注ステータスマスタに存在しないIDは「MtbBuyOrderStatusに（値）が見つかりません。」を返す",
+        "入力不正（HTTP 400）"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "失敗レスポンス定義は入力検証失敗時にHTTP 400で検証メッセージ配列を返す",
+      "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html",
+      "start": 1711,
+      "end": 1712,
+      "language": "html",
+      "contains": [
+        "400",
+        "ステータス・明細の入力検証に1件以上失敗",
+        "{code, errors}",
+        "検証メッセージの配列"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は存在しないステータスIDで設計と異なる文言を投げる",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php",
+      "start": 183,
+      "end": 186,
+      "language": "php",
+      "contains": [
+        "$BuyOrderStatus = $this->buyOrderStatusRepository->find($updateBuyOrderDto->orderStatusId)",
+        "throw new InvalidParameterException('正しい買取ステータスIDを入力してください')"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise テストも設計と異なる文言を期待している",
+      "path": "ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/BuyOrderControllerTest.php",
+      "start": 650,
+      "end": 683,
+      "language": "php",
+      "contains": [
+        "'order_status' => 999",
+        "Response::HTTP_BAD_REQUEST",
+        "正しい買取ステータスIDを入力してください"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api の Validator は設計と同じ MtbBuyOrderStatusに<値>が見つかりません。形式を生成する",
+      "path": "pf-api/src/Validator/Constraints/MasterValue.php",
+      "start": 11,
+      "end": 26,
+      "language": "php",
+      "contains": [
+        "public $message = \"{{ table }}に{{ id }}が見つかりません。\""
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は BuyOrderEdit の order_status に MtbBuyOrderStatus の MasterValue 検証を付ける",
+      "path": "pf-api/src/Entity/Api/BuyOrderEdit.php",
+      "start": 10,
+      "end": 20,
+      "language": "php",
+      "contains": [
+        "@AppAssert\\MasterValue(",
+        "table = \"MtbBuyOrderStatus\"",
+        "private $orderStatusId"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api Controller は検証メッセージを HTTP 400 の errors に入れて返す",
+      "path": "pf-api/src/Controller/Admin/BuyOrderController.php",
+      "start": 85,
+      "end": 99,
+      "language": "php",
+      "contains": [
+        "$messages[] = $error->getMessage()",
+        "'code' => Response::HTTP_BAD_REQUEST",
+        "'errors' => $messages"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"order_status|MtbBuyOrderStatusに|入力不正|検証メッセージ\" excel_to_html/output/0507_基本設計仕様書\\(API_ネット買取管理\\).html",
+      "rg -n \"put_buy_order_end|putBuyOrderEndAction|BuyOrderEdit|MasterValue|MtbBuyOrderStatus|見つかりません|order_status\" ../pf-api/config ../pf-api/src",
+      "rg -n \"正しい買取ステータスID|MtbBuyOrderStatusに|orderStatusId|UpdateBuyOrderDto|api_admin_buy_order_update\" ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/tests --glob '!var/**'",
+      "rg -n \"BaseApiException|getStatusCode|JsonResponse|HTTP_BAD_REQUEST|InvalidParameterException\" ../ec-cube-enterprise/src/Eccube/Exception/App ../ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php"
+    ],
+    "review": "gpt-5.5 high reviewer Lovelace VERDICT: VERIFIED. Design line 1705 requires HTTP 400 for order_status master absence, line 1712 defines {code, errors}, and line 1732 requires `MtbBuyOrderStatusに（値）が見つかりません。`. pf-api routes PUT /admin/buyOrder/{id}.json to BuyOrderController::putBuyOrderEndAction, validates BuyOrderEdit with MasterValue(table=\"MtbBuyOrderStatus\"), and returns collected validation messages as HTTP 400 {code, errors}. No dedicated pf-api net-buy BuyOrderController test was found. ec-cube-enterprise returns HTTP 400 but with `正しい買取ステータスIDを入力してください`, and its test expects that wording. Reviewer concern: none; this is separate from A07-05 HTTP 422 validation and 500 internal-error message findings."
+  }
+}

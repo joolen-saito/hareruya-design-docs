@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m12_04_admin_analytics_sales_order_analysis_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答（ファイル名/Content-Disposition）などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Content-Type・Form制約をオラクル化しない。CSVファイルの内部（ヘッダ行・列順・平均単価計算・全件出力・BOM・文字コード）は**ブラウザ観測外につき手動**で確認する。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答（ファイル名/Content-Disposition）などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Content-Type・Form制約をオラクル化しない。CSVファイルの内部（ヘッダ行・列順・平均単価計算・全件出力・BOM・文字コード）は**ブラウザ観測外につき手動**で確認する。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 設計源は pf-eccube3（HareruyaEc のリバース）であり、**基本設計・観点表を上位オラクル**とする。刷新先 ec-cube-enterprise（`admin_analysis_sales_export`）との乖離は「付帯表4（不具合候補）」に出し、テストは仕様どおりに書く（実装が違えば落ちて検出する）。
 
@@ -25,23 +25,23 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-001	IT-25	UI部品	P2	集計結果一覧で検索実行後にCSVダウンロードリンクが表示される	ログイン済み／SEED-M12-04-ADMIN／SEED-M12-04-ORDER（集計でヒットする受注明細あり）	フリーワード空（全件相当）	"1. /admin/analysis/sales を開く
-2. 検索ボタンを押下して集計を実行する"	集計結果一覧に「CSVダウンロード」リンクが表示されること。
+2. 検索ボタンを押下して集計を実行する"	集計結果一覧に「CSVダウンロード」リンクが表示されること。				
 m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-002	IT-03	画面遷移	P1	CSVダウンロードリンク押下で画面遷移しない	ログイン済み／SEED-M12-04-ADMIN／SEED-M12-04-ORDER	—	"1. 集計を実行しCSVダウンロードリンクを表示する
-2. CSVダウンロードリンクを押下する"	画面遷移せず一覧画面に滞留すること。
+2. CSVダウンロードリンクを押下する"	画面遷移せず一覧画面に滞留すること。				
 m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-003	IT-25	HTTPステータス	P1	CSV出力ファイル名が sales_report_<出力日時>.csv 形式である	ログイン済み／SEED-M12-04-ADMIN／検索実行済み	—	"1. 集計を実行し検索条件セッションを確立する
-2. CSV出力（/admin/analysis/sales/export）を取得する"	ダウンロードファイル名が「sales_report_」＋出力日時（YmdHis 14桁）＋「.csv」の形式であること。
+2. CSV出力（/admin/analysis/sales/export）を取得する"	ダウンロードファイル名が「sales_report_」＋出力日時（YmdHis 14桁）＋「.csv」の形式であること。				
 m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-004	IT-13	URL直接アクセス	P2	検索実行後にCSV出力URLでCSVが応答される	ログイン済み／SEED-M12-04-ADMIN／検索実行済み	GET /admin/analysis/sales/export	"1. 集計を実行し検索条件セッションを確立する
-2. CSV出力URLへ直接アクセスする"	検索条件セッションの条件で集計したCSVがHTTP成功で応答されること。
+2. CSV出力URLへ直接アクセスする"	検索条件セッションの条件で集計したCSVがHTTP成功で応答されること。				
 m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-005	IT-25	確認ダイアログ	P1	CSV出力応答が添付ファイル（attachment）として返る	ログイン済み／SEED-M12-04-ADMIN／検索実行済み	—	"1. 集計を実行し検索条件セッションを確立する
-2. CSV出力を取得し応答ヘッダを確認する"	Content-Disposition が attachment（ファイルダウンロード）であること。
+2. CSV出力を取得し応答ヘッダを確認する"	Content-Disposition が attachment（ファイルダウンロード）であること。				
 m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-006	IT-25	操作起点	P1	CSVダウンロードリンク押下でCSVファイルがダウンロード発火する	ログイン済み／SEED-M12-04-ADMIN／SEED-M12-04-ORDER	—	"1. 集計を実行しCSVダウンロードリンクを表示する
-2. CSVダウンロードリンクを押下する"	集計結果のCSVファイル（sales_report_*.csv）のダウンロードが発火すること。
+2. CSVダウンロードリンクを押下する"	集計結果のCSVファイル（sales_report_*.csv）のダウンロードが発火すること。				
 m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-007	IT-25	確認ダイアログ	P3	CSVダウンロード押下で確認モーダル/ダイアログを表示せずダウンロードが発火する	ログイン済み／SEED-M12-04-ADMIN／SEED-M12-04-ORDER	—	"1. 集計を実行しCSVダウンロードリンクを表示する
-2. CSVダウンロードリンクを押下する"	確認モーダルやJS確認ダイアログを表示せず、CSVダウンロードが発火し画面遷移しないこと（仕様：本機能専用のモーダルは無い・画面遷移を伴わない）。
-m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-010	IT-15	未認証	P1	未ログインでCSV出力URL直接アクセス→管理ログイン画面へ誘導	未ログイン	GET /admin/analysis/sales/export	"1. ログアウト状態でCSV出力URLへ直接アクセスする"	管理ログイン画面へ誘導されCSVを出力しないこと。
-m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-011	IT-03	画面遷移	P2	検索条件セッションが空でも空の検索条件で集計しCSVを出力する（要確認・刷新先乖離）	ログイン済み／SEED-M12-04-ADMIN／検索未実行（セッション空）	GET /admin/analysis/sales/export	"1. ログイン直後（検索未実行）でCSV出力URLへ直接アクセスする"	空の検索条件で集計したCSVが出力されること（刷新先は一覧へリダイレクトし「検索条件がありません。」表示＝付帯表4#1の乖離検出）。
+2. CSVダウンロードリンクを押下する"	確認モーダルやJS確認ダイアログを表示せず、CSVダウンロードが発火し画面遷移しないこと（仕様：本機能専用のモーダルは無い・画面遷移を伴わない）。				
+m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-010	IT-15	未認証	P1	未ログインでCSV出力URL直接アクセス→管理ログイン画面へ誘導	未ログイン	GET /admin/analysis/sales/export	1. ログアウト状態でCSV出力URLへ直接アクセスする	管理ログイン画面へ誘導されCSVを出力しないこと。				
+m12-04_admin_analytics_sales_order_analysis_csv_export（受注/売上分析 CSVダウンロード）	E2E-M12-04-011	IT-03	画面遷移	P2	検索条件セッションが空でも空の検索条件で集計しCSVを出力する（要確認・刷新先乖離）	ログイン済み／SEED-M12-04-ADMIN／検索未実行（セッション空）	GET /admin/analysis/sales/export	1. ログイン直後（検索未実行）でCSV出力URLへ直接アクセスする	空の検索条件で集計したCSVが出力されること（刷新先は一覧へリダイレクトし「検索条件がありません。」表示＝付帯表4#1の乖離検出）。				
 ```
 
 ## 1b. E2E自動化区分・セレクタ・仕様根拠（TSV外の付帯表）

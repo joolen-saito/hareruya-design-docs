@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない参照系JSON API（商品名検索 `GET /product/search`）であり、買取アプリ（MTGバイヤー）が呼び出す。管理画面など本APIの結果を反映するUIは持たないため、**E2E自動化はAPI/統合レイヤに集約**し（UIレイヤ＝0：本APIの応答を観測する管理画面が無いため）、Playwright `request`（APIRequestContext）でエンドポイントへGET送信し、HTTPステータス・レスポンス本文（構造・型・既知値）で判定する。
 
-**期待結果は仕様（正本md・観点表）由来**とし、実装のレスポンス形・HTTPライブラリ既定値・PHP型キャスト挙動を期待値に流用しない（オラクル独立性）。本機能は基本設計・観点表を上位オラクルとし、pf-apiリバースの正本mdと実装（ec-cube-enterprise）の乖離は付帯表4に出す。実装からは位置情報（APIパス・メソッド・認証有無）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（正本md・観点表）由来**とし、実装のレスポンス形・HTTPライブラリ既定値・PHP型キャスト挙動を期待値に流用しない（オラクル独立性）。本機能は基本設計・観点表を上位オラクルとし、pf-apiリバースの正本mdと実装（ec-cube-enterprise）の乖離は付帯表4に出す。実装からは位置情報（APIパス・メソッド・認証有無）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -22,51 +22,51 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-001	IT-09	リクエスト	P1	部分一致する商品名で検索し200と該当商品配列が返る	SEED-A06-09-PRODUCT-KNOWN	product＝既知商品名の部分文字列	"1. GET /product/search?product=<部分一致語> を送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200が返り、products配列に該当商品が1件以上含まれること。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200が返り、products配列に該当商品が1件以上含まれること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-002	IT-09	実行結果	P1	成功レスポンスの各フィールド値がSEED既知レコードと一致する	SEED-A06-09-PRODUCT-KNOWN	product＝既知商品名	"1. GET /product/search?product=<既知商品名> を送信する
-2. レスポンス本文の各フィールド値を確認する"	products[].product_id・product_name・product_classes[].price・stock がSEED既知レコードの期待値と一致すること。
+2. レスポンス本文の各フィールド値を確認する"	products[].product_id・product_name・product_classes[].price・stock がSEED既知レコードの期待値と一致すること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-003	IT-09	HTTPステータス	P2	該当商品がある場合のHTTPステータスが200となる	SEED-A06-09-PRODUCT-KNOWN	product＝既知商品名	"1. GET /product/search?product=<既知商品名> を送信する
-2. HTTPステータスを確認する"	該当商品がある場合のHTTPステータスが200であること。
+2. HTTPステータスを確認する"	該当商品がある場合のHTTPステータスが200であること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-004	IT-09	外部取得	P2	成功レスポンスにカテゴリ・地域制限・規格・画像URLが含まれる	SEED-A06-09-PRODUCT-KNOWN	product＝既知商品名	"1. GET /product/search?product=<既知商品名> を送信する
-2. products要素の関連フィールドを確認する"	products[]に categories（配列）・region_restriction・product_classes（規格配列）・product_class_images（URL配列）が取得されること。
+2. products要素の関連フィールドを確認する"	products[]に categories（配列）・region_restriction・product_classes（規格配列）・product_class_images（URL配列）が取得されること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-005	IT-32	レスポンス	P2	成功レスポンスのルート構造が仕様の形式（code/products）と一致する	SEED-A06-09-PRODUCT-KNOWN	product＝既知商品名	"1. GET /product/search?product=<既知商品名> を送信する
-2. ルート構造を確認する"	ルートに code（integer・成功時200）と products（array）を持つ仕様の形式であること（実装が付加するcount等の余剰フィールドは合否条件にしない・付帯表4#1）。
+2. ルート構造を確認する"	ルートに code（integer・成功時200）と products（array）を持つ仕様の形式であること（実装が付加するcount等の余剰フィールドは合否条件にしない・付帯表4#1）。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-006	IT-32	レスポンス	P2	商品規格要素の型契約（id/price/stock=integer・images=array）が一致する	SEED-A06-09-PRODUCT-KNOWN	product＝既知商品名	"1. GET /product/search?product=<既知商品名> を送信する
-2. products[].product_classes[]の各フィールド型を確認する"	products[].product_classes[]の product_class_id・price・stock がinteger、product_class_images がarray（URL文字列）であること。
+2. products[].product_classes[]の各フィールド型を確認する"	products[].product_classes[]の product_class_id・price・stock がinteger、product_class_images がarray（URL文字列）であること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-007	IT-32	資格情報	P1	認証情報を付与しないリクエストでも200が返る（本APIは認証なし）	SEED-A06-09-PRODUCT-KNOWN	認証ヘッダ・トークンを付与しないリクエスト／product＝既知商品名	"1. 認証情報を付与せずGET /product/search?product=<既知商品名> を送信する
-2. HTTPステータスを確認する"	認証情報なしでもHTTPステータス200が返ること（本APIは認証を行わない仕様）。
+2. HTTPステータスを確認する"	認証情報なしでもHTTPステータス200が返ること（本APIは認証を行わない仕様）。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-008	IT-10	通信	P2	拡張子あり別名(.json)でも同一処理として200が返る	SEED-A06-09-PRODUCT-KNOWN	product＝既知商品名	"1. GET /product/search.json?product=<既知商品名> を送信する
-2. HTTPステータスとレスポンス本文を確認する"	別名(/product/search.json)でも同一処理としてHTTPステータス200・同等のproducts配列が返ること。
+2. HTTPステータスとレスポンス本文を確認する"	別名(/product/search.json)でも同一処理としてHTTPステータス200・同等のproducts配列が返ること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-009	IT-10	正常	P2	部分一致する複数商品がproducts配列で返る	SEED-A06-09-PRODUCT-KNOWN（複数商品が該当）	product＝複数商品に部分一致する語	"1. GET /product/search?product=<複数該当語> を送信する
-2. products配列の件数を確認する"	部分一致する複数商品がproducts配列に返ること。
+2. products配列の件数を確認する"	部分一致する複数商品がproducts配列に返ること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-010	IT-09	実行結果	P2	カード詳細を持つ商品のproduct_nameに言語コードが付与される	SEED-A06-09-PRODUCT-KNOWN（カード詳細あり）	product＝カード詳細を持つ商品名	"1. GET /product/search?product=<カード詳細あり商品名> を送信する
-2. product_nameの先頭を確認する"	カード詳細を持つ商品のproduct_nameが先頭に言語コード（【JP】等）を付した値であること。
+2. product_nameの先頭を確認する"	カード詳細を持つ商品のproduct_nameが先頭に言語コード（【JP】等）を付した値であること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-011	IT-10	正常	P2	その他コンディション表示可の商品でNM以外の規格も含まれる	SEED-A06-09-OTHER-COND（表示条件を満たす）	product＝その他コンディション表示可の商品名	"1. GET /product/search?product=<対象商品名> を送信する
-2. product_classesの規格内訳を確認する"	その他コンディションの表示可と判定される商品で、product_classesに良品(NM)以外の規格も含まれること。
+2. product_classesの規格内訳を確認する"	その他コンディションの表示可と判定される商品で、product_classesに良品(NM)以外の規格も含まれること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-012	IT-10	重複・順序	P1	表示下限未満・その他コンディション抑制時は規格がNMのみに絞られる	SEED-A06-09-OTHER-COND（表示下限未満／抑制対象）	product＝抑制対象の商品名	"1. GET /product/search?product=<抑制対象商品名> を送信する
-2. product_classesの規格内訳を確認する"	その他コンディション抑制または表示下限価格未満の場合、product_classesが良品(NM)の規格のみに絞られ、応答が実在規格の一部となること。
+2. product_classesの規格内訳を確認する"	その他コンディション抑制または表示下限価格未満の場合、product_classesが良品(NM)の規格のみに絞られ、応答が実在規格の一部となること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-013	IT-32	リクエスト	P3	想定外のクエリ項目を加えても無視され200が返る	SEED-A06-09-PRODUCT-KNOWN	product＝既知商品名＋想定外のクエリ項目（項目名と値のセット）	"1. GET /product/search?product=<既知商品名>&<想定外項目>=<値> を送信する
-2. HTTPステータスとレスポンス本文を確認する"	想定外項目を加えてもエラーにならず、HTTPステータス200で該当商品が返ること（未知クエリは無視）。
+2. HTTPステータスとレスポンス本文を確認する"	想定外項目を加えてもエラーにならず、HTTPステータス200で該当商品が返ること（未知クエリは無視）。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-014	IT-09	実行結果	P3	該当が多い場合に商品が最大100件で打ち切られる	SEED-A06-09-OVER100（同一語に101件以上該当）	product＝101件以上に部分一致する語	"1. GET /product/search?product=<101件以上該当語> を送信する
-2. products配列の件数を確認する"	products配列が最大100件で打ち切られ、101件目以降が含まれないこと。
+2. products配列の件数を確認する"	products配列が最大100件で打ち切られ、101件目以降が含まれないこと。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-020	IT-32	必須条件	P1	productを未指定（空）で送信すると404が返る	SEED-A06-09-PRODUCT-KNOWN	productパラメータを未指定（空）	"1. GET /product/search（product未指定）を送信する
-2. HTTPステータスを確認する"	HTTPステータス404が返ること。
-a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-021	IT-10	異常系	P1	該当なし時の404本文が {code, message}（"Not Found"）形式となる	SEED-A06-09-PRODUCT-NONE	product＝該当しない商品名	"1. GET /product/search?product=<該当なし語> を送信する
-2. レスポンス本文を確認する"	404応答の本文が {code, message}（message=\"Not Found\"）の形式であること。
+2. HTTPステータスを確認する"	HTTPステータス404が返ること。				
+a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-021	IT-10	異常系	P1	"該当なし時の404本文が {code, message}（""Not Found""）形式となる"	SEED-A06-09-PRODUCT-NONE	product＝該当しない商品名	"1. GET /product/search?product=<該当なし語> を送信する
+2. レスポンス本文を確認する"	"404応答の本文が {code, message}（message=\""Not Found\""）の形式であること。"				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-022	IT-32	データなし	P2	該当0件の場合に404（仕様の0件表現）が返る	SEED-A06-09-PRODUCT-NONE	product＝該当0件の商品名	"1. GET /product/search?product=<該当0件語> を送信する
-2. HTTPステータスを確認する"	該当0件の場合、HTTPステータス404（仕様の0件表現＝Not Found）が返ること。
+2. HTTPステータスを確認する"	該当0件の場合、HTTPステータス404（仕様の0件表現＝Not Found）が返ること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-023	IT-10	エラー	P2	該当する商品サブクラス（規格）が無い場合に404が返る	SEED-A06-09-SUBCLASS-MISSING	product＝商品はヒットするが規格が無い商品名	"1. GET /product/search?product=<規格なし商品名> を送信する
-2. HTTPステータスを確認する"	該当する商品サブクラス（規格）が無い場合、HTTPステータス404が返ること。
+2. HTTPステータスを確認する"	該当する商品サブクラス（規格）が無い場合、HTTPステータス404が返ること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-024	IT-32	リクエスト	P2	特殊文字クエリで該当が無い場合に404が返る	SEED-A06-09-PRODUCT-NONE	product＝特殊文字（記号等）で該当なし	"1. GET /product/search?product=<特殊文字> を送信する
-2. HTTPステータスを確認する"	特殊文字で該当商品が無い場合、HTTPステータス404が返ること。
+2. HTTPステータスを確認する"	特殊文字で該当商品が無い場合、HTTPステータス404が返ること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-025	IT-10	HTTPステータス	P1	異常（該当なし）時のHTTPステータスが404となる	SEED-A06-09-PRODUCT-NONE	product＝該当しない商品名	"1. GET /product/search?product=<該当なし語> を送信する
-2. HTTPステータスを確認する"	異常（該当なし）時のHTTPステータスが404であること。
+2. HTTPステータスを確認する"	異常（該当なし）時のHTTPステータスが404であること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-026	IT-32	受信検証	P2	空白のみのクエリは該当なしとして404が返る	SEED-A06-09-PRODUCT-KNOWN	product＝空白文字のみ（半角/全角空白）	"1. GET /product/search?product=<空白のみ> を送信する
-2. HTTPステータスを確認する"	実質空（空白のみ）のクエリは該当なしとしてHTTPステータス404が返ること。
+2. HTTPステータスを確認する"	実質空（空白のみ）のクエリは該当なしとしてHTTPステータス404が返ること。				
 a06-09_api_product_search_by_name（API_店頭仕入_商品名検索）	E2E-A06-09-030	IT-10	エラー	P3	タイムアウト時に未定義エラーで停止せず仕様の挙動となる（手動）	SEED-A06-09-PRODUCT-KNOWN	タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してGET /product/search?product=<語> を送信する
-2. 応答を確認する"	タイムアウト発生時に未定義エラーで停止しないこと（正典にタイムアウト時の応答定義が無く、固定期待を置かず要実機確認・付帯表4#3）。
+2. 応答を確認する"	タイムアウト発生時に未定義エラーで停止しないこと（正典にタイムアウト時の応答定義が無く、固定期待を置かず要実機確認・付帯表4#3）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

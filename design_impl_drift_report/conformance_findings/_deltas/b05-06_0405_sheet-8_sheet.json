@@ -1,0 +1,96 @@
+{
+  "functionId": "b05-06_0405_sheet-8_sheet",
+  "featureNo": "B05-06",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-8:1713,1717",
+      "designExpectation": "コンソールのバッチコマンドは `order:batch checkDuplicatePoint` として実行する。",
+      "implRef": "src/Eccube/Command/CheckDuplicatePointCommand.php:34 / 不在（探索範囲: src/Eccube/Command, src/Eccube, html; 検索語: order:batch, checkDuplicatePoint, eccube:check-duplicate-point）",
+      "implementationActual": "実装の Symfony Console コマンド名は `eccube:check-duplicate-point`。`order:batch checkDuplicatePoint` のコマンド定義またはエイリアスは確認できない。",
+      "mismatchReason": "設計は利用者視点の入口として `order:batch checkDuplicatePoint` を指定しているが、実装入口は `#[AsCommand(name: 'eccube:check-duplicate-point')]` のため、設計通りのコマンド名では起動できない。",
+      "comparisonRows": [
+        {
+          "item": "バッチ起動コマンド",
+          "design": "`order:batch checkDuplicatePoint`",
+          "implementation": "`eccube:check-duplicate-point`",
+          "mismatch": "コマンド名が一致せず、設計に記載された実行方法と実装入口が異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-8:1724,1736",
+      "designExpectation": "ポイント重複は、受注・会員・ポイント履歴の組み合わせで同一目的の付与または利用が複数成立している状態として検出し、`dtb_point_history` の `order_id`・`point_type_id`・`point_change` を二重登録の検知に使用する。",
+      "implRef": "src/Eccube/Repository/DtbPointHistoryRepository.php:225",
+      "implementationActual": "`findDuplicatePoint()` は `ph.Order` を join し、`ph.pointChange < 0`、直近1日、`groupBy('o.id')` と `addGroupBy('ph.pointChange')`、`COUNT(DISTINCT ph.id) > 1` で判定している。`ph.Customer` や `ph.PointType` / `point_type_id` は検知キーに含めていない。",
+      "mismatchReason": "設計は受注・会員・ポイント履歴区分を含む組み合わせを検知基準にしているが、実装は注文IDとポイント増減量だけで集計しており、会員・ポイント履歴区分が異なる履歴も同一グループとして扱われ得る。",
+      "comparisonRows": [
+        {
+          "item": "重複検知キー",
+          "design": "受注・会員・ポイント履歴区分・ポイント増減量を含む組み合わせで検知する。DBカラムとして `order_id`・`point_type_id`・`point_change` を使用する。",
+          "implementation": "`groupBy('o.id')` と `addGroupBy('ph.pointChange')` のみ。`Customer` と `PointType` は未使用。",
+          "mismatch": "設計で検知に必要な `point_type_id` と会員観点が実装の集計キーから欠落している。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-8:1706,1736",
+      "designExpectation": "通知に用いる注文番号は `dtb_order.order_no` から取得する。",
+      "implRef": "src/Eccube/Util/OrderUtil.php:33; src/Eccube/Entity/Order.php:450; src/Eccube/Entity/Order.php:633",
+      "implementationActual": "`OrderUtil::getOrderNumbers()` は受注IDから Order を取得し、通知用の値として `$order->getOrderNumber()` を返す。Entity では `order_no` と `order_number` が別カラムとして存在する。",
+      "mismatchReason": "設計は `dtb_order.order_no` を通知に添える注文番号として指定しているが、実装は `order_number` を返す `getOrderNumber()` を使っている。",
+      "comparisonRows": [
+        {
+          "item": "通知メールに添える注文番号カラム",
+          "design": "`dtb_order.order_no`",
+          "implementation": "`Order::getOrderNumber()`、すなわち `dtb_order.order_number`",
+          "mismatch": "設計指定カラム `order_no` ではなく別カラム `order_number` が通知に使われる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-8:1732,1742",
+      "designExpectation": "取得・送信時のエラーはエラーメッセージをコンソールに出力する。",
+      "implRef": "src/Eccube/Command/CheckDuplicatePointCommand.php:50; src/Eccube/Service/MailService.php:2266",
+      "implementationActual": "Command 側は `handle()` から投げられた例外を `io->error()` で出力するが、メール送信時の `TransportExceptionInterface` は `MailService::sendOrderDuplicateNotificationMail()` 内で catch され、`log_critical($e->getMessage())` のみで再throwされない。",
+      "mismatchReason": "取得エラーはコンソール出力され得る一方、送信時エラーは MailService 内でログ化されるだけで Command に伝播せず、設計が求めるコンソールへのエラーメッセージ出力にならない。",
+      "comparisonRows": [
+        {
+          "item": "送信時エラーの出力先",
+          "design": "エラーメッセージをコンソールに出力する。",
+          "implementation": "`TransportExceptionInterface` を catch して `log_critical()` するのみ。",
+          "mismatch": "メール送信失敗時にコンソールエラーとして出力されない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-8:1744,1745",
+      "designExpectation": "開始・完了のコンソール出力は日時付きで行う。",
+      "implRef": "src/Eccube/Command/CheckDuplicatePointCommand.php:46",
+      "implementationActual": "開始時は `ポイント二重登録チェックバッチ開始`、完了時は `ポイント二重登録は検出されませんでした。` または `ポイント二重登録が検出されました。（%d件）` を出力するが、日時は付与していない。",
+      "mismatchReason": "設計は開始・完了ログのコンソール出力に日時を要求しているが、実装の出力文には日時生成・付与処理がない。",
+      "comparisonRows": [
+        {
+          "item": "コンソール出力の日時",
+          "design": "開始・完了のコンソール出力（日時付き）。",
+          "implementation": "開始・完了メッセージはあるが日時なし。",
+          "mismatch": "設計で要求された日時付き出力が実装されていない。"
+        }
+      ]
+    }
+  ]
+}

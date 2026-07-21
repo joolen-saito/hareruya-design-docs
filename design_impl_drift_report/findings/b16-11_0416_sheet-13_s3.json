@@ -1,0 +1,917 @@
+{
+  "functionId": "b16-11_0416_sheet-13_s3",
+  "featureNo": "B16-11",
+  "title": "B16-11 S3画像サイズチェック処理",
+  "domain": "b16",
+  "kind": "batch",
+  "designHtml": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+  "sourceBook": "0416_基本設計仕様書(バッチ_インフラ).html",
+  "sheetId": "sheet-13",
+  "sheetName": "S3画像サイズチェック処理",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "b16-11_0416_sheet-13_s3-conformance-3ea9bda130a2",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13:1408,1420-1477",
+      "designRefDetail": null,
+      "designExpectation": "S3画像サイズチェック処理として、15分毎にS3上の指定画像バケットからファイル名・ファイルサイズ一覧を取得し、画像種別ごとの規定サイズ超過ファイル一覧を作成して、指定宛先へメール通知する",
+      "designQuote": "S3画像サイズチェック処理として、15分毎にS3上の指定画像バケットからファイル名・ファイルサイズ一覧を取得し、画像種別ごとの規定サイズ超過ファイル一覧を作成して、指定宛先へメール通知する",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/S3, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Upload, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/**/Mail, /home/y-saito/Developments/ec-cube-enterprise/html。確認語: S3画像/画像サイズ/容量超過/規定サイズ/画像ファイルサイズ超過アラート/hareruya_filesize_alert/filepool-resized/listObjects/filesize/image-size/250KB/400KB/500KB/5KB）",
+      "implementationActual": "B16-11相当のConsole Command/Service/Mailテンプレートは確認できない。近いS3実装は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/S3/FileUploadService.php:36 で s3_inventory_check 設定を読み、同:57-85 で putObject によるアップロードのみを行う。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Upload/Adapters/S3FileAdapter.php:61-100 はupload、同:178-200 はget、同:274-279 はexistsで、バケット配下一覧取得・サイズ閾値判定・超過一覧作成・管理者メール通知はない。",
+      "difference": "設計はバッチ外部契約として「スケジュール起動(Step Functions) 15分毎」「入力S3、出力メール」「指定S3パス5種」「種別別しきい値」「指定From/To/CC/BCC/件名/本文」を要求しているが、src/Eccube/Command の AsCommand 一覧に画像サイズチェック/ファイルサイズアラート相当の入口がなく、S3処理はアップロード/単体取得系のみ、MailServiceとMailテンプレートにも設計件名・宛先・本文に該当する送信処理が存在しない。",
+      "mismatchReason": "設計はバッチ外部契約として「スケジュール起動(Step Functions) 15分毎」「入力S3、出力メール」「指定S3パス5種」「種別別しきい値」「指定From/To/CC/BCC/件名/本文」を要求しているが、src/Eccube/Command の AsCommand 一覧に画像サイズチェック/ファイルサイズアラート相当の入口がなく、S3処理はアップロード/単体取得系のみ、MailServiceとMailテンプレートにも設計件名・宛先・本文に該当する送信処理が存在しない。",
+      "comparisonRows": [
+        {
+          "item": "バッチ入口・実行周期",
+          "design": "Step Functions によるスケジュール起動、15分毎",
+          "implementation": "src/Eccube/Command 配下の AsCommand 一覧に B16-11、S3画像サイズチェック、filesize alert、image-size check 相当なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "S3一覧取得",
+          "design": "下記バケットからファイル名およびファイルサイズの一覧を取得する",
+          "implementation": "FileUploadService は putObject のみ。S3FileAdapter も upload/get/delete/copy/exists で listObjects/listObjectsV2 相当なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "対象S3パス",
+          "design": "s3://filepool-resized/img/goods/L/, /C/, /I/, /img/goods/L/NUM/, /banner/, /product/, /set/",
+          "implementation": "filepool-resized および該当プレフィックスを扱う実装なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "しきい値判定",
+          "design": "商品サムネイル250kB以上、オリジナル400kB以上、バナー500kB以上、商品画像400kB以上、絵文字5kB以上を抽出",
+          "implementation": "250KB/400KB/500KB/5KB または byte 換算値による種別別ファイルサイズ判定なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "通知先・ヘッダ",
+          "design": "From info@hareruyamtg.com、To hareruya_filesize_alert@hareruyamtg.com、CC it_common@hareruyamtg.com、BCC r9y9k6q2h2i8d9b5@sekappy-dev.slack.com",
+          "implementation": "MailService/Mailテンプレートに該当宛先のサイズ超過通知なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "通知件名・本文",
+          "design": "件名「画像ファイルサイズ超過アラート」、本文「規定サイズを超過している画像ファイルが見つかりました」と超過ファイルURL・サイズ一覧",
+          "implementation": "件名・本文文言・超過ファイル一覧を生成する処理なし",
+          "mismatch": "未実装"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b16-11_0416_sheet-13_s3",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/S3, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Upload, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/**/Mail, /home/y-saito/Developments/ec-cube-enterprise/html。確認語: S3画像/画像サイズ/容量超過/規定サイズ/画像ファイルサイズ超過アラート/hareruya_filesize_alert/filepool-resized/listObjects/filesize/image-size/250KB/400KB/500KB/5KB）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「S3画像サイズチェック処理として、15分毎にS3上の指定画像バケットからファイル名・ファイルサイズ一覧を取得し、画像種別ごとの規定サイズ超過ファイル一覧を作成して、指定宛先へメール通知する」。実装は「B16-11相当のConsole Command/Service/Mailテンプレートは確認できない。近いS3実装は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/S3/FileUploadService.php:36 で s3_inventory_check 設定を読み、同:57-85 で putObject によるアップロードのみを行う。/home/y-saito/Developments/ec-cube-enterprise…」。乖離理由は「設計はバッチ外部契約として「スケジュール起動(Step Functions) 15分毎」「入力S3、出力メール」「指定S3パス5種」「種別別しきい値」「指定From/To/CC/BCC/件名/本文」を要求しているが、src/Eccube/Command の AsCommand 一覧に画像サイズチェック/ファイルサイズアラート相当の入口がなく、S3処理はアップロード/単体取得系のみ、MailServiceとMailテンプレートにも設計件名・宛先・本文に該当する送信処理が存在しない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "業務ロジック・外部連携未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ルート・Controller",
+        "Form・入力項目",
+        "Service・業務ルール",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Service/MailService.php:69\n66: use Twig\\Error\\SyntaxError;\n67: use Twig\\Markup;\n68: \n69: class MailService\n70: {\n71:     protected BaseInfo $BaseInfo;\n72: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 16,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-369368c1ca",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "S3画像サイズチェック処理",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-8f67b007dd",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "概要 S3にアップロードされている画像内に規定している容量超過しているファイルを通知する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-28a530a649",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "S3にアップロードされている画像内に規定している容量超過しているファイルを通知する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-234922241c",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "S3にアップロードされている画像(商品・バナーなど)のファイル容量が規定量を超えていた場合、メールで通知する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-4fa58dabbf",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "・ ファイル一覧から、画像種別ごとに規定されたファイル容量を超えていないか確認する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-88363e91f5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "・ 規定サイズを超えるファイルがある場合、該当ファイル一覧を作成し管理者メールアドレスに通知する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-b1778750a5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "入力データ元 S3 出力先(フォーマット) メール",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-0b081d3aaa",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "ファイルサイズ : 250kB以上",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-c6b0fc63de",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "ファイルサイズ : 400kB以上",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-a875510a2c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "ファイルサイズ : 500kB以上",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-4c78f16251",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "ファイルサイズ : 5kB以上",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-e1b69a01ee",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "実行結果詳細 ※主にDBの登録・更新結果について記載",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-ef899fea35",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "件名 : 画像ファイルサイズ超過アラート",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-53fdea1dd8",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "※※送信専用アドレスの為返信不可※※",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-122ed59dac",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "規定サイズを超過している画像ファイルが見つかりました",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-11_0416_sheet-13_s3-req-6c0304025f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "エラーハンドリング",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "filepool-resized/img/goods/L",
+        "filepool-resized/img/goods/C",
+        "filepool-resized/img/goods/I",
+        "filepool-resized/img/goods/L/NUM",
+        "filepool-resized/banner",
+        "filepool-resized/product",
+        "filepool-resized/set",
+        "files.hareruyamtg.com"
+      ],
+      "businessTerms": [
+        "B16",
+        "S3画像サイズチェック処理",
+        "バッチ機能",
+        "バッチ処理用EC2インスタンス",
+        "商品サムネイル",
+        "商品画像"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "filepool-resized/img/goods/C",
+        "termType": "path",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbBuyOrderRepository.php:805",
+        "snippet": "AND pcat.category_id IN (:goods_category_id, :reserved_goods_category_id)",
+        "weight": 6
+      },
+      {
+        "term": "filepool-resized/img/goods/C",
+        "termType": "path",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbBuyOrderRepository.php:811",
+        "snippet": "AND pcat.category_id IN (:goods_category_id, :reserved_goods_category_id)",
+        "weight": 6
+      },
+      {
+        "term": "files.hareruyamtg.com",
+        "termType": "path",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Block/deck_entry_how_to_import.twig:18",
+        "snippet": "<img src=\"https://files.hareruyamtg.com/img/event/decklists_import_detail/en/import_decklist_1.png\"><br>",
+        "weight": 6
+      },
+      {
+        "term": "files.hareruyamtg.com",
+        "termType": "path",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Block/deck_entry_how_to_import.twig:21",
+        "snippet": "<img src=\"https://files.hareruyamtg.com/img/event/decklists_import_detail/en/import_decklist_2.png\"><br>",
+        "weight": 6
+      },
+      {
+        "term": "files.hareruyamtg.com",
+        "termType": "path",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Block/deck_entry_how_to_import.twig:24",
+        "snippet": "<img src=\"https://files.hareruyamtg.com/img/event/decklists_import_detail/en/import_decklist_3.png\"><br>",
+        "weight": 6
+      },
+      {
+        "term": "files.hareruyamtg.com",
+        "termType": "path",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Block/deck_entry_how_to_import.twig:27",
+        "snippet": "<img src=\"https://files.hareruyamtg.com/img/event/decklists_import_detail/en/import_decklist_4.png\"><br>",
+        "weight": 6
+      },
+      {
+        "term": "filepool-resized/img/goods/L",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/QrCodeService.php:162",
+        "snippet": "private function filledRoundedRect(\\GdImage $img, int $x1, int $y1, int $x2, int $y2, int $radius, int $color): void",
+        "weight": 6
+      },
+      {
+        "term": "filepool-resized/img/goods/L",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/QrCodeService.php:165",
+        "snippet": "imagefilledrectangle($img, $x1 + $radius, $y1, $x2 - $radius, $y2, $color);",
+        "weight": 6
+      },
+      {
+        "term": "filepool-resized/banner",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-main.js:1",
+        "snippet": "(()=>{\"use strict\";let e,t;var r,i,n,a,o,s,l,c,u,d,h,p,f,m,v={},g={};function y(e){var t=g[e];if(void 0!==t)return t.exports;var r=g[e]={exports:{}};return v[e](r,r.exports,y),r.exports}y.rv=()=>\"1.7.5\",y.ruid=\"bundler=…",
+        "weight": 4
+      },
+      {
+        "term": "filepool-resized/img/goods/L",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-main.js:1",
+        "snippet": "(()=>{\"use strict\";let e,t;var r,i,n,a,o,s,l,c,u,d,h,p,f,m,v={},g={};function y(e){var t=g[e];if(void 0!==t)return t.exports;var r=g[e]={exports:{}};return v[e](r,r.exports,y),r.exports}y.rv=()=>\"1.7.5\",y.ruid=\"bundler=…",
+        "weight": 4
+      },
+      {
+        "term": "filepool-resized/product",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-main.js:1",
+        "snippet": "(()=>{\"use strict\";let e,t;var r,i,n,a,o,s,l,c,u,d,h,p,f,m,v={},g={};function y(e){var t=g[e];if(void 0!==t)return t.exports;var r=g[e]={exports:{}};return v[e](r,r.exports,y),r.exports}y.rv=()=>\"1.7.5\",y.ruid=\"bundler=…",
+        "weight": 4
+      },
+      {
+        "term": "filepool-resized/set",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-main.js:1",
+        "snippet": "(()=>{\"use strict\";let e,t;var r,i,n,a,o,s,l,c,u,d,h,p,f,m,v={},g={};function y(e){var t=g[e];if(void 0!==t)return t.exports;var r=g[e]={exports:{}};return v[e](r,r.exports,y),r.exports}y.rv=()=>\"1.7.5\",y.ruid=\"bundler=…",
+        "weight": 4
+      },
+      {
+        "term": "filepool-resized/product",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-purchase-unisearch-list-client.js:239",
+        "snippet": "return String(cfg.purchaseSearchUrl) + '?purchaseFlg=1&product=' + encodeURIComponent(word);",
+        "weight": 4
+      },
+      {
+        "term": "filepool-resized/set",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-purchase-unisearch-list-client.js:50",
+        "snippet": "params.set(orderbyName, String($orderbyInput.val() ?? ''));",
+        "weight": 4
+      },
+      {
+        "term": "filepool-resized/product",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-purchase-unisearch-list-client.js:526",
+        "snippet": "$('#purchase-search-form').on('change', '.product-list-quick-filter input, .product-list-quick-filter select', function() {",
+        "weight": 4
+      },
+      {
+        "term": "filepool-resized/set",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-purchase-unisearch-list-client.js:62",
+        "snippet": "urlSearchParams.set('pageno', String(pageNumber));",
+        "weight": 4
+      },
+      {
+        "term": "filepool-resized/set",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-purchase-unisearch-list-client.js:84",
+        "snippet": "paramValueMap.set(key, []);",
+        "weight": 4
+      },
+      {
+        "term": "filepool-resized/banner",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-top.js:1",
+        "snippet": "(()=>{\"use strict\";var e,r,t,n,a={},i={};function o(e){var r=i[e];if(void 0!==r)return r.exports;var t=i[e]={exports:{}};return a[e](t,t.exports,o),t.exports}function l(e){e.innerHTML=\"\"}function c(e,r){return e.querySe…",
+        "weight": 4
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 6,
+    "implementationGapRequirementCount": 6,
+    "rows": [
+      {
+        "findingId": "b16-11_0416_sheet-13_s3-conformance-3ea9bda130a2",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13:1408,1420-1477",
+        "designRequirement": "Step Functions によるスケジュール起動、15分毎",
+        "implementationActual": "src/Eccube/Command 配下の AsCommand 一覧に B16-11、S3画像サイズチェック、filesize alert、image-size check 相当なし",
+        "mismatchReason": "未実装",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "バッチ入口・実行周期",
+            "design": "Step Functions によるスケジュール起動、15分毎",
+            "implementation": "src/Eccube/Command 配下の AsCommand 一覧に B16-11、S3画像サイズチェック、filesize alert、image-size check 相当なし",
+            "mismatch": "未実装"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-11_0416_sheet-13_s3-conformance-3ea9bda130a2",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13:1408,1420-1477",
+        "designRequirement": "下記バケットからファイル名およびファイルサイズの一覧を取得する",
+        "implementationActual": "FileUploadService は putObject のみ。S3FileAdapter も upload/get/delete/copy/exists で listObjects/listObjectsV2 相当なし",
+        "mismatchReason": "未実装",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "S3一覧取得",
+            "design": "下記バケットからファイル名およびファイルサイズの一覧を取得する",
+            "implementation": "FileUploadService は putObject のみ。S3FileAdapter も upload/get/delete/copy/exists で listObjects/listObjectsV2 相当なし",
+            "mismatch": "未実装"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-11_0416_sheet-13_s3-conformance-3ea9bda130a2",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13:1408,1420-1477",
+        "designRequirement": "s3://filepool-resized/img/goods/L/, /C/, /I/, /img/goods/L/NUM/, /banner/, /product/, /set/",
+        "implementationActual": "filepool-resized および該当プレフィックスを扱う実装なし",
+        "mismatchReason": "未実装",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "対象S3パス",
+            "design": "s3://filepool-resized/img/goods/L/, /C/, /I/, /img/goods/L/NUM/, /banner/, /product/, /set/",
+            "implementation": "filepool-resized および該当プレフィックスを扱う実装なし",
+            "mismatch": "未実装"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-11_0416_sheet-13_s3-conformance-3ea9bda130a2",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13:1408,1420-1477",
+        "designRequirement": "商品サムネイル250kB以上、オリジナル400kB以上、バナー500kB以上、商品画像400kB以上、絵文字5kB以上を抽出",
+        "implementationActual": "250KB/400KB/500KB/5KB または byte 換算値による種別別ファイルサイズ判定なし",
+        "mismatchReason": "未実装",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "しきい値判定",
+            "design": "商品サムネイル250kB以上、オリジナル400kB以上、バナー500kB以上、商品画像400kB以上、絵文字5kB以上を抽出",
+            "implementation": "250KB/400KB/500KB/5KB または byte 換算値による種別別ファイルサイズ判定なし",
+            "mismatch": "未実装"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-11_0416_sheet-13_s3-conformance-3ea9bda130a2",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13:1408,1420-1477",
+        "designRequirement": "From info@hareruyamtg.com、To hareruya_filesize_alert@hareruyamtg.com、CC it_common@hareruyamtg.com、BCC r9y9k6q2h2i8d9b5@sekappy-dev.slack.com",
+        "implementationActual": "MailService/Mailテンプレートに該当宛先のサイズ超過通知なし",
+        "mismatchReason": "未実装",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "通知先・ヘッダ",
+            "design": "From info@hareruyamtg.com、To hareruya_filesize_alert@hareruyamtg.com、CC it_common@hareruyamtg.com、BCC r9y9k6q2h2i8d9b5@sekappy-dev.slack.com",
+            "implementation": "MailService/Mailテンプレートに該当宛先のサイズ超過通知なし",
+            "mismatch": "未実装"
+          }
+        ]
+      },
+      {
+        "findingId": "b16-11_0416_sheet-13_s3-conformance-3ea9bda130a2",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13:1408,1420-1477",
+        "designRequirement": "件名「画像ファイルサイズ超過アラート」、本文「規定サイズを超過している画像ファイルが見つかりました」と超過ファイルURL・サイズ一覧",
+        "implementationActual": "件名・本文文言・超過ファイル一覧を生成する処理なし",
+        "mismatchReason": "未実装",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "通知件名・本文",
+            "design": "件名「画像ファイルサイズ超過アラート」、本文「規定サイズを超過している画像ファイルが見つかりました」と超過ファイルURL・サイズ一覧",
+            "implementation": "件名・本文文言・超過ファイル一覧を生成する処理なし",
+            "mismatch": "未実装"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 16,
+    "verdictedCount": 16,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 16,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-369368c1ca",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "S3画像サイズチェック処理",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-8f67b007dd",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "概要 S3にアップロードされている画像内に規定している容量超過しているファイルを通知する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-28a530a649",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "S3にアップロードされている画像内に規定している容量超過しているファイルを通知する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-234922241c",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "S3にアップロードされている画像(商品・バナーなど)のファイル容量が規定量を超えていた場合、メールで通知する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-4fa58dabbf",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "・ ファイル一覧から、画像種別ごとに規定されたファイル容量を超えていないか確認する",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-88363e91f5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "・ 規定サイズを超えるファイルがある場合、該当ファイル一覧を作成し管理者メールアドレスに通知する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-b1778750a5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "入力データ元 S3 出力先(フォーマット) メール",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-0b081d3aaa",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "ファイルサイズ : 250kB以上",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-c6b0fc63de",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "ファイルサイズ : 400kB以上",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-a875510a2c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "ファイルサイズ : 500kB以上",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-4c78f16251",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "ファイルサイズ : 5kB以上",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-e1b69a01ee",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "実行結果詳細 ※主にDBの登録・更新結果について記載",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-ef899fea35",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "件名 : 画像ファイルサイズ超過アラート",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-53fdea1dd8",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "※※送信専用アドレスの為返信不可※※",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-122ed59dac",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "規定サイズを超過している画像ファイルが見つかりました",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b16-11_0416_sheet-13_s3-req-6c0304025f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13",
+        "designRequirement": "エラーハンドリング",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "id": "b05-06-check-duplicate-point-command-name-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b05-06_0405_sheet-8_sheet.json",
+  "sourceFindingId": "b05-06_0405_sheet-8_sheet-conformance-6a8664ad13b5",
+  "classification": "バッチ受注管理",
+  "feature": "ポイント二重登録チェック",
+  "issueCategory": "実装違い",
+  "issue": "ポイント二重登録チェックバッチを設計どおり `order:batch checkDuplicatePoint` で起動できない",
+  "designBook": "0405_基本設計仕様書(バッチ_受注管理).xlsx",
+  "reproSteps": [
+    "設計書 B05-06 の利用者視点の入口で、実行方法が `order:batch checkDuplicatePoint` とされていることを確認する",
+    "ベース実装 pf-eccube3 の `OrderBatch` が `order:batch` コマンドの `batch_name` として `checkDuplicatePoint` を受け付け、`CheckDuplicatePoint` サービスへ対応付けることを確認する",
+    "ec-cube-enterprise の `src/Eccube/Command` と設定を検索し、`order:batch checkDuplicatePoint` または同等 alias が登録されているか確認する",
+    "ec-cube-enterprise では `eccube:check-duplicate-point` だけが登録され、設計どおりの起動名ではポイント二重登録チェックバッチに到達できないことを確認する"
+  ],
+  "expected": [
+    "ポイント二重登録チェックバッチは `order:batch checkDuplicatePoint` で起動できる",
+    "コマンド名が未指定または不一致の場合は、ポイント二重登録チェック処理を行わずに終了する",
+    "起動後の処理では二重登録されたポイント履歴を検知し、該当があれば注文番号を添えて管理者へ通知メールを送信する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise ではポイント二重登録チェックの本体処理と通知処理は存在するが、Symfony Console の登録名は `eccube:check-duplicate-point` であり、設計とベース実装が外部入口としている `order:batch checkDuplicatePoint` や alias は確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は別名の Symfony コマンドだけを登録している",
+          "path": "ec-cube-enterprise/src/Eccube/Command/CheckDuplicatePointCommand.php",
+          "start": 30,
+          "end": 66,
+          "language": "php",
+          "contains": [
+            "bin/console eccube:check-duplicate-point",
+            "#[AsCommand(name: 'eccube:check-duplicate-point', description: 'ポイント二重登録チェックバッチ')]",
+            "$count = $this->checkDuplicatePointAction->handle();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の本体処理は存在するため、差分は起動名に限定する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/CheckDuplicatePointAction.php",
+          "start": 24,
+          "end": 50,
+          "language": "php",
+          "contains": [
+            "class CheckDuplicatePointAction",
+            "$orderIds = $this->pointHistoryRepository->findDuplicatePoint();",
+            "$orderNumbers = OrderUtil::getOrderNumbers($this->orderRepository, $orderIds);",
+            "$this->mailService->sendOrderDuplicateNotificationMail($orderNumbers);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `order:batch` が `batch_name` 引数を受け取り、`checkDuplicatePoint` を `CheckDuplicatePoint` サービスへ対応付ける。未指定・不一致の場合は `Nothing args or command.` を出して処理せず終了するため、設計の起動契約と一致している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は order:batch checkDuplicatePoint を登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php",
+          "start": 12,
+          "end": 30,
+          "language": "php",
+          "contains": [
+            "'checkDuplicatePoint' => 'Plugin\\HareruyaEc\\Service\\Order\\CheckDuplicatePoint'",
+            "$this->setName('order:batch')",
+            "->addArgument('batch_name', InputArgument::OPTIONAL);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 はコマンド名不一致時に処理せず終了する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php",
+          "start": 41,
+          "end": 54,
+          "language": "php",
+          "contains": [
+            "$name = $input->getArgument('batch_name');",
+            "if (!isset($batchNames[$name])) {",
+            "Nothing args or command.",
+            "$batch = new $batchNames[$name]($app, $this->createOptions($input));",
+            "$batch->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 のポイント二重登録チェックサービス",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Order/CheckDuplicatePoint.php",
+          "start": 10,
+          "end": 54,
+          "language": "php",
+          "contains": [
+            "class CheckDuplicatePoint",
+            "protected $commandName = 'checkDuplicatePoint';",
+            "$duplicatePointHistories = $this->app['hareruya_ec.repository.point_history']->findDuplicatePoint();",
+            "$this->app['hareruya_ec.service.mail']->sendOrderDuplicateNotificationMail($orderNumbers);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B05-06 はポイント二重登録を検知し、該当があれば管理者へ通知するバッチとして定義している",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1640,
+      "end": 1679,
+      "language": "html",
+      "contains": [
+        "B05-06",
+        "ポイント二重登録チェック",
+        "ポイント履歴から注文データIDとポイント増減量で検索し、重複している履歴を検索する",
+        "重複している履歴があれば、注文IDから注文番号を取得し、管理者にメールを送信する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B05-06 は pf-eccube3 を挙動参照元とし、利用者視点の入口を `order:batch checkDuplicatePoint` と明記している",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1690,
+      "end": 1718,
+      "language": "html",
+      "contains": [
+        "確認値はpf-eccube3",
+        "<code>order:batch checkDuplicatePoint</code>",
+        "コマンド名が一致しない場合は処理を行わずに終了する",
+        "ポイント二重登録チェックを実行する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は `eccube:check-duplicate-point` として登録しており、`order:batch checkDuplicatePoint` ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/CheckDuplicatePointCommand.php",
+      "start": 30,
+      "end": 66,
+      "language": "php",
+      "contains": [
+        "#[AsCommand(name: 'eccube:check-duplicate-point'",
+        "$this->checkDuplicatePointAction->handle();"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の本体処理は存在するため、本件は起動入口の差分に限定する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/CheckDuplicatePointAction.php",
+      "start": 24,
+      "end": 50,
+      "language": "php",
+      "contains": [
+        "$this->pointHistoryRepository->findDuplicatePoint();",
+        "$this->mailService->sendOrderDuplicateNotificationMail($orderNumbers);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `order:batch` の batch_name として `checkDuplicatePoint` を受け付ける",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php",
+      "start": 12,
+      "end": 30,
+      "language": "php",
+      "contains": [
+        "'checkDuplicatePoint' => 'Plugin\\HareruyaEc\\Service\\Order\\CheckDuplicatePoint'",
+        "$this->setName('order:batch')"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の `order:batch` は未指定・不一致の場合に処理せず終了する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php",
+      "start": 41,
+      "end": 54,
+      "language": "php",
+      "contains": [
+        "if (!isset($batchNames[$name])) {",
+        "Nothing args or command.",
+        "$batch->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の実処理は重複ポイント履歴を取得し、注文番号を添えて管理者へ通知する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Order/CheckDuplicatePoint.php",
+      "start": 30,
+      "end": 54,
+      "language": "php",
+      "contains": [
+        "$this->app['hareruya_ec.repository.point_history']->findDuplicatePoint();",
+        "OrderUtil::getOrderNumbers($this->app, $orderIds);",
+        "$this->app['hareruya_ec.service.mail']->sendOrderDuplicateNotificationMail($orderNumbers);"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B05-06|ポイント二重登録|checkDuplicatePoint|check-duplicate-point|order:batch\" excel_to_html/output/0405_基本設計仕様書\\(バッチ_受注管理\\).html",
+      "rg -n \"order:batch|checkDuplicatePoint|eccube:check-duplicate-point|setAliases|aliases|addAlias|addAliases\" ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/app/config 2>/dev/null",
+      "rg -n \"checkDuplicatePoint|CheckDuplicatePoint|ポイント二重登録|ポイント重複|order:batch|sendDuplicate\" ../pf-eccube3/app/Plugin/HareruyaEc 2>/dev/null"
+    ],
+    "notes": [
+      "codex gpt-5.5 high reviewer Leibniz: VERIFIED。設計とpf-eccube3は `order:batch checkDuplicatePoint` 入口で一致し、enterpriseは `#[AsCommand(name: 'eccube:check-duplicate-point')]` のみで aliases がない。`CheckDuplicatePointAction` に本体処理はあるため、バッチ本体欠落ではなくコマンド入口差分に限定する。",
+      "enterprise では `AsCommand(... aliases: ...)` を使う例があるが、`CheckDuplicatePointCommand` には設定されていない。",
+      "enterprise 側には `CheckDuplicatePointAction` と管理者通知メール呼び出しがあるため、処理そのものではなく設計どおりの起動名に限定した差分として起票する。"
+    ]
+  }
+}

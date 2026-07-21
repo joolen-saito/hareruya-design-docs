@@ -1,0 +1,54 @@
+{
+  "functionId": "f06-17_0306_sheet-14_sheet",
+  "featureNo": "F06-17",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-14（カスタマイズ要件『・開催店舗を表示する』／画面部品表 識別ID4 開催店舗ラベル『※カスタマイズ対応、開催店舗を表示する』）",
+      "designExpectation": "デッキ登録完了画面（confirm/check）に、カスタマイズ新規追加項目として開催店舗（会場店舗）を表示する。DCIナンバー削除と対になる本機能固有の新規追加。",
+      "implRef": "src/Eccube/Resource/template/default/Mypage/deck_entry_check.twig:1-101 ／ src/Eccube/Controller/Front/Mypage/DeckEntryController.php:161-194",
+      "implementationActual": "deck_entry_check.twig は見出し・会員氏名・大会名(EventDetail.event.nameJp)・お名前(Deck.playerName)・フォーマット・メイン/サイドボード・カード画像・ボタンのみを描画。店舗/store/shop/venue/会場/開催 のいずれもテンプレートにヒットせず、check() コントローラも店舗のview変数を渡していない。",
+      "mismatchReason": "設計はカスタマイズ新規追加として完了画面への開催店舗表示を要求するが、テンプレート・コントローラのどこにも開催店舗を表示する要素・view変数が存在しない。DtbEventDetail の hasStoreEntried() は店頭受付判定であり開催店舗の表示関連ではない。DCIナンバー削除は実装済（非表示）だが、開催店舗の追加表示のみ欠落。",
+      "comparisonRows": [
+        {
+          "item": "完了画面の開催店舗ラベル（画面部品#4）",
+          "design": "開催店舗を表示する（カスタマイズ新規追加）",
+          "implementation": "表示要素・view変数とも不在",
+          "mismatch": "未実装（表示欠落）"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-14（処理フロー『メイン・サイドのカードリストを解析する。書式エラー…セッションに保持し、デッキ編集画面へリダイレクトする。デッキは保存しない。』／画面遷移『更新時に書式エラー→デッキ編集画面へリダイレクト（入力保持）』／セッション節／エラー処理節／エッジケース節）",
+      "designExpectation": "更新確定(update)でメイン・サイドのカードリストを解析し、書式エラー（解析結果が整数のエラーコード）があれば入力テキストとエラー内容をセッションに保持してデッキ編集画面(edit)へリダイレクトし、デッキは保存しない。編集画面表示時にセッションから入力/エラーを復元する。",
+      "implRef": "src/Eccube/Controller/Front/Mypage/DeckEntryController.php:99-154（entry）／src/Eccube/Service/Front/Mypage/DeckEntryAction.php:37-83（handle）／DeckEntryController.php:51-93（edit index）",
+      "implementationActual": "entry() はトークン検証・選手/イベント詳細/フォーマット確認後、deckMain/deckSide を生文字列のまま DeckEntryInput に詰めて handle() を呼び無条件に persist/flush で即保存し、メール送信後 check へリダイレクト。カードリスト解析・書式エラー判定・セッション保存・edit へのリダイレクト・保存中止のいずれも無い。edit(index) 側にもセッションからの入力/エラー復元処理が無い。",
+      "mismatchReason": "設計は書式エラー時『保存せず入力保持でデッキ編集画面へ戻す』を利用者可視の中核挙動として複数の機能節（処理フロー・画面遷移・エラー処理・セッション・エッジケース）で明記するが、実装の更新確定フローには解析・エラー分岐・セッション保存・edit リダイレクトが全く無く、書式不正入力でもデッキが保存され完了画面へ遷移する。『実装詳細は要確認』のハッジはDB永続化詳細を対象とする文脈であり、書式エラー時の遷移・入力保持という機能挙動要求はハッジ対象外。",
+      "comparisonRows": [
+        {
+          "item": "書式エラー時の保存可否",
+          "design": "保存しない（デッキは保存しない）",
+          "implementation": "無条件に persist/flush で保存",
+          "mismatch": "未実装（保存中止なし）"
+        },
+        {
+          "item": "書式エラー時の遷移",
+          "design": "デッキ編集画面(edit)へリダイレクト（入力保持）",
+          "implementation": "常に完了画面(check)へリダイレクト",
+          "mismatch": "未実装（edit リダイレクトなし）"
+        },
+        {
+          "item": "入力/エラーのセッション保持・復元",
+          "design": "セッションに保持し編集画面で復元・消去",
+          "implementation": "セッション保存も復元も無し",
+          "mismatch": "未実装"
+        }
+      ]
+    }
+  ]
+}

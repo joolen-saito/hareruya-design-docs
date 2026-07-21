@@ -1,0 +1,25 @@
+{
+  "chunkId": "b02-07_0404_sheet-10_tsv--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0404_sheet-10_tsv.json#b02-07_0404_sheet-10_tsv-conformance-d2579ec21c60",
+      "refuted": false,
+      "reason": "反証できず。設計TSV表（1697-1734行）を実際に確認し、識別ID34は branch_status（支店表示フラグ）で、category_name_en / search_word は存在しない。実装 getHeader()（UniSearchExportService.php:131-172）は 40 エントリで、is_branch_published（167行）に改名し category_name_en（159行）と search_word（171行）を追加している。反証検索として (1) 0404文書全体、(2) excel_to_html/output 配下と functions/ 配下の全設計ドキュメントに対し is_branch_published / category_name_en / search_word を rg した（find の該当ヒットは M03/0204 の別文脈=検索ワード=dtb_product.ln、category_sub.name_en、search_parameters であり本TSVの列名ではない）。UniSearchフィードTSVの列名としての設計根拠はどこにも無く、外部連携TSVへ設計外2列が混入し1列が改名されている事実は確認された。is_branch_published は branch_status と意味的に等価だが、追加2列は設計に無い実在の乖離であり指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0404_sheet-10_tsv.json#b02-07_0404_sheet-10_tsv-conformance-1549184c3e6b",
+      "refuted": true,
+      "reason": "要求の読み違い。指摘は『設計は数値の在庫数を要求』とするが、設計ID23 stock（1720行）は『本店ECの在庫数、リニューアル後は本店ECだけでなく店舗のEC在庫を反映する』であり、同表の検索備考は『在庫の有無を検索する』（在庫数ではなく有無）。base_info_id は店舗（支店）IDである（BaseInfo=dtb_n、Entity/BaseInfo.php COMMON_NAME='支店共通'、ProductStock/ProductClass の base_info コメントは『店舗』）。実装 stock_agg（ProductClassRepository.php:374-396）は各 base_info_id ごとに SUM(stock) を取り、stock_unlimited OR stock>=1 の base_info_id を DISTINCT で ^A(\\x01) 連結する。これは『どの店舗にEC在庫があるか』=店舗のEC在庫の有無を反映した集合であり、設計が新たに求めた『店舗のEC在庫を反映』『在庫の有無を検索』を満たす。他フィールド（tag/color/format等）も同様に ^A 区切りの複数値であり、stock を店舗ID集合で表す方式は設計の複数値表現と整合する。指摘は旧来の単一在庫数を前提とした誤読で反証。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0404_sheet-10_tsv.json#b02-07_0404_sheet-10_tsv-conformance-95aebf22489e",
+      "refuted": true,
+      "reason": "要求の読み違い＋別実装（フレームワーク移行差分）。設計『利用者視点の入口』のコマンド名 product:batch exportWeeklyStockHistoryCsv は現行 pf-eccube3 の記述であり、当設計節は冒頭で『挙動は現行リポを正とし、DB関連はec-cube-enterpriseを正とする』と現行挙動を記述として置く移行ノートである。実際 pf-eccube3 の ProductBatch ディスパッチャは exportWeeklyStockHistoryCsv → ExportWeeklyStockHistoryCsv サービスへ委譲する『product:batch <method>』方式で、『コマンド名が一致しない場合は処理を行わずに終了する』は当該ディスパッチャの名前照合機構を説明したもの。移行先 ec-cube-enterprise は Symfony ネイティブの #[AsCommand] で eccube: 名前空間規約（Command 配下に 43 以上の eccube:* コマンドが実在）を採り、週間在庫履歴更新の入口 UpdateWeeklyStockHistoryCommand（eccube:update-weekly-stock-history, :35）が実在し handle() で更新を実行する。要求（週間在庫履歴更新を起動する入口コマンドの存在）は満たされており、コマンド名の差はフレームワーク移行に固有の命名規約変更で、外部契約ではない内部運用コマンドのリネームに過ぎない。既に REFUTED 済みの同機能 4a2d（CSV→DB は移行ノートが規定）と同じ移行差分の性質であり反証。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0404_sheet-10_tsv.json#b02-07_0404_sheet-10_tsv-conformance-70c120593009",
+      "refuted": false,
+      "reason": "反証できず。設計『集計条件』（1779行）と処理フロー（step2『商品在庫から全商品規格IDの一覧を取得する』／step4『在庫履歴が無い週は0』）は、母集団を『商品在庫に存在する全商品規格ID』とし『該当する在庫履歴が無い場合は0とする』と明示する。実装 getStockData（DtbWeeklyStockHistoryTempRepository.php:69-79）は FROM dtb_stock_history sh WHERE sh.product_stock_id BETWEEN :start AND :end GROUP BY sh.product_stock_id で、在庫履歴を起点に集計する。呼出元 BatchUpdateWeeklyStockHistoryAction::handle（:67-73）は 1..getLastProductStockId(=MAX(ProductStock.id)) の ID 範囲を 20000 件刻みで回すが、getStockData は dtb_stock_history に1件も履歴が無い商品在庫の行を生成しない。dtb_product_stock を起点に LEFT JOIN dtb_stock_history して全商品在庫を0埋めする処理は当リポジトリにも Action にも insertBatch にも存在しない。移行ノートの『集計の刻み』行は ID 範囲バッチ化を記すのみで、履歴皆無の商品在庫を落とすことは容認していない。全欠損の商品在庫が0行として登録されない実在の乖離が確認され、指摘は維持。"
+    }
+  ]
+}

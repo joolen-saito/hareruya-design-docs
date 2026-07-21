@@ -1,0 +1,45 @@
+{
+  "functionId": "f02-04_0302_sheet-6_sheet",
+  "featureNo": "F02-04",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "0302_基本設計仕様書(フロント_グローバルナビ).html#sheet-6（用語『店舗切替セレクト…短縮店舗名を表示する』／処理フロー『店舗切替セレクトへ短縮店舗名で表示する』／業務ルール『店舗名表示』）",
+      "designExpectation": "イベント店舗文脈の店舗切替セレクトは短縮店舗名（dtb_base_info.short_name_jp／short_name_en、言語に応じて日英）を表示する。並び順付きの全店舗一覧を取得し、店舗切替セレクトへ短縮店舗名で表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Event/index.twig:104（供給元 src/Eccube/Controller/Front/EventTopController.php:67 getOpenShops）",
+      "implementationActual": "option 表示は「{% if app.request.locale == 'en' %}{{ OpenShop.shopNameEng ?? OpenShop.shopName }}{% else %}{{ OpenShop.shopName }}{% endif %}」で正式店舗名（shop_name／shop_name_eng）を表示。短縮店舗名（getShortNameJp／getShortNameEn）は不使用。",
+      "mismatchReason": "BaseInfo エンティティに short_name_jp／short_name_en が実在し（src/Eccube/Entity/BaseInfo.php:1058-1083）、Contact/confirm.twig:105-107,189-191 では現に shortNameJp／shortNameEn を参照しているが、イベント店舗切替セレクトのみ正式店舗名を出力しており設計と不一致。Event 配下テンプレートに shortName 参照は 0 件。",
+      "comparisonRows": [
+        {"item": "店舗切替セレクトの表示名", "design": "短縮店舗名 short_name_jp／short_name_en", "implementation": "正式店舗名 shop_name／shop_name_eng", "mismatch": "短縮名ではなく正式名を表示"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "0302_基本設計仕様書(フロント_グローバルナビ).html#sheet-6（用語『右カラムセクションナビ』／処理フロー②③／業務ルール『右カラムナビの順序』『右カラムナビの表示有無』／DBカラム dtb_shop_page_element）",
+      "designExpectation": "店舗紹介ページのスマホ表示で、登録済みの右カラム項目だけをセクションナビへ並べ（値の無いセクションは非表示）、『店舗案内・初心者講習会・取り扱い商品・買取・スタッフ・その他・アクセス』の定義順で表示、出力順の末尾要素へ末尾用クラスを付与。押下で同一ページ内アンカー移動。表示有無判定は dtb_shop_page_element の element／value を用いる。",
+      "implRef": "不在（src/Eccube/Controller/Shop/ShopTopController.php＋shop_top.twig／src/Eccube/Repository/DtbShopPageElementRepository.php は未参照）",
+      "implementationActual": "DtbShopPageElement の Entity／Repository は移植されて存在するが、Controller／Twig／JS から一切参照されない。支店ページは shop_top.twig の商材ブロックで構成され、右カラムセクションナビ（ページ内アンカー導線）は未実装。",
+      "mismatchReason": "php 全体で ShopPageElement 参照は Entity/Repository 定義以外 0 件。セクション名（初心者講習会・取り扱い商品・スタッフ 等）や末尾用クラス付与ロジックもテンプレートに不在。旧 shoppage 由来要素がリニューアルの ShopTop 再編時に未移植と見られる。",
+      "comparisonRows": [
+        {"item": "右カラムセクションナビ", "design": "dtb_shop_page_element を用いた登録済みセクションのページ内アンカーナビ", "implementation": "描画経路なし", "mismatch": "未実装"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "0302_基本設計仕様書(フロント_グローバルナビ).html#sheet-6（用語『タブレット用店舗一覧』／フロント挙動／処理フロー②／画面遷移）",
+      "designExpectation": "店舗紹介ページのスマホ・タブレット表示で『閲覧店舗を選択』とともに並び順付きの全店舗一覧（タブレット用店舗一覧）を表示し、表示中の店舗を選択状態にする。店舗リンク押下で選択店舗の店舗紹介ページ（GET /{_locale}/shoppage/{name} 相当）へ遷移。",
+      "implRef": "不在（支店フロントテンプレート全域で『閲覧店舗を選択』0 件／shop_top.twig・branch_header.twig に店舗切替用店舗一覧なし）",
+      "implementationActual": "支店フロント（ShopTop）に『閲覧店舗を選択』付きのタブレット用店舗一覧が存在しない。支店ヘッダ（branch_header.twig）にも複数店舗を並べて切替する店舗一覧 UI は無く、旧 shoppage 相当の独立ルートも無い。支店ルートは ShopTopController の /{_locale}{_shop}/ のみ。",
+      "mismatchReason": "front テンプレートで『閲覧店舗を選択』は 0 件（admin/mall/tenant/index.twig のみ）。イベント側の店舗切替セレクト（Event/index.twig）は店舗紹介ページの店舗一覧ではなく別物。旧 shoppage 由来 UI が未移植と見られる。",
+      "comparisonRows": [
+        {"item": "タブレット用店舗一覧（閲覧店舗を選択）", "design": "並び順付き全店舗一覧＋『閲覧店舗を選択』、表示中を選択状態、押下で店舗紹介ページ遷移", "implementation": "描画経路なし", "mismatch": "未実装"}
+      ]
+    }
+  ]
+}

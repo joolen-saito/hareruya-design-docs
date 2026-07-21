@@ -1,0 +1,138 @@
+{
+  "functionId": "b05-01_0405_sheet-3_sheet",
+  "featureNo": "B05-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:945,984,991",
+      "designExpectation": "スマレジ商品連携対象は「バッチ起動から30分前以降の注文」とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:47, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1802",
+      "implementationActual": "コマンドは現在時刻から30分前を targetDateTime として渡し、Repository は `o.order_date < :targetDateTime` で30分前より古い注文を対象にしている。",
+      "mismatchReason": "設計はバッチ駆動時刻から30分前以降の注文を対象にする要求だが、実装は30分前以前の注文を抽出しており、時間条件が逆方向になっている。",
+      "comparisonRows": [
+        {
+          "item": "注文日時条件",
+          "design": "バッチ起動から30分前以降の注文",
+          "implementation": "`o.order_date < :targetDateTime`、targetDateTime は now - 30 minutes",
+          "mismatch": "対象期間が設計と逆"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:950-956",
+      "designExpectation": "スマレジ用商品コードは `20 + 1 + スマレジ店舗ID3桁0埋め + 注文番号8桁0埋め後の末尾6桁 + チェックディジット` で採番する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:58, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:94-98, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:77-80",
+      "implementationActual": "親バッチ側で `getProductBarcode('20','1',sprintf('%03d',$smaregiShopId),$orderNumber)` を呼び、`substr($orderNumber, -6)` をそのまま使う。同期サービスは既存 `smaregi_code` がある場合は再生成しない。",
+      "mismatchReason": "設計は注文番号を8桁0埋めしてから末尾6桁を使うが、親バッチ実装は0埋めせず末尾6桁を切り出す。注文番号が6桁未満の場合、設計例のような13桁コードにならない。",
+      "comparisonRows": [
+        {
+          "item": "注文番号部分",
+          "design": "注文番号を8桁0埋め後、末尾6桁取得",
+          "implementation": "`substr($orderNumber, -6)` のみ",
+          "mismatch": "短い注文番号で0埋めが欠落"
+        },
+        {
+          "item": "同期時の再生成",
+          "design": "設計式で採番したスマレジ用商品コードを保存・連携",
+          "implementation": "既存 `smaregi_code` があれば `SmaregiOtcProductCodeGenerator` を使わない",
+          "mismatch": "親バッチで誤採番した値がそのまま連携される"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:962-963",
+      "designExpectation": "スマレジ商品登録APIへ送信する部門IDは `6: 店頭受取（固定）` とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:96, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:153-160, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-268",
+      "implementationActual": "追加システム設定 `smaregi_category_id` から categoryId を取得し、商品登録リクエストの `categoryId` に設定している。",
+      "mismatchReason": "設計は部門ID 6 固定だが、実装は設定値依存であり、6固定を保証していない。",
+      "comparisonRows": [
+        {
+          "item": "部門ID/categoryId",
+          "design": "6: 店頭受取（固定）",
+          "implementation": "`MtbOption::SMAREGI_CATEGORY_ID` の option_value",
+          "mismatch": "固定値ではなく設定値を送信"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:965-967",
+      "designExpectation": "スマレジ商品登録APIへ送信する商品名は、店頭PCアカウントの場合「店頭注文: 店頭注文番号 のご注文」、通常会員の場合「注文者姓カナ 注文者名カナ 様のご注文」とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250-259",
+      "implementationActual": "商品名は常に `sprintf('店頭受取 %s', Order.orderNumber)` で生成している。店頭PCアカウント/通常会員の分岐や注文者カナの利用はない。",
+      "mismatchReason": "設計の商品名文言・分岐条件と実装の productName が一致しない。反証検索でも `店頭注文:`、`様のご注文`、注文者カナを使ったOTC商品名生成は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "店頭PCアカウントの商品名",
+          "design": "店頭注文: 店頭注文番号 のご注文",
+          "implementation": "店頭受取 {注文番号}",
+          "mismatch": "文言が異なる"
+        },
+        {
+          "item": "通常会員の商品名",
+          "design": "注文者姓カナ 注文者名カナ 様のご注文",
+          "implementation": "店頭受取 {注文番号}",
+          "mismatch": "会員名カナを使わない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:972-979,1002-1004",
+      "designExpectation": "スマレジ連携APIの実行に失敗した場合はエラーメールを送信し、送信先は追加設定のスマレジ通信エラー送信メールアドレスとする。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php, src/Eccube/Service/Smaregi, src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php, src/Eccube/Repository/OrderRepository.php; 検索語: スマレジ通信エラー, 通信エラー送信, エラーメール, smaregi mail, MailService, sendMail, send）",
+      "implementationActual": "API失敗時は `smaregi_error_flg` を true にして logger/MessengerJob errorMessage に記録するのみで、メール送信処理と送信先設定の参照がない。",
+      "mismatchReason": "設計が要求するエラーメール送信と追加設定メールアドレス参照が、OTCスマレジ連携コマンド・同期サービス・メッセージハンドラ周辺に存在しない。",
+      "comparisonRows": [
+        {
+          "item": "商品連携失敗",
+          "design": "エラーメールを追加設定のスマレジ通信エラー送信メールアドレスへ送信",
+          "implementation": "`markError()` でログ出力と `smaregi_error_flg=true` のみ",
+          "mismatch": "メール送信がない"
+        },
+        {
+          "item": "在庫連携失敗",
+          "design": "エラーメールを追加設定のスマレジ通信エラー送信メールアドレスへ送信",
+          "implementation": "`markError()` でログ出力と `smaregi_error_flg=true` のみ",
+          "mismatch": "メール送信がない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3:1095-1096",
+      "designExpectation": "ログ・監査として開始・完了のコンソール出力を日時付きで行う。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:44, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:61",
+      "implementationActual": "開始時は `店頭受取注文スマレジ連携バッチ開始`、完了時は `店頭受取注文スマレジ連携処理が完了しました。` を出力するが、日時を付与していない。",
+      "mismatchReason": "設計は開始・完了のコンソール出力に日時付きであることを要求しているが、実装の出力文字列に日時が含まれない。",
+      "comparisonRows": [
+        {
+          "item": "開始ログ",
+          "design": "開始のコンソール出力（日時付き）",
+          "implementation": "日時なしの固定文言",
+          "mismatch": "日時が欠落"
+        },
+        {
+          "item": "完了ログ",
+          "design": "完了のコンソール出力（日時付き）",
+          "implementation": "日時なしの固定文言",
+          "mismatch": "日時が欠落"
+        }
+      ]
+    }
+  ]
+}

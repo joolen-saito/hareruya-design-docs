@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_35_admin_product_product_section_csv_import_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・フラッシュメッセージ・ダウンロード発火・URL など、ブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言や Form 制約（NotBlank/maxSize）をオラクル化しない。取込後の DB 値（`dtb_product_class.section_id` の一括更新・`dtb_csv_import_history` の追記）は画面から直接観測できないため間接/手動として扱う。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・フラッシュメッセージ・ダウンロード発火・URL など、ブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言や Form 制約（NotBlank/maxSize）をオラクル化しない。取込後の DB 値（`dtb_product_class.section_id` の一括更新・`dtb_csv_import_history` の追記）は画面から直接観測できないため間接/手動として扱う。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 設計源は現行 pf-eccube3 のリバースであり、刷新先 ec-cube-enterprise と乖離する箇所は付帯表4（不具合候補）に出す。本機能はカスタマイズ機能だが、刷新先に同等画面 `@admin/Product/csv_product_section.twig`（`ProductSectionCsvController`）が存在し、セレクタを導出できた。
 
@@ -26,65 +26,65 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-001	IT-25	UI部品	P2	アップロード画面にファイル選択欄・アップロードボタン・雛形DLボタンが表示される	管理者ログイン済／SEED-M03-35-ADMIN	—	"1. /admin/product/section/csv_upload を開く"	ファイル選択欄・「CSVファイルをアップロード」ボタン・「雛形ファイルダウンロード」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-001	IT-25	UI部品	P2	アップロード画面にファイル選択欄・アップロードボタン・雛形DLボタンが表示される	管理者ログイン済／SEED-M03-35-ADMIN	—	1. /admin/product/section/csv_upload を開く	ファイル選択欄・「CSVファイルをアップロード」ボタン・「雛形ファイルダウンロード」ボタンが表示されること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-002	IT-25	表示結果	P3	フォーマット表に「商品コード」必須バッジと「部門コード」が表示される	管理者ログイン済／SEED-M03-35-ADMIN	—	"1. アップロード画面を表示する
-2. フォーマット表を確認する"	フォーマット表に「商品コード」（必須バッジ付）と「部門コード」が表示されること。
+2. フォーマット表を確認する"	フォーマット表に「商品コード」（必須バッジ付）と「部門コード」が表示されること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-003	IT-26	表示結果	P3	取込履歴カードと表示件数プルダウンが表示される	管理者ログイン済／SEED-M03-35-ADMIN	—	"1. アップロード画面を表示する
-2. CSVインポート履歴カードを確認する"	「CSVインポート履歴」カードと表示件数プルダウンが表示されること。
+2. CSVインポート履歴カードを確認する"	「CSVインポート履歴」カードと表示件数プルダウンが表示されること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-004	IT-25	確認ダイアログ	P3	送信前確認ダイアログが出ず直接送信される	管理者ログイン済／SEED-M03-35-ADMIN	ヘッダ不一致CSV（非破壊）	"1. アップロード画面を表示する
-2. ヘッダ不一致CSVを選択しアップロードボタンを押下"	送信前確認ダイアログが介在せずPOSTが実行され、エラーフラッシュが表示されること。
+2. ヘッダ不一致CSVを選択しアップロードボタンを押下"	送信前確認ダイアログが介在せずPOSTが実行され、エラーフラッシュが表示されること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-005	IT-27	実行結果	P2	雛形ダウンロードで product_section_update.csv の取得が発火する	管理者ログイン済／SEED-M03-35-ADMIN	—	"1. アップロード画面を表示する
-2. 雛形ファイルダウンロードボタンを押下"	ファイル名 product_section_update.csv のダウンロードが発火すること（内容は手動確認）。
+2. 雛形ファイルダウンロードボタンを押下"	ファイル名 product_section_update.csv のダウンロードが発火すること（内容は手動確認）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-010	IT-26	登録内容	P1	正常CSV取込で成功フラッシュが表示され履歴が1件追記される	管理者ログイン済／SEED-M03-35-PRODUCT（既存商品コード）／SEED-M03-35-SECTION（既存部門コード）	商品コード=既存,部門コード=既存 の1行CSV	"1. アップロード画面を表示する
-2. 正常CSVを選択しアップロード"	成功フラッシュ「登録が完了しました。」が表示され、履歴一覧に当該ファイル名が1件追記されること（破壊的・要シード）。
+2. 正常CSVを選択しアップロード"	成功フラッシュ「登録が完了しました。」が表示され、履歴一覧に当該ファイル名が1件追記されること（破壊的・要シード）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-011	IT-23	状態変化	P2	部門コード空のCSV取込で当該規格のsection_idがNULLクリアされ成功する	管理者ログイン済／SEED-M03-35-PRODUCT（既存商品コード）	商品コード=既存,部門コード=空 の1行CSV	"1. アップロード画面を表示する
-2. 部門コード空のCSVを選択しアップロード"	成功フラッシュ「登録が完了しました。」が表示されること（section_idのNULL更新はDB値のため間接確認・破壊的・要シード）。
+2. 部門コード空のCSVを選択しアップロード"	成功フラッシュ「登録が完了しました。」が表示されること（section_idのNULL更新はDB値のため間接確認・破壊的・要シード）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-020	IT-22	必須バリデーション	P1	ファイル未選択でアップロードするとエラーが表示され同画面に留まる	管理者ログイン済／SEED-M03-35-ADMIN	ファイル＝未選択	"1. アップロード画面を表示する
-2. ファイルを選択せずアップロードボタンを押下"	エラーフラッシュが表示され、アップロード画面（csv_upload）に留まること。
+2. ファイルを選択せずアップロードボタンを押下"	エラーフラッシュが表示され、アップロード画面（csv_upload）に留まること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-021	IT-22	その他のバリデーション	P2	ヘッダ不一致のCSVで「CSVのフォーマットが一致しません。」が表示される	管理者ログイン済／SEED-M03-35-ADMIN	ヘッダ行が定義名と異なるCSV	"1. アップロード画面を表示する
-2. ヘッダ不一致CSVをアップロード"	「CSVのフォーマットが一致しません。」が表示され、csv_upload に留まること。
+2. ヘッダ不一致CSVをアップロード"	「CSVのフォーマットが一致しません。」が表示され、csv_upload に留まること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-022	IT-22	その他のバリデーション	P2	ヘッダのみ（データ行0）のCSVで「CSVデータが存在しません。」が表示される	管理者ログイン済／SEED-M03-35-ADMIN	ヘッダ行のみのCSV	"1. アップロード画面を表示する
-2. ヘッダのみのCSVをアップロード"	「CSVデータが存在しません。」が表示され、csv_upload に留まること。
+2. ヘッダのみのCSVをアップロード"	「CSVデータが存在しません。」が表示され、csv_upload に留まること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-023	IT-22	その他のバリデーション	P2	列数が2でないデータ行でフォーマット不一致エラーが表示される	管理者ログイン済／SEED-M03-35-ADMIN	正しいヘッダ＋3列のデータ行CSV	"1. アップロード画面を表示する
-2. 列数3のデータ行を含むCSVをアップロード"	「CSVのフォーマットが一致しません。」（行番号付）が表示され、csv_upload に留まること。
+2. 列数3のデータ行を含むCSVをアップロード"	「CSVのフォーマットが一致しません。」（行番号付）が表示され、csv_upload に留まること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-024	IT-22	必須バリデーション	P1	商品コード空のデータ行で必須エラーとなり取込が中断される	管理者ログイン済／SEED-M03-35-ADMIN	商品コード=空,部門コード=任意 の1行CSV	"1. アップロード画面を表示する
-2. 商品コード空のCSVをアップロード"	「商品コード は必須項目です。」を含むエラーが表示され、取込が中断され csv_upload に留まること。
+2. 商品コード空のCSVをアップロード"	「商品コード は必須項目です。」を含むエラーが表示され、取込が中断され csv_upload に留まること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-025	IT-22	DBとの相関バリデーション	P1	存在しない商品コードで規格不存在エラーとなり取込が中断される	管理者ログイン済／SEED-M03-35-ADMIN	商品コード=実在しない値,部門コード=空 の1行CSV	"1. アップロード画面を表示する
-2. 実在しない商品コードのCSVをアップロード"	「ではデータを取得できません。」を含むエラーが表示され、取込が中断され csv_upload に留まること。
+2. 実在しない商品コードのCSVをアップロード"	「ではデータを取得できません。」を含むエラーが表示され、取込が中断され csv_upload に留まること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-026	IT-22	DBとの相関バリデーション	P2	非空の部門コードが部門マスタに存在しないとマスタ不存在エラーで中断される	管理者ログイン済／SEED-M03-35-PRODUCT（既存商品コード）	商品コード=既存,部門コード=実在しない値 の1行CSV	"1. アップロード画面を表示する
-2. 実在しない部門コードのCSVをアップロード"	「がマスターから取得できません。」を含むエラーが表示され、取込が中断され csv_upload に留まること（規格実在が前提のため要シード）。
+2. 実在しない部門コードのCSVをアップロード"	「がマスターから取得できません。」を含むエラーが表示され、取込が中断され csv_upload に留まること（規格実在が前提のため要シード）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-027	IT-22	その他のバリデーション	P2	改行行数が上限(5010)以上のCSVで行数上限超過メッセージが表示される	管理者ログイン済／SEED-M03-35-ADMIN	データ行が5010行以上のCSV	"1. アップロード画面を表示する
-2. 5010行以上のCSVをアップロード"	行数上限超過のエラー（{maxRecord} 行を超える…）が表示され、取込されず csv_upload に留まること（大容量生成のため要実機確認）。
+2. 5010行以上のCSVをアップロード"	行数上限超過のエラー（{maxRecord} 行を超える…）が表示され、取込されず csv_upload に留まること（大容量生成のため要実機確認）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-030	IT-22	必須制御	P2	履歴の表示件数を許容リスト内のクエリで指定すると当該件数が反映される	管理者ログイン済／SEED-M03-35-ADMIN	page_count=50,page_no=1	"1. /admin/product/section/csv_upload?page_count=50&page_no=1 を開く
-2. 件数プルダウンの選択状態を確認する"	表示件数プルダウンで「50件」が選択状態になること。
-m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-040	IT-15	未認証	P1	未ログインでアップロードURLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/product/section/csv_upload へアクセス"	管理ログイン画面へ誘導されること。
+2. 件数プルダウンの選択状態を確認する"	表示件数プルダウンで「50件」が選択状態になること。				
+m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-040	IT-15	未認証	P1	未ログインでアップロードURLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/product/section/csv_upload へアクセス	管理ログイン画面へ誘導されること。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-041	IT-03	画面遷移	P2	取込POST後は成否によらず常にcsv_upload画面へリダイレクトされる	管理者ログイン済／SEED-M03-35-ADMIN	ヘッダ不一致CSV（非破壊）	"1. アップロード画面を表示する
-2. ヘッダ不一致CSVをアップロード"	GET /admin/product/section/csv_upload へリダイレクトされること（PRGパターン）。
+2. ヘッダ不一致CSVをアップロード"	GET /admin/product/section/csv_upload へリダイレクトされること（PRGパターン）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-006	IT-27	出力結果	P3	雛形CSVがヘッダ1行のみ・キー順・Content-Type application/octet-stream で返る	管理者ログイン済／SEED-M03-35-ADMIN	—	"1. 雛形ファイルダウンロードを発火する
-2. 取得ファイルの本文と応答ヘッダを確認する"	本文が1行目のみ＝ヘッダで列順が「商品コード,部門コード」、応答 Content-Type が application/octet-stream であること（内容=自動化候補006c/手動、Content-Type=手動）。
+2. 取得ファイルの本文と応答ヘッダを確認する"	本文が1行目のみ＝ヘッダで列順が「商品コード,部門コード」、応答 Content-Type が application/octet-stream であること（内容=自動化候補006c/手動、Content-Type=手動）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-028	IT-22	その他のバリデーション	P3	ファイルサイズ上限超過でエラーとなり取込されず同画面に留まる	管理者ログイン済／SEED-M03-35-ADMIN	サイズ上限を超える大容量ファイル	"1. アップロード画面を表示する
-2. サイズ上限超過ファイルをアップロード"	エラーフラッシュが表示され取込されず csv_upload に留まること（上限値はオラクル化しない／大容量生成のため手動・要実機確認）。
-m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-042	IT-15	未認証	P1	未ログインで雛形DL(csv_template)URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/product/section/csv_template へアクセス"	管理ログイン画面へ誘導され雛形が得られないこと。
-m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-043	IT-15	未認証	P1	未ログインで取込POST(import)を送ると処理されず管理ログインへ誘導される	未ログイン	multipart CSV	"1. 未ログインで POST /admin/product/section/import を送信"	取込が実行されず管理ログイン画面へ誘導されること（request-context/multipart・要実機確認のためspecはfixme）。
+2. サイズ上限超過ファイルをアップロード"	エラーフラッシュが表示され取込されず csv_upload に留まること（上限値はオラクル化しない／大容量生成のため手動・要実機確認）。				
+m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-042	IT-15	未認証	P1	未ログインで雛形DL(csv_template)URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/product/section/csv_template へアクセス	管理ログイン画面へ誘導され雛形が得られないこと。				
+m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-043	IT-15	未認証	P1	未ログインで取込POST(import)を送ると処理されず管理ログインへ誘導される	未ログイン	multipart CSV	1. 未ログインで POST /admin/product/section/import を送信	取込が実行されず管理ログイン画面へ誘導されること（request-context/multipart・要実機確認のためspecはfixme）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-050	IT-25	状態変化	P3	同一商品コードを複数データ行に書くと後勝ちで最終行の値が残る	管理者ログイン済／SEED-M03-35-PRODUCT（既存商品コード）	同一商品コードの2行（部門コード異なる）CSV	"1. 同一商品コード2行のCSVをアップロード
-2. 規格の部門を別画面で確認"	成功フラッシュが表示され、当該規格の section_id が最終行の値であること（DB値は別画面/間接・手動・破壊的）。
+2. 規格の部門を別画面で確認"	成功フラッシュが表示され、当該規格の section_id が最終行の値であること（DB値は別画面/間接・手動・破壊的）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-051	IT-25	状態変化	P3	同一product_codeを持つ複数規格がまとめて同一section_idに更新される	管理者ログイン済／SEED-M03-35-PRODUCT（同一product_code複数規格）	商品コード=既存,部門コード=既存 の1行CSV	"1. 1行CSVをアップロード
-2. 同一product_codeの全規格の部門を別画面で確認"	同一 product_code の全規格が同じ section_id に更新されること（DB値は別画面/間接・手動・破壊的）。
+2. 同一product_codeの全規格の部門を別画面で確認"	同一 product_code の全規格が同じ section_id に更新されること（DB値は別画面/間接・手動・破壊的）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-052	IT-26	状態変化	P2	検証エラーでロールバックされたとき履歴に追記されない	管理者ログイン済／SEED-M03-35-ADMIN	規格不存在を含むCSV（途中でbreakAll）	"1. 規格不存在を含むCSVをアップロード
-2. 取込履歴一覧を確認"	エラーフラッシュが表示され、取込履歴一覧に当該ファイル名が追記されていないこと（履歴不在で間接・手動）。
+2. 取込履歴一覧を確認"	エラーフラッシュが表示され、取込履歴一覧に当該ファイル名が追記されていないこと（履歴不在で間接・手動）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-007	IT-25	UI部品	P3	ファイル入力のaccept属性に.csv/.tsv等が含まれCSV/TSVを受け付ける	管理者ログイン済／SEED-M03-35-ADMIN	—	"1. アップロード画面を表示する
-2. ファイル選択欄のaccept属性を確認する"	ファイル入力のaccept属性に「.csv」「.tsv」が含まれること（設計書フロント挙動: accept=.csv,text/csv,.tsv,text/tsv）。
+2. ファイル選択欄のaccept属性を確認する"	ファイル入力のaccept属性に「.csv」「.tsv」が含まれること（設計書フロント挙動: accept=.csv,text/csv,.tsv,text/tsv）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-031	IT-22	必須制御	P3	履歴の表示件数を許容リスト外のクエリで指定してもセッション保存されず既定件数のまま	管理者ログイン済／SEED-M03-35-ADMIN	page_count=999,page_no=1	"1. /admin/product/section/csv_upload?page_count=999&page_no=1 を開く
-2. 件数プルダウンの選択状態を確認する"	件数プルダウンの選択が「999件」にならず既定の許容件数のままであること（設計書: 許容リストに含まれるときだけセッション保存。030の正常系に対する異常系）。
+2. 件数プルダウンの選択状態を確認する"	件数プルダウンの選択が「999件」にならず既定の許容件数のままであること（設計書: 許容リストに含まれるときだけセッション保存。030の正常系に対する異常系）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-029	IT-22	その他のバリデーション	P3	TSV拡張子のファイルはタブ区切りとして取込まれる	管理者ログイン済／SEED-M03-35-PRODUCT（既存商品コード）／SEED-M03-35-SECTION（既存部門コード）	拡張子.tsv・タブ区切り・商品コード=既存,部門コード=既存 の1行	"1. アップロード画面を表示する
-2. 拡張子.tsvのタブ区切りファイルをアップロード"	タブ区切りとして列が解釈され取込結果（成功フラッシュ）が得られること（TSV経路・文字コードUTF-8寄せは手動・破壊的・要シード）。
+2. 拡張子.tsvのタブ区切りファイルをアップロード"	タブ区切りとして列が解釈され取込結果（成功フラッシュ）が得られること（TSV経路・文字コードUTF-8寄せは手動・破壊的・要シード）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-044	IT-15	CSRF	P2	CSRFトークン欠落/不正の取込POSTは処理されず取込されない	管理者ログイン済／SEED-M03-35-ADMIN	CSRFトークンを欠落/改変したmultipart CSV	"1. アップロード画面を表示する
-2. CSRFトークンを欠落/改変して取込POSTを送信"	取込が実行されず（成功フラッシュも履歴追記も生じない）、無効リクエストとして拒否されること（POSTボディ改変が必要なため手動）。
+2. CSRFトークンを欠落/改変して取込POSTを送信"	取込が実行されず（成功フラッシュも履歴追記も生じない）、無効リクエストとして拒否されること（POSTボディ改変が必要なため手動）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-053	IT-23	登録内容	P3	取込履歴一覧は種別11のみをcreate_date降順で表示し他CSV種別が混在しない	管理者ログイン済／SEED-M03-35-HISTORY（種別11と他種別の履歴を含む）	—	"1. アップロード画面を表示する
-2. CSVインポート履歴一覧の行を確認する"	履歴一覧に部門更新CSV（種別11）の履歴のみが新しい順（create_date降順）で表示され、他CSV種別の履歴が混在しないこと（種別・並び順はDB値依存のため手動/間接・要シード）。
+2. CSVインポート履歴一覧の行を確認する"	履歴一覧に部門更新CSV（種別11）の履歴のみが新しい順（create_date降順）で表示され、他CSV種別の履歴が混在しないこと（種別・並び順はDB値依存のため手動/間接・要シード）。				
 m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）	E2E-M03-35-054	IT-26	状態変化	P3	同一CSV内で後続行がbreakAllすると先行行のUPDATEもロールバックされ一行も確定しない	管理者ログイン済／SEED-M03-35-PRODUCT（既存商品コード）	1行目=既存商品コード(更新可),2行目=規格不存在 の2行CSV	"1. 先行行が更新可・後続行が規格不存在の2行CSVをアップロード
-2. 先行行に対応する規格の部門を別画面で確認"	エラーフラッシュが表示され、先行行の規格のsection_idも更新されず元のままであること（一行も確定しない／DB値は別画面・間接・破壊的・要シード）。
+2. 先行行に対応する規格の部門を別画面で確認"	エラーフラッシュが表示され、先行行の規格のsection_idも更新されず元のままであること（一行も確定しない／DB値は別画面・間接・破壊的・要シード）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象セレクタ・仕様根拠・元IT（TSV外）

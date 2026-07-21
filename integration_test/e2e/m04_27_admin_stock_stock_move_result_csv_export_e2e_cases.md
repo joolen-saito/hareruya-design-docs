@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m04_27_admin_stock_stock_move_result_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果はダウンロード発火・HTTP応答ヘッダ（Content-Type／Content-Disposition）・ファイル名・画面滞留・未認証誘導などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装の現挙動・Form制約・Cookie名等をオラクル化しない。**CSV本文（4列ヘッダー・データ行なし・区切り文字・文字コード/BOM）は手動**とする。技術的には `download.saveAs()`／`page.request.get().body()` で本文取得・機械判定は可能だが、(a)文字コードが環境設定 `eccube_csv_export_encoding`（既定 SJIS-win／UTF-8時のみBOM）依存で出力エンコーディングが実行環境により変わり、ブラウザ経由の本文をデコードした結果をオラクル固定すると環境設定をオラクル化する恐れがある、(b)4列ヘッダー・区切り文字・BOM有無は設計書「CSV出力仕様」の固定値で、E2E自動化の主眼（ダウンロード導線・応答ヘッダ・認可）とは観測層が異なる、ため監査上は手動内容検査に倒す（要確認＝環境設定依存）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果はダウンロード発火・HTTP応答ヘッダ（Content-Type／Content-Disposition）・ファイル名・画面滞留・未認証誘導などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装の現挙動・Form制約・Cookie名等をオラクル化しない。**CSV本文（4列ヘッダー・データ行なし・区切り文字・文字コード/BOM）は手動**とする。技術的には `download.saveAs()`／`page.request.get().body()` で本文取得・機械判定は可能だが、(a)文字コードが環境設定 `eccube_csv_export_encoding`（既定 SJIS-win／UTF-8時のみBOM）依存で出力エンコーディングが実行環境により変わり、ブラウザ経由の本文をデコードした結果をオラクル固定すると環境設定をオラクル化する恐れがある、(b)4列ヘッダー・区切り文字・BOM有無は設計書「CSV出力仕様」の固定値で、E2E自動化の主眼（ダウンロード導線・応答ヘッダ・認可）とは観測層が異なる、ため監査上は手動内容検査に倒す（要確認＝環境設定依存）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は在庫移動指示一覧（`admin_stock_move_instruction_list`）の検索実行後リストヘッダに表示される「在庫移動実績入力用CSVダウンロード」リンク（GET）から、ヘッダー行のみのCSV雛形をストリーミング配信する。入力フォーム・対象選択・確認ダイアログ・DB読み書きはない。
 
@@ -24,41 +24,41 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-001	IT-25	UI部品	P2	検索実行後の一覧に「在庫移動実績入力用CSVダウンロード」リンクが表示される	管理ログイン済／SEED-M04-27-ADMIN／SEED-M04-27-INSTRUCTION	—	"1. 在庫移動指示一覧（/admin/product/stock/move-instruction）を開く
-2. 検索を実行してリストを表示する"	リストヘッダに「在庫移動実績入力用CSVダウンロード」リンクが表示されること。
+2. 検索を実行してリストを表示する"	リストヘッダに「在庫移動実績入力用CSVダウンロード」リンクが表示されること。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-010	IT-25	操作起点	P1	ダウンロードリンク押下でCSVダウンロードが発火する	管理ログイン済／SEED-M04-27-ADMIN／SEED-M04-27-INSTRUCTION	—	"1. 在庫移動指示一覧を開き検索を実行する
-2. 「在庫移動実績入力用CSVダウンロード」リンクを押下する"	ダウンロード（download イベント）が発火すること。
+2. 「在庫移動実績入力用CSVダウンロード」リンクを押下する"	ダウンロード（download イベント）が発火すること。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-011	IT-25	URL	P1	ダウンロードファイル名が stock_move_instruction_record_template_<日時>.csv 形式である	管理ログイン済／SEED-M04-27-ADMIN／SEED-M04-27-INSTRUCTION	—	"1. 在庫移動指示一覧を開き検索を実行する
-2. ダウンロードリンクを押下しファイルを取得する"	ファイル名が stock_move_instruction_record_template_{YmdHis}.csv（{YmdHis}=出力時刻14桁）であること。
-M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-012	IT-13	URL直接アクセス	P2	CSV出力URLへ直接GETするとダウンロードが発火する	管理ログイン済／SEED-M04-27-ADMIN	GET /admin/product/stock/move-instruction/csv-template	"1. CSV出力URLへ直接GETアクセスする"	ダウンロードが発火しファイル名が stock_move_instruction_record_template_{YmdHis}.csv であること。
+2. ダウンロードリンクを押下しファイルを取得する"	ファイル名が stock_move_instruction_record_template_{YmdHis}.csv（{YmdHis}=出力時刻14桁）であること。				
+M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-012	IT-13	URL直接アクセス	P2	CSV出力URLへ直接GETするとダウンロードが発火する	管理ログイン済／SEED-M04-27-ADMIN	GET /admin/product/stock/move-instruction/csv-template	1. CSV出力URLへ直接GETアクセスする	ダウンロードが発火しファイル名が stock_move_instruction_record_template_{YmdHis}.csv であること。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-013	IT-25	HTTPステータス	P2	CSV出力応答がHTTP200を返す	管理ログイン済／SEED-M04-27-ADMIN	GET /admin/product/stock/move-instruction/csv-template	"1. 認証済みコンテキストで出力URLをGETする
-2. 応答ステータスを確認する"	HTTPステータス200が返ること。
+2. 応答ステータスを確認する"	HTTPステータス200が返ること。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-014	IT-25	HTTPステータス	P2	CSV出力応答のContent-Typeが text/csv である	管理ログイン済／SEED-M04-27-ADMIN	GET /admin/product/stock/move-instruction/csv-template	"1. 認証済みコンテキストで出力URLをGETする
-2. 応答ヘッダ Content-Type を確認する"	Content-Type が text/csv（charset付き）であること。
+2. 応答ヘッダ Content-Type を確認する"	Content-Type が text/csv（charset付き）であること。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-015	IT-03	画面遷移	P2	CSV出力応答が attachment; filename=stock_move_instruction_record_template_<日時>.csv を返す	管理ログイン済／SEED-M04-27-ADMIN	GET /admin/product/stock/move-instruction/csv-template	"1. 認証済みコンテキストで出力URLをGETする
-2. 応答ヘッダ Content-Disposition を確認する"	Content-Disposition が attachment かつ filename=stock_move_instruction_record_template_{YmdHis}.csv であること。
+2. 応答ヘッダ Content-Disposition を確認する"	Content-Disposition が attachment かつ filename=stock_move_instruction_record_template_{YmdHis}.csv であること。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-016	IT-25	確認ダイアログ	P3	ダウンロード時に確認ダイアログを介さない	管理ログイン済／SEED-M04-27-ADMIN／SEED-M04-27-INSTRUCTION	—	"1. 在庫移動指示一覧を開き検索を実行する
-2. ダウンロードリンクを押下する"	確認ダイアログ（dialog）が表示されずダウンロードが発火すること。
+2. ダウンロードリンクを押下する"	確認ダイアログ（dialog）が表示されずダウンロードが発火すること。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-017	IT-03	画面遷移	P2	ダウンロード押下後も在庫移動指示一覧に留まる	管理ログイン済／SEED-M04-27-ADMIN／SEED-M04-27-INSTRUCTION	—	"1. 在庫移動指示一覧を開き検索を実行する
-2. ダウンロードリンクを押下する"	押下後も在庫移動指示一覧（/admin/product/stock/move-instruction）に留まり別画面へ遷移しないこと。
-M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-020	IT-15	未認証	P1	未ログインでCSV出力URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	GET /admin/product/stock/move-instruction/csv-template	"1. 未ログイン状態で出力URLへアクセスする"	管理ログイン画面へ誘導されること（ログインID入力欄が表示される）。
+2. ダウンロードリンクを押下する"	押下後も在庫移動指示一覧（/admin/product/stock/move-instruction）に留まり別画面へ遷移しないこと。				
+M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-020	IT-15	未認証	P1	未ログインでCSV出力URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	GET /admin/product/stock/move-instruction/csv-template	1. 未ログイン状態で出力URLへアクセスする	管理ログイン画面へ誘導されること（ログインID入力欄が表示される）。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-021	IT-15	状態変化	P1	ログアウト/セッション無効化後にCSV出力URLへアクセスすると管理ログイン画面へ誘導される	管理ログイン済／SEED-M04-27-ADMIN（ログイン後にセッションを無効化）	GET /admin/product/stock/move-instruction/csv-template	"1. 管理ログインして出力URLへアクセスできることを確認する
 2. セッションを無効化（ログアウト/期限切れ相当でCookie破棄）する
-3. 再度出力URLへアクセスする"	無効化後の出力URLアクセスでは雛形が配信されず管理ログイン画面へ誘導されること（ログインID入力欄が表示される）。
+3. 再度出力URLへアクセスする"	無効化後の出力URLアクセスでは雛形が配信されず管理ログイン画面へ誘導されること（ログインID入力欄が表示される）。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-040	IT-16	実行結果	P1	出力CSVのヘッダーが4列（移動指示ID/出庫元店舗(名称)/入庫先店舗(名称)/送り状No.）である	管理ログイン済／SEED-M04-27-ADMIN	—	"1. CSV雛形をダウンロードする
-2. ファイルをテキストエディタ/表計算で開きヘッダー行を確認する（手動）"	1行目のヘッダーが「移動指示ID」「出庫元店舗(名称)」「入庫先店舗(名称)」「送り状No.」の4列固定であること。
+2. ファイルをテキストエディタ/表計算で開きヘッダー行を確認する（手動）"	1行目のヘッダーが「移動指示ID」「出庫元店舗(名称)」「入庫先店舗(名称)」「送り状No.」の4列固定であること。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-041	IT-16	実行結果	P2	出力CSVにデータ行が無く（ヘッダー1行のみ）である	管理ログイン済／SEED-M04-27-ADMIN	—	"1. CSV雛形をダウンロードする
-2. ファイルの行数を確認する（手動）"	ヘッダー1行のみでデータ行が出力されないこと。
+2. ファイルの行数を確認する（手動）"	ヘッダー1行のみでデータ行が出力されないこと。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-042	IT-27	実行結果	P2	出力CSVの文字コードが既定設定（SJIS-win）でありBOMが付与されない	管理ログイン済／SEED-M04-27-ADMIN／eccube_csv_export_encoding＝既定（SJIS-win）	—	"1. CSV雛形をダウンロードする
-2. ファイルの文字コードと先頭バイト（BOM有無）を確認する（手動）"	既定 SJIS-win で出力され、先頭にBOMが付与されないこと。
+2. ファイルの文字コードと先頭バイト（BOM有無）を確認する（手動）"	既定 SJIS-win で出力され、先頭にBOMが付与されないこと。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-044	IT-27	実行結果	P3	文字コード設定をUTF-8にした場合のみ先頭にBOMが付与される	管理ログイン済／SEED-M04-27-ADMIN／eccube_csv_export_encoding＝UTF-8 に切替	—	"1. 文字コード設定を UTF-8 に切り替える
 2. CSV雛形をダウンロードする
-3. ファイルの文字コードと先頭バイト（BOM有無）を確認する（手動）"	UTF-8 で出力され、先頭にBOM（EF BB BF）が付与されること。
+3. ファイルの文字コードと先頭バイト（BOM有無）を確認する（手動）"	UTF-8 で出力され、先頭にBOM（EF BB BF）が付与されること。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-043	IT-16	実行結果	P3	出力CSVの区切り文字が設定値（既定カンマ）である	管理ログイン済／SEED-M04-27-ADMIN	—	"1. CSV雛形をダウンロードする
-2. ヘッダー行の列区切り文字を確認する（手動）"	区切り文字が設定値 eccube_csv_export_separator（既定 カンマ , ）であること。
+2. ヘッダー行の列区切り文字を確認する（手動）"	区切り文字が設定値 eccube_csv_export_separator（既定 カンマ , ）であること。				
 M04-27（在庫移動実績入力用CSV出力）	E2E-M04-27-045	IT-16	実行結果	P3	一覧画面のCSVフォーマット説明に各列の記入要領が表示される	管理ログイン済／SEED-M04-27-ADMIN／SEED-M04-27-INSTRUCTION	—	"1. 在庫移動指示一覧を開き検索を実行する
-2. CSV取込モーダルを開きCSVフォーマット説明テーブルを表示する（手動）"	移動指示ID／出庫元店舗(名称)／入庫先店舗(名称)／送り状No. の4項目について設計書「各列の記入要領」と一致する記入内容説明が表示されること。
+2. CSV取込モーダルを開きCSVフォーマット説明テーブルを表示する（手動）"	移動指示ID／出庫元店舗(名称)／入庫先店舗(名称)／送り状No. の4項目について設計書「各列の記入要領」と一致する記入内容説明が表示されること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

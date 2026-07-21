@@ -1,0 +1,42 @@
+{
+  "functionId": "b13-02_0413_sheet-4_sheet",
+  "featureNo": "B13-02",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4:1029,1033,1034,1037,1040,1043,1046,1051,1059,1063,1068",
+      "designExpectation": "コンビニ支払チェックを実行する（entry:batch checkCvsPayment）。コンビニ決済で入金待ちのイベント申込を抽出し、決済サービスへ取引照会して、入金確認時はステータス更新、取引不在時は申込み記録除去、想定外エラーは重複を除いて管理者へ通知し、申込履歴を記録して最後に確定する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, src/Eccube/Service/Admin/Payment, src/Eccube/Repository/DtbEventEntryRepository.php, src/Eccube/Entity/Payment.php, src/Eccube/Service/MailService.php, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: checkCvsPayment, CvsPayment, コンビニ支払チェック, コンビニ支払, 入金待ち.*イベント申込, WAITING_RECEIVED, EC_CVS, PAYSUCCESS, REQSUCCESS）",
+      "implementationActual": "専用の checkCvsPayment コマンドは存在しない。近傍実装として src/Eccube/Command/PaymentStatusCheckCommand.php:35 に eccube:payment-status-check があるが、説明は「決済処理中チェックバッチ」。処理本体 src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:78 は getBeforeMinutesEntry(30) を呼び、Repository 側 src/Eccube/Repository/DtbEventEntryRepository.php:261-268 は既定ステータス PROCESSING_PAYMENT と createDate 基準で抽出する。コンビニ入金待ち WAITING_RECEIVED + EC_CVS の抽出ではない。さらに src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191-194 は SP.LINKS取引照会API未実装として LogicException を投げる。",
+      "mismatchReason": "設計は entry:batch checkCvsPayment の外部契約として、コンビニ決済かつ入金待ちのイベント申込を照会・更新・削除・履歴記録・管理者通知することを要求している。実装に該当コマンド/専用Actionはなく、既存の PaymentStatusCheckAction は決済処理中チェック用で抽出条件が異なり、取引照会APIも未実装例外で停止するため、B13-02 のバッチ契約は実装されていない。",
+      "comparisonRows": [
+        {
+          "item": "起動入口",
+          "design": "entry:batch checkCvsPayment でコンビニ支払チェックを実行する。",
+          "implementation": "PaymentStatusCheckCommand は eccube:payment-status-check（src/Eccube/Command/PaymentStatusCheckCommand.php:35）で、checkCvsPayment は不在。",
+          "mismatch": "設計コマンド/同等のCVS専用入口が存在しない。"
+        },
+        {
+          "item": "抽出対象",
+          "design": "コンビニ決済で入金待ちのイベント申込。",
+          "implementation": "PaymentStatusCheckAction は getBeforeMinutesEntry(30) を呼び、Repository 既定値は PROCESSING_PAYMENT（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:78、src/Eccube/Repository/DtbEventEntryRepository.php:261-268）。",
+          "mismatch": "WAITING_RECEIVED かつ EC_CVS の抽出ではない。"
+        },
+        {
+          "item": "決済照会",
+          "design": "申込みごとに決済サービスへ取引を照会し、結果のメッセージと新ステータスを得る。",
+          "implementation": "getApiResponse は SP.LINKS取引照会API未実装として LogicException を投げる（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191-194）。",
+          "mismatch": "照会処理が実行可能な実装になっていない。"
+        },
+        {
+          "item": "結果反映",
+          "design": "取引不在時は記録除去、入金確認時は新ステータス更新、申込履歴記録、想定外エラー通知を行う。",
+          "implementation": "近傍処理は OK の場合 ENTERED 更新・履歴追加、その他は論理削除、例外ごとに通知するが、CVS入金待ち照会APIに到達しない（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:107-166）。",
+          "mismatch": "B13-02 の対象抽出と照会が未実装のため、設計の結果反映契約を満たせない。"
+        }
+      ]
+    }
+  ]
+}

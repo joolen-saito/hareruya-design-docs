@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない参照系JSON API（固定価格部門の部門IDをオプションマスタから取得し、MTGバイヤー＝買取アプリへ返すGET）であり、結果が管理画面に現れないため**API/統合レイヤで網羅**する（UIレイヤは該当0）。リクエストパラメータを持たず、入力検証・登録・更新・外部連携・バッチを行わない。
 
-**期待結果は仕様（正本md・観点表・基本設計／pf-apiリバースは基本設計・観点表を上位オラクル）由来**とし、実装のレスポンス形・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。正本mdはレスポンス成功形を `{code, section_id}`（codeはinteger 200、section_idはstring＝option_value text型）と定めるため、これを型契約のオラクルとする。実装からは位置情報（APIパス・メソッド・認可属性・option_key）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。設計書と実装の食い違いは付帯表4に出す。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（正本md・観点表・基本設計／pf-apiリバースは基本設計・観点表を上位オラクル）由来**とし、実装のレスポンス形・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。正本mdはレスポンス成功形を `{code, section_id}`（codeはinteger 200、section_idはstring＝option_value text型）と定めるため、これを型契約のオラクルとする。実装からは位置情報（APIパス・メソッド・認可属性・option_key）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。設計書と実装の食い違いは付帯表4に出す。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -22,27 +22,27 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a06-12_api_store_purchase_fixed_price_section（API_店頭仕入_定額部門）	E2E-A06-12-001	IT-09	リクエスト	P1	正常GETで固定価格部門IDを取得できる	SEED-A06-12-AUTH／SEED-A06-12-OPTION-SET	"固定価格部門設定（option_key=fixed_price_section）が存在する状態
 リクエストパラメータ無し"	"1. 固定価格部門取得エンドポイントへGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で固定価格部門の部門ID（section_id）を返すレスポンスが返ること。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で固定価格部門の部門ID（section_id）を返すレスポンスが返ること。				
 a06-12_api_store_purchase_fixed_price_section（API_店頭仕入_定額部門）	E2E-A06-12-002	IT-32	レスポンス	P1	レスポンスの型契約（code整数・section_id文字列）が仕様と一致する	SEED-A06-12-AUTH／SEED-A06-12-OPTION-SET	固定価格部門設定が存在する状態	"1. 固定価格部門取得エンドポイントへGET送信する
-2. レスポンス本文のcode・section_idの型を確認する"	codeが整数の200、section_idが文字列（option_value text型のため数値文字列）として返ること（実装の素値返却との差異は付帯表4#1）。
+2. レスポンス本文のcode・section_idの型を確認する"	codeが整数の200、section_idが文字列（option_value text型のため数値文字列）として返ること（実装の素値返却との差異は付帯表4#1）。				
 a06-12_api_store_purchase_fixed_price_section（API_店頭仕入_定額部門）	E2E-A06-12-003	IT-32	必須条件	P3	必須パラメータを持たずパラメータ無しのGETで成功する	SEED-A06-12-AUTH／SEED-A06-12-OPTION-SET	リクエストパラメータ無し	"1. パラメータを付与せずGET送信する
-2. HTTPステータスを確認する"	本APIは必須リクエストパラメータを持たず、パラメータ無しのGETでHTTPステータス200が返ること。
+2. HTTPステータスを確認する"	本APIは必須リクエストパラメータを持たず、パラメータ無しのGETでHTTPステータス200が返ること。				
 a06-12_api_store_purchase_fixed_price_section（API_店頭仕入_定額部門）	E2E-A06-12-004	IT-09	実行結果	P2	取得したsection_idがSEED既知値と一致する	SEED-A06-12-AUTH／SEED-A06-12-OPTION-SET（option_value既知）	option_value=既知の部門ID（例「1」）を投入	"1. 固定価格部門取得エンドポイントへGET送信する
-2. レスポンスのsection_id値を確認する"	section_idの値がSEEDで投入した既知のoption_value（fixed_price_section行）と一致すること。
+2. レスポンスのsection_id値を確認する"	section_idの値がSEEDで投入した既知のoption_value（fixed_price_section行）と一致すること。				
 a06-12_api_store_purchase_fixed_price_section（API_店頭仕入_定額部門）	E2E-A06-12-005	IT-09	外部取得	P2	参照のみでmtb_optionに副作用が無い	SEED-A06-12-AUTH／SEED-A06-12-OPTION-SET	固定価格部門設定が存在する状態	"1. GET送信前のmtb_option（fixed_price_section行）を確認する
 2. 固定価格部門取得エンドポイントへGET送信する
-3. GET送信後のmtb_optionを確認する"	GET前後でmtb_option（fixed_price_section行）が変化せず、参照のみで副作用が無いこと。
+3. GET送信後のmtb_optionを確認する"	GET前後でmtb_option（fixed_price_section行）が変化せず、参照のみで副作用が無いこと。				
 a06-12_api_store_purchase_fixed_price_section（API_店頭仕入_定額部門）	E2E-A06-12-010	IT-32	データなし	P2	設定が無い場合は現行仕様の例外応答となる	SEED-A06-12-AUTH／SEED-A06-12-OPTION-ABSENT	option_key=fixed_price_section の行が存在しない状態	"1. 設定が無い状態でGET送信する
-2. HTTPステータスを確認する"	固定価格部門の設定が無い場合、現行仕様ではnull参照によりHTTPステータス500となること（移行先の例外有無は要実機確認＝付帯表4#2）。
+2. HTTPステータスを確認する"	固定価格部門の設定が無い場合、現行仕様ではnull参照によりHTTPステータス500となること（移行先の例外有無は要実機確認＝付帯表4#2）。				
 a06-12_api_store_purchase_fixed_price_section（API_店頭仕入_定額部門）	E2E-A06-12-011	IT-32	リクエスト	P3	想定外項目を付与しても副作用が無い	SEED-A06-12-AUTH／SEED-A06-12-OPTION-SET	正常GETに想定外の項目（項目名と値のセット）を付与	"1. 想定外項目を付与してGET送信する
-2. mtb_optionの変化有無を確認する"	想定外の項目を付与してもmtb_optionが変化せず副作用が無いこと（未知パラメータ時のHTTPステータスは正典に規定が無く要実機確認）。
+2. mtb_optionの変化有無を確認する"	想定外の項目を付与してもmtb_optionが変化せず副作用が無いこと（未知パラメータ時のHTTPステータスは正典に規定が無く要実機確認）。				
 a06-12_api_store_purchase_fixed_price_section（API_店頭仕入_定額部門）	E2E-A06-12-012	IT-32	リクエスト	P3	異常なパラメータ値を付与しても副作用が無い	SEED-A06-12-AUTH／SEED-A06-12-OPTION-SET	異常なパラメータ値（型不正・範囲外）を付与	"1. 異常パラメータを付与してGET送信する
-2. mtb_optionの変化有無を確認する"	異常なパラメータ値を付与してもmtb_optionが変化せず副作用が無いこと（異常パラメータ時のHTTPステータスは正典に規定が無く要実機確認）。
+2. mtb_optionの変化有無を確認する"	異常なパラメータ値を付与してもmtb_optionが変化せず副作用が無いこと（異常パラメータ時のHTTPステータスは正典に規定が無く要実機確認）。				
 a06-12_api_store_purchase_fixed_price_section（API_店頭仕入_定額部門）	E2E-A06-12-020	IT-32	資格情報	P1	認可を満たさないリクエストは取得できず拒否される	SEED-A06-12-OPTION-SET（SEED-A06-12-AUTH未適用）	資格情報（認可）を満たさないリクエスト	"1. 認可を満たさない状態でGET送信する
-2. 取得可否とHTTPステータスを確認する"	認可を満たさないリクエストは固定価格部門IDを取得できず拒否されること（認可方式が正典で未特定のためHTTPステータスは要実機確認＝付帯表4#3）。
+2. 取得可否とHTTPステータスを確認する"	認可を満たさないリクエストは固定価格部門IDを取得できず拒否されること（認可方式が正典で未特定のためHTTPステータスは要実機確認＝付帯表4#3）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

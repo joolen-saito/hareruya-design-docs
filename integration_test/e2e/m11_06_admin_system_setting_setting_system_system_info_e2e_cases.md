@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m11_06_admin_system_setting_setting_system_system_info_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・DOM有無・HTTPステータスなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・DOM有無・HTTPステータスなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は**参照専用（GET のみ・フォーム/POST/DB更新なし）**である（副作用「DB更新 行わない」／永続化「書き戻さない」／バリデーション「フォームを持たない」）。そのため既存IT casesの 登録/更新/検索/入力検証 系の観点は本機能では非該当となり、`対象外` に分類する（理由付き・付帯表2/2b）。
 
@@ -23,41 +23,41 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-001	IT-25	UI部品	P1	システム情報画面が表示されカード見出し「システム情報」が出る	認証済み（システム管理者）／SEED-M11-06-ADMIN	—	"1. 管理ログインする
-2. /admin/setting/system/system を開く"	システム情報カードの見出しに「システム情報」が表示されること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-002	IT-25	UI部品	P2	ページタイトルに「システム情報」が表示される	認証済み／SEED-M11-06-ADMIN	—	"1. システム情報画面を開く"	ページタイトル領域に「システム情報」が表示されること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-003	IT-25	UI部品	P2	サブタイトルに「システム設定」が表示される	認証済み／SEED-M11-06-ADMIN	—	"1. システム情報画面を開く"	サブタイトルに「システム設定」が表示されること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-004	IT-25	UI部品	P3	見出しに問い合わせ（ツールチップ）アイコンが表示される	認証済み／SEED-M11-06-ADMIN	—	"1. システム情報画面を開く"	システム情報カード見出しの右にツールチップ付きの問い合わせアイコンが表示されること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-005	IT-25	UI部品	P2	システム情報カードに6つの行ラベルが表示される	認証済み／SEED-M11-06-ADMIN	—	"1. システム情報画面を開く"	「EC-CUBE」「サーバーOS」「DBサーバー」「WEBサーバー」「PHP」「User Agent」の各ラベルが表示されること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-006	IT-25	UI部品	P3	各行の値コンテナに連番idが付与される	認証済み／SEED-M11-06-ADMIN	—	"1. システム情報画面を開く"	各行の値コンテナに連番に基づく識別子（server_info_box__value--N）が付与され、最低6件存在すること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-007	IT-25	確認ダイアログ	P2	EC-CUBE行に値（バージョン文字列）が表示される	認証済み／SEED-M11-06-ADMIN	—	"1. システム情報画面を開く"	先頭行（EC-CUBE）の値コンテナに製品バージョン文字列（空でない値）が表示されること。
+2. /admin/setting/system/system を開く"	システム情報カードの見出しに「システム情報」が表示されること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-002	IT-25	UI部品	P2	ページタイトルに「システム情報」が表示される	認証済み／SEED-M11-06-ADMIN	—	1. システム情報画面を開く	ページタイトル領域に「システム情報」が表示されること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-003	IT-25	UI部品	P2	サブタイトルに「システム設定」が表示される	認証済み／SEED-M11-06-ADMIN	—	1. システム情報画面を開く	サブタイトルに「システム設定」が表示されること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-004	IT-25	UI部品	P3	見出しに問い合わせ（ツールチップ）アイコンが表示される	認証済み／SEED-M11-06-ADMIN	—	1. システム情報画面を開く	システム情報カード見出しの右にツールチップ付きの問い合わせアイコンが表示されること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-005	IT-25	UI部品	P2	システム情報カードに6つの行ラベルが表示される	認証済み／SEED-M11-06-ADMIN	—	1. システム情報画面を開く	「EC-CUBE」「サーバーOS」「DBサーバー」「WEBサーバー」「PHP」「User Agent」の各ラベルが表示されること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-006	IT-25	UI部品	P3	各行の値コンテナに連番idが付与される	認証済み／SEED-M11-06-ADMIN	—	1. システム情報画面を開く	各行の値コンテナに連番に基づく識別子（server_info_box__value--N）が付与され、最低6件存在すること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-007	IT-25	確認ダイアログ	P2	EC-CUBE行に値（バージョン文字列）が表示される	認証済み／SEED-M11-06-ADMIN	—	1. システム情報画面を開く	先頭行（EC-CUBE）の値コンテナに製品バージョン文字列（空でない値）が表示されること。				
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-008	IT-15	状態変化	P2	折りたたみアイコン押下でカード本文が折りたたまれる	認証済み／SEED-M11-06-ADMIN	—	"1. システム情報画面を開く
-2. 見出し右の角度アイコンを押下する"	システム情報カード本文（#systemInfo）が折りたたまれ非表示になること。
+2. 見出し右の角度アイコンを押下する"	システム情報カード本文（#systemInfo）が折りたたまれ非表示になること。				
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-009	IT-15	状態変化	P3	折りたたみ後に再度押下でカード本文が展開される	認証済み／SEED-M11-06-ADMIN	—	"1. システム情報画面を開く
 2. 角度アイコンを押下し折りたたむ
-3. 再度押下する"	システム情報カード本文が再び展開され表示されること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-010	IT-25	送信可否制御	P1	既定環境ではPHP情報カードがDOM上に存在しない	認証済み／SEED-M11-06-ADMIN（phpinfo既定無効）	—	"1. システム情報画面を開く"	PHP情報カード（#php_info_box__header および iframe）がDOM上に存在しないこと。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-011	IT-25	UI部品	P2	phpinfo有効環境でPHP情報カードとiframeが表示される	認証済み／SEED-M11-06-PHPINFO-ON（ECCUBE_PHPINFO_ENABLED=1）	—	"1. phpinfo有効環境でシステム情報画面を開く"	PHP情報カード見出し「PHP情報」と、src が phpinfo 用GETのiframeが表示されること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-012	IT-03	外部画面	P3	phpinfo応答が共通レイアウト非経由の生HTMLである	認証済み／SEED-M11-06-PHPINFO-ON	—	"1. phpinfo有効環境で /admin/setting/system/system/phpinfo をGETする"	応答が管理画面共通フレーム（ヘッダ・サイドナビ）を含まない生のphpinfo HTMLであること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-013	IT-25	操作起点	P2	本画面はモーダル/確認ダイアログ/トーストを表示しない	認証済み／SEED-M11-06-ADMIN	—	"1. システム情報画面を開く"	モーダル・確認ダイアログ・トーストが表示されないこと。
+3. 再度押下する"	システム情報カード本文が再び展開され表示されること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-010	IT-25	送信可否制御	P1	既定環境ではPHP情報カードがDOM上に存在しない	認証済み／SEED-M11-06-ADMIN（phpinfo既定無効）	—	1. システム情報画面を開く	PHP情報カード（#php_info_box__header および iframe）がDOM上に存在しないこと。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-011	IT-25	UI部品	P2	phpinfo有効環境でPHP情報カードとiframeが表示される	認証済み／SEED-M11-06-PHPINFO-ON（ECCUBE_PHPINFO_ENABLED=1）	—	1. phpinfo有効環境でシステム情報画面を開く	PHP情報カード見出し「PHP情報」と、src が phpinfo 用GETのiframeが表示されること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-012	IT-03	外部画面	P3	phpinfo応答が共通レイアウト非経由の生HTMLである	認証済み／SEED-M11-06-PHPINFO-ON	—	1. phpinfo有効環境で /admin/setting/system/system/phpinfo をGETする	応答が管理画面共通フレーム（ヘッダ・サイドナビ）を含まない生のphpinfo HTMLであること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-013	IT-25	操作起点	P2	本画面はモーダル/確認ダイアログ/トーストを表示しない	認証済み／SEED-M11-06-ADMIN	—	1. システム情報画面を開く	モーダル・確認ダイアログ・トーストが表示されないこと。				
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-014	IT-20	表示要素	P2	User Agent行に要求のUA値がエスケープされプレーンテキスト表示される	認証済み（システム管理者）／SEED-M11-06-ADMIN（UAヘッダに目印文字列を設定）	User-Agentヘッダ＝HTML特殊文字を含む目印文字列	"1. UAヘッダに目印を設定したコンテキストで管理ログインする
-2. システム情報画面を開く"	表示順6行目（User Agent）の値コンテナに要求のUA文字列がそのまま表示され、HTMLとして解釈されず（子要素化されず）プレーンテキストとして出ること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-015	IT-25	URL	P3	クエリ付きURLでも出力が変わらずシステム情報が表示される	認証済み／SEED-M11-06-ADMIN	URLクエリ ?probe=e2e&x=1	"1. システム情報画面を ?probe=e2e&x=1 付きで開く"	クエリの有無やキーは情報組立に使われず、システム情報カードと6行ラベルがクエリ無しと同様に表示されること。
+2. システム情報画面を開く"	表示順6行目（User Agent）の値コンテナに要求のUA文字列がそのまま表示され、HTMLとして解釈されず（子要素化されず）プレーンテキストとして出ること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-015	IT-25	URL	P3	クエリ付きURLでも出力が変わらずシステム情報が表示される	認証済み／SEED-M11-06-ADMIN	URLクエリ ?probe=e2e&x=1	1. システム情報画面を ?probe=e2e&x=1 付きで開く	クエリの有無やキーは情報組立に使われず、システム情報カードと6行ラベルがクエリ無しと同様に表示されること。				
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-016	IT-03	画面遷移	P2	サイドナビのシステム情報リンクから同一画面へ到達する	認証済み／SEED-M11-06-ADMIN	—	"1. 管理ログインする
-2. サイドナビのシステム情報リンクを押下する"	メニュー選択により同一のシステム情報画面（URL /setting/system/system）が表示されること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-020	IT-13	URL直接アクセス	P1	未認証でシステム情報URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/setting/system/system へ直接アクセスする"	管理ログイン画面へ誘導されること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-021	IT-13	URL直接アクセス	P2	未認証でphpinfo URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/setting/system/system/phpinfo へ直接アクセスする"	管理ログイン画面へ誘導されること。
+2. サイドナビのシステム情報リンクを押下する"	メニュー選択により同一のシステム情報画面（URL /setting/system/system）が表示されること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-020	IT-13	URL直接アクセス	P1	未認証でシステム情報URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/setting/system/system へ直接アクセスする	管理ログイン画面へ誘導されること。				
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-021	IT-13	URL直接アクセス	P2	未認証でphpinfo URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/setting/system/system/phpinfo へ直接アクセスする	管理ログイン画面へ誘導されること。				
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-022	IT-15	対象データ	P1	店舗オーナーでシステム情報URLへアクセスすると403になる	認証済み（店舗オーナー）／SEED-M11-06-SHOP-OWNER	—	"1. 店舗オーナーでログインする
-2. /admin/setting/system/system へアクセスする"	初期データの拒否URL（dtb_authority_role）先頭一致により HTTP 403 となること。
+2. /admin/setting/system/system へアクセスする"	初期データの拒否URL（dtb_authority_role）先頭一致により HTTP 403 となること。				
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-023	IT-15	対象データ	P2	店舗オペレーターでシステム情報URLへアクセスすると403になる	認証済み（店舗オペレーター）／SEED-M11-06-SHOP-OPERATOR	—	"1. 店舗オペレーターでログインする
-2. /admin/setting/system/system へアクセスする"	初期データの拒否URL先頭一致により HTTP 403 となること。
+2. /admin/setting/system/system へアクセスする"	初期データの拒否URL先頭一致により HTTP 403 となること。				
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-024	IT-25	HTTPステータス	P2	店舗オーナーでphpinfo URLへアクセスすると403になる	認証済み（店舗オーナー）／SEED-M11-06-SHOP-OWNER	—	"1. 店舗オーナーでログインする
-2. /admin/setting/system/system/phpinfo へアクセスする"	より長いパスのphpinfo側も同一拒否パターン先頭一致により HTTP 403 となること。
+2. /admin/setting/system/system/phpinfo へアクセスする"	より長いパスのphpinfo側も同一拒否パターン先頭一致により HTTP 403 となること。				
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-025	IT-15	対象データ	P2	店舗オペレーターでphpinfo URLへアクセスすると403になる	認証済み（店舗オペレーター）／SEED-M11-06-SHOP-OPERATOR	—	"1. 店舗オペレーターでログインする
-2. /admin/setting/system/system/phpinfo へアクセスする"	より長いパスのphpinfo側も同一拒否パターン先頭一致により HTTP 403 となること。
+2. /admin/setting/system/system/phpinfo へアクセスする"	より長いパスのphpinfo側も同一拒否パターン先頭一致により HTTP 403 となること。				
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	E2E-M11-06-026	IT-15	ナビ表示	P3	拒否ロールではサイドナビにシステム情報項目が表示されない	認証済み（店舗オーナー）／SEED-M11-06-SHOP-OWNER	—	"1. 店舗オーナーでログインする
-2. サイドナビを確認する"	拒否URLに合致するため、サイドナビにシステム情報リンクが表示されないこと（URL直接アクセス時は別途403）。
+2. サイドナビを確認する"	拒否URLに合致するため、サイドナビにシステム情報リンクが表示されないこと（URL直接アクセス時は別途403）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

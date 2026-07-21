@@ -1,0 +1,1276 @@
+{
+  "functionId": "a07-02_0507_sheet-4_sheet",
+  "featureNo": "A07-02",
+  "title": "A07-02 ネット買取受注一覧取得",
+  "domain": "a07",
+  "kind": "api",
+  "designHtml": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+  "sourceBook": "0507_基本設計仕様書(API_ネット買取管理).html",
+  "sheetId": "sheet-4",
+  "sheetName": "ネット買取受注一覧取得",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "a07-02_0507_sheet-4_sheet-conformance-1ab3e04d3312",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1141-1142,1165",
+      "designRefDetail": null,
+      "designExpectation": "成功レスポンスはHTTP 200で、応答本体は受注ごとのオブジェクト配列。netBuyOrderId と netOrderStatusId は integer、applyDate はISO8601形式、freeComment は未設定時 null、memberName は紐づく会員が無い場合 null とする。応答はcamelCase、日時はISO8601、serialize_null有効とする。",
+      "designQuote": "成功レスポンスはHTTP 200で、応答本体は受注ごとのオブジェクト配列。netBuyOrderId と netOrderStatusId は integer、applyDate はISO8601形式、freeComment は未設定時 null、memberName は紐づく会員が無い場合 null とする。応答はcamelCase、日時はISO8601、serialize_null有効とする。",
+      "implRef": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76",
+      "implementationActual": "実装は netBuyOrderId と netOrderStatusId を文字列にキャストし、applyDate を `Y/m/d H:i:s` 形式に整形し、freeComment/memberName の null を空文字へ置換して返している。",
+      "difference": "設計は整数型・ISO8601日時・null保持を外部契約として定義しているが、実装は文字列化、非ISO形式、空文字化を行っており、レスポンススキーマが一致しない。反証検索として `netBuyOrderId`、`applyDate`、`freeComment`、`memberName`、`serialize_null`、`findToAssessBuyOrders` を確認したが、当該GETレスポンスで別の正規化処理は見つからない。",
+      "mismatchReason": "設計は整数型・ISO8601日時・null保持を外部契約として定義しているが、実装は文字列化、非ISO形式、空文字化を行っており、レスポンススキーマが一致しない。反証検索として `netBuyOrderId`、`applyDate`、`freeComment`、`memberName`、`serialize_null`、`findToAssessBuyOrders` を確認したが、当該GETレスポンスで別の正規化処理は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "netBuyOrderId",
+          "design": "integer",
+          "implementation": "`(string) $buyOrder['id']`",
+          "mismatch": "数値ではなく文字列で返す。"
+        },
+        {
+          "item": "applyDate",
+          "design": "ISO8601形式の日時文字列",
+          "implementation": "`$buyOrder['orderDate']->format('Y/m/d H:i:s')`",
+          "mismatch": "ISO8601ではなく `YYYY/MM/DD HH:MM:SS` 形式で返す。"
+        },
+        {
+          "item": "freeComment",
+          "design": "未設定の場合はnull",
+          "implementation": "`$buyOrder['memo'] ?? ''`",
+          "mismatch": "nullを空文字へ変換する。"
+        },
+        {
+          "item": "memberName",
+          "design": "紐づく会員が無い場合はnull",
+          "implementation": "`$buyOrder['memberName'] ?? ''`",
+          "mismatch": "nullを空文字へ変換する。"
+        },
+        {
+          "item": "netOrderStatusId",
+          "design": "integer",
+          "implementation": "`(string) $buyOrder['buyOrderStatusId']`",
+          "mismatch": "数値ではなく文字列で返す。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "a07-02_0507_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「成功レスポンスはHTTP 200で、応答本体は受注ごとのオブジェクト配列。netBuyOrderId と netOrderStatusId は integer、applyDate はISO8601形式、freeComment は未設定時 null、memberName は紐づく会員が無い場合 null とする。応答はcamelCase、日時はISO8601、serialize_null有効とする。」。実装は「実装は netBuyOrderId と netOrderStatusId を文字列にキャストし、applyDate を `Y/m/d H:i:s` 形式に整形し、freeComment/memberName の null を空文字へ置換して返している。」。乖離理由は「設計は整数型・ISO8601日時・null保持を外部契約として定義しているが、実装は文字列化、非ISO形式、空文字化を行っており、レスポンススキーマが一致しない。反証検索として `netBuyOrderId`、`applyDate`、`freeComment`、`memberName`、`serialize_null`、`findToAssessBuyOrders` を確認したが、当該GETレスポンスで別の正規化処理は見つからない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76",
+        "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71\n68:                 $buyOrder['addr02'],\n69:             ]));\n70: \n71:             return [\n72:                 'netBuyOrderId' => (string) $buyOrder['id'],\n73:                 'applyDate' => $buyOrder['orderDate']->format('Y/m/d H:i:s'),\n74:                 'freeComment' => $buyOrder['memo'] ?? '',",
+        "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:45\n42: use Symfony\\Component\\Security\\Http\\Attribute\\IsGranted;\n43: \n44: #[IsGranted('IS_AUTHENTICATED_FULLY')]\n45: class BuyOrderController extends AbstractController\n46: {\n47:     public function __construct(\n48:         private readonly DtbBuyOrderRepository $buyOrderRepository,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "a07-02_0507_sheet-4_sheet-conformance-706cca86312a",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1144",
+      "designRefDetail": null,
+      "designExpectation": "認証失敗時（トークン欠落・署名不正・該当する管理者会員なし）はHTTP 401とし、本文を持たない認証拒否を返す。",
+      "designQuote": "認証失敗時（トークン欠落・署名不正・該当する管理者会員なし）はHTTP 401とし、本文を持たない認証拒否を返す。",
+      "implRef": "src/Eccube/EventListener/ExceptionListener.php:72-100,136-139",
+      "implementationActual": "App APIの例外処理は401を含むエラー時に `JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)` を返す。401の場合のerrorsは `['認証エラー']` になる。",
+      "difference": "設計は401で本文なしを要求しているが、実装のApp API共通例外処理は401でもJSON本文 `{code, errors}` を返す。反証検索として `JwtTokenHeaderExtractor`、`JwtTokenHandler`、`UnauthenticatedException`、`ExceptionListener`、security.yaml の access_token 設定を確認し、認証ヘッダ検証自体は存在するが、本文なし401を返す実装は確認できない。",
+      "mismatchReason": "設計は401で本文なしを要求しているが、実装のApp API共通例外処理は401でもJSON本文 `{code, errors}` を返す。反証検索として `JwtTokenHeaderExtractor`、`JwtTokenHandler`、`UnauthenticatedException`、`ExceptionListener`、security.yaml の access_token 設定を確認し、認証ヘッダ検証自体は存在するが、本文なし401を返す実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "401本文",
+          "design": "認証拒否（本文を持たない）",
+          "implementation": "`{'code': 401, 'errors': ['認証エラー']}` のJSON本文を生成",
+          "mismatch": "401レスポンス本文の有無が異なる。"
+        },
+        {
+          "item": "対象条件",
+          "design": "トークン欠落・署名不正・該当する管理者会員なし",
+          "implementation": "jwt-token抽出、JWT検証、Member取得失敗は認証エラーになるが、App API例外レスポンスはJSON本文付き",
+          "mismatch": "認証条件は概ね実装済みだが、外部レスポンス形が設計と一致しない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "a07-02_0507_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/EventListener/ExceptionListener.php:72-100,136-139",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「認証失敗時（トークン欠落・署名不正・該当する管理者会員なし）はHTTP 401とし、本文を持たない認証拒否を返す。」。実装は「App APIの例外処理は401を含むエラー時に `JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)` を返す。401の場合のerrorsは `['認証エラー']` になる。」。乖離理由は「設計は401で本文なしを要求しているが、実装のApp API共通例外処理は401でもJSON本文 `{code, errors}` を返す。反証検索として `JwtTokenHeaderExtractor`、`JwtTokenHandler`、`UnauthenticatedException`、`ExceptionListener`、security.yaml の access_token 設定を確認し、認証ヘッダ検証自体は存在するが、本文なし401を返す実装は確認できない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/EventListener/ExceptionListener.php:72-100,136",
+        "src/Eccube/EventListener/ExceptionListener.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/EventListener/ExceptionListener.php:72\n69:         /**\n70:          * APIの場合は、エラー詳細をログ出力し、JSON形式で必ず(code, errors)を返す\n71:          */\n72:         if ($this->requestContext->isAppApi()) {\n73:             $logLevel = 'error';\n74:             $errors = ['システムエラーが発生しました'];\n75:             $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;",
+        "src/Eccube/EventListener/ExceptionListener.php:27\n24: use Symfony\\Component\\HttpKernel\\KernelEvents;\n25: use Twig\\Environment;\n26: \n27: class ExceptionListener implements EventSubscriberInterface\n28: {\n29:     /**\n30:      * ExceptionListener constructor."
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 25,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-dc5f55cf03",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "・ MTGBuyerで以下の画面を出すための情報を取得するためのAPI",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-40c6f6d47e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "項目名 型 必須 最大文字数",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-abda5aa435",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "または最大値 入力例 備考",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-c5f73650a1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "},以下同様の配列が続く",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-1211ea5c64",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "買取アプリ（MTGバイヤー）が、査定対象となるネット買取受注の一覧を取得するためのAPIである。pf-api（買取連携用のAPIアプリケーション）が提供するJSON APIで、商品到着から査定完了前までの状態にあるネット買取受注を抽出し、受注ごとの基本情報と申込者情報をまとめて返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-3f736e1999",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのネット買取受注一覧取得処理、ルート定義（ config/routes.yaml ）、ネット買取受注を扱うエンティティとリポジトリ、共通の認証処理を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-d2f1c6e5cf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別APIの設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-6f0d608761",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "ネット買取受注の査定終了処理・ステータス更新（ネット買取注文の査定終了処理APIの設計を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-a470aedbe8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "ネット買取受注のフリーコメント更新（ネット買取受注コメント更新APIの設計を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-c8ed77b552",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "mtb_buy_order_status に1〜16を定義（入庫完了14・未登録在庫15・入庫待ち16を追加）。本APIの抽出条件のステータスID（2・10・11・12）は変わらない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-17c9c789e6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "査定対象の状態にあるネット買取受注を受注ID昇順で抽出し、受注ごとの基本情報と申込者情報の配列を返す。該当が無い場合は空配列を返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-118db1d2b0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "jwt-token ヘッダのトークンを検証し、管理者会員を特定する。検証できない場合は認証拒否（HTTP 401）とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-1b03b112c3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "該当する受注が無い場合は空配列を返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-5ec5b20304",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "受注に紐づく会員（申込者を登録した会員）と都道府県マスタを左結合する。住所は都道府県名・住所1・住所2を半角空白区切りで連結する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-60d13df1e0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "査定対象のネット買取受注の配列。該当が無い場合は空配列。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-0e282a37bf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "受注に付与されたフリーコメント。未設定の場合はnull。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-0d2a48985a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "申込者を登録した会員名。紐づく会員が無い場合はnull。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-0b3fe87369",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "成功時の応答例（実装確認値に基づく代表値。個人情報は最小限の代表値とする）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-da4f39d5d8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "本APIは認証用の jwt-token ヘッダ以外の入力パラメータを持たないため、入力検証を行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-1bea5e8369",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-3ddf2b3547",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-e94d2b3f9d",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-fe751ead41",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "呼び出し時点で査定対象の状態にあるネット買取受注を返す。本APIはデータを更新しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-db59ec8465",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "本APIは一覧の受注基本情報と申込者情報のみを返し、受注明細（買取代表カード・個別入力商品）は含まない。明細の整合は査定終了処理APIの設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-02_0507_sheet-4_sheet-req-f1aa27643f",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "designDerivedTerms": {
+      "routeNames": [
+        "buyOrders",
+        "customerInfo",
+        "buy_order_id",
+        "order_date",
+        "buy_order_status_id"
+      ],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "api/admin/buyOrders.json",
+        "03/06",
+        "pf-api/a07-02_api_online_purchase_buy_order_list.md",
+        "routes.yaml",
+        "admin/buyOrders.json",
+        "buyOrders.json"
+      ],
+      "businessTerms": [
+        "A07",
+        "ネット買取受注一覧取得",
+        "ネット買取管理",
+        "ネット買取管理機能",
+        "MTGバイヤーで査定する対象の買取情報を取得する",
+        "エンドポイントURL",
+        "得するためのAPI",
+        "査定完了前のネット買取情報を取得する",
+        "商品到着",
+        "買取情報のJSON配列",
+        "ステータスの買取情報のJSON配列",
+        "ネット買取ID",
+        "ネット買取ステータスID",
+        "買取を申し込んだ顧客の情報が入ったオブジェクト",
+        "買取アプリ",
+        "査定対象となるネット買取受注の一覧を取得するため",
+        "のAPIである",
+        "買取連携用のAPIアプリケーション",
+        "APIで",
+        "商品到着から査定完了前までの状態にあるネット買取",
+        "受注を抽出し",
+        "受注ごとの基本情報と申込者情報をまとめて返す",
+        "apiのネット買取受注一覧取得処理",
+        "ネット買取受注を扱うエンティティとリポジトリ"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "customerInfo",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:77",
+        "snippet": "'customerInfo' => [",
+        "weight": 7
+      },
+      {
+        "term": "customerInfo",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:110",
+        "snippet": "'customerInfo' => [",
+        "weight": 7
+      },
+      {
+        "term": "buy_order_status_id",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbBuyOrderRepository.php:605",
+        "snippet": "AND (:saleFlg = true OR bo.buy_order_status_id != :cancelledStatusId) -- 売却しない抽出のときは、買取ステータス「キャンセル」を除外する",
+        "weight": 7
+      },
+      {
+        "term": "buy_order_status_id",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbBuyOrderRepository.php:633",
+        "snippet": "AND (:saleFlg = true OR bo_iip.buy_order_status_id != :cancelledStatusId) -- 売却しない抽出のときは、買取ステータス「キャンセル」を除外する",
+        "weight": 7
+      },
+      {
+        "term": "admin/buyOrders.json",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:59",
+        "snippet": "#[Route('/%eccube_api_v1_route%/admin/buyOrders.json', name: 'api_admin_buy_orders_product_arrival', methods: ['GET'])]",
+        "weight": 6
+      },
+      {
+        "term": "buyOrders.json",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:59",
+        "snippet": "#[Route('/%eccube_api_v1_route%/admin/buyOrders.json', name: 'api_admin_buy_orders_product_arrival', methods: ['GET'])]",
+        "weight": 6
+      },
+      {
+        "term": "buyOrders",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1021",
+        "snippet": "private Collection $BuyOrders;",
+        "weight": 5
+      },
+      {
+        "term": "buyOrders",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1121",
+        "snippet": "$this->BuyOrders[] = $BuyOrder;",
+        "weight": 5
+      },
+      {
+        "term": "buyOrders",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:217",
+        "snippet": "$this->BuyOrders = new ArrayCollection();",
+        "weight": 5
+      },
+      {
+        "term": "buy_order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBuyMainCard.php:45",
+        "snippet": "#[ORM\\JoinColumn(name: 'buy_order_id', referencedColumnName: 'id', onDelete: 'CASCADE', nullable: false)]",
+        "weight": 5
+      },
+      {
+        "term": "buy_order_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBuyOrder.php:131",
+        "snippet": "#[ORM\\JoinColumn(name: 'buy_order_status_id', referencedColumnName: 'id', nullable: false)]",
+        "weight": 5
+      },
+      {
+        "term": "buyOrders",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBuyOrder.php:136",
+        "snippet": "#[ORM\\ManyToOne(targetEntity: Customer::class, inversedBy: 'BuyOrders')]",
+        "weight": 5
+      },
+      {
+        "term": "buy_order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBuyOrderIndivisualInputProduct.php:51",
+        "snippet": "#[ORM\\JoinColumn(name: 'buy_order_id', referencedColumnName: 'id', onDelete: 'CASCADE', nullable: false)]",
+        "weight": 5
+      },
+      {
+        "term": "buy_order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBuyOrderStatusHistory.php:36",
+        "snippet": "#[ORM\\JoinColumn(name: 'buy_order_id', referencedColumnName: 'id', onDelete: 'CASCADE', nullable: false)]",
+        "weight": 5
+      },
+      {
+        "term": "buy_order_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBuyOrderStatusHistory.php:44",
+        "snippet": "#[ORM\\JoinColumn(name: 'buy_order_status_id', referencedColumnName: 'id', nullable: false)]",
+        "weight": 5
+      },
+      {
+        "term": "buy_order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBuyOrderStock.php:46",
+        "snippet": "#[ORM\\JoinColumn(name: 'buy_order_id', nullable: false, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => 'ネット買取注文ID'])]",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:1301",
+        "snippet": "$this->order_date = $orderDate;",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:132",
+        "snippet": "#[ORM\\Index(columns: ['order_date'], name: 'dtb_order_order_date_idx')]",
+        "weight": 5
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 7,
+    "implementationGapRequirementCount": 0,
+    "rows": [
+      {
+        "findingId": "a07-02_0507_sheet-4_sheet-conformance-1ab3e04d3312",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1141-1142,1165",
+        "designRequirement": "integer",
+        "implementationActual": "`(string) $buyOrder['id']`",
+        "mismatchReason": "数値ではなく文字列で返す。",
+        "implementationRefs": [
+          "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76",
+          "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "netBuyOrderId",
+            "design": "integer",
+            "implementation": "`(string) $buyOrder['id']`",
+            "mismatch": "数値ではなく文字列で返す。"
+          }
+        ]
+      },
+      {
+        "findingId": "a07-02_0507_sheet-4_sheet-conformance-1ab3e04d3312",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1141-1142,1165",
+        "designRequirement": "ISO8601形式の日時文字列",
+        "implementationActual": "`$buyOrder['orderDate']->format('Y/m/d H:i:s')`",
+        "mismatchReason": "ISO8601ではなく `YYYY/MM/DD HH:MM:SS` 形式で返す。",
+        "implementationRefs": [
+          "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76",
+          "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "applyDate",
+            "design": "ISO8601形式の日時文字列",
+            "implementation": "`$buyOrder['orderDate']->format('Y/m/d H:i:s')`",
+            "mismatch": "ISO8601ではなく `YYYY/MM/DD HH:MM:SS` 形式で返す。"
+          }
+        ]
+      },
+      {
+        "findingId": "a07-02_0507_sheet-4_sheet-conformance-1ab3e04d3312",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1141-1142,1165",
+        "designRequirement": "未設定の場合はnull",
+        "implementationActual": "`$buyOrder['memo'] ?? ''`",
+        "mismatchReason": "nullを空文字へ変換する。",
+        "implementationRefs": [
+          "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76",
+          "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "freeComment",
+            "design": "未設定の場合はnull",
+            "implementation": "`$buyOrder['memo'] ?? ''`",
+            "mismatch": "nullを空文字へ変換する。"
+          }
+        ]
+      },
+      {
+        "findingId": "a07-02_0507_sheet-4_sheet-conformance-1ab3e04d3312",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1141-1142,1165",
+        "designRequirement": "紐づく会員が無い場合はnull",
+        "implementationActual": "`$buyOrder['memberName'] ?? ''`",
+        "mismatchReason": "nullを空文字へ変換する。",
+        "implementationRefs": [
+          "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76",
+          "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "memberName",
+            "design": "紐づく会員が無い場合はnull",
+            "implementation": "`$buyOrder['memberName'] ?? ''`",
+            "mismatch": "nullを空文字へ変換する。"
+          }
+        ]
+      },
+      {
+        "findingId": "a07-02_0507_sheet-4_sheet-conformance-1ab3e04d3312",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1141-1142,1165",
+        "designRequirement": "integer",
+        "implementationActual": "`(string) $buyOrder['buyOrderStatusId']`",
+        "mismatchReason": "数値ではなく文字列で返す。",
+        "implementationRefs": [
+          "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76",
+          "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "netOrderStatusId",
+            "design": "integer",
+            "implementation": "`(string) $buyOrder['buyOrderStatusId']`",
+            "mismatch": "数値ではなく文字列で返す。"
+          }
+        ]
+      },
+      {
+        "findingId": "a07-02_0507_sheet-4_sheet-conformance-706cca86312a",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1144",
+        "designRequirement": "認証拒否（本文を持たない）",
+        "implementationActual": "`{'code': 401, 'errors': ['認証エラー']}` のJSON本文を生成",
+        "mismatchReason": "401レスポンス本文の有無が異なる。",
+        "implementationRefs": [
+          "src/Eccube/EventListener/ExceptionListener.php:72-100,136",
+          "src/Eccube/EventListener/ExceptionListener.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "401本文",
+            "design": "認証拒否（本文を持たない）",
+            "implementation": "`{'code': 401, 'errors': ['認証エラー']}` のJSON本文を生成",
+            "mismatch": "401レスポンス本文の有無が異なる。"
+          }
+        ]
+      },
+      {
+        "findingId": "a07-02_0507_sheet-4_sheet-conformance-706cca86312a",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4:1144",
+        "designRequirement": "トークン欠落・署名不正・該当する管理者会員なし",
+        "implementationActual": "jwt-token抽出、JWT検証、Member取得失敗は認証エラーになるが、App API例外レスポンスはJSON本文付き",
+        "mismatchReason": "認証条件は概ね実装済みだが、外部レスポンス形が設計と一致しない。",
+        "implementationRefs": [
+          "src/Eccube/EventListener/ExceptionListener.php:72-100,136",
+          "src/Eccube/EventListener/ExceptionListener.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "対象条件",
+            "design": "トークン欠落・署名不正・該当する管理者会員なし",
+            "implementation": "jwt-token抽出、JWT検証、Member取得失敗は認証エラーになるが、App API例外レスポンスはJSON本文付き",
+            "mismatch": "認証条件は概ね実装済みだが、外部レスポンス形が設計と一致しない。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 25,
+    "verdictedCount": 25,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 25,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-dc5f55cf03",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "・ MTGBuyerで以下の画面を出すための情報を取得するためのAPI",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-40c6f6d47e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "項目名 型 必須 最大文字数",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-abda5aa435",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "または最大値 入力例 備考",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-c5f73650a1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "},以下同様の配列が続く",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-1211ea5c64",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "買取アプリ（MTGバイヤー）が、査定対象となるネット買取受注の一覧を取得するためのAPIである。pf-api（買取連携用のAPIアプリケーション）が提供するJSON APIで、商品到着から査定完了前までの状態にあるネット買取受注を抽出し、受注ごとの基本情報と申込者情報をまとめて返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-3f736e1999",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-apiのネット買取受注一覧取得処理、ルート定義（ config/routes.yaml ）、ネット買取受注を扱うエンティティとリポジトリ、共通の認証処理を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-d2f1c6e5cf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別APIの設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-6f0d608761",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "ネット買取受注の査定終了処理・ステータス更新（ネット買取注文の査定終了処理APIの設計を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-a470aedbe8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "ネット買取受注のフリーコメント更新（ネット買取受注コメント更新APIの設計を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-c8ed77b552",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "mtb_buy_order_status に1〜16を定義（入庫完了14・未登録在庫15・入庫待ち16を追加）。本APIの抽出条件のステータスID（2・10・11・12）は変わらない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-17c9c789e6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "査定対象の状態にあるネット買取受注を受注ID昇順で抽出し、受注ごとの基本情報と申込者情報の配列を返す。該当が無い場合は空配列を返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-118db1d2b0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "jwt-token ヘッダのトークンを検証し、管理者会員を特定する。検証できない場合は認証拒否（HTTP 401）とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-1b03b112c3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "該当する受注が無い場合は空配列を返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-5ec5b20304",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "受注に紐づく会員（申込者を登録した会員）と都道府県マスタを左結合する。住所は都道府県名・住所1・住所2を半角空白区切りで連結する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-60d13df1e0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "査定対象のネット買取受注の配列。該当が無い場合は空配列。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-0e282a37bf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "受注に付与されたフリーコメント。未設定の場合はnull。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-0d2a48985a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "申込者を登録した会員名。紐づく会員が無い場合はnull。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-0b3fe87369",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "成功時の応答例（実装確認値に基づく代表値。個人情報は最小限の代表値とする）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-da4f39d5d8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "本APIは認証用の jwt-token ヘッダ以外の入力パラメータを持たないため、入力検証を行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-1bea5e8369",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-3ddf2b3547",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-e94d2b3f9d",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-fe751ead41",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "呼び出し時点で査定対象の状態にあるネット買取受注を返す。本APIはデータを更新しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-db59ec8465",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "本APIは一覧の受注基本情報と申込者情報のみを返し、受注明細（買取代表カード・個別入力商品）は含まない。明細の整合は査定終了処理APIの設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-02_0507_sheet-4_sheet-req-f1aa27643f",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-4",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

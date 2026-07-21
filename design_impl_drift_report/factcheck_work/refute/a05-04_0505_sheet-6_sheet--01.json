@@ -1,0 +1,45 @@
+{
+  "chunkId": "a05-04_0505_sheet-6_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-04_0505_sheet-6_sheet.json#a05-04-0505-sheet-6-sheet-058ff68d1b-06",
+      "refuted": true,
+      "reason": "『取引IDをキーに削除』の設計根拠(L1852)は埋め込みの旧pf-eccube3リバース詳細設計の表であり、同じ旧詳細設計のDB操作節(L1855)が『当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定はpersist/flushによる即時反映。DB=ec-cube-enterpriseを正典とする。』と明記し、L1798も『永続化に関わる記述は移行先(ec-cube-enterprise)を正とする』としている。つまり永続化の正典は実装(ec-cube-enterprise)側であり、DELETEを行わず監査用に元履歴を残して逆仕訳INSERTで残高を戻す実装(SmaregiPointAdjustmentReverter L96-111)は、L1855の『不要な削除は含まない』方針と整合する。L1852のDELETE記述はL1855と内部矛盾しており、正典と定めた永続化仕様(削除なし)に実装は合致するため棄却。加えて逆仕訳方式は取引ID基準の冪等性(existsByTransactionId)も維持し、会員残高の巻き戻しという設計意図(L1841副作用)を満たす。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-04_0505_sheet-6_sheet.json#a05-04-0505-sheet-6-sheet-cec160c3ba-09",
+      "refuted": true,
+      "reason": "『明示的try-catchを持たず標準例外ハンドラに委ねる』の根拠(L1861)は旧pf-eccube3リバース詳細設計＝旧同期実装の挙動を後付けで記述したもので、外部契約ではなく内部実装の記述にすぎない。観測可能な最終挙動は実装(WebhookController::index L110-121)も設計も同じHTTP 500であり差が無い。新・基本設計(L1544)はレスポンス書式を『なし(ステータスコードのみ)』とするだけで、try-catchの有無を規定していない。唯一観測できる差(500時にJSON本文を返す点)は既にconformance-5075aa32c42a(本文有無)で扱われる重複であり、try-catchという内部手段の相違は operative な新設計の要求に反しない。検証者自身もconfidence=lowとし『両者500で共通』と認めている。棄却。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-04_0505_sheet-6_sheet.json#a05-04-0505-sheet-6-sheet-b49b030f46-12",
+      "refuted": false,
+      "reason": "実装は WebhookController::index L44-50 で 'headers'=>$request->headers->all() と 'content'=>$request->getContent() を log_info 出力し、認証失敗時 L52-59 でも同じ全ヘッダ・content を log_warning 出力する(コードで直接確認)。設計L1866は『連携用ヘッダ(契約ID・アクセストークン)の値』『Cookie値・セッションIDの完全値』をログ禁止と明記。反証として(1)全ヘッダには認証用シークレットヘッダ x-sdsch-secret(.env L91 SMAREGI_WEBHOOK_SECRET_HEADER)や Cookie が必ず含まれ得る、(2)これをマスクするmonologプロセッサ/スクラバの類は app/config/eccube/packages/*.yaml および Service/Smaregi 配下を rg しても存在しない、を確認。旧spec由来だがログ秘匿はアーキテクチャに依らない一般的セキュリティ要求で、新設計も上書きしておらず、緩和策も無い。実装が秘匿値を平文ログ出力する事実は残るため指摘を維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-04_0505_sheet-6_sheet.json#a05-04-0505-sheet-6-sheet-c75ad55635-14",
+      "refuted": true,
+      "reason": "『明示的な悲観ロック・楽観ロックの取得は行わない』の根拠(L1869)は旧pf-eccube3リバース詳細設計であり、逐次実行だった旧同期コードの挙動を記述したもの。新・基本設計はアーキテクチャを非同期化(L1546-1547、実装はMessageBus dispatch→並列MessageHandler)しており、L1798『挙動は現行を正とし』は同期前提の記述で、並列処理という新前提には当てはまらない。実装のロック(SmaregiOrderPointApplier L99-101 / SmaregiPointAdjustmentApplier L132-134)は、コメント(L96-98/L129-131)の通り『同一transactionHeadIdのWebhookが並列処理されるとexistsByTransactionIdが両者falseを見て二重付与し得る』ため会員行を直列化するもので、まさに設計L1869後段が依存する『取引IDを基準にポイント履歴を特定して巻き戻す前提=冪等性』を新・非同期モデル下で保護している。ロックは出力・機能を変えない安全側の実装手段で、新設計の整合性目標を満たす。旧同期記述の後付け文言に反するだけなので棄却。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-04_0505_sheet-6_sheet.json#a05-04_0505_sheet-6_sheet-conformance-3c1a24a866c4",
+      "refuted": false,
+      "reason": "新・基本設計L1544が『認証方式 IP制限』と明記。実装はAuthenticationService::verify L33-46で設定ヘッダ(x-sdsch-secret)上の共有シークレットをhash_equalsで検証する方式(WebhookController L52で呼び失敗時401)。反証としてIP制限が別レイヤに存在しないか横断調査したが、(1)security.yamlのsmaregiファイアウォール(L67-69)は pattern:'^/%eccube_smaregi_webhook_route%/' に対し security:false のみで ips: 制限なし、(2)rg で IpUtils/REMOTE_ADDR/getClientIp/allowed_ips/checkIp は Controller/Smaregi・Service/Smaregi・security.yaml のいずれにも該当0件。コード/設定のどの層にもIP制限は無く、認証方式が設計と実際に異なることを確認したため指摘を維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-04_0505_sheet-6_sheet.json#a05-04_0505_sheet-6_sheet-conformance-5075aa32c42a",
+      "refuted": false,
+      "reason": "新・基本設計L1680『200 レスポンスデータは空を返す』、L1544『レスポンス書式 なし(ステータスコードのみ)』。実装は成功時 JsonResponse(['status'=>'ok'],200) L107、重複時 ['status'=>'ok','message'=>'Event is duplicate'] L85 と非空のJSON本文を返し、さらに設計のWebhook受信データ(L1668-1671 契約ID/イベント名/アクション/取引IDリスト)に存在しない smaregi-event-id ヘッダを必須化し欠落時400(L67-78)を返す。反証を試みたが、コード上これらの本文・400分岐は実在し、設計側にsmaregi-event-idヘッダ要求も本文返却許可も見当たらない。新設計の operative な要求(空応答・状態コードのみ)からの逸脱は明白のため指摘を維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-04_0505_sheet-6_sheet.json#a05-04_0505_sheet-6_sheet-conformance-2ef3471a576a",
+      "refuted": true,
+      "reason": "設計内に内部矛盾がある。B取引情報取得APIの構造化パラメータ表(L1692)は『その他支払い方法情報フラグ』の入力例を明示的に『none』と規定し(同表は取引明細=all,その他支払方法=none,小計=all…と入力例列が意味を持つ)、実装 SmaregiTransactionApiClient L34 の with_payments=none はこの表の入力例(none=付加しない)と値・意図が一致する。一方、指摘が根拠とするURLサンプル(L1703)は with_deposit_others=all と書くが、これは with_store が2回出るなど不整合な散文サンプルで、しかも旧・廃止予定のスマレジAPIホスト(api.smaregi.dev)の命名。新設計L1546は『Webhookの仕様が廃止予定のスマレジAPIからプラットフォームAPIに変更』と明記しており、実装はプラットフォームAPIを叩く前提。よってパラメータ名の相違(with_deposit_others vs with_payments)は設計公認のAPI移行に伴う命名差である可能性が高く、機能的意図(その他支払方法情報を付加しない=none)は保たれている。設計自身が値(all vs none)で矛盾している以上、確定した実装違いとは言えないため棄却(medium)。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-04_0505_sheet-6_sheet.json#a05-04-0505-sheet-6-sheet-b2b04c4b49-01",
+      "refuted": false,
+      "reason": "検証者の『秘匿トークン化された秘匿パス』という記述は事実誤認で、環境変数の既定値は eccube.yaml L7 env(ECCUBE_SMAREGI_WEBHOOK_ROUTE):'smaregi/webhook' という平文の可読パスである(.envでも上書きなし)。しかしこの点を補正しても、実装の実効パスは /smaregi/webhook(routes.yaml L9-12 prefix + WebhookController L41 Route(''))であり、新・基本設計L1543が要求する /smaregi/transaction とはパスセグメント(webhook vs transaction)が明確に異なる。既定値が設計値と不一致である以上(env可変ではあるが既定は transaction ではない)、ルートパスの乖離は実在する。よって『パスが /smaregi/transaction ではない』という指摘の本質は維持する(検証者の秘匿パス説明のみ訂正)。"
+    }
+  ]
+}

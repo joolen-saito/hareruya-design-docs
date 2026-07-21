@@ -1,0 +1,98 @@
+{
+  "functionId": "f06-14_0306_sheet-12_sheet",
+  "featureNo": "F06-14",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12 機能仕様・処理概要",
+      "designExpectation": "★(6)デッキステータス（デッキ登録状況）と(7)デッキ登録/編集は、(4)ステータスが「イベント終了」／デッキ登録締切日時超過／「デッキ登録を終了する」チェック／「デッキ登録あり」未チェックのいずれかで表示しない。",
+      "implRef": "src/Eccube/Resource/template/default/Mypage/event_history.twig:143-145（ラベル無条件描画）, :148-150（ボタンはガード有）, src/Eccube/Entity/DtbEventDetail.php:508-511 canBeRegisteredDeck",
+      "implementationActual": "デッキ登録/編集ボタンは `{% if not isFinished and detail.canBeRegisteredDeck() %}` で4条件を網羅して非表示になるが、デッキ登録状況ラベル（登録済み/未登録）にはガードが無く常時表示される。",
+      "mismatchReason": "設計は(6)デッキステータスと(7)デッキ登録/編集の両方を4条件で非表示にするよう求めるが、実装ではボタンのみ条件付き非表示、ラベルは無条件描画。event_history.twig全体・DtbEventDetailを確認したがラベル行に非表示ガードは無い。",
+      "comparisonRows": [
+        {"item": "デッキ登録/編集ボタンの非表示", "design": "4条件で非表示", "implementation": "not isFinished and canBeRegisteredDeck() で非表示", "mismatch": "一致（適合）"},
+        {"item": "デッキ登録状況ラベルの非表示", "design": "4条件で非表示", "implementation": "無条件で常時表示", "mismatch": "非表示ガード欠落"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12 機能仕様",
+      "designExpectation": "開催日の23:59:59を過ぎたイベントは処理状態に「イベント終了」と表示する。",
+      "implRef": "src/Eccube/Entity/DtbEventDetail.php:554-556 hasFinished(); 呼び出し src/Eccube/Resource/template/default/Mypage/event_history.twig:95,118-119",
+      "implementationActual": "hasFinished() は `return $this->startDate < new \\DateTime();` で、開催開始日時(start_date)を過ぎた瞬間に true → 処理状態が『イベント終了』になる。",
+      "mismatchReason": "設計は開催日当日の終端(23:59:59)を基準とするが、実装は開催開始日時そのものを基準にしている。開催当日で開始時刻経過後（例:10:00開始を当日12:00閲覧）は設計上まだ終了表示すべきでないのにイベント終了となる。開催日終端やend_date基準の終了判定は他に存在しない。",
+      "comparisonRows": [
+        {"item": "イベント終了判定の基準", "design": "開催日の23:59:59を過ぎたら終了", "implementation": "start_date（開催開始日時）を過ぎたら終了", "mismatch": "終了判定の時点が早まる"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12 画面部品(10)",
+      "designExpectation": "(10)ページネーション：前後に4ページ分のリンクを表示する（例：8ページ選択時は4〜12ページのリンク）。",
+      "implRef": "src/Eccube/Controller/Front/Mypage/EventHistoryController.php:99 paginate()（optionsなし）, src/Eccube/Resource/template/default/pager.twig:36-46 pagesInRange",
+      "implementationActual": "paginate() に page_range を渡さず、app/config・Plugin いずれにも knp_paginator の page_range 設定が無い（reference.php:1471 は Default:5 の記述のみ）。よって Knp デフォルト page_range=5（±2ページ）で描画される。",
+      "mismatchReason": "設計は現在ページ±4（例8→4〜12の9リンク）を要求。実装はrange指定が無くKnpデフォルトの±2で描画される。page_range/pageRange設定箇所を全探索したが該当なし。",
+      "comparisonRows": [
+        {"item": "ページネーション表示範囲", "design": "現在ページ前後4ページ（計9）", "implementation": "Knpデフォルト前後2ページ（計5）", "mismatch": "range指定欠落で±2"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "low",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12 画面部品(10)",
+      "designExpectation": "(10)ページネーション：表示しきれないページが存在する場合、先頭方向に「＜最初」、末尾方向に「最後＞」のリンクを表示する。",
+      "implRef": "src/Eccube/Resource/template/default/pager.twig:22-33（先頭側）, :48-60（末尾側）",
+      "implementationActual": "先頭側は pages.first、末尾側は pages.last の数字リンクを出し、範囲外は『…』(ellipsis)を表示する。『＜最初』『最後＞』の文言リンクは存在しない。",
+      "mismatchReason": "設計は明示的に『＜最初』『最後＞』の文言リンクを求めるが、共有pager.twigは数字ページ番号＋『…』のスタイル。利用者可視の文言・見た目が設計と異なる。",
+      "comparisonRows": [
+        {"item": "先頭/末尾ジャンプリンク", "design": "「＜最初」「最後＞」の文言リンク", "implementation": "先頭/最終ページ番号リンク + 『…』", "mismatch": "文言・見た目が相違"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "low",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12 画面部品(1)",
+      "designExpectation": "(1)パンくずリスト末尾は現在ページ名＝「マイイベント・デッキ登録」（押下不可）。",
+      "implRef": "src/Eccube/Resource/template/default/breadcrumb_nav.twig:122-124, src/Eccube/Resource/locale/messages.ja.yaml event_history.breadcrumb_title: 大会デッキ登録",
+      "implementationActual": "mypage_event_history のパンくず末尾は breadcrumb_title すなわち『大会デッキ登録』を表示する（見出しh1/メニュー名は『マイイベント・デッキ登録』）。",
+      "mismatchReason": "設計のパンくず末尾は『マイイベント・デッキ登録』だが、実装は別文言『大会デッキ登録』。ホームアイコン→homepage・現在ページ非リンクは満たすが、末尾クラムの文言が不一致。",
+      "comparisonRows": [
+        {"item": "パンくず末尾文言", "design": "マイイベント・デッキ登録", "implementation": "大会デッキ登録", "mismatch": "文言相違"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "low",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12 画面部品(7)",
+      "designExpectation": "(7)デッキ登録状況：登録されている場合「デッキ登録済み」、未登録の場合「デッキ未登録」と表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Mypage/event_history.twig:144, src/Eccube/Resource/locale/messages.ja.yaml deck__registered: 登録済み / deck__not_registered: 未登録",
+      "implementationActual": "表示値は『登録済み』／『未登録』で、接頭『デッキ』が無い。列ラベルlabel__deck='デッキ登録'は別要素。",
+      "mismatchReason": "設計は表示文言を『デッキ登録済み』『デッキ未登録』と明記するが、実装は『登録済み』『未登録』。値テキスト自体が設計の引用文言と不一致（利用者可視の文言差）。",
+      "comparisonRows": [
+        {"item": "デッキ登録状況の値文言", "design": "デッキ登録済み / デッキ未登録", "implementation": "登録済み / 未登録", "mismatch": "接頭『デッキ』欠落"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "low",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-12 画面部品(5)",
+      "designExpectation": "(5)処理状態：デッキ登録済みの大会（申込なし）の表示追加のため、処理状態に「未登録」を追加する。",
+      "implRef": "src/Eccube/Resource/template/default/Mypage/event_history.twig:120-121, src/Eccube/Resource/locale/messages.ja.yaml status__not_applied: 未申込",
+      "implementationActual": "デッキ登録済みだが申込(Entry)が無い行の処理状態は status__not_applied ＝『未申込』を表示する。",
+      "mismatchReason": "設計は追加ステータスの表示文言を『未登録』と記載するが、実装は『未申込』。該当ケース(Entry is null)向けステータスは実装されているが文言が設計の引用と異なる。",
+      "comparisonRows": [
+        {"item": "申込なし行の処理状態文言", "design": "未登録", "implementation": "未申込", "mismatch": "文言相違"}
+      ]
+    }
+  ]
+}

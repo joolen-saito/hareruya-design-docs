@@ -1,0 +1,54 @@
+{
+  "functionId": "b16-11_0416_sheet-13_s3",
+  "featureNo": "B16-11",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-13:1408,1420-1477",
+      "designExpectation": "S3画像サイズチェック処理として、15分毎にS3上の指定画像バケットからファイル名・ファイルサイズ一覧を取得し、画像種別ごとの規定サイズ超過ファイル一覧を作成して、指定宛先へメール通知する",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/S3, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Upload, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/**/Mail, /home/y-saito/Developments/ec-cube-enterprise/html。確認語: S3画像/画像サイズ/容量超過/規定サイズ/画像ファイルサイズ超過アラート/hareruya_filesize_alert/filepool-resized/listObjects/filesize/image-size/250KB/400KB/500KB/5KB）",
+      "implementationActual": "B16-11相当のConsole Command/Service/Mailテンプレートは確認できない。近いS3実装は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/S3/FileUploadService.php:36 で s3_inventory_check 設定を読み、同:57-85 で putObject によるアップロードのみを行う。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Upload/Adapters/S3FileAdapter.php:61-100 はupload、同:178-200 はget、同:274-279 はexistsで、バケット配下一覧取得・サイズ閾値判定・超過一覧作成・管理者メール通知はない。",
+      "mismatchReason": "設計はバッチ外部契約として「スケジュール起動(Step Functions) 15分毎」「入力S3、出力メール」「指定S3パス5種」「種別別しきい値」「指定From/To/CC/BCC/件名/本文」を要求しているが、src/Eccube/Command の AsCommand 一覧に画像サイズチェック/ファイルサイズアラート相当の入口がなく、S3処理はアップロード/単体取得系のみ、MailServiceとMailテンプレートにも設計件名・宛先・本文に該当する送信処理が存在しない。",
+      "comparisonRows": [
+        {
+          "item": "バッチ入口・実行周期",
+          "design": "Step Functions によるスケジュール起動、15分毎",
+          "implementation": "src/Eccube/Command 配下の AsCommand 一覧に B16-11、S3画像サイズチェック、filesize alert、image-size check 相当なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "S3一覧取得",
+          "design": "下記バケットからファイル名およびファイルサイズの一覧を取得する",
+          "implementation": "FileUploadService は putObject のみ。S3FileAdapter も upload/get/delete/copy/exists で listObjects/listObjectsV2 相当なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "対象S3パス",
+          "design": "s3://filepool-resized/img/goods/L/, /C/, /I/, /img/goods/L/NUM/, /banner/, /product/, /set/",
+          "implementation": "filepool-resized および該当プレフィックスを扱う実装なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "しきい値判定",
+          "design": "商品サムネイル250kB以上、オリジナル400kB以上、バナー500kB以上、商品画像400kB以上、絵文字5kB以上を抽出",
+          "implementation": "250KB/400KB/500KB/5KB または byte 換算値による種別別ファイルサイズ判定なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "通知先・ヘッダ",
+          "design": "From info@hareruyamtg.com、To hareruya_filesize_alert@hareruyamtg.com、CC it_common@hareruyamtg.com、BCC r9y9k6q2h2i8d9b5@sekappy-dev.slack.com",
+          "implementation": "MailService/Mailテンプレートに該当宛先のサイズ超過通知なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "通知件名・本文",
+          "design": "件名「画像ファイルサイズ超過アラート」、本文「規定サイズを超過している画像ファイルが見つかりました」と超過ファイルURL・サイズ一覧",
+          "implementation": "件名・本文文言・超過ファイル一覧を生成する処理なし",
+          "mismatch": "未実装"
+        }
+      ]
+    }
+  ]
+}

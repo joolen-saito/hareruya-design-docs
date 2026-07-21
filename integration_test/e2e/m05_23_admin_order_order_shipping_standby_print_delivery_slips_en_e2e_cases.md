@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m05_23_admin_order_order_shipping_standby_print_delivery_slips_en_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・HTTP応答（200/404）・子ウィンドウ表示など、ブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約・現挙動をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・HTTP応答（200/404）・子ウィンドウ表示など、ブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約・現挙動をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は `print` 型（POSTで子ウィンドウに英語納品書HTMLを表示する参照系）である。**ダウンロード/帳票の内容（フォーマット・金額・明細並び・改ページ）は手動**、HTTP応答・遷移・UI部品・子ウィンドウ発火を自動化対象とする。
 
@@ -24,41 +24,41 @@
 | IT-23 | DB検索のレコード単位確認＝ブラウザ観測外（対象外）。POST→HTML表示のみ自動化 |
 | IT-26 | 更新内容（本機能は参照系・更新なし）＝対象外/間接 |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-001	IT-25	UI部品	P2	出荷指示リスト編集画面に「納品書印刷（英語）」ボタンが表示される	管理者ログイン済／SEED-M05-23-STANDBY	—	"1. 出荷指示リスト編集（/standby/{id}/edit）を表示する"	「納品書印刷（英語）」ボタンが表示されること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-002	IT-25	UI部品	P2	各受注行に既定でオンのチェックボックスと一括選択が表示される	管理者ログイン済／SEED-M05-23-STANDBY	—	"1. 出荷指示リスト編集を表示する"	各受注行先頭にチェックボックス（name=order_ids[受注ID]）が既定オンで表示され、ヘッダに一括選択チェックが表示されること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-003	IT-25	操作起点	P3	form_bulk内に各出力ボタンが並ぶ	管理者ログイン済／SEED-M05-23-STANDBY	—	"1. 出荷指示リスト編集を表示する"	一括用form_bulk内にピッキングリスト・納品書（日）・納品書（英）・他出力ボタンが並んで表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-001	IT-25	UI部品	P2	出荷指示リスト編集画面に「納品書印刷（英語）」ボタンが表示される	管理者ログイン済／SEED-M05-23-STANDBY	—	1. 出荷指示リスト編集（/standby/{id}/edit）を表示する	「納品書印刷（英語）」ボタンが表示されること。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-002	IT-25	UI部品	P2	各受注行に既定でオンのチェックボックスと一括選択が表示される	管理者ログイン済／SEED-M05-23-STANDBY	—	1. 出荷指示リスト編集を表示する	各受注行先頭にチェックボックス（name=order_ids[受注ID]）が既定オンで表示され、ヘッダに一括選択チェックが表示されること。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-003	IT-25	操作起点	P3	form_bulk内に各出力ボタンが並ぶ	管理者ログイン済／SEED-M05-23-STANDBY	—	1. 出荷指示リスト編集を表示する	一括用form_bulk内にピッキングリスト・納品書（日）・納品書（英）・他出力ボタンが並んで表示されること。				
 m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-016	IT-25	UI部品	P2	ヘッダ一括選択（check-all）で全受注行チェックが連動する	管理者ログイン済／SEED-M05-23-STANDBY	—	"1. 出荷指示リスト編集を表示する
-2. ヘッダの一括選択チェックを外す→戻す"	ヘッダ一括選択を外すと全受注行のチェックが連動して外れ、戻すと全行が連動してオンになること（設計書「#check-all は列一括選択と連動する」）。
+2. ヘッダの一括選択チェックを外す→戻す"	ヘッダ一括選択を外すと全受注行のチェックが連動して外れ、戻すと全行が連動してオンになること（設計書「#check-all は列一括選択と連動する」）。				
 m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-010	IT-25	確認ダイアログ	P1	チェック保持で押下すると子ウィンドウに英語納品書HTMLが開く	管理者ログイン済／SEED-M05-23-STANDBY	行チェックは既定オンのまま	"1. 出荷指示リスト編集を表示する
-2. 「納品書印刷（英語）」を押下する"	空の名前付き子ウィンドウが開き、英語納品書HTML（タイトル「納品書」）が表示されること。
+2. 「納品書印刷（英語）」を押下する"	空の名前付き子ウィンドウが開き、英語納品書HTML（タイトル「納品書」）が表示されること。				
 m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-011	IT-25	UI部品	P2	子ウィンドウの英語納品書に印刷ボタンが表示される	管理者ログイン済／SEED-M05-23-STANDBY	行チェックは既定オン	"1. 出荷指示リスト編集を表示する
 2. 「納品書印刷（英語）」を押下する
-3. 開いた子ウィンドウを確認する"	子ウィンドウの英語納品書に印刷ボタンが表示されること。
+3. 開いた子ウィンドウを確認する"	子ウィンドウの英語納品書に印刷ボタンが表示されること。				
 m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-012	IT-25	HTTPステータス	P2	押下後も親タブは編集画面のまま	管理者ログイン済／SEED-M05-23-STANDBY	行チェックは既定オン	"1. 出荷指示リスト編集を表示する
-2. 「納品書印刷（英語）」を押下する"	親タブは出荷指示リスト編集画面に留まり、自動遷移しないこと。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-013	IT-27	実行結果	P1	有効なorder_idsでPOSTするとHTTP200のHTMLが返る	管理者ログイン済／SEED-M05-23-STANDBY	order_ids＝リストに属する受注ID（連想配列キー）	"1. 英語印刷URL（/standby/{id}/print/delivery/en）へorder_idsを付けてPOSTする"	HTTPステータス200でHTMLが返ること。
+2. 「納品書印刷（英語）」を押下する"	親タブは出荷指示リスト編集画面に留まり、自動遷移しないこと。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-013	IT-27	実行結果	P1	有効なorder_idsでPOSTするとHTTP200のHTMLが返る	管理者ログイン済／SEED-M05-23-STANDBY	order_ids＝リストに属する受注ID（連想配列キー）	1. 英語印刷URL（/standby/{id}/print/delivery/en）へorder_idsを付けてPOSTする	HTTPステータス200でHTMLが返ること。				
 m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-014	IT-03	画面遷移	P2	成功応答のContent-Typeがtext/html	管理者ログイン済／SEED-M05-23-STANDBY	order_ids＝有効な受注ID	"1. 英語印刷URLへorder_idsを付けてPOSTする
-2. 応答ヘッダを確認する"	成功応答のContent-Typeがtext/html（UTF-8想定）であること。
+2. 応答ヘッダを確認する"	成功応答のContent-Typeがtext/html（UTF-8想定）であること。				
 m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-015	IT-03	画面遷移	P2	国内配送のみの受注を選んだ英語印刷はHTTP200の薄い紙面	管理者ログイン済／SEED-M05-23-DOMESTIC	order_ids＝国内配送のみの受注	"1. 国内配送のみの受注を含む出荷指示リスト編集を表示する
-2. 当該受注のみチェックして英語印刷URLへPOSTする"	海外結合に残らずDeliverySlipsが空配列になりうるが、HTTPステータスは200で印刷ボタンと外枠のみの薄い紙面HTMLが返ること（判定順序#4・紙面内容は手動）。
+2. 当該受注のみチェックして英語印刷URLへPOSTする"	海外結合に残らずDeliverySlipsが空配列になりうるが、HTTPステータスは200で印刷ボタンと外枠のみの薄い紙面HTMLが返ること（判定順序#4・紙面内容は手動）。				
 m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-017	IT-22	必須制御	P2	一部の受注行のみチェックして英語印刷するとHTTP200	管理者ログイン済／SEED-M05-23-STANDBY（複数受注）	order_ids＝残したチェック済み受注のみ（先頭1行を解除）	"1. 出荷指示リスト編集を表示する
-2. 先頭の受注行チェックを外し、残りはチェックのまま英語印刷URLへPOSTする"	送信されるのは残したチェック由来のorder_idsのみで、当該受注に配送があれば判定順序#3を通過しHTTPステータス200のHTMLが返ること（023＝全解除→404の正常側対）。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-020	IT-22	必須制御	P1	存在しない{id}でPOSTするとHTTP404	管理者ログイン済	{id}＝存在しない出荷指示リスト主キー／order_ids＝任意	"1. 英語印刷URL（/standby/{存在しないid}/print/delivery/en）へPOSTする"	HTTPステータス404となること（判定順序#1）。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-021	IT-22	必須バリデーション	P1	order_idsを付けずPOSTするとHTTP404	管理者ログイン済／SEED-M05-23-STANDBY	order_ids＝無し	"1. 英語印刷URLへorder_idsを付けずPOSTする"	HTTPステータス404となること（判定順序#2）。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-022	IT-13	URL直接アクセス	P2	GETのみ（order_ids無し）でアクセスするとHTTP404	管理者ログイン済／SEED-M05-23-STANDBY	—	"1. 英語印刷URLへ通常GETで直接アクセスする"	order_idsが読み取れずHTTPステータス404となること。
+2. 先頭の受注行チェックを外し、残りはチェックのまま英語印刷URLへPOSTする"	送信されるのは残したチェック由来のorder_idsのみで、当該受注に配送があれば判定順序#3を通過しHTTPステータス200のHTMLが返ること（023＝全解除→404の正常側対）。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-020	IT-22	必須制御	P1	存在しない{id}でPOSTするとHTTP404	管理者ログイン済	{id}＝存在しない出荷指示リスト主キー／order_ids＝任意	1. 英語印刷URL（/standby/{存在しないid}/print/delivery/en）へPOSTする	HTTPステータス404となること（判定順序#1）。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-021	IT-22	必須バリデーション	P1	order_idsを付けずPOSTするとHTTP404	管理者ログイン済／SEED-M05-23-STANDBY	order_ids＝無し	1. 英語印刷URLへorder_idsを付けずPOSTする	HTTPステータス404となること（判定順序#2）。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-022	IT-13	URL直接アクセス	P2	GETのみ（order_ids無し）でアクセスするとHTTP404	管理者ログイン済／SEED-M05-23-STANDBY	—	1. 英語印刷URLへ通常GETで直接アクセスする	order_idsが読み取れずHTTPステータス404となること。				
 m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-023	IT-22	必須制御	P1	全行チェックを外して送信するとHTTP404	管理者ログイン済／SEED-M05-23-STANDBY	order_ids＝空（全行チェック解除相当）	"1. 全行のチェックを外す
-2. 「納品書印刷（英語）」を押下（order_ids空でPOST）する"	クライアント側アラートは無く、サーバでHTTPステータス404となること（エッジケース）。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-024	IT-25	URL	P2	lang要件外（ja|en以外）のパスは解決されずHTTP404	管理者ログイン済	{lang}＝ja|en以外（例 xx）	"1. /standby/{id}/print/delivery/xx へアクセスする"	ルート要件（lang=ja|en）に合致せずHTTPステータス404となること。
+2. 「納品書印刷（英語）」を押下（order_ids空でPOST）する"	クライアント側アラートは無く、サーバでHTTPステータス404となること（エッジケース）。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-024	IT-25	URL	P2	lang要件外（ja|en以外）のパスは解決されずHTTP404	管理者ログイン済	{lang}＝ja|en以外（例 xx）	1. /standby/{id}/print/delivery/xx へアクセスする	ルート要件（lang=ja|en）に合致せずHTTPステータス404となること。				
 m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-025	IT-22	DBとの相関バリデーション	P2	チェック受注に配送が無く配送ID集合が空だとHTTP404	管理者ログイン済／SEED-M05-23-NOSHIP	配送を持たない受注のみをチェック	"1. 配送を持たない受注を含む出荷指示リスト編集を表示する
-2. 当該受注のみチェックして「納品書印刷（英語）」を押下する"	配送ID集合が空となりHTTPステータス404となること（判定順序#3）。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-026	IT-22	DBとの相関バリデーション	P2	チェック済み受注が当該リストに属さない場合はHTTP404	管理者ログイン済／SEED-M05-23-STANDBY	order_ids＝当該出荷指示リストに属さない受注ID	"1. 英語印刷URLへ、当該出荷指示リストに属さない受注IDをorder_idsに付けてPOSTする"	リスト内に対象受注が残らず配送ID集合が空となりHTTPステータス404となること（判定順序#3・設計書「チェック済み受注がリストに無い」）。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-030	IT-15	未認証	P1	未ログインで英語印刷URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインのまま英語印刷URLへ直接アクセスする"	管理ログイン画面へ誘導されること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-031	IT-15	未認証	P1	未ログインで編集URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインのまま出荷指示リスト編集URLへ直接アクセスする"	管理ログイン画面へ誘導されること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-032	IT-13	URL直接アクセス	P2	ログイン管理者は出荷指示リスト編集画面を利用できる	管理者ログイン済／SEED-M05-23-STANDBY	—	"1. ログイン後に出荷指示リスト編集URLへアクセスする"	ログイン画面へ送られず編集画面が利用できること。
+2. 当該受注のみチェックして「納品書印刷（英語）」を押下する"	配送ID集合が空となりHTTPステータス404となること（判定順序#3）。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-026	IT-22	DBとの相関バリデーション	P2	チェック済み受注が当該リストに属さない場合はHTTP404	管理者ログイン済／SEED-M05-23-STANDBY	order_ids＝当該出荷指示リストに属さない受注ID	1. 英語印刷URLへ、当該出荷指示リストに属さない受注IDをorder_idsに付けてPOSTする	リスト内に対象受注が残らず配送ID集合が空となりHTTPステータス404となること（判定順序#3・設計書「チェック済み受注がリストに無い」）。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-030	IT-15	未認証	P1	未ログインで英語印刷URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインのまま英語印刷URLへ直接アクセスする	管理ログイン画面へ誘導されること。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-031	IT-15	未認証	P1	未ログインで編集URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインのまま出荷指示リスト編集URLへ直接アクセスする	管理ログイン画面へ誘導されること。				
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	E2E-M05-23-032	IT-13	URL直接アクセス	P2	ログイン管理者は出荷指示リスト編集画面を利用できる	管理者ログイン済／SEED-M05-23-STANDBY	—	1. ログイン後に出荷指示リスト編集URLへアクセスする	ログイン画面へ送られず編集画面が利用できること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

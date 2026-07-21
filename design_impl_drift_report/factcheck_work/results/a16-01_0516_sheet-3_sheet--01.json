@@ -1,0 +1,33 @@
+{
+  "chunkId": "a16-01_0516_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a16-01_0516_sheet-3_sheet.json#a16-01_0516_sheet-3_sheet-conformance-24c69f6609ba",
+      "functionId": "a16-01_0516_sheet-3_sheet",
+      "featureNo": "A16-01",
+      "title": "A16-01 トップバナー情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "詳細設計はレスポンスのプロパティをcamelCase(imageUrl/dispType/nameJp/nameEn)と明記するが、実装はsnake_case(image_url/disp_type/name_jp/name_en)を返している。",
+      "reason": "詳細設計埋め込み部（function-design-embed）のレスポンス（成功）フィールド表(957行)は id, imageUrl, link, dispType, languages[].id/nameJp/nameEn/code と定義し、副作用節(973行)で『プロパティはcamelCase』と明記している。一方、応答整形の単一層 TopBannerResponseBuilder::build は languages配列に 'name_jp'/'name_en'(35-36行)、トップ階層に 'image_url'(43行)/'disp_type'(45行) と snake_case で構築している。ContentController::getTopBannerByTopBannerId(67-69行)はこの配列を $this->json($response, HTTP_OK) でそのまま返しており、camelCase変換処理は無い（Controller/App・Service/App/Content 配下を確認）。よって詳細設計のcamelCase指定と実装のsnake_case出力が食い違う実装違い。なお同HTMLの上部『レスポンスデータサンプル』(903-910行)はsnake_caseで実装と一致しており設計書内に矛盾があるが、詳細設計書が明示的にcamelCaseを正としているため実装違いと判定した。",
+      "designEvidence": {"label": "設計要求(詳細設計・レスポンスフィールド/camelCase明記)", "path": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html", "start": 957, "end": 973, "contains": ["imageUrl", "dispType", "プロパティはcamelCase"]},
+      "implEvidence": [{"label": "実装(snake_caseで応答整形)", "note": "単一整形層で snake_case キーを構築", "path": "ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php", "start": 31, "end": 47, "contains": ["'name_jp'", "'image_url'", "'disp_type'"]}, {"label": "実装(そのままJSON返却・変換なし)", "path": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php", "start": 67, "end": 69, "contains": ["$this->topBannerResponseBuilder->build", "return $this->json($response, Response::HTTP_OK)"]}]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a16-01_0516_sheet-3_sheet.json#a16-01_0516_sheet-3_sheet-conformance-fce9edcc660b",
+      "functionId": "a16-01_0516_sheet-3_sheet",
+      "featureNo": "A16-01",
+      "title": "A16-01 トップバナー情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は404失敗本文を{code, message}('Not Found')とするが、実装はmessageキーを持たず{code, errors}(errorsは配列)を返す。",
+      "reason": "詳細設計のレスポンス（失敗）表(959行)は 404 時の本文の形を『{code, message}（\"Not Found\"）』と定義する。実装では該当なし時に NotFoundException('Not Found') を throw し、NotFoundException コンストラクタは message を errors: [$message] として親 BaseApiException に渡す(NotFoundException.php 30行)。ContentController の catch(BaseApiException)(70-74行) は本文を ['code' => $e->getStatusCode(), 'errors' => $e->getErrors()] で JSON 化しており、message キーではなく errors 配列を返す。両エンドポイントのcatch経路(70-74行/113-117行)ともに同形で、message キーを返す経路は存在しない。よって本文キー形状が設計(message)と実装(errors配列)で異なる実装違い。",
+      "designEvidence": {"label": "設計要求(404失敗本文の形)", "path": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html", "start": 959, "end": 959, "contains": ["{code, message}", "Not Found"]},
+      "implEvidence": [{"label": "実装(catchでcode+errorsを返す)", "path": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php", "start": 70, "end": 74, "contains": ["'code' => $e->getStatusCode()", "'errors' => $e->getErrors()"]}, {"label": "実装(messageをerrors配列に格納)", "path": "ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php", "start": 29, "end": 31, "contains": ["errors: [$message]"]}]
+    }
+  ]
+}

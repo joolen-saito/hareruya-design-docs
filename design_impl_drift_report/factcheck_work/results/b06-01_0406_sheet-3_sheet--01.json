@@ -1,0 +1,87 @@
+{
+  "chunkId": "b06-01_0406_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b06-01_0406_sheet-3_sheet.json#b06-01_0406_sheet-3_sheet-conformance-aa5d8221b7d7",
+      "functionId": "b06-01_0406_sheet-3_sheet",
+      "featureNo": "B06-01",
+      "title": "B06-01 【新規】買取自動入庫バッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は店頭買取の入庫待ちをステータス12と明記するが、実装ではステータス12は「未登録在庫あり」で入庫待ちは13、バッチも13を対象にしている。",
+      "reason": "設計書の入力データ検索条件（HTML 883行）は『店頭買取情報.ステータス 12: 入庫待ち』と明記する。一方、実装の MtbOtcBuyOrderStatus では STATUS_HAS_UNREGISTERED_STOCK=12（未登録在庫あり）、STATUS_STOCKING_PENDING=13（入庫待ち）と定義され（59-60行、コメント41-42行）、自動入庫バッチ BatchAutoStockAction は findBy(['OtcBuyOrderStatus' => STATUS_STOCKING_PENDING])（=13）を対象にしている（45行）。ネット買取側の 16=入庫待ち（MtbBuyOrderStatus::WAITING_FOR_STOCK）は設計通り。店頭買取のステータスID 12 を入庫待ちとして扱う実装は存在せず、業務意味（入庫待ち）は実装上ID 13 に割り当てられている。設計値12と実装値13のIDが不一致であり、実装違いが事実。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html",
+        "start": 883,
+        "end": 883,
+        "contains": ["店頭買取情報.ステータス", "12: 入庫待ち"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装（ステータス定義）",
+          "note": "12=未登録在庫あり、13=入庫待ち。設計の12=入庫待ちと不一致",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php",
+          "start": 58,
+          "end": 60,
+          "contains": ["STATUS_HAS_UNREGISTERED_STOCK = 12", "STATUS_STOCKING_PENDING = 13"]
+        },
+        {
+          "label": "実装（バッチ対象ステータス）",
+          "note": "自動入庫バッチが対象にするのはステータス13（STATUS_STOCKING_PENDING）",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/BatchAutoStockAction.php",
+          "start": 45,
+          "end": 45,
+          "contains": ["MtbOtcBuyOrderStatus::STATUS_STOCKING_PENDING"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b06-01_0406_sheet-3_sheet.json#b06-01_0406_sheet-3_sheet-conformance-09bc5baac501",
+      "functionId": "b06-01_0406_sheet-3_sheet",
+      "featureNo": "B06-01",
+      "title": "B06-01 【新規】買取自動入庫バッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は買取店舗のECCUBE在庫への登録を要求するが、店頭買取入庫処理は BaseInfo（店舗）一致だけで既存 ProductStock を選び stock_location_id を条件にせず、既存行のロケーションを引き継ぐため非ECCUBE在庫を更新し得る。",
+      "reason": "設計書（HTML 851行・856行）は『実在庫情報を買取を行った店舗のECCUBE在庫に登録する』と要求する。実装 OtcBuyOrderStockInbound::process は $ProductClass->getProductStocks() を走査し $Stock->getBaseInfo()->getId() === $BaseInfo->getId() だけで既存 ProductStock を選択（56-61行）、保存時は stockLocationId として既存行の getStockLocationId() を引き継ぎ、既存行が無い場合のみ STOCK_LOCATION_ECCUBE を用いる（81行）。stock_location_id で ECCUBE 在庫に限定していないため、同一店舗にスマレジ等の非ECCUBE在庫行が存在する場合その行を更新し得る。ProductClass には base_info_id と stock_location_id=STOCK_LOCATION_ECCUBE の両方で在庫行を特定する専用メソッド getProductStockByEccube(ProductClass.php 618行、getProductStockByLocation で stock_location_id を判定 646-650行)が実装済みだが、自動入庫処理では使用されていない。設計要求（ECCUBE在庫への登録）と実装の在庫行選択条件が一致しないことは事実。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html",
+        "start": 851,
+        "end": 856,
+        "contains": ["買取を行った店舗のECCUBE在庫に登録する", "店頭買取を行った店舗のECCUBE在庫に登録する"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装（在庫行選択条件）",
+          "note": "BaseInfo一致のみで選択し stock_location_id を条件にしていない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderStockInbound.php",
+          "start": 56,
+          "end": 61,
+          "contains": ["getProductStocks()", "getBaseInfo()->getId() === $BaseInfo->getId()"]
+        },
+        {
+          "label": "実装（保存時ロケーション）",
+          "note": "既存行があればその stockLocationId を引き継ぎ、未存在時のみ STOCK_LOCATION_ECCUBE",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderStockInbound.php",
+          "start": 81,
+          "end": 81,
+          "contains": ["ProductStock::STOCK_LOCATION_ECCUBE"]
+        },
+        {
+          "label": "実装（未使用の専用ヘルパー）",
+          "note": "base_info_id + stock_location_id=ECCUBE で在庫特定するメソッドが存在するが自動入庫処理では未使用",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/ProductClass.php",
+          "start": 618,
+          "end": 620,
+          "contains": ["getProductStockByEccube", "STOCK_LOCATION_ECCUBE"]
+        }
+      ]
+    }
+  ]
+}

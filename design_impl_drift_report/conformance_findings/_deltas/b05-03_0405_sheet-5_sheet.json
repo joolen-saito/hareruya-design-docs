@@ -1,0 +1,96 @@
+{
+  "functionId": "b05-03_0405_sheet-5_sheet",
+  "featureNo": "B05-03",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-5:1330-1334",
+      "designExpectation": "コンソールのバッチコマンド `order:batch truncateWaitingNumber` で店頭注文番号初期化を実行し、コマンド名が一致しない場合は処理を行わずに終了する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php:25",
+      "implementationActual": "Symfony Console コマンドは `eccube:order:truncate-waiting-number` として登録されている。`order:batch truncateWaitingNumber` または alias 登録は確認できない。",
+      "mismatchReason": "設計は利用者視点の入口として `order:batch truncateWaitingNumber` を外部契約化しているが、実装の `#[AsCommand]` 登録名は別名である。反証検索として `order:batch truncateWaitingNumber`、`truncateWaitingNumber`、`truncate-waiting-number`、`setAliases`、`aliases` を `src/Eccube`、`app`、`html` で確認したが、設計コマンド名または alias は不在。",
+      "comparisonRows": [
+        {
+          "item": "バッチ入口",
+          "design": "`order:batch truncateWaitingNumber`",
+          "implementation": "`eccube:order:truncate-waiting-number`",
+          "mismatch": "設計された起動コマンド名で実行できる根拠がない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-5:1349,1369",
+      "designExpectation": "削除と採番カウンタ初期化は1トランザクションでまとめた更新ではなく、それぞれ独立した文として実行する。削除のみ成功してカウンタ初期化前に中断した場合でも、再実行で空テーブル・カウンタ1に収束する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php:36",
+      "implementationActual": "`handle()` は `beginTransaction()` 後に `dtb_waiting_number` と `dtb_waiting_number_counter` の TRUNCATE、カウンタ再登録、`flush()` を行い、最後に `commit()` する。例外時は `rollback()` する。",
+      "mismatchReason": "設計は削除とカウンタ初期化を1トランザクションにまとめないことを明記しているが、実装は `beginTransaction()` から `commit()` までの1トランザクション内で両テーブル操作と再登録をまとめている。",
+      "comparisonRows": [
+        {
+          "item": "トランザクション境界",
+          "design": "削除と採番カウンタ初期化は1トランザクションでまとめない",
+          "implementation": "`beginTransaction()` で開始し、削除・カウンタ初期化・再登録をまとめて `commit()`",
+          "mismatch": "設計と逆に単一トランザクション化されている"
+        },
+        {
+          "item": "途中失敗時の性質",
+          "design": "削除のみ成功した状態も許容し、再実行で収束する",
+          "implementation": "例外時は `rollback()` するため削除のみ成功状態を作らない",
+          "mismatch": "設計が前提にする途中状態と実装のロールバック挙動が異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-5:1342,1345,1360",
+      "designExpectation": "削除またはカウンタ初期化の途中で例外が発生した場合は処理が中断する。本バッチは例外捕捉や通知を行わない。例外発生時はコンソールへ例外が伝播する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php:40",
+      "implementationActual": "Command 側が `try` / `catch (\\Throwable $e)` で action の例外を捕捉し、`$io->error()` でエラーメッセージを出力して `Command::FAILURE` を返す。",
+      "mismatchReason": "設計は例外を捕捉せずコンソールへ伝播するとしているが、実装は Command 層で Throwable を捕捉して終了コードへ変換している。対象 Command/Action/Repository を `catch`、`Throwable`、`error`、`通知`、`Mailer`、`MailService` で再検索し、設計どおりの非捕捉伝播経路は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "例外処理",
+          "design": "例外を捕捉せず処理を中断し、コンソールへ伝播する",
+          "implementation": "`catch (\\Throwable $e)` で捕捉し、`Command::FAILURE` を返す",
+          "mismatch": "例外伝播ではなく捕捉済み失敗終了になる"
+        },
+        {
+          "item": "失敗時出力",
+          "design": "本バッチ独自のログ・通知は行わない",
+          "implementation": "`店舗注文番号初期化処理でエラーが発生しました` と例外メッセージを `$io->error()` で出力",
+          "mismatch": "独自エラーメッセージを出力している"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-5:1362-1364",
+      "designExpectation": "バッチコマンドの起動時に日時付きのコンソール出力を行う。本バッチ独自の件数ログ・完了ログは出力しない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php:38",
+      "implementationActual": "起動時は `$io->text('店舗注文番号初期化バッチ開始')` を出力するが日時は含まない。成功時は `$io->success('店舗注文番号初期化処理が完了しました。')` で完了ログを出力する。",
+      "mismatchReason": "設計は起動ログに日時を含め、完了ログは出さないとしている。実装は起動ログに日時を含まず、かつ成功時の完了ログを出力している。`date(`、`DateTime`、`format(`、起動/完了文言を対象ファイルで再検索しても日時付与処理は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "起動ログ",
+          "design": "日時付きのコンソール出力",
+          "implementation": "`店舗注文番号初期化バッチ開始` の固定文言のみ",
+          "mismatch": "日時が出力されない"
+        },
+        {
+          "item": "完了ログ",
+          "design": "本バッチ独自の完了ログは出力しない",
+          "implementation": "`店舗注文番号初期化処理が完了しました。` を `$io->success()` で出力",
+          "mismatch": "設計で禁止された完了ログが出力される"
+        }
+      ]
+    }
+  ]
+}

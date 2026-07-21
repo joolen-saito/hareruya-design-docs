@@ -1,0 +1,60 @@
+{
+  "functionId": "m03-41_0204_sheet-59_csv",
+  "featureNo": "M03-41",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-59:13186-13197,13340",
+      "designExpectation": "M03-41 のカテゴリ登録CSVフォーマットは、識別ID 1〜12（カテゴリID、表示ランク、カテゴリ名(日)、カテゴリ名(英)、親カテゴリID、階層、フロント非表示フラグ、支店非表示フラグ、検索パラメータ、最新セット用バナー画像パス、カテゴリアイコン画像パス、対象商品数）を扱う。詳細設計上の入口は m03-41_admin_product_product_category_csv_import / GET,POST /{admin_route}/product/category_csv_upload。",
+      "implRef": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:673,2017-2036 / src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php:72,118,190-202",
+      "implementationActual": "設計入口 admin_product_category_csv_import（/%eccube_admin_route%/product/category_csv_upload）はカテゴリID・カテゴリ名・親カテゴリID・カテゴリ削除フラグの4列だけを getCategoryCsvHeader() で定義している。12列フォーマットは別コントローラの admin_product_category_bulk_csv_upload（GET /product/category/category_bulk_csv_upload）および admin_product_category_bulk_import（POST /product/category/import）に実装されている。",
+      "mismatchReason": "設計が示す m03-41_admin_product_product_category_csv_import のURL/ルートでは、sheet-59 の12列CSVフォーマットを取り込めない。別ルートに12列実装は存在するが、設計入口とPOST先が異なるため利用者視点の外部契約が一致しない。反証として CategoryCsvController、CsvImportController、Twig、翻訳キー、nav を再検索し、12列実装が旧ルートへ接続されていないことを確認した。",
+      "comparisonRows": [
+        {
+          "item": "入口ルート",
+          "design": "GET/POST /{admin_route}/product/category_csv_upload（m03-41_admin_product_product_category_csv_import）",
+          "implementation": "GET/POST /product/category_csv_upload は admin_product_category_csv_import。12列実装は GET /product/category/category_bulk_csv_upload と POST /product/category/import。",
+          "mismatch": "12列CSVの実装経路が設計入口と別経路。"
+        },
+        {
+          "item": "CSV列",
+          "design": "識別ID1〜12の12列",
+          "implementation": "admin_product_category_csv_import は4列。CategoryCsvController 側は12列。",
+          "mismatch": "設計入口で要求列を満たさない。"
+        },
+        {
+          "item": "雛形",
+          "design": "当機能が参照するヘッダー定義と同じ列名の category.csv",
+          "implementation": "旧ルートの雛形は4列 category.csv。12列側の雛形は category_registration_template.csv。",
+          "mismatch": "設計入口の雛形と12列フォーマットが一致しない。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-59:13223-13224",
+      "designExpectation": "子検索条件指定として、CSV項目「検索条件:名称」「検索条件:パラメータ」を追加する。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php, src/Eccube/Service/Csv/Importer/Event/CategoryCsvImportHandler.php, src/Eccube/Entity/Category.php, src/Eccube/Resource/locale/messages.ja.yaml, src/Eccube/Resource/template/admin/Product, html; 検索語: 検索条件, 検索条件:名称, 検索条件:パラメータ, 検索パラメータ, searchParameters, search_parameters）",
+      "implementationActual": "CSV列として実装されているのは「検索パラメータ」1列のみ。Category エンティティにも search_parameters のみ存在し、検索条件名に相当するCSV列・保存先・取込処理は確認できない。",
+      "mismatchReason": "設計は名称とパラメータの2項目追加を要求しているが、実装は search_parameters だけを CategoryCsvImportHandler で読み込み Category::setSearchParameters() に保存している。別キーワード・英語名・Twig・翻訳キー・Entity を再検索しても検索条件名の列または保存処理は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "検索条件:名称",
+          "design": "CSV項目として追加",
+          "implementation": "該当列・保存先・取込処理なし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "検索条件:パラメータ",
+          "design": "CSV項目として追加",
+          "implementation": "「検索パラメータ」列を Category::search_parameters に保存",
+          "mismatch": "パラメータ側のみ実装"
+        }
+      ]
+    }
+  ]
+}

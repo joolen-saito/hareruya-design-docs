@@ -1,0 +1,150 @@
+{
+  "id": "b13-01-payment-status-check-missing-failure-message-collection",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b13-01_0413_sheet-3_sheet.json",
+  "sourceFindingId": "b13-01_0413_sheet-3_sheet-conformance-a43140fb3e7b",
+  "classification": "バッチイベント",
+  "feature": "決済処理中チェックバッチ",
+  "issueCategory": "実装違い",
+  "issue": "取引不在・未完了時のメッセージを収集せず削除件数だけを返す",
+  "designBook": "0413_基本設計仕様書(バッチ_イベント).xlsx",
+  "reproSteps": [
+    "設計書 B13-01 の入出力・エラー処理で、取引不在・未完了等のメッセージ収集が失敗時出力として定義されていることを確認する",
+    "ベース実装 pf-eccube3 の `AbstractCheckPaymentEntry::check()` を確認し、取引不在・未完了・取引エラー時に `$messages[]` へ `OrderId<決済番号>...` を追加し、最後に `createResult($messages)` で返すことを確認する",
+    "ec-cube-enterprise の `PaymentStatusCheckAction::handle()` を確認し、取引不在・失敗時は `deletedAt` を設定して `flush()` し、戻り値は件数集計の `detail` のみで、個別メッセージを収集・返却しないことを確認する"
+  ],
+  "expected": [
+    "取引不在・未完了の場合は、記録除去などの所定処理を行ったうえで、対象の決済番号と理由が分かるメッセージを収集する",
+    "バッチ結果として、失敗時出力に取引不在・未完了等のメッセージを含める",
+    "想定外エラーは重複を除いてまとめ、管理者へ通知する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `PaymentStatusCheckAction::handle()` は、取引が存在しない・失敗している場合に `deletedAt` を設定して `flush()` し、`$cntDeleted++` するだけである。`OrderId<...>` やエラー理由を保持する配列はなく、戻り値の `detail` も対象・更新・保留・削除・エラーの件数集計に限られる。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は取引不在・失敗時に論理削除して削除件数だけを加算する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+          "start": 149,
+          "end": 163,
+          "language": "php",
+          "contains": [
+            "} elseif (array_key_exists($resultApi, $this->pendingResponseCds)) {",
+            "$cntPending++;",
+            "$EventEntry->setDeletedAt($time);",
+            "$this->entityManager->flush();",
+            "$cntDeleted++;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise のバッチ結果 detail は件数集計のみ",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+          "start": 175,
+          "end": 178,
+          "language": "php",
+          "contains": [
+            "'error' => $cntError,",
+            "'detail' => '対象：'.$cntEntries.'件、更新：'.$cntUpdate.'件、保留：'.$cntPending.'件、削除：'.$cntDeleted.'件、エラー：'.$cntError.'件',"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、`AbstractCheckPaymentEntry::check()` が取引不在・未完了・取引エラーのメッセージを `$messages[]` に追加し、`AbstractPaymentService::createResult()` がメッセージを改行連結して失敗結果として返す。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は取引不在・未完了メッセージを収集する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php",
+          "start": 45,
+          "end": 59,
+          "language": "php",
+          "contains": [
+            "$message === $this->notExistingTransuctionMessage",
+            "$message === $this->transactionIncompleteMessage",
+            "$message === $this->transactionErrorMessage",
+            "$messages[] = \"OrderId<{$prePaymentNo}>{$message}\";",
+            "$this->execRecordOperation($entry, $newStatus);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は収集メッセージをバッチ結果として返す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractPaymentService.php",
+          "start": 51,
+          "end": 61,
+          "language": "php",
+          "contains": [
+            "protected function createResult($messages)",
+            "return (count($messages) > 0) ?",
+            "[$this::FAILED, implode(\"\\n\", $messages) . \"\\n\"]",
+            "[$this::SUCCESS, $this->getCommandName() . \" batch is success\\n\"]"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "詳細設計は失敗時出力として取引不在・未完了等のメッセージ収集を定義している",
+      "path": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html",
+      "start": 944,
+      "end": 965,
+      "language": "html",
+      "contains": [
+        "失敗時出力</td><td>取引不在・未完了等のメッセージ収集、想定外エラーの通知",
+        "取引不在・未完了</td><td>記録の除去等の所定処理を行い、メッセージを収集する",
+        "想定外エラー</td><td>重複を除いてまとめ、管理者へ通知する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "取引不在・失敗時は論理削除と件数加算のみで、個別メッセージを収集しない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+      "start": 154,
+      "end": 178,
+      "language": "php",
+      "contains": [
+        "// 取引が存在しない・失敗している場合（決済画面での離脱やキャンセルを含む）",
+        "$EventEntry->setDeletedAt($time);",
+        "$cntDeleted++;",
+        "'detail' => '対象：'.$cntEntries.'件、更新：'.$cntUpdate.'件、保留：'.$cntPending.'件、削除：'.$cntDeleted.'件、エラー：'.$cntError.'件',"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "取引不在・未完了・取引エラーを OrderId 付きメッセージとして収集する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php",
+      "start": 45,
+      "end": 74,
+      "language": "php",
+      "contains": [
+        "$messages[] = \"OrderId<{$prePaymentNo}>{$message}\";",
+        "$this->app['hareruya_ec.service.mail']->sendCheckPaymentErrorMail($errorMessages);",
+        "return $this->createResult($messages);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "収集済みメッセージがある場合はバッチ結果を失敗として返す",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractPaymentService.php",
+      "start": 51,
+      "end": 61,
+      "language": "php",
+      "contains": [
+        "protected function createResult($messages)",
+        "[$this::FAILED, implode(\"\\n\", $messages) . \"\\n\"]"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"取引不在・未完了|失敗時出力|メッセージ収集|想定外エラー\" excel_to_html/output/0413_基本設計仕様書\\(バッチ_イベント\\).html design_impl_drift_report/findings/b13-01_0413_sheet-3_sheet.json",
+      "rg -n \"messages\\[\\]|createResult\\(|notExistingTransuctionMessage|transactionIncompleteMessage|transactionErrorMessage|OrderId\" ../pf-eccube3/app/Plugin/HareruyaEc/Service/Payment -g '*.php'",
+      "rg -n \"cntDeleted|detail|messages|OrderId|取引が存在しない・失敗|setDeletedAt\" ../ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php"
+    ]
+  },
+  "notes": [
+    "B13-01のSP.LINKS取引照会API未実装とは別論点として確認した。API実装後に取引不在・未完了レスポンスを処理できても、個別メッセージ収集がない場合は設計・ベース実装との差分が残る。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

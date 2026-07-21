@@ -1,0 +1,54 @@
+{
+  "chunkId": "b05-09_0405_sheet-11_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-09_0405_sheet-11_sheet.json#b05-09_0405_sheet-11_sheet-conformance-dd58268f1f00",
+      "functionId": "b05-09_0405_sheet-11_sheet",
+      "featureNo": "B05-09",
+      "title": "B05-09 スマレジ取引連携エラー再連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計はスマレジ接続設定（URL・契約ID・アクセストークン等）をmtb_optionに保持しAPI呼出に使うと明記するが、B05-09取引API経路は環境変数由来のDIパラメータを使いmtb_optionを参照していない。",
+      "reason": "設計書DBカラム表(line 2096)および処理フロー(line 2083)は、スマレジ接続設定をオプションマスタ mtb_option の option_key・option_value に保持しAPI呼び出しに使用すると明記。移行時の扱い表(line 2072)も ec-cube-enterprise で同一スキーマ(mtb_option)と記載。実装を確認すると、取引処理ハンドラ SmaregiTransactionProcessMessageHandler は smaregiApiIdUrl/smaregiApiUrl/smaregiApiClientId/smaregiApiClientSecret/smaregiApiContractId をコンストラクタでstring注入し(96-100行)、これらを getAccessToken()/getTransaction() に直接渡している(154-163行)。これらのDIパラメータは services.yaml 28-32行の '%env(SMAREGI_API_ID_URL)%' 等の環境変数由来で、76-80行で引数バインドされている。ハンドラ内に Option/mtb_option/OptionRepository の参照は一切無い(rgで確認)。MtbOptionエンティティには SMAREGI_CONTRACT_ID/SMAREGI_ACCESS_TOKEN/SMAREGI_REQUEST_URL 等の定数が残り、別ハンドラ SmaregiOtcSyncMessageHandler は mtb_option(SMAREGI_CATEGORY_ID)を読むが、B05-09取引参照APIの接続設定取得経路では mtb_option を使わず環境変数を用いている。設計の保持元・取得経路(オプションマスタ)と実装(環境変数DI)が異なるため実装違い。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+        "start": 2094,
+        "end": 2096,
+        "contains": ["スマレジ接続設定（接続先URL・契約ID・アクセストークン等）を保持し、API呼び出しに使用する", "mtb_option", "option_key"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装（接続設定はDI注入）",
+          "note": "取引処理ハンドラが接続設定をコンストラクタstring注入で受ける",
+          "path": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php",
+          "start": 96,
+          "end": 100,
+          "contains": ["private string $smaregiApiIdUrl", "private string $smaregiApiContractId"]
+        },
+        {
+          "label": "実装（API呼出に注入値を使用）",
+          "note": "mtb_optionではなく注入されたプロパティをAPIに渡す",
+          "path": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php",
+          "start": 154,
+          "end": 163,
+          "contains": ["$this->accessTokenService->getAccessToken(", "$this->smaregiApiIdUrl", "$this->transactionApiClient->getTransaction("]
+        },
+        {
+          "label": "実装（設定は環境変数パラメータ）",
+          "note": "接続設定の保持元が環境変数",
+          "path": "ec-cube-enterprise/app/config/eccube/services.yaml",
+          "start": 28,
+          "end": 32,
+          "contains": ["smaregi_api_id_url: '%env(SMAREGI_API_ID_URL)%'", "smaregi_api_contract_id: '%env(SMAREGI_API_CONTRACT_ID)%'"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -n 'Option|option' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php",
+        "rg -rn -i 'mtb_option|OptionRepository|getOption' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube --glob '*maregi*'"
+      ]
+    }
+  ]
+}

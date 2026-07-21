@@ -1,0 +1,66 @@
+{
+  "functionId": "m03-30_0204_sheet-42_csv",
+  "featureNo": "M03-30",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-42:9414-9415,9457-9458",
+      "designExpectation": "低価格帯カード価格変更CSVファイルフォーマットのテーブルを追加し、低価格帯カード価格変更CSVファイルをダウンロードするボタンを追加する。画面部品「低価格帯カード価格変更CSVダウンロード」は低価格帯カード価格変更CSVを出力し、「低価格帯カード価格変更CSVファイルフォーマット」を表示する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product, /home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube_nav.yaml, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: 低価格帯, 低価格帯カード価格変更CSV, low_price, simple_low, ProductSimpleLow, admin_product_simple_low, 現行基準価格, 新基準価格）",
+      "implementationActual": "基準価格変更CSV画面は csv_product_standard_price.twig が base_csv_upload.twig を継承し、アップロードフォーム、基準価格CSVフォーマット表、雛形ダウンロード、インポート履歴だけを描画する。低価格帯カード価格変更CSVの出力ボタン、低価格帯フォーマット表、専用ルート、翻訳キーは見当たらない。",
+      "mismatchReason": "ProductStandardPriceCsvController は基準価格CSV用の form_action_route/template_download_route/history_page_route だけを渡しており、csv_product_standard_price.twig は base_csv_upload.twig の継承のみ。base_csv_upload.twig 側にも低価格帯カードCSV出力導線は無く、別キーワード検索でも低価格帯CSV実装は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "低価格帯カードCSV出力導線",
+          "design": "基準価格変更CSVアップロード画面に低価格帯カード価格変更CSVファイルをダウンロードするボタンを追加する。",
+          "implementation": "該当ボタン/リンク/ルートが存在しない。",
+          "mismatch": "利用者が設計上の低価格帯カード価格変更CSVを画面から出力できない。"
+        },
+        {
+          "item": "低価格帯カードCSVフォーマット表示",
+          "design": "低価格帯カード価格変更CSVファイルフォーマットのテーブルを追加する。",
+          "implementation": "基準価格変更CSVの4列フォーマット表のみ描画する。",
+          "mismatch": "低価格帯カード価格変更CSV用のフォーマット説明が表示されない。"
+        },
+        {
+          "item": "バックエンド契約",
+          "design": "低価格帯カード価格変更CSVを出力する。",
+          "implementation": "low_price/simple_low/低価格帯カード価格変更CSVに相当するController/Route/Service/翻訳キーが不在。",
+          "mismatch": "画面要素だけでなくCSV出力処理の入口も実装されていない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-42:9416-9418,9428",
+      "designExpectation": "スマレジ連携について、条件を満たす場合スマレジ連携フラグを有効とし、連携対象の条件を満たしている場合に限りスマレジへ商品情報を連携する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:175, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2719, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:47",
+      "implementationActual": "ProductStandardPriceImportHandler は既存の smaregi_alignment_flg を読み取り deferIfEligible に渡すだけで、ProductClassRepository::updateProductClassForStandardPriceCsv は standard_price/buy_price/price02 のみ更新する。deferIfEligible は既存フラグが有効かつスマレジ商品コードありの場合だけキューへ載せる。",
+      "mismatchReason": "設計はCSV価格登録/更新時に条件判定でスマレジ連携フラグを有効化する要求だが、実装は既にONの規格だけを連携候補にする。基準価格・状態などの条件で smaregi_alignment_flg をOFFからONへ更新する処理がない。",
+      "comparisonRows": [
+        {
+          "item": "スマレジ連携フラグ自動有効化",
+          "design": "条件を満たす場合スマレジ連携フラグを有効とする。",
+          "implementation": "既存の smaregi_alignment_flg を参照するのみで更新しない。",
+          "mismatch": "条件を満たしたCSV行でも既存フラグがOFFならONにならない。"
+        },
+        {
+          "item": "商品情報連携対象の決定",
+          "design": "連携対象の条件を満たしている場合に限りスマレジへ商品情報を連携する。",
+          "implementation": "deferIfEligible は既存フラグONかつスマレジ商品コードありの場合のみ後続キューに載せる。",
+          "mismatch": "設計上の条件判定ではなく既存フラグ依存になっている。"
+        },
+        {
+          "item": "価格更新時の更新列",
+          "design": "価格登録/更新に伴いスマレジ連携フラグ有効化も行う。",
+          "implementation": "UPDATE対象はセール中なら standard_price/buy_price、通常なら standard_price/price02/buy_price。",
+          "mismatch": "smaregi_alignment_flg がUPDATE対象に含まれない。"
+        }
+      ]
+    }
+  ]
+}

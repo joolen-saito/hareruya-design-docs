@@ -1,0 +1,323 @@
+{
+  "id": "b02-04-no-section-product-batch-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b02-04_0404_sheet-6_sheet.json",
+  "sourceFindingId": "b02-04_0404_sheet-6_sheet-conformance-77b701dbb664",
+  "classification": "バッチ商品管理",
+  "feature": "商品部門未設定チェック",
+  "issueCategory": "実装漏れ",
+  "issue": "商品部門未設定チェックが商品管理バッチとして実装されておらず、店頭買取集計の副処理になっている",
+  "designBook": "0404_基本設計仕様書(バッチ_商品管理).xlsx",
+  "reproSteps": [
+    "ec-cube-enterprise のローカル環境で、設計書に記載された `bin/console product:batch checkNoSectionProduct` を実行できるか確認する",
+    "ec-cube-enterprise の `src/Eccube/Command` と関連 Service / Repository を確認し、B02-04 の商品管理バッチ入口と処理本体が存在するか確認する",
+    "ベース実装(pf-eccube3)の `ProductBatch`、`CheckNoSectionProduct`、`DtbProductSubClassRepository` を確認し、現行の実行入口・抽出条件・10000件単位取得・通知メール送信と照合する",
+    "0404 の B02-04 設計「product:batch checkNoSectionProduct」「公開中かつ部門未設定の商品規格」「一定件数(10000件)ずつ取得」「開始・完了のコンソール出力」と照合する"
+  ],
+  "expected": [
+    "コンソールのバッチコマンド `product:batch checkNoSectionProduct` で B02-04 商品部門未設定チェックを実行できる",
+    "`dtb_product.product_status_id` と `dtb_product_class.section_id` を使い、公開中かつ部門未設定の商品規格を抽出する",
+    "部門未設定の商品規格を最大10000件ずつ取得し、該当がある場合は管理者へ「部門未設定商品通知メール」を送信する",
+    "バッチの開始・完了は日時付きでコンソール出力し、コマンド名不一致時や抽出・送信時エラーはコンソールに出力する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise には `product:batch checkNoSectionProduct` の有効な Command / Service がなく、検索で見つかる商品規格向けの `getNoSectionProductClassCount` / `getNoSectionProductClasses` は `ProductClassRepository` 内でコメントアウトされている。実装済みの近傍処理は `eccube:otc-buy-order:aggregate-summary` で、B02-04 の商品管理バッチ入口ではない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の近傍 Command は店頭買取集計バッチとして登録されている",
+          "path": "ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php",
+          "start": 40,
+          "end": 45,
+          "language": "php",
+          "contains": [
+            "部門未設定の商品が存在する場合: 部門未設定商品通知メールを送信",
+            "#[AsCommand(name: 'eccube:otc-buy-order:aggregate-summary', description: '店頭買取集計バッチ')]"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の近傍 Command は OTC 集計処理を実行する",
+          "path": "ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php",
+          "start": 60,
+          "end": 90,
+          "language": "php",
+          "contains": [
+            "protected function execute(InputInterface $input, OutputInterface $output): int",
+            "$this->batchAggregateSummaryAction->handle($summaryDate);",
+            "$io->success('店頭買取集計が完了しました。');"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の商品規格向け NoSection 取得処理はコメントアウトされている",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php",
+          "start": 2325,
+          "end": 2363,
+          "language": "php",
+          "contains": [
+            "//     public function getNoSectionProductClassCount() : int",
+            "//                 AND psc.section_id IS NULL",
+            "//     public function getNoSectionProductClasses(int $limit, int $offset) : mixed"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ec-cube-enterprise で有効な通知処理は店頭買取集計の副処理であり、`dtb_otc_buy_order_detail.section_id` / `dtb_otc_buy_order_indivisual_input_product.section_id` が NULL の店頭買取データを対象にする。設計が要求する `dtb_product.product_status_id` による公開判定と、商品規格 `dtb_product_class.section_id` の未設定チェックではない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の店頭買取集計副処理は OTC Repository の NoSection 取得結果でメール送信する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php",
+          "start": 33,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "集計完了後に部門未設定商品が存在する場合は通知メールを送信する。",
+            "$noSectionProducts = $this->otcBuyOrderRepository->getNoSectionProducts($summaryDate);",
+            "$this->mailService->sendNoSectionAlertMail($noSectionProducts);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の NoSection 取得は店頭買取明細と個別入力商品の section_id を見る",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php",
+          "start": 949,
+          "end": 1000,
+          "language": "php",
+          "contains": [
+            "public function getNoSectionProducts(\\DateTime $summaryDate): array",
+            "dtb_otc_buy_order_detail obod",
+            "AND obod.section_id IS NULL",
+            "dtb_otc_buy_order_indivisual_input_product oboi",
+            "AND oboi.section_id IS NULL"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の通知メール送信処理自体は OTC 用テンプレートで呼ばれる",
+          "path": "ec-cube-enterprise/src/Eccube/Service/MailService.php",
+          "start": 1183,
+          "end": 1221,
+          "language": "php",
+          "contains": [
+            "public function sendNoSectionAlertMail(array $products): void",
+            "$this->eccubeConfig['eccube_otc_buy_order_no_section_alert_mail_template_id']",
+            "$this->mailer->send($message);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `CommandRegister` が `ProductBatch` を console に登録し、`product:batch` の `batch_name` として `checkNoSectionProduct` を `CheckNoSectionProduct` に対応させる。処理本体は 10000 件単位で公開中かつ部門未設定の商品規格を取得し、該当時に `sendNoSectionAlertMail` を呼び出す。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 CommandRegister は ProductBatch を console に登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/CommandRegister.php",
+          "start": 15,
+          "end": 48,
+          "language": "php",
+          "contains": [
+            "$app['console']->add($command);",
+            "new Command\\ProductBatch()"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は product:batch と checkNoSectionProduct を定義する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 12,
+          "end": 56,
+          "language": "php",
+          "contains": [
+            "'checkNoSectionProduct' => 'Plugin\\HareruyaEc\\Service\\Product\\CheckNoSectionProduct'",
+            "$this->setName('product:batch')",
+            "$product->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 CheckNoSectionProduct は 10000 件単位で商品規格を取得し通知する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/CheckNoSectionProduct.php",
+          "start": 7,
+          "end": 47,
+          "language": "php",
+          "contains": [
+            "const GET_PRODUCT_LIMIT = 10000;",
+            "protected $commandName = 'checkNoSectionProduct';",
+            "$noSectionProductClasses = $this->app['hareruya_ec.repository.product_sub_class']->getNoSectionProductClasses(self::GET_PRODUCT_LIMIT, $offset);",
+            "$this->app['hareruya_ec.service.mail']->sendNoSectionAlertMail($noSectionProductClasses);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)の抽出 SQL は公開中の商品を `p.Status = :showStatus` で絞り、商品規格側の部門未設定を `psc.section_id IS NULL` で判定し、`LIMIT :limit OFFSET :offset` で取得する。通知メールは件名「部門未設定商品通知メール」で商品名・商品コードを本文に含める。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は公開中かつ部門未設定の商品規格数を取得する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php",
+          "start": 1481,
+          "end": 1515,
+          "language": "php",
+          "contains": [
+            "public function getNoSectionProductClassCount() : int",
+            "AND p.Status = :showStatus",
+            "AND psc.section_id IS NULL",
+            "'showStatus' => Disp::DISPLAY_SHOW"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は LIMIT/OFFSET で部門未設定商品規格を取得する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php",
+          "start": 1524,
+          "end": 1561,
+          "language": "php",
+          "contains": [
+            "public function getNoSectionProductClasses($limit, $offset) : array",
+            "AND p.Status = :showStatus",
+            "AND psc.section_id IS NULL",
+            "LIMIT :limit",
+            "OFFSET :offset"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は部門未設定商品通知メールを送信する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php",
+          "start": 1161,
+          "end": 1201,
+          "language": "php",
+          "contains": [
+            "public function sendNoSectionAlertMail(array $products)",
+            "商品名, 商品コード",
+            "->setSubject('部門未設定商品通知メール')",
+            "log_info('部門未設定商品通知メール送信完了', ['count' => $count]);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "0404 の B02-04 は概要で公開中なのに部門未設定の商品を管理者にメール通知するとしている。同じシート内に「部門の登録が必須になったため、不要」という図形注記もあるため設計矛盾として扱う。",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 1219,
+      "end": 1254,
+      "language": "html",
+      "contains": [
+        "機能No</dt><dd>B02-04",
+        "商品の公開ステータスが公開なのに、部門が未設定の商品があった場合、管理者にメールで通知する",
+        "部門の登録が必須になったため、不要"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "0404 の埋め込み詳細設計は pf-eccube3 の現行踏襲として product:batch checkNoSectionProduct、10000件単位取得、アラートメール送信、開始・完了出力を要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 1265,
+      "end": 1323,
+      "language": "html",
+      "contains": [
+        "確認値はpf-eccube3",
+        "product:batch checkNoSectionProduct",
+        "一定件数（10000件）ずつ部門未設定の商品規格を取得する",
+        "公開中であって部門が未設定の商品規格",
+        "開始・完了のコンソール出力（日時付き）"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の近傍実装は店頭買取集計バッチであり、商品管理バッチ product:batch checkNoSectionProduct ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php",
+      "start": 40,
+      "end": 90,
+      "language": "php",
+      "contains": [
+        "#[AsCommand(name: 'eccube:otc-buy-order:aggregate-summary', description: '店頭買取集計バッチ')]",
+        "$this->batchAggregateSummaryAction->handle($summaryDate);",
+        "$io->success('店頭買取集計が完了しました。');"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の有効な NoSection 取得は OTC 明細・個別入力商品を対象にしており、商品規格の公開ステータスと section_id の判定ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php",
+      "start": 949,
+      "end": 1000,
+      "language": "php",
+      "contains": [
+        "public function getNoSectionProducts(\\DateTime $summaryDate): array",
+        "dtb_otc_buy_order_detail obod",
+        "AND obod.section_id IS NULL",
+        "dtb_otc_buy_order_indivisual_input_product oboi",
+        "AND oboi.section_id IS NULL"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の商品規格向け NoSection 取得処理はコメントアウトされており有効実装ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php",
+      "start": 2325,
+      "end": 2400,
+      "language": "php",
+      "contains": [
+        "//     public function getNoSectionProductClassCount() : int",
+        "//     public function getNoSectionProductClasses(int $limit, int $offset) : mixed",
+        "//                 'limit' => $limit"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は product:batch の batch_name として checkNoSectionProduct を処理本体に対応させる",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+      "start": 12,
+      "end": 56,
+      "language": "php",
+      "contains": [
+        "'checkNoSectionProduct' => 'Plugin\\HareruyaEc\\Service\\Product\\CheckNoSectionProduct'",
+        "$this->setName('product:batch')",
+        "$product->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の CheckNoSectionProduct は 10000 件単位で部門未設定商品規格を取得し、該当時に通知メールを送信する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/CheckNoSectionProduct.php",
+      "start": 7,
+      "end": 47,
+      "language": "php",
+      "contains": [
+        "const GET_PRODUCT_LIMIT = 10000;",
+        "$noSectionProductCount = $this->app['hareruya_ec.repository.product_sub_class']->getNoSectionProductClassCount();",
+        "$offset += self::GET_PRODUCT_LIMIT;"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の Repository は公開中かつ部門未設定の商品規格を LIMIT/OFFSET 付きで取得する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php",
+      "start": 1481,
+      "end": 1561,
+      "language": "php",
+      "contains": [
+        "public function getNoSectionProductClassCount() : int",
+        "AND p.Status = :showStatus",
+        "AND psc.section_id IS NULL",
+        "LIMIT :limit",
+        "OFFSET :offset"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B02-04|商品部門未設定チェック|product:batch checkNoSectionProduct|公開中かつ部門未設定|10000件|部門の登録が必須になったため、不要\" excel_to_html/output/0404_基本設計仕様書\\(バッチ_商品管理\\).html",
+      "rg -n \"checkNoSectionProduct|product:batch|NoSection|部門未設定|section_id|otc-buy-order:aggregate-summary|AggregateSummary|sendNoSectionAlertMail|ProductBatch|CommandRegister\" ../ec-cube-enterprise/src ../ec-cube-enterprise/app ../pf-eccube3/app/Plugin/HareruyaEc ../pf-api ../pf-article ../ec-cube ../deck-api ../deck-builder",
+      "rg -n \"AsCommand\\(name: 'product:batch'|product:batch|checkNoSectionProduct|CheckNoSectionProduct|getNoSectionProductClassCount|getNoSectionProductClasses\" ../ec-cube-enterprise/src ../ec-cube-enterprise/app",
+      "rg -n \"checkNoSectionProduct|ProductBatch|GET_PRODUCT_LIMIT|getNoSectionProductClassCount|getNoSectionProductClasses|sendNoSectionAlertMail|部門未設定商品通知メール\" ../pf-eccube3/app/Plugin/HareruyaEc"
+    ],
+    "review": [
+      "codex gpt-5.5 high reviewer Plato: VERIFIED。enterprise には有効な product:batch / checkNoSectionProduct / getNoSectionProductClassCount / getNoSectionProductClasses がなく、後者2つは ProductClassRepository のコメントアウトのみ。近傍の有効実装は eccube:otc-buy-order:aggregate-summary で、OTC 明細側の section null を見る処理であり、公開商品・商品規格の部門未設定チェックではない。",
+      "reviewer: `部門の登録が必須になったため、不要` は実在する設計矛盾だが、同シートの現行踏襲および埋め込み詳細設計が pf-eccube3 を正として `product:batch checkNoSectionProduct`、10000件処理、アラートメールを定義しているため、棄却理由ではなく注記として開示するのが妥当。"
+    ],
+    "notes": [
+      "同じ B02-04 の抽出条件差分、10000件単位取得差分、開始・完了コンソール出力差分は、商品管理バッチ B02-04 が enterprise で有効実装されていないことに起因するため、本件に統合する。",
+      "設計書内に「部門の登録が必須になったため、不要」という図形注記があるため、起票後に設計オーナーへ B02-04 が本当に必要か、廃止対象かを確認する余地がある。",
+      "レビュー指摘: enterprise の DtbOtcBuyOrderRepository::getNoSectionProducts() は SQL 内に `WHERE AND` があり、近傍実装としても動作リスクがある。ただし本件の主論点は B02-04 商品管理バッチ不在である。"
+    ]
+  }
+}

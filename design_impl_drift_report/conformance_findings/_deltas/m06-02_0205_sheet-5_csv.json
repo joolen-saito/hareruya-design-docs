@@ -1,0 +1,60 @@
+{
+  "functionId": "m06-02_0205_sheet-5_csv",
+  "featureNo": "M06-02",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-5:1537",
+      "designExpectation": "エクスポート用 result_form にSymfonyフォームが自動付与するCSRFフィールドはなく、当エンドポイントでもCSRFトークン検証は行わない。到達制御は管理画面の認証に依存する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:153, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:173, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/AbstractController.php:252",
+      "implementationActual": "result_form に CSRF hidden input を出力し、export() の冒頭で isTokenValid() を呼び出して CSRF トークン検証を行っている。AbstractController::isTokenValid() はトークン不正時に AccessDeniedHttpException を投げる。",
+      "mismatchReason": "設計は古物台帳CSVエクスポートで CSRF フィールドなし・CSRF トークン検証なしを明記しているが、実装はテンプレートで Constant::TOKEN_NAME の csrf_token を埋め込み、コントローラで $this->isTokenValid() を実行しているため外部契約が異なる。反証検索として isTokenValid(), csrf_token, TOKEN_NAME, result_form, old_goods_account を Controller/Twig/JS 配下で確認したが、古物台帳種別だけ検証を外す分岐は存在しない。",
+      "comparisonRows": [
+        {
+          "item": "CSRFフィールド",
+          "design": "result_form にSymfonyフォームが自動付与するCSRFフィールドはない。",
+          "implementation": "index.twig:153 で name=Constant::TOKEN_NAME の hidden input に csrf_token(Constant::TOKEN_NAME) を出力する。",
+          "mismatch": "設計はフィールドなし、実装は hidden CSRF フィールドあり。"
+        },
+        {
+          "item": "CSRF検証",
+          "design": "当エンドポイントでもCSRFトークン検証は行わない。",
+          "implementation": "OtcBuyOrderController.php:173 で export() が $this->isTokenValid() を呼ぶ。AbstractController.php:252-260 で CSRF 不正時に AccessDeniedHttpException。",
+          "mismatch": "設計は検証なし、実装は検証あり。"
+        },
+        {
+          "item": "到達制御",
+          "design": "到達制御は管理画面の認証に依存する。",
+          "implementation": "管理画面認証に加えて CSRF トークンの存在・妥当性にも依存する。",
+          "mismatch": "設計より到達条件が追加されている。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-5:1455",
+      "designExpectation": "検索結果が0件で一覧ブロックが「該当なし」表示のみ",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:239",
+      "implementationActual": "検索結果0件時は CSV ダウンロードメニューを描画しない点は満たすが、一覧ブロックの表示文言は「検索条件に該当するデータがありませんでした。」であり、「該当なし」ではない。",
+      "mismatchReason": "設計は0件時の一覧ブロックを「該当なし」表示のみと記載している。実装の OtcBuyOrder/index.twig では pagination.totalItemCount が0の場合に h3.box-title へ別文言を直書きしている。反証検索として 該当なし、検索条件に該当するデータがありませんでした、result_list_main__header、CSVダウンロード を OtcBuyOrder Twig と翻訳キー配下で確認したが、同画面で「該当なし」を出す実装は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "0件時文言",
+          "design": "「該当なし」表示のみ。",
+          "implementation": "「検索条件に該当するデータがありませんでした。」",
+          "mismatch": "利用者に見える文言が設計と異なる。"
+        },
+        {
+          "item": "CSVメニュー非表示",
+          "design": "メニュー自体が描画されない。",
+          "implementation": "index.twig:155-247 の pagination ブロック内で、0件時は else 側に入り CSV ダウンロードメニューを描画しない。",
+          "mismatch": "この点は一致。文言のみ差異。"
+        }
+      ]
+    }
+  ]
+}

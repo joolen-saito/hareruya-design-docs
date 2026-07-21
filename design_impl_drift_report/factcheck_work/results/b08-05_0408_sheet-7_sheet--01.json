@@ -1,0 +1,108 @@
+{
+  "chunkId": "b08-05_0408_sheet-7_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b08-05_0408_sheet-7_sheet.json#b08-05_0408_sheet-7_sheet-conformance-ed77530f668b",
+      "functionId": "b08-05_0408_sheet-7_sheet",
+      "featureNo": "B08-05",
+      "title": "B08-05 ポイント差分発生通知",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計が外部契約とするバッチ実行コマンド名 customer:batch adjustPointVariance が、実装では eccube:customer:adjust-point-variance として登録されており一致しない。",
+      "reason": "設計書『利用者視点の入口』の実行方法として command 名 customer:batch adjustPointVariance が明記されている(1570行)。ec-cube-enterprise の AdjustPointVarianceCommand.php:25 の #[AsCommand(name: ...)] は eccube:customer:adjust-point-variance で登録されている。adjust-point-variance / adjustPointVariance / customer:batch 等で AdjustPointVarianceCommand を確認したが、設計名の登録は存在しない。設計名と実装名が異なるため実装違い。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+        "start": 1570,
+        "end": 1574,
+        "contains": ["customer:batch adjustPointVariance", "コンソールのバッチコマンド"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(登録コマンド名)",
+          "note": "AsCommand 属性で登録される実際のコマンド名",
+          "path": "ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php",
+          "start": 25,
+          "end": 26,
+          "contains": ["eccube:customer:adjust-point-variance", "AsCommand"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b08-05_0408_sheet-7_sheet.json#b08-05_0408_sheet-7_sheet-conformance-fc0bb67a8212",
+      "functionId": "b08-05_0408_sheet-7_sheet",
+      "featureNo": "B08-05",
+      "title": "B08-05 ポイント差分発生通知",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は開始・完了のコンソール出力に日時付与を要求するが、実装は固定文言のみで日時を付与しない。",
+      "reason": "設計書『ログ・監査』の記録内容は「開始・完了のコンソール出力（日時付き）。」(1603行)。実装 AdjustPointVarianceCommand.php では開始時に $io->text('ポイント差分発生通知バッチ開始')(38行)、完了時に $io->success('ポイント差分発生通知処理が完了しました。')(51行) を出力するのみで、date()/format等による現在日時の付与処理は同コマンド内に存在しない。処理本体の AdjustPointVarianceAction.php も logger->info のみで開始・完了のコンソール日時出力はない。日時が欠落しており実装違い。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+        "start": 1602,
+        "end": 1603,
+        "contains": ["開始・完了のコンソール出力（日時付き）", "ログ・監査"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(開始・完了出力)",
+          "note": "固定文言のみで日時なし",
+          "path": "ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php",
+          "start": 38,
+          "end": 51,
+          "contains": ["ポイント差分発生通知バッチ開始", "ポイント差分発生通知処理が完了しました。"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b08-05_0408_sheet-7_sheet.json#b08-05_0408_sheet-7_sheet-conformance-9257c6aafd7a",
+      "functionId": "b08-05_0408_sheet-7_sheet",
+      "featureNo": "B08-05",
+      "title": "B08-05 ポイント差分発生通知",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は送信時エラーのコンソール出力を要求するが、メール送信例外は MailService 内で log_critical のみ行い再throwしないためコンソールに到達しない。",
+      "reason": "設計書『エラー処理』は「取得・送信時のエラーはエラーメッセージをコンソールに出力する。」(1600行)を要求。取得側は AdjustPointVarianceAction::handle の getCustomersWithPointDifferential(35行)およびトランザクション catch(67-70行)で throw されるため Command の $io->error(43-46行)に到達する。しかし送信は commit 後 line73 の sendAdjustPointVarianceMail 経由で、MailService::sendAdjustPointVarianceMail の catch(TransportExceptionInterface $e)(1363行)が log_critical($e->getMessage())(1364行)を呼ぶだけで再throwしない。よって送信時エラーは握りつぶされ Command のコンソール出力に伝播しない。送信時エラーに限り設計要求を満たさず実装違い。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+        "start": 1599,
+        "end": 1600,
+        "contains": ["取得・送信時のエラー", "エラーメッセージをコンソールに出力する"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(送信例外の握りつぶし)",
+          "note": "TransportExceptionInterface を log_critical のみで処理し再throwしない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/MailService.php",
+          "start": 1360,
+          "end": 1365,
+          "contains": ["catch (TransportExceptionInterface $e)", "log_critical($e->getMessage())"]
+        },
+        {
+          "label": "呼び出し元(commit後にメール送信)",
+          "note": "送信はトランザクション確定後に呼ばれ、例外は伝播しない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Customer/AdjustPointVarianceAction.php",
+          "start": 73,
+          "end": 73,
+          "contains": ["sendAdjustPointVarianceMail"]
+        },
+        {
+          "label": "Command側のエラー出力(送信例外には到達しない)",
+          "note": "Throwable 伝播時のみ機能する",
+          "path": "ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php",
+          "start": 42,
+          "end": 46,
+          "contains": ["$io->error(", "ポイント差分発生通知処理でエラーが発生しました"]
+        }
+      ]
+    }
+  ]
+}

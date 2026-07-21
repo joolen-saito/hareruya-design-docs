@@ -1,0 +1,46 @@
+{
+  "functionId": "f01-01_0301_sheet-3_ectop",
+  "featureNo": "F01-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html#sheet-3 (5 アイテムを探す 画面部品5-5,5-6)",
+      "designExpectation": "アイテムを探す(5): 画面部品は静的コンテンツだが、(5-5)カテゴリ押下で当該カテゴリ絞込の商品一覧画面へ、(5-6)通常盤以外のカードセット押下で当該カードセット絞込の商品一覧画面へ遷移する（5-5/5-6はリンク）。",
+      "implRef": "src/Eccube/Resource/template/default/Block/search_items.twig:22-31,53-56,75; shop_top.twig:45",
+      "implementationActual": "search_items.twig は全80行が静的ハードコード。カテゴリ/カードセット相当リンクは全て <a class=\"c-hareruya-tag\" aria-disabled=\"true\"> で href 不在（aria-disabled 11箇所, href 0件）。押下しても商品一覧画面へ遷移しない。shop_top.twig:45 で実描画される。",
+      "mismatchReason": "設計は5-5/5-6を『リンク』と定義し押下時の商品一覧遷移を明示要求。実装は href 無しの aria-disabled 非リンクで遷移ロジックが未配線のため機能要求(5-5)(5-6)が実現されていない。",
+      "comparisonRows": [
+        {"item": "5-5 カテゴリリンク", "design": "押下で当該カテゴリ絞込の商品一覧へ遷移", "implementation": "<a aria-disabled='true'> href無し, 遷移なし", "mismatch": "リンク遷移未実装"},
+        {"item": "5-6 カードセットリンク", "design": "押下で当該カードセット絞込の商品一覧へ遷移", "implementation": "<a aria-disabled='true'> href無し, 遷移なし", "mismatch": "リンク遷移未実装"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html#sheet-3 (2 最新入荷アイテム 英語版/画面部品2-17,2-18)",
+      "designExpectation": "最新入荷アイテム(2)英語版: (2-17)(2-18)more 押下で『Trending Now』タグ絞込の商品一覧画面へ遷移（英語版のみ表示）。表示商品も Trending Now タグ由来。",
+      "implRef": "src/Eccube/Resource/template/default/Block/new_items.en.twig:9,23; src/Eccube/Service/Block/NewItemsBlockPayloadBuilder.php:56-63",
+      "implementationActual": "new_items.en.twig の more リンク(:9,:23)は共に url('product_list_tag', {tagId: constant('Eccube\\\\Entity\\\\Tag::NEW_ITEMS_ID')})。NEW_ITEMS_ID=1(最新入荷アイテムタグ)。一方 NewItemsBlockPayloadBuilder は locale='en' 時 MtbOption::SLIDER_EN_ONLY_TAG_ID(Trending Now タグ)で商品取得。",
+      "mismatchReason": "英語版表示商品は Trending Now タグ由来なのに more リンク遷移先タグが NEW_ITEMS_ID にハードコードされ、押下すると表示中商品とは別の『最新入荷アイテム』タグ絞込一覧へ遷移する。設計要求(Trending Now タグ絞込一覧)と不一致。Tag.php:55 NEW_ITEMS_ID=1, MtbOption.php:100 SLIDER_EN_ONLY_TAG_ID 確認。",
+      "comparisonRows": [
+        {"item": "英語版 more 遷移先タグ", "design": "Trending Now タグ(SLIDER_EN_ONLY_TAG_ID)絞込一覧", "implementation": "NEW_ITEMS_ID=1(最新入荷アイテム)絞込一覧", "mismatch": "遷移先タグが表示商品タグと不一致"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html#sheet-3 (4 あなたのお気に入り 機能仕様 条件1~6)",
+      "designExpectation": "あなたのお気に入り(4)の表示条件は1~6のみ: 1 会員お気に入り登録商品 / 2 本店公開ステータス公開 / 3 表示サイト言語 / 4 登録日降順 / 5 最大30件 / 6 1件もなければ非表示。在庫条件は非列挙(他ブロック2/8/SALE/英語版は『在庫が1以上』を明記)。",
+      "implRef": "src/Eccube/Repository/CustomerFavoriteProductRepository.php:109; src/Eccube/Service/Block/FavoritesBlockPayloadBuilder.php:61-66",
+      "implementationActual": "findTopFavoriteProductClassesByCustomer が status=1・visible・locale・登録日降順に加え pc.stock > 0(:109)を条件付加。FavoritesBlockPayloadBuilder が同メソッドを直接利用(緩和なし)。在庫切れのお気に入り商品が除外される。",
+      "mismatchReason": "設計ブロック4は条件を1~6で明示列挙し在庫条件を意図的に含めていない(他ブロックは『在庫が1以上』を明記)。実装が独自に pc.stock>0 を付加するため在庫切れお気に入り商品が設計と異なりトップに出ない。docstring も『pf-eccube3 の stock 条件を踏襲』と旧仕様追随を明言。",
+      "comparisonRows": [
+        {"item": "在庫条件", "design": "条件1~6に在庫条件なし(表示対象)", "implementation": "pc.stock > 0 を付加(在庫切れ除外)", "mismatch": "設計非列挙の在庫フィルタを実装で追加"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,217 @@
+{
+  "id": "b02-05-favorite-sale-notification-memory-clear-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b02-05_0404_sheet-7_sheet.json",
+  "sourceFindingId": "b02-05_0404_sheet-7_sheet-conformance-45599d05b629",
+  "classification": "バッチ商品管理",
+  "feature": "お気に入り商品セール通知",
+  "issueCategory": "実装漏れ",
+  "issue": "お気に入り商品セール通知で一定件数ごとのメモリ解放を行わず全件を配列に集約している",
+  "designBook": "0404_基本設計仕様書(バッチ_商品管理).xlsx",
+  "reproSteps": [
+    "ec-cube-enterprise の `FavoriteSaleNotificationCommand` から呼ばれる `BatchFavoriteSaleNotificationAction::handle()` を確認する",
+    "`findSaleFavoriteProducts()` の結果取得後、会員ごとの集約処理で一定件数ごとの `clear()` / `detach()` / チャンク分割が行われるか確認する",
+    "ベース実装(pf-eccube3)の `SaleNotificationService::execute()` を確認し、1000件ごとに EntityManager を clear していることを確認する",
+    "0404 の B02-05 設計「一定件数ごとに処理メモリを解放しながら集約する」と照合する"
+  ],
+  "expected": [
+    "セール中のお気に入り商品の情報を会員ごとに集約する際、一定件数ごとに処理メモリを解放する",
+    "大量件数でもメモリを保持し続けないよう、ベース実装と同等に一定件数ごとの `clear()` などを行う",
+    "会員ごとに対象商品をまとめたうえで、対象会員へセール通知メールを送信する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では `BatchFavoriteSaleNotificationAction::handle()` が `findSaleFavoriteProducts()` の全結果を `$rows` に取得し、`groupByCustomer($rows)` で全件を `$grouped` 配列に集約してからメール送信している。この処理範囲には一定件数ごとの `clear()` / `detach()` / チャンク分割がない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は findSaleFavoriteProducts の全結果を取得してから groupByCustomer に渡す",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php",
+          "start": 36,
+          "end": 61,
+          "language": "php",
+          "contains": [
+            "public function handle(): int",
+            "$rows = $this->customerFavoriteProductRepository->findSaleFavoriteProducts();",
+            "$groupedByCustomer = $this->groupByCustomer($rows);",
+            "$this->mailService->sendFavoriteSaleNotificationMail($Customer, $customerData);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise は groupByCustomer で全 rows を grouped 配列へ集約する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php",
+          "start": 64,
+          "end": 91,
+          "language": "php",
+          "contains": [
+            "private function groupByCustomer(array $rows): array",
+            "$grouped = [];",
+            "foreach ($rows as $row)",
+            "$grouped[$customerId]['products'][]"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の findSaleFavoriteProducts は getResult で配列を返す",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/CustomerFavoriteProductRepository.php",
+          "start": 230,
+          "end": 254,
+          "language": "php",
+          "contains": [
+            "public function findSaleFavoriteProducts(): array",
+            "->where('pc.sale_flg = true')",
+            "->getQuery()",
+            "->getResult();"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `SaleNotificationService::execute()` がセール中のお気に入り商品を会員ごとにまとめるループ内で件数をカウントし、1000件ごとに `$this->app['orm.em']->clear()` を呼び出している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は findSaleFavoriteProducts を iterate で返す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbFavoriteProductRepository.php",
+          "start": 24,
+          "end": 54,
+          "language": "php",
+          "contains": [
+            "public function findSaleFavoriteProducts()",
+            "->setParameter('saleFlg', DtbProductSubClass::SALE)",
+            "return $qb->getQuery()->iterate();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は saleNotification バッチ処理で1000件ごとに EntityManager を clear する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/SaleNotificationService.php",
+          "start": 27,
+          "end": 68,
+          "language": "php",
+          "contains": [
+            "$saleFavoriteProducts = $this->app['hareruya_ec.repository.favorite_product']->findSaleFavoriteProducts();",
+            "foreach($saleFavoriteProducts as $saleFavoriteProduct)",
+            "if ($i % 1000 === 0)",
+            "$this->app['orm.em']->clear();",
+            "$this->app['hareruya_ec.service.mail']->sendSaleProductNotification($customerData);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は saleNotification を処理本体へ対応させる",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 12,
+          "end": 56,
+          "language": "php",
+          "contains": [
+            "'saleNotification' => 'Plugin\\HareruyaEc\\Service\\Product\\SaleNotificationService'",
+            "$this->setName('product:batch')",
+            "$product->execute();"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "0404 の B02-05 は処理フローで一定件数ごとの処理メモリ解放を要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 1411,
+      "end": 1422,
+      "language": "html",
+      "contains": [
+        "product:batch saleNotification",
+        "一定件数ごとに処理メモリを解放しながら集約する",
+        "大量件数対応"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "0404 の B02-05 は排他制御・トランザクションでも集約処理中の一定件数ごとのメモリ解放を明記している",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 1445,
+      "end": 1449,
+      "language": "html",
+      "contains": [
+        "排他制御・トランザクション",
+        "集約処理中は一定件数ごとに処理メモリを解放する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は全件結果を取得して全件配列に集約してから送信する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php",
+      "start": 36,
+      "end": 91,
+      "language": "php",
+      "contains": [
+        "$rows = $this->customerFavoriteProductRepository->findSaleFavoriteProducts();",
+        "$groupedByCustomer = $this->groupByCustomer($rows);",
+        "private function groupByCustomer(array $rows): array",
+        "$grouped[$customerId]['products'][]"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の findSaleFavoriteProducts は getResult で配列を返し、limit/offset や iterate ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/CustomerFavoriteProductRepository.php",
+      "start": 230,
+      "end": 254,
+      "language": "php",
+      "contains": [
+        "public function findSaleFavoriteProducts(): array",
+        "->getQuery()",
+        "->getResult();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の findSaleFavoriteProducts は Doctrine の iterate で結果を返す",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbFavoriteProductRepository.php",
+      "start": 24,
+      "end": 54,
+      "language": "php",
+      "contains": [
+        "public function findSaleFavoriteProducts()",
+        "return $qb->getQuery()->iterate();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は会員ごとの集約ループで1000件ごとに EntityManager を clear する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/SaleNotificationService.php",
+      "start": 27,
+      "end": 68,
+      "language": "php",
+      "contains": [
+        "$saleFavoriteProducts = $this->app['hareruya_ec.repository.favorite_product']->findSaleFavoriteProducts();",
+        "if ($i % 1000 === 0)",
+        "$this->app['orm.em']->clear();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は product:batch saleNotification を SaleNotificationService に対応させる",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+      "start": 12,
+      "end": 56,
+      "language": "php",
+      "contains": [
+        "'saleNotification' => 'Plugin\\HareruyaEc\\Service\\Product\\SaleNotificationService'",
+        "$this->setName('product:batch')",
+        "$product->execute();"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"一定件数ごと|処理メモリ|メモリを解放|product:batch saleNotification|お気に入り商品セール通知を実行|大量件数対応\" excel_to_html/output/0404_基本設計仕様書\\(バッチ_商品管理\\).html",
+      "rg -n \"clear\\(|detach\\(|flush\\(|batch|chunk|limit|offset|一定件数|memory|findSaleFavoriteProducts|groupByCustomer|FavoriteSaleNotification\" ../ec-cube-enterprise/src/Eccube/Command/FavoriteSaleNotificationCommand.php ../ec-cube-enterprise/src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php ../ec-cube-enterprise/src/Eccube/Repository/CustomerFavoriteProductRepository.php ../ec-cube-enterprise/src/Eccube/Repository/DtbFavoriteProductRepository.php",
+      "rg -n \"repository.favorite_product|findSaleFavoriteProducts|saleNotification|SaleNotificationService|orm.em.*clear|\\$i % 1000|product:batch\" ../pf-eccube3/app/Plugin/HareruyaEc"
+    ],
+    "review": [
+      "codex gpt-5.5 high reviewer Bernoulli: VERIFIED。設計は 1416, 1422, 1449 で一定件数ごとのメモリ解放を要求している。pf-eccube3 は DtbFavoriteProductRepository::findSaleFavoriteProducts() が iterate() を返し、SaleNotificationService で1000件ごとに EntityManager を clear する。一方 enterprise は CustomerFavoriteProductRepository::findSaleFavoriteProducts() が getResult() で全件配列を返し、BatchFavoriteSaleNotificationAction が $rows 全体を groupByCustomer() に渡して全件配列集約してから送信する。",
+      "reviewer: enterprise 側に代替実装は見つからない。DtbFavoriteProductRepository::findSaleFavoriteProducts(): IterableResult の痕跡はコメントアウトのみで未接続。他の clear/chunk パターンは別バッチ。1000件という値はベース実装の根拠であり、設計上は固定値ではなく「一定件数」として扱う。"
+    ],
+    "notes": [
+      "B02-05 のコマンド名差分や dtb_favorite_product / dtb_player 参照差分は別候補として存在するが、本件は大量件数対応の一定件数ごとのメモリ解放に限定する。"
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "functionId": "f07-03_0307_sheet-5_sheet",
+  "featureNo": "F07-03",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "0307_基本設計仕様書(フロント_イベント).html#sheet-5 (項目1-1 パンくずリスト)",
+      "designExpectation": "パンくずリスト内の「店舗名」「フォーマット」「イベント開催日付」はそれぞれ押下可能。押下するとその内容での絞り込み結果画面に遷移する。パンくずは ホーム > イベントTOP > [店舗名] > [フォーマット] > [イベント開催日付]。",
+      "implRef": "src/Eccube/Resource/template/default/Event/detail.twig:47-72",
+      "implementationActual": "店舗名クラム(50行)とフォーマットクラム(60行)はいずれも url('event_search')（/events/list, EventSearchController.php:37）へ絞り込みパラメータ無しでリンク。最終クラムはイベント開催日付ではなくイベント名(67-72行)で非リンクの現在ページ扱い。押下可能な『イベント開催日付』クラムが存在しない。",
+      "mismatchReason": "店舗名/フォーマットのhrefに shop/format 等のクエリが無く絞り込み結果に繋がらず素の検索一覧へ遷移。開催日付クラムが未生成でイベント名に置換されている。設計項目1-1の『それぞれ押下可能』『その内容での絞り込み結果画面に遷移』を満たさない。",
+      "comparisonRows": [
+        {"item": "店舗名クラムの遷移先", "design": "店舗で絞り込んだ結果画面", "implementation": "url('event_search') 素の /events/list（パラメータ無し）", "mismatch": "絞り込みパラメータ欠落"},
+        {"item": "フォーマットクラムの遷移先", "design": "フォーマットで絞り込んだ結果画面", "implementation": "url('event_search') 素の /events/list（パラメータ無し）", "mismatch": "絞り込みパラメータ欠落"},
+        {"item": "最終クラム", "design": "イベント開催日付（押下可）", "implementation": "イベント名（非リンク・現在ページ）", "mismatch": "開催日付クラム不在"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "0307_基本設計仕様書(フロント_イベント).html#sheet-5 (項目1-10 参加費 / 表示ルール)",
+      "designExpectation": "参加費は0円のとき「無料」、それ以外は金額を桁区切りで「（金額）円」（例: 1,000円）と表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Event/detail.twig:132-136",
+      "implementationActual": "0円時は front.event.detail.info.entry_fee_free（=『無料』, messages.ja.yaml:6559）で正しい。非0円時は '¥{{ Event.entryFee|number_format }}'（135行）とハードコードされ『¥1,000』のように円記号プレフィックスで表示。",
+      "mismatchReason": "detail.twig:135 が『¥』プレフィックス固定。設計は末尾『円』を要求。桁区切り自体は number_format で満たすが通貨表記の位置/記号が設計と相違し、ja ロケールでも『円』にならない。",
+      "comparisonRows": [
+        {"item": "非0円時の参加費表記", "design": "1,000円（末尾『円』）", "implementation": "¥1,000（『¥』プレフィックス）", "mismatch": "通貨記号の位置/種別が相違"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "0307_基本設計仕様書(フロント_イベント).html#sheet-5 (項目1-9 定員・1-10 参加費／DtbEventDetail各列『未設定時はイベント本体の値』)",
+      "designExpectation": "定員・参加費の表示（および申込可否の定員判定）は、イベント詳細(dtb_event_detail)の値を用い、未設定時のみイベント本体(dtb_event)の値を用いる。",
+      "implRef": "src/Eccube/Resource/template/default/Event/detail.twig:127,132,135 / src/Eccube/Service/Front/Event/EventDetailButtonStateResolver.php:32",
+      "implementationActual": "賞品は Detail.prizeJp（詳細値優先フォールバック付き）を使う一方、定員は Event.capacity(127行)、参加費は Event.entryFee(132,135行)とイベント本体値を直接参照。DtbEventDetail::getCapacity()(DtbEventDetail.php:250 = capacity ?? Event.getCapacity())・getEntryFee()(:262) が詳細値優先で用意されているのに未使用。申込可否判定も EventDetailButtonStateResolver.php:32 で $event->getCapacity() を使用。",
+      "mismatchReason": "エンティティは詳細値優先＋本体フォールバックを実装済みだがテンプレートとボタン判定が Event 本体値を使用。詳細レベルで capacity/entry_fee を上書きしたイベントでは設計と異なる本体値が表示・判定され、賞品(Detail優先)との整合も取れない。",
+      "comparisonRows": [
+        {"item": "定員の参照元", "design": "Detail.capacity（未設定時 Event.capacity）", "implementation": "Event.capacity 直接（detail.twig:127）", "mismatch": "詳細値上書きを無視"},
+        {"item": "参加費の参照元", "design": "Detail.entryFee（未設定時 Event.entryFee）", "implementation": "Event.entryFee 直接（detail.twig:132,135）", "mismatch": "詳細値上書きを無視"},
+        {"item": "申込可否の定員判定", "design": "Detail.getCapacity() で判定", "implementation": "$event->getCapacity()（Resolver:32）", "mismatch": "詳細レベル定員上書きを無視"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "0307_基本設計仕様書(フロント_イベント).html#sheet-5 (項目4-8 戻る『遷移前のページに遷移』)",
+      "designExpectation": "4-8 戻るボタン：遷移前のページに遷移する（遷移元のクエリにより戻り先を切り替える／日別画面などへ戻る）。",
+      "implRef": "src/Eccube/Resource/template/default/Event/_event_detail_actions.twig:60",
+      "implementationActual": "戻るボタンが常に url('event_top')（イベントTOP固定）へのリンク。遷移元や履歴を参照せず、どこから来ても一律でイベントTOPへ遷移する。EventDetailController も遷移元クエリの受け渡し/戻り先切替を持たず、JSによる history.back 等の上書きも無い。",
+      "mismatchReason": "_event_detail_actions.twig:60 のhrefが event_top 固定。設計の『遷移前のページに遷移』『遷移元のクエリにより戻り先を切り替える』を満たさない。",
+      "comparisonRows": [
+        {"item": "戻るボタンの遷移先", "design": "遷移前のページ（遷移元クエリで切替・日別画面等）", "implementation": "url('event_top') 固定", "mismatch": "遷移元非参照で常にイベントTOP"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "id": "a06-12-fixed-price-section-response-contract-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a06-12_0506_sheet-12_sheet.json",
+  "sourceFindingId": "a06-12_0506_sheet-12_sheet-conformance-19337b3f9f27",
+  "classification": "API店頭買取管理",
+  "feature": "固定価格部門の部門情報を取得",
+  "issueCategory": "実装違い",
+  "issue": "固定価格部門取得APIが成功時にcode/section_idを返さず、未設定時もHTTP 500ではなく空文字のHTTP 200を返す",
+  "designBook": "0506_基本設計仕様書(API_店頭買取管理).xlsx",
+  "reproSteps": [
+    "JWT認証済みの状態で、GET http://localhost:8080/api/v1/admin/fixedPriceSection.json を実行する",
+    "mtb_option に option_key=fixed_price_section が存在する場合のレスポンス本文が code と section_id を持つJSONオブジェクトか確認する",
+    "mtb_option から option_key=fixed_price_section を削除した状態で同じAPIを実行し、HTTPステータスとレスポンス本文を確認する"
+  ],
+  "expected": [
+    "成功時は HTTP 200 で、code: 200 と section_id: <固定価格部門ID> を持つJSONオブジェクトを返す",
+    "section_id はオプションマスタの固定価格部門設定値を文字列として返す",
+    "オプションマスタに固定価格部門の設定が存在しない場合は、pf-api と同じく null参照による例外となり、HTTP 500 のフレームワーク標準例外応答を返す"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、`/%eccube_api_v1_route%/admin/fixedPriceSection.json` の Controller が `MtbOption::FIXED_PRICE_SECTION` を検索し、`$Option?->getOptionValue() ?? ''` で未設定を空文字にフォールバックしている。戻り値は `new JsonResponse($value)` であり、成功時も `code` / `section_id` を持つJSONオブジェクトではなく、固定価格部門IDのJSON文字列だけを返す。未設定時も例外を発生させず、空文字のJSON文字列を HTTP 200 で返す。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise Controller は nullsafe で空文字にフォールバックし、JsonResponse($value) を返す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php",
+          "start": 47,
+          "end": 59,
+          "language": "php",
+          "contains": [
+            "#[Route('/%eccube_api_v1_route%/admin/fixedPriceSection.json'",
+            "'option_key' => MtbOption::FIXED_PRICE_SECTION",
+            "$value = $Option?->getOptionValue() ?? ''",
+            "return new JsonResponse($value)"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の正常系テストは JSON文字列だけを期待する",
+          "path": "ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OptionControllerTest.php",
+          "start": 155,
+          "end": 185,
+          "language": "php",
+          "contains": [
+            "$expectedValue = '29'",
+            "'/api/v1/admin/fixedPriceSection.json'",
+            "$this->assertSame(Response::HTTP_OK",
+            "$this->assertSame(json_encode($expectedValue)"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の未設定時テストは HTTP 200 と空文字を期待する",
+          "path": "ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OptionControllerTest.php",
+          "start": 188,
+          "end": 218,
+          "language": "php",
+          "contains": [
+            "オプションが存在しない場合は空文字を返すこと",
+            "'/api/v1/admin/fixedPriceSection.json'",
+            "$this->assertSame(Response::HTTP_OK",
+            "$this->assertSame(json_encode('')"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、`/fixedPriceSection.json` が `ProductController::getFixedPriceSection` に向き、Controller は `findOneBy(...)->getOptionValue()` を直列に呼び出している。そのため設定が存在しない場合は null への `getOptionValue()` 呼び出しで例外になり、設計に記載された未設定時 HTTP 500 の挙動になる。成功時は `code` と `section_id` を持つJSONオブジェクトを返す。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は fixedPriceSection.json を ProductController へ定義する",
+          "path": "pf-api/config/routes.yaml",
+          "start": 243,
+          "end": 246,
+          "language": "yaml",
+          "contains": [
+            "get_fixed_price_section:",
+            "path: /fixedPriceSection.json",
+            "controller: App\\Controller\\ProductController::getFixedPriceSection"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api は nullsafe を使わず、成功時 code/section_id を返す",
+          "path": "pf-api/src/Controller/ProductController.php",
+          "start": 497,
+          "end": 507,
+          "language": "php",
+          "contains": [
+            "public function getFixedPriceSection(): JsonResponse",
+            "findOneBy(['optionKey' => MtbOption::FIXED_PRICE_SECTION])",
+            "->getOptionValue()",
+            "'code' => Response::HTTP_OK",
+            "'section_id' => $section"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "基本設計は code と section_id を返すレスポンスを示す",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 3210,
+      "end": 3228,
+      "language": "html",
+      "contains": [
+        "code",
+        "section_id",
+        "\"code\":200",
+        "\"section_id\":30"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計は pf-api を正とし、未設定時は null参照によりHTTP 500とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 3241,
+      "end": 3277,
+      "language": "html",
+      "contains": [
+        "確認値はpf-apiの固定価格部門取得処理",
+        "固定価格部門の部門IDを、コードとともにJSONで返す",
+        "コード（200）・部門IDをJSONで返す",
+        "オプションマスタに固定価格部門の設定が存在しない場合、null参照により例外となる"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "成功時レスポンス定義は code integer と section_id string を要求する",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 3273,
+      "end": 3283,
+      "language": "html",
+      "contains": [
+        "HTTP 200",
+        "section_id",
+        "固定価格部門の部門ID",
+        "\"section_id\": \"1\""
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は JSON文字列または空文字を返す",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php",
+      "start": 47,
+      "end": 59,
+      "language": "php",
+      "contains": [
+        "$value = $Option?->getOptionValue() ?? ''",
+        "return new JsonResponse($value)"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise テストは未設定時 HTTP 200 + 空文字を期待する",
+      "path": "ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OptionControllerTest.php",
+      "start": 188,
+      "end": 218,
+      "language": "php",
+      "contains": [
+        "オプションが存在しない場合は空文字を返すこと",
+        "$this->assertSame(Response::HTTP_OK",
+        "$this->assertSame(json_encode('')"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は nullsafe なしで optionValue を取得し、code/section_id オブジェクトを返す",
+      "path": "pf-api/src/Controller/ProductController.php",
+      "start": 497,
+      "end": 507,
+      "language": "php",
+      "contains": [
+        "->getOptionValue()",
+        "'code' => Response::HTTP_OK",
+        "'section_id' => $section"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"A06-12|固定価格部門|fixedPriceSection|FIXED_PRICE_SECTION|section_id|fixed_price\" excel_to_html/output/0506_基本設計仕様書\\(API_店頭買取管理\\).html ../ec-cube-enterprise/src ../ec-cube-enterprise/tests ../pf-api --glob '!vendor/**' --glob '!var/**'",
+      "rg -n \"fixedPriceSection|FIXED_PRICE_SECTION|固定価格部門\" ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/tests --glob '!var/**'",
+      "rg -n \"get_fixed_price_section|fixedPriceSection\\.json|getFixedPriceSection|FIXED_PRICE_SECTION|getOptionValue|section_id\" ../pf-api/config/routes.yaml ../pf-api/src/Controller/ProductController.php",
+      "rg -n \"api_admin_fixed_price_section|fixedPriceSection\\.json|JsonResponse\\(\\$value\\)|json_encode\\(''\\)|json_encode\\(\\$expectedValue\\)\" ../ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php ../ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OptionControllerTest.php"
+    ],
+    "review": "gpt-5.5 high reviewer VERDICT: VERIFIED. 設計は pf-api を正とし、未設定時は null参照によりHTTP 500と明記する。pf-api は findOneBy(...)->getOptionValue() の直列呼び出しで未設定時 null参照になる。enterprise は $Option?->getOptionValue() ?? '' で空文字へフォールバックし JsonResponse($value) を返す。成功レスポンス形差分も同一エンドポイント・同一メソッド・同一修正箇所なので統合する。"
+  }
+}

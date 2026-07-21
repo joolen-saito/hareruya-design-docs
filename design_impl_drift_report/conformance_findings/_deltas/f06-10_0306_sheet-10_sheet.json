@@ -1,0 +1,46 @@
+{
+  "functionId": "f06-10_0306_sheet-10_sheet",
+  "featureNo": "F06-10",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-10 (識別ID7 表示範囲 / 表示メッセージ 件数表示)",
+      "designExpectation": "識別ID7『ポイント履歴の全件数のうち現在表示している範囲を表示』。件数表示は日本語『（開始）~（終了）件 ／ （総件数）件あります』、英語『[（開始）~（終了）] ／ （総件数） Items』とし、開始~終了の表示範囲を常時表示する。",
+      "implRef": "src/Eccube/Resource/locale/messages.ja.yaml:818, messages.en.yaml:642, src/Eccube/Resource/template/default/Mypage/point_history.twig:57-62",
+      "implementationActual": "twigはstart/end/totalを算出しrange_infoへ%start%/%end%/%total%を渡すが、ja翻訳range_infoが『件数: %total%件』で%start%/%end%を出力せず日本語では表示範囲(開始~終了)が画面に出ない。en翻訳は『Showing %start%–%end% of %total%』で範囲を表示し非対称。文言書式も設計指定と不一致。",
+      "mismatchReason": "messages.ja.yaml:818のrange_info定義に%start%/%end%が含まれず、設計が常時表示を求める表示範囲が日本語で欠落。翻訳定義から確定（実機確認不要）。",
+      "comparisonRows": [
+        {"item": "日本語 件数表示", "design": "（開始）~（終了）件 ／ （総件数）件あります", "implementation": "件数: %total%件（総件数のみ）", "mismatch": "開始~終了の表示範囲が欠落・書式不一致"},
+        {"item": "英語 件数表示", "design": "[（開始）~（終了）] ／ （総件数） Items", "implementation": "Showing %start%–%end% of %total%", "mismatch": "範囲は表示されるが書式不一致"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-10 (業務ルール・計算 注文番号 / 画面遷移)",
+      "designExpectation": "注文に紐づく履歴は注文番号をリンク表示し、押下で注文詳細を別タブで開く（購入履歴詳細機能を正とする）。",
+      "implRef": "src/Eccube/Resource/template/default/Mypage/point_history.twig:110-118",
+      "implementationActual": "注文番号リンクは url('mypage_history',...) の静的アンカーで target=\"_blank\" が無く、JSでの新規タブ制御も無いため同一タブで遷移する。",
+      "mismatchReason": "point_history.twigの該当アンカーにtarget/新規タブ制御が無いことをgrepで確認（target/_blank/window.openいずれもヒットせず）。設計は2箇所で別タブを規定。",
+      "comparisonRows": [
+        {"item": "注文番号リンクの遷移", "design": "別タブで注文詳細を開く", "implementation": "同一タブで mypage_history へ遷移", "mismatch": "target=\"_blank\"/新規タブ制御なし"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-10 (識別ID10 ページ番号)",
+      "designExpectation": "ページ番号は現在表示ページから前後最大4つまで表示（現在ページ中心に前後4件、最大9件）。",
+      "implRef": "src/Eccube/Controller/Front/Mypage/MypageController.php:399-404, src/Eccube/Resource/template/default/pager.twig, app/config/eccube page_range未設定",
+      "implementationActual": "paginate()はpageRangeオプション未指定（['wrap-queries'=>true]のみ）で、KnpPaginator既定page_range=5（Configuration.php defaultValue(5)、config/app/config側に上書き無し）が適用され、pager.twigのpagesInRangeは前後最大2件（計5件）に留まる。",
+      "mismatchReason": "paginate呼び出し・pager.twig・knp既定値(5)・app/config未設定を確認。設計の前後4件に対し実装は前後2件で数値差。",
+      "comparisonRows": [
+        {"item": "ページ番号表示範囲", "design": "現在ページ前後最大4件（計9件）", "implementation": "現在ページ前後最大2件（計5件, page_range=5既定）", "mismatch": "表示ページリンク数不足"}
+      ]
+    }
+  ]
+}

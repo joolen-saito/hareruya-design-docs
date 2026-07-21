@@ -1,0 +1,73 @@
+{
+  "chunkId": "b02-07_0404_sheet-10_tsv--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0404_sheet-10_tsv.json#b02-07_0404_sheet-10_tsv-conformance-d2579ec21c60",
+      "functionId": "b02-07_0404_sheet-10_tsv",
+      "featureNo": "B02-07",
+      "title": "B02-07 ユニサーチフィードTSV",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "TSVヘッダで設計のbranch_statusがis_branch_publishedに改名され、設計表に無いcategory_name_en/search_wordが追加されている。",
+      "reason": "設計TSV表（1697-1734行）は識別ID34をbranch_status（支店表示フラグ）とし、category_name_enとsearch_wordは存在しない。実装 UniSearchExportService::getHeader() は列名 is_branch_published（167行）を出力し、設計に無い category_name_en（159行）と search_word（171行）を含む。ヘッダ配列は40エントリで設計表項目より多い。TSV外部契約の項目名・列がそのまま設計と食い違う。",
+      "designEvidence": {"label": "設計要求(TSV表 ID34)", "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html", "start": 1731, "end": 1731, "contains": ["branch_status", "支店表示フラグ"]},
+      "implEvidence": [{"label": "getHeaderの出力列", "note": "is_branch_published改名・category_name_en/search_word追加", "path": "ec-cube-enterprise/src/Eccube/Service/UniSearch/UniSearchExportService.php", "start": 155, "end": 172, "contains": ["is_branch_published", "category_name_en", "search_word"]}]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0404_sheet-10_tsv.json#b02-07_0404_sheet-10_tsv-conformance-1549184c3e6b",
+      "functionId": "b02-07_0404_sheet-10_tsv",
+      "featureNo": "B02-07",
+      "title": "B02-07 ユニサーチフィードTSV",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "TSVのstock列は設計が在庫数を要求するが、実装は在庫がある base_info_id 集合を ^A 区切りで出力している。",
+      "reason": "設計ID23 stock は『本店ECの在庫数、リニューアル後は本店ECだけでなく店舗のEC在庫を反映する』（1720行）と在庫数を求める。実装 ProductClassRepository の stock_agg CTE は string_agg(DISTINCT base_info_id::text, E'\\x01' ...) FILTER(WHERE stock_unlimited OR stock>=1) AS stock（374-381行）で、在庫がある base_info_id を ^A 区切りで集約したものを stock 列として出力する。数値の在庫数を連携する処理は確認できない。",
+      "designEvidence": {"label": "設計要求(TSV表 ID23 stock)", "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html", "start": 1720, "end": 1720, "contains": ["stock", "本店ECの在庫数"]},
+      "implEvidence": [{"label": "stock列の集計(base_info_id集約)", "path": "ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php", "start": 374, "end": 381, "contains": ["string_agg", "DISTINCT s.base_info_id::text", "AS stock"]}]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0404_sheet-10_tsv.json#b02-07_0404_sheet-10_tsv-conformance-95aebf22489e",
+      "functionId": "b02-07_0404_sheet-10_tsv",
+      "featureNo": "B02-07",
+      "title": "B02-07 ユニサーチフィードTSV",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計の入口コマンド名 product:batch exportWeeklyStockHistoryCsv に対し、実装は eccube:update-weekly-stock-history で呼び出す。",
+      "reason": "設計『利用者視点の入口』（1768行）と処理フロー見出し（1772行）はコンソールコマンドを product:batch exportWeeklyStockHistoryCsv とし、1769行で『コマンド名が一致しない場合は処理を行わずに終了する』と入口契約を明示する。実装 UpdateWeeklyStockHistoryCommand は #[AsCommand(name: 'eccube:update-weekly-stock-history', ...)]（35行）で、設計コマンド名は src 内に存在しない（exportWeeklyStockHistoryCsv / product:batch は未ヒット）。設計の移行差分表（1762行）にもコマンド名変更は記載されておらず、入口の呼び出し契約が設計と食い違う。",
+      "designEvidence": {"label": "設計の入口コマンド名", "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html", "start": 1768, "end": 1768, "contains": ["product:batch exportWeeklyStockHistoryCsv"]},
+      "implEvidence": [{"label": "実装のAsCommand名", "path": "ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php", "start": 35, "end": 35, "contains": ["eccube:update-weekly-stock-history", "AsCommand"]}],
+      "absenceCommands": ["rg -n \"exportWeeklyStockHistoryCsv|product:batch\" /home/y-saito/Developments/ec-cube-enterprise/src"]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0404_sheet-10_tsv.json#b02-07_0404_sheet-10_tsv-conformance-4a2d820f56bd",
+      "functionId": "b02-07_0404_sheet-10_tsv",
+      "featureNo": "B02-07",
+      "title": "B02-07 ユニサーチフィードTSV",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "high",
+      "reason": "この指摘は『実装がCSV出力せずDBテーブル更新している』ことを違反とするが、同じ設計書の『リニューアル移行時の扱い』表（1762行）が、移行先(ec-cube-enterprise)は『集計結果を一時テーブル dtb_weekly_stock_history_temp へINSERTし、本テーブル dtb_weekly_stock_history へコピーするDB方式。CSV出力ではない。』と明記している。1785行のCSV出力・DB非更新は現行(pf-eccube3)の挙動として記述されたものであり、設計自身が移行先実装をDB方式と規定している。実装 BatchUpdateWeeklyStockHistoryAction のTRUNCATE/INSERT/COPY（dtb_weekly_stock_history_temp→dtb_weekly_stock_history）は設計の移行差分表どおりで、指摘の前提（移行先でCSVを出力すべき）が設計と矛盾するため反証。設計移行差分表: line 1762。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0404_sheet-10_tsv.json#b02-07_0404_sheet-10_tsv-conformance-70c120593009",
+      "functionId": "b02-07_0404_sheet-10_tsv",
+      "featureNo": "B02-07",
+      "title": "B02-07 ユニサーチフィードTSV",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は商品在庫の全商品規格を対象に履歴なしを0とするが、実装は在庫履歴を起点に集計するため履歴が全く無い商品在庫は行が生成されない。",
+      "reason": "設計『集計条件』（1779行）は対象データを『商品在庫に存在する全商品規格ID』とし『該当する在庫履歴が無い場合は0とする』と要求する。実装 DtbWeeklyStockHistoryTempRepository::getStockData は FROM dtb_stock_history sh を起点に sh.product_stock_id BETWEEN で集計し GROUP BY sh.product_stock_id する（73-78行）。範囲上限は getLastProductStockId の MAX(ProductStock.id) だが、dtb_stock_history に履歴行を1件も持たない商品在庫は結果行が生成されず一時テーブルへ0行として登録されない。各週NULLを0に変換するのは履歴が存在する商品在庫のみ。dtb_product_stock を起点にLEFT JOINして全件0埋めする処理は確認できない。",
+      "designEvidence": {"label": "設計の集計対象・欠損時0要求", "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html", "start": 1779, "end": 1779, "contains": ["商品在庫に存在する全商品規格ID", "該当する在庫履歴が無い場合は0とする"]},
+      "implEvidence": [{"label": "在庫履歴起点の集計SQL", "note": "dtb_stock_history起点でGROUP BY、履歴皆無の商品在庫は行が出ない", "path": "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php", "start": 73, "end": 78, "contains": ["dtb_stock_history sh", "sh.product_stock_id BETWEEN :start AND :end"]}],
+      "absenceCommands": ["rg -n \"dtb_product_stock|FROM\\s+dtb_product_stock\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php"]
+    }
+  ]
+}

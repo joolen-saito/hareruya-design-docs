@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_04_admin_product_product_goods_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・フラッシュなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は商品一覧 `form_bulk` からの **POST CSV 出力** であり、画面タイプは `csv_export`。**ダウンロード発火・ファイル名・Content-Type/Disposition・リダイレクト・フラッシュ・UI部品・権限ガード**を自動化対象とし、**CSV本文（列・規格行展開・カンマ連結・並び）は手動**とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・フラッシュなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は商品一覧 `form_bulk` からの **POST CSV 出力** であり、画面タイプは `csv_export`。**ダウンロード発火・ファイル名・Content-Type/Disposition・リダイレクト・フラッシュ・UI部品・権限ガード**を自動化対象とし、**CSV本文（列・規格行展開・カンマ連結・並び）は手動**とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 ## 関連ID対応概要
 
@@ -20,54 +20,54 @@
 | IT-23 | DB検索（findBy）の内部レコード一致＝ブラウザ観測外。一覧検索は別機能へ委譲 |
 | IT-20 | ログ「グッズ商品CSV出力ファイル名」＝サーバログ観測外 |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-001	IT-25	UI部品	P2	商品一覧に「グッズ商品CSV出力」ボタンが表示される	管理者ログイン済／検索結果1件以上／SEED-M03-04-ADMIN	—	"1. 商品一覧(/admin/product)を開く"	一覧ブロックのボタン行に「グッズ商品CSV出力」ボタンが表示されること。
-m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-002	IT-15	対象データ	P3	各商品行にids[]チェックボックスと全選択チェックが表示される	管理者ログイン済／検索結果1件以上／SEED-M03-04-ADMIN	—	"1. 商品一覧を開く"	各行先頭に name=\"ids[]\" のチェックボックスがあり、表頭に全選択チェック(#trigger_check_all)が表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-001	IT-25	UI部品	P2	商品一覧に「グッズ商品CSV出力」ボタンが表示される	管理者ログイン済／検索結果1件以上／SEED-M03-04-ADMIN	—	1. 商品一覧(/admin/product)を開く	一覧ブロックのボタン行に「グッズ商品CSV出力」ボタンが表示されること。				
+m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-002	IT-15	対象データ	P3	各商品行にids[]チェックボックスと全選択チェックが表示される	管理者ログイン済／検索結果1件以上／SEED-M03-04-ADMIN	—	1. 商品一覧を開く	"各行先頭に name=\""ids[]\"" のチェックボックスがあり、表頭に全選択チェック(#trigger_check_all)が表示されること。"				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-003	IT-25	確認ダイアログ	P2	出力ボタン押下前に確認ダイアログが表示されない	管理者ログイン済／検索結果1件以上／SEED-M03-04-ADMIN	—	"1. 商品一覧を開く
-2. 商品を選択せず「グッズ商品CSV出力」を押下"	出力前に確認ダイアログ(モーダル/alert)が表示されないこと（ボタンはtype=submitでクライアント側チェックが掛からない）。
+2. 商品を選択せず「グッズ商品CSV出力」を押下"	出力前に確認ダイアログ(モーダル/alert)が表示されないこと（ボタンはtype=submitでクライアント側チェックが掛からない）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-004	IT-03	画面遷移	P2	検索結果0件のとき「グッズ商品CSV出力」ボタンが表示されない	管理者ログイン済／SEED-M03-04-ADMIN	一致しないキーワード	"1. 商品一覧を開く
-2. 一致しないキーワードで検索する"	一覧ブロック(form_bulk)とボタン行が描画されず「グッズ商品CSV出力」ボタンが表示されないこと（件数が正のときのみ描画）。
+2. 一致しないキーワードで検索する"	一覧ブロック(form_bulk)とボタン行が描画されず「グッズ商品CSV出力」ボタンが表示されないこと（件数が正のときのみ描画）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-010	IT-27	実行結果	P1	グッズ商品を選択して出力するとCSVがダウンロードされファイル名がproduct_goods_{YmdHis}.csvになる	管理者ログイン済／カード詳細なし・規格1件以上の商品/SEED-M03-04-GOODS	出力対象のグッズ商品IDをチェック	"1. 商品一覧を開く
 2. グッズ商品の行をチェック
-3. 「グッズ商品CSV出力」を押下"	CSVファイルのダウンロードが発火し、ファイル名が product_goods_{YmdHis}.csv であること。
-m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-011	IT-25	確認ダイアログ	P1	出力応答がtext/csvでattachment配信される	管理者ログイン済／SEED-M03-04-GOODS	出力対象のグッズ商品ID	"1. 認証済みコンテキストで出力ルートへ ids[] 付きPOST"	応答が HTTP 200・Content-Type に text/csv を含み・Content-Disposition が attachment（filename=product_goods_…）であること。
-m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-014	IT-27	実行結果	P2	有効グッズIDと存在しないIDを混在POSTすると取得できた商品でCSVが配信される	管理者ログイン済／SEED-M03-04-GOODS	ids[]＝有効グッズID＋存在しないID（例 999999999）	"1. 認証済みコンテキストで出力ルートへ 有効ID＋存在しないID をPOST"	配列が空でなく取得結果が空でないため CSV が配信されること（HTTP 200・text/csv・attachment）。出力対象が取得できた商品だけであることはCSV本文＝手動(012b)。
+3. 「グッズ商品CSV出力」を押下"	CSVファイルのダウンロードが発火し、ファイル名が product_goods_{YmdHis}.csv であること。				
+m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-011	IT-25	確認ダイアログ	P1	出力応答がtext/csvでattachment配信される	管理者ログイン済／SEED-M03-04-GOODS	出力対象のグッズ商品ID	1. 認証済みコンテキストで出力ルートへ ids[] 付きPOST	応答が HTTP 200・Content-Type に text/csv を含み・Content-Disposition が attachment（filename=product_goods_…）であること。				
+m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-014	IT-27	実行結果	P2	有効グッズIDと存在しないIDを混在POSTすると取得できた商品でCSVが配信される	管理者ログイン済／SEED-M03-04-GOODS	ids[]＝有効グッズID＋存在しないID（例 999999999）	1. 認証済みコンテキストで出力ルートへ 有効ID＋存在しないID をPOST	配列が空でなく取得結果が空でないため CSV が配信されること（HTTP 200・text/csv・attachment）。出力対象が取得できた商品だけであることはCSV本文＝手動(012b)。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-012a	IT-16	実行結果	P2	CSVヘッダ行がグッズ登録CSVのキー順で並ぶ	管理者ログイン済／SEED-M03-04-GOODS	出力対象のグッズ商品ID	"1. グッズ商品を選択して出力する
-2. ダウンロードCSVのヘッダ行を確認する"	ヘッダ行がグッズ商品登録CSV用ヘッダー連想配列のキー順で並ぶこと（手動: CSV本文検査）。
+2. ダウンロードCSVのヘッダ行を確認する"	ヘッダ行がグッズ商品登録CSV用ヘッダー連想配列のキー順で並ぶこと（手動: CSV本文検査）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-012b	IT-16	実行結果	P2	出力対象が選択した商品のみである	管理者ログイン済／SEED-M03-04-GOODS	出力対象のグッズ商品ID	"1. グッズ商品を選択して出力する
-2. ダウンロードCSVの対象商品を確認する"	CSVに出力される商品が選択した商品IDのみであること（手動: CSV本文検査）。
+2. ダウンロードCSVの対象商品を確認する"	CSVに出力される商品が選択した商品IDのみであること（手動: CSV本文検査）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-012c	IT-16	実行結果	P2	選択商品の各規格が規格行として展開される	管理者ログイン済／SEED-M03-04-GOODS	出力対象のグッズ商品ID	"1. グッズ商品を選択して出力する
-2. ダウンロードCSVの行を確認する"	選択商品の全規格がそれぞれ1データ行として展開されること（規格ごと1行・全規格走査。手動: CSV本文検査）。
+2. ダウンロードCSVの行を確認する"	選択商品の全規格がそれぞれ1データ行として展開されること（規格ごと1行・全規格走査。手動: CSV本文検査）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-012d	IT-16	実行結果	P2	各列の値が対象データと一致する	管理者ログイン済／SEED-M03-04-GOODS	出力対象のグッズ商品ID	"1. グッズ商品を選択して出力する
-2. ダウンロードCSVの各セル値を確認する"	各列の値が対象データ（商品共通列・規格依存列）と一致すること（手動: CSV本文検査）。
+2. ダウンロードCSVの各セル値を確認する"	各列の値が対象データ（商品共通列・規格依存列）と一致すること（手動: CSV本文検査）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-012e	IT-16	実行結果	P3	出力エンコーディング・区切り・BOMが設定どおりに整形される	管理者ログイン済／SEED-M03-04-GOODS	出力対象のグッズ商品ID	"1. グッズ商品を選択して出力する
-2. ダウンロードCSVのバイト列（先頭BOM・区切り文字・charset）を確認する"	設定出力エンコーディングがUTF-8のとき先頭にBOMが付与され、区切り文字は設定 eccube_csv_export_separator・エンクロージャは二重引用符であること（手動: CSV本文/バイト検査。仕様「入出力」由来）。
+2. ダウンロードCSVのバイト列（先頭BOM・区切り文字・charset）を確認する"	設定出力エンコーディングがUTF-8のとき先頭にBOMが付与され、区切り文字は設定 eccube_csv_export_separator・エンクロージャは二重引用符であること（手動: CSV本文/バイト検査。仕様「入出力」由来）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-013	IT-25	操作起点	P3	全選択チェックで行チェックが一括オンオフされる	管理者ログイン済／検索結果1件以上／SEED-M03-04-ADMIN	—	"1. 商品一覧を開く
-2. 表頭の全選択チェック(#trigger_check_all)を操作する"	id が check_ で始まる行チェックボックスが一括でオン/オフされること（JS連動・要実機確認）。
+2. 表頭の全選択チェック(#trigger_check_all)を操作する"	id が check_ で始まる行チェックボックスが一括でオン/オフされること（JS連動・要実機確認）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-020	IT-22	必須制御	P1	商品未選択で出力すると商品一覧へリダイレクトされる	管理者ログイン済／検索結果1件以上／SEED-M03-04-ADMIN	ids＝未選択（空）	"1. 商品一覧を開く
-2. 何も選択せず「グッズ商品CSV出力」を押下"	商品一覧(admin_product_page、ページ番号はセッションの検索ページ)へリダイレクトされること。
+2. 何も選択せず「グッズ商品CSV出力」を押下"	商品一覧(admin_product_page、ページ番号はセッションの検索ページ)へリダイレクトされること。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-021	IT-22	必須バリデーション	P1	商品未選択で出力すると選択を促すメッセージが表示される	管理者ログイン済／検索結果1件以上／SEED-M03-04-ADMIN	ids＝未選択（空）	"1. 商品一覧を開く
-2. 何も選択せず「グッズ商品CSV出力」を押下"	「1つ以上の商品を選択してください」が表示されること（eccube.admin.error フラッシュ）。
+2. 何も選択せず「グッズ商品CSV出力」を押下"	「1つ以上の商品を選択してください」が表示されること（eccube.admin.error フラッシュ）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-030	IT-27	出力失敗	P1	カード詳細ありの商品のみ選択するとCSVが配信されずリダイレクトされる	管理者ログイン済／カード詳細あり商品/SEED-M03-04-CARD	カード詳細ありの商品IDのみをチェック	"1. 商品一覧を開く
 2. カード詳細ありの商品のみをチェック
-3. 「グッズ商品CSV出力」を押下"	変換結果が空となりCSVは配信されず、Referer/商品一覧へリダイレクトされること（admin.csv.error.export.no_goods_data 相当）。
+3. 「グッズ商品CSV出力」を押下"	変換結果が空となりCSVは配信されず、Referer/商品一覧へリダイレクトされること（admin.csv.error.export.no_goods_data 相当）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-033	IT-27	出力失敗	P2	カード詳細なしだが規格0件の商品のみ選択するとCSVが配信されずリダイレクトされる	管理者ログイン済／規格0件・カード詳細なし商品/SEED-M03-04-NOCLASS	規格0件の商品IDのみをチェック	"1. 商品一覧を開く
 2. 規格0件（カード詳細なし）の商品のみをチェック
-3. 「グッズ商品CSV出力」を押下"	規格0件はスキップされ変換結果が空となりCSVは配信されず、Referer/商品一覧へリダイレクトされること（admin.csv.error.export.no_goods_data 相当。030のカード詳細ありとは別分岐）。
+3. 「グッズ商品CSV出力」を押下"	規格0件はスキップされ変換結果が空となりCSVは配信されず、Referer/商品一覧へリダイレクトされること（admin.csv.error.export.no_goods_data 相当。030のカード詳細ありとは別分岐）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-015	IT-27	実行結果	P2	グッズ商品とカード詳細あり商品を混在選択するとグッズ商品でCSVが配信される	管理者ログイン済／SEED-M03-04-GOODS／SEED-M03-04-CARD	グッズ商品ID＋カード詳細あり商品ID	"1. 商品一覧を開く
 2. グッズ商品とカード詳細あり商品の双方をチェック
-3. 「グッズ商品CSV出力」を押下"	カード詳細あり商品はスキップされ、残ったグッズ商品で CSV が配信されること（HTTP 200・text/csv）。カード詳細商品が除外される本文照合はCSV本文＝手動(012b)。
-m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-031	IT-03	画面遷移	P2	存在しないIDのみを出力POSTするとCSVが配信されずリダイレクトされる	管理者ログイン済／SEED-M03-04-ADMIN	ids[]＝存在しない商品ID（例 999999999）	"1. 認証済みコンテキストで出力ルートへ存在しないids[]をPOST"	CSVストリームではなく 302 リダイレクト応答が返り、Content-Type に text/csv を含まないこと（admin.csv.error.export.not_registered 相当）。
-m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-035	IT-03	画面遷移	P2	例外時にRefererがあればRefererのURLへリダイレクトされCSVは配信されない	管理者ログイン済／SEED-M03-04-ADMIN	ids[]＝存在しない商品ID（例 999999999）／Refererヘッダ＝商品一覧の特定ページURL	"1. Refererヘッダを付与して出力ルートへ存在しないids[]をPOST"	302リダイレクト応答が返り、Locationヘッダが送信したRefererのURL（例 /product/page/2）であること（Referer非空時はadmin_product_page既定ではなくRefererへ戻す）。Content-Typeにtext/csvを含まないこと。
-m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-032	IT-22	数値バリデーション	P2	0以下・非数字のIDのみを出力POSTするとCSVが配信されずリダイレクトされる	管理者ログイン済／SEED-M03-04-ADMIN	ids[]＝0・-1・abc	"1. 認証済みコンテキストで出力ルートへ無効なids[]をPOST"	整数化後0以下/非整数は破棄され有効ID0件となり、302 リダイレクト応答が返ること（CSVは配信されない）。
-m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-034	IT-22	数値バリデーション	P2	非配列のidsを出力POSTすると空配列扱いでCSVが配信されずリダイレクトされる	管理者ログイン済／SEED-M03-04-ADMIN	ids＝abc（配列記法でないスカラ値）	"1. 認証済みコンテキストで出力ルートへ非配列の ids=abc をPOST"	idsが配列でないため空配列とみなされ有効ID0件となり、302 リダイレクト応答が返ること（CSVは配信されない。処理フロー#2「配列でない場合は空配列」）。
-m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-040	IT-15	未認証	P1	未ログインで商品一覧へアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/product へアクセス"	管理ログイン画面へ誘導されること（当パスへ到達できない）。
-m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-041	IT-13	URL直接アクセス	P2	未ログインで出力ルートへPOSTすると管理ログイン画面へ誘導されCSVは配信されない	未ログイン	ids未指定	"1. 未ログインで /admin/product/product_goods_csv_export へPOST（出力ルートはPOST専用）"	302で管理ログイン画面へ誘導され（Locationに/login）、Content-Typeにtext/csvを含まないこと（GET直アクセスは405になり得るためPOSTで観測）。
+3. 「グッズ商品CSV出力」を押下"	カード詳細あり商品はスキップされ、残ったグッズ商品で CSV が配信されること（HTTP 200・text/csv）。カード詳細商品が除外される本文照合はCSV本文＝手動(012b)。				
+m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-031	IT-03	画面遷移	P2	存在しないIDのみを出力POSTするとCSVが配信されずリダイレクトされる	管理者ログイン済／SEED-M03-04-ADMIN	ids[]＝存在しない商品ID（例 999999999）	1. 認証済みコンテキストで出力ルートへ存在しないids[]をPOST	CSVストリームではなく 302 リダイレクト応答が返り、Content-Type に text/csv を含まないこと（admin.csv.error.export.not_registered 相当）。				
+m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-035	IT-03	画面遷移	P2	例外時にRefererがあればRefererのURLへリダイレクトされCSVは配信されない	管理者ログイン済／SEED-M03-04-ADMIN	ids[]＝存在しない商品ID（例 999999999）／Refererヘッダ＝商品一覧の特定ページURL	1. Refererヘッダを付与して出力ルートへ存在しないids[]をPOST	302リダイレクト応答が返り、Locationヘッダが送信したRefererのURL（例 /product/page/2）であること（Referer非空時はadmin_product_page既定ではなくRefererへ戻す）。Content-Typeにtext/csvを含まないこと。				
+m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-032	IT-22	数値バリデーション	P2	0以下・非数字のIDのみを出力POSTするとCSVが配信されずリダイレクトされる	管理者ログイン済／SEED-M03-04-ADMIN	ids[]＝0・-1・abc	1. 認証済みコンテキストで出力ルートへ無効なids[]をPOST	整数化後0以下/非整数は破棄され有効ID0件となり、302 リダイレクト応答が返ること（CSVは配信されない）。				
+m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-034	IT-22	数値バリデーション	P2	非配列のidsを出力POSTすると空配列扱いでCSVが配信されずリダイレクトされる	管理者ログイン済／SEED-M03-04-ADMIN	ids＝abc（配列記法でないスカラ値）	1. 認証済みコンテキストで出力ルートへ非配列の ids=abc をPOST	idsが配列でないため空配列とみなされ有効ID0件となり、302 リダイレクト応答が返ること（CSVは配信されない。処理フロー#2「配列でない場合は空配列」）。				
+m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-040	IT-15	未認証	P1	未ログインで商品一覧へアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/product へアクセス	管理ログイン画面へ誘導されること（当パスへ到達できない）。				
+m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-041	IT-13	URL直接アクセス	P2	未ログインで出力ルートへPOSTすると管理ログイン画面へ誘導されCSVは配信されない	未ログイン	ids未指定	1. 未ログインで /admin/product/product_goods_csv_export へPOST（出力ルートはPOST専用）	302で管理ログイン画面へ誘導され（Locationに/login）、Content-Typeにtext/csvを含まないこと（GET直アクセスは405になり得るためPOSTで観測）。				
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	E2E-M03-04-050	IT-20	出力抑止	P3	出力後にファイル名が情報ログへ記録される	管理者ログイン済／SEED-M03-04-GOODS	出力対象のグッズ商品ID	"1. グッズ商品を選択して出力する
-2. サーバの情報ログを確認する"	情報ログに「グッズ商品CSV出力ファイル名」と生成ファイル名が記録されること（対象外: サーバログはブラウザ観測外）。
+2. サーバの情報ログを確認する"	情報ログに「グッズ商品CSV出力ファイル名」と生成ファイル名が記録されること（対象外: サーバログはブラウザ観測外）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠（TSV外）

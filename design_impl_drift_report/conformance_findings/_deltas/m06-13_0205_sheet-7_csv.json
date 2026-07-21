@@ -1,0 +1,54 @@
+{
+  "functionId": "m06-13_0205_sheet-7_csv",
+  "featureNo": "M06-13",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-7:1664,1691-1699,1735,1745",
+      "designExpectation": "店頭買取の買取商品一覧（キャンセル）CSVとして、キャンセルされた店頭買取商品をCSV出力し、列は商品コード、キャンセル数、商品名、販売価格、買取価格、言語ID、略称タグ、レアリティ、状態とする。キャンセル数はキャンセルの個数を表示し、個別入力商品または状態がない場合の空欄・日本語固定等の列規則に従う。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: otc_buy_order_product_list_cancel, otc_buy_order_cancel, product_cancel, cancel.*product_list, キャンセル数, 買取商品一覧（キャンセル）, notSale, NOT_SALE, cancel_count, cancelCount）",
+      "implementationActual": "店頭買取のCSV出口は admin_otcbuyorder_export で export_type を OtcBuyOrderCsvExportService::CSV_TYPES に照合する実装だが、CSV_TYPES は old_goods_account、otc_buy_order_product_list、otc_buy_order_restock_list_csv の3種のみで、買取商品一覧（キャンセル）CSVの種別がない。画面のCSVメニューにも古物台帳入力用CSV、買取商品一覧CSV、戻しリストCSV、戻しリストPDFのみが表示される。既存の店頭買取商品一覧CSVはキャンセルステータスを除外し、ヘッダは在庫増減数・基準価格であり、キャンセル数・販売価格ではない。ネット買取側には type=notSale のキャンセルCSVがあるが、/purchase 配下かつ dtb_buy_order 系であり、設計が対象とする店頭買取 dtb_otc_buy_order 系ではない。",
+      "mismatchReason": "OtcBuyOrderController::export は export_type が OtcBuyOrderCsvExportService::CSV_TYPES に存在しない場合に InvalidArgumentException とする（src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:175-183）。OtcBuyOrderCsvExportService::CSV_TYPES には3種のみが定義され、キャンセル用CSV種別・キャンセル数ヘッダ・販売価格ヘッダが存在しない（src/Eccube/Service/Csv/Exporter/OtcBuyOrderCsvExportService.php:33-75）。店頭買取一覧画面のCSVメニューにもキャンセルCSVの項目がない（src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:181-188）。店頭買取の商品一覧CSVデータ取得SQLは o.otc_buy_order_status_id <> :cancel_status_id でキャンセルを除外している（src/Eccube/Repository/DtbOtcBuyOrderRepository.php:469-472,493-499,532-535）。反証としてネット買取側の admin_purchase_csv_export_product_list type=notSale を確認したが、PurchaseController / BuyOrderProductListCsvExportService / DtbBuyOrderRepository の dtb_buy_order 系実装であり、設計HTMLも店頭買取とは別系統で流用前提としないと明記しているため本機能の実装根拠にはならない。",
+      "comparisonRows": [
+        {
+          "item": "CSV種別・入口",
+          "design": "店頭買取の買取商品一覧（キャンセル）CSVを出力する。",
+          "implementation": "店頭買取CSV_TYPES は old_goods_account、otc_buy_order_product_list、otc_buy_order_restock_list_csv のみ。",
+          "mismatch": "キャンセルCSVの export_type/ルート処理がない。"
+        },
+        {
+          "item": "画面メニュー",
+          "design": "店頭買取のCSVダウンロードから買取商品一覧（キャンセル）CSVを利用できる必要がある。",
+          "implementation": "OtcBuyOrder/index.twig のメニューは古物台帳入力用CSV、買取商品一覧CSV、戻しリストCSV、戻しリストPDFのみ。",
+          "mismatch": "利用者がキャンセルCSVを開始するUIがない。"
+        },
+        {
+          "item": "対象データ",
+          "design": "キャンセルされた店頭買取商品をCSV出力する。",
+          "implementation": "既存の店頭買取商品一覧CSV SQL は o.otc_buy_order_status_id <> :cancel_status_id でキャンセルを除外する。",
+          "mismatch": "対象であるキャンセル済み店頭買取商品が既存CSVから除外される。"
+        },
+        {
+          "item": "列2",
+          "design": "キャンセル数。キャンセルの個数を表示する。",
+          "implementation": "店頭買取商品一覧CSVの列2は productCount => 在庫増減数。キャンセル数ヘッダはない。",
+          "mismatch": "列ラベル・意味が設計と異なる以前にキャンセルCSV種別が存在しない。"
+        },
+        {
+          "item": "列4",
+          "design": "販売価格。商品規格に紐づく現在の基準価格、個別入力商品または状態がない場合は空。",
+          "implementation": "店頭買取商品一覧CSVの列4は standardPrice => 基準価格。キャンセルCSV用の販売価格列はない。",
+          "mismatch": "設計列名の販売価格として出力する定義がない。"
+        },
+        {
+          "item": "列1/3/5/6/7/8/9",
+          "design": "商品コード、商品名、買取価格、言語ID、略称タグ、レアリティ、状態をキャンセルCSVの列として出力し、空欄・日本語固定などの規則に従う。",
+          "implementation": "通常の店頭買取商品一覧CSVには類似列があるが、キャンセルCSV種別がなく、キャンセル対象データを出力しない。",
+          "mismatch": "キャンセルCSVとしての外部契約が未定義。"
+        }
+      ]
+    }
+  ]
+}

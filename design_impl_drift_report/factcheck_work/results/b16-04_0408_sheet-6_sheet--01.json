@@ -1,0 +1,34 @@
+{
+  "chunkId": "b16-04_0408_sheet-6_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b16-04_0408_sheet-6_sheet.json#b16-04_0408_sheet-6_sheet-conformance-5b04b931e119",
+      "functionId": "b16-04_0408_sheet-6_sheet",
+      "featureNo": "B16-04",
+      "title": "B16-04 必須項目が空欄の会員発生通知",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "ユーザー情報抜粋データのCONCATで電話番号(1列目) c.tel01 のラベルが ':tel02:' になっており、設計が要求する 'tel01:' ラベルが出力されない。",
+      "reason": "設計書 sheet-6 の取得例(1440行)およびメール本文例(1468行)は tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)] を要求している。実装 CustomerRepository::getBlankRequiredItemCustomers() の CONCAT(649-650行)では c.tel01 の直前ラベルが ':tel02:' で、続く c.tel02 も ':tel02:' となっているため、tel01 ラベルが欠落し tel02 ラベルが2回出現する。grep で tel01/tel02 ラベルを確認し、この関数が該当バッチのユーザー情報抜粋データ生成箇所であることを確認した(WHERE条件も設計の必須項目チェックと一致)。設計例(1列目=tel01)と実装(1列目=tel02ラベル)が一致しないため実装違い。",
+      "designEvidence": {
+        "label": "設計要求(取得例・本文例)",
+        "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+        "start": 1440,
+        "end": 1468,
+        "contains": ["tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:", "tel01:000:tel02:0000:tel03:0000"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(CONCAT のラベル誤り)",
+          "note": "c.tel01 の直前ラベルが ':tel02:' になっており tel01 ラベルが欠落。tel02 ラベルが2回出現する。",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/CustomerRepository.php",
+          "start": 649,
+          "end": 650,
+          "contains": [":tel02:', COALESCE(c.tel01, 'null'), ':tel02:', COALESCE(c.tel02, 'null')"]
+        }
+      ]
+    }
+  ]
+}

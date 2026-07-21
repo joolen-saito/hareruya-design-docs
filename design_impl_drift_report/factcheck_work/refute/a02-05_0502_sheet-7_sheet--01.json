@@ -1,0 +1,20 @@
+{
+  "chunkId": "a02-05_0502_sheet-7_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-05_0502_sheet-7_sheet.json#a02-05_0502_sheet-7_sheet-conformance-bd93faefee76",
+      "refuted": false,
+      "reason": "反証失敗。指摘は維持。(1)引用検証: 設計HTMLは基本設計フィールド表(result.strageCodeId 数値(整数) ストレージコードID)・基本設計サンプル(\"strageCodeId\": 1449)・詳細設計レスポンス表1810行(result[].strageCodeId integer 保管コードのID)・詳細設計サンプル(\"strageCodeId\": null)の全4箇所で一貫してtypo綴り strageCodeId を使用。実装 ProductRepository.php はSQLで sc.id AS storageCodeId、addScalarResult('storagecodeid','storageCodeId','integer') と正綴り storageCodeId を出力。(2)別実装/キー変換の探索: `rg -rn 'strageCodeId' src/` は exit=1 で src 全体に存在せず、リポジトリ全体でも0件。Controller getUpdatedProductClasses(206行) は $results をキー変換せず $this->json(['count'=>count($results),'result'=>$results]) でそのまま返却(234-237行)、Subscriber/Serializer/Normalizer経由の改名も無し。よって設計綴り strageCodeId と実装出力 storageCodeId のキー名不一致は事実で、設計どおりにコーディングしたクライアントは当該フィールドを取得できない。設計側のtypoである可能性は高いが、乖離事実そのものは覆らない。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-05_0502_sheet-7_sheet.json#a02-05_0502_sheet-7_sheet-conformance-8ebccee366bd",
+      "refuted": false,
+      "reason": "反証失敗。指摘は維持。実装 ProductRepository.php の ResultSetMapping は addScalarResult('stock','stock','integer')・addScalarResult('price02','price02','integer') で PHP int に変換し、Controller は文字列キャスト無しで $this->json(...) するため JSON では数値出力。src に (string)/strval/ResponseBuilder 等の型変換は無し。設計側は詳細設計レスポンス表1810行が result[].stock string・result[].price02 string と明記し、基本設計サンプル(\"stock\":\"1\",\"price02\":\"6000\")と詳細設計サンプル(\"stock\":\"5\",\"price02\":\"300\") の両サンプルとも引用符付き文字列で示す。反証観点として設計内矛盾を指摘しておく: 基本設計のフィールド表(1685行付近)は result.stock/result.price02 を『数値(整数)』と記し、この一箇所のみ実装(integer)と一致する。しかし成功応答の契約を定める詳細設計レスポンス表と2つのJSONサンプルはいずれも string を要求しており、ワイヤ形式の意図はstringと読むのが妥当。よって integer 出力の乖離は事実(設計内に整数記載が1箇所ある点は付記)。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-05_0502_sheet-7_sheet.json#a02-05_0502_sheet-7_sheet-conformance-251fa0415684",
+      "refuted": false,
+      "reason": "反証失敗。指摘は維持。実装SQLは pc.update_date AS productClassUpdateDate・p.update_date AS productUpdateDate を to_char 等の整形無しで生SELECTし、RSMは両者を type 'string' でマッピングするのみ(DateTime変換もフォーマットも無し)。`rg 'to_char|datestyle|ATOM|format\\(''c''\\)|DATE_ATOM'` を Repository/Controller に掛けても応答日時の整形箇所は無く、param側の format('c') はクエリ条件用。Controllerも $results 無整形で $this->json 返却。設計は副作用節1844行『プロパティはcamelCase、日時はISO8601とする』と明記し、両サンプルとも 2026-06-01T10:00:00+09:00 の T区切りISO8601を示す。PostgreSQL の timestamp 文字列既定表現は空白区切り(例 2025-08-01 20:20:00+09)でありISO8601のT区切りと不一致になるため、生文字列返却は設計要求を満たさない。厳密書式がDBドライバ挙動依存である点で原confidence medium は妥当だが、整形処理が実装に存在しないこと自体は事実であり反証できない。"
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "id": "a05-01-smooth-otc-payment-total-label-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json",
+  "sourceFindingId": "a05-01-0505-sheet-3-sheet-08e4ef1dcc-02",
+  "classification": "API受注管理",
+  "feature": "注文印刷_印刷情報をプリンタへ送信",
+  "issueCategory": "実装漏れ",
+  "issue": "スムーズ店頭受取の注文印刷で合計金額欄が「スムーズ店頭受取」にならない",
+  "designBook": "0505_基本設計仕様書(API_受注管理).xlsx",
+  "reproSteps": [
+    "配送方法がスムーズ店頭受取で、A05-01 の印刷対象条件を満たす受注を用意する",
+    "ec-cube-enterprise の注文印刷 API で ConnectionType=GetRequest の印刷情報を取得する（例: POST http://localhost:8080/api/order/prints/direct/{base_info_id} に ConnectionType=GetRequest を指定）",
+    "返却された印刷情報 XML の「合計金額」欄に出力される値を確認する"
+  ],
+  "expected": [
+    "GetRequest の印刷情報生成時、受注ごとに配送方法を判定する",
+    "配送がスムーズ店頭受取の場合、合計金額欄には payment_total の金額ではなく「スムーズ店頭受取」と出力する",
+    "この配送方法判定は dtb_shipping の配送方法を用いる"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、印刷XML生成時に $paymentTotal = $Order['payment_total'] を設定し、その値を合計金額欄へそのまま出力している。getPrintData() 内に配送方法の取得や Delivery::SMOOTH_OTC 判定はなく、スムーズ店頭受取時に文言へ置換する処理がない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 印刷XML生成は payment_total をそのまま合計金額欄へ出力する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php",
+          "start": 71,
+          "end": 129,
+          "language": "php",
+          "contains": [
+            "$paymentTotal = $Order['payment_total']",
+            "<text>合計金額</text>",
+            "<text>{$paymentTotal}</text>"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 印刷対象取得は payment_total を渡すが配送方法を印字データへ渡さない",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+          "start": 1493,
+          "end": 1540,
+          "language": "php",
+          "contains": [
+            "public function getPrintOrderListMainShop(int $base_info_id): array",
+            "'o.payment_total AS payment_total'",
+            "'s.Delivery = :smoothOtc'"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 支店向け印刷対象取得も payment_total のみを返す",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+          "start": 1550,
+          "end": 1607,
+          "language": "php",
+          "contains": [
+            "public function getDirectPrintOrderList(int $base_info_id): array",
+            "o.payment_total",
+            "->addScalarResult('payment_total', 'payment_total')"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、印刷XML生成時に受注の配送を取得し、配送IDが DtbDelivery::SMOOTH_OTC の場合は $paymentTotal を「スムーズ店頭受取」に置換してから合計金額欄へ出力している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は SMOOTH_OTC の場合に合計金額欄を文言へ置換する",
+          "path": "pf-api/src/Controller/Admin/OrderController.php",
+          "start": 134,
+          "end": 144,
+          "language": "php",
+          "contains": [
+            "$paymentTotal = '\\\\' . number_format($order['payment_total'])",
+            "$deliveryId === DtbDelivery::SMOOTH_OTC",
+            "$paymentTotal = 'スムーズ店頭受取'"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "A05-01 は pf-api の注文印刷処理を確認値とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1012,
+      "end": 1014,
+      "language": "html",
+      "contains": [
+        "pf-api",
+        "確認値はpf-apiの注文印刷処理",
+        "挙動の参照リポはpf-api"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "GetRequest でスムーズ店頭受取の場合は合計金額欄を文言にする",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1043,
+      "end": 1044,
+      "language": "html",
+      "contains": [
+        "ConnectionType",
+        "GetRequest",
+        "配送がスムーズ店頭受取の場合は合計金額欄を「スムーズ店頭受取」とする"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "DBカラム定義でも payment_total はスムーズ店頭受取時に文言へ置換すると定義",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1104,
+      "end": 1107,
+      "language": "html",
+      "contains": [
+        "合計金額（<code>payment_total</code>）",
+        "スムーズ店頭受取時は文言に置換する",
+        "配送<code>dtb_shipping</code>"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "印刷XML生成で payment_total をそのまま出力",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php",
+      "start": 71,
+      "end": 129,
+      "language": "php",
+      "contains": [
+        "$paymentTotal = $Order['payment_total']",
+        "<text>{$paymentTotal}</text>"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "本店向け取得は smoothOtc 条件を持つが印字データに delivery_id を返さない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+      "start": 1493,
+      "end": 1540,
+      "language": "php",
+      "contains": [
+        "'o.payment_total AS payment_total'",
+        "'s.Delivery = :smoothOtc'",
+        "->setParameter('smoothOtc', Delivery::SMOOTH_OTC)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "SMOOTH_OTC の場合に paymentTotal をスムーズ店頭受取へ置換",
+      "path": "pf-api/src/Controller/Admin/OrderController.php",
+      "start": 134,
+      "end": 144,
+      "language": "php",
+      "contains": [
+        "findOneByOrder($order['order_id'])",
+        "$deliveryId === DtbDelivery::SMOOTH_OTC",
+        "$paymentTotal = 'スムーズ店頭受取'"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex",
+    "commands": [
+      "rg -n \"スムーズ店頭受取|合計金額|payment_total|GetRequest|印刷対象|注文印刷|A05-01|order/print|order/prints\" hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "rg -n \"SMOOTH|smooth|スムーズ|delivery|payment_total|店頭受取|is_main_shop|getPrintOrderListMainShop|getDirectPrintOrderList\" pf-api/src/Controller/Admin/OrderController.php pf-api/src/Repository ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+      "rg -n \"paymentTotal|SMOOTH_OTC|スムーズ店頭受取|DtbDelivery|findOneByOrder\" pf-api/src/Controller/Admin/OrderController.php",
+      "rg -n \"paymentTotal|SMOOTH_OTC|スムーズ店頭受取|Delivery::SMOOTH_OTC|payment_total\" ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php"
+    ],
+    "notes": [
+      "設計HTMLは GetRequest の印刷情報生成で、配送がスムーズ店頭受取の場合に合計金額欄を「スムーズ店頭受取」とする要求を明記している。",
+      "pf-api は DtbShipping から配送IDを取得し、DtbDelivery::SMOOTH_OTC の場合に $paymentTotal を文言へ置換している。",
+      "ec-cube-enterprise の getPrintData() は payment_total をそのまま合計金額欄へ出力し、配送方法を参照していない。"
+    ]
+  }
+}

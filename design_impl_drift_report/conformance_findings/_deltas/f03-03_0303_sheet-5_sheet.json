@@ -1,0 +1,24 @@
+{
+  "functionId": "f03-03_0303_sheet-5_sheet",
+  "featureNo": "F03-03",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0303_基本設計仕様書(フロント_商品).html#sheet-5",
+      "designExpectation": "カテゴリの選択肢は、フロント検索で非表示とする親配下（dtb_category.front_search_hide_flg=true の親カテゴリ配下）を除いて提示する。エッジケース『非表示親配下のカテゴリ→選択肢に出さない』を含め4箇所で明記。",
+      "implRef": "src/Eccube/Form/Type/Front/SearchType.php:95,107-111 / src/Eccube/Repository/CategoryRepository.php:133-163 / src/Eccube/Resource/template/default/Block/_product_search_form_fields.twig:36-38",
+      "implementationActual": "SearchType.php:95 が CategoryRepository::getList(null, true) の全カテゴリを SearchType.php:111 で choices にそのまま渡す。getList (CategoryRepository.php:140-144) は orderBy('c.sort_no','DESC') のみで front_search_hide_flg フィルタが無く、getSelfAndDescendants() で非表示親配下も全件返す。Twig(_product_search_form_fields.twig:36-38) も無条件ループ。front_search_hide_flg は検索フォーム経路で未使用。",
+      "mismatchReason": "front_search_hide_flg を src/Eccube 配下で全走査した結果、使用箇所は TopCategoryListBuilder.php・CategoryTreeResponseBuilder.php・Category.php(定義)・CategoryType.php・CSV系のみで、フロント詳細検索のカテゴリ EntityType choices 生成経路(SearchType/getList/Twig)に非表示親配下除外ロジックが存在しない。実装は在るが設計の除外要件を満たさない。",
+      "comparisonRows": [
+        {
+          "item": "カテゴリ選択肢の除外",
+          "design": "front_search_hide_flg=true の親カテゴリ配下を選択肢から除外",
+          "implementation": "getList(null,true) の全カテゴリを無条件に選択肢化（フラグ判定なし）",
+          "mismatch": "非表示親配下のカテゴリも選択肢に出力される"
+        }
+      ]
+    }
+  ]
+}

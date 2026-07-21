@@ -1,0 +1,30 @@
+{
+  "chunkId": "b02-01_0404_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json#b02-01_0404_sheet-3_sheet-conformance-8ce43a549ced",
+      "refuted": false,
+      "reason": "設計 line875『★本店の支店IDは0として処理する』を実在確認。実装 getSalesForAggregate() は SELECT で s.base_info_id をそのまま出力し GROUP BY oi.product_class_id, s.base_info_id、updateSalesQuantityColumns も base_info_id をそのまま INSERT/更新(DtbSalesQuantityRepository.php:436-458, 104-)。本店(TC_TOKYO)を0へ写像する CASE/COALESCE 等を rg したが皆無(base_info_id.*0 のヒットは削除除外コメントと支店取得の説明のみ)。BaseInfo::TC_TOKYO_ID=1(BaseInfo.php:45)、POPULAR_PRODUCT_RECOMMEND_SHOP_ID=0(同Repo:39)で clearSalesQuantityForAggregate は base_info_id!=0 のみ削除し0を人気リコメンド用に予約(:95-98)。本店識別値が設計の0と一致せず別実装も存在しない。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json#b02-01_0404_sheet-3_sheet-conformance-ed048467d744",
+      "refuted": true,
+      "reason": "設計内不整合により指摘の根拠が弱い。基本設計(★カスタマイズ)の入力データ検索条件 line885 は『受注データ.ステータス　キャンセルを除外』と明記し、除外対象をキャンセルのみと定める。実装の WHERE は o.order_status_id != :cancel_status(cancel_status=OrderStatus::CANCEL)であり、この基本設計の検索条件と完全一致する。指摘が依拠する『キャンセル・処理中』は詳細設計 line919/930/933 にのみ現れるが、当該詳細設計は冒頭(line 903 付近)で pf-eccube3 の現行挙動を写した『リバース詳細設計』と自称する記述であり、★カスタマイズの確定要求である基本設計 line885 と矛盾する。要求が確定要求(基本設計)と現行記述(詳細設計)で食い違う以上、実装が基本設計の検索条件を満たしている読みが成立し、実装違いと断定できない。指摘も自ら confidence=medium で設計内不整合を認めている。反証成立。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json#b02-01_0404_sheet-3_sheet-conformance-64432e4e3bb8",
+      "refuted": false,
+      "reason": "設計 line927『対象が無い場合は更新を行わずに終了する』および line 949 付近のエラー処理『対象なし→更新を行わず完了』を実在確認。実装 BatchAggregateSalesAction::handle() は beginTransaction 後、対象取得 getSalesForAggregate() より前に clearSalesQuantityForAggregate() を無条件実行し(:44-45)、同メソッドは 'DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id' を発行(Repo:93-98)。salesData が空でも foreach が回らないだけで commit() は実行され DELETE が確定する。対象なしでも人気リコメンド以外の既存集計行が消える破壊的挙動で、条件付き削除や early-return も無い。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json#b02-01_0404_sheet-3_sheet-conformance-daa1bb0772cd",
+      "refuted": false,
+      "reason": "設計 line955 ログ・監査『開始・完了→開始・完了のコンソール出力（日時付き）』を実在確認。実装 AggregateSalesCommand::execute() は成功時 $io->success('期間別販売数集計が完了しました。')(:56) と例外時 $io->error(...) のみで、開始出力も日時も無い。呼び先 handle()/getSalesForAggregate に echo/date/writeln 無し。全コマンド共通の開始・完了ログlistenerを疑い LogListener を確認したが getSubscribedEvents は KernelEvents(REQUEST/RESPONSE/CONTROLLER/TERMINATE/EXCEPTION)のみで ConsoleEvents 非対応、コンソールコマンドの開始・完了は記録しない。日時付き開始・完了出力が欠落。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json#b02-01_0404_sheet-3_sheet-conformance-f6f05b013074",
+      "refuted": false,
+      "reason": "設計 line869-875『本店のほか支店やスマレジの販売情報も集計対象』『★スマレジの取引データも集計対象とし店舗ごとにECCUBEとスマレジで分けて販売数を集計する』を実在確認。実装 AggregateSalesCommand docコメント『現在は EC 受注のみ対象。スマレジ実店舗販売は未実装のため除外される』(:29)、SQL は dtb_order_item/dtb_order/dtb_shipping/dtb_base_info のみで UNION も種別分離列も無く『スマレジ受注が別テーブル管理の場合は UNION 等で本クエリを拡張すること』TODO 残置(Repo:432-434)、handle() にも同旨TODO(:38-40)。rg -ril 'smaregi|スマレジ' src/Eccube のヒットは il Webhook 受信・会員連携・在庫連携系のみで、スマレジ取引を dtb_order へ取込む処理も別の販売数集計処理も存在しない(他に sales_quantity 集計コマンドは AggregateSales 系のみ)。ECCUBE/スマレジ分離集計も未実装。指摘は維持。"
+    }
+  ]
+}

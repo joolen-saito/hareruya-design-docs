@@ -10,6 +10,17 @@ E2Eシードは各テーブルで **固定ID帯 `900000000〜900000999`** を予
 |---|---|---|
 | dtb_customer | 900000101 | SEED-F06-CUSTOMER |
 | dtb_customer | 900000201 | SEED-M05-ORDERS / SEED-M05-15-ORDER（共有会員） |
+| dtb_customer | 900000904 | SEED-M01-CUSTOMER |
+| dtb_member | 900000901 | SEED-M01-ADMIN |
+| dtb_member | 900000902 | SEED-M01-DISABLED |
+| dtb_member | 900000903 | SEED-M01-2FA-ON |
+| dtb_member | 900000905 | SEED-M01-LOCK |
+| dtb_member | 900000906 | SEED-M01-02-2FA-SECRET |
+| dtb_member | 900000907 | SEED-M01-02-2FA-RESET |
+| dtb_member | 900000908 | SEED-M01-02-2FA-NOSECRET |
+| dtb_member | 900000909 | SEED-M01-02-2FA-NOSECRET-ONCE |
+| dtb_member | 900000910 | SEED-M01-02-2FA-OFF |
+| dtb_member | 900000911 | SEED-M01-02-2FA-LOCK |
 | dtb_order | 900000301 | SEED-M05-15-ORDER（ORDER_ID） |
 | dtb_order | 900000311〜900000350 | SEED-M05-ORDERS（40件） |
 | dtb_order_item | 900000401 | SEED-M05-15-ORDER |

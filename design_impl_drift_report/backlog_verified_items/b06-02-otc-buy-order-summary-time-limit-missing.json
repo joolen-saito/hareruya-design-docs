@@ -1,0 +1,175 @@
+{
+  "id": "b06-02-otc-buy-order-summary-time-limit-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b06-02_0406_sheet-4_sheet.json",
+  "sourceFindingId": "b06-02_0406_sheet-4_sheet-conformance-29f1d612e343",
+  "classification": "バッチ店頭買取管理",
+  "feature": "買取集計バッチ",
+  "issueCategory": "実装漏れ",
+  "issue": "買取集計バッチ開始時に実行時間制限を解除していない",
+  "designBook": "0406_基本設計仕様書(バッチ_店頭買取管理).xlsx",
+  "reproSteps": [
+    "設計書 B06-02 の処理フローで、買取集計バッチ開始時に実行時間制限を解除する要求があることを確認する",
+    "ベース実装 pf-eccube3 の `SummaryService::execute()` が冒頭で `set_time_limit(0)` を実行していることを確認する",
+    "ec-cube-enterprise の `OtcBuyOrderAggregateSummaryCommand::execute()` から `BatchAggregateSummaryAction::handle()`、`SummaryByDateAggregator::aggregate()` までの実行経路を確認する",
+    "同実行経路に `set_time_limit(0)`、`ini_set('max_execution_time', ...)`、または同等の実行時間制限解除処理がないことを確認する"
+  ],
+  "expected": [
+    "買取集計バッチは長時間処理に備えて、バッチ開始時に PHP の実行時間制限を解除する",
+    "設計が正とする pf-eccube3 と同様に、集計・削除・登録・通知へ入る前に `set_time_limit(0)` 相当の処理を実行する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の買取集計コマンドは日付を解決して `BatchAggregateSummaryAction::handle()` を呼ぶが、この入口に実行時間制限解除処理はない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の買取集計コマンド入口",
+          "path": "ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php",
+          "start": 60,
+          "end": 90,
+          "language": "php",
+          "contains": [
+            "protected function execute(InputInterface $input, OutputInterface $output): int",
+            "$dateArg = $input->getArgument('date');",
+            "$summaryDate->setTime(0, 0, 0);",
+            "$this->batchAggregateSummaryAction->handle($summaryDate);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise のバッチAction",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php",
+          "start": 40,
+          "end": 59,
+          "language": "php",
+          "contains": [
+            "public function handle(\\DateTime $summaryDate): void",
+            "SummaryByDateAggregator::aggregate(",
+            "$noSectionProducts = $this->otcBuyOrderRepository->getNoSectionProducts($summaryDate);",
+            "$this->mailService->sendNoSectionAlertMail($noSectionProducts);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の集計本体",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/SummaryByDateAggregator.php",
+          "start": 36,
+          "end": 52,
+          "language": "php",
+          "contains": [
+            "public static function aggregate(",
+            "$summary = $otcBuyOrderRepository->getSectionSummary($summaryDate, $fixedPriceSection);",
+            "$otcBuyOrderSummaryRepository->replaceSummary($summary, $summaryDate);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では同じ買取集計処理の `SummaryService::execute()` 冒頭で `set_time_limit(0)` を実行し、その後にSQLロガー無効化、トランザクション開始、集計・削除・登録・通知へ進む。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 の SummaryService は開始時に実行時間制限を解除する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/OtcBuyOrder/SummaryService.php",
+          "start": 28,
+          "end": 60,
+          "language": "php",
+          "contains": [
+            "public function execute()",
+            "set_time_limit(0);",
+            "$this->app['orm.em']->getConnection()->getConfiguration()->setSQLLogger(null);",
+            "$this->app['orm.em']->getConnection()->beginTransaction();",
+            "$summary = $this->app['hareruya_ec.repository.otc_buy_order']->getSectionSummary($summaryDate);",
+            "$this->app['hareruya_ec.repository.otc_buy_order_summary']->insertOtcBuyOrderSummary($summary, $summaryDate);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B06-02 の処理フローはバッチ開始時の実行時間制限解除を要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html",
+      "start": 1074,
+      "end": 1081,
+      "language": "html",
+      "contains": [
+        "買取集計を実行する（<code>otcBuyOrder:batch updateSummary</code>）",
+        "実行時間制限を解除し、メール送信用の経路を準備し、トランザクションを開始する。"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B06-02 の排他制御・トランザクション節も長時間処理に備えた実行時間制限解除を要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html",
+      "start": 1118,
+      "end": 1118,
+      "language": "html",
+      "contains": [
+        "長時間処理に備えて実行時間制限を解除する。"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の Command 入口には日付解決と Action 呼び出しはあるが `set_time_limit(0)` 相当がない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php",
+      "start": 60,
+      "end": 90,
+      "language": "php",
+      "contains": [
+        "$dateArg = $input->getArgument('date');",
+        "$summaryDate->setTime(0, 0, 0);",
+        "$this->batchAggregateSummaryAction->handle($summaryDate);"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の Action 入口にも実行時間制限解除はない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php",
+      "start": 40,
+      "end": 59,
+      "language": "php",
+      "contains": [
+        "public function handle(\\DateTime $summaryDate): void",
+        "SummaryByDateAggregator::aggregate(",
+        "$this->mailService->sendUpdateOtcBuyOrderSummaryErrorMail($exception->getMessage());"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の集計本体にも実行時間制限解除はない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/SummaryByDateAggregator.php",
+      "start": 36,
+      "end": 52,
+      "language": "php",
+      "contains": [
+        "public static function aggregate(",
+        "$summary = $otcBuyOrderRepository->getSectionSummary($summaryDate, $fixedPriceSection);",
+        "$otcBuyOrderSummaryRepository->replaceSummary($summary, $summaryDate);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は同バッチ本体の冒頭で `set_time_limit(0)` を実行する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/OtcBuyOrder/SummaryService.php",
+      "start": 28,
+      "end": 60,
+      "language": "php",
+      "contains": [
+        "public function execute()",
+        "set_time_limit(0);",
+        "$this->app['orm.em']->getConnection()->beginTransaction();",
+        "$summary = $this->app['hareruya_ec.repository.otc_buy_order']->getSectionSummary($summaryDate);"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"実行時間制限|set_time_limit|otcBuyOrder:batch updateSummary|排他制御・トランザクション\" \"excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html\"",
+      "rg -n \"set_time_limit|max_execution_time|ini_set|OtcBuyOrderAggregateSummaryCommand|BatchAggregateSummaryAction|SummaryByDateAggregator|aggregate-summary\" ../ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php ../ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder ../ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php ../ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderSummaryRepository.php",
+      "rg -n \"set_time_limit|max_execution_time|SummaryService|otcBuyOrder:batch|updateSummary\" ../pf-eccube3/app/Plugin/HareruyaEc/Command/OtcBuyOrderBatch.php ../pf-eccube3/app/Plugin/HareruyaEc/Service/OtcBuyOrder/SummaryService.php"
+    ]
+  },
+  "notes": [
+    "enterprise 内の他画面・他CSV処理には `set_time_limit(0)` が存在するが、B06-02 の `OtcBuyOrderAggregateSummaryCommand` から集計本体へ至る経路では確認できない。",
+    "本件は実行時間制限解除のみを対象とする。コマンド名互換入口、部門未設定通知ログ件数、部門未設定商品取得SQLなどは別候補として扱う。"
+  ]
+}

@@ -1,0 +1,834 @@
+{
+  "functionId": "m07-10_0206_sheet-14_sheet",
+  "featureNo": "M07-10",
+  "title": "M07-10 【新規】買取商品履歴(検索入力)",
+  "domain": "m07",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+  "sourceBook": "0206_基本設計仕様書(ネット買取管理機能).html",
+  "sheetId": "sheet-14",
+  "sheetName": "【新規】買取商品履歴(検索入力)",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "m07-10_0206_sheet-14_sheet-conformance-46935a40c9e5",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3490-3492",
+      "designRefDetail": null,
+      "designExpectation": "申込者名検索は、空白が含まれている場合（姓と名の間に空白等）空白で区切ったいずれかの入力が一致していれば検索結果に出力する。",
+      "designQuote": "申込者名検索は、空白が含まれている場合（姓と名の間に空白等）空白で区切ったいずれかの入力が一致していれば検索結果に出力する。",
+      "implRef": "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:89-107",
+      "implementationActual": "申込者名を空白・カンマで分割した後、各キーワードごとに andWhere(orX(...)) を追加しているため、複数キーワードはAND条件になる。各キーワード内では姓・名・姓カナ・名カナへのOR部分一致。",
+      "difference": "設計は空白区切りの「いずれか」が一致すれば出力するOR検索を要求しているが、実装はforeach内でandWhereを繰り返すため、分割後の全キーワードがいずれかの姓名/カナ列に一致しないと出力されない。反証として買取一覧側の同仕様実装 src/Eccube/Repository/DtbBuyOrderRepository.php:133-142 と共通ユーティリティ src/Eccube/Util/SqlUtil.php:128-157 も確認したが、同じくキーワード単位はANDであり、設計要求のORを満たす実装は見つからなかった。",
+      "mismatchReason": "設計は空白区切りの「いずれか」が一致すれば出力するOR検索を要求しているが、実装はforeach内でandWhereを繰り返すため、分割後の全キーワードがいずれかの姓名/カナ列に一致しないと出力されない。反証として買取一覧側の同仕様実装 src/Eccube/Repository/DtbBuyOrderRepository.php:133-142 と共通ユーティリティ src/Eccube/Util/SqlUtil.php:128-157 も確認したが、同じくキーワード単位はANDであり、設計要求のORを満たす実…",
+      "comparisonRows": [
+        {
+          "item": "空白区切りキーワード間の結合",
+          "design": "空白で区切ったいずれかの入力が一致していれば検索結果に出力する。",
+          "implementation": "foreach ($keywords as $i => $keyword) ごとに $qb->andWhere($qb->expr()->orX(...)) を追加する。",
+          "mismatch": "キーワード間がORではなくANDになる。"
+        },
+        {
+          "item": "検索対象列",
+          "design": "申込者姓、申込者名、申込者姓カナ、申込者名カナに対して部分一致検索を行う。",
+          "implementation": "bo.lastName / bo.firstName / bo.lastNameKana / bo.firstNameKana に LIKE '%keyword%'。",
+          "mismatch": "検索対象列と部分一致は一致しているが、複数キーワード時の結合条件が不一致。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m07-10_0206_sheet-14_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:89-107",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「申込者名検索は、空白が含まれている場合（姓と名の間に空白等）空白で区切ったいずれかの入力が一致していれば検索結果に出力する。」。実装は「申込者名を空白・カンマで分割した後、各キーワードごとに andWhere(orX(...)) を追加しているため、複数キーワードはAND条件になる。各キーワード内では姓・名・姓カナ・名カナへのOR部分一致。」。乖離理由は「設計は空白区切りの「いずれか」が一致すれば出力するOR検索を要求しているが、実装はforeach内でandWhereを繰り返すため、分割後の全キーワードがいずれかの姓名/カナ列に一致しないと出力されない。反証として買取一覧側の同仕様実装 src/Eccube/Repository/DtbBuyOrderRepository.php:133-142 と共通ユーティリティ src/Eccube/Util/SqlUtil.php:128-157 も確認したが、同じくキーワード単位はANDであり、設計要求のORを満たす実…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Form・入力項目",
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:89-107",
+        "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:89\n86:             );\n87:         }\n88: \n89:         // 申込者名（空白区切りで複数キーワード、姓・名・姓カナ・名カナに部分一致）\n90:         if ($searchData->customerName !== null) {\n91:             $keywords = preg_split(\n92:                 \"/[\\s,　]+/u\",",
+        "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:30\n27: /**\n28:  * @extends AbstractRepository<DtbBuyOrderStockHistory>\n29:  */\n30: class DtbBuyOrderStockHistoryRepository extends AbstractRepository\n31: {\n32:     public function __construct(ManagerRegistry $registry)\n33:     {"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m07-10_0206_sheet-14_sheet-conformance-ccb849196d31",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3487-3488,3511",
+      "designRefDetail": null,
+      "designExpectation": "会員IDの書式・制限は「半角数字(整数)」で、完全一致検索とする。",
+      "designQuote": "会員IDの書式・制限は「半角数字(整数)」で、完全一致検索とする。",
+      "implRef": "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63; src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:23-26; src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:81-86",
+      "implementationActual": "会員IDフォームは TextType、DTOも ?string として受け取り、Repositoryで (int) $searchData->customerId にキャストして IDENTITY(bo.Customer) = :customerId の完全一致検索をしている。",
+      "difference": "完全一致検索自体は実装されているが、設計の「半角数字(整数)」入力制限に対して IntegerType や半角数字バリデーションがなく、非数値文字列もフォーム入力として受け付けてから整数キャストされる。反証として FormType、DTO、SearchControllerTrait、FormUtil、Repositoryを確認したが、会員IDの半角数字制限を行う実装は見つからなかった。",
+      "mismatchReason": "完全一致検索自体は実装されているが、設計の「半角数字(整数)」入力制限に対して IntegerType や半角数字バリデーションがなく、非数値文字列もフォーム入力として受け付けてから整数キャストされる。反証として FormType、DTO、SearchControllerTrait、FormUtil、Repositoryを確認したが、会員IDの半角数字制限を行う実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "入力書式",
+          "design": "半角数字(整数)",
+          "implementation": "TextTypeで受け付け、DTOは ?string。",
+          "mismatch": "半角数字(整数)としてのフォーム型/バリデーションがない。"
+        },
+        {
+          "item": "検索方式",
+          "design": "完全一致検索",
+          "implementation": "IDENTITY(bo.Customer) = :customerId。",
+          "mismatch": "検索方式は一致。ただし入力制限が設計と異なる。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m07-10_0206_sheet-14_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63; src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:23-26; src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:81-86",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「会員IDの書式・制限は「半角数字(整数)」で、完全一致検索とする。」。実装は「会員IDフォームは TextType、DTOも ?string として受け取り、Repositoryで (int) $searchData->customerId にキャストして IDENTITY(bo.Customer) = :customerId の完全一致検索をしている。」。乖離理由は「完全一致検索自体は実装されているが、設計の「半角数字(整数)」入力制限に対して IntegerType や半角数字バリデーションがなく、非数値文字列もフォーム入力として受け付けてから整数キャストされる。反証として FormType、DTO、SearchControllerTrait、FormUtil、Repositoryを確認したが、会員IDの半角数字制限を行う実装は見つからなかった。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Form・入力項目",
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63",
+        "src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:23-26",
+        "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:81-86",
+        "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php",
+        "src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php",
+        "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60\n57:                 'label' => 'admin.purchase.online.history.form.buy_order_id.label',\n58:                 'required' => false,\n59:             ])\n60:             ->add('customer_id', TextType::class, [\n61:                 'label' => 'admin.purchase.online.history.form.customer_id.label',\n62:                 'required' => false,\n63:             ])",
+        "src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:23\n20: \n21: final readonly class HistorySearchDataDto\n22: {\n23:     public function __construct(\n24:         public ?int $buyOrderId = null,\n25:         public ?string $customerId = null,\n26:         public ?string $customerName = null,",
+        "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:81\n78:             );\n79:         }\n80: \n81:         // 会員ID（完全一致）\n82:         if ($searchData->customerId !== null && $searchData->customerId !== '') {\n83:             $qb->andWhere('IDENTITY(bo.Customer) = :customerId')->setParameter(\n84:                 'customerId',"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m07-10_0206_sheet-14_sheet-conformance-8d022d4ec104",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3496-3497,3517-3518",
+      "designRefDetail": null,
+      "designExpectation": "振込完了日(From)/(To)の書式・制限は「日付(yyyy/mm/dd)」で、振込が完了した日を買取が成立した日とみなし検索項目とする。",
+      "designQuote": "振込完了日(From)/(To)の書式・制限は「日付(yyyy/mm/dd)」で、振込が完了した日を買取が成立した日とみなし検索項目とする。",
+      "implRef": "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-103; src/Eccube/Resource/template/admin/Purchase/history.twig:28-41; src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:123-145",
+      "implementationActual": "振込完了日は DateTimeType の single_text で実装され、画面JSは datetimepicker の format を 'YYYY-MM-DD HH:mm' にしている。Repositoryは振込完了ステータス履歴の MAX(createDate) に対して >= From / <= To のDateTime比較を行う。",
+      "difference": "設計は日付のみ yyyy/mm/dd を要求しているが、実装は年月日と時刻を入力・比較する日時検索で、表示フォーマットも YYYY-MM-DD HH:mm。反証としてTwig、FormType、Repository、翻訳キーを確認したが、yyyy/mm/ddの日付専用入力・日単位To終端補正は見つからなかった。",
+      "mismatchReason": "設計は日付のみ yyyy/mm/dd を要求しているが、実装は年月日と時刻を入力・比較する日時検索で、表示フォーマットも YYYY-MM-DD HH:mm。反証としてTwig、FormType、Repository、翻訳キーを確認したが、yyyy/mm/ddの日付専用入力・日単位To終端補正は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "入力書式",
+          "design": "日付(yyyy/mm/dd)",
+          "implementation": "datetimepicker format: YYYY-MM-DD HH:mm。",
+          "mismatch": "日付のみではなく時刻付き、かつ区切りがスラッシュではなくハイフン。"
+        },
+        {
+          "item": "検索粒度",
+          "design": "振込が完了した日を検索項目とする。",
+          "implementation": "振込完了ステータス履歴のMAX(createDate)をDateTimeで >= / <= 比較。",
+          "mismatch": "日単位検索ではなく日時単位検索になる。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m07-10_0206_sheet-14_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-103; src/Eccube/Resource/template/admin/Purchase/history.twig:28-41; src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:123-145",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「振込完了日(From)/(To)の書式・制限は「日付(yyyy/mm/dd)」で、振込が完了した日を買取が成立した日とみなし検索項目とする。」。実装は「振込完了日は DateTimeType の single_text で実装され、画面JSは datetimepicker の format を 'YYYY-MM-DD HH:mm' にしている。Repositoryは振込完了ステータス履歴の MAX(createDate) に対して >= From / <= To のDateTime比較を行う。」。乖離理由は「設計は日付のみ yyyy/mm/dd を要求しているが、実装は年月日と時刻を入力・比較する日時検索で、表示フォーマットも YYYY-MM-DD HH:mm。反証としてTwig、FormType、Repository、翻訳キーを確認したが、yyyy/mm/ddの日付専用入力・日単位To終端補正は見つからなかった。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "Form・入力項目",
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-103",
+        "src/Eccube/Resource/template/admin/Purchase/history.twig:28-41",
+        "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:123-145",
+        "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php",
+        "src/Eccube/Resource/template/admin/Purchase/history.twig",
+        "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82\n79:                         ->orderBy('bos.rank', 'ASC');\n80:                 },\n81:             ])\n82:             ->add('transfer_complete_date_from', DateTimeType::class, [\n83:                 'label' => 'admin.purchase.online.history.form.transfer_complete_date_from.label',\n84:                 'required' => false,\n85:                 'input' => 'datetime',",
+        "src/Eccube/Resource/template/admin/Purchase/history.twig:28\n25: </style>\n26: {% endblock stylesheet %}\n27: \n28: {% block javascript %}\n29: <script src=\"{{ asset('assets/js/vendor/moment-with-locales.min.js', 'admin') }}\"></script>\n30: <script src=\"{{ asset('assets/js/vendor/tempusdominus-bootstrap-4.min.js', 'admin') }}\"></script>\n31: <script nonce=\"{{ csp_nonce }}\">",
+        "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:123\n120:             );\n121:         }\n122: \n123:         // 振込完了日（サブクエリを WHERE と ORDER BY で使用）\n124:         $qb->setParameter('tcStatus', MtbBuyOrderStatus::TRANSFER_COMPLETE);\n125:         $createTcSubQuery = function (string $alias) {\n126:             return sprintf("
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 9,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m07-10_0206_sheet-14_sheet-req-f275ddacbc",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "【新規】買取商品履歴(検索入力)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-10_0206_sheet-14_sheet-req-aeb2346878",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "【新規】買取商品履歴(検索入力) / B7 / image 1",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-10_0206_sheet-14_sheet-req-e079ddfd23",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "・ 完全一致検索とする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-10_0206_sheet-14_sheet-req-e2e3fbd5da",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "・ 買取一覧の申込者名検索と同仕様（以下記載の仕様）とする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-10_0206_sheet-14_sheet-req-bfe05d5f28",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "・ 空白が含まれている場合（姓と名の間に空白等）空白で区切ったいずれかの入力が一致していれば検索結果に出力する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-10_0206_sheet-14_sheet-req-5abeec7c32",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "・ 申込者姓、申込者名、申込者姓カナ、申込者名カナに対して部分一致検索を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-10_0206_sheet-14_sheet-req-472893854f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "・ チェックボックスで複数の状態をOR検索可能とする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-10_0206_sheet-14_sheet-req-de2dd00d70",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "複数選択(チェックボックス)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-10_0206_sheet-14_sheet-req-5aca349d89",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "検索実行する（買取商品履歴(検索結果)の内容を表示する）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "designDerivedTerms": {
+      "routeNames": [],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "mm/dd"
+      ],
+      "businessTerms": [
+        "M07",
+        "買取商品履歴",
+        "ネット買取管理機能",
+        "実在庫情報変更履歴の検索",
+        "ネット買取にも実在庫情報を実装するため",
+        "会員ID検索",
+        "買取一覧の申込者名検索と同仕様",
+        "買取が成立したステータスを選択可能とする",
+        "振込が完了した日を買取が成立した日とみなし",
+        "買取価格検索",
+        "買取一覧では買取情報の合計金額に対する検索だが",
+        "買取商品履歴では買取情報の明細に対する検索を行う",
+        "商品に設定されている買取価格ではなく",
+        "買取番号",
+        "会員ID",
+        "商品コード"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 3,
+    "candidateRefs": [
+      {
+        "term": "mm/dd",
+        "termType": "path",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyOrderType.php:146",
+        "snippet": "'format' => 'yyyy/MM/dd',",
+        "weight": 6
+      },
+      {
+        "term": "mm/dd",
+        "termType": "path",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/Front/Purchase/ConfirmType.php:152",
+        "snippet": "'format' => 'yyyy/MM/dd',",
+        "weight": 6
+      },
+      {
+        "term": "買取商品履歴",
+        "termType": "businessTerm",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderHistoryController.php:56",
+        "snippet": "* 買取商品履歴",
+        "weight": 4
+      },
+      {
+        "term": "買取商品履歴",
+        "termType": "businessTerm",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Purchase/PurchaseHistoryController.php:39",
+        "snippet": "* ネット買取 買取商品履歴",
+        "weight": 4
+      },
+      {
+        "term": "買取商品履歴",
+        "termType": "businessTerm",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Purchase/PurchaseHistoryController.php:61",
+        "snippet": "* 買取商品履歴",
+        "weight": 4
+      },
+      {
+        "term": "買取番号",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:73",
+        "snippet": "// 買取番号（完全一致）",
+        "weight": 4
+      },
+      {
+        "term": "会員ID",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:81",
+        "snippet": "// 会員ID（完全一致）",
+        "weight": 4
+      },
+      {
+        "term": "会員ID",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbOtcBuyOrderRepository.php:269",
+        "snippet": "// 会員ID",
+        "weight": 4
+      },
+      {
+        "term": "商品コード",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbStockHistoryRepository.php:95",
+        "snippet": "// id 商品名(日/英)・カード名(日/英)・商品ID・商品コード",
+        "weight": 4
+      },
+      {
+        "term": "商品コード",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/ProductClassRepository.php:2121",
+        "snippet": "* @param string $productCode 商品コード",
+        "weight": 4
+      },
+      {
+        "term": "mm/dd",
+        "termType": "path",
+        "role": "Locale",
+        "ref": "src/Eccube/Resource/locale/messages.en.yaml:3894",
+        "snippet": "front.event.search.date.placeholder: 'YYYY/MM/DD'",
+        "weight": 4
+      },
+      {
+        "term": "買取番号",
+        "termType": "businessTerm",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:113",
+        "snippet": "$errs[] = sprintf('買取番号: %07d は存在しません。', $orderId);",
+        "weight": 4
+      },
+      {
+        "term": "買取番号",
+        "termType": "businessTerm",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Admin/Purchase/BuyOrderStockInbound.php:48",
+        "snippet": "$stockChangeReason = \"ネット買取による入庫 買取番号：{$BuyOrder->getId()}\";",
+        "weight": 4
+      },
+      {
+        "term": "買取番号",
+        "termType": "businessTerm",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/Exporter/BuyOrderHistoryCsvExportService.php:33",
+        "snippet": "'buyOrderId' => '買取番号',",
+        "weight": 4
+      },
+      {
+        "term": "会員ID",
+        "termType": "businessTerm",
+        "role": "Service",
+        "ref": "src/Eccube/Service/MailService.php:1287",
+        "snippet": "会員ID",
+        "weight": 4
+      },
+      {
+        "term": "会員ID",
+        "termType": "businessTerm",
+        "role": "Service",
+        "ref": "src/Eccube/Service/MailService.php:1342",
+        "snippet": "会員ID, 履歴合計値, 現在のポイント, 差分",
+        "weight": 4
+      },
+      {
+        "term": "商品コード",
+        "termType": "businessTerm",
+        "role": "Service",
+        "ref": "src/Eccube/Service/OrderPdfService.php:103",
+        "snippet": "$this->labelCell[] = '商品名 / 商品コード';",
+        "weight": 4
+      },
+      {
+        "term": "商品コード",
+        "termType": "businessTerm",
+        "role": "Service",
+        "ref": "src/Eccube/Service/ProductAllCsv.php:287",
+        "snippet": "'label' => '商品コード',",
+        "weight": 4
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 6,
+    "implementationGapRequirementCount": 0,
+    "rows": [
+      {
+        "findingId": "m07-10_0206_sheet-14_sheet-conformance-46935a40c9e5",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3490-3492",
+        "designRequirement": "空白で区切ったいずれかの入力が一致していれば検索結果に出力する。",
+        "implementationActual": "foreach ($keywords as $i => $keyword) ごとに $qb->andWhere($qb->expr()->orX(...)) を追加する。",
+        "mismatchReason": "キーワード間がORではなくANDになる。",
+        "implementationRefs": [
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:89-107",
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "空白区切りキーワード間の結合",
+            "design": "空白で区切ったいずれかの入力が一致していれば検索結果に出力する。",
+            "implementation": "foreach ($keywords as $i => $keyword) ごとに $qb->andWhere($qb->expr()->orX(...)) を追加する。",
+            "mismatch": "キーワード間がORではなくANDになる。"
+          }
+        ]
+      },
+      {
+        "findingId": "m07-10_0206_sheet-14_sheet-conformance-46935a40c9e5",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3490-3492",
+        "designRequirement": "申込者姓、申込者名、申込者姓カナ、申込者名カナに対して部分一致検索を行う。",
+        "implementationActual": "bo.lastName / bo.firstName / bo.lastNameKana / bo.firstNameKana に LIKE '%keyword%'。",
+        "mismatchReason": "検索対象列と部分一致は一致しているが、複数キーワード時の結合条件が不一致。",
+        "implementationRefs": [
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:89-107",
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "検索対象列",
+            "design": "申込者姓、申込者名、申込者姓カナ、申込者名カナに対して部分一致検索を行う。",
+            "implementation": "bo.lastName / bo.firstName / bo.lastNameKana / bo.firstNameKana に LIKE '%keyword%'。",
+            "mismatch": "検索対象列と部分一致は一致しているが、複数キーワード時の結合条件が不一致。"
+          }
+        ]
+      },
+      {
+        "findingId": "m07-10_0206_sheet-14_sheet-conformance-ccb849196d31",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3487-3488,3511",
+        "designRequirement": "半角数字(整数)",
+        "implementationActual": "TextTypeで受け付け、DTOは ?string。",
+        "mismatchReason": "半角数字(整数)としてのフォーム型/バリデーションがない。",
+        "implementationRefs": [
+          "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63",
+          "src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:23-26",
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:81-86",
+          "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php",
+          "src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php",
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "入力書式",
+            "design": "半角数字(整数)",
+            "implementation": "TextTypeで受け付け、DTOは ?string。",
+            "mismatch": "半角数字(整数)としてのフォーム型/バリデーションがない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m07-10_0206_sheet-14_sheet-conformance-ccb849196d31",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3487-3488,3511",
+        "designRequirement": "完全一致検索",
+        "implementationActual": "IDENTITY(bo.Customer) = :customerId。",
+        "mismatchReason": "検索方式は一致。ただし入力制限が設計と異なる。",
+        "implementationRefs": [
+          "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63",
+          "src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:23-26",
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:81-86",
+          "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php",
+          "src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php",
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "検索方式",
+            "design": "完全一致検索",
+            "implementation": "IDENTITY(bo.Customer) = :customerId。",
+            "mismatch": "検索方式は一致。ただし入力制限が設計と異なる。"
+          }
+        ]
+      },
+      {
+        "findingId": "m07-10_0206_sheet-14_sheet-conformance-8d022d4ec104",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3496-3497,3517-3518",
+        "designRequirement": "日付(yyyy/mm/dd)",
+        "implementationActual": "datetimepicker format: YYYY-MM-DD HH:mm。",
+        "mismatchReason": "日付のみではなく時刻付き、かつ区切りがスラッシュではなくハイフン。",
+        "implementationRefs": [
+          "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-103",
+          "src/Eccube/Resource/template/admin/Purchase/history.twig:28-41",
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:123-145",
+          "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php",
+          "src/Eccube/Resource/template/admin/Purchase/history.twig",
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "入力書式",
+            "design": "日付(yyyy/mm/dd)",
+            "implementation": "datetimepicker format: YYYY-MM-DD HH:mm。",
+            "mismatch": "日付のみではなく時刻付き、かつ区切りがスラッシュではなくハイフン。"
+          }
+        ]
+      },
+      {
+        "findingId": "m07-10_0206_sheet-14_sheet-conformance-8d022d4ec104",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14:3496-3497,3517-3518",
+        "designRequirement": "振込が完了した日を検索項目とする。",
+        "implementationActual": "振込完了ステータス履歴のMAX(createDate)をDateTimeで >= / <= 比較。",
+        "mismatchReason": "日単位検索ではなく日時単位検索になる。",
+        "implementationRefs": [
+          "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-103",
+          "src/Eccube/Resource/template/admin/Purchase/history.twig:28-41",
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:123-145",
+          "src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php",
+          "src/Eccube/Resource/template/admin/Purchase/history.twig",
+          "src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "検索粒度",
+            "design": "振込が完了した日を検索項目とする。",
+            "implementation": "振込完了ステータス履歴のMAX(createDate)をDateTimeで >= / <= 比較。",
+            "mismatch": "日単位検索ではなく日時単位検索になる。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 9,
+    "verdictedCount": 9,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 9,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m07-10_0206_sheet-14_sheet-req-f275ddacbc",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "【新規】買取商品履歴(検索入力)",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-10_0206_sheet-14_sheet-req-aeb2346878",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "【新規】買取商品履歴(検索入力) / B7 / image 1",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-10_0206_sheet-14_sheet-req-e079ddfd23",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "・ 完全一致検索とする",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-10_0206_sheet-14_sheet-req-e2e3fbd5da",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "・ 買取一覧の申込者名検索と同仕様（以下記載の仕様）とする",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-10_0206_sheet-14_sheet-req-bfe05d5f28",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "・ 空白が含まれている場合（姓と名の間に空白等）空白で区切ったいずれかの入力が一致していれば検索結果に出力する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-10_0206_sheet-14_sheet-req-5abeec7c32",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "・ 申込者姓、申込者名、申込者姓カナ、申込者名カナに対して部分一致検索を行う",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-10_0206_sheet-14_sheet-req-472893854f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "・ チェックボックスで複数の状態をOR検索可能とする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m07-10_0206_sheet-14_sheet-req-de2dd00d70",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "複数選択(チェックボックス)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m07-10_0206_sheet-14_sheet-req-5aca349d89",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-14",
+        "designRequirement": "検索実行する（買取商品履歴(検索結果)の内容を表示する）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      }
+    ],
+    "materialGapRows": []
+  }
+}

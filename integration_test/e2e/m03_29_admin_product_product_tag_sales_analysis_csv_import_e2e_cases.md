@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_29_admin_product_product_tag_sales_analysis_csv_import_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・フラッシュメッセージ・ダウンロード発火などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約(NotBlank/maxSize)をオラクル化しない。取込後の `dtb_product_tag_sales_analysis` 原値照合・履歴件数の厳密値・ログ出力は手動/間接または対象外（観測外）とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・フラッシュメッセージ・ダウンロード発火などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約(NotBlank/maxSize)をオラクル化しない。取込後の `dtb_product_tag_sales_analysis` 原値照合・履歴件数の厳密値・ログ出力は手動/間接または対象外（観測外）とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 刷新先 ec-cube-enterprise に該当画面が存在する（`TagSalesAnalysisCsvController` ＋ `@admin/Product/csv_tag_sales_analysis.twig`（共通 `base_csv_upload.twig` 継承））。設計源は pf-eccube3 リバースのため、基本設計・観点表を上位オラクルとし、刷新先との乖離は付帯表4に出す。
 
@@ -26,68 +26,68 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-001	IT-25	UI部品	P2	アップロード画面にファイル入力・送信ボタン・雛形DLリンクが表示される	管理ログイン済／SEED-M03-29-ADMIN	—	"1. /admin/product/tag_sales_analysis/csv_upload を開く"	ファイル入力欄・送信ボタン「CSVファイルをアップロード」・雛形ダウンロードリンクが表示されること。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-002	IT-25	UI部品	P3	タイトル・サブタイトル・アップロードカード見出しが表示される	管理ログイン済／SEED-M03-29-ADMIN	—	"1. アップロード画面を開く"	タイトル「商品管理」・サブタイトル「売上分析タグ更新CSVアップロード」・カード見出し「売上分析タグ更新CSV」が表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-001	IT-25	UI部品	P2	アップロード画面にファイル入力・送信ボタン・雛形DLリンクが表示される	管理ログイン済／SEED-M03-29-ADMIN	—	1. /admin/product/tag_sales_analysis/csv_upload を開く	ファイル入力欄・送信ボタン「CSVファイルをアップロード」・雛形ダウンロードリンクが表示されること。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-002	IT-25	UI部品	P3	タイトル・サブタイトル・アップロードカード見出しが表示される	管理ログイン済／SEED-M03-29-ADMIN	—	1. アップロード画面を開く	タイトル「商品管理」・サブタイトル「売上分析タグ更新CSVアップロード」・カード見出し「売上分析タグ更新CSV」が表示されること。				
 m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-003	IT-25	UI部品	P2	フォーマット表に2列が表示され商品IDに必須バッジが付く	管理ログイン済／SEED-M03-29-ADMIN	—	"1. アップロード画面を開く
-2. フォーマット表を確認する"	「商品ID」「売上分析タグ(ID)」行が表示され、商品IDにのみ「必須」バッジ（1個）が付くこと。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-004	IT-25	確認ダイアログ	P2	送信前の確認ダイアログがなく直接送信される	管理ログイン済／SEED-M03-29-ADMIN	"非破壊CSV（存在しない商品ID 1行）"	"1. アップロード画面を開く
-2. CSVを選択し送信する"	送信前に確認ダイアログが表示されず、csv_upload へ戻ること。
+2. フォーマット表を確認する"	「商品ID」「売上分析タグ(ID)」行が表示され、商品IDにのみ「必須」バッジ（1個）が付くこと。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-004	IT-25	確認ダイアログ	P2	送信前の確認ダイアログがなく直接送信される	管理ログイン済／SEED-M03-29-ADMIN	非破壊CSV（存在しない商品ID 1行）	"1. アップロード画面を開く
+2. CSVを選択し送信する"	送信前に確認ダイアログが表示されず、csv_upload へ戻ること。				
 m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-005	IT-15	状態変化	P3	ファイル選択でラベルにファイル名が表示される	管理ログイン済／SEED-M03-29-ADMIN	ファイル名 e2e_label.csv	"1. アップロード画面を開く
-2. ファイルを選択する"	カスタムファイルラベルに選択したファイル名「e2e_label.csv」が表示されること。
+2. ファイルを選択する"	カスタムファイルラベルに選択したファイル名「e2e_label.csv」が表示されること。				
 m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-006	IT-03	画面遷移	P2	ナビ「商品管理」→「商品CSV管理」→「売上分析タグ更新CSVアップロード」でアップロード画面へ遷移する	管理ログイン済／SEED-M03-29-ADMIN	—	"1. 管理画面にログインする
-2. ナビ「商品管理」→「商品CSV管理」→「売上分析タグ更新CSVアップロード」を順に選択する"	URLが csv_upload となりアップロード画面（フォーマット表・履歴）が表示されること（ナビ操作のセレクタは要実機確認）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-007	IT-25	UI部品	P3	取込履歴カードと件数プルダウンが表示される	管理ログイン済／SEED-M03-29-ADMIN	—	"1. アップロード画面を開く"	「CSVインポート履歴」カードと履歴件数プルダウンが表示されること。
+2. ナビ「商品管理」→「商品CSV管理」→「売上分析タグ更新CSVアップロード」を順に選択する"	URLが csv_upload となりアップロード画面（フォーマット表・履歴）が表示されること（ナビ操作のセレクタは要実機確認）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-007	IT-25	UI部品	P3	取込履歴カードと件数プルダウンが表示される	管理ログイン済／SEED-M03-29-ADMIN	—	1. アップロード画面を開く	「CSVインポート履歴」カードと履歴件数プルダウンが表示されること。				
 m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-008	IT-25	UI部品	P3	ファイル入力欄の accept 属性にCSV/TSV形式が含まれる	管理ログイン済／SEED-M03-29-ADMIN	—	"1. アップロード画面を開く
-2. ファイル入力欄の accept 属性を確認する"	ファイル入力欄の accept 属性に「.csv」が含まれること（設計: .csv,text/csv,.tsv,text/tsv）。
+2. ファイル入力欄の accept 属性を確認する"	ファイル入力欄の accept 属性に「.csv」が含まれること（設計: .csv,text/csv,.tsv,text/tsv）。				
 m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-010	IT-27	実行結果	P2	雛形ダウンロードが発火しファイル名が一致する	管理ログイン済／SEED-M03-29-ADMIN	—	"1. アップロード画面を開く
-2. 雛形ダウンロードリンクを押下する"	ダウンロードが発火し、ファイル名が「product_tag_sales_analysis_template.csv」であること（内容は手動確認）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-020	IT-13	URL直接アクセス	P1	未ログインでアップロードURLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product/tag_sales_analysis/csv_upload へ直接アクセスする"	管理ログイン画面へ誘導されること。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-025	IT-13	URL直接アクセス	P2	未ログインで雛形ダウンロードURLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product/tag_sales_analysis/csv_template へ直接アクセスする"	管理ログイン画面へ誘導され、雛形は取得できないこと。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-026	IT-15	権限・認可	P1	未ログインで取込POST(import)へ直接アクセスすると管理ログイン画面へ誘導され取込されない	未ログイン	"任意のCSV（送信されない想定）"	"1. /admin/product/tag_sales_analysis/import へ直接POSTする"	管理ログイン画面へ誘導され、取込処理が実行されないこと。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-021	IT-03	画面遷移	P2	csv_upload を開くとアップロード画面（フォーマット表・履歴）が表示される	管理ログイン済／SEED-M03-29-ADMIN	—	"1. csv_upload を開く"	URLが csv_upload で、フォーマット表「売上分析タグ更新CSVファイルフォーマット」と「CSVインポート履歴」が表示されること。
+2. 雛形ダウンロードリンクを押下する"	ダウンロードが発火し、ファイル名が「product_tag_sales_analysis_template.csv」であること（内容は手動確認）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-020	IT-13	URL直接アクセス	P1	未ログインでアップロードURLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product/tag_sales_analysis/csv_upload へ直接アクセスする	管理ログイン画面へ誘導されること。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-025	IT-13	URL直接アクセス	P2	未ログインで雛形ダウンロードURLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product/tag_sales_analysis/csv_template へ直接アクセスする	管理ログイン画面へ誘導され、雛形は取得できないこと。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-026	IT-15	権限・認可	P1	未ログインで取込POST(import)へ直接アクセスすると管理ログイン画面へ誘導され取込されない	未ログイン	任意のCSV（送信されない想定）	1. /admin/product/tag_sales_analysis/import へ直接POSTする	管理ログイン画面へ誘導され、取込処理が実行されないこと。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-021	IT-03	画面遷移	P2	csv_upload を開くとアップロード画面（フォーマット表・履歴）が表示される	管理ログイン済／SEED-M03-29-ADMIN	—	1. csv_upload を開く	URLが csv_upload で、フォーマット表「売上分析タグ更新CSVファイルフォーマット」と「CSVインポート履歴」が表示されること。				
 m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-022	IT-03	画面遷移	P2	取込フォーム送信後（成否問わず）csv_upload へリダイレクトされフラッシュが表示される	管理ログイン済／SEED-M03-29-ADMIN	ファイル未選択で送信	"1. アップロード画面を開く
-2. ファイル未選択のまま送信する"	csv_upload へリダイレクトされ、フラッシュメッセージが表示されること。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-023	IT-03	画面遷移	P2	許容件数(50)を指定すると履歴件数プルダウンの選択が保持される	管理ログイン済／SEED-M03-29-ADMIN	page_no=1&page_count=50	"1. csv_upload?page_no=1&page_count=50 を開く"	履歴件数プルダウンで「50件」が選択状態であること。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-024	IT-03	画面遷移	P3	非許容件数(7)を指定すると既定10件にフォールバックする	管理ログイン済／SEED-M03-29-ADMIN	page_no=1&page_count=7	"1. csv_upload?page_no=1&page_count=7 を開く"	履歴件数プルダウンで「10件」が選択状態であること（許容外はセッション保存されない）。
+2. ファイル未選択のまま送信する"	csv_upload へリダイレクトされ、フラッシュメッセージが表示されること。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-023	IT-03	画面遷移	P2	許容件数(50)を指定すると履歴件数プルダウンの選択が保持される	管理ログイン済／SEED-M03-29-ADMIN	page_no=1&page_count=50	1. csv_upload?page_no=1&page_count=50 を開く	履歴件数プルダウンで「50件」が選択状態であること。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-024	IT-03	画面遷移	P3	非許容件数(7)を指定すると既定10件にフォールバックする	管理ログイン済／SEED-M03-29-ADMIN	page_no=1&page_count=7	1. csv_upload?page_no=1&page_count=7 を開く	履歴件数プルダウンで「10件」が選択状態であること（許容外はセッション保存されない）。				
 m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-030	IT-22	必須バリデーション	P1	ファイル未選択で送信するとエラーフラッシュが表示され同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	ファイル＝未選択	"1. アップロード画面を開く
-2. ファイル未選択のまま送信する"	エラーフラッシュが表示され、csv_upload に留まること。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-031	IT-22	相関バリデーション	P2	ヘッダのみ(データ行なし)のCSVで事前検証エラーフラッシュが表示される	管理ログイン済／SEED-M03-29-ADMIN	"ヘッダ行のみのCSV"	"1. アップロード画面を開く
-2. ヘッダのみのCSVを送信する"	事前検証エラーフラッシュが表示され、csv_upload に留まること。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-032	IT-22	その他のバリデーション	P2	改行数が上限(5010)以上のCSVで上限超過エラーフラッシュが表示される	管理ログイン済／SEED-M03-29-ADMIN	"5010行以上のCSV（存在しない商品ID）"	"1. アップロード画面を開く
-2. 上限以上の行数のCSVを送信する"	「(行数) 行を超えるCSVファイルは登録できません。」のエラーフラッシュが表示され、取込処理に入らず csv_upload に留まること。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-033	IT-22	DBとの相関バリデーション	P1	存在しない商品IDのCSVで商品不存在エラー・ロールバックし同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	"存在しない商品ID 1行（タグ列空）"	"1. アップロード画面を開く
-2. 存在しない商品IDのCSVを送信する"	商品不存在エラーフラッシュが表示され全体ロールバックされ、csv_upload に留まること。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-034	IT-22	その他のバリデーション	P2	列数が定義(2列)と不一致のCSVで行エラー・全体中断し同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	"列数が1列のみのデータ行を含むCSV（非破壊）"	"1. アップロード画面を開く
-2. 列数不一致のCSVを送信する"	エラーフラッシュが表示され全体中断（ロールバック）され、csv_upload に留まること（判定順序#3。文言は要実機確認）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-035	IT-22	数値バリデーション	P2	商品ID列が非数値のCSVで列検証エラー・全体中断し同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	"商品ID列に非数値（例:abc）を含むCSV（非破壊）"	"1. アップロード画面を開く
-2. 商品ID非数値のCSVを送信する"	エラーフラッシュが表示され全体中断（ロールバック）され、csv_upload に留まること（判定順序#4 列単体検証。文言は要実機確認）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-036	IT-22	必須バリデーション	P1	商品ID列が空のデータ行で必須エラー・全体中断し同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	"商品ID列が空のデータ行を含むCSV（非破壊）"	"1. アップロード画面を開く
-2. 商品ID空のCSVを送信する"	エラーフラッシュが表示され全体中断（ロールバック）され、csv_upload に留まること（判定順序#4 商品ID必須。文言は要実機確認）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-037	IT-22	数値バリデーション	P2	タグ列に非数値を含むCSVで列検証エラー・全体中断し同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	"売上分析タグ(ID)列に非数値（例:abc）を含むCSV（非破壊）"	"1. アップロード画面を開く
-2. タグ列非数値のCSVを送信する"	エラーフラッシュが表示され全体中断（ロールバック）され、csv_upload に留まること（判定順序#4 タグ要素の数値検証。文言は要実機確認）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-038	IT-22	相関バリデーション	P2	ヘッダ名が定義と不一致(ヘッダ解釈不可)のCSVで事前検証エラーフラッシュが表示される	管理ログイン済／SEED-M03-29-ADMIN	"定義と異なるヘッダ行＋データ行のCSV（非破壊）"	"1. アップロード画面を開く
-2. ヘッダ名不一致のCSVを送信する"	事前検証エラーフラッシュが表示され、csv_upload に留まること（判定順序#1 ヘッダ解釈不可。文言は要実機確認）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-027	IT-26	実行結果	P2	取込失敗時に取込履歴の件数が増えない	管理ログイン済／SEED-M03-29-ADMIN	"存在しない商品ID 1行（タグ列空・非破壊）"	"1. アップロード画面を開き取込履歴の行数を控える
+2. ファイル未選択のまま送信する"	エラーフラッシュが表示され、csv_upload に留まること。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-031	IT-22	相関バリデーション	P2	ヘッダのみ(データ行なし)のCSVで事前検証エラーフラッシュが表示される	管理ログイン済／SEED-M03-29-ADMIN	ヘッダ行のみのCSV	"1. アップロード画面を開く
+2. ヘッダのみのCSVを送信する"	事前検証エラーフラッシュが表示され、csv_upload に留まること。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-032	IT-22	その他のバリデーション	P2	改行数が上限(5010)以上のCSVで上限超過エラーフラッシュが表示される	管理ログイン済／SEED-M03-29-ADMIN	5010行以上のCSV（存在しない商品ID）	"1. アップロード画面を開く
+2. 上限以上の行数のCSVを送信する"	「(行数) 行を超えるCSVファイルは登録できません。」のエラーフラッシュが表示され、取込処理に入らず csv_upload に留まること。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-033	IT-22	DBとの相関バリデーション	P1	存在しない商品IDのCSVで商品不存在エラー・ロールバックし同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	存在しない商品ID 1行（タグ列空）	"1. アップロード画面を開く
+2. 存在しない商品IDのCSVを送信する"	商品不存在エラーフラッシュが表示され全体ロールバックされ、csv_upload に留まること。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-034	IT-22	その他のバリデーション	P2	列数が定義(2列)と不一致のCSVで行エラー・全体中断し同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	列数が1列のみのデータ行を含むCSV（非破壊）	"1. アップロード画面を開く
+2. 列数不一致のCSVを送信する"	エラーフラッシュが表示され全体中断（ロールバック）され、csv_upload に留まること（判定順序#3。文言は要実機確認）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-035	IT-22	数値バリデーション	P2	商品ID列が非数値のCSVで列検証エラー・全体中断し同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	商品ID列に非数値（例:abc）を含むCSV（非破壊）	"1. アップロード画面を開く
+2. 商品ID非数値のCSVを送信する"	エラーフラッシュが表示され全体中断（ロールバック）され、csv_upload に留まること（判定順序#4 列単体検証。文言は要実機確認）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-036	IT-22	必須バリデーション	P1	商品ID列が空のデータ行で必須エラー・全体中断し同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	商品ID列が空のデータ行を含むCSV（非破壊）	"1. アップロード画面を開く
+2. 商品ID空のCSVを送信する"	エラーフラッシュが表示され全体中断（ロールバック）され、csv_upload に留まること（判定順序#4 商品ID必須。文言は要実機確認）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-037	IT-22	数値バリデーション	P2	タグ列に非数値を含むCSVで列検証エラー・全体中断し同画面に留まる	管理ログイン済／SEED-M03-29-ADMIN	売上分析タグ(ID)列に非数値（例:abc）を含むCSV（非破壊）	"1. アップロード画面を開く
+2. タグ列非数値のCSVを送信する"	エラーフラッシュが表示され全体中断（ロールバック）され、csv_upload に留まること（判定順序#4 タグ要素の数値検証。文言は要実機確認）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-038	IT-22	相関バリデーション	P2	ヘッダ名が定義と不一致(ヘッダ解釈不可)のCSVで事前検証エラーフラッシュが表示される	管理ログイン済／SEED-M03-29-ADMIN	定義と異なるヘッダ行＋データ行のCSV（非破壊）	"1. アップロード画面を開く
+2. ヘッダ名不一致のCSVを送信する"	事前検証エラーフラッシュが表示され、csv_upload に留まること（判定順序#1 ヘッダ解釈不可。文言は要実機確認）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-027	IT-26	実行結果	P2	取込失敗時に取込履歴の件数が増えない	管理ログイン済／SEED-M03-29-ADMIN	存在しない商品ID 1行（タグ列空・非破壊）	"1. アップロード画面を開き取込履歴の行数を控える
 2. 行検証で失敗するCSVを送信する
-3. 取込履歴の行数を再確認する"	エラーフラッシュ表示後も取込履歴の行数が増えないこと（失敗時は履歴INSERTされない）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-040	IT-16	実行結果	P1	正常CSV取込成功で成功フラッシュが表示され取込履歴が1件追加される	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的・後始末）	"実在商品ID＋実在タグIDの有効CSV"	"1. アップロード画面を開く
-2. 有効なCSVを送信する"	成功フラッシュ「登録が完了しました。」が表示され、取込履歴に1件追加され、csv_upload へ戻ること。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-041	IT-26	更新内容	P2	タグ列空で取込すると当該商品の売上分析タグ紐付けが全削除される	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的・値復元）	"実在商品ID＋タグ列空の有効CSV"	"1. 当該商品に既存タグ紐付けがある状態を用意する
-2. タグ列空のCSVを送信する"	取込が成功し、当該商品の売上分析タグ紐付けがすべて削除されること（DB原値照合は手動/間接）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-042	IT-23	実行結果	P2	存在しない売上分析タグIDでマスタ不存在エラー・ロールバックする	管理ログイン済／SEED-M03-29-PRODUCT（実在商品ID）	"実在商品ID＋存在しないタグID"	"1. アップロード画面を開く
-2. 存在しないタグIDのCSVを送信する"	マスタ不存在エラーフラッシュが表示され全体ロールバックされ、csv_upload に留まること。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-043	IT-26	登録内容	P3	同一商品IDが複数行のとき末尾行の指定が残り成功件数はユニーク商品数になる	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的・後始末）	"同一商品IDを2行（異なるタグ指定）含む有効CSV"	"1. アップロード画面を開く
-2. 同一商品IDを複数行含むCSVを送信する"	取込が成功し、末尾行の指定が当該商品の最終的な紐付けとして残ること（DB原値照合は手動/間接）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-044	IT-22	その他のバリデーション	P3	TSV(タブ区切り)も同一インポータ経路で取込まれる	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的）	"実在商品ID＋実在タグIDのTSV（拡張子.tsv・タブ区切り）"	"1. アップロード画面を開く
-2. .tsv ファイルを送信する"	取込が成功すること（拡張子.tsvはタブ区切りで解釈。CSVで代表済のためTSV固有差分は手動で確認）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-045	IT-22	その他のバリデーション	P3	アップロード上限(eccube_csv_size)超過のファイルで取込不可	管理ログイン済／SEED-M03-29-ADMIN	"上限(配布確認値5MB相当)を超えるCSV"	"1. アップロード画面を開く
-2. 上限超過ファイルを送信する"	取込されずエラーとなること（サイズ上限は eccube_csv_size／upload_max_filesize に依存=環境依存のため手動）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-046	IT-26	更新内容	P3	タグID重複指定は一意化され重複紐付けが残らない	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的）	"同一タグIDを重複指定したCSV（例:1,1）"	"1. アップロード画面を開く
+3. 取込履歴の行数を再確認する"	エラーフラッシュ表示後も取込履歴の行数が増えないこと（失敗時は履歴INSERTされない）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-040	IT-16	実行結果	P1	正常CSV取込成功で成功フラッシュが表示され取込履歴が1件追加される	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的・後始末）	実在商品ID＋実在タグIDの有効CSV	"1. アップロード画面を開く
+2. 有効なCSVを送信する"	成功フラッシュ「登録が完了しました。」が表示され、取込履歴に1件追加され、csv_upload へ戻ること。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-041	IT-26	更新内容	P2	タグ列空で取込すると当該商品の売上分析タグ紐付けが全削除される	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的・値復元）	実在商品ID＋タグ列空の有効CSV	"1. 当該商品に既存タグ紐付けがある状態を用意する
+2. タグ列空のCSVを送信する"	取込が成功し、当該商品の売上分析タグ紐付けがすべて削除されること（DB原値照合は手動/間接）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-042	IT-23	実行結果	P2	存在しない売上分析タグIDでマスタ不存在エラー・ロールバックする	管理ログイン済／SEED-M03-29-PRODUCT（実在商品ID）	実在商品ID＋存在しないタグID	"1. アップロード画面を開く
+2. 存在しないタグIDのCSVを送信する"	マスタ不存在エラーフラッシュが表示され全体ロールバックされ、csv_upload に留まること。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-043	IT-26	登録内容	P3	同一商品IDが複数行のとき末尾行の指定が残り成功件数はユニーク商品数になる	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的・後始末）	同一商品IDを2行（異なるタグ指定）含む有効CSV	"1. アップロード画面を開く
+2. 同一商品IDを複数行含むCSVを送信する"	取込が成功し、末尾行の指定が当該商品の最終的な紐付けとして残ること（DB原値照合は手動/間接）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-044	IT-22	その他のバリデーション	P3	TSV(タブ区切り)も同一インポータ経路で取込まれる	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的）	実在商品ID＋実在タグIDのTSV（拡張子.tsv・タブ区切り）	"1. アップロード画面を開く
+2. .tsv ファイルを送信する"	取込が成功すること（拡張子.tsvはタブ区切りで解釈。CSVで代表済のためTSV固有差分は手動で確認）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-045	IT-22	その他のバリデーション	P3	アップロード上限(eccube_csv_size)超過のファイルで取込不可	管理ログイン済／SEED-M03-29-ADMIN	上限(配布確認値5MB相当)を超えるCSV	"1. アップロード画面を開く
+2. 上限超過ファイルを送信する"	取込されずエラーとなること（サイズ上限は eccube_csv_size／upload_max_filesize に依存=環境依存のため手動）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-046	IT-26	更新内容	P3	タグID重複指定は一意化され重複紐付けが残らない	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的）	同一タグIDを重複指定したCSV（例:1,1）	"1. アップロード画面を開く
 2. タグID重複のCSVを送信する
-3. 当該商品の紐付けを確認する"	重複が一意化され当該商品に重複紐付けが残らないこと（DB原値照合は手動/間接）。
-m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-047	IT-26	登録内容	P3	1セルに複数タグID(カンマ区切り)指定で複数紐付けが登録される	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的・後始末）	"実在商品ID＋複数タグID（例:1,2）の有効CSV"	"1. アップロード画面を開く
-2. 複数タグID指定のCSVを送信する"	取込が成功し当該商品に複数の売上分析タグが紐付くこと（成功フラッシュは自動・DB原値照合は手動/間接）。
+3. 当該商品の紐付けを確認する"	重複が一意化され当該商品に重複紐付けが残らないこと（DB原値照合は手動/間接）。				
+m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）	E2E-M03-29-047	IT-26	登録内容	P3	1セルに複数タグID(カンマ区切り)指定で複数紐付けが登録される	管理ログイン済／SEED-M03-29-PRODUCT-TAG（破壊的・後始末）	実在商品ID＋複数タグID（例:1,2）の有効CSV	"1. アップロード画面を開く
+2. 複数タグID指定のCSVを送信する"	取込が成功し当該商品に複数の売上分析タグが紐付くこと（成功フラッシュは自動・DB原値照合は手動/間接）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケース（TSV外）

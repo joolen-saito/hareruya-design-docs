@@ -1,0 +1,186 @@
+{
+  "id": "f06-25-waiting-number-wifi-branch-hidden-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-25_0306_sheet-21_sheet.json",
+  "sourceFindingId": "f06-25_0306_sheet-21_sheet-conformance-fa0c06f76207",
+  "classification": "フロント会員",
+  "feature": "店頭注文呼び出し番号表示",
+  "issueCategory": "実装漏れ",
+  "issue": "支店の店頭注文呼び出し番号画面でもWiFiパスワードが表示される",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "支店URL `http://localhost:8080/ja/{支店名(英)}/waiting_number` を表示する",
+    "画面下部のWiFiパスワード表示欄を確認する",
+    "本店以外でも `hareruya{mm}{dd}` 形式のWiFiパスワードが表示されていないか確認する"
+  ],
+  "expected": [
+    "WiFiパスワードは本店の店頭注文呼び出し番号画面にのみ表示する",
+    "支店の店頭注文呼び出し番号画面ではWiFiパスワードを非表示にする",
+    "パスワード形式は本店表示時のみ `hareruya{mm}{dd}` とする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `Waiting/waiting_number.twig` は `#wifi` セクションを店舗条件なしで常時描画している。直前コメントには『本店のみWifi表示するようにする』というTODOが残っており、`isMainShop` 等の条件分岐はWiFiブロックに適用されていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise waiting_number.twig はWiFiブロックを無条件描画",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Waiting/waiting_number.twig",
+          "start": 43,
+          "end": 53,
+          "language": "twig",
+          "contains": [
+            "TODO: 本店のみWifi表示するようにする",
+            "<section id=\"wifi\" class=\"p-hareruya-waiting-number__wifi\">",
+            "<div class=\"p-hareruya-waiting-number__wifi-text wifiText\"></div>"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise waiting_monitor.js はwifiTextへ無条件書き込み",
+          "path": "ec-cube-enterprise/html/template/default/assets/js/waiting_monitor.js",
+          "start": 13,
+          "end": 30,
+          "language": "javascript",
+          "contains": [
+            "TODO: 本店のみWifi表示するようにする",
+            "const month = toDoubleDigits(now.getMonth() + 1);",
+            "const day = toDoubleDigits(now.getDate());",
+            "$(\".wifiText\").text(\"hareruya\" + month + day);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise はisMainShopをTwigグローバルとして提供済み",
+          "path": "ec-cube-enterprise/src/Eccube/EventListener/TwigInitializeListener.php",
+          "start": 67,
+          "end": 69,
+          "language": "php",
+          "contains": [
+            "$shop = $this->baseInfoService->getByRequestShop();",
+            "$this->twig->addGlobal('BaseInfo', $shop);",
+            "$this->twig->addGlobal('isMainShop', $shop->isMainShop());"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 は旧実装として `#wifi` と `.wifiText` を無条件表示・更新している。設計書はこの現行支店表示を除去するカスタマイズ要求を追加しているが、ec-cube-enterprise 側は同じ旧挙動のままTODO付きで残っている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 waiting_number.twig は旧実装としてWiFiブロックを無条件描画",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Waiting/waiting_number.twig",
+          "start": 53,
+          "end": 57,
+          "language": "twig",
+          "contains": [
+            "<section id=\"wifi\">",
+            "<div class=\"wifiText\"></div>"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 waiting_monitor.js はwifiTextへ無条件書き込み",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/assets/js/waiting_monitor.js",
+          "start": 23,
+          "end": 30,
+          "language": "javascript",
+          "contains": [
+            "var month = toDoubleDigits(now.getMonth() + 1);",
+            "var day = toDoubleDigits(now.getDate());",
+            "$(\".wifiText\").text(\"hareruya\" + month + day);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "本店では表示、支店では非表示",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 7018,
+      "end": 7021,
+      "language": "html",
+      "contains": [
+        "本店ではWiFiパスワードを表示する",
+        "支店ではWiFiパスワードを非表示にする"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "WiFiパスワードは本店のみ表示",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 7030,
+      "end": 7044,
+      "language": "html",
+      "contains": [
+        "(2)WiFiパスワードについて",
+        "本店のみに表示する",
+        "現行の支店で表示されていた、以下赤枠内のWiFiパスワードを除去する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "項目表でも本店のみ表示を指定",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 7066,
+      "end": 7066,
+      "language": "html",
+      "contains": [
+        "WiFiパスワード",
+        "※カスタマイズ対応、本店のみに表示する",
+        "hareruya{mm}{dd}",
+        "・本店のみに表示する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "WiFiセクションを無条件描画しTODOが残る",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Waiting/waiting_number.twig",
+      "start": 43,
+      "end": 53,
+      "language": "twig",
+      "contains": [
+        "TODO: 本店のみWifi表示するようにする",
+        "<section id=\"wifi\""
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "JSがWiFiパスワードを無条件更新",
+      "path": "ec-cube-enterprise/html/template/default/assets/js/waiting_monitor.js",
+      "start": 13,
+      "end": 30,
+      "language": "javascript",
+      "contains": [
+        "TODO: 本店のみWifi表示するようにする",
+        "$(\".wifiText\").text(\"hareruya\" + month + day);"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 は旧実装としてWiFiを無条件表示",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Waiting/waiting_number.twig",
+      "start": 53,
+      "end": 57,
+      "language": "twig",
+      "contains": [
+        "<section id=\"wifi\">",
+        "<div class=\"wifiText\"></div>"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-25_0306_sheet-21_sheet.json#f06-25_0306_sheet-21_sheet-conformance-fa0c06f76207'",
+      "rg -n \"fa0c06f76207|本店ではWiFi|支店ではWiFi|本店のみに表示|WiFiパスワード|赤枠|支店で表示\" design_impl_drift_report/findings/f06-25_0306_sheet-21_sheet.json excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"wifi|WiFi|Wifi|wifiText|passUpdate|waiting_number|isMainShop|本店のみ|TODO|hareruya\" ec-cube-enterprise/src/Eccube/Resource/template/default/Waiting/waiting_number.twig ec-cube-enterprise/html/template/default/assets/js/waiting_monitor.js ec-cube-enterprise/src/Eccube/EventListener/TwigInitializeListener.php ec-cube-enterprise/src/Eccube/Controller/Front/WaitingNumberController.php",
+      "rg -n \"wifi|WiFi|Wifi|wifiText|passUpdate|waiting_number|本店のみ|hareruya\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Waiting/waiting_number.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/assets/js/waiting_monitor.js pf-eccube3/app/Plugin/HareruyaEc/Controller/WaitingNumberController.php ec-cube/app/template/default/Waiting/waiting_number.twig ec-cube/html/template/default/assets/js/waiting_monitor.js",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '7018,7021p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '7030,7044p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '7066,7066p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Waiting/waiting_number.twig | sed -n '43,53p'",
+      "nl -ba ec-cube-enterprise/html/template/default/assets/js/waiting_monitor.js | sed -n '13,30p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Waiting/waiting_number.twig | sed -n '53,57p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/assets/js/waiting_monitor.js | sed -n '23,30p'"
+    ],
+    "review": "review-pack を生成し、設計の本店のみ表示・支店非表示要求、ec-cube-enterprise のTODO付き無条件描画/無条件JS更新、pf-eccube3 の旧無条件表示実装を手動で批判的に再確認した。外部の codex gpt-5.5 high レビューはこの環境では利用できないため、同等の観点で WaitingNumberController、Twig、JS、TwigInitializeListener を検索した。"
+  }
+}

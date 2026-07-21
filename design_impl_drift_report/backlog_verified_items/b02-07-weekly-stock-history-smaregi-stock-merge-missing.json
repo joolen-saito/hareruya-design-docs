@@ -1,0 +1,261 @@
+{
+  "id": "b02-07-weekly-stock-history-smaregi-stock-merge-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b02-07_0402_sheet-6_sheet.json",
+  "sourceFindingId": "b02-07_0402_sheet-6_sheet-conformance-7a9e21e41821",
+  "classification": "バッチ在庫管理",
+  "feature": "週間在庫履歴更新バッチ",
+  "issueCategory": "実装漏れ",
+  "issue": "週間在庫履歴更新でEC-CUBE在庫とスマレジ在庫を商品コード・店舗単位に合算していない",
+  "designBook": "0402_基本設計仕様書(バッチ_在庫管理).xlsx",
+  "reproSteps": [
+    "ec-cube-enterprise で `bin/console eccube:update-weekly-stock-history` から呼ばれる `BatchUpdateWeeklyStockHistoryAction::handle()` を確認する",
+    "`DtbWeeklyStockHistoryTempRepository::getStockData()` のSQLが `product_stock_id` 単位で週次在庫を集計しているか、商品規格・店舗・在庫区分をJOINしてEC-CUBE在庫とスマレジ在庫を合算しているか確認する",
+    "`DtbWeeklyStockHistoryRepository::copyDataFromTemp()` が一時テーブルの `product_stock_id` 単位の結果をそのまま本テーブルへコピーしているか確認する",
+    "0402 の B02-07 設計「ECCUBE、スマレジの在庫を合算して週間在庫履歴テーブルに登録する」と照合する"
+  ],
+  "expected": [
+    "週間在庫履歴更新バッチでは、商品コードごと・店舗ごとに在庫履歴を出力できるよう、EC-CUBE在庫とスマレジ在庫を合算して週間在庫履歴テーブルに登録する",
+    "在庫ごと(商品コードごと、店舗ごと、在庫区分ごと)に1週間前から11週間前までの最新在庫履歴を取得し、一時テーブルへ保存したうえで本テーブルへ反映する",
+    "システム統合後は本店・支店の取得を1つのバッチで行い、週間在庫履歴テーブルのデータを洗い替える"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では `BatchUpdateWeeklyStockHistoryAction::handle()` が `DtbWeeklyStockHistoryTempRepository::getStockData()` の結果をそのまま一時テーブルへINSERTし、本テーブルへ置き換える。コメント上もスマレジ在庫との合算はTODOで、B02-07内ではEC-CUBE在庫行とスマレジ在庫行を商品コード・店舗単位に合算する処理がない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise B02-07 はスマレジ在庫合算をTODOとしており getStockData の結果をそのまま登録する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php",
+          "start": 33,
+          "end": 80,
+          "language": "php",
+          "contains": [
+            "TODO: スマレジ在庫との合算対応",
+            "現時点ではスマレジ在庫の取り込みが未実装のため、ECCUBE在庫のみを対象としている。",
+            "$data = $this->weeklyStockHistoryTempRepository->getStockData($dateStr, self::BATCH_SIZE, $offset);",
+            "$this->weeklyStockHistoryTempRepository->insertBatch($data);",
+            "$this->weeklyStockHistoryRepository->replaceFromTemp();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の getStockData は dtb_stock_history を product_stock_id 単位でGROUP BYする",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php",
+          "start": 37,
+          "end": 105,
+          "language": "php",
+          "contains": [
+            "dtb_stock_history から各 product_stock ごとに 1〜11 週間前時点の最新在庫数を取得する。",
+            "sh.product_stock_id AS product_stock_id",
+            "FROM",
+            "dtb_stock_history sh",
+            "GROUP BY",
+            "sh.product_stock_id"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise は一時テーブルの product_stock_id 単位の値をそのまま本テーブルへコピーする",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryRepository.php",
+          "start": 31,
+          "end": 80,
+          "language": "php",
+          "contains": [
+            "$insertParams = ['product_stock_id'];",
+            "$selectParams = ['wsht.product_stock_id'];",
+            "INSERT INTO",
+            "dtb_weekly_stock_history",
+            "FROM",
+            "dtb_weekly_stock_history_temp wsht",
+            "$connection->executeStatement('TRUNCATE TABLE dtb_weekly_stock_history');"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `product:batch exportWeeklyStockHistoryCsv` が `ExportWeeklyStockHistoryCsv` を実行し、`DtbStockHistoryRepository::getWeeklyStockHistory()` が商品規格ID単位で `dtb_stock_history.product_class_id` の最新在庫を取得してCSVへ出力する。ベースはスマレジ在庫区分・店舗単位の合算を扱っておらず、0402のB02-07本文はシステム統合後の移行先要求としてEC-CUBE在庫とスマレジ在庫の合算を追加している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は product:batch exportWeeklyStockHistoryCsv を登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 12,
+          "end": 56,
+          "language": "php",
+          "contains": [
+            "'exportWeeklyStockHistoryCsv' => 'Plugin\\HareruyaEc\\Service\\Product\\ExportWeeklyStockHistoryCsv'",
+            "$this->setName('product:batch')",
+            "$product->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は getWeeklyStockHistory の結果をCSVへ出力する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/ExportWeeklyStockHistoryCsv.php",
+          "start": 7,
+          "end": 51,
+          "language": "php",
+          "contains": [
+            "const CSV_HEADER",
+            "'product_class_id'",
+            "$weeklyStockHistories = $this->app['hareruya_ec.repository.stock_history']->getWeeklyStockHistory();",
+            "fputcsv($f, self::CSV_HEADER);",
+            "fputcsv($f, $weeklyStockHistory);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は product_class_id 単位で最新在庫履歴を取得する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php",
+          "start": 203,
+          "end": 243,
+          "language": "php",
+          "contains": [
+            "public function getWeeklyStockHistory()",
+            "$productClassIds = $entityManager->getRepository(ProductStock::class)->getAllProductClassId();",
+            "sh.product_class_id = :productClassId",
+            "ORDER BY",
+            "sh.create_date DESC",
+            "$weeklyStockHistory[sprintf('stock_%02d', $i)] = $result['stock'] ?? 0;"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "0402 の B02-07 本文はシステム統合に伴い本店・支店の週間在庫履歴取得を1つのバッチで行い、週間在庫履歴テーブルへ保存することを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html",
+      "start": 1262,
+      "end": 1277,
+      "language": "html",
+      "contains": [
+        "機能名",
+        "週間在庫履歴更新バッチ",
+        "本店、支店の取得を1つのバッチで行う",
+        "週間在庫履歴テーブルに結果を保存する",
+        "1週間前、2週間前・・・11週間前まで"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "0402 の B02-07 本文は商品コード・店舗単位の出力のためEC-CUBE在庫とスマレジ在庫を合算して週間在庫履歴テーブルに登録すると明記している",
+      "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html",
+      "start": 1279,
+      "end": 1306,
+      "language": "html",
+      "contains": [
+        "在庫ごと（商品コードごと、店舗ごと、在庫区分ごと）",
+        "取得した在庫数について週間在庫履歴一時テーブルに保存する",
+        "②で一時テーブルに登録されたデータを週間在庫履歴テーブルにコピーする",
+        "ECCUBE、スマレジの在庫を合算して週間在庫履歴テーブルに登録する",
+        "週間在庫履歴テーブルのデータを洗い替え"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise のB02-07はスマレジ在庫との合算をTODOとしており、実処理はgetStockDataの結果をそのまま一時テーブルへINSERTする",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php",
+      "start": 33,
+      "end": 80,
+      "language": "php",
+      "contains": [
+        "TODO: スマレジ在庫との合算対応",
+        "ECCUBE在庫のみを対象としている。",
+        "$this->weeklyStockHistoryTempRepository->getStockData($dateStr, self::BATCH_SIZE, $offset)",
+        "$this->weeklyStockHistoryRepository->replaceFromTemp();"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の週次在庫履歴集計SQLはdtb_stock_historyをproduct_stock_id単位でGROUP BYし、商品規格・店舗・在庫区分をJOINしてSUMしていない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php",
+      "start": 37,
+      "end": 105,
+      "language": "php",
+      "contains": [
+        "sh.product_stock_id AS product_stock_id",
+        "dtb_stock_history sh",
+        "GROUP BY",
+        "sh.product_stock_id"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise には別用途のEC-CUBE+スマレジ合算メソッドがあるが、B02-07からは呼ばれていない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/ProductStockRepository.php",
+      "start": 554,
+      "end": 584,
+      "language": "php",
+      "contains": [
+        "本店（base_info_id=TC_TOKYO_ID）の EC-CUBE + スマレジ在庫を商品規格IDごとに合算して返す。",
+        "public function getMainStoreDisplayStockByProductClassIds(array $productClassIds): array",
+        "ProductStock::STOCK_LOCATION_ECCUBE",
+        "ProductStock::STOCK_LOCATION_SMAREGI"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise にはスマレジ在庫変動をスマレジ在庫区分のProductStockへ反映する処理があり、課題は取り込み自体ではなくB02-07側の合算不在に限定する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Stock/SmaregiStockChangeApplier.php",
+      "start": 32,
+      "end": 106,
+      "language": "php",
+      "contains": [
+        "スマレジ在庫変動履歴 1 件を EC-CUBE のスマレジ在庫の在庫履歴へ反映する。",
+        "ProductStock::STOCK_LOCATION_SMAREGI",
+        "$ProductStock = $this->productStockRepository->findOneBySmaregiProductIdAndBaseInfoAndStockLocation("
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は product:batch exportWeeklyStockHistoryCsv を ExportWeeklyStockHistoryCsv に対応させる",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+      "start": 12,
+      "end": 56,
+      "language": "php",
+      "contains": [
+        "'exportWeeklyStockHistoryCsv' => 'Plugin\\HareruyaEc\\Service\\Product\\ExportWeeklyStockHistoryCsv'",
+        "$this->setName('product:batch')",
+        "$product->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は商品規格IDと週次在庫列をCSVへ出力する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/ExportWeeklyStockHistoryCsv.php",
+      "start": 7,
+      "end": 51,
+      "language": "php",
+      "contains": [
+        "'product_class_id'",
+        "$weeklyStockHistories = $this->app['hareruya_ec.repository.stock_history']->getWeeklyStockHistory();",
+        "fputcsv($f, self::CSV_HEADER);",
+        "fputcsv($f, $weeklyStockHistory);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 はdtb_stock_history.product_class_id単位で最新在庫履歴を取得し、スマレジ在庫区分・店舗単位の合算は扱わない",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php",
+      "start": 203,
+      "end": 243,
+      "language": "php",
+      "contains": [
+        "$productClassIds = $entityManager->getRepository(ProductStock::class)->getAllProductClassId();",
+        "sh.product_class_id = :productClassId",
+        "$weeklyStockHistory[sprintf('stock_%02d', $i)] = $result['stock'] ?? 0;"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"週間在庫履歴更新バッチ|ECCUBE、スマレジの在庫を合算|在庫ごと（商品コードごと、店舗ごと、在庫区分ごと）|週間在庫履歴テーブルに結果を保存\" excel_to_html/output/0402_基本設計仕様書\\(バッチ_在庫管理\\).html",
+      "rg -n \"BatchUpdateWeeklyStockHistoryAction|スマレジ在庫との合算対応|getStockData\\(|product_stock_id|stock_location_id|STOCK_LOCATION_SMAREGI|getMainStoreDisplayStockByProductClassIds|SmaregiStockChangeApplier\" ../ec-cube-enterprise/src/Eccube",
+      "rg -n \"exportWeeklyStockHistoryCsv|ExportWeeklyStockHistoryCsv|getWeeklyStockHistory|product_class_id|weekly_stock_history|stock_location|smaregi|スマレジ\" ../pf-eccube3/app/Plugin/HareruyaEc"
+    ],
+    "review": [
+      "codex gpt-5.5 high reviewer Nietzsche: VERIFIED。設計本文のB02-07は商品コード・店舗単位にEC-CUBE在庫とスマレジ在庫を合算してdtb_weekly_stock_historyへ登録することを求めている。一方enterpriseはdtb_stock_historyをproduct_stock_id単位で集計し、一時テーブルから本テーブルへそのままコピーしている。",
+      "reviewer: ProductStockRepositoryにはEC-CUBE+スマレジ在庫を合算する別メソッドがあるがB02-07からは呼ばれていない。SmaregiStockChangeApplierがスマレジ在庫変動をSTOCK_LOCATION_SMAREGIのProductStockへ反映するため、課題はスマレジ取り込み自体ではなくB02-07側の合算不在として記載する。"
+    ],
+    "notes": [
+      "B02-07の command name mismatch / CSV vs DB mismatch 候補は、設計本文とリニューアル移行時の扱いがenterpriseのDB方式を正としているため過検知としてreject済み。本件はスマレジ在庫合算に限定する。"
+    ]
+  }
+}

@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m06_06_admin_store_purchase_purchase_store_history_csv_export_all_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・応答ヘッダ・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約（Length/NotBlank）・内部セッションキー名・ログ文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。**CSVファイルの中身（列値・ヘッダ文言・行数・BOM/エンコード）は実ファイルを開いて手動確認**（csv_export方針）。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・応答ヘッダ・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約（Length/NotBlank）・内部セッションキー名・ログ文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。**CSVファイルの中身（列値・ヘッダ文言・行数・BOM/エンコード）は実ファイルを開いて手動確認**（csv_export方針）。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は pf-eccube3（HareruyaEc プラグイン）由来のリバース設計だが、刷新先 ec-cube-enterprise に同一画面（route `admin_otcbuyorder_history` ／ Twig `admin/OtcBuyOrder/history.twig`）が実在するためE2E化した。DB・挙動は ec-cube-enterprise を正とする。
 
@@ -26,30 +26,30 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-001	IT-23	検索条件	P1	検索実行で一覧ブロックが表示され検索結果件数が描画される	ログイン済／SEED-M06-06-HISTORY（履歴1件以上）	検索条件は任意（空のまま全件検索）	"1. /admin/otcbuyorder/history を開く
-2. 「検索する」ボタンを押下"	検索結果ブロックが表示され「検索結果 N 件 が該当しました」が描画されること。
+2. 「検索する」ボタンを押下"	検索結果ブロックが表示され「検索結果 N 件 が該当しました」が描画されること。				
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-002	IT-25	UI部品	P2	一覧描画時にCSVダウンロードドロップダウンと「検索結果全件取得」が表示される	ログイン済／SEED-M06-06-HISTORY（履歴1件以上）	—	"1. 履歴画面を開き「検索する」で一覧を表示
-2. 「CSVダウンロード」ドロップダウンを開く"	ドロップダウン内に「検索結果全件取得」項目（data-type=all_export）が表示されること。
+2. 「CSVダウンロード」ドロップダウンを開く"	ドロップダウン内に「検索結果全件取得」項目（data-type=all_export）が表示されること。				
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-003	IT-27	実行結果	P1	「検索結果全件取得」押下でブラウザがCSVをダウンロードする	ログイン済／SEED-M06-06-HISTORY（履歴1件以上・検索済）	—	"1. 検索を成功させ一覧を表示
-2. 「CSVダウンロード」→「検索結果全件取得」を押下"	ブラウザのダウンロードが発火しCSVファイルが取得されること。
+2. 「CSVダウンロード」→「検索結果全件取得」を押下"	ブラウザのダウンロードが発火しCSVファイルが取得されること。				
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-004	IT-25	URL	P2	ダウンロードCSVのファイル名が接頭辞otc_buy_order_history_と拡張子.csvを持つ	ログイン済／SEED-M06-06-HISTORY（履歴1件以上・検索済）	—	"1. 「検索結果全件取得」でダウンロードを発火
-2. ダウンロードの推奨ファイル名を確認"	ファイル名が「otc_buy_order_history_」で始まり「.csv」で終わること。
+2. ダウンロードの推奨ファイル名を確認"	ファイル名が「otc_buy_order_history_」で始まり「.csv」で終わること。				
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-005	IT-25	確認ダイアログ	P3	出力前に確認ダイアログ/モーダルが表示されない	ログイン済／SEED-M06-06-HISTORY（履歴1件以上・検索済）	—	"1. 「検索結果全件取得」を押下
-2. 出力前のダイアログ有無を確認"	確認ダイアログ/モーダルは表示されず直ちにダウンロードが開始されること。
-m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-006	IT-15	対象データ	P2	全件取得は隠しexport_type=all_exportを乗せてresult_formを送信しHTML遷移しない	ログイン済／SEED-M06-06-HISTORY（履歴1件以上・検索済）	—	"1. 「検索結果全件取得」を押下し送信リクエストを観測"	export エンドポイントへのPOSTボディに export_type=all_export が含まれ、HTMLページ遷移ではなくダウンロード応答となること。
+2. 出力前のダイアログ有無を確認"	確認ダイアログ/モーダルは表示されず直ちにダウンロードが開始されること。				
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-006	IT-15	対象データ	P2	全件取得は隠しexport_type=all_exportを乗せてresult_formを送信しHTML遷移しない	ログイン済／SEED-M06-06-HISTORY（履歴1件以上・検索済）	—	1. 「検索結果全件取得」を押下し送信リクエストを観測	export エンドポイントへのPOSTボディに export_type=all_export が含まれ、HTMLページ遷移ではなくダウンロード応答となること。				
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-010	IT-27	出力失敗	P1	検索セッション無で全件取得するとエラーフラッシュが表示される	ログイン済／検索を一度も成功させていない（検索セッション無）	export_type=all_export	"1. 検索未実行の状態で全件CSV exportを送信
-2. リダイレクト先の画面表示を確認"	「条件に一致する商品がありません」のエラーフラッシュが表示されること。
+2. リダイレクト先の画面表示を確認"	「条件に一致する商品がありません」のエラーフラッシュが表示されること。				
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-011	IT-03	画面遷移	P1	検索セッション無で全件取得すると履歴ページ一覧へリダイレクトされCSVは返らない	ログイン済／検索を一度も成功させていない（検索セッション無）	export_type=all_export	"1. 検索未実行の状態で全件CSV exportを送信
-2. 遷移先URLを確認"	履歴一覧のページ付きパス（/otcbuyorder/history/page/{page_no}）へHTTPリダイレクトされ、ダウンロードは発火しないこと。
+2. 遷移先URLを確認"	履歴一覧のページ付きパス（/otcbuyorder/history/page/{page_no}）へHTTPリダイレクトされ、ダウンロードは発火しないこと。				
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-012	IT-25	確認ダイアログ	P2	検索結果0件でもセッション条件があればCSVがダウンロードされる	ログイン済／該当0件になる検索条件で検索済（SEED-M06-06-NOHIT）	該当0件になる査定ID等	"1. 該当0件になる条件で検索を成功させる
-2. 全件CSV出力を発火させる（注: 0件時は一覧のCSVメニュー#result_list__custom_csv_menuが描画されない＝totalItemCount>0条件のため、UIドロップダウン経由では押下不可。発火経路＝#result_form直接submit/POST送信は要実機確認）"	データ行が0でもダウンロードが発火しCSVファイル（ヘッダのみになりうる）が取得されること。【要確認: 0件時の出力発火経路】
-m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-020	IT-15	未認証	P1	未ログインで履歴URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/otcbuyorder/history へ直接アクセス"	管理ログイン画面（#login_id 表示）へ誘導されること。
+2. 全件CSV出力を発火させる（注: 0件時は一覧のCSVメニュー#result_list__custom_csv_menuが描画されない＝totalItemCount>0条件のため、UIドロップダウン経由では押下不可。発火経路＝#result_form直接submit/POST送信は要実機確認）"	データ行が0でもダウンロードが発火しCSVファイル（ヘッダのみになりうる）が取得されること。【要確認: 0件時の出力発火経路】				
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-020	IT-15	未認証	P1	未ログインで履歴URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/otcbuyorder/history へ直接アクセス	管理ログイン画面（#login_id 表示）へ誘導されること。				
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-021	IT-13	URL直接アクセス	P2	未ログインで全件CSV exportエンドポイントへアクセスするとCSVは返らず管理ログインへ誘導される	未ログイン	export_type=all_export	"1. 未ログインで /admin/otcbuyorder/history/export へ未認証POST送信（export ルートはPOST専用のためGET前提にしない）
-2. 応答（誘導先/ステータス/Content-Type）を確認"	CSV（application/octet-stream）は返らず、未認証ガードにより管理ログインへ誘導されること。【要確認: 未認証POST時の実応答（リダイレクト/403）】
+2. 応答（誘導先/ステータス/Content-Type）を確認"	CSV（application/octet-stream）は返らず、未認証ガードにより管理ログインへ誘導されること。【要確認: 未認証POST時の実応答（リダイレクト/403）】				
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-022	IT-23	検索条件	P2	セッション保存条件で指定ページを再表示できる	ログイン済／SEED-M06-06-HISTORY（履歴1件以上・検索済）	page_no=1	"1. 検索を成功させる
-2. /admin/otcbuyorder/history/page/1 を開く"	セッションに保存した検索条件で一覧ブロックが再表示されること。
-m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-030	IT-20	識別子	P3	不正なexport_typeを送信してもCSVを返さない	ログイン済／SEED-M06-06-HISTORY（検索済）	export_type=不正値（例 foo）	"1. export エンドポイントへ export_type=foo を送信"	CSVダウンロードは発火せず正常出力されないこと（識別子不一致は全件経路の対象外）。
+2. /admin/otcbuyorder/history/page/1 を開く"	セッションに保存した検索条件で一覧ブロックが再表示されること。				
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	E2E-M06-06-030	IT-20	識別子	P3	不正なexport_typeを送信してもCSVを返さない	ログイン済／SEED-M06-06-HISTORY（検索済）	export_type=不正値（例 foo）	1. export エンドポイントへ export_type=foo を送信	CSVダウンロードは発火せず正常出力されないこと（識別子不一致は全件経路の対象外）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

@@ -1,0 +1,146 @@
+{
+  "id": "b02-02-arrival-notification-cancel-console-start-complete-datetime-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b02-02_0404_sheet-4_sheet.json",
+  "sourceFindingId": "b02-02_0404_sheet-4_sheet-conformance-3452d66c5f76",
+  "classification": "バッチ商品管理",
+  "feature": "入荷通知キャンセル",
+  "issueCategory": "実装違い",
+  "issue": "入荷通知キャンセルバッチの開始・完了コンソール出力が設計と異なる",
+  "designBook": "0404_基本設計仕様書(バッチ_商品管理).xlsx",
+  "reproSteps": [
+    "ec-cube-enterprise のコンテナまたはローカル環境で bin/console eccube:cancel-product-request を実行する",
+    "処理開始前に日時付きの開始メッセージが出力されるか確認する",
+    "処理完了時に日時付きの完了メッセージが出力されるか確認する",
+    "設計書の B02-02 入荷通知キャンセルのログ・監査要件と、ec-cube-enterprise の CancelProductRequestCommand を照合する"
+  ],
+  "expected": [
+    "開始時に日時付きのコンソール出力を行う",
+    "完了時に日時付きのコンソール出力を行う",
+    "ベース実装と同様に、バッチ名を含む開始・完了メッセージを日時プレフィックス付きで出力する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `CancelProductRequestCommand::execute()` は、`SymfonyStyle` 生成後すぐに `BatchCancelProductRequestAction::handle()` を実行しており、処理前の開始出力がない。成功時の出力は `入荷通知キャンセルが完了しました。（%d件）` のみで、日時も出力されない。例外時のエラー出力は存在するため、この課題は開始出力と日時付き完了出力の不足に限定する。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise CancelProductRequestCommand は開始出力なしで action を実行し、日時なしの完了メッセージを出す",
+          "path": "ec-cube-enterprise/src/Eccube/Command/CancelProductRequestCommand.php",
+          "start": 42,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "protected function execute(InputInterface $input, OutputInterface $output): int",
+            "$count = $this->batchCancelProductRequestAction->handle();",
+            "$io->error('入荷通知キャンセル処理でエラーが発生しました: '.$e->getMessage());",
+            "$io->success(sprintf('入荷通知キャンセルが完了しました。（%d件）', $count));"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では、`ProductBatch` が `date('Y/m/d H:i')` を使って日時プレフィックスを作成し、`deleteProductRequest: Command start.` と `deleteProductRequest: Command complete.` を出力する。`DeleteProductRequest` はこの `ProductBatch` 経由で実行されるため、B02-02でも日時付きの開始・完了出力が行われる。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は日時付きで開始・完了を出力する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 43,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "$name = $input->getArgument('batch_name');",
+            "$resultMessage = '[' . date('Y/m/d H:i') . '] ';",
+            "echo $resultMessage . \"{$name}: Command start.\\n\";",
+            "echo $product->getErrorMassage() ?? $resultMessage . \"{$name}: Command complete.\\n\";"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は deleteProductRequest を対象サービスに対応させる",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 12,
+          "end": 16,
+          "language": "php",
+          "contains": [
+            "const BATCH_NAMES = [",
+            "'deleteProductRequest' => 'Plugin\\HareruyaEc\\Service\\Product\\DeleteProductRequest'"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 DeleteProductRequest は B02-02 の処理本体である",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/DeleteProductRequest.php",
+          "start": 24,
+          "end": 30,
+          "language": "php",
+          "contains": [
+            "delete non product requests",
+            "public function execute()",
+            "$this->app['hareruya_ec.repository.product_request']->deleteRequestByNonProduct();"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "設計HTMLはログ・監査として開始・完了のコンソール出力を日時付きで行うとしている",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 1070,
+      "end": 1073,
+      "language": "html",
+      "contains": [
+        "ログ・監査",
+        "開始・完了",
+        "開始・完了のコンソール出力（日時付き）"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は開始出力を持たず、完了出力にも日時を含めない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/CancelProductRequestCommand.php",
+      "start": 42,
+      "end": 58,
+      "language": "php",
+      "contains": [
+        "$count = $this->batchCancelProductRequestAction->handle();",
+        "$io->success(sprintf('入荷通知キャンセルが完了しました。（%d件）', $count));"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は ProductBatch で日時プレフィックスを作り、開始・完了を出力する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+      "start": 43,
+      "end": 58,
+      "language": "php",
+      "contains": [
+        "$resultMessage = '[' . date('Y/m/d H:i') . '] ';",
+        "{$name}: Command start.",
+        "{$name}: Command complete."
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は deleteProductRequest を ProductBatch の対象バッチとして定義する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+      "start": 12,
+      "end": 16,
+      "language": "php",
+      "contains": [
+        "'deleteProductRequest' => 'Plugin\\HareruyaEc\\Service\\Product\\DeleteProductRequest'"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"開始|完了|日時|Command start|Command complete|Nothing args|入荷通知キャンセルが完了|DateTime|date\\(\" excel_to_html/output/0404_基本設計仕様書\\(バッチ_商品管理\\).html ../pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php ../pf-eccube3/app/Plugin/HareruyaEc/Service/Product/DeleteProductRequest.php ../ec-cube-enterprise/src/Eccube/Command/CancelProductRequestCommand.php ../ec-cube-enterprise/src/Eccube/Service/Product/BatchCancelProductRequestAction.php",
+      "rg -n \"CancelProductRequestCommand|BatchCancelProductRequestAction|cancel-product-request|入荷通知キャンセル.*開始|開始.*入荷通知キャンセル|Command start|Command complete|DateTime|date\\(|success\\(\" ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/src/Eccube/Service/Product ../ec-cube-enterprise/app",
+      "rg -n \"deleteProductRequest|product:batch|ProductBatch|Command start|Command complete|date\\(\" ../pf-eccube3/app/Plugin/HareruyaEc/Command ../pf-eccube3/app/Plugin/HareruyaEc/Service/Product"
+    ],
+    "notes": [
+      "設計HTMLは B02-02 のログ・監査で開始・完了のコンソール出力を日時付きと指定している。",
+      "pf-eccube3 は ProductBatch の共通処理で日時プレフィックス付きの start/complete を出力する。",
+      "ec-cube-enterprise の CancelProductRequestCommand は開始出力を行わず、完了出力にも日時を含めない。"
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 /**
  * 管理画面 二段階認証 E2E。納品ケース表 integration_test/e2e/m01_02_admin_login_two_factor_auth_e2e_cases.md に対応。
- * 本specには「E2E自動化」ケースのみ実装し、056/080は test.fixme、091等の手動/間接はケース表で全量管理する
+ * 本specには「E2E自動化」ケースのみ実装し、080は test.fixme、091等の手動/間接はケース表で全量管理する
  * （ケース表とspecは完全1:1ではない＝規約「手動/対象外はspecに残さない」に従う）。
  * 期待結果は仕様(m01-02_admin_login_two_factor_auth.md / messages.ja.yaml)由来（オラクル独立性）。
  * ec-cube-enterprise の Playwright は本リポジトリでは実行不可。構造参考のもとで生成した未実行雛形。
@@ -24,7 +24,7 @@
  *  - SEED-M01-02-2FA-RESET    : TFA_RESET_USER / TFA_RESET_PASS / TFA_RESET_SECRET（本人再設定の使い捨て・秘密鍵設定済）
  *  - 認証済みCookie名は仕様固定でないため判定に用いない（HttpOnly属性と新規付与のみをオラクルとする）
  */
-import { test, expect, Page } from "@playwright/test";
+import { test, expect, Page, BrowserContext } from "@playwright/test";
 import { AdminLoginPage } from "../../pages/admin/login.page";
 import { AdminTwoFactorAuthPage } from "../../pages/admin/two_factor_auth.page";
 import { ECCUBE_ADMIN_ROUTE } from "../../config/default.config";
@@ -68,6 +68,7 @@ const SET_RE = /\/two_factor_auth\/set(\?|$)/;
 const LOGIN_RE = /\/login(\?|$)/;
 // ホーム画面相当（admin_homepage = /<route>/ ）。成功遷移は「ホームへ」を仕様とするため明示確認する。
 const HOME_RE = new RegExp(`/${ECCUBE_ADMIN_ROUTE}/?(\\?|$)`);
+type ContextCookie = Awaited<ReturnType<BrowserContext["cookies"]>>[number];
 
 /** パスワード認証して、ガードにより追加認証画面（秘密鍵あり）へ到達するまで。 */
 async function loginToAuthScreen(page: Page, user: string, pass: string) {
@@ -88,6 +89,36 @@ async function loginAndPassAuth(
   const tfa = new AdminTwoFactorAuthPage(page);
   await tfa.submitAuth(currentTotp(secret));
   await expect(page).toHaveURL(HOME_RE); // 成功→ホーム画面相当
+}
+
+/** 追加認証成功で付与された2FA認証済みCookieを、Cookie名固定なしで検出する。 */
+async function loginAndCaptureTwoFactorCookie(
+  page: Page,
+  context: BrowserContext,
+  user = TFA_USER,
+  pass = TFA_PASS,
+  secret = TFA_SECRET
+): Promise<ContextCookie> {
+  await loginToAuthScreen(page, user, pass);
+  const before = new Set((await context.cookies()).map((c) => `${c.name}\t${c.domain}\t${c.path}`));
+  const tfa = new AdminTwoFactorAuthPage(page);
+  await tfa.submitAuth(currentTotp(secret));
+  await expect(page).toHaveURL(HOME_RE);
+
+  const added = (await context.cookies()).filter(
+    (c) => !before.has(`${c.name}\t${c.domain}\t${c.path}`) && c.httpOnly
+  );
+  expect(added.length, "追加認証成功でHttpOnlyの認証済みCookieが新規付与されること").toBeGreaterThan(0);
+  return added.find((c) => c.path.includes(`/${ECCUBE_ADMIN_ROUTE}`)) ?? added[0];
+}
+
+/** 管理セッションは残し、2FA認証済みCookieだけを削除して「ログイン済み・2FA Cookie無効」を作る。 */
+async function clearTwoFactorCookie(context: BrowserContext, cookie: ContextCookie) {
+  await context.clearCookies({ name: cookie.name, domain: cookie.domain, path: cookie.path });
+  const remains = (await context.cookies()).filter(
+    (c) => c.name === cookie.name && c.domain === cookie.domain && c.path === cookie.path
+  );
+  expect(remains, "2FA認証済みCookieだけが削除されること").toHaveLength(0);
 }
 
 test.describe("管理画面 > 二段階認証", { tag: ["@admin", "@auth", "@2fa"] }, () => {
@@ -208,6 +239,21 @@ test.describe("管理画面 > 二段階認証", { tag: ["@admin", "@auth", "@2fa
       "新規付与CookieにHttpOnly属性のもの（認証済みCookie）が含まれること"
     ).toBeGreaterThan(0);
     // Secure/SameSite は SSL強制設定依存のため属性確認は手動（不具合候補#4）。
+  });
+
+  test("E2E-M01-02-056 本人再設定でCookie無効→ホームへ送られガード再誘導", async ({
+    page,
+    context,
+  }) => {
+    test.skip(!HAS_SECRET, "SEED-M01-02-2FA-SECRET 未設定");
+    const twoFactorCookie = await loginAndCaptureTwoFactorCookie(page, context);
+    await clearTwoFactorCookie(context, twoFactorCookie);
+
+    const tfa = new AdminTwoFactorAuthPage(page);
+    await tfa.gotoEdit();
+    await expect(page).not.toHaveURL(tfa.editUrl);
+    await expect(page).toHaveURL(AUTH_RE);
+    await expect(tfa.deviceToken).toBeVisible();
   });
 
   test("E2E-M01-02-070 個別2FA ONの管理者はヘッダに「2段階認証 設定」リンクが表示される", async ({
@@ -362,13 +408,6 @@ test.describe("管理画面 > 二段階認証", { tag: ["@admin", "@auth", "@2fa
   });
 
   // ===== 保留（理由付きで未実行・抜け漏れ可視化。手動/対象外はケース表で全量管理） =====
-
-  test.fixme(
-    "E2E-M01-02-056 本人再設定でCookie無効→ホームへ送られガード再誘導（要: 認証済みCookie無効状態の生成）",
-    async () => {
-      // 期待は仕様(処理フロー Controller.php:106-107)由来。Cookie無効状態を安定生成する手順を実機確認後に実装。
-    }
-  );
 
   test.fixme(
     "E2E-M01-02-080 追加認証POST 5回/30分超過で試行制限メッセージ（要: 専用IP隔離＋リミッタ(Redis)初期化）",

@@ -1,0 +1,38 @@
+{
+  "chunkId": "a06-11_0506_sheet-11_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-11_0506_sheet-11_sheet.json#a06-11_0506_sheet-11_sheet-conformance-2de4a84f5f4a",
+      "functionId": "a06-11_0506_sheet-11_sheet",
+      "featureNo": "A06-11",
+      "title": "A06-11 部門一覧を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "部門一覧取得APIの成功レスポンスは設計では code/message/sections を持つJSONオブジェクトだが、実装は部門要素の裸配列をそのまま返しており、トップレベルの code・message・sections ラッパーが欠落している。",
+      "reason": "設計HTMLはレスポンスデータ表(3044-3046)・詳細設計のレスポンス表(3113)・サンプル(3065,3118-3125)・処理フロー(3103 「コード（200）・メッセージ・部門一覧をJSONで返す」)で一貫して、成功レスポンスが code=200・message=\"get sections success\"・sections 配列を持つJSONオブジェクトであると定義している。sections.json を処理するハンドラは ec-cube-enterprise 内で MTGBuyer の SectionController のみ(rg -ln 'sections.json' src/ で1件)。その getSections() は array_map で section_id/name/code だけを詰めた $payload を作り、new JsonResponse($payload) で裸配列を返している(40,42,49行)。トップレベルの code/message/sections ラッパーを付けていない。反証として 'get sections success' を全体検索したが0件。'sections' => は Admin/Product/SectionController.php と PDFビルダーにあるが、いずれも別機能(部門管理画面・PDF)のTwig用データでありAPI応答ではない。よって設計が要求するレスポンス構造と実装のレスポンス構造が異なる実装違い。",
+      "designEvidence": {
+        "label": "設計要求（成功レスポンスのフィールド定義）",
+        "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+        "start": 3044,
+        "end": 3046,
+        "contains": ["必ず200が入る", "get sections success", "部門の配列"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装（裸配列を返している）",
+          "note": "array_map で section_id/name/code のみを詰めた $payload を new JsonResponse($payload) で返す。code/message/sections ラッパーなし。",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/SectionController.php",
+          "start": 40,
+          "end": 49,
+          "contains": ["array_map", "'section_id' => $s->getId()", "new JsonResponse($payload)"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -n 'get sections success' /home/y-saito/Developments/ec-cube-enterprise",
+        "rg -ln 'sections.json' /home/y-saito/Developments/ec-cube-enterprise/src"
+      ]
+    }
+  ]
+}

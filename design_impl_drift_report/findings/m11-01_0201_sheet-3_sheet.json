@@ -1,0 +1,3889 @@
+{
+  "functionId": "m11-01_0201_sheet-3_sheet",
+  "featureNo": "M11-01",
+  "title": "M11-01 メンバー管理一覧",
+  "domain": "m11",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+  "sourceBook": "0201_基本設計仕様書(システム設定).html",
+  "sheetId": "sheet-3",
+  "sheetName": "メンバー管理一覧",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "m11-01_0201_sheet-3_sheet-conformance-e1c73b773f66",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+      "designRefDetail": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3（利用者視点の入口 表『存在しないIDで削除を実行する』行、および処理フロー『削除（DELETE）』の『見つからない場合は削除警告メッセージを積み、一覧へリダイレクトする（404 にはしない）』）",
+      "designExpectation": "存在しないIDで DELETE /%admin_route%/setting/system/member/{id}/delete を実行したとき、対象が見つからない場合は削除警告メッセージ（フラッシュ）を積み、一覧へリダイレクトする。404 にはしない。up/down の『無ければ404とする』とは明確に区別される。",
+      "designQuote": "存在しないIDで DELETE /%admin_route%/setting/system/member/{id}/delete を実行したとき、対象が見つからない場合は削除警告メッセージ（フラッシュ）を積み、一覧へリダイレクトする。404 にはしない。up/down の『無ければ404とする』とは明確に区別される。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php:274-308",
+      "implementationActual": "delete() が型付き引数 `Member $Member` を受けるため、存在しないIDでは Symfony の EntityValueResolver が本体到達前に NotFoundHttpException(404) を投げる。isTokenValid/delete/addSuccess/DELETE完了イベントに到達せず、設計要求の『削除警告メッセージ→一覧リダイレクト・404にはしない』は発生せず 404 応答となる。存在時の削除本体（MemberRepository::delete():116 の物理削除＋sort_no繰り下げ、成功/外部キー/一般例外メッセージ、DELETE完了イベント）は設計どおり実装済み。Controller.php・MemberRepository.php・member.twig に不在時の警告フラッシュ＋redirectToRoute 分岐や 404→リダイレクト変換リスナは存在しない。",
+      "difference": "設計は削除対象不在時の期待挙動を明示的に『404にはしない／警告メッセージ→一覧リダイレクト』と規定し（HTML L970/L983）、up/down の『無ければ404』（L979/L989）と対比して区別している。しかし実装 delete は型付きエンティティ引数解決に依存し、不在IDでは本体到達前に404となるため設計と差異。pf-eccube3→EC-CUBE4系(enterprise)のコントローラ署名変更に由来する未記載の挙動差。",
+      "mismatchReason": "設計は削除対象不在時の期待挙動を明示的に『404にはしない／警告メッセージ→一覧リダイレクト』と規定し（HTML L970/L983）、up/down の『無ければ404』（L979/L989）と対比して区別している。しかし実装 delete は型付きエンティティ引数解決に依存し、不在IDでは本体到達前に404となるため設計と差異。pf-eccube3→EC-CUBE4系(enterprise)のコントローラ署名変更に由来する未記載の挙動差。",
+      "comparisonRows": [
+        {
+          "item": "存在しないID削除時のHTTP応答",
+          "design": "404にはしない（本体到達→警告フラッシュ→一覧リダイレクト 302）",
+          "implementation": "EntityValueResolver が NotFoundHttpException(404) を送出",
+          "mismatch": "設計は非404・警告＋リダイレクト、実装は404"
+        },
+        {
+          "item": "削除警告メッセージの積載",
+          "design": "見つからない場合は削除警告メッセージを積む",
+          "implementation": "本体未到達のため addError/addWarning は実行されない",
+          "mismatch": "警告フラッシュが積まれない"
+        },
+        {
+          "item": "up/down との区別",
+          "design": "up/down は無ければ404、delete は404にしない（明示区別）",
+          "implementation": "delete も up/down と同様に型付き引数で一律404",
+          "mismatch": "設計が意図した挙動の区別が失われている"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m11-01_0201_sheet-3_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php:274-308",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「存在しないIDで DELETE /%admin_route%/setting/system/member/{id}/delete を実行したとき、対象が見つからない場合は削除警告メッセージ（フラッシュ）を積み、一覧へリダイレクトする。404 にはしない。up/down の『無ければ404とする』とは明確に区別される。」。実装は「delete() が型付き引数 `Member $Member` を受けるため、存在しないIDでは Symfony の EntityValueResolver が本体到達前に NotFoundHttpException(404) を投げる。isTokenValid/delete/addSuccess/DELETE完了イベントに到達せず、設計要求の『削除警告メッセージ→一覧リダイレクト・404にはしない』は発生せず 404 応答となる。存在時の削除本体（MemberRepository::delete():116 …」。乖離理由は「設計は削除対象不在時の期待挙動を明示的に『404にはしない／警告メッセージ→一覧リダイレクト』と規定し（HTML L970/L983）、up/down の『無ければ404』（L979/L989）と対比して区別している。しかし実装 delete は型付きエンティティ引数解決に依存し、不在IDでは本体到達前に404となるため設計と差異。pf-eccube3→EC-CUBE4系(enterprise)のコントローラ署名変更に由来する未記載の挙動差。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "業務ロジック・外部連携未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "ルート・Controller",
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html:836\n833:           </div>\n834:         </div>\n835:       </section>\n836:       <section class=\"sheet-panel\" id=\"sheet-3\">\n837:         <div class=\"sheet-heading\">\n838:           <h2>メンバー管理一覧</h2>\n839:         </div>",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php:274-308",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php:274\n271:     /**\n272:      * @throws ForeignKeyConstraintViolationException|\\Exception\n273:      */\n274:     #[Route(path: '/%eccube_admin_route%/setting/system/member/{id}/delete', name: 'admin_setting_system_member_delete', requirements: ['id' => '\\d+'], methods: ['DELETE'])]\n275:     public function delete(Request $request, Member $Member): RedirectResponse\n276:     {\n277:         $this->isTokenValid();",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php:38\n35: use Symfony\\Component\\Routing\\Attribute\\Route;\n36: use Symfony\\Component\\Security\\Core\\Authentication\\Token\\Storage\\TokenStorageInterface;\n37: \n38: class MemberController extends AbstractController\n39: {\n40:     /**\n41:      * MemberController constructor."
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 120,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-39ff7f90a2",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "概要 メンバーの一覧表示と検索",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-31e212c3f7",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "・ 識別ID:1-2「所属」を選択時、選択された店舗で表示を絞り込む",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-b412ad1020",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "・ 識別ID:1-3「権限」を選択時、選択された権限で表示を絞り込む",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-3816cbf8db",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "・ 識別ID:2-2「所属」を押下時、ソートを変更する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-99c72af0f8",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "・ 識別ID:2-3「権限」を押下時、ソートを変更する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-1978e0dd56",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "・ 識別ID:2-4「デフォルト検索表示店舗」を選択時、選択された店舗で表示を絞り込む",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-adb6ea0778",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー管理へ遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-5f7856e3e0",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "所属マスターデータを参照し選択肢を表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-e30c70e17d",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "選択肢:登録されている全権限",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-c3801f930d",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "リンク押下時ソート",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-ff02961782",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "デフォルト検索表示店舗",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-389faa762d",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "処理前に確認を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-7b65ef7b15",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "管理画面の「システム情報設定」配下において、管理ログイン用の管理者アカウント（メンバー）を一覧表示し、各行から登録・編集・削除・表示順の入れ替えへ誘導する一覧機能である。ページタイトルブロックは「システム設定」、サブタイトルおよび一覧ボックス見出しは「メンバー管理」として表示される。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-956ce2ff73",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。対象は pf-eccube3 のメンバー一覧（index）と、一覧から実行する削除・上へ・下への各操作とする。一覧（index）はコア実装のままで、HareruyaEcプラグインによる一覧の上書きはない。登録・編集フォームの詳細は「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-8375c65fba",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "挙動・画面・処理フローの参照ソースツリーは pf-eccube3 を正とする。ただしDB関連の記述（テーブル名・列名・型・制約・関連・永続化先、DBカラム節、データ整合性のDB部分、副作用のDB更新）は、リニューアル後システムである ec-cube-enterprise の実装を正とする。両者でスキーマが食い違う点は「リニューアル移行時の扱い」に明記する。URLエンドポイントは管理画面コントローラのルート定義（ AdminControllerProvider ）で確認した利用者視点の入口として記載する。管理画面プレフィックスは ADMIN_ROUTE （ path.yml の admin_route ）で決まる。本書ではコントローラクラス名・ルートbind名は本文に置かない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-74faba9ac3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー一覧の表示項目、並び順、件数・ページングの有無",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-d8c75ee3e5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧から新規登録・編集・削除・上へ・下へへ向かう利用者視点の導線と結果メッセージ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-f64950f1b1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除時の表示順繰り下げ、上へ・下へによる隣接行との表示順入れ替え",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-934f0ca971",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "ログイン中メンバー自身の行に対する削除リンクの非表示、先頭・末尾行での上へ・下へリンクの非表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-4afba2a129",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧初期化イベントおよび削除前後イベントによる拡張点（名称はコード内の EccubeEvents 定数を参照）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-3f1b553dd5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-227a8b02eb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバーの登録・編集フォームの項目、検証、パスワード・ソルトの扱い、保存処理（「メンバー管理」M11-02 を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-6ff73d5a02",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "管理画面 IP 制限やファイアウォールの判定順序の詳細",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-43b7864af1",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "本機能以外が dtb_member を更新する経路（バッチ、他画面、直接SQL）の一覧",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-b9fd1ee1b2",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "基本設計の機能仕様（同シート上部）に記載される、所属・権限による絞り込み・ソート、および表示リストへの項目追加（デフォルト検索表示店舗、編集可能店舗、自動ログアウト、二段階認証など）は、リニューアル後の追加仕様である。現行の pf-eccube3 のコア一覧には実装されていない。pf-eccube3 の一覧は名前・所属・権限・稼働の4列と操作メニューのみで構成し、検索フォーム・絞り込みセレクト・ソートリンク・追加列は持たない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-2430158dcc",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "DB関連の記述は ec-cube-enterprise を正とする。挙動説明・画面構成は現行（pf-eccube3）の確認値だが、DBスキーマは移行先（ec-cube-enterprise）に合わせる。現行と移行先の主な差は次のとおり。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-9324e71b08",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示順キー: 現行は dtb_member.rank 、移行先は dtb_member.sort_no 。いずれも降順で並べる。本書のDB記述は sort_no を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-989f32b75a",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除方式: 現行は dtb_member.del_flg を立てる論理削除、移行先は del_flg 列を持たず物理削除である。本書のDB記述は物理削除（ del_flg なし）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-cc53f62541",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "所属: 現行は dtb_member.department のテキスト、移行先は dtb_member.department_id （ mtb_department 参照）のマスタFKである。一覧の「所属」列は移行先ではマスタ名称を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-2fa8903cfc",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メールアドレス・所属店舗・デフォルト検索表示店舗・二段階認証・自動ログアウトは、移行先では dtb_member 本体の列（ email 、 base_info_id 、 default_search_base_info_id 、 two_factor_auth_enabled 、 is_auto_logout ）として存在する。編集可能店舗は移行先の結合表 dtb_member_base_info に保持する。現行ではこれらの列・表は存在しない（所属店舗・スマレジは現行プラグインの補助表 dtb_member_sub で代替）。これらは一覧の追加列・絞り込みの裏付けとなる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-cfdb602022",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "管理画面へログインするアカウント。 dtb_member に保存される。フロントの会員（顧客）とは別物である。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-47c3140860",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "dtb_member.sort_no によるメンバー一覧の表示順。一覧は sort_no の降順で並べ、値が大きい行が先頭に来る（DB列は ec-cube-enterprise を正とする。現行 pf-eccube3 は rank ）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-cb59d7e9e4",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "mtb_work のマスタ項目。ログイン可否の判定に利用される値がコアに定義されている。一覧ではマスタ名称を「稼働」列に表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-3c51bcdd24",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "mtb_authority のマスタ項目。パス単位の拒否リストと組み合わせて管理画面のアクセスを制御する（詳細は権限管理機能を正とする）。一覧ではマスタ名称を「権限」列に表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-e43e34aa21",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバーの所属。移行先では dtb_member.department_id （ mtb_department 参照）のマスタ名称を「所属」列に表示する（現行 pf-eccube3 は department のテキスト値）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-a50d91a8f3",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "dtb_member の対象行を物理削除し、削除対象より大きい sort_no の行を繰り下げる扱い。移行先は del_flg 列を持たない（現行 pf-eccube3 は del_flg を立てる論理削除。差は移行時の扱いを参照）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-05721051d2",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除されていないメンバーが sort_no 降順の表で表示される。各行に名前・所属・権限名・稼働名が表示され、操作メニュー（編集、削除、上へ、下へ）と画面下部の新規登録ボタンがある。件数表示・ページングはない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-669d9948ba",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "操作メニューから新規登録を開く",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-4bc04bce06",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー登録・編集画面（新規）へ遷移する。フォームの項目・検証・保存は「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-0035ebe645",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "選択した行のメンバー登録・編集画面（既存）へ遷移する。詳細は「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-0901808c25",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "ログイン中メンバー自身の行で削除を見る",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-85b7df3f84",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "—（一覧上リンク非表示）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-ba2e814de3",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "自分自身の行では削除がリンクにならず、文言のみが表示される。削除を実行できない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-2b4bfc708e",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "他行の削除を実行する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-747fde92fc",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "対象行を削除し、削除対象より大きい sort_no の行を繰り下げる。成功メッセージののち一覧へ遷移する。保存失敗時はエラーメッセージののち一覧へ遷移する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-c001992c64",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "隣接する sort_no の行と表示順を入れ替える。成功すれば成功メッセージ、失敗すればエラーメッセージののち一覧へ遷移する。先頭行では上へ、末尾行では下へのリンクを一覧上に出さない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-4cd4b52a3e",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "存在しないIDで削除を実行する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-cdef8d77eb",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "対象が見つからない場合は削除警告メッセージを積み、一覧へ遷移する。404 にはしない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-0eb819944d",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧テーブルの列は、名前、所属、権限（マスタ名称）、稼働（マスタ名称）、操作メニュー。各行の操作メニューはドロップダウンで、編集・削除・上へ・下へを表示する。画面下部に新規登録ボタンを置く。検索フォーム・絞り込みセレクト・ソートリンクは持たない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-5f0b4bb437",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示条件付き要素",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-55de7839d1",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除は、行のメンバーがログイン中メンバー自身の場合はリンクにせず文言のみとし、それ以外はトークン付きの削除リンクとする。上へは先頭行で出さず、下へは末尾行で出さない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-d8e7d50912",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧テンプレートに changeAction 関数が定義されているが、当該テンプレート内で呼び出しはなく、本機能の主操作には使われない確認値である。削除・上へ・下へは共通スクリプトにより、 data-method とトークン用属性を付与した疑似フォーム送信で DELETE または PUT を行う。削除リンクは共通スクリプトの既定の確認ダイアログに従い、上へ・下へは data-confirm=\"false\" を付けて確認ダイアログを出さない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-8f56bcf0e6",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "Bootstrap モーダルは用いず、削除確認はブラウザの確認ダイアログに依存する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-ede98d941e",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "dtb_member を sort_no 降順のみの条件で取得する。削除済みの行は取得対象から除外する（移行先は物理削除のため対象行自体が存在しない。現行 pf-eccube3 は del_flg フィルタで除外）。稼働状態による絞り込みは行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-9dc18ec027",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "PUT のとき、上へ処理を呼ぶ。自身の sort_no より 1 大きい行と sort_no を交換する。隣が存在しないなどで処理できない場合は失敗とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-093c576678",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "成否に応じて成功またはエラーメッセージを積み、一覧へリダイレクトする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-41694341c7",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "上へと同様に、自身の sort_no より 1 小さい行と sort_no を交換する。先頭・末尾などで隣接行が無い場合は失敗とし、エラーメッセージを積む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-0c705e023b",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除（DELETE）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-169be4afec",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "対象メンバーを取得する。見つからない場合は削除警告メッセージを積み、一覧へリダイレクトする（404 にはしない）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-498be0df2f",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "見つかった場合は削除前イベントをディスパッチし、削除処理を呼ぶ。削除対象より大きい sort_no の全行を 1 つ繰り下げたうえで、対象メンバーを物理削除する（移行先は del_flg を持たない。現行 pf-eccube3 は del_flg を立て rank を 0 にする論理削除）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-87c98c24ee",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "成功時は削除完了イベントをディスパッチし、成功メッセージを積む。失敗時はエラーメッセージを積む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-faecac2246",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧へリダイレクトする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-159d5f4b46",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "dtb_member を sort_no 降順で並べ替える。件数表示やページングは行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-ce5081ae9e",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除されていないメンバーを対象とする（移行先は物理削除のため削除済み行は存在しない）。稼働・非稼働の区別による絞り込みはしない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-cc30abb0c9",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除時の繰り下げ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-a90b82cb5c",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除対象より大きい sort_no の全行を 1 つ繰り下げる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-0a967e23b7",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "主操作時の判定順序",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-ff850c191b",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除・上へ・下へのトークンが有効か",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-9cc5d623f3",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "対象メンバーが存在するか（削除）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-eaeecddea3",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "存在しなければ削除警告メッセージを積み一覧へ戻る。404 にはしない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-a1c7241e03",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除・入れ替えの保存が成功したか",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-886349ef22",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "成功なら完了メッセージ、失敗ならエラーメッセージを積み一覧へ戻る。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-3349dde12d",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示文言（日本語）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-bb72e3dad1",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示条件（利用者視点）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-af5b13cc85",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "他行の削除が成功したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-723752d09d",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除完了メッセージキーに対応する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-64ca0f0638",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除できませんでした。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-220947705a",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除の保存が失敗したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-7487d00f20",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除失敗メッセージキーに対応する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-4fd19b4e85",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "（削除対象不在の警告メッセージ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-c0add9d188",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "存在しないIDで削除を実行したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-99a28bc793",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "共通の削除警告メッセージを積む。文言は実装の翻訳メッセージを正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-3f3df5e871",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示しないが関連する遷移",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-2aeafe9ca6",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "新規登録・編集リンク押下",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-bb3487cef5",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー登録・編集画面（M11-02）。本機能では当画面の文言は扱わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-2b246b5728",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "本機能では金額集計や税率計算は行わない。一覧画面は入力フォームを持たないため、入力項目の検証は行わない。登録・編集フォームの入力項目は「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-26cee6265c",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "移行先は物理削除であり、削除された行は一覧結果に含まれない（現行 pf-eccube3 は del_flg を立てる論理削除で行自体は残る）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-68d73d4816",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除対象が存在しない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-050b5f050b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "対象が見つからず、削除警告メッセージを積んで一覧へ戻る。404 にはしない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-5289530acd",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "先頭行の上へ、末尾行の下へは一覧上にリンクを出さない。仮に隣接行が無い状態で実行された場合は失敗としてエラーメッセージを積む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-6ffa63bc23",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "ログイン中メンバー自身の行の削除",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-d93fc2c49f",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧では削除をリンクにせず文言のみとする。サーバ側で同一IDを特別拒否するコードはコアに無い。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-d1b3d227b7",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧は稼働条件なしで取得するため、非稼働メンバーも表示される。ログイン可否の判定はログイン処理を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-3541b07497",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧表示は取得直前の dtb_member の内容を反映する。並びは sort_no 降順のみで、削除済みは除外する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-0feaae9fb7",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "入れ替え・削除は隣接または該当範囲の sort_no 更新で整合を取る設計だが、同時操作による競合時の保証は本書では切らない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-be3a5ba526",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧は稼働条件なし取得のため、非稼働メンバーも表示され得る。実際のログイン可否は認証処理の判定を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-b883e12eeb",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧の表示値は当該行の dtb_member 現行値である。編集画面側の表示・保存は M11-02 を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-0012347f22",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧表示の GET、削除・上へ・下への疑似フォームによるトークン付き要求",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-d6e816f12c",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧の再描画、削除・上へ・下へ完了の翻訳キーに対応する成功フラッシュ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-560095ccf3",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除・上へ・下へ失敗のエラーフラッシュ、削除対象不在時の警告フラッシュ、トークン不正時のアクセス拒否、上へ・下へでの 404",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-f5f2466a85",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除時の dtb_member の物理削除（DELETE）、順序変更・繰り下げ時の dtb_member.sort_no の UPDATE、Doctrine の flush、一覧初期化・削除前後イベントのディスパッチ（DB列・削除方式は ec-cube-enterprise を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-55cd5915c0",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "DB関連は ec-cube-enterprise の実装を正とする（SKILL 手順 1c）。下表は一覧・削除・順序変更に直接関係する列のみを記載する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-9177066f60",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "主キー。自動採番。一覧の各行・操作リンクのID指定に用いる（移行先のPK列名は id 。現行 pf-eccube3 は member_id ）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-c1aa8bc5a4",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "名前。「名前」列に表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-9e28b59fbf",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "所属。 mtb_department 外部キー。「所属」列にマスタ名称を表示する（現行 pf-eccube3 は department テキスト列）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-50bbc765f5",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "mtb_authority 外部キー。「権限」列にマスタ名称を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-b49dd393c9",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "mtb_work 外部キー。「稼働」列にマスタ名称を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-2780bbee41",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示順。一覧は降順。削除時は削除対象より大きい表示順の行を繰り下げる。上へ・下へで隣接行と交換する（現行 pf-eccube3 は rank ）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-3ea6cb2e31",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "所属マスタ。一覧の「所属」列の表示名称を提供する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-0c10e09629",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "権限マスタ。一覧の「権限」列の表示名称を提供する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-dac099a96a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "稼働マスタ。一覧の「稼働」列の表示名称を提供する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-51f462ca1a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "移行先の dtb_member には del_flg 列が無く、削除は物理削除である（現行 pf-eccube3 の del_flg 論理削除との差は「リニューアル移行時の扱い」を参照）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-9371578c67",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧画面は検索・絞り込みの入力フォームを持たないため、本機能で扱う入力バリデーションはない。削除・上へ・下へはトークン検証のみを前提とする。登録・編集フォームのバリデーションは「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-fe40ba4a25",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー一覧・削除・順序変更",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-a400b5d9e5",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "管理画面の認証フローへ誘導される（詳細は管理画面ログインを正とする）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-ac5c2b4b4e",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー一覧の参照、削除、順序変更を操作できる。権限マスタにより当画面パスが拒否されている場合は拒否され得る（権限管理の設定を正とする）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-a039c9a3fd",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "新規登録・編集の実行可否（編集権限）は「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-d89d78fc53",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧から新規登録リンク",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-da10b84de3",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー登録・編集画面（新規、M11-02）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m11-01_0201_sheet-3_sheet-req-849910841a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー登録・編集画面（既存、M11-02）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "AdminControllerProvider",
+        "ADMIN_ROUTE",
+        "admin_route",
+        "ADMIN_SETTING_SYSTEM_MEMBER_INDEX_INITIALIZE",
+        "ADMIN_SETTING_SYSTEM_MEMBER_DELETE_INITIALIZE",
+        "ADMIN_SETTING_SYSTEM_MEMBER_DELETE_COMPLETE",
+        "OrderStatus",
+        "OrderStatusColor",
+        "CustomerOrderStatus"
+      ],
+      "translationKeys": [
+        "admin.member.delete.complete",
+        "admin.member.delete.error",
+        "admin.member.up.complete",
+        "admin.member.down.complete",
+        "admin.member.up.error",
+        "admin.member.down.error",
+        "admin.login_history.search.page_count",
+        "admin.login_history.search",
+        "admin.login_history.search.page_no",
+        "admin.common.save_complete",
+        "admin.common.save_error",
+        "admin.setting.system.master_data.duplicate_id"
+      ],
+      "classNames": [
+        "CollectionType"
+      ],
+      "paths": [
+        "8/29",
+        "pf-eccube3/m11-01_admin_system_setting_setting_system_member_list.md",
+        "setting/system/member",
+        "setting/system/member/new",
+        "setting/system/member/{id}/edit",
+        "setting/system/member/{id}/delete",
+        "setting/system/member/{id}/up",
+        "setting/system/member/{id}/down",
+        "Eccube/Event/EccubeEvents.php",
+        "ec-cube-enterprise/m11-04_admin_system_setting_setting_system_login_history.md",
+        "setting/system/login_history",
+        "setting/system/login_history/{page_no}",
+        "setting/system/login_history/1",
+        "flush",
+        "ec-cube-enterprise/m11-05_admin_system_setting_setting_system_masterdata.md",
+        "setting/system/masterdata",
+        "setting/system/masterdata/{entity}/edit",
+        "setting/system/masterdata/edit",
+        "ec-cube-enterprise/m11-06_admin_system_setting_setting_system_system_info.md",
+        "setting/system/system",
+        "setting/system/system/phpinfo"
+      ],
+      "businessTerms": [
+        "M11",
+        "メンバー管理一覧",
+        "権限でのソート",
+        "選択された権限で表示を絞り込む",
+        "登録されている全権限",
+        "自動ログアウト"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "ADMIN_SETTING_SYSTEM_MEMBER_DELETE_COMPLETE",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/MemberController.php:290",
+        "snippet": "$this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_SETTING_SYSTEM_MEMBER_DELETE_COMPLETE);",
+        "weight": 7
+      },
+      {
+        "term": "ADMIN_SETTING_SYSTEM_MEMBER_INDEX_INITIALIZE",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/MemberController.php:73",
+        "snippet": "$this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_SETTING_SYSTEM_MEMBER_INDEX_INITIALIZE);",
+        "weight": 7
+      },
+      {
+        "term": "CollectionType",
+        "termType": "className",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/SearchProductType.php:28",
+        "snippet": "use Symfony\\Component\\Form\\Extension\\Core\\Type\\CollectionType;",
+        "weight": 7
+      },
+      {
+        "term": "CollectionType",
+        "termType": "className",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/SearchProductType.php:82",
+        "snippet": "$builder->add('tags', CollectionType::class, [",
+        "weight": 7
+      },
+      {
+        "term": "CollectionType",
+        "termType": "className",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/ShippingMultipleType.php:19",
+        "snippet": "use Symfony\\Component\\Form\\Extension\\Core\\Type\\CollectionType;",
+        "weight": 7
+      },
+      {
+        "term": "CollectionType",
+        "termType": "className",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/ShippingMultipleType.php:60",
+        "snippet": "->add('shipping', CollectionType::class, [",
+        "weight": 7
+      },
+      {
+        "term": "admin.common.save_complete",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/SellGroupController.php:122",
+        "snippet": "$this->addSuccess('admin.common.save_complete', 'admin');",
+        "weight": 6
+      },
+      {
+        "term": "admin.common.save_complete",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/SellGroupController.php:69",
+        "snippet": "$this->addSuccess('admin.common.save_complete', 'admin');",
+        "weight": 6
+      },
+      {
+        "term": "admin.login_history.search.page_no",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/LoginHistoryController.php:100",
+        "snippet": "$session->set('eccube.admin.login_history.search.page_no', $pageNo);",
+        "weight": 6
+      },
+      {
+        "term": "setting/system/login_history/{page_no}",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/LoginHistoryController.php:48",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/setting/system/login_history/{page_no}', name: 'admin_setting_system_login_history_page', requirements: ['page_no' => '\\d+'], methods: ['GET', 'POST'])]",
+        "weight": 6
+      },
+      {
+        "term": "admin.login_history.search.page_count",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/LoginHistoryController.php:55",
+        "snippet": "$pageCount = $session->get('eccube.admin.login_history.search.page_count', $this->eccubeConfig['eccube_default_page_count']);",
+        "weight": 6
+      },
+      {
+        "term": "admin.login_history.search.page_count",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/LoginHistoryController.php:61",
+        "snippet": "$session->set('eccube.admin.login_history.search.page_count', $pageCount);",
+        "weight": 6
+      },
+      {
+        "term": "admin.login_history.search",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/LoginHistoryController.php:76",
+        "snippet": "$session->set('eccube.admin.login_history.search', FormUtil::getViewData($searchForm));",
+        "weight": 6
+      },
+      {
+        "term": "admin.login_history.search.page_no",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/LoginHistoryController.php:77",
+        "snippet": "$session->set('eccube.admin.login_history.search.page_no', $pageNo);",
+        "weight": 6
+      },
+      {
+        "term": "admin.login_history.search.page_no",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/LoginHistoryController.php:91",
+        "snippet": "$session->set('eccube.admin.login_history.search.page_no', (int) $pageNo);",
+        "weight": 6
+      },
+      {
+        "term": "admin.login_history.search.page_no",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/LoginHistoryController.php:93",
+        "snippet": "$pageNo = $session->get('eccube.admin.login_history.search.page_no', 1);",
+        "weight": 6
+      },
+      {
+        "term": "admin.login_history.search",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/LoginHistoryController.php:95",
+        "snippet": "$viewData = $session->get('eccube.admin.login_history.search', []);",
+        "weight": 6
+      },
+      {
+        "term": "admin.login_history.search",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/System/LoginHistoryController.php:99",
+        "snippet": "$session->set('eccube.admin.login_history.search', $viewData);",
+        "weight": 6
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 3,
+    "implementationGapRequirementCount": 3,
+    "rows": [
+      {
+        "findingId": "m11-01_0201_sheet-3_sheet-conformance-e1c73b773f66",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "404にはしない（本体到達→警告フラッシュ→一覧リダイレクト 302）",
+        "implementationActual": "EntityValueResolver が NotFoundHttpException(404) を送出",
+        "mismatchReason": "設計は非404・警告＋リダイレクト、実装は404",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php:274-308",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "存在しないID削除時のHTTP応答",
+            "design": "404にはしない（本体到達→警告フラッシュ→一覧リダイレクト 302）",
+            "implementation": "EntityValueResolver が NotFoundHttpException(404) を送出",
+            "mismatch": "設計は非404・警告＋リダイレクト、実装は404"
+          }
+        ]
+      },
+      {
+        "findingId": "m11-01_0201_sheet-3_sheet-conformance-e1c73b773f66",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "見つからない場合は削除警告メッセージを積む",
+        "implementationActual": "本体未到達のため addError/addWarning は実行されない",
+        "mismatchReason": "警告フラッシュが積まれない",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php:274-308",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "削除警告メッセージの積載",
+            "design": "見つからない場合は削除警告メッセージを積む",
+            "implementation": "本体未到達のため addError/addWarning は実行されない",
+            "mismatch": "警告フラッシュが積まれない"
+          }
+        ]
+      },
+      {
+        "findingId": "m11-01_0201_sheet-3_sheet-conformance-e1c73b773f66",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "up/down は無ければ404、delete は404にしない（明示区別）",
+        "implementationActual": "delete も up/down と同様に型付き引数で一律404",
+        "mismatchReason": "設計が意図した挙動の区別が失われている",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php:274-308",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/System/MemberController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "up/down との区別",
+            "design": "up/down は無ければ404、delete は404にしない（明示区別）",
+            "implementation": "delete も up/down と同様に型付き引数で一律404",
+            "mismatch": "設計が意図した挙動の区別が失われている"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 120,
+    "verdictedCount": 120,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 120,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-39ff7f90a2",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "概要 メンバーの一覧表示と検索",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-31e212c3f7",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "・ 識別ID:1-2「所属」を選択時、選択された店舗で表示を絞り込む",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-b412ad1020",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "・ 識別ID:1-3「権限」を選択時、選択された権限で表示を絞り込む",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-3816cbf8db",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "・ 識別ID:2-2「所属」を押下時、ソートを変更する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-99c72af0f8",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "・ 識別ID:2-3「権限」を押下時、ソートを変更する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-1978e0dd56",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "・ 識別ID:2-4「デフォルト検索表示店舗」を選択時、選択された店舗で表示を絞り込む",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-adb6ea0778",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー管理へ遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-5f7856e3e0",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "所属マスターデータを参照し選択肢を表示する",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-e30c70e17d",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "選択肢:登録されている全権限",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-c3801f930d",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "リンク押下時ソート",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-ff02961782",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "デフォルト検索表示店舗",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-389faa762d",
+        "category": "機能仕様 処理概要",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "処理前に確認を行う",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-7b65ef7b15",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "管理画面の「システム情報設定」配下において、管理ログイン用の管理者アカウント（メンバー）を一覧表示し、各行から登録・編集・削除・表示順の入れ替えへ誘導する一覧機能である。ページタイトルブロックは「システム設定」、サブタイトルおよび一覧ボックス見出しは「メンバー管理」として表示される。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-956ce2ff73",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。対象は pf-eccube3 のメンバー一覧（index）と、一覧から実行する削除・上へ・下への各操作とする。一覧（index）はコア実装のままで、HareruyaEcプラグインによる一覧の上書きはない。登録・編集フォームの詳細は「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-8375c65fba",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "挙動・画面・処理フローの参照ソースツリーは pf-eccube3 を正とする。ただしDB関連の記述（テーブル名・列名・型・制約・関連・永続化先、DBカラム節、データ整合性のDB部分、副作用のDB更新）は、リニューアル後システムである ec-cube-enterprise の実装を正とする。両者でスキーマが食い違う点は「リニューアル移行時の扱い」に明記する。URLエンドポイントは管理画面コントローラのルート定義（ AdminControllerProvider ）で確認した利用者視点の入口として記載する。管理画面プレフィックスは ADMIN_ROUTE （ path.yml の admin_route ）で決まる。本書ではコントローラクラス名・ルートbind名は本文に置かない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-74faba9ac3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー一覧の表示項目、並び順、件数・ページングの有無",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-d8c75ee3e5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧から新規登録・編集・削除・上へ・下へへ向かう利用者視点の導線と結果メッセージ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-f64950f1b1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除時の表示順繰り下げ、上へ・下へによる隣接行との表示順入れ替え",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-934f0ca971",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "ログイン中メンバー自身の行に対する削除リンクの非表示、先頭・末尾行での上へ・下へリンクの非表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-4afba2a129",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧初期化イベントおよび削除前後イベントによる拡張点（名称はコード内の EccubeEvents 定数を参照）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-3f1b553dd5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-227a8b02eb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバーの登録・編集フォームの項目、検証、パスワード・ソルトの扱い、保存処理（「メンバー管理」M11-02 を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-6ff73d5a02",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "管理画面 IP 制限やファイアウォールの判定順序の詳細",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-43b7864af1",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "本機能以外が dtb_member を更新する経路（バッチ、他画面、直接SQL）の一覧",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-b9fd1ee1b2",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "基本設計の機能仕様（同シート上部）に記載される、所属・権限による絞り込み・ソート、および表示リストへの項目追加（デフォルト検索表示店舗、編集可能店舗、自動ログアウト、二段階認証など）は、リニューアル後の追加仕様である。現行の pf-eccube3 のコア一覧には実装されていない。pf-eccube3 の一覧は名前・所属・権限・稼働の4列と操作メニューのみで構成し、検索フォーム・絞り込みセレクト・ソートリンク・追加列は持たない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-2430158dcc",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "DB関連の記述は ec-cube-enterprise を正とする。挙動説明・画面構成は現行（pf-eccube3）の確認値だが、DBスキーマは移行先（ec-cube-enterprise）に合わせる。現行と移行先の主な差は次のとおり。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-9324e71b08",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示順キー: 現行は dtb_member.rank 、移行先は dtb_member.sort_no 。いずれも降順で並べる。本書のDB記述は sort_no を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-989f32b75a",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除方式: 現行は dtb_member.del_flg を立てる論理削除、移行先は del_flg 列を持たず物理削除である。本書のDB記述は物理削除（ del_flg なし）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-cc53f62541",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "所属: 現行は dtb_member.department のテキスト、移行先は dtb_member.department_id （ mtb_department 参照）のマスタFKである。一覧の「所属」列は移行先ではマスタ名称を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-2fa8903cfc",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メールアドレス・所属店舗・デフォルト検索表示店舗・二段階認証・自動ログアウトは、移行先では dtb_member 本体の列（ email 、 base_info_id 、 default_search_base_info_id 、 two_factor_auth_enabled 、 is_auto_logout ）として存在する。編集可能店舗は移行先の結合表 dtb_member_base_info に保持する。現行ではこれらの列・表は存在しない（所属店舗・スマレジは現行プラグインの補助表 dtb_member_sub で代替）。これらは一覧の追加列・絞り込みの裏付けとなる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-cfdb602022",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "管理画面へログインするアカウント。 dtb_member に保存される。フロントの会員（顧客）とは別物である。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-47c3140860",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "dtb_member.sort_no によるメンバー一覧の表示順。一覧は sort_no の降順で並べ、値が大きい行が先頭に来る（DB列は ec-cube-enterprise を正とする。現行 pf-eccube3 は rank ）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-cb59d7e9e4",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "mtb_work のマスタ項目。ログイン可否の判定に利用される値がコアに定義されている。一覧ではマスタ名称を「稼働」列に表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-3c51bcdd24",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "mtb_authority のマスタ項目。パス単位の拒否リストと組み合わせて管理画面のアクセスを制御する（詳細は権限管理機能を正とする）。一覧ではマスタ名称を「権限」列に表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-e43e34aa21",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバーの所属。移行先では dtb_member.department_id （ mtb_department 参照）のマスタ名称を「所属」列に表示する（現行 pf-eccube3 は department のテキスト値）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-a50d91a8f3",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "dtb_member の対象行を物理削除し、削除対象より大きい sort_no の行を繰り下げる扱い。移行先は del_flg 列を持たない（現行 pf-eccube3 は del_flg を立てる論理削除。差は移行時の扱いを参照）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-05721051d2",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除されていないメンバーが sort_no 降順の表で表示される。各行に名前・所属・権限名・稼働名が表示され、操作メニュー（編集、削除、上へ、下へ）と画面下部の新規登録ボタンがある。件数表示・ページングはない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-669d9948ba",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "操作メニューから新規登録を開く",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-4bc04bce06",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー登録・編集画面（新規）へ遷移する。フォームの項目・検証・保存は「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-0035ebe645",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "選択した行のメンバー登録・編集画面（既存）へ遷移する。詳細は「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-0901808c25",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "ログイン中メンバー自身の行で削除を見る",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-85b7df3f84",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "—（一覧上リンク非表示）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-ba2e814de3",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "自分自身の行では削除がリンクにならず、文言のみが表示される。削除を実行できない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-2b4bfc708e",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "他行の削除を実行する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-747fde92fc",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "対象行を削除し、削除対象より大きい sort_no の行を繰り下げる。成功メッセージののち一覧へ遷移する。保存失敗時はエラーメッセージののち一覧へ遷移する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-c001992c64",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "隣接する sort_no の行と表示順を入れ替える。成功すれば成功メッセージ、失敗すればエラーメッセージののち一覧へ遷移する。先頭行では上へ、末尾行では下へのリンクを一覧上に出さない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-4cd4b52a3e",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "存在しないIDで削除を実行する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-cdef8d77eb",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "対象が見つからない場合は削除警告メッセージを積み、一覧へ遷移する。404 にはしない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-0eb819944d",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧テーブルの列は、名前、所属、権限（マスタ名称）、稼働（マスタ名称）、操作メニュー。各行の操作メニューはドロップダウンで、編集・削除・上へ・下へを表示する。画面下部に新規登録ボタンを置く。検索フォーム・絞り込みセレクト・ソートリンクは持たない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-5f0b4bb437",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示条件付き要素",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-55de7839d1",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除は、行のメンバーがログイン中メンバー自身の場合はリンクにせず文言のみとし、それ以外はトークン付きの削除リンクとする。上へは先頭行で出さず、下へは末尾行で出さない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-d8e7d50912",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧テンプレートに changeAction 関数が定義されているが、当該テンプレート内で呼び出しはなく、本機能の主操作には使われない確認値である。削除・上へ・下へは共通スクリプトにより、 data-method とトークン用属性を付与した疑似フォーム送信で DELETE または PUT を行う。削除リンクは共通スクリプトの既定の確認ダイアログに従い、上へ・下へは data-confirm=\"false\" を付けて確認ダイアログを出さない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-8f56bcf0e6",
+        "category": "管理画面へのログイン、セッション、CSRF の名称形式、Remember Me、パスワードポリシー全般の詳細",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "Bootstrap モーダルは用いず、削除確認はブラウザの確認ダイアログに依存する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-ede98d941e",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "dtb_member を sort_no 降順のみの条件で取得する。削除済みの行は取得対象から除外する（移行先は物理削除のため対象行自体が存在しない。現行 pf-eccube3 は del_flg フィルタで除外）。稼働状態による絞り込みは行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-9dc18ec027",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "PUT のとき、上へ処理を呼ぶ。自身の sort_no より 1 大きい行と sort_no を交換する。隣が存在しないなどで処理できない場合は失敗とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-093c576678",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "成否に応じて成功またはエラーメッセージを積み、一覧へリダイレクトする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-41694341c7",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "上へと同様に、自身の sort_no より 1 小さい行と sort_no を交換する。先頭・末尾などで隣接行が無い場合は失敗とし、エラーメッセージを積む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-0c705e023b",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除（DELETE）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-169be4afec",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "対象メンバーを取得する。見つからない場合は削除警告メッセージを積み、一覧へリダイレクトする（404 にはしない）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-498be0df2f",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "見つかった場合は削除前イベントをディスパッチし、削除処理を呼ぶ。削除対象より大きい sort_no の全行を 1 つ繰り下げたうえで、対象メンバーを物理削除する（移行先は del_flg を持たない。現行 pf-eccube3 は del_flg を立て rank を 0 にする論理削除）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-87c98c24ee",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "成功時は削除完了イベントをディスパッチし、成功メッセージを積む。失敗時はエラーメッセージを積む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-faecac2246",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧へリダイレクトする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-159d5f4b46",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "dtb_member を sort_no 降順で並べ替える。件数表示やページングは行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-ce5081ae9e",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除されていないメンバーを対象とする（移行先は物理削除のため削除済み行は存在しない）。稼働・非稼働の区別による絞り込みはしない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-cc30abb0c9",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除時の繰り下げ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-a90b82cb5c",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除対象より大きい sort_no の全行を 1 つ繰り下げる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-0a967e23b7",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "主操作時の判定順序",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-ff850c191b",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除・上へ・下へのトークンが有効か",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-9cc5d623f3",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "対象メンバーが存在するか（削除）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-eaeecddea3",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "存在しなければ削除警告メッセージを積み一覧へ戻る。404 にはしない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-a1c7241e03",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除・入れ替えの保存が成功したか",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-886349ef22",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "成功なら完了メッセージ、失敗ならエラーメッセージを積み一覧へ戻る。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-3349dde12d",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示文言（日本語）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-bb72e3dad1",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示条件（利用者視点）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-af5b13cc85",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "他行の削除が成功したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-723752d09d",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除完了メッセージキーに対応する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-64ca0f0638",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除できませんでした。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-220947705a",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除の保存が失敗したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-7487d00f20",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除失敗メッセージキーに対応する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-4fd19b4e85",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "（削除対象不在の警告メッセージ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-c0add9d188",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "存在しないIDで削除を実行したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-99a28bc793",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "共通の削除警告メッセージを積む。文言は実装の翻訳メッセージを正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-3f3df5e871",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示しないが関連する遷移",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-2aeafe9ca6",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "新規登録・編集リンク押下",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-bb3487cef5",
+        "category": "一覧画面は検索・絞り込みの入力項目を持たない。登録・編集フォームの入力項目は本機能では扱わない。",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー登録・編集画面（M11-02）。本機能では当画面の文言は扱わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-2b246b5728",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "本機能では金額集計や税率計算は行わない。一覧画面は入力フォームを持たないため、入力項目の検証は行わない。登録・編集フォームの入力項目は「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-26cee6265c",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "移行先は物理削除であり、削除された行は一覧結果に含まれない（現行 pf-eccube3 は del_flg を立てる論理削除で行自体は残る）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-68d73d4816",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除対象が存在しない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-050b5f050b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "対象が見つからず、削除警告メッセージを積んで一覧へ戻る。404 にはしない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-5289530acd",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "先頭行の上へ、末尾行の下へは一覧上にリンクを出さない。仮に隣接行が無い状態で実行された場合は失敗としてエラーメッセージを積む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-6ffa63bc23",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "ログイン中メンバー自身の行の削除",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-d93fc2c49f",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧では削除をリンクにせず文言のみとする。サーバ側で同一IDを特別拒否するコードはコアに無い。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-d1b3d227b7",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧は稼働条件なしで取得するため、非稼働メンバーも表示される。ログイン可否の判定はログイン処理を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-3541b07497",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧表示は取得直前の dtb_member の内容を反映する。並びは sort_no 降順のみで、削除済みは除外する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-0feaae9fb7",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "入れ替え・削除は隣接または該当範囲の sort_no 更新で整合を取る設計だが、同時操作による競合時の保証は本書では切らない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-be3a5ba526",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧は稼働条件なし取得のため、非稼働メンバーも表示され得る。実際のログイン可否は認証処理の判定を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-b883e12eeb",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧の表示値は当該行の dtb_member 現行値である。編集画面側の表示・保存は M11-02 を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-0012347f22",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧表示の GET、削除・上へ・下への疑似フォームによるトークン付き要求",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-d6e816f12c",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧の再描画、削除・上へ・下へ完了の翻訳キーに対応する成功フラッシュ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-560095ccf3",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除・上へ・下へ失敗のエラーフラッシュ、削除対象不在時の警告フラッシュ、トークン不正時のアクセス拒否、上へ・下へでの 404",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-f5f2466a85",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "削除時の dtb_member の物理削除（DELETE）、順序変更・繰り下げ時の dtb_member.sort_no の UPDATE、Doctrine の flush、一覧初期化・削除前後イベントのディスパッチ（DB列・削除方式は ec-cube-enterprise を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-55cd5915c0",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "DB関連は ec-cube-enterprise の実装を正とする（SKILL 手順 1c）。下表は一覧・削除・順序変更に直接関係する列のみを記載する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-9177066f60",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "主キー。自動採番。一覧の各行・操作リンクのID指定に用いる（移行先のPK列名は id 。現行 pf-eccube3 は member_id ）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-c1aa8bc5a4",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "名前。「名前」列に表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-9e28b59fbf",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "所属。 mtb_department 外部キー。「所属」列にマスタ名称を表示する（現行 pf-eccube3 は department テキスト列）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-50bbc765f5",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "mtb_authority 外部キー。「権限」列にマスタ名称を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-b49dd393c9",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "mtb_work 外部キー。「稼働」列にマスタ名称を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-2780bbee41",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "表示順。一覧は降順。削除時は削除対象より大きい表示順の行を繰り下げる。上へ・下へで隣接行と交換する（現行 pf-eccube3 は rank ）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-3ea6cb2e31",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "所属マスタ。一覧の「所属」列の表示名称を提供する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-0c10e09629",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "権限マスタ。一覧の「権限」列の表示名称を提供する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-dac099a96a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "稼働マスタ。一覧の「稼働」列の表示名称を提供する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-51f462ca1a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "移行先の dtb_member には del_flg 列が無く、削除は物理削除である（現行 pf-eccube3 の del_flg 論理削除との差は「リニューアル移行時の扱い」を参照）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-9371578c67",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧画面は検索・絞り込みの入力フォームを持たないため、本機能で扱う入力バリデーションはない。削除・上へ・下へはトークン検証のみを前提とする。登録・編集フォームのバリデーションは「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-fe40ba4a25",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー一覧・削除・順序変更",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-a400b5d9e5",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "管理画面の認証フローへ誘導される（詳細は管理画面ログインを正とする）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-ac5c2b4b4e",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー一覧の参照、削除、順序変更を操作できる。権限マスタにより当画面パスが拒否されている場合は拒否され得る（権限管理の設定を正とする）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-a039c9a3fd",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "新規登録・編集の実行可否（編集権限）は「メンバー管理」（M11-02）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-d89d78fc53",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "一覧から新規登録リンク",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-da10b84de3",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー登録・編集画面（新規、M11-02）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m11-01_0201_sheet-3_sheet-req-849910841a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0201_基本設計仕様書(システム設定).html#sheet-3",
+        "designRequirement": "メンバー登録・編集画面（既存、M11-02）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "chunkId": "a07-04_0507_sheet-6_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-04_0507_sheet-6_sheet.json#a07-04_0507_sheet-6_sheet-conformance-fdde371a521b",
+      "refuted": false,
+      "reason": "引用・別実装ともに検証したが反証できず。設計1510行は 404『受注IDに該当するネット買取受注が無い＝該当なし（本文を持たない）』と明記（Read で確認、一意な表記）。実装は BuyOrderController::updateStatus が受注なし時に throw new NotFoundException('買取情報が見つかりません')（BuyOrderController.php:131 確認）。NotFoundException は BaseApiException(statusCode=404, errors=[$message]) を継承（NotFoundException.php, BaseApiException.php 確認）。App API の例外応答ハンドラを全数探索: KernelEvents::EXCEPTION を購読するのは ExceptionListener / TransactionListener / LogListener の3つのみで、Response をセットするのは ExceptionListener だけ。ExceptionListener は isAppApi() 配下(72行)で必ず new JsonResponse(['code'=>$statusCode,'errors'=>$errors], $statusCode) を返す(136-139行、本文なしへ分岐する枝は存在しない)。isAppApi() は /api/v1/ 始まりで true を返し(Context.php:74-86)、当ルート /%eccube_api_v1_route%/admin/buyOrder/{id}/status.json は該当。よって 404 は {code:404, errors:['買取情報が見つかりません']} の本文付き応答となり、設計『本文を持たない』と明確に相違する。設計に『現行踏襲』『対象外』等の除外注記も無し(1490-1546行確認)。トークン欠落/署名不正の401は security.yaml app: access_token のファイアウォール層で別処理となり得るが、404は本文付きで確定するため指摘は維持。",
+      "attempts": [
+        "別実装: KernelEvents::EXCEPTION 購読クラスを全数grep→ExceptionListener以外にAPI応答を差し替える枝なし",
+        "引用確認: BuyOrderController.php:131 / ExceptionListener.php:72-139 / 設計1510行を実読、いずれも一致",
+        "設計除外: 1490-1546行に現行踏襲/対象外/本文なし分岐の記述なし",
+        "経路確認: isAppApi()(Context.php:74) が当ルートにマッチすることを確認"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-04_0507_sheet-6_sheet.json#a07-04_0507_sheet-6_sheet-conformance-04d1056ec78c",
+      "refuted": true,
+      "reason": "要求の読み違いの疑いが強く、指摘は成立しない。設計1510行/1538行の文言は『保存処理中の例外は処理失敗（HTTP 500）とし、errorsは例外メッセージ。トランザクションはロールバックする』であり、(a)ロールバックは実装済み(UpdateStatusAction.php:112 確認)、(b)errors には『例外メッセージ』を載せる、を求める。実装は catch(\\Throwable) 後に throw new InternalException('システムエラーが発生しました', $e)(UpdateStatusAction.php:114 確認)を行い、ExceptionListener が BaseApiException::getErrors()=['システムエラーが発生しました'] をそのまま errors に載せて返す(ExceptionListener.php:81-83,136-139)。ここで返る値『システムエラーが発生しました』は、まさに実際にスローされ ExceptionListener が捕捉した例外(InternalException)の message そのものであり、設計文言『errorsは例外メッセージ』を字義通り満たす（errors に例外の message が入っている）。設計は『原因(previous)例外のメッセージ』『元例外のメッセージを露出せよ』とは書いておらず(1510,1538行を実読、そのような限定語なし)、どの例外のメッセージかは未特定。生のDB/ドライバ例外文言をAPIクライアントへ返す解釈は、同設計のログ制約(1542-1543行: JWT原値・シークレット等を出すな)が示すセキュリティ志向とも整合しない。指摘者は『例外メッセージ＝原因例外のメッセージ』と限定して読んでいるが、その限定は設計に存在せず、実装は例外の message を errors に返している点で要求を満たすと解せる。finding自身も confidence=medium かつ『システムエラーが発生しました自体はInternalExceptionのmessage』と認めており、証拠は弱い。よって refuted。",
+      "attempts": [
+        "引用確認: 設計1510(500行)・1538行を実読→『どの例外か』の限定語(原因/元/previous)は無し",
+        "実装確認: UpdateStatusAction.php:111-114 rollback+InternalException、BuyOrderController.php:160 も同様、InternalException.php:27-34 で errors=[message]",
+        "読み違い判定: errors に載る文字列は捕捉例外(InternalException)の message そのもので、設計『errorsは例外メッセージ』を字義的に充足",
+        "設計整合性: ログ秘匿方針(1542-1543行)から生例外露出は設計意図でないと解釈可能"
+      ]
+    }
+  ]
+}

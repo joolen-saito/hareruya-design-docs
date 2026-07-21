@@ -1,0 +1,156 @@
+{
+  "functionId": "m16-06_0213_sheet-8_sheet",
+  "featureNo": "M16-06",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-8:1963,1970-1971,2003,2028",
+      "designExpectation": "利用者視点の入口は、一覧が GET /{admin_route}/buy_price_list、一覧の金額セルが GET /{admin_route}/buy_price_list/{id} で編集画面へ遷移する。調査補助上のルート名は admin_buy_price_list / admin_buy_price_list_edit とされている。",
+      "implRef": "src/Eccube/Controller/Admin/Data/BuyPriceListController.php:45,80 / src/Eccube/Resource/template/admin/Data/buy_price_list.twig:73",
+      "implementationActual": "一覧は name='admin_data_buy_price_list' path='/%eccube_admin_route%/data/buy_price_list'、編集は name='admin_data_buy_price_list_edit' path='/%eccube_admin_route%/data/buy_price_list/{id}/edit' として実装され、セルリンクも admin_data_buy_price_list_edit を参照している。admin_buy_price_list / admin_buy_price_list_edit / '/{admin_route}/buy_price_list/{id}' の別実装は rg 検索で見つからない。",
+      "mismatchReason": "設計の利用者視点URLと遷移先ルートは /buy_price_list および /buy_price_list/{id} だが、実装は /data/buy_price_list および /data/buy_price_list/{id}/edit に変更されている。探索範囲: src/Eccube, html。検索語: admin_buy_price_list, admin_data_buy_price_list, /buy_price_list, data/buy_price_list, buy_price_list_edit。",
+      "comparisonRows": [
+        {
+          "item": "一覧URL",
+          "design": "GET /{admin_route}/buy_price_list",
+          "implementation": "GET /%eccube_admin_route%/data/buy_price_list",
+          "mismatch": "設計より URL に /data が追加されている。"
+        },
+        {
+          "item": "一覧ルート名",
+          "design": "admin_buy_price_list",
+          "implementation": "admin_data_buy_price_list",
+          "mismatch": "設計のルート名ではなく admin_data_* 名で登録されている。"
+        },
+        {
+          "item": "セル押下時の編集URL",
+          "design": "GET /{admin_route}/buy_price_list/{id}",
+          "implementation": "GET /%eccube_admin_route%/data/buy_price_list/{id}/edit",
+          "mismatch": "設計より /data と /edit が追加されている。"
+        },
+        {
+          "item": "セルリンクのTwig route",
+          "design": "path('admin_buy_price_list_edit', {id: buyPrice.id})",
+          "implementation": "path('admin_data_buy_price_list_edit', {id: ...})",
+          "mismatch": "設計の route 名と異なる route を生成している。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-8:1966",
+      "designExpectation": "表示要素は、block title が「買取価格対応表」、サブタイトルが「一覧」、メニューが menus = ['data_menu', 'buy_price_list'] である。",
+      "implRef": "src/Eccube/Resource/template/admin/Data/buy_price_list.twig:13,15-16 / src/Eccube/Resource/locale/messages.ja.yaml:5824,5873",
+      "implementationActual": "Twig は menus = ['data_management', 'buy_price_list_management']、title は 'admin.data.buy_price_list_management' = 「買取価格対応表」、sub_title は 'admin.data.data_management' = 「データ管理」を表示する。",
+      "mismatchReason": "タイトルは一致するが、設計で利用者に表示するサブタイトルは「一覧」なのに、実装は「データ管理」を表示している。メニューキーも設計の data_menu / buy_price_list ではなく data_management / buy_price_list_management である。探索範囲: src/Eccube/Resource/template/admin/Data, src/Eccube/Resource/locale/messages.ja.yaml。",
+      "comparisonRows": [
+        {
+          "item": "画面タイトル",
+          "design": "買取価格対応表",
+          "implementation": "買取価格対応表",
+          "mismatch": "一致。"
+        },
+        {
+          "item": "サブタイトル",
+          "design": "一覧",
+          "implementation": "データ管理",
+          "mismatch": "利用者表示文言が異なる。"
+        },
+        {
+          "item": "メニューキー",
+          "design": "['data_menu', 'buy_price_list']",
+          "implementation": "['data_management', 'buy_price_list_management']",
+          "mismatch": "設計のメニュー識別子と実装の選択キーが異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-8:1971",
+      "designExpectation": "処理フローでは、カード状態マスタを識別子昇順で全件取得し、買取価格対応表マスタを識別子順で全件取得する（リポジトリの findAll に依存）。行の並びは三次元配列の最外層キー（NM価格）の列挙順に従う。",
+      "implRef": "src/Eccube/Controller/Admin/Data/BuyPriceListController.php:49-57,67",
+      "implementationActual": "カード状態は id IN (SP, MP, HP) で取得し、明示的な識別子昇順指定はない。買取価格対応表は findBy([], ['nmPrice' => 'ASC', 'specialFlg' => 'ASC']) で取得し、さらに ksort($buyPriceMap, SORT_NUMERIC) でNM価格順に並べ替えている。",
+      "mismatchReason": "設計はマスタ全件取得・識別子順/findAll依存の取得順を前提にしているが、実装はカード状態を SP/MP/HP に限定し、買取価格対応表も id/findAll ではなく nmPrice/specialFlg と ksort による別順序を強制している。探索範囲: Controller, Repository, Entity。検索語: MtbCardCondition, findAll, findBy, nmPrice, specialFlg, ksort。",
+      "comparisonRows": [
+        {
+          "item": "カード状態取得",
+          "design": "識別子昇順で全件取得し、Twig 側で id > 1 を扱う",
+          "implementation": "SP, MP, HP のID配列で絞り込み、orderBy 指定なし",
+          "mismatch": "取得対象と順序保証が設計と異なる。"
+        },
+        {
+          "item": "買取価格対応表取得",
+          "design": "findAll に依存し、識別子順/DB既定順で全件取得",
+          "implementation": "findBy([], ['nmPrice' => 'ASC', 'specialFlg' => 'ASC'])",
+          "mismatch": "id/default順ではなく nmPrice/specialFlg 順で取得している。"
+        },
+        {
+          "item": "行順",
+          "design": "手順4の最外層キー（NM価格）の列挙順",
+          "implementation": "ksort($buyPriceMap, SORT_NUMERIC) によるNM価格数値昇順",
+          "mismatch": "取得・投入順ではなく明示ソート後の順序で表示される。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-8:1981",
+      "designExpectation": "データ整合性では、マスタに存在しない組み合わせはセル自体が無い。欠けの検知や警告は一覧では行わない。",
+      "implRef": "src/Eccube/Resource/template/admin/Data/buy_price_list.twig:72-75",
+      "implementationActual": "buyPriceForFlg[specialFlg][CardCondition.id] が存在しない場合、実装は <td>-</td> を描画する。",
+      "mismatchReason": "設計は存在しない組み合わせについてセル自体を出さないとしているが、実装はセルを出したうえで '-' を表示するため、表のセル数と欠けの見え方が設計と異なる。探索範囲: src/Eccube/Resource/template/admin/Data/buy_price_list.twig。検索語: buyPriceForFlg, specialFlg, CardCondition.id, '-'.",
+      "comparisonRows": [
+        {
+          "item": "欠けた組み合わせの表示",
+          "design": "セル自体が無い",
+          "implementation": "<td>-</td> を表示",
+          "mismatch": "欠けを空セルではなくハイフン付きセルとして表示している。"
+        },
+        {
+          "item": "欠けの警告",
+          "design": "欠けの検知や警告は一覧では行わない",
+          "implementation": "警告はないが '-' で欠けを視覚表示する",
+          "mismatch": "警告ではないものの、設計が求める「セル自体が無い」とは表示結果が異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-8:1966-1967",
+      "designExpectation": "表頭は二段で、ノーマルカード／FOil&プロモ版カードを表示し、補足ではノーマルカード colspan=\"3\"、FOil&プロモ版カード colspan=\"4\" が静的に書かれている。",
+      "implRef": "src/Eccube/Resource/template/admin/Data/buy_price_list.twig:53-63 / src/Eccube/Resource/locale/messages.ja.yaml:5879-5880",
+      "implementationActual": "実装は通常版見出しと特別版見出しの colspan をどちらも CardConditions|length で動的に決める。実装の表示文言は 'ノーマルカード' と 'Foil&プロモ版カード' である。",
+      "mismatchReason": "設計補足の静的 colspan 値（ノーマル3、FOil&プロモ4）に対し、実装は両ブロックとも同じ CardConditions|length を使う。カード状態が SP/MP/HP の3件なら特別版側も colspan=3 となり、設計の特別版 colspan=4 と一致しない。探索範囲: Twig, locale。検索語: normal_card, special_card, colspan, CardConditions|length。",
+      "comparisonRows": [
+        {
+          "item": "ノーマルカード colspan",
+          "design": "colspan=\"3\"",
+          "implementation": "colspan=\"{{ CardConditions|length }}\"",
+          "mismatch": "カード状態件数依存の動的値であり、静的値ではない。"
+        },
+        {
+          "item": "FOil&プロモ版カード colspan",
+          "design": "colspan=\"4\"",
+          "implementation": "colspan=\"{{ CardConditions|length }}\"",
+          "mismatch": "SP/MP/HP の3件構成では 3 になり、設計値4と異なる。"
+        },
+        {
+          "item": "特別版見出し文言",
+          "design": "FOil&プロモ版カード",
+          "implementation": "Foil&プロモ版カード",
+          "mismatch": "大文字小文字表記が設計と異なる。"
+        }
+      ]
+    }
+  ]
+}

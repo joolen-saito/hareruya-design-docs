@@ -1,0 +1,162 @@
+{
+  "id": "a05-01-order-print-missing-base-info-not-404",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json",
+  "sourceFindingId": "a05-01_0505_sheet-3_sheet-conformance-c85609e37a71",
+  "classification": "API受注管理",
+  "feature": "注文印刷_印刷情報をプリンタへ送信",
+  "issueCategory": "実装漏れ",
+  "issue": "存在しない店舗IDで注文印刷APIを呼び出しても404にならず空の200応答になり得る",
+  "designBook": "0505_基本設計仕様書(API_受注管理).xlsx",
+  "reproSteps": [
+    "BaseInfo に存在しない数値IDを確認する",
+    "ec-cube-enterprise の注文印刷API POST http://localhost:8080/api/order/prints/direct/{存在しないbase_info_id} に ConnectionType=GetRequest を指定して呼び出す",
+    "HTTPステータスとレスポンス本文を確認する"
+  ],
+  "expected": [
+    "設計上の店舗ID(shop_id)に存在しない数値IDが指定された場合は HTTP 404 を返す",
+    "存在しない店舗IDでは印刷対象検索や空文字の正常応答へ進まない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、ルート引数 `base_info_id` を `OrderDirectPrintAction` に渡すが、`BaseInfoRepository::find($base_info_id)` が null を返した場合でも404を返さない。`if ($BaseInfo && $BaseInfo->isMainShop())` に入らないため支店向けの `getDirectPrintOrderList($base_info_id)` を実行し、対象データがなければ空文字を返す。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は存在しない base_info_id でも 404 にせず支店向け検索へ進む",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php",
+          "start": 37,
+          "end": 52,
+          "language": "php",
+          "contains": [
+            "$BaseInfo = $this->baseInfoRepository->find($base_info_id)",
+            "if ($BaseInfo && $BaseInfo->isMainShop())",
+            "$OrderDataList = $this->orderRepository->getDirectPrintOrderList($base_info_id)",
+            "return ''"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise のControllerは GetRequest の戻り値を StreamedResponse として返し 404 を設定しない",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php",
+          "start": 48,
+          "end": 75,
+          "language": "php",
+          "contains": [
+            "$connectionType === 'GetRequest'",
+            "$xmlData = $this->orderDirectPrintAction->handle",
+            "$response = new StreamedResponse()",
+            "echo $xmlData",
+            "return $response"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)は旧方式として `GET /order/print/direct` と `POST /order/print/direct` を同じController actionへ割り当てており、設計がカスタマイズ後に求める店舗IDパス引数の404契約はこのルート定義上には存在しない。設計の「支店での処理を踏襲」という404要件を enterprise 側で満たす処理も追加されていない。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は /order/print/direct の旧ルートで店舗IDパス引数を持たない",
+          "path": "pf-api/config/routes.yaml",
+          "start": 73,
+          "end": 80,
+          "language": "yaml",
+          "contains": [
+            "get_order_print_direct:",
+            "path: /order/print/direct",
+            "methods: GET",
+            "post_order_print_direct:",
+            "methods: POST"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "A05-01 はURLに店舗ID(shop_id)を持つ",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 877,
+      "end": 899,
+      "language": "html",
+      "contains": [
+        "URLに店舗ID(shop_id)を引数として持つ",
+        "店舗ID",
+        "受取店舗の店舗ID(shop_id)",
+        "/order/prints/123"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "存在しない店舗ID(shop_id)は404を返す",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 900,
+      "end": 903,
+      "language": "html",
+      "contains": [
+        "ステータスコード",
+        "404",
+        "存在しない店舗ID(shop_id)"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "BaseInfo が null でも404にせず支店向け検索へ進む",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php",
+      "start": 37,
+      "end": 52,
+      "language": "php",
+      "contains": [
+        "$BaseInfo = $this->baseInfoRepository->find($base_info_id)",
+        "if ($BaseInfo && $BaseInfo->isMainShop())",
+        "$OrderDataList = $this->orderRepository->getDirectPrintOrderList($base_info_id)",
+        "return ''"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "GetRequest のレスポンスに404ステータス設定がない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php",
+      "start": 48,
+      "end": 75,
+      "language": "php",
+      "contains": [
+        "$connectionType === 'GetRequest'",
+        "$xmlData = $this->orderDirectPrintAction->handle",
+        "$response = new StreamedResponse()",
+        "return $response"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "旧方式のルートには店舗IDパス引数がなく、GET/POST /order/print/direct を同じ action に割り当てる",
+      "path": "pf-api/config/routes.yaml",
+      "start": 73,
+      "end": 80,
+      "language": "yaml",
+      "contains": [
+        "get_order_print_direct:",
+        "path: /order/print/direct",
+        "controller: App\\Controller\\Admin\\OrderController::postPrintDirectAction",
+        "methods: GET",
+        "methods: POST"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex + gpt-5.5 high critical review",
+    "commands": [
+      "rg -n \"店舗ID\\(shop_id\\)|存在しない店舗ID|404|/order/prints|shop_id|base_info_id\" hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json",
+      "rg -n \"BaseInfo|base_info_id|shop_id|NotFound|404|createNotFound|find\\(|getDirectPrintOrderList|OrderDirectPrintAction\" ec-cube-enterprise/src/Eccube/Service/Admin/Order ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php pf-api/src/Controller/Admin/OrderController.php pf-api/config/routes.yaml",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php | sed -n '43,88p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php | sed -n '37,52p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php | sed -n '1550,1618p'",
+      "nl -ba pf-api/config/routes.yaml | sed -n '73,80p'"
+    ],
+    "notes": [
+      "gpt-5.5 high の批判的レビューでは、候補全体は missing/non-integer 店舗IDを含むためそのまま出力不可だが、数値で存在しないIDが空200になり得る点は独立差分として切り出せると判定された。",
+      "本レジストリ項目は存在しない数値IDだけにスコープを限定し、missing/non-integer 店舗IDは a05-01-order-print-route-method-store-id-mismatch 側のルート未実装に含める。",
+      "enterprise 実装では design の shop_id に相当する実装引数を base_info_id とみなし、BaseInfo が存在しない場合の分岐を確認した。"
+    ]
+  }
+}

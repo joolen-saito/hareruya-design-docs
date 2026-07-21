@@ -1,0 +1,46 @@
+{
+  "functionId": "m04-17_0202_sheet-23_sheet",
+  "featureNo": "M04-17",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-23 機能仕様 1-2-3 / 1-3",
+      "designExpectation": "第三ソートは各レコードの登録日時と承認日時のうち後の日時（基準日時=COALESCE(承認日時,登録日時)）の降順。第一=商品コード降順、第二=店舗ID降順。",
+      "implRef": "src/Eccube/Repository/DtbStockHistoryRepository.php:333-335",
+      "implementationActual": "一覧クエリ getQueryBuilderBySearchDataForAdmin の並び順は addOrderBy('pc.code','DESC')→addOrderBy('ps.baseInfo','DESC')→addOrderBy('sh.createDate','DESC')。第三ソートに作成日時 createDate を使用し、承認日時/登録日時の基準日時を参照していない。StockHistoryController::new(:207) が本クエリを使用。",
+      "mismatchReason": "設計の基準日時は COALESCE(approvalAt, registeredAt) 降順であるべきだが、実装は createDate でソートしており承認済みレコードが承認日時で並び替わらない。findLatestByProductStockId(:358) には COALESCE(sh.approvalAt, sh.registeredAt, sh.createDate) 実装があるが一覧クエリでは未使用。",
+      "comparisonRows": [
+        {"item": "第三ソートキー", "design": "基準日時=COALESCE(承認日時,登録日時) 降順", "implementation": "sh.createDate 降順", "mismatch": "作成日時を用い基準日時を参照せず"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-23 リスト表示項目 2-25",
+      "designExpectation": "承認者列は3状態: 承認者名 / 在庫編集承認IDあり かつ 承認者未登録→「承認待ち」/ 承認行為なし→「-」。",
+      "implRef": "src/Eccube/Resource/template/admin/Stock/history.twig:730",
+      "implementationActual": "{{ Stock.approvalMember ? Stock.approvalMember : '-' }} で承認者名か「-」の2値のみ。「承認待ち」分岐が無い。",
+      "mismatchReason": "history.twig を grep しても「承認待ち」文言・ロジック不在。翻訳キー admin.stock.approval_list.approval_waiting=承認待ち は在庫編集承認一覧側でのみ使用され、本一覧では未使用。承認待ちレコードが一律「-」表示になり設計の3状態と差異。",
+      "comparisonRows": [
+        {"item": "承認者列の状態", "design": "承認者名 / 承認待ち / -（3状態）", "implementation": "承認者名 / -（2状態）", "mismatch": "承認IDあり承認者未登録時の「承認待ち」が「-」になる"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "low",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-23 リスト表示項目 2-16",
+      "designExpectation": "仕入単価は値がない場合「-」を表示する。",
+      "implRef": "src/Eccube/Resource/template/admin/Stock/history.twig:705",
+      "implementationActual": "{{ productClassSub.buy_price|price }} を出力。price フィルタ(EccubeExtension::getPriceFilter は formatCurrency((float)($number ?? 0)))が null を ¥0 に整形するため、値が無い場合「¥0」表示。「-」分岐なし。表示値も履歴時点でなく現在の ProductClass.buy_price 参照。",
+      "mismatchReason": "設計は値なし時「-」だが実装は null→¥0。加えてデータソースが履歴時点の仕入単価でなく現在の ProductClass.buy_price のため設計とデータソースも相違の可能性。",
+      "comparisonRows": [
+        {"item": "値なし時の仕入単価表示", "design": "-", "implementation": "¥0", "mismatch": "null を ¥0 整形し「-」を出さない"},
+        {"item": "仕入単価のデータソース", "design": "履歴時点の仕入単価", "implementation": "現在の ProductClass.buy_price", "mismatch": "履歴値でなく現在値を参照"}
+      ]
+    }
+  ]
+}

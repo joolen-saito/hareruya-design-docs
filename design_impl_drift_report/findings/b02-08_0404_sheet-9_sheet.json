@@ -1,0 +1,1361 @@
+{
+  "functionId": "b02-08_0404_sheet-9_sheet",
+  "featureNo": "B02-08",
+  "title": "B02-08 ユニサーチフィード作成",
+  "domain": "b02",
+  "kind": "batch",
+  "designHtml": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+  "sourceBook": "0404_基本設計仕様書(バッチ_商品管理).html",
+  "sheetId": "sheet-9",
+  "sheetName": "ユニサーチフィード作成",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "b02-08_0404_sheet-9_sheet-conformance-fec227068446",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1643,",
+      "designRefDetail": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1643, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1644, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1659, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1666, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1667",
+      "designExpectation": "定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能。管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時はフィードファイル作成を行う。",
+      "designQuote": "定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能。管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時はフィードファイル作成を行う。",
+      "implRef": "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19, src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21, src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:46, src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:47, src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:27, src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29, src/Eccube/Service/UniSearch/UniSearchExportService.php:96, src/Eccube/Service/UniSearch/UniSearchExportService.php:100, src/Eccube/Service/UniSearch/UniSearchExportService.php:103, src/Eccube/Service/UniSearch/UniSearchExportService.php:107",
+      "implementationActual": "管理画面の「フィードファイルを更新する」POSTは UniSearchFeedCreateAction::handle() に入り、exportAndUpload(false) を呼ぶ。UniSearchExportService は false の場合に SFTP アップロードをスキップせず、既存リモート削除後に gz と done ファイルをアップロードする。",
+      "difference": "設計のB02-08は管理画面からフィードファイル作成可能、実行結果はTSV.gzとdoneファイルを指定ディレクトリに置くという作成処理の要求である。一方、実装は管理画面押下時に exportAndUpload(false) を渡しており、false は手動実行スキップではなくSFTP送信を実行する分岐になっている。別機能として設計されている送信処理まで管理画面の作成操作で実行されるため、設計の外部契約と異なる。反証として admin_product_unisearch_feed、UniSearchFeedCreateAction、exportAndUpload、--manual、deleteRemoteByPrefixes、upload、unisearch_feed メニューを再検索したが、管理画面経由で SFTP をスキップする実装は見つからなかった。",
+      "mismatchReason": "設計のB02-08は管理画面からフィードファイル作成可能、実行結果はTSV.gzとdoneファイルを指定ディレクトリに置くという作成処理の要求である。一方、実装は管理画面押下時に exportAndUpload(false) を渡しており、false は手動実行スキップではなくSFTP送信を実行する分岐になっている。別機能として設計されている送信処理まで管理画面の作成操作で実行されるため、設計の外部契約と異なる。反証として admin_product_unisearch_feed、UniSearchFeedCre…",
+      "comparisonRows": [
+        {
+          "item": "管理画面ボタン押下時の処理範囲",
+          "design": "フィードファイル作成メニューでフィードファイル作成可能。実行結果はTSV.gzとMD5 doneファイルを指定ディレクトリに置く。",
+          "implementation": "POSTで UniSearchFeedCreateAction::handle() を呼び、exportAndUpload(false) を実行する。",
+          "mismatch": "管理画面の作成操作がファイル作成だけで閉じず、送信処理込みのメソッドを通常送信モードで呼んでいる。"
+        },
+        {
+          "item": "SFTP送信の扱い",
+          "design": "B02-08シートでは出力先はTSVファイルをgzに圧縮、指定ディレクトリへの配置。",
+          "implementation": "isManualExecution=false のため deleteRemoteByPrefixes、upload(gzip)、upload(done) を実行する。",
+          "mismatch": "設計上の作成処理にないリモート削除/SFTPアップロードが管理画面作成で発火する。"
+        },
+        {
+          "item": "手動実行スキップ指定",
+          "design": "管理画面からフィードファイル作成可能。",
+          "implementation": "CLIには --manual があり true の場合だけSFTPアップロードをスキップするが、管理画面は false 固定。",
+          "mismatch": "管理画面起動が手動作成扱いになっておらず、SFTPスキップ経路を使っていない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b02-08_0404_sheet-9_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19, src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21, src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:46, src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:47, src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:27, src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29, src/Eccube/Service/UniSearch/UniSearchExportService.php:96, src/Eccube/Service/UniSearch/UniSearchExportService.php:100, src/Eccube/Service/UniSearch/UniSearchExportService.php:103, src/Eccube/Service/UniSearch/UniSearchExportService.php:107",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能。管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時はフィードファイル作成を行う。」。実装は「管理画面の「フィードファイルを更新する」POSTは UniSearchFeedCreateAction::handle() に入り、exportAndUpload(false) を呼ぶ。UniSearchExportService は false の場合に SFTP アップロードをスキップせず、既存リモート削除後に gz と done ファイルをアップロードする。」。乖離理由は「設計のB02-08は管理画面からフィードファイル作成可能、実行結果はTSV.gzとdoneファイルを指定ディレクトリに置くという作成処理の要求である。一方、実装は管理画面押下時に exportAndUpload(false) を渡しており、false は手動実行スキップではなくSFTP送信を実行する分岐になっている。別機能として設計されている送信処理まで管理画面の作成操作で実行されるため、設計の外部契約と異なる。反証として admin_product_unisearch_feed、UniSearchFeedCre…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19",
+        "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21",
+        "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:46",
+        "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:47",
+        "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:27",
+        "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29",
+        "src/Eccube/Service/UniSearch/UniSearchExportService.php:96",
+        "src/Eccube/Service/UniSearch/UniSearchExportService.php:100",
+        "src/Eccube/Service/UniSearch/UniSearchExportService.php:103",
+        "src/Eccube/Service/UniSearch/UniSearchExportService.php:107",
+        "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig",
+        "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php",
+        "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php",
+        "src/Eccube/Service/UniSearch/UniSearchExportService.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19\n16:                     <p class=\"mb-3\">\n17:                         ユニサーチのフィードファイルを作成します。処理に時間がかかる場合があります。\n18:                     </p>\n19:                     <form method=\"post\" action=\"{{ url('admin_product_unisearch_feed') }}\">\n20:                         <input type=\"hidden\" name=\"_token\" value=\"{{ csrf_token('unisearch_feed') }}\">\n21:                         <button class=\"btn btn-primary\" type=\"submit\">\n22:                             フィードファイルを更新する",
+        "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21\n18:                     </p>\n19:                     <form method=\"post\" action=\"{{ url('admin_product_unisearch_feed') }}\">\n20:                         <input type=\"hidden\" name=\"_token\" value=\"{{ csrf_token('unisearch_feed') }}\">\n21:                         <button class=\"btn btn-primary\" type=\"submit\">\n22:                             フィードファイルを更新する\n23:                         </button>\n24:                     </form>",
+        "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:46\n43:                 return $this->redirectToRoute('admin_product_unisearch_feed');\n44:             }\n45: \n46:             try {\n47:                 $result = $this->feedCreateAction->handle();\n48:                 if ($result === 0) {\n49:                     $this->addWarning('admin.product.unisearch_feed_running', 'admin');"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 35,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-492e98026c",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "ユニサーチフィード作成",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-123f55133d",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "概要 ユニサーチ向けのフィードファイルを出力する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-0255dadde2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 詳細な連携仕様はユニサーチから提供されているフィード仕様書を参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-806eb14cf5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 商品情報を記載したTSVファイル（gzに固める）、出力が終わったことを示すdoneファイルを指定のディレクトリ以下に出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-94738fba84",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 前回作成したファイルを削除",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-45024f5a7f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ プロセスファイルを作成し、二重でファイルを作成するのを防ぐ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-5c43e0ac5b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ ユニサーチに連携する対象の商品を取得する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-7a957d8a9f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 連携内容はユニサーチ要件質問票も参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-16a0cb5abe",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 取得条件は以下の通り",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-f1b0c288a5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 販売価格が1円以上",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-288fdf3cc9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ （高額商品でない場合）カード状態が同一商品、同一言語の中で最も状態がよいもの",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-21908d001e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "→NMのみ送信される ※在庫数はNM以外も合計して送る",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-b1a1f1aed2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ （高額商品の場合）状態関係なく高額商品コードが設定されているもの",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-e37c49dde4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 商品、商品規格が削除されていないもの",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-0693425be0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 出力内容は「ユニサーチフィードTSV」シートを参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-4f22067987",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 現行ではFoilはあり、なしをフラグで持つが、リニューアル後は通常（Foilなし）、あり、特殊を持つため、連携内容も通常（Foilなし）、あり、特殊を連携する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-200a929f78",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 支店の追加、廃止ごとにユニサーチのフィードの増減があるのは作業漏れの可能性があるため、在庫のカラムにすべての店舗のEC在庫数を連携する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-b5d8fbb6ee",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 支店表示フラグ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-99233cc8b1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ リニューアルで支店にもユニサーチ対応を行うため、支店表示フラグを追加する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-6a4e199dbe",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 支店で検索を行う際は、必ず支店表示フラグを公開で指定する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-4f958f3468",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ リニューアルでフレームを検索条件に追加するため、連携を追加する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-4974142e90",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 買取では予約商品を表示しないようにする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-8c0e305249",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 予約商品であるかどうかは、商品に紐づく購入グループの予約商品フラグが立っているかどうかで判定する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-3efc3749a0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ リニューアルのタイミングで新たに発売日順（降順）を実装するため、カードセットのリリース日を連携する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-b6325b3bb0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-70a9723ff8",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ リニューアル時、バッチ実行方法が変わる場合は修正が必要",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-c9b67426e0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "ユニサーチフィード作成 / D89 / image 1",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-7472c37610",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ フィードファイル作成に時間がかかっているので、今後作成時間が延びていくようならパフォーマンス改善を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-6cbe939683",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時 実行タイミング 毎時15分",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-cddd7eb81c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "入力データ元 DB 出力先(フォーマット) TSVファイルをgzに圧縮",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-cfcb3eb0ae",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "入力データ検索条件",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-14e7fb9bd5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "実行結果詳細 ※主にDBの登録・更新結果について記載",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-31d46aad97",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 取得したデータをTSVファイルで出力し、gzで圧縮したものを指定のディレクトリに置く",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-1da76482ae",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ ファイルの権限をすべてのユーザが読み取り、更新、削除できるよう変更する（バッチ、管理画面どちらからも呼ばれるため異なるユーザで作成されることがあるため）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b02-08_0404_sheet-9_sheet-req-bd9159a996",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "エラーハンドリング",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "designDerivedTerms": {
+      "routeNames": [],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "docs.google.com/spreadsheets/d/11HCPre5VJPVAQgVFKQptEEuRphYVsKhYVDkibxgGphg/edit"
+      ],
+      "businessTerms": [
+        "B02",
+        "ユニサーチフィード作成",
+        "フィードファイル内のカテゴリ項目をリニューアルの",
+        "カテゴリに合わせる",
+        "買取でユニサーチの検索ができるよう",
+        "商品情報を記載したTSVファイル",
+        "ユニサーチに連携する対象の商品を取得する",
+        "高額商品でない場合",
+        "カード状態が同一商品",
+        "在庫数はNM以外も合計して送る",
+        "高額商品の場合",
+        "状態関係なく高額商品コードが設定されているもの",
+        "商品規格が削除されていないもの",
+        "リニューアルでのカスタマイズポイント",
+        "在庫数について",
+        "庫数は本店ECの在庫数となるが",
+        "リニューアル後は支店ごとのECの在庫数を持つ必要",
+        "在庫のカラムにすべての店舗のEC在庫数を連携する",
+        "在庫数の形式で指定可能であれば指定したい",
+        "在庫有無のみ検索できればよいので",
+        "リニューアル後は支店やスマレジの週間販売数も集計",
+        "カテゴリについて",
+        "リニューアル後は現行のカテゴリとは異なり",
+        "の形でカテゴリを持つようになるが"
+      ]
+    },
+    "candidateCount": 8,
+    "strongSignalCount": 4,
+    "candidateRefs": [
+      {
+        "term": "docs.google.com/spreadsheets/d/11HCPre5VJPVAQgVFKQptEEuRphYVsKhYVDkibxgGphg/edit",
+        "termType": "path",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Block/footer_promo.twig:27",
+        "snippet": "<a class=\"p-hareruya-footer__nav-link\" href=\"https://docs.google.com/forms/d/e/1FAIpQLSfadm2WyMncxBYUMmujbvD9mCKyJLolR5ITH-v8BKjhERTuhg/viewform\" target=\"_blank\" rel=\"noopener\">{{ 'front.footer.promo.event_organize_form…",
+        "weight": 6
+      },
+      {
+        "term": "docs.google.com/spreadsheets/d/11HCPre5VJPVAQgVFKQptEEuRphYVsKhYVDkibxgGphg/edit",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-event.js:1",
+        "snippet": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var s=e[i](o),l=s.value}catch(e){r(e);r…",
+        "weight": 4
+      },
+      {
+        "term": "B02",
+        "termType": "businessTerm",
+        "role": "Command/Batch",
+        "ref": "src/Eccube/Command/AggregateSalesCommand.php:26",
+        "snippet": "* 期間別販売数集計バッチ（B02-01）",
+        "weight": 4
+      },
+      {
+        "term": "B02",
+        "termType": "businessTerm",
+        "role": "Command/Batch",
+        "ref": "src/Eccube/Command/AggregateStockUpCommand.php:26",
+        "snippet": "* 期間別入庫数集計バッチ（B02-03）",
+        "weight": 4
+      },
+      {
+        "term": "B02",
+        "termType": "businessTerm",
+        "role": "Command/Batch",
+        "ref": "src/Eccube/Command/CancelProductRequestCommand.php:26",
+        "snippet": "* 入荷通知キャンセルバッチ（B02-02）",
+        "weight": 4
+      },
+      {
+        "term": "B02",
+        "termType": "businessTerm",
+        "role": "Command/Batch",
+        "ref": "src/Eccube/Command/InitialStockRegistrationCommand.php:27",
+        "snippet": "* 在庫初期化バッチ（B02-06）",
+        "weight": 4
+      },
+      {
+        "term": "docs.google.com/spreadsheets/d/11HCPre5VJPVAQgVFKQptEEuRphYVsKhYVDkibxgGphg/edit",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbStockHistory.php:33",
+        "snippet": "MtbStockHistorySourceType::STOCK_EDIT => 'admin_stock_approval_list',",
+        "weight": 4
+      },
+      {
+        "term": "docs.google.com/spreadsheets/d/11HCPre5VJPVAQgVFKQptEEuRphYVsKhYVDkibxgGphg/edit",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbStockHistory.php:34",
+        "snippet": "MtbStockHistorySourceType::STOCK_BULK_EDIT => 'admin_stock_approval_list',",
+        "weight": 4
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 3,
+    "implementationGapRequirementCount": 0,
+    "rows": [
+      {
+        "findingId": "b02-08_0404_sheet-9_sheet-conformance-fec227068446",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1643,",
+        "designRequirement": "フィードファイル作成メニューでフィードファイル作成可能。実行結果はTSV.gzとMD5 doneファイルを指定ディレクトリに置く。",
+        "implementationActual": "POSTで UniSearchFeedCreateAction::handle() を呼び、exportAndUpload(false) を実行する。",
+        "mismatchReason": "管理画面の作成操作がファイル作成だけで閉じず、送信処理込みのメソッドを通常送信モードで呼んでいる。",
+        "implementationRefs": [
+          "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19",
+          "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21",
+          "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:46",
+          "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:47",
+          "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:27",
+          "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:96",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:100",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:103",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:107",
+          "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig",
+          "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php",
+          "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "管理画面ボタン押下時の処理範囲",
+            "design": "フィードファイル作成メニューでフィードファイル作成可能。実行結果はTSV.gzとMD5 doneファイルを指定ディレクトリに置く。",
+            "implementation": "POSTで UniSearchFeedCreateAction::handle() を呼び、exportAndUpload(false) を実行する。",
+            "mismatch": "管理画面の作成操作がファイル作成だけで閉じず、送信処理込みのメソッドを通常送信モードで呼んでいる。"
+          }
+        ]
+      },
+      {
+        "findingId": "b02-08_0404_sheet-9_sheet-conformance-fec227068446",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1643,",
+        "designRequirement": "B02-08シートでは出力先はTSVファイルをgzに圧縮、指定ディレクトリへの配置。",
+        "implementationActual": "isManualExecution=false のため deleteRemoteByPrefixes、upload(gzip)、upload(done) を実行する。",
+        "mismatchReason": "設計上の作成処理にないリモート削除/SFTPアップロードが管理画面作成で発火する。",
+        "implementationRefs": [
+          "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19",
+          "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21",
+          "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:46",
+          "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:47",
+          "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:27",
+          "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:96",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:100",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:103",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:107",
+          "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig",
+          "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php",
+          "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "SFTP送信の扱い",
+            "design": "B02-08シートでは出力先はTSVファイルをgzに圧縮、指定ディレクトリへの配置。",
+            "implementation": "isManualExecution=false のため deleteRemoteByPrefixes、upload(gzip)、upload(done) を実行する。",
+            "mismatch": "設計上の作成処理にないリモート削除/SFTPアップロードが管理画面作成で発火する。"
+          }
+        ]
+      },
+      {
+        "findingId": "b02-08_0404_sheet-9_sheet-conformance-fec227068446",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1643,",
+        "designRequirement": "管理画面からフィードファイル作成可能。",
+        "implementationActual": "CLIには --manual があり true の場合だけSFTPアップロードをスキップするが、管理画面は false 固定。",
+        "mismatchReason": "管理画面起動が手動作成扱いになっておらず、SFTPスキップ経路を使っていない。",
+        "implementationRefs": [
+          "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19",
+          "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21",
+          "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:46",
+          "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:47",
+          "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:27",
+          "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:96",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:100",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:103",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php:107",
+          "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig",
+          "src/Eccube/Controller/Admin/Product/UniSearchFeedController.php",
+          "src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php",
+          "src/Eccube/Service/UniSearch/UniSearchExportService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "手動実行スキップ指定",
+            "design": "管理画面からフィードファイル作成可能。",
+            "implementation": "CLIには --manual があり true の場合だけSFTPアップロードをスキップするが、管理画面は false 固定。",
+            "mismatch": "管理画面起動が手動作成扱いになっておらず、SFTPスキップ経路を使っていない。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 35,
+    "verdictedCount": 35,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 35,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-492e98026c",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "ユニサーチフィード作成",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-123f55133d",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "概要 ユニサーチ向けのフィードファイルを出力する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-0255dadde2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 詳細な連携仕様はユニサーチから提供されているフィード仕様書を参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-806eb14cf5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 商品情報を記載したTSVファイル（gzに固める）、出力が終わったことを示すdoneファイルを指定のディレクトリ以下に出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-94738fba84",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 前回作成したファイルを削除",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-45024f5a7f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ プロセスファイルを作成し、二重でファイルを作成するのを防ぐ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-5c43e0ac5b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ ユニサーチに連携する対象の商品を取得する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-7a957d8a9f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 連携内容はユニサーチ要件質問票も参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-16a0cb5abe",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 取得条件は以下の通り",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-f1b0c288a5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 販売価格が1円以上",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-288fdf3cc9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ （高額商品でない場合）カード状態が同一商品、同一言語の中で最も状態がよいもの",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-21908d001e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "→NMのみ送信される ※在庫数はNM以外も合計して送る",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-b1a1f1aed2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ （高額商品の場合）状態関係なく高額商品コードが設定されているもの",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-e37c49dde4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 商品、商品規格が削除されていないもの",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-0693425be0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 出力内容は「ユニサーチフィードTSV」シートを参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-4f22067987",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 現行ではFoilはあり、なしをフラグで持つが、リニューアル後は通常（Foilなし）、あり、特殊を持つため、連携内容も通常（Foilなし）、あり、特殊を連携する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-200a929f78",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 支店の追加、廃止ごとにユニサーチのフィードの増減があるのは作業漏れの可能性があるため、在庫のカラムにすべての店舗のEC在庫数を連携する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-b5d8fbb6ee",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 支店表示フラグ",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-99233cc8b1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ リニューアルで支店にもユニサーチ対応を行うため、支店表示フラグを追加する",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-6a4e199dbe",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 支店で検索を行う際は、必ず支店表示フラグを公開で指定する",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-4f958f3468",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ リニューアルでフレームを検索条件に追加するため、連携を追加する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-4974142e90",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 買取では予約商品を表示しないようにする",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-8c0e305249",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 予約商品であるかどうかは、商品に紐づく購入グループの予約商品フラグが立っているかどうかで判定する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-3efc3749a0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ リニューアルのタイミングで新たに発売日順（降順）を実装するため、カードセットのリリース日を連携する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-b6325b3bb0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-70a9723ff8",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ リニューアル時、バッチ実行方法が変わる場合は修正が必要",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-c9b67426e0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "ユニサーチフィード作成 / D89 / image 1",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-7472c37610",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ フィードファイル作成に時間がかかっているので、今後作成時間が延びていくようならパフォーマンス改善を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-6cbe939683",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時 実行タイミング 毎時15分",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-cddd7eb81c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "入力データ元 DB 出力先(フォーマット) TSVファイルをgzに圧縮",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-cfcb3eb0ae",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "入力データ検索条件",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-14e7fb9bd5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "実行結果詳細 ※主にDBの登録・更新結果について記載",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-31d46aad97",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ 取得したデータをTSVファイルで出力し、gzで圧縮したものを指定のディレクトリに置く",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-1da76482ae",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "・ ファイルの権限をすべてのユーザが読み取り、更新、削除できるよう変更する（バッチ、管理画面どちらからも呼ばれるため異なるユーザで作成されることがあるため）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b02-08_0404_sheet-9_sheet-req-bd9159a996",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9",
+        "designRequirement": "エラーハンドリング",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

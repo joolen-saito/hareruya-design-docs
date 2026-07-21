@@ -1,0 +1,66 @@
+{
+  "functionId": "b16-06_0416_sheet-8_sheet",
+  "featureNo": "B16-06",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-8:1093,1107,1122,1123,1124,1126",
+      "designExpectation": "月初に店舗・在庫場所・商品規格ごとに一部の事項を抽出し、stock_YYYYMMDD.txt.zip に圧縮して s3://inventorycheck/ へアップロードする月次バッチを、毎月1日 午前1時にStep Functionsから実行する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: inventorycheck, stock_YYYYMMDD, branch_YYYYMMDD, monthly-inventory, restore-for-inventory, 月次商品, スナップショット, 毎月1日, 午前1時, FileUploadService, putFile, ZipArchive）",
+      "implementationActual": "専用Command/Service/Repositoryは確認できない。S3汎用サービスは src/Eccube/Service/S3/FileUploadService.php:57 で単一ファイルputFileを提供し、デモCommandは src/Eccube/Command/TestS3UploadDemoCommand.php:22 の eccube:demo:s3-upload で固定の hello.txt をアップロードするだけ。Command一覧にも月次商品情報スナップショット相当の入口はなく、近い名称の src/Eccube/Command/MonthlySummaryAggregateCommand.php:26 は月次集計テーブル更新、src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:35 は週間在庫履歴更新である。",
+      "mismatchReason": "設計は月次商品情報スナップショット専用の外部契約（Step Functions月次起動、DB抽出、ZIP生成、stock_YYYYMMDD.txt.zip、s3://inventorycheck/アップロード）を要求しているが、実装範囲にはその入口・ファイル名生成・ZIP生成・S3アップロード呼び出しの連結処理が存在しない。S3サービス単体やデモCommand、管理画面CSVはこのバッチ契約を満たさない。なお設計HTMLの一時DBクラスタ作成/削除に関する行は cell-strike 表示のため現行要求から除外した。",
+      "comparisonRows": [
+        {
+          "item": "実行入口",
+          "design": "Step Functionsで毎月1日 午前1時に起動する月次商品情報スナップショットバッチ",
+          "implementation": "Command一覧に該当入口なし。月次系は eccube:analysis:aggregate-monthly-summary（月次集計テーブル更新）など別用途。",
+          "mismatch": "専用バッチ入口がない"
+        },
+        {
+          "item": "出力ファイル",
+          "design": "stock_YYYYMMDD.txt.zip",
+          "implementation": "stock_YYYYMMDD.txt.zip / branch_YYYYMMDD.txt.zip の生成箇所なし。管理画面在庫CSVは stock_list_YYYYMMDDHHIISS.csv をHTTPレスポンスで返す。",
+          "mismatch": "設計ファイル名・ZIP出力がない"
+        },
+        {
+          "item": "S3保存先",
+          "design": "s3://inventorycheck/",
+          "implementation": "FileUploadService::putFile はあるが、月次スナップショットから呼び出す実装なし。デモCommandは dev-eccube-enterprise-s3/test/1/hello.txt 固定。",
+          "mismatch": "設計バケットへの月次ZIPアップロード処理がない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-8:1107,1108,1109,1110,1111,1112,1113,1114,1115,1116,1117,1118,1119,1120",
+      "designExpectation": "一時的なDBインスタンスに対して、商品規格の公開フラグが1、商品在庫に紐づく店舗が閉店でないこと、本店支店含め全店舗を対象に、商品コード・販売価格・買取価格・店舗名・在庫区分名・在庫数を出力し、店舗ID昇順、在庫区分名（EC、スマレジの順）で並べる。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: ProductStock, stock_location_id, product_code, price02, buy_price, visible, closed, 閉店, 在庫区分名, 店舗ID, stock_）",
+      "implementationActual": "管理画面用の在庫CSVは src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:33 で類似列を持つが、列は商品ID・商品名・言語・状態・基準価格・原価単価・販売数などを含む管理画面CSVで、src/Eccube/Controller/Admin/Stock/StockListController.php:213 のHTTPダウンロード用。検索Queryは src/Eccube/Repository/ProductStockRepository.php:57 の管理画面在庫一覧用で、src/Eccube/Repository/ProductStockRepository.php:313 では pc.id DESC, ps.stockLocationId ASC に並べており、設計の店舗ID昇順ではない。BaseInfoには src/Eccube/Entity/BaseInfo.php:1518 に test_store_flg はあるが、閉店判定を使った月次抽出条件は確認できない。",
+      "mismatchReason": "設計が要求する月次スナップショット用抽出SQL/Repository/Serviceがなく、類似する在庫CSV実装は管理画面検索条件に基づくHTTP CSVであり、公開フラグ=1、店舗閉店除外、全店舗固定出力、6項目のみ、店舗ID昇順およびEC/スマレジ順の外部契約を満たす実装証跡ではない。",
+      "comparisonRows": [
+        {
+          "item": "抽出条件",
+          "design": "商品規格の公開フラグが1、商品在庫に紐づく店舗が閉店でない、全店舗対象",
+          "implementation": "管理画面在庫一覧Queryは入力フォーム条件を適用する汎用検索で、月次固定条件としての公開フラグ=1・閉店店舗除外・全店舗固定出力は確認できない。",
+          "mismatch": "設計条件の専用抽出がない"
+        },
+        {
+          "item": "出力項目",
+          "design": "商品コード、販売価格、買取価格、店舗名、在庫区分名、在庫数",
+          "implementation": "StockListCsvExportService は類似項目を含むが、商品ID・商品名・言語・状態・基準価格・原価単価・総原価・販売数等も出す管理画面CSV。",
+          "mismatch": "月次スナップショットの6項目固定出力ではない"
+        },
+        {
+          "item": "並び順",
+          "design": "店舗IDの昇順、在庫区分名（EC、スマレジの順）",
+          "implementation": "ProductStockRepository は pc.id DESC, ps.stockLocationId ASC。",
+          "mismatch": "店舗ID昇順ではない"
+        }
+      ]
+    }
+  ]
+}

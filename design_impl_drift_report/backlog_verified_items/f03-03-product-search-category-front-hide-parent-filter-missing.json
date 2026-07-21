@@ -1,0 +1,235 @@
+{
+  "id": "f03-03-product-search-category-front-hide-parent-filter-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f03-03_0303_sheet-5_sheet.json",
+  "sourceFindingId": "f03-03_0303_sheet-5_sheet-conformance-ab2423b16497",
+  "classification": "フロント商品",
+  "feature": "商品詳細検索",
+  "issueCategory": "実装漏れ",
+  "issue": "詳細検索のカテゴリ選択肢でフロント検索非表示親配下のカテゴリが除外されない",
+  "designBook": "0303_基本設計仕様書(フロント_商品).xlsx",
+  "reproSteps": [
+    "管理側データで、親カテゴリの dtb_category.front_search_hide_flg を true にし、その配下に子カテゴリを用意する",
+    "商品詳細検索モーダルを表示する画面（例: http://localhost:8080/ja/products/search ）を開く",
+    "詳細検索のカテゴリセレクトボックスに、フロント検索非表示親配下の子カテゴリが表示されるか確認する"
+  ],
+  "expected": [
+    "カテゴリの選択肢は、フロント検索で非表示とする親カテゴリ配下を除いて提示する",
+    "dtb_category.front_search_hide_flg は選択肢から除外する親配下の判定に用いる",
+    "非表示親配下のカテゴリは詳細検索フォームの選択肢に出さない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では SearchType が CategoryRepository::getList(null, true) の戻り値をそのまま category の choices に渡している。CategoryRepository::getList() は sort_no 降順で全カテゴリを取得するだけで front_search_hide_flg を条件にしておらず、テンプレートも f.category.vars.choices を無条件に option 出力する。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 詳細検索フォームのカテゴリchoices生成",
+          "path": "ec-cube-enterprise/src/Eccube/Form/Type/Front/SearchType.php",
+          "start": 91,
+          "end": 115,
+          "language": "php",
+          "contains": [
+            "$categories = $this->categoryRepository->getList(null, true);",
+            "'choices' => $categories"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise CategoryRepository getList",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/CategoryRepository.php",
+          "start": 133,
+          "end": 150,
+          "language": "php",
+          "contains": [
+            "public function getList(?Category $Parent = null, bool $flat = false): array",
+            "->orderBy('c.sort_no', 'DESC')",
+            "->getResult()"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise front_search_hide_flg定義",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/Category.php",
+          "start": 456,
+          "end": 484,
+          "language": "php",
+          "contains": [
+            "front_search_hide_flg",
+            "getFrontSearchHideFlg",
+            "setFrontSearchHideFlg"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 詳細検索カテゴリoption出力",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/_product_search_form_fields.twig",
+          "start": 30,
+          "end": 40,
+          "language": "twig",
+          "contains": [
+            "{% for choice in f.category.vars.choices %}",
+            "<option value=\"{{ choice.value }}\""
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、商品詳細検索フォームのカテゴリ候補を取得した後、親カテゴリの frontSearchHideFlg が true の場合に unset してから choices に渡している。したがって、同一機能のベース側に存在する非表示親配下除外処理が enterprise 側では抜けている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 カテゴリ選択肢の非表示親配下除外",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Front/Product/SearchType.php",
+          "start": 39,
+          "end": 71,
+          "language": "php",
+          "contains": [
+            "$categoryList = $app['hareruya_ec.repository.category_sub']->getProperSortList()->getQuery()->getResult();",
+            "getFrontSearchHideFlg()",
+            "unset($categoryList[$index]);",
+            "'choices' => $categoryList"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 詳細検索カテゴリoption出力",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/search.twig",
+          "start": 48,
+          "end": 55,
+          "language": "twig",
+          "contains": [
+            "{% for key, choice in searchForm.category.vars.choices %}",
+            "<option value=\"{{ key }}\""
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "詳細検索フォームのカテゴリ除外判定",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 2347,
+      "end": 2347,
+      "language": "html",
+      "contains": [
+        "カテゴリの除外判定",
+        "フロント検索非表示の親カテゴリ配下を除外",
+        "front_search_hide_flg"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細検索フォームの処理手順と業務ルール",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 2363,
+      "end": 2368,
+      "language": "html",
+      "contains": [
+        "カテゴリの選択肢は、フロント検索で非表示とする親配下を除いて提示する",
+        "カテゴリ選択肢の除外",
+        "フロント検索で非表示とする親カテゴリ配下の項目は選択肢から除外する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "入力項目とエッジケース",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 2370,
+      "end": 2373,
+      "language": "html",
+      "contains": [
+        "クエリ<code>category</code>",
+        "非表示親配下を除いた選択肢",
+        "非表示親配下のカテゴリ",
+        "選択肢に出さない"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "DBカラム",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 2386,
+      "end": 2386,
+      "language": "html",
+      "contains": [
+        "dtb_category",
+        "front_search_hide_flg",
+        "選択肢から除外する親配下の判定に用いる"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "詳細検索カテゴリ候補に全カテゴリを渡す",
+      "path": "ec-cube-enterprise/src/Eccube/Form/Type/Front/SearchType.php",
+      "start": 91,
+      "end": 115,
+      "language": "php",
+      "contains": [
+        "getList(null, true)",
+        "'choices' => $categories"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "getListはfront_search_hide_flgで絞り込まない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/CategoryRepository.php",
+      "start": 133,
+      "end": 150,
+      "language": "php",
+      "contains": [
+        "createQueryBuilder('c')",
+        "orderBy('c.sort_no', 'DESC')"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "テンプレートはchoicesを無条件に出力する",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/_product_search_form_fields.twig",
+      "start": 30,
+      "end": 40,
+      "language": "twig",
+      "contains": [
+        "f.category.vars.choices",
+        "choice.label"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "親カテゴリのfrontSearchHideFlgで候補をunsetしてからchoicesに渡す",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Front/Product/SearchType.php",
+      "start": 39,
+      "end": 71,
+      "language": "php",
+      "contains": [
+        "getFrontSearchHideFlg()",
+        "unset($categoryList[$index]);",
+        "'choices' => $categoryList"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "ベース側テンプレートは除外済みchoicesを描画する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product/search.twig",
+      "start": 48,
+      "end": 55,
+      "language": "twig",
+      "contains": [
+        "searchForm.category.vars.choices",
+        "choice.label"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-09",
+    "checkedBy": "codex",
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f03-03_0303_sheet-5_sheet.json#f03-03_0303_sheet-5_sheet-conformance-ab2423b16497'",
+      "rg -n \"非表示親|表示対象外の親|front_search_hide_flg|フロント非表示|選択肢に出さない|カテゴリ.*非表示|詳細検索フォーム|カテゴリ.*選択肢\" hareruya-design-docs/design_impl_drift_report/findings/f03-03_0303_sheet-5_sheet.json hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書\\(フロント_商品\\).html",
+      "rg -n \"front_search_hide_flg|getList\\(|CategoryRepository|category_id|category|SearchType|product_search\" ec-cube-enterprise/src/Eccube/Form/Type/Front/SearchType.php ec-cube-enterprise/src/Eccube/Repository/CategoryRepository.php ec-cube-enterprise/src/Eccube/Controller/Front/ProductController.php ec-cube-enterprise/src/Eccube/Resource/template/default/Block/_product_search_form_fields.twig ec-cube-enterprise/src/Eccube/Entity/Category.php",
+      "rg -n \"front_product_search|category_id|category.*choices|ChoiceType|EntityType|getChildrenByParentId|getList\\(\" pf-eccube3/app/Plugin/HareruyaEc/Form pf-eccube3/app/Plugin/HareruyaEc/Controller/ProductController.php pf-eccube3/app/Plugin/HareruyaEc/Repository pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Product",
+      "nl -ba ec-cube-enterprise/src/Eccube/Form/Type/Front/SearchType.php | sed -n '91,115p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Repository/CategoryRepository.php | sed -n '133,150p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Front/Product/SearchType.php | sed -n '39,71p'"
+    ],
+    "notes": [
+      "gpt-5.5 high の批判的レビューは利用可能な外部レビュー環境がなく実行できなかったため、review-pack 生成とローカルの設計・base・enterprise ソース照合で確認した。"
+    ]
+  }
+}

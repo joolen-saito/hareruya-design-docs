@@ -1,0 +1,73 @@
+{
+  "chunkId": "a06-03_0506_sheet-5_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-03_0506_sheet-5_sheet.json#a06-03_0506_sheet-5_sheet-conformance-386ab112caaa",
+      "functionId": "a06-03_0506_sheet-5_sheet",
+      "featureNo": "A06-03",
+      "title": "A06-03 店頭買取情報更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "エラー応答契約（400/401/404本文なし・order_statusマスタ存在検証と指定メッセージ）が実装と乖離している。",
+      "reason": "設計(1537,1556)は入力不正=HTTP400・全メッセージをerrors配列で返し、401/404は本文を持たず、order_statusは店頭買取ステータスマスタに存在するIDで存在しない場合『MtbOtcBuyOrderStatusに{指定ID}が見つかりません。』と規定。実装ではControllerが#[MapRequestPayload]（validationFailedStatusCode未指定=Symfony既定422）でDTO検証を委譲するためDTO制約違反時に422を返し得る。ExceptionListenerのisAppApi分岐(72,136-139)はApp API例外を常に{code, errors}のJSON本文で返し、401は'認証エラー'、404はメッセージを本文に載せるため『本文を持たない』設計と矛盾。order_statusはマスタ存在ではなくAssert\\Choice(ASSESSMENT_COMPLETED_STATUSES=成立/キャンセル/経理払出し待ちの3値)へ絞り、メッセージも'order_status is invalid'で設計文言と不一致。いずれも別ルート・別クラスで設計どおり実現している箇所は見当たらなかった。",
+      "designEvidence": {"label": "設計要求(応答/検証)", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1537, "end": 1537, "contains": ["認証拒否（本文を持たない）", "該当なし（本文を持たない）", "MtbOtcBuyOrderStatusに{指定ID}が見つかりません。"]},
+      "implEvidence": [
+        {"label": "MapRequestPayload委譲(400ではなく422)", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php", "start": 130, "end": 130, "contains": ["MapRequestPayload", "UpdateOtcBuyOrderDto"]},
+        {"label": "401/404も本文({code,errors})を返す", "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php", "start": 136, "end": 139, "contains": ["'code' => $statusCode", "'errors' => $errors"]},
+        {"label": "order_statusはChoice制約かつメッセージ相違", "path": "ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php", "start": 35, "end": 35, "contains": ["Assert\\Choice", "ASSESSMENT_COMPLETED_STATUSES", "order_status is invalid"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-03_0506_sheet-5_sheet.json#a06-03_0506_sheet-5_sheet-conformance-b94a971de265",
+      "functionId": "a06-03_0506_sheet-5_sheet",
+      "featureNo": "A06-03",
+      "title": "A06-03 店頭買取情報更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "order_details[].quantity/priceは設計上任意（サンプルでnull許容）だが、実装は全明細でnullを一律拒否する。",
+      "reason": "設計(1531)はquantity/priceを『任意・整数のみ』とし、サンプルJSON(1479)の個別入力商品はquantity/priceともにnull。DTO(UpdateOtcBuyOrderDetailDto.php:37,41)もNotNullを付けず?intで受ける。しかしBuildOtcBuyOrderDetailUpdatePlan.php:51で全明細を走査しprice===null||quantity===nullを検出するとInvalidRequestParameterException('価格または数量が指定されていません')を投げ、削除・登録処理へ進まない。商品規格IDが空の個別入力商品も同じ集計ループを通るため、設計サンプルの個別入力商品(null)を登録できない。null許容を維持する別経路は見当たらなかった。",
+      "designEvidence": {"label": "設計要求(quantity/price任意)", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1531, "end": 1531, "contains": ["order_details[].quantity", "数量。整数のみ。", "単価。整数のみ。"]},
+      "implEvidence": [
+        {"label": "サンプルで個別入力商品はnull", "note": "設計サンプルJSON", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1479, "end": 1479, "contains": ["\"quantity\": null", "\"price\": null"]},
+        {"label": "null一律拒否", "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/BuildOtcBuyOrderDetailUpdatePlan.php", "start": 51, "end": 53, "contains": ["$detail->price === null || $detail->quantity === null", "価格または数量が指定されていません"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-03_0506_sheet-5_sheet.json#a06-03_0506_sheet-5_sheet-conformance-1263d1c145f8",
+      "functionId": "a06-03_0506_sheet-5_sheet",
+      "featureNo": "A06-03",
+      "title": "A06-03 店頭買取情報更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "適格請求書発行事業者確認フラグはfalse更新が無視され、かつ『受注が該当する場合のみ』の条件判定が無い。",
+      "reason": "設計(1531,1524)はqualified_invoice_issuer_confirmation_flgを任意booleanとし『受注が適格請求書発行事業者に該当する場合は確認済みフラグを指定値で更新する』と規定。DTOは?boolで受けるが、OtcBuyOrderEntityManager.php:62のif ($qualifiedInvoiceIssuerConfirmationFlg)はtruthy時のみsetterを呼ぶため、false（未確認へ戻す指定値）が保存されない。また同更新箇所には受注側の適格請求書発行事業者該当判定（getQualifiedInvoiceIssuerFlg等）が無く、非該当受注でもtrueなら確認済みフラグが更新され得る。『指定値で更新』『該当する場合のみ』の双方に反する。",
+      "designEvidence": {"label": "設計要求(該当時のみ指定値で更新)", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1524, "end": 1524, "contains": ["受注が適格請求書発行事業者に該当する場合は確認済みフラグを指定値で更新する"]},
+      "implEvidence": [
+        {"label": "truthyのみ反映・条件判定なし", "path": "ec-cube-enterprise/src/Eccube/Service/EntityManager/OtcBuyOrderEntityManager.php", "start": 62, "end": 63, "contains": ["if ($qualifiedInvoiceIssuerConfirmationFlg)", "setQualifiedInvoiceIssuerConfirmationFlg"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-03_0506_sheet-5_sheet.json#a06-03_0506_sheet-5_sheet-conformance-b7389d6a549b",
+      "functionId": "a06-03_0506_sheet-5_sheet",
+      "featureNo": "A06-03",
+      "title": "A06-03 店頭買取情報更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は成立以外を一律キャンセル日時設定対象とするが、実装は買取キャンセル時のみ設定し経理払出し待ち等で日時が更新されない。",
+      "reason": "設計(1524,1552)は『指定ステータスが成立（1）の場合は成立日時を、それ以外の場合はキャンセル日時を現在日時に設定する』と規定。実装のOtcBuyOrderEntityManager::updateはisComplete()時にcompleteDateを、elseif isCancel()時にのみcancelDateを設定する(52-59)。受付対象ASSESSMENT_COMPLETED_STATUSESには経理払出し待ち(STATUS_ACCOUNTING_PAYMENT_PENDING=10)が含まれるが、isComplete()もisCancel()も真にならないためcancelDateが設定されず、設計の『成立以外→キャンセル日時』を満たさない。別途status10でキャンセル日時を設定する経路は見当たらなかった。",
+      "designEvidence": {"label": "設計要求(成立以外はキャンセル日時)", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1524, "end": 1524, "contains": ["指定ステータスが成立（1）の場合は成立日時を、それ以外の場合はキャンセル日時を現在日時に設定する"]},
+      "implEvidence": [
+        {"label": "cancelはisCancel()時のみ設定", "path": "ec-cube-enterprise/src/Eccube/Service/EntityManager/OtcBuyOrderEntityManager.php", "start": 52, "end": 59, "contains": ["isComplete()", "} elseif ($OtcBuyOrderStatus->isCancel())", "setCancelDate($currentTime)"]},
+        {"label": "status10は成立でもキャンセルでもない", "note": "isCancelはSTATUS_CANCEL=2のみ、経理払出し待ち=10は対象外", "path": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php", "start": 91, "end": 94, "contains": ["ASSESSMENT_COMPLETED_STATUSES", "STATUS_ACCOUNTING_PAYMENT_PENDING"]}
+      ]
+    }
+  ]
+}

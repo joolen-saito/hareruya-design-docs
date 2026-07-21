@@ -1,0 +1,60 @@
+{
+  "functionId": "m04-33_0202_sheet-48_csv",
+  "featureNo": "M04-33",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-48:16551",
+      "designExpectation": "許可ステータス（ALLOWED_STATUS_IDS、出庫承認済み以降）は、出庫承認済み（STATUS_OUTBOUND_APPROVED=4）／移動中（STATUS_MOVING=5）／入庫承認待ち（STATUS_INBOUND_APPROVAL_PENDING=6）／入庫承認済み（STATUS_INBOUND_APPROVED=7）。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:43",
+      "implementationActual": "戻しリストCSVの許可ステータス定数は STATUS_MOVING=5、STATUS_INBOUND_APPROVAL_PENDING=6、STATUS_INBOUND_APPROVED=7 の3件のみで、STATUS_OUTBOUND_APPROVED=4 を含まない。validateReturnListExportIds() は含まれないステータスを「対象外のステータスです。」としてエラーにする。",
+      "mismatchReason": "設計は出庫承認済み(4)を許可対象に含めるが、実装の ALLOWED_STATUS_IDS には 4 がない。反証として StockMoveTransferController、StockMoveTransferReturnListCsvExportService、DtbStockMoveTransferRepository、Twig、翻訳キー、テストを route名・STATUS_OUTBOUND_APPROVED・出庫承認済み・対象外のステータスで再検索したが、戻しリストCSVで 4 を許可する別実装は見つからず、テスト /home/y-saito/Developments/ec-cube-enterprise/tests/Eccube/Tests/Service/Csv/StockMoveTransferReturnListCsvExportServiceTest.php:223 も出庫承認済みを対象外として固定している。",
+      "comparisonRows": [
+        {
+          "item": "許可ステータス",
+          "design": "4: 出庫承認済み、5: 移動中、6: 入庫承認待ち、7: 入庫承認済み",
+          "implementation": "5: STATUS_MOVING、6: STATUS_INBOUND_APPROVAL_PENDING、7: STATUS_INBOUND_APPROVED のみ（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:44）",
+          "mismatch": "設計で許可される STATUS_OUTBOUND_APPROVED=4 が実装では対象外になる。"
+        },
+        {
+          "item": "対象外時の動作",
+          "design": "出庫承認済みは検証OKとしてCSV出力対象",
+          "implementation": "ALLOWED_STATUS_IDS に無い場合、IDごとに「対象外のステータスです。」を追加（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:154）",
+          "mismatch": "出庫承認済みIDを選択すると、設計では出力、実装では検証NG。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-48:16471",
+      "designExpectation": "CSV列「色/R」は、商品名から取り出した色とレアリティを出力（例: 金R）。シングルカード以外は色に該当するデータがないため、色情報は非表示。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockMoveTransferRepository.php:206",
+      "implementationActual": "色/R の出力値は商品名文字列から抽出しておらず、SQLで dtb_card_color→mtb_color の色名と mtb_rarity.code を取得し、RestockListCsvRowFormatter が colorName . rarityCode を連結している。商品名からの色/R抽出は商品名整形用の削除処理に限られる。",
+      "mismatchReason": "設計は「商品名から取り出した色とレアリティ」を出力源としているが、実装はカード色マスタとレアリティマスタを出力源にしている。反証として colorAndRarity、colorName、rarityCode、商品名から取り出した色、stripProductNameComponents、dtb_card_color を StockMoveTransferController / StockMoveTransferReturnListCsvExportService / RestockListCsvRowFormatter / DtbStockMoveTransferRepository 配下で再検索したが、戻しリストCSVの色/Rを商品名から抽出する処理は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "色の取得元",
+          "design": "商品名から取り出す",
+          "implementation": "dtb_card_color と mtb_color から STRING_AGG(cl.name_jp, '') を取得（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockMoveTransferRepository.php:206）",
+          "mismatch": "商品名由来ではなくカード色マスタ由来。"
+        },
+        {
+          "item": "レアリティの取得元",
+          "design": "商品名から取り出す",
+          "implementation": "mtb_rarity.code を rarityCode として取得（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockMoveTransferRepository.php:212）",
+          "mismatch": "商品名由来ではなくレアリティマスタ由来。"
+        },
+        {
+          "item": "CSVへの整形",
+          "design": "商品名から抽出した色とレアリティを「色/R」に出力",
+          "implementation": "RestockListCsvRowFormatter が $colorName.$rarityCode を colorAndRarity に設定（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/RestockListCsvRowFormatter.php:84）",
+          "mismatch": "出力列名は一致するが、抽出元が設計と異なる。"
+        }
+      ]
+    }
+  ]
+}

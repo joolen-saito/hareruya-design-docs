@@ -1,0 +1,230 @@
+{
+  "id": "a14-01-card-id-route-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a14-01_0514_sheet-3_id.json",
+  "sourceFindingId": "a14-01_0514_sheet-3_id-conformance-2778e0f0352e",
+  "classification": "APIカード管理",
+  "feature": "カードIDからカード情報を取得",
+  "issueCategory": "実装漏れ",
+  "issue": "カードID指定でカード情報を取得する GET /cards/{id} が実装されていない",
+  "designBook": "0514_基本設計仕様書(API_カード管理).xlsx",
+  "reproSteps": [
+    "GET http://localhost:8080/cards/300 を実行する",
+    "レスポンスのHTTPステータスとJSON本文を確認する",
+    "近似APIとして GET http://localhost:8080/card?name={カード名}&lang=ja または GET http://localhost:8080/api/cards/300 が存在するか確認し、設計の /cards/{id} と同一入口かを確認する"
+  ],
+  "expected": [
+    "GET /cards/{id} でパスパラメータ id を受け取り、該当するカードマスタ情報をJSONで返す",
+    "該当するカードが存在しない場合は HTTP 404 で code と message: Not Found を返す",
+    "検索クエリ用の /card や DeckBuilder 用の /api/cards/{id} ではなく、APIカード管理の公開入口として /cards/{id} を提供する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、カード検索用の `GET /card`・`GET /card.json` と DeckBuilder 用の `GET /api/cards/{id}` は存在するが、設計が要求する `GET /cards/{id}` の Route は定義されていない。`App\\CardController::getSingleCardByParams` は `name` と `lang` のクエリ検索であり、パスのカードIDを受け取らない。`App\\DeckBuilder\\CardController::getCard` は `/%eccube_api_v1_route%/` 配下の別APIであり、設計の公開入口 `/cards/{id}` とはURL契約が異なる。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise App/CardController は /card と /card.json のクエリ検索のみを定義する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/CardController.php",
+          "start": 41,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "#[Route(path: '/card', name: 'card_by_params', methods: ['GET'])]",
+            "#[Route(path: '/card.json', name: 'card_by_params_json', methods: ['GET'])]",
+            "public function getSingleCardByParams(Request $request): JsonResponse",
+            "$name = (string) $request->query->get('name', '')",
+            "$card = $this->cardRepository->findOneByParams($name, $lang)"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise DeckBuilder/CardController は別入口 /api/cards/{id} を定義する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php",
+          "start": 142,
+          "end": 158,
+          "language": "php",
+          "contains": [
+            "#[Route('/api/cards/{id}', name: 'api_deck_builder_card', methods: ['GET', 'OPTIONS'], requirements: ['id' => '\\d+'])]",
+            "public function getCard(Request $request, int $id): JsonResponse",
+            "$Card = $this->cardRepository->find($id)",
+            "return $this->createCorsResponse(new JsonResponse($Card->toNormalizedArray(), Response::HTTP_OK))"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、`config/routes.yaml` に `GET /cards/{id}` が明示され、`CardController::getCardAction($id)` が `MtbCardRepository::find($id)` でカードを取得する。該当なしの場合は `{ code: 404, message: 'Not Found' }` を HTTP 404 で返すため、設計HTMLの入口・取得条件・404契約の根拠になっている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は GET /cards/{id} を CardController::getCardAction に割り当てる",
+          "path": "pf-api/config/routes.yaml",
+          "start": 167,
+          "end": 170,
+          "language": "yaml",
+          "contains": [
+            "get_card:",
+            "path: /cards/{id}",
+            "controller: App\\Controller\\CardController::getCardAction",
+            "methods: GET"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api はカードIDで MtbCard を取得し、該当なしは Not Found のHTTP 404を返す",
+          "path": "pf-api/src/Controller/CardController.php",
+          "start": 20,
+          "end": 35,
+          "language": "php",
+          "contains": [
+            "public function getCardAction($id)",
+            "->getRepository(MtbCard::class)",
+            "->find($id)",
+            "\"code\" => 404",
+            "\"message\" => 'Not Found'",
+            "return $card"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "設計HTMLは A14-01 のエンドポイントを /cards/{id}、HTTPメソッドを GET とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html",
+      "start": 845,
+      "end": 856,
+      "language": "html",
+      "contains": [
+        "機能No</dt><dd>A14-01",
+        "機能名</dt><dd>カードIDからカード情報を取得",
+        "エンドポイントURL",
+        "/cards/{id}",
+        "メソッド　GET"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計は GET /cards/{id} でカードIDに対応するカードマスタ情報を返し、該当なしは404とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html",
+      "start": 1192,
+      "end": 1198,
+      "language": "html",
+      "contains": [
+        "GET /cards/{id}",
+        "カードIDに対応するカードマスタ情報をJSONで返す",
+        "該当が無い場合は404を返す",
+        "パスのカードIDを受け取る",
+        "取得できない場合はコード404・「Not Found」のJSONを返す"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計は検索クエリによる取得を本書対象外とし、失敗レスポンス本文を {code, message}(\"Not Found\") とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html",
+      "start": 1184,
+      "end": 1212,
+      "language": "html",
+      "contains": [
+        "本書で扱わないこと",
+        "検索クエリによる取得",
+        "レスポンス（失敗）",
+        "404",
+        "{code, message}",
+        "Not Found"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise のカード検索Controllerは /card と /card.json のみで、パスID取得の /cards/{id} ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/CardController.php",
+      "start": 41,
+      "end": 58,
+      "language": "php",
+      "contains": [
+        "#[Route(path: '/card', name: 'card_by_params', methods: ['GET'])]",
+        "#[Route(path: '/card.json', name: 'card_by_params_json', methods: ['GET'])]",
+        "$request->query->get('name', '')",
+        "findOneByParams($name, $lang)"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の近似ID取得APIは DeckBuilder 配下の /api/cards/{id} で、設計の /cards/{id} と別入口である",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php",
+      "start": 142,
+      "end": 158,
+      "language": "php",
+      "contains": [
+        "#[Route('/api/cards/{id}', name: 'api_deck_builder_card'",
+        "public function getCard(Request $request, int $id): JsonResponse",
+        "$Card = $this->cardRepository->find($id)"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "DeckBuilder の404文言は Not Found ではなくロケール定義の「見つかりません」を使う",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+      "start": 6009,
+      "end": 6013,
+      "language": "yaml",
+      "contains": [
+        "api.deck_builder.common.not_found: '見つかりません'",
+        "api.deck_builder.card.name_required: 'カード名は必須です'"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "ポップアップ用の近似ルートは商品情報取得であり、カードマスタ情報APIではない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php",
+      "start": 257,
+      "end": 266,
+      "language": "php",
+      "contains": [
+        "カードIDからポップアップ用の商品情報を1件取得する",
+        "#[Route(path: '/api/popup/card/{lang}/{cardId}', name: 'popup_product_by_card_id', methods: ['GET'])]",
+        "public function getPopupProductByCardId(string $lang, string $cardId): JsonResponse"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は設計と同じ GET /cards/{id} を定義している",
+      "path": "pf-api/config/routes.yaml",
+      "start": 167,
+      "end": 170,
+      "language": "yaml",
+      "contains": [
+        "get_card:",
+        "path: /cards/{id}",
+        "controller: App\\Controller\\CardController::getCardAction",
+        "methods: GET"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api はカードIDで MtbCard を検索し、該当なしはHTTP 404のNot Foundを返す",
+      "path": "pf-api/src/Controller/CardController.php",
+      "start": 20,
+      "end": 35,
+      "language": "php",
+      "contains": [
+        "public function getCardAction($id)",
+        "->getRepository(MtbCard::class)",
+        "->find($id)",
+        "\"code\" => 404",
+        "\"message\" => 'Not Found'"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"A14-01|/cards/\\\\{id\\\\}|GET /cards|カードIDからカード情報\" excel_to_html/output/0514_基本設計仕様書\\(API_カード管理\\).html design_impl_drift_report/findings/a14-01_0514_sheet-3_id.json",
+      "rg -n \"get_card:|path: /cards/\\\\{id\\\\}|getCardAction|Not Found\" ../pf-api/config/routes.yaml ../pf-api/src/Controller/CardController.php",
+      "rg -n \"path: '/cards|Route\\\\('/cards|cards/\\\\{id\\\\}|api_deck_builder_card|card_by_params\" ../ec-cube-enterprise/src/Eccube/Controller ../ec-cube-enterprise/app/config",
+      "rg -n \"get_card:|path: /cards|CardController::getCardAction|getCardAction\" ../pf-api ../deck-api ../ec-cube-enterprise/src/Eccube/Controller"
+    ],
+      "notes": [
+        "enterprise 側では `/card`・`/card.json` と `/api/cards/{id}` は確認できるが、設計と同じ `/cards/{id}` の Route 定義は確認できなかった。",
+      "ベース実装は pf-api の `GET /cards/{id}` と `CardController::getCardAction($id)` を根拠とした。",
+      "gpt-5.5 high reviewer Popper verdict: VERIFIED. `/card`・`/card.json` は設計HTMLが本書対象外とする検索クエリ取得であり、`/api/cards/{id}` は DeckBuilder 配下の別URL契約かつ404文言も異なるため、A14-01 の代替とは扱えない。"
+    ]
+  }
+}

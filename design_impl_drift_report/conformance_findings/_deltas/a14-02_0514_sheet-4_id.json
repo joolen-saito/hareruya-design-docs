@@ -1,0 +1,132 @@
+{
+  "functionId": "a14-02_0514_sheet-4_id",
+  "featureNo": "A14-02",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1284, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1294, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1493, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1498",
+      "designExpectation": "GET /cardDetails/{id} でカード詳細IDを受け取り、カード詳細IDに対応するカード詳細情報をJSONで返す。該当が無い場合は404を返す。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller, src/Eccube/Service, src/Eccube/Repository, src/Eccube/Entity, html。検索語: cardDetails, card_details, cardDetail, MtbCardDetail, mtb_card_detail, /cardDetails, api_card_card_detail_get）",
+      "implementationActual": "MtbCardDetailエンティティおよびリポジトリは存在するが、公開APIの GET /cardDetails/{id} ルートは存在しない。近い実装は管理画面AJAX /%eccube_admin_route%/product/detail/search/id と、別機能の /card, /api/cards/{id}, /api/buying/{cardDetailId}.json のみ。",
+      "mismatchReason": "設計はクライアント向けJSON API GET /cardDetails/{id} を要求しているが、src/Eccube/Controller配下のルート一覧に /cardDetails/{id} がない。管理画面AJAXは src/Eccube/Controller/Admin/Product/ProductController.php:986 の別URLで、XHR前提かつ管理画面用途の部分情報のみを返すため、設計APIの実装ではない。/api/cards/{id} は src/Eccube/Controller/App/DeckBuilder/CardController.php:142 でカードID取得、/card は src/Eccube/Controller/App/CardController.php:41 で検索クエリ取得であり、カード詳細ID取得ではない。",
+      "comparisonRows": [
+        {
+          "item": "入口URL",
+          "design": "GET /cardDetails/{id}",
+          "implementation": "該当ルートなし。近似: /%eccube_admin_route%/product/detail/search/id, /api/cards/{id}, /card",
+          "mismatch": "設計APIのURLが未定義"
+        },
+        {
+          "item": "取得キー",
+          "design": "パスのカード詳細ID id で mtb_card_detail の主キーを取得",
+          "implementation": "管理画面AJAXは request id を受けて find するが、URL・用途・レスポンスが異なる。/api/cards/{id} はカードID取得",
+          "mismatch": "公開A14-02 APIとして未実装"
+        },
+        {
+          "item": "該当なし",
+          "design": "404・{code, message}（\"Not Found\"）JSON",
+          "implementation": "A14-02ルートがないため当該契約なし。管理画面AJAXは空配列404を返す箇所がある",
+          "mismatch": "設計のエラー本文契約が未実装"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1507, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1510, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1511",
+      "designExpectation": "成功時はHTTP 200でカード詳細情報を返し、id/cardId/backCardDetailId/cardsetId/rarityId/illustratorId/flavorJp/flavorEn/textJp/textEn/power/toughness/cardNo/foilFlg/promotionFlg/updateDate/createDate/cardLayout/rarity/cardset/illustrator/promotion/cardImages を含む。cardLayoutId・promotionId・親カード(card)・productSubsは応答に含めない。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/App, src/Eccube/Controller/Front, src/Eccube/Controller/Admin, src/Eccube/Service/App, src/Eccube/Repository/Master。検索語: cardDetails, cardImages, cardId, backCardDetailId, promotionFlg, cardLayoutId, productSubs, MtbCardDetail）",
+      "implementationActual": "設計と同じA14-02エンドポイントでこのレスポンスを組み立てるController/Serviceは存在しない。近い管理画面AJAXは name/nameEn/productNameJp/productNameEn/cardLabelJp/detailId/images のみを返す。",
+      "mismatchReason": "src/Eccube/Controller/Admin/Product/ProductController.php:1020-1034 の管理画面AJAXはカード詳細選択UI用の部分レスポンスで、設計が要求するカード詳細マスタ全体・関連オブジェクト・除外指定契約を満たさない。src/Eccube/Service/App/Article/ArticleResponseBuilder.php:175-281 にはカード詳細配列を組む private メソッドがあるが、記事レスポンス内の card_details 用であり、GET /cardDetails/{id} の実装入口ではない。",
+      "comparisonRows": [
+        {
+          "item": "成功レスポンス",
+          "design": "カード詳細情報の全体をHTTP 200 JSONで返す",
+          "implementation": "A14-02 API入口なし。管理画面AJAXは detailId/images 等の部分情報のみ",
+          "mismatch": "レスポンス契約が未実装"
+        },
+        {
+          "item": "フィールド名",
+          "design": "埋め込み詳細設計では camelCase（cardId, cardImages 等）",
+          "implementation": "A14-02としてのシリアライズなし。記事用private builderは snake_case（card_id, card_images 等）",
+          "mismatch": "設計APIのJSON整形が存在しない"
+        },
+        {
+          "item": "除外指定",
+          "design": "cardLayoutId・promotionId・card・productSubs は含めない",
+          "implementation": "A14-02用の除外指定処理なし",
+          "mismatch": "除外契約が未実装"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1289, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1295, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1300, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1301, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1344",
+      "designExpectation": "レスポンスデータ内で foil_flg を foil に変更し、値は 0:なし / 1:あり / 2:特殊 とする。frame を追加し、promotion_flg は除去する。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller, src/Eccube/Service, src/Eccube/Repository, src/Eccube/Entity。検索語: foil, foil_flg, frame, frameFlg, promotion_flg, promotionFlg, cardDetails）",
+      "implementationActual": "エンティティには foil_flg, promotion_flg, frame_flg があるが、A14-02のレスポンスとして foil へ改名し frame を返し promotion_flg を除去する実装入口がない。記事用private builderは foil_flg と promotion_flg を返し、frame を返していない。",
+      "mismatchReason": "src/Eccube/Entity/Master/MtbCardDetail.php:278-319 でDB項目は保持しているが、設計はAPIレスポンス変換を要求している。src/Eccube/Service/App/Article/ArticleResponseBuilder.php:270-280 は近似のカード詳細JSONを作るが、foil_flg/promotion_flgを出力しframeを出力しないため、A14-02レスポンス契約の実装証跡にならない。",
+      "comparisonRows": [
+        {
+          "item": "Foil項目名",
+          "design": "foil_flg を foil に変更",
+          "implementation": "A14-02なし。近似builderは 'foil_flg' => getFoilFlg()",
+          "mismatch": "設計名 foil が未実装"
+        },
+        {
+          "item": "Foil値",
+          "design": "0/1/2（特殊）",
+          "implementation": "MtbCardDetail::FOIL_SPECIAL = 2 は存在するが、A14-02レスポンス foil として返す実装なし",
+          "mismatch": "API外部契約として未実装"
+        },
+        {
+          "item": "frame",
+          "design": "レスポンスに frame を追加",
+          "implementation": "Entityは frameFlg を持つが、A14-02レスポンス出力なし",
+          "mismatch": "frameレスポンスが未実装"
+        },
+        {
+          "item": "promotion_flg",
+          "design": "レスポンスから除去",
+          "implementation": "近似builderは promotion_flg を出力",
+          "mismatch": "設計と逆の項目が残る近似実装のみ"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1502, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1541, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1543, excel_to_html/output/0514_基本設計仕様書(API_カード管理).html#sheet-4:1545",
+      "designExpectation": "応答はJSON応答整形を経て返し、プロパティはcamelCase、日時はISO8601とする。呼び出し時点のカード詳細マスタ情報を返し、本APIはデータを更新しない。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller, src/Eccube/Service, src/Eccube/Repository, src/Eccube/Entity。検索語: cardDetails, camelCase, createDate, updateDate, formatDateTime, MtbCardDetailRepository::find, JsonResponse）",
+      "implementationActual": "A14-02 APIとして、カード詳細マスタを参照しcamelCase/ISO8601で整形して返すController/Serviceがない。",
+      "mismatchReason": "MtbCardDetailRepository::get/findByIdNative は src/Eccube/Repository/Master/MtbCardDetailRepository.php:96-153 に存在するが、API入口に接続されていない。近似の管理画面AJAXは src/Eccube/Controller/Admin/Product/ProductController.php:986-1034 で部分情報のみを返し、日時やカード詳細マスタ全体のcamelCase/ISO8601契約を実装していない。",
+      "comparisonRows": [
+        {
+          "item": "JSON整形",
+          "design": "camelCase、日時ISO8601",
+          "implementation": "A14-02整形処理なし",
+          "mismatch": "外部契約未実装"
+        },
+        {
+          "item": "参照時点",
+          "design": "呼び出し時点のカード詳細マスタ情報を返す",
+          "implementation": "A14-02入口なし",
+          "mismatch": "参照APIとして未実装"
+        },
+        {
+          "item": "副作用",
+          "design": "参照のみ、更新しない",
+          "implementation": "A14-02入口なしのため確認可能な実装なし",
+          "mismatch": "APIとしての参照専用契約が未実装"
+        }
+      ]
+    }
+  ]
+}

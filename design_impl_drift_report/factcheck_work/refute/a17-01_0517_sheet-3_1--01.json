@@ -1,0 +1,20 @@
+{
+  "chunkId": "a17-01_0517_sheet-3_1--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-01_0517_sheet-3_1.json#a17-01_0517_sheet-3_1-conformance-184faf10601f",
+      "refuted": false,
+      "reason": "反証失敗。設計(HTML 1426/1475)は dtb_article.deleted_at による論理削除で削除済みは応答対象外・wp_post_id を検索条件に用いると明記。実装 ArticleController::getSingleArticleByParamsAction:58 は findOneBy(['wpPostId' => (int)$wpPostIdParam]) のみで deletedAt IS NULL 条件なし。(1)別実装検索: article.json の単記事取得ルートは ArticleController の1本のみで別Controllerなし。DtbArticleRepository には単記事取得メソッドも deletedAt 絞り込みも存在しない(getRelatedArticles のみ)。(2)Gedmoフィルタ検証: doctrine.yaml で soft_deleteable(Gedmo\\SoftDeleteableFilter)は enabled:true だが、このフィルタは #[Gedmo\\SoftDeleteable] 注釈を持つエンティティにのみ適用。注釈済みは DtbProductRequest/Shipping/Order/DtbFormatBoard/MtbFormat のみで、DtbArticle.php は deleted_at が素の ORM\\Column(50行)で Gedmo 注釈ゼロ(rg 確認)ため対象外。(3)手動絞り込みの慣行: 非Gedmoエンティティは DtbEventDetailRepository:425 等で明示的に ->andWhere('deletedAt IS NULL') を付与するのが本コードの慣行だが、DtbArticle 取得経路には一切なし。よって wp_post_id 一致の論理削除済み記事が返却され得る。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-01_0517_sheet-3_1.json#a17-01_0517_sheet-3_1-conformance-b1534aada51f",
+      "refuted": false,
+      "reason": "反証失敗。設計は成功応答フィールドを camelCase(articleId/wpPostId/wpTypeId/updateDate/createDate/cards/archetypes/decks/eventDetails, HTML 1446表)、サンプル応答も camelCase(1452-1463)、副作用節で『プロパティはcamelCase』(1466)と明記。実装 ArticleResponseBuilder::build:36-46 は 'article_id'/'wp_post_id'/'wp_type_id'/'update_date'/'create_date'/'event_details' と snake_case 配列を返し、ネスト(name_jp/card_details/event_detail_id 等)も全て snake_case。(1)変換層の有無: Controller は $this->json($builder->build($Article)) と plain array を渡すのみ。CamelCaseToSnakeCase 等の name_converter 設定は config/src に存在せず(rg 該当なし)、Symfony の name converter はオブジェクト正規化にのみ作用し配列キーは無変換で透過するため JSON も snake_case のまま。(2)別実装: camelCase で articleId を返す別レスポンスビルダーは存在しない(rg 該当ゼロ)。設計要求の camelCase 外部契約と実装の snake_case が不一致。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a17-01_0517_sheet-3_1.json#a17-01_0517_sheet-3_1-conformance-977d566c2358",
+      "refuted": false,
+      "reason": "反証失敗。設計は該当記事なし時の404本文の形を {code, message}（\"Not Found\"）と明記(HTML 1449表『本文の形』)。実装は NotFoundException('記事が見つかりません') を送出(ArticleController:60)、catch で ['code' => $e->getStatusCode(), 'errors' => $e->getErrors()] を返す(66-68)。NotFoundException は BaseApiException を errors:[$message] で構築し getErrors() は ['記事が見つかりません'] を返す構造(実クラス確認)。よって実応答は {\"code\":404,\"errors\":[\"記事が見つかりません\"]} で、キーは message ではなく errors、値も日本語で英語 'Not Found' ではない。message キーで 'Not Found' を返す単記事用パスは存在しない。反証観点として業務ルール節 1469『既存のエラー形式で返す』を根拠に既存BaseApiException形式が許容される可能性を検討したが、404本文の具体形は 1449 が明示的に {code, message}\"Not Found\" と特定しており、特則が一般則に優先するため不一致は解消しない。指摘は維持。"
+    }
+  ]
+}

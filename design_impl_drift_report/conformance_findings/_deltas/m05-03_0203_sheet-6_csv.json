@@ -1,0 +1,54 @@
+{
+  "functionId": "m05-03_0203_sheet-6_csv",
+  "featureNo": "M05-03",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-6:2329",
+      "designExpectation": "受注一覧カスタムCSV出力項目設定では、識別ID:4「店舗名」をCSV出力項目として持つ。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/app/DoctrineMigrations, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/doctrine/import_csv/ja/dtb_csv.csv, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/CustomExportCsvController.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/CsvExportService.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbCsvCsvExtensionRepository.php）",
+      "implementationActual": "受注CSV種別のdtb_csv更新では識別ID相当のsort_no=3に「店舗ID」を追加しているが、sort_no=4の「店舗名」は追加されていない。店舗名のdtb_csv登録は在庫カスタムCSV用のVersion20260523100000.phpにだけ存在し、受注CSV種別には存在しない。",
+      "mismatchReason": "設計は「店舗ID」「店舗名」を連続するCSV項目として要求している。実装の受注CSV項目マイグレーションは /home/y-saito/Developments/ec-cube-enterprise/app/DoctrineMigrations/Version20260224000000.php:33 で「店舗ID」を追加し、同ファイル:34 で「会員ID」をsort_no=5へ移動しているため、sort_no=4の「店舗名」が欠落している。別キーワード（店舗名/shop_name/BaseInfo/disp_name/csv_type_id=3）でも受注CSV種別への登録は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "CSV項目 識別ID:4",
+          "design": "店舗名。本店、支店のデータを統合するため追加。",
+          "implementation": "受注CSV種別に「店舗名」のdtb_csv行がない。",
+          "mismatch": "設計CSV列がカスタムCSV設定・出力対象に登録されない。"
+        },
+        {
+          "item": "近接する店舗ID",
+          "design": "識別ID:3 店舗ID、識別ID:4 店舗名。",
+          "implementation": "/home/y-saito/Developments/ec-cube-enterprise/app/DoctrineMigrations/Version20260224000000.php:33 で店舗IDのみ追加。",
+          "mismatch": "店舗IDだけ実装され、店舗名が抜けている。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-6:2331,2401,2405",
+      "designExpectation": "非会員である場合、「お名前(姓)」に「非会員」と表現する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/CsvExportService.php:410",
+      "implementationActual": "受注カスタムCSVの行生成はCsvExportService::exportOrderで各Csv定義に対してgetDataを呼び、Order.name01を生値で出力する。getDataにもCustomer不在時に「非会員」へ置換する分岐はない。通常の非会員購入ではNonMemberShoppingControllerが入力された姓をOrder.name01へ保存する一方、スマレジ取引のguest生成時だけSmaregiOrderFactoryがname01へ「非会員」を事前設定している。",
+      "mismatchReason": "設計はCSV出力時の非会員表現を要求しているが、実装はCSV出力処理で非会員判定を行わずOrder.name01の保存値に依存している。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/CsvExportService.php:418-425 はOrder/OrderItemから値を取得するだけで、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/CsvExportService.php:215-251 のgetDataも型・フィールド・スカラー変換のみ。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Front/NonMemberShoppingController.php:149-161 は非会員入力名を保存しており、スマレジguestのみ /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:58-64,109-115 で「非会員」を設定するため、全非会員に対するCSV表現としては設計と一致しない。",
+      "comparisonRows": [
+        {
+          "item": "非会員時のお名前(姓)",
+          "design": "非会員である場合は「非会員」と表示する。",
+          "implementation": "CSV出力時はOrder.name01の保存値をそのまま出す。通常非会員購入では入力姓が保存される。",
+          "mismatch": "CSV出力ロジックに非会員判定と「非会員」置換がない。"
+        },
+        {
+          "item": "スマレジguest",
+          "design": "スマレジでの非会員による取引データを考慮。",
+          "implementation": "SmaregiOrderFactoryはguest注文作成時にname01へ「非会員」を保存する。",
+          "mismatch": "スマレジguestはデータ作成側で満たすが、受注カスタムCSV機能自体の非会員表現ルールとしては通常非会員に適用されない。"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "functionId": "a06-05_0506_sheet-7_sheet",
+  "featureNo": "A06-05",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7:1874,1887,1898,1915",
+      "designExpectation": "リクエストのステータスID（status）で店頭買取ステータスマスタを引く。該当が無い場合は入力不正（HTTP 400）とし「正しい店頭買取ステータスIDを入力してください」を返す。",
+      "implRef": "src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:198, src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:206, src/Eccube/Exception/App/InvalidParameterException.php:29",
+      "implementationActual": "status が欠落・空・非数値の場合は「ステータスが不正です」、マスタ未存在の場合は「ステータスが見つかりません」を HTTP 400 で返す。",
+      "mismatchReason": "設計はステータスID不正時の返却文言を「正しい店頭買取ステータスIDを入力してください」に固定しているが、店頭買取API実装は別文言を返す。ネット買取側 BuyOrderController には同文言があるが、OtcBuyOrderController では未採用であることを反証検索で確認した。",
+      "comparisonRows": [
+        {
+          "item": "マスタ未存在ステータスIDのエラーメッセージ",
+          "design": "正しい店頭買取ステータスIDを入力してください",
+          "implementation": "ステータスが見つかりません",
+          "mismatch": "返却文言が設計と異なる"
+        },
+        {
+          "item": "status 欠落・非数値時のエラーメッセージ",
+          "design": "正しい店頭買取ステータスIDを入力してください",
+          "implementation": "ステータスが不正です",
+          "mismatch": "入力不正時の返却文言が設計と異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7:1874,1887,1898,1915",
+      "designExpectation": "更新前ステータスが査定中・査定再開で、かつ指定ステータスも査定中・査定再開で、その受注の査定担当者が認証した管理者会員と異なる場合は、入力不正（HTTP 400）とし「この受注は「（査定担当者名）」が査定中です。」を返す。",
+      "implRef": "src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php:95, src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php:101, src/Eccube/Exception/App/InvalidStatusTransitionException.php:29",
+      "implementationActual": "他担当者が査定中の場合、HTTP 400 で「この受注は{担当者名}が査定中です」を返す。担当者名を囲む鉤括弧と末尾句点がない。",
+      "mismatchReason": "設計は「この受注は「（査定担当者名）」が査定中です。」を返す要求だが、店頭買取実装は鉤括弧と句点を含まない。反証としてネット買取側 UpdateStatusAction には設計どおりの鉤括弧・句点付き文言が存在するが、店頭買取側では異なる文言が実装されている。",
+      "comparisonRows": [
+        {
+          "item": "他担当者査定中エラー文言",
+          "design": "この受注は「（査定担当者名）」が査定中です。",
+          "implementation": "この受注は{担当者名}が査定中です",
+          "mismatch": "鉤括弧と末尾句点が欠落している"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7:1886",
+      "designExpectation": "レスポンス（失敗）では、401 は「認証拒否（本文を持たない）」、404 は「該当なし（本文を持たない）」とする。",
+      "implRef": "src/Eccube/EventListener/ExceptionListener.php:72, src/Eccube/EventListener/ExceptionListener.php:81, src/Eccube/EventListener/ExceptionListener.php:94, src/Eccube/EventListener/ExceptionListener.php:136",
+      "implementationActual": "App API の例外応答は 401/404 を含め JsonResponse で {code, errors} を返す。NotFoundException も BaseApiException として code/errors 形式になる。",
+      "mismatchReason": "設計は 401/404 の本文なしを明記しているが、共通例外リスナーは App API で必ず code と errors を含む JSON 本文を設定する。",
+      "comparisonRows": [
+        {
+          "item": "401 応答本文",
+          "design": "本文を持たない",
+          "implementation": "{code: 401, errors: [\"認証エラー\"]} 形式",
+          "mismatch": "本文有無が異なる"
+        },
+        {
+          "item": "404 応答本文",
+          "design": "本文を持たない",
+          "implementation": "{code: 404, errors: [...]} 形式",
+          "mismatch": "本文有無が異なる"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7:1865",
+      "designExpectation": "利用者視点の入口として、PUT /admin/otcBuyOrder/{id}/status の拡張子なし別名も /status.json と同一処理で提供する。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php, app/config/eccube/routes.yaml, src/Eccube, html。検索語: otcBuyOrder/{id}/status, status.json, /status, api_admin_otc_buy_order_update_status）",
+      "implementationActual": "店頭買取ステータス更新の Route は /%eccube_api_v1_route%/admin/otcBuyOrder/{id}/status.json のみ定義され、拡張子なし /status の同一処理ルートは確認できない。",
+      "mismatchReason": "設計は拡張子なし別名を明記しているが、属性ルートと routes.yaml の探索で該当ルートが存在しない。",
+      "comparisonRows": [
+        {
+          "item": "拡張子なしURL別名",
+          "design": "PUT /admin/otcBuyOrder/{id}/status を /status.json と同一処理で提供",
+          "implementation": "PUT /%eccube_api_v1_route%/admin/otcBuyOrder/{id}/status.json のみ",
+          "mismatch": "拡張子なし別名が未実装"
+        }
+      ]
+    }
+  ]
+}

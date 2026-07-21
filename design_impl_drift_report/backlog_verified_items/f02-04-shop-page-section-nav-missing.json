@@ -1,0 +1,189 @@
+{
+  "id": "f02-04-shop-page-section-nav-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f02-04_0302_sheet-6_sheet.json",
+  "sourceFindingId": "f02-04_0302_sheet-6_sheet-conformance-add7cac61ff8",
+  "classification": "フロントグローバルナビ",
+  "feature": "支店スマホ版ナビゲーション",
+  "issueCategory": "実装漏れ",
+  "issue": "店舗紹介ページの右カラムセクションナビが表示されない",
+  "designBook": "0302_基本設計仕様書(フロント_グローバルナビ).xlsx",
+  "reproSteps": [
+    "スマホ幅またはタブレット幅で支店トップページ(例: http://localhost:8080/ja/tokyo/ )を表示する",
+    "店舗紹介ページ内に、登録済みセクションへ移動する右カラムセクションナビが表示されるか確認する",
+    "「初心者講習会」「取り扱い商品」などのナビ押下で同一ページ内アンカーへ移動するか確認する"
+  ],
+  "expected": [
+    "dtb_shop_page_element の element/value を参照し、値のある右カラム項目だけをセクションナビに表示する",
+    "右カラムセクションナビは「店舗案内・初心者講習会・取り扱い商品・買取・スタッフ・その他・アクセス」の順で表示する",
+    "出力順の末尾要素へ末尾用クラスを付与し、各リンク押下で同一ページ内アンカーへ移動する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では DtbShopPageElement の Entity/Repository は存在するが、ShopTopController には DtbShopPageElementRepository の注入・取得処理がなく、テンプレートへ rightColumns や lastElement 相当を渡していない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise ShopTopController",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Shop/ShopTopController.php",
+          "start": 43,
+          "end": 121,
+          "language": "php",
+          "contains": [
+            "private readonly BaseInfoRepository $baseInfoRepository",
+            "'Shop' => $Shop",
+            "'tiles' => $tiles"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise DtbShopPageElementRepository",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbShopPageElementRepository.php",
+          "start": 19,
+          "end": 30,
+          "language": "php",
+          "contains": [
+            "DtbShopPageElement",
+            "parent::__construct($registry, DtbShopPageElement::class)"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise shop_top.twig",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/shop_top.twig",
+          "start": 35,
+          "end": 50,
+          "language": "twig",
+          "contains": [
+            "p-hareruya-branch-top",
+            "shop_item_list.twig",
+            "shop_recommend.twig"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、ShopPageController が shop_page_element を取得して rightColumns/lastElement を作り、ShopPage/index.twig が rightColumns に応じて storeNav のページ内アンカーリンクと NavLast を描画している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 ShopPageController",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ShopPageController.php",
+          "start": 9,
+          "end": 62,
+          "language": "php",
+          "contains": [
+            "const RightColumns",
+            "shop_page_element",
+            "'rightColumns' => $rightColumns",
+            "'lastElement' => $lastElement"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ShopPage/index.twig 右カラムナビ",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/ShopPage/index.twig",
+          "start": 90,
+          "end": 106,
+          "language": "twig",
+          "contains": [
+            "storeNav",
+            "handson_session",
+            "NavLast",
+            "#storeItem"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "右カラムセクションナビの表示・順序・末尾クラス要件",
+      "path": "hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html",
+      "start": 3352,
+      "end": 3359,
+      "language": "html",
+      "contains": [
+        "登録済みの右カラム項目だけをセクションナビへ並べ",
+        "末尾用クラス",
+        "右カラムナビの順序"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "dtb_shop_page_element の element/value を表示有無判定に用いる要件",
+      "path": "hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html",
+      "start": 3374,
+      "end": 3379,
+      "language": "html",
+      "contains": [
+        "dtb_shop_page_element",
+        "要素名",
+        "右カラムナビの表示有無"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "支店トップの返却変数に rightColumns/lastElement 相当がない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Shop/ShopTopController.php",
+      "start": 108,
+      "end": 121,
+      "language": "php",
+      "contains": [
+        "'Shop' => $Shop",
+        "'tiles' => $tiles",
+        "'shopTopUrl' => $shopTopUrl"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "DtbShopPageElementRepository は存在するが基本リポジトリ定義のみ",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/DtbShopPageElementRepository.php",
+      "start": 19,
+      "end": 30,
+      "language": "php",
+      "contains": [
+        "DtbShopPageElement",
+        "parent::__construct"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "shop_page_element から rightColumns/lastElement を構成する処理",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ShopPageController.php",
+      "start": 27,
+      "end": 62,
+      "language": "php",
+      "contains": [
+        "shop_page_element",
+        "rightColumns",
+        "lastElement"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "rightColumns に応じたページ内アンカーの描画",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/ShopPage/index.twig",
+      "start": 93,
+      "end": 106,
+      "language": "twig",
+      "contains": [
+        "storeNav",
+        "storeGuide",
+        "storeAd",
+        "NavLast"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-09",
+    "checkedBy": "codex",
+    "commands": [
+      "rg -n \"右カラムセクションナビ|dtb_shop_page_element|末尾用クラス|登録済みの右カラム\" hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書\\(フロント_グローバルナビ\\).html",
+      "rg -n \"DtbShopPageElement|ShopPageElement|shop_page_element|rightColumns|NavLast|storeNav|handson_session|selection|storeAd|storeItem\" ec-cube-enterprise/src ec-cube-enterprise/app --glob '!var/cache/**'",
+      "rg -n \"shop_page_element|rightColumns|NavLast|storeNav|handson_session|selection|storeAd|storeItem\" pf-eccube3/app/Plugin/HareruyaEc",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Shop/ShopTopController.php | sed -n '43,121p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/ShopPage/index.twig | sed -n '90,106p'"
+    ],
+    "notes": [
+      "gpt-5.5 high の批判的レビューは利用可能な外部レビュー環境がなく実行できなかったため、review-pack 生成とローカルの設計・base・enterprise ソース照合で確認した。",
+      "ec-cube-enterprise の rg 結果では DtbShopPageElement 参照は Entity/Repository 定義に限られ、ShopTopController/shop_top.twig の描画経路では rightColumns/lastElement/storeNav/NavLast が確認できなかった。"
+    ]
+  }
+}

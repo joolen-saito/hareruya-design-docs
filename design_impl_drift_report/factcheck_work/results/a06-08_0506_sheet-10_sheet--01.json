@@ -1,0 +1,93 @@
+{
+  "chunkId": "a06-08_0506_sheet-10_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-08_0506_sheet-10_sheet.json#a06-08_0506_sheet-10_sheet-conformance-13ba660128ce",
+      "functionId": "a06-08_0506_sheet-10_sheet",
+      "featureNo": "A06-08",
+      "title": "A06-08 カード名から買取用商品情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は GET /search でクエリパラメータ受け取りだが、実装は POST でリクエストボディから name を取得している。",
+      "reason": "設計は入口を GET /search（クエリパラメータで条件指定）とし、name はクエリ位置で @QueryParam（パラメータフェッチャ）で受け取ると明記（HTML 2684,2696,2697行）。実装 BuyingController::getByCardName はルートを methods:['POST'] で定義し、name を $request->request->get('name','')（POSTボディ）から取得している。$request->query->get や QueryParam を BuyingController 内で検索したが GET/クエリ実装は存在しなかった。よってメソッドと name の受け取り位置が設計と不一致。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 2684, "end": 2697, "contains": ["GET /search", "クエリパラメータで条件指定", "クエリ"]},
+      "implEvidence": [
+        {"label": "実装(ルート定義POST)", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php", "start": 99, "end": 100, "contains": ["api_search", "methods: ['POST']", "getByCardName"]},
+        {"label": "実装(POSTボディから取得)", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php", "start": 102, "end": 102, "contains": ["$request->request->get('name'"]}
+      ],
+      "absenceCommands": ["rg -n \"query->get|QueryParam|ParamFetcher\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php"]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-08_0506_sheet-10_sheet.json#a06-08_0506_sheet-10_sheet-conformance-87645e33a108",
+      "functionId": "a06-08_0506_sheet-10_sheet",
+      "featureNo": "A06-08",
+      "title": "A06-08 カード名から買取用商品情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は該当なし時に404を返すが、実装は name 空・検索0件のいずれも HTTP 200 で cards を返す。",
+      "reason": "設計は取得結果が空の場合はページが見つからない扱い（404）とし標準例外応答JSONを返すと明記（HTML 2639,2689,2704行）。実装 getByCardName は name 空のとき new JsonResponse(['cards'=>[]])（105行）で HTTP 200 を返し、検索結果が空でも NotFoundException を投げず formatter が ['cards'=>new stdClass()]（BuyingCardsFormatter 123行）を返し HTTP 200 になる。NotFoundException はカード詳細ID取得メソッド（58行）にしか存在せず、カード名検索経路には404分岐が無い。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 2689, "end": 2704, "contains": ["ページが見つからない扱い（404）", "標準の例外応答"]},
+      "implEvidence": [
+        {"label": "実装(name空で200返却)", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php", "start": 104, "end": 105, "contains": ["return new JsonResponse(['cards' => []])"]},
+        {"label": "実装(0件でもstdClassを200返却)", "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php", "start": 123, "end": 123, "contains": ["empty($cards) ? new \\stdClass()"]}
+      ],
+      "absenceCommands": ["rg -n \"NotFoundException\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php"]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-08_0506_sheet-10_sheet.json#a06-08_0506_sheet-10_sheet-conformance-364fb9d75711",
+      "functionId": "a06-08_0506_sheet-10_sheet",
+      "featureNo": "A06-08",
+      "title": "A06-08 カード名から買取用商品情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は name の % と _ をエスケープして扱うが、実装は入力値をそのまま LIKE パターンに連結しエスケープしていない。",
+      "reason": "設計は name をカード名の前方一致検索キーとし % と _ はエスケープして扱うと明記（HTML 2696行）。実装 MtbCardRepository::getBuyingCardsByCardName は product.name LIKE :cardName に対し setParameter('cardName', $cardName.'%')（136,137行）で入力値をそのまま連結し、addcslashes 等のエスケープをしていない。同ファイル別メソッドには addcslashes($text,'%_\\\\')（471,485行）が存在するが、当該メソッドには適用されていない。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 2696, "end": 2696, "contains": ["前方一致検索キー", "はエスケープして扱う"]},
+      "implEvidence": [
+        {"label": "実装(エスケープなしLIKE連結)", "path": "ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php", "start": 136, "end": 137, "contains": ["product.name LIKE :cardName", "$cardName.'%'"]}
+      ],
+      "absenceCommands": ["rg -n \"getBuyingCardsByCardName\" -A8 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php"]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-08_0506_sheet-10_sheet.json#a06-08_0506_sheet-10_sheet-conformance-cdc99feae74f",
+      "functionId": "a06-08_0506_sheet-10_sheet",
+      "featureNo": "A06-08",
+      "title": "A06-08 カード名から買取用商品情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は cards を1始まりの連番でキー付けし直すが、実装は DB の cardId をそのままキーにしている。",
+      "reason": "設計は応答の cards を、検索で得たカードを1始まりの連番でキー付けし直して格納すると明記し、サンプルも \"1\" キー（HTML 2700,2701,2709行）。実装 BuyingCardsFormatter::format は $cardId = $dto->cardId（68行）を $cards[$cardId]（75行）のキーにして返し、1,2,3... への array_values 等の再採番処理が無い。よってカードIDが 10001 なら cards.10001 になり設計の連番キーと不一致。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 2700, "end": 2701, "contains": ["1始まりの連番でキー付けし直して", "1始まりの連番をキーとする"]},
+      "implEvidence": [
+        {"label": "実装(cardIdをキーに使用)", "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php", "start": 68, "end": 75, "contains": ["$cardId = $dto->cardId", "$cards[$cardId] = ["]}
+      ],
+      "absenceCommands": ["rg -n \"array_values|array_is_list|再採番\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php"]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-08_0506_sheet-10_sheet.json#a06-08_0506_sheet-10_sheet-conformance-10e08e518139",
+      "functionId": "a06-08_0506_sheet-10_sheet",
+      "featureNo": "A06-08",
+      "title": "A06-08 カード名から買取用商品情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "conditionClasses 配下のフィールド名・型が不一致（設計 productCode/price(string)/stock(string) に対し実装 productClassCode/int|null/int）。",
+      "reason": "設計のレスポンス仕様では conditionClasses.<conditionCode> 配下に productCode(string)、price(string 販売価格)、stock(string 在庫数)を返すと明記（HTML 2701行、サンプル 2730-2733行も productCode/\"300\"/\"5\"）。実装 BuyingCardsFormatter は 'productClassCode' => $dto->productClassCode（115行）とキー名が productClassCode。price は $dto->standardPrice（117行, DTO 44行 ?int）、stock は $dto->stock（118行, DTO 45行 int）で、いずれも文字列化されない。よってフィールド名と price/stock の型が設計と不一致。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 2701, "end": 2701, "contains": ["productCode", "販売価格", "在庫数"]},
+      "implEvidence": [
+        {"label": "実装(キー名productClassCode)", "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php", "start": 115, "end": 118, "contains": ["'productClassCode' => $dto->productClassCode", "'price' => $dto->standardPrice", "'stock' => $dto->stock"]},
+        {"label": "実装(DTO型 int|null / int)", "path": "ec-cube-enterprise/src/Eccube/Dto/Repository/Master/GetBuyingCardsQueryResponseDto.php", "start": 42, "end": 45, "contains": ["public string $productClassCode", "public ?int $standardPrice", "public int $stock"]}
+      ],
+      "absenceCommands": ["rg -n \"'productCode'\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php"]
+    }
+  ]
+}

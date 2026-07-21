@@ -1,0 +1,70 @@
+{
+  "chunkId": "a07-05_0507_sheet-7_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-05_0507_sheet-7_sheet.json#a07-05_0507_sheet-7_sheet-conformance-e93dfe110454",
+      "functionId": "a07-05_0507_sheet-7_sheet",
+      "featureNo": "A07-05",
+      "title": "A07-05 ネット買取注文の査定終了処理",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "入力検証失敗時、設計はHTTP 400を要求するが、MapRequestPayload既定によりHTTP 422を返す。",
+      "reason": "設計はステータス・明細の入力検証失敗を入力不正（HTTP 400）と明記（レスポンス失敗表・処理フロー・バリデーション節）。実装 updateBuyOrder は #[MapRequestPayload] UpdateBuyOrderDto を validationFailedStatusCode 未指定で使用しており、MapRequestPayload の既定 validationFailedStatusCode は Response::HTTP_UNPROCESSABLE_ENTITY(422)。UpdateBuyOrderDto は order_status に NotNull('ステータスを選択してください')、order_details に NotNull/Count('1つ以上の商品を選んでください')、明細 DTO に NotBlank/Length 等の Assert 制約を持つため、これら（設計が400とする検証）に失敗すると Symfony が 422 の HttpException を投げる。ExceptionListener は isAppApi 分岐で HttpExceptionInterface の getStatusCode()=422 をそのまま採用し {code:422, errors:[...]} を返す。よって設計の400と実装の422が食い違う。",
+      "designEvidence": {"label": "設計要求（レスポンス失敗表）", "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html", "start": 1712, "end": 1712, "contains": ["ステータス・明細の入力検証に1件以上失敗", "400"]},
+      "implEvidence": [
+        {"label": "コントローラ（MapRequestPayload利用・statusCode未指定）", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php", "start": 170, "end": 171, "contains": ["MapRequestPayload", "UpdateBuyOrderDto"]},
+        {"label": "MapRequestPayload既定 validationFailedStatusCode=422", "path": "ec-cube-enterprise/vendor/symfony/http-kernel/Attribute/MapRequestPayload.php", "start": 42, "end": 42, "contains": ["validationFailedStatusCode", "HTTP_UNPROCESSABLE_ENTITY"]},
+        {"label": "検証制約を持つDTO", "path": "ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateBuyOrderDto.php", "start": 28, "end": 38, "contains": ["ステータスを選択してください", "1つ以上の商品を選んでください"]},
+        {"label": "ExceptionListenerがHTTP例外のstatusCodeをそのまま返す", "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php", "start": 86, "end": 97, "contains": ["HttpExceptionInterface", "HTTP_UNPROCESSABLE_ENTITY"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-05_0507_sheet-7_sheet.json#a07-05_0507_sheet-7_sheet-conformance-934bd6783a13",
+      "functionId": "a07-05_0507_sheet-7_sheet",
+      "featureNo": "A07-05",
+      "title": "A07-05 ネット買取注文の査定終了処理",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "medium",
+      "reason": "設計（失敗レスポンス表・エラー処理節）は500時に「codeと例外メッセージ配列errorsのJSON」を返すと述べるのみで、露出すべき文言を具体指定していない。実装は UpdateBuyOrderAction が例外時に rollback しログ出力した上で InternalException('システムエラーが発生しました', $e) を投げ、InternalException は BaseApiException として errors=['システムエラーが発生しました']・statusCode=500 を持つ。ExceptionListener は isAppApi で BaseApiException の getErrors() を errors に用い {code:500, errors:['システムエラーが発生しました']} を返す。すなわち実装は設計が示す形（500・{code, errors}・errorsは例外メッセージの配列＝投げられた InternalException のメッセージ配列）を満たしており、応答形は一致する。指摘は「根本原因である元例外($e)の生メッセージを露出すべき」という強い解釈に依存するが、設計本文はそれを要求しておらず、むしろログ・監査節は例外メッセージをエラーログへ出すと定めている。設計の記述と矛盾する事実は確認できないため REFUTED。",
+      "designEvidence": {"label": "設計要求（500応答の形）", "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html", "start": 1712, "end": 1712, "contains": ["更新処理中の例外", "500"]}
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-05_0507_sheet-7_sheet.json#a07-05_0507_sheet-7_sheet-conformance-26dbb897bddd",
+      "functionId": "a07-05_0507_sheet-7_sheet",
+      "featureNo": "A07-05",
+      "title": "A07-05 ネット買取注文の査定終了処理",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "受注が無い404応答を設計は本文なしとするが、実装は{code, errors}のJSON本文を返す。",
+      "reason": "設計はレスポンス失敗表・エラー処理節で、受注IDに該当が無い場合を「該当なし（HTTP 404）」かつ『本文を持たない』と明記（401と同様に本文なし。400/500のみ{code, errors}本文を持つと区別している）。実装 updateBuyOrder は対象受注が無い場合 NotFoundException('買取情報が見つかりません') を投げ、NotFoundException は BaseApiException で statusCode=HTTP_NOT_FOUND(404)・errors=['買取情報が見つかりません']。ExceptionListener は isAppApi 分岐で BaseApiException の statusCode/errors を採り、常に new JsonResponse(['code'=>$statusCode,'errors'=>$errors], $statusCode) を返す。したがって404でも {code:404, errors:['買取情報が見つかりません']} のJSON本文が返り、設計の『本文を持たない』と食い違う。",
+      "designEvidence": {"label": "設計要求（404は本文なし）", "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html", "start": 1712, "end": 1712, "contains": ["受注IDに該当するネット買取受注が無い", "本文を持たない"]},
+      "implEvidence": [
+        {"label": "対象なし時にNotFoundExceptionを送出", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php", "start": 174, "end": 175, "contains": ["NotFoundException", "買取情報が見つかりません"]},
+        {"label": "NotFoundExceptionは404を持つBaseApiException", "path": "ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php", "start": 31, "end": 31, "contains": ["HTTP_NOT_FOUND"]},
+        {"label": "APIは常に{code, errors}のJSON本文を返す", "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php", "start": 136, "end": 139, "contains": ["new JsonResponse", "'errors' => $errors"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-05_0507_sheet-7_sheet.json#a07-05_0507_sheet-7_sheet-conformance-7238baebc48d",
+      "functionId": "a07-05_0507_sheet-7_sheet",
+      "featureNo": "A07-05",
+      "title": "A07-05 ネット買取注文の査定終了処理",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "明細nameは設計上最大65535だが、個別入力商品として永続化するカラムは255文字上限で設計値を保存できない。",
+      "reason": "設計はリクエストパラメータ表・入出力・バリデーション節でいずれも name（商品名）を必須・最大65535と規定。実装の入力検証 UpdateBuyOrderDetailDto.name は Assert\\Length(max: 65535) で65535まで許容する。一方、商品規格ID=0 の明細を個別入力商品として保存する DtbBuyOrderIndivisualInputProduct.name は ORM 上 type: STRING, length: 255 のカラムである。よって256〜65535文字の name は検証を通過しても個別入力商品として設計どおり永続化できず（DBエラーまたは切り詰め）、永続化可能な最大長が設計より小さい実装違いとなる。カード明細（product_class_id≠0）は買取代表カード経由で商品規格を参照し name を直接保持しないため、この不整合は個別入力商品に固有。",
+      "designEvidence": {"label": "設計要求（name最大65535）", "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html", "start": 1624, "end": 1624, "contains": ["name", "65535", "商品名"]},
+      "implEvidence": [
+        {"label": "DTO検証は最大65535を許容", "path": "ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateBuyOrderDetailDto.php", "start": 32, "end": 32, "contains": ["Assert\\Length(max: 65535"]},
+        {"label": "個別入力商品の保存カラムは255", "path": "ec-cube-enterprise/src/Eccube/Entity/DtbBuyOrderIndivisualInputProduct.php", "start": 35, "end": 35, "contains": ["name", "length: 255"]}
+      ]
+    }
+  ]
+}

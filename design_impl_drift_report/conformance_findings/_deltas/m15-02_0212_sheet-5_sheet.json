@@ -1,0 +1,75 @@
+{
+  "functionId": "m15-02_0212_sheet-5_sheet",
+  "featureNo": "M15-02",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-5 (M15-02 デッキCSV出力 旧サイト向けレイアウト)",
+      "designExpectation": "デッキCSV出力は標準出力と旧サイト連携向けにカード明細を行単位で展開する別形式の2系統があり、一覧の『CSV出力（旧サイト）』ボタン（翻訳キー admin.btn.csvexport_old）押下で POST /{admin_route}/deck/csvexport_old が旧サイトレイアウトCSVを返す。",
+      "implRef": "不在 (DeckController.php:677 csvExport 1系統, DeckCsvExporterService.php:30 CSV_TYPES='deck'のみ, index.twig csv_exportボタン1つのみ)",
+      "implementationActual": "CSV出力ルートは admin_deck_csv_export の1系統のみで、DeckCsvExporterService.CSV_TYPES は標準レイアウト'deck'だけを持つ。旧サイトレイアウトのルート/サービス分岐/翻訳キー/ボタンが存在しない。",
+      "mismatchReason": "csvexport_old・admin.btn.csvexport_old を DeckController/DeckCsvController/DeckCsvExporterService/index.twig/messages.ja.yaml/html配下JS で探索し 0 件。設計は標準＋旧サイトの2系統CSVを現行踏襲で要求するが実装は標準1系統のみ。",
+      "comparisonRows": [
+        {"item": "CSV系統数", "design": "標準＋旧サイトの2系統", "implementation": "標準'deck'の1系統のみ", "mismatch": "旧サイト系統が不在"},
+        {"item": "旧サイト出力ルート", "design": "POST /deck/csvexport_old", "implementation": "存在しない", "mismatch": "ルート未定義"},
+        {"item": "起動ボタン翻訳キー", "design": "admin.btn.csvexport_old", "implementation": "存在しない", "mismatch": "翻訳キー・ボタン不在"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-5 (画面上の各項目の制御について (5))",
+      "designExpectation": "(5) アーキタイプを選択変更すると、JSで(8)代表カードが更新される（無条件）。",
+      "implRef": "src/Eccube/Resource/template/admin/Deck/edit.twig:101-117 (106-109)",
+      "implementationActual": "アーキタイプ変更ハンドラは currentCardImageId が '0' 以外（既に代表カードあり）の場合に早期returnし更新しない。空のときだけAJAXで代表カードをセットする。",
+      "mismatchReason": "設計は無条件更新を規定するが、実装は既存代表カードを上書きしないガードを持つため、編集時にアーキタイプ変更しても代表カードが更新されないケースが生じる。",
+      "comparisonRows": [
+        {"item": "アーキタイプ変更時の代表カード更新", "design": "常に更新", "implementation": "既存代表カードあり時は更新しない（早期return）", "mismatch": "条件付き更新で無条件更新にならない"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-5 (M15-02 デッキCSV出力 フロント挙動)",
+      "designExpectation": "一覧でチェックなしのままCSV出力ボタンを押すと、送信前にクライアントのアラート alert('CSV出力するデッキをひとつ以上選択してください。') を出して送信を中止する。",
+      "implRef": "src/Eccube/Resource/template/admin/Deck/index.twig:205-215, DeckController.php:693-703, messages.ja.yaml:4336",
+      "implementationActual": "index.twig の submit ハンドラは CSRFトークン差し替えのみで未選択ガードが無い。0件でも一旦POSTされサーバ側が admin.deck.csv_export_no_selection でフラッシュ＋リダイレクトする。設計の翻訳キー admin.csv.error.export.require も存在しない。",
+      "mismatchReason": "設計はクライアント側アラートによる送信前中断を明記するが、実装にはクライアントJSガードが無くサーバ往復後のフラッシュになりUXが異なる。",
+      "comparisonRows": [
+        {"item": "未選択時の中断方式", "design": "送信前クライアントalertで中止", "implementation": "POST後サーバ判定＋フラッシュ＋リダイレクト", "mismatch": "中断タイミングとUXが異なる"},
+        {"item": "メッセージ翻訳キー", "design": "admin.csv.error.export.require / alert文言『CSV出力するデッキをひとつ以上選択してください。』", "implementation": "admin.deck.csv_export_no_selection『CSV出力対象のデッキが選択されていません。』", "mismatch": "キー・文言とも異なる"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-5 (登録・更新時 警告メッセージ一覧)",
+      "designExpectation": "4枚制限カードが5枚以上で『n 行目の {カード名} が5枚以上登録されています』、1枚制限カードが2枚以上で『n 行目の {カード名} 2枚以上登録されています』を表示する。",
+      "implRef": "src/Eccube/Service/Deck/DeckValidationService.php:242-261, messages.ja.yaml:4359-4361",
+      "implementationActual": "枚数上限超過は more_than_max=『%row% 行目の %name% が%count%枚を超えて登録されています』(%count%=4で『4枚を超えて』)。1枚制限カード(RESTRICTION_ID,count>1)は restricted=『%row% 行目の %name% は制限カードです』を表示し、『2枚以上登録されています』はHighlander専用(highlander_only)に割当。",
+      "mismatchReason": "設計文言『5枚以上登録されています』は実装では『4枚を超えて登録されています』と別表現。『(1枚制限で)2枚以上登録されています』は制限カードには出ず『は制限カードです』が出るため条件と文言の対応が不一致。",
+      "comparisonRows": [
+        {"item": "4枚制限超過の文言", "design": "が5枚以上登録されています", "implementation": "が4枚を超えて登録されています", "mismatch": "表現が異なる"},
+        {"item": "1枚制限カード超過の文言", "design": "2枚以上登録されています", "implementation": "は制限カードです（『2枚以上』はHighlander専用）", "mismatch": "条件と表示文言の対応が不一致"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-5 (★登録・更新ロジック内のDCIナンバー除去)",
+      "designExpectation": "★画面の変更にあわせて、登録/更新ロジック内に記載されている項目『DCIナンバー』を除去する（旧デッキID・DCIナンバーは不要のため削除）。",
+      "implRef": "src/Eccube/Service/Admin/Deck/DeckStoreAction.php:105,122, DeckEntityManager.php:88,105, DeckCopyAction.php:53,70",
+      "implementationActual": "画面(DeckType/edit.twig)からDCIナンバー入力欄は除去済みだが、登録/更新保存ロジック(DeckStoreAction→DeckEntityManager::save)と複製(DeckCopyAction)は依然 dciNo/oldDeckId を受け渡し setDciNo/setOldDeckId で永続化している。",
+      "mismatchReason": "★カスタマイズ要件の『登録/更新ロジック内のDCIナンバー除去』がUI除去のみで、保存系サービスに dciNo/oldDeckId 処理が残存。明示要件が未完了。",
+      "comparisonRows": [
+        {"item": "DCIナンバー保存処理", "design": "登録/更新ロジックから除去", "implementation": "DeckStoreAction/DeckEntityManager/DeckCopyActionに dciNo/oldDeckId 処理が残存", "mismatch": "UI除去のみで保存ロジック未除去"}
+      ]
+    }
+  ]
+}

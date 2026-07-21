@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m07_04_admin_online_purchase_purchase_manual_mail_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・HTTPステータス・成功フラッシュなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約（NotBlank/maxlength）・Cookie名をオラクル化しない。本機能は pf-eccube3（HareruyaEcプラグイン）出自のリバース設計であり、刷新先 ec-cube-enterprise コア（`MailController.php` / `PurchaseManualMailType.php` / `manual_mail.twig` / `manual_mail_confirm.twig`）へ移載される。設計書と実装の乖離は付帯表4へ出す。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・HTTPステータス・成功フラッシュなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約（NotBlank/maxlength）・Cookie名をオラクル化しない。本機能は pf-eccube3（HareruyaEcプラグイン）出自のリバース設計であり、刷新先 ec-cube-enterprise コア（`MailController.php` / `PurchaseManualMailType.php` / `manual_mail.twig` / `manual_mail_confirm.twig`）へ移載される。設計書と実装の乖離は付帯表4へ出す。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 画面タイプは `mail`。送信操作・成功フラッシュ（翻訳キー `admin.order.mail_send_complete`）・画面遷移・検証エラー再表示をブラウザで観測する。**実メール受信・本文内容・メール履歴 INSERT（DB）・送信元未設定/SMTP失敗時の挙動・件名255文字超のDB例外は手動／間接**（メールサーバ・DB・環境設定操作が必要）。
 
@@ -28,51 +28,51 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-001	IT-25	UI部品	P1	入力画面に見出し・カード・テンプレ選択・件名・本文・確認ボタンが表示される	管理ログイン済／SEED-M07-04-BUYORDER（存在する買取受注1件）	買取ID＝存在するID	"1. /{admin_route}/purchase/{buyOrderId}/mail をGETで開く"	見出し「買取管理」「手動メール通知」、カード見出し「手動メール送信」、テンプレ選択・件名入力・本文textarea・「確認」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-001	IT-25	UI部品	P1	入力画面に見出し・カード・テンプレ選択・件名・本文・確認ボタンが表示される	管理ログイン済／SEED-M07-04-BUYORDER（存在する買取受注1件）	買取ID＝存在するID	1. /{admin_route}/purchase/{buyOrderId}/mail をGETで開く	見出し「買取管理」「手動メール通知」、カード見出し「手動メール送信」、テンプレ選択・件名入力・本文textarea・「確認」ボタンが表示されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-002	IT-03	画面遷移	P3	買取番号が7桁ゼロ埋めで表示される	管理ログイン済／SEED-M07-04-BUYORDER	買取ID＝存在するID	"1. 入力画面をGETで開く
-2. 買取番号欄を確認する"	買取番号が買取IDの7桁ゼロ埋め表記で表示されること。
+2. 買取番号欄を確認する"	買取番号が買取IDの7桁ゼロ埋め表記で表示されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-003	IT-25	確認ダイアログ	P2	テンプレ選択が未選択（プレースホルダ）で初期表示される	管理ログイン済／SEED-M07-04-BUYORDER	—	"1. 入力画面をGETで開く
-2. テンプレ選択の初期値を確認する"	テンプレ選択がマスタ選択のプレースホルダ（未選択）で表示されること。
+2. テンプレ選択の初期値を確認する"	テンプレ選択がマスタ選択のプレースホルダ（未選択）で表示されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-004	IT-25	UI部品	P3	入力画面の下部コンバージョンエリアに「買取編集画面に戻る」リンクが表示される	管理ログイン済／SEED-M07-04-BUYORDER	買取ID＝存在するID	"1. 入力画面をGETで開く
-2. 下部コンバージョンエリアを確認する"	下部コンバージョンエリアに「買取編集画面に戻る」相当のリンクが表示され、リンク先が当該買取の詳細編集（/{admin_route}/purchase/{buyOrderId}/edit）であること（設計書 フロント挙動「下部コンバージョンエリアのリンク」）。
+2. 下部コンバージョンエリアを確認する"	下部コンバージョンエリアに「買取編集画面に戻る」相当のリンクが表示され、リンク先が当該買取の詳細編集（/{admin_route}/purchase/{buyOrderId}/edit）であること（設計書 フロント挙動「下部コンバージョンエリアのリンク」）。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-005	IT-25	UI部品	P3	GET直後は件名・本文が空で初期表示される	管理ログイン済／SEED-M07-04-BUYORDER	—	"1. 入力画面をGETで開く
-2. 件名欄・本文欄の初期値を確認する"	件名欄・本文欄がいずれも空で表示されること（設計書 入力項目 初期値「GET 直後は空」）。
+2. 件名欄・本文欄の初期値を確認する"	件名欄・本文欄がいずれも空で表示されること（設計書 入力項目 初期値「GET 直後は空」）。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-010	IT-25	UI部品	P1	テンプレ変更で件名・本文が選択テンプレ由来でセットされる	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILTEMPLATE	テンプレ選択＝買取メールテンプレート1件	"1. 入力画面をGETで開く
-2. テンプレ選択を変更する（JSにより mode=change で自動送信）"	選択テンプレートの件名が件名欄に、テンプレートのレンダリング本文が本文欄にセットされ、入力画面が再表示されること。
+2. テンプレ選択を変更する（JSにより mode=change で自動送信）"	選択テンプレートの件名が件名欄に、テンプレートのレンダリング本文が本文欄にセットされ、入力画面が再表示されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-020	IT-15	状態変化	P1	全項目入力し確認すると確認画面が返る	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILTEMPLATE	テンプレ選択・件名・本文すべて有効値	"1. 入力画面でテンプレを選び件名・本文を確定する
-2. 「確認」を押下（mode=confirm）"	確認画面が返り、テンプレ名・件名・本文が静的表示され、「送信」ボタンと「手動メール通知入力画面に戻る」リンクが表示されること。
+2. 「確認」を押下（mode=confirm）"	確認画面が返り、テンプレ名・件名・本文が静的表示され、「送信」ボタンと「手動メール通知入力画面に戻る」リンクが表示されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-021	IT-25	送信可否制御	P2	確認画面の本文がpre-wrapの静的ブロックで表示される	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILTEMPLATE	テンプレ選択・件名・本文すべて有効値	"1. 確認画面を表示する
-2. 本文ブロックを確認する"	確認画面の本文が white-space: pre-wrap の静的ブロックで折り返し表示されること。
+2. 本文ブロックを確認する"	確認画面の本文が white-space: pre-wrap の静的ブロックで折り返し表示されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-030	IT-26	登録内容	P1	送信すると成功フラッシュ付きで詳細編集へリダイレクトする	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILTEMPLATE／SEED-M07-04-MAILFROM（買取メール送信元設定済）	テンプレ選択・件名・本文すべて有効値	"1. 確認画面を表示する
-2. 「送信」を押下（mode=complete）"	`/{admin_route}/purchase/{buyOrderId}/edit` へリダイレクトし、成功フラッシュ「メールを送信しました。」が表示されること。
+2. 「送信」を押下（mode=complete）"	`/{admin_route}/purchase/{buyOrderId}/edit` へリダイレクトし、成功フラッシュ「メールを送信しました。」が表示されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-040	IT-03	画面遷移	P2	確認画面で戻ると入力画面が返り入力内容が維持される	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILTEMPLATE	テンプレ選択・件名・本文すべて有効値	"1. 確認画面を表示する
-2. 「手動メール通知入力画面に戻る」を押下（mode=back）"	入力画面が再表示され、テンプレ・件名・本文の入力内容が維持されること。
+2. 「手動メール通知入力画面に戻る」を押下（mode=back）"	入力画面が再表示され、テンプレ・件名・本文の入力内容が維持されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-050	IT-22	必須バリデーション	P1	全項目未入力で確認すると入力画面に留まり検証エラーになる	管理ログイン済／SEED-M07-04-BUYORDER	テンプレ未選択・件名空・本文空	"1. 入力画面をGETで開く
-2. 何も入力せず「確認」を押下"	確認画面へ進まず入力画面に留まり、フォーム検証エラーが表示されること。
+2. 何も入力せず「確認」を押下"	確認画面へ進まず入力画面に留まり、フォーム検証エラーが表示されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-051	IT-22	必須バリデーション	P1	件名未入力で確認すると検証エラーで入力画面に留まる	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILTEMPLATE	テンプレ選択・本文は有効値、件名＝空	"1. テンプレ・本文を入力し件名を空にする
-2. 「確認」を押下"	確認画面へ進まず入力画面に留まり、件名の検証エラーが表示されること。
+2. 「確認」を押下"	確認画面へ進まず入力画面に留まり、件名の検証エラーが表示されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-052	IT-22	必須バリデーション	P1	本文未入力で確認すると検証エラーで入力画面に留まる	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILTEMPLATE	テンプレ選択・件名は有効値、本文＝空	"1. テンプレ・件名を入力し本文を空にする
-2. 「確認」を押下"	確認画面へ進まず入力画面に留まり、本文の検証エラーが表示されること。
+2. 「確認」を押下"	確認画面へ進まず入力画面に留まり、本文の検証エラーが表示されること。				
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-053	IT-22	必須バリデーション	P1	テンプレ未選択のみ（件名・本文は有効）で確認すると検証エラーで入力画面に留まる	管理ログイン済／SEED-M07-04-BUYORDER	件名・本文は有効値、テンプレ未選択	"1. 件名・本文を手入力しテンプレを未選択のままにする
-2. 「確認」を押下"	確認画面へ進まず入力画面に留まり、テンプレ選択の検証エラーが表示されること（テンプレ選択 NotBlank の単独異常系）。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-060	IT-03	外部画面	P1	存在しない買取IDでGETするとHTTP404を返す	管理ログイン済	存在しない買取ID	"1. /{admin_route}/purchase/{存在しないID}/mail をGETで開く"	HTTP 404 が返ること。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-061	IT-25	HTTPステータス	P2	存在しない買取IDでPOSTするとHTTP404を返す	管理ログイン済	存在しない買取ID	"1. /{admin_route}/purchase/{存在しないID}/mail へPOST（mode=confirm）する"	HTTP 404 が返ること（買取受注取得が先に行われる）。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-070	IT-13	URL直接アクセス	P1	未ログインで入力URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /{admin_route}/purchase/{buyOrderId}/mail を開く"	管理ログイン画面へ誘導されること（管理ファイアウォール）。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-071	IT-13	URL直接アクセス	P1	未ログインで確認POSTしても業務処理されず管理ログイン画面へ誘導される	未ログイン	mode=confirm	"1. 未ログインで /{admin_route}/purchase/{buyOrderId}/mail へPOST（mode=confirm）する"	確認画面は返らず管理ログイン画面へ誘導されること（未ログインPOSTも管理ファイアウォールで到達不可＝070の異常系POST対）。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-080	IT-26	登録内容	P2	送信成功時のみメール履歴が1件増える（失敗時は増えない）	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	"1. 送信前後で dtb_mail_history の対象受注の件数を比較する"	送信成功時のみメール履歴行が1件増え、送信元欠如・SMTP失敗では増えないこと。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-081	IT-28	確認ダイアログ	P2	送信メールがプレーンテキストで件名・本文が確定値と一致する	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	"1. 送信を実行し受信メールを確認する"	受信メールが Content-Type プレーンテキストのみで、件名・本文が確定値（テンプレ由来またはフォーム確定値）と一致すること。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-086	IT-28	登録内容	P2	送信メールのヘッダが設計書「送信メール」節どおりに設定される	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	"1. 送信を実行し受信メールのヘッダを確認する"	宛先(To)は受注に紐づくメールアドレス（RFC逸脱文字を許容する変換を適用）、From・Bcc・Reply-To は買取メール送信元アドレス＋店舗名、Return-Path は店舗情報のエラー通知メールアドレス参照値が設定されること（設計書「送信メール」節）。Cc は本機能で設定しない。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-087	IT-11	登録内容	P2	指定宛先への送信が正常終了する	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	"1. 送信を実行する"	受注に紐づく宛先メールアドレスへの送信が正常終了し、送信完了ログが残ること（IT-11 実行結果）。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-082	IT-03	画面遷移	P2	送信元未設定（判定順序#1）でも送信せず成功扱いでリダイレクトする	管理ログイン済／SEED-M07-04-BUYORDER／買取メール送信元未設定	有効値で送信	"1. 買取メール送信元（purchase_mail_address）未設定状態で送信を実行する"	メールは送られず致命ログのみで、コントローラは成功フラッシュ付きで詳細編集へリダイレクトし、メール履歴は増えないこと（送信処理 判定順序#1）。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-088	IT-03	画面遷移	P2	SMTP送信失敗（判定順序#3）でも送信せず成功扱いでリダイレクトする	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM／SMTP遮断	有効値で送信	"1. SMTP遮断（トランスポート例外）状態で送信を実行する"	メールは送られず致命ログのみで、コントローラは成功フラッシュ付きで詳細編集へリダイレクトし、メール履歴は増えないこと（送信処理 判定順序#3）。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-083	IT-22	その他のバリデーション	P2	テンプレTwig破損時は本文が空になり警告ログのみ（変更モード）	管理ログイン済／SEED-M07-04-BUYORDER／file_name 不正のテンプレ	破損テンプレを選択	"1. file_name が見つからない/実行時例外となるテンプレを選び変更する"	本文が空文字でセットされ、警告ログのみ残り画面は入力テンプレを返すこと。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-084	IT-03	画面遷移	P3	件名255文字超は履歴保存時にDB例外になりうる	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	件名＝256文字以上	"1. 件名を255文字超で送信する"	履歴保存時に dtb_mail_history.mail_subject の列長制約で環境依存の例外になりうること（フォーム側では事前防止しない）。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-085	IT-25	操作起点	P2	テンプレ候補は自動送信でない許容file_nameの行のみ	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILTEMPLATE	—	"1. 入力画面のテンプレ選択の候補を確認する"	候補が isAutoSend=false かつ許容 file_name（Mail/no_base.twig・Mail/buy_order*.twig 等）の行のみで、テンプレート名昇順であること。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-089	IT-26	登録内容	P2	送信成功時のメール履歴の保存列値が設計どおり	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	"1. 送信後に dtb_mail_history の追加行の各列を確認する"	追加行の mail_subject＝確定件名、mail_body＝確定本文、mail_html_body＝未設定、send_date・template_id（テンプレ参照）・buy_order_id・customer_id・base_info_id が当該受注/顧客/店舗情報に紐づくこと（設計書 DBカラム節）。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-090	IT-26	登録内容	P3	件名/本文は受注マスタへ書き戻されない	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	"1. 送信後に一覧/詳細を再読込し受注の表示値を確認する"	送信した件名/本文が受注マスタへ書き戻されず、一覧/詳細を再読込してもメール内容由来の変化が生じないこと（設計書 データ整合性「受注マスタに書き戻さない」）。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-091	IT-28	登録内容	P2	宛先/件名最大長・件名/本文の改行/タブ/メタ文字でも送信が正常終了する	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	宛先最大長・件名最大長・件名/本文に改行/タブ/メタ文字	"1. 各境界/特殊文字条件で送信を実行する"	いずれの条件でも送信が正常終了すること（観点表 IT-28 行216-219）。件名255文字超の履歴保存例外は084で別途。
-m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-092	IT-03	画面遷移	P3	送信時にテンプレート参照が取得できない場合は送信せず入力画面へ戻る	管理ログイン済／SEED-M07-04-BUYORDER	mode=complete・テンプレ参照が解決できない状態	"1. 確認後にテンプレ実体が取得できない状態で送信(mode=complete)する"	メール送信は行われず、共通処理により入力画面が返ること（設計書 処理フロー mode=complete 4。通常フローでは confirm の template 必須検証通過済のため到達困難＝テンプレ削除競合等の防御分岐）。
+2. 「確認」を押下"	確認画面へ進まず入力画面に留まり、テンプレ選択の検証エラーが表示されること（テンプレ選択 NotBlank の単独異常系）。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-060	IT-03	外部画面	P1	存在しない買取IDでGETするとHTTP404を返す	管理ログイン済	存在しない買取ID	1. /{admin_route}/purchase/{存在しないID}/mail をGETで開く	HTTP 404 が返ること。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-061	IT-25	HTTPステータス	P2	存在しない買取IDでPOSTするとHTTP404を返す	管理ログイン済	存在しない買取ID	1. /{admin_route}/purchase/{存在しないID}/mail へPOST（mode=confirm）する	HTTP 404 が返ること（買取受注取得が先に行われる）。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-070	IT-13	URL直接アクセス	P1	未ログインで入力URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログインで /{admin_route}/purchase/{buyOrderId}/mail を開く	管理ログイン画面へ誘導されること（管理ファイアウォール）。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-071	IT-13	URL直接アクセス	P1	未ログインで確認POSTしても業務処理されず管理ログイン画面へ誘導される	未ログイン	mode=confirm	1. 未ログインで /{admin_route}/purchase/{buyOrderId}/mail へPOST（mode=confirm）する	確認画面は返らず管理ログイン画面へ誘導されること（未ログインPOSTも管理ファイアウォールで到達不可＝070の異常系POST対）。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-080	IT-26	登録内容	P2	送信成功時のみメール履歴が1件増える（失敗時は増えない）	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	1. 送信前後で dtb_mail_history の対象受注の件数を比較する	送信成功時のみメール履歴行が1件増え、送信元欠如・SMTP失敗では増えないこと。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-081	IT-28	確認ダイアログ	P2	送信メールがプレーンテキストで件名・本文が確定値と一致する	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	1. 送信を実行し受信メールを確認する	受信メールが Content-Type プレーンテキストのみで、件名・本文が確定値（テンプレ由来またはフォーム確定値）と一致すること。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-086	IT-28	登録内容	P2	送信メールのヘッダが設計書「送信メール」節どおりに設定される	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	1. 送信を実行し受信メールのヘッダを確認する	宛先(To)は受注に紐づくメールアドレス（RFC逸脱文字を許容する変換を適用）、From・Bcc・Reply-To は買取メール送信元アドレス＋店舗名、Return-Path は店舗情報のエラー通知メールアドレス参照値が設定されること（設計書「送信メール」節）。Cc は本機能で設定しない。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-087	IT-11	登録内容	P2	指定宛先への送信が正常終了する	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	1. 送信を実行する	受注に紐づく宛先メールアドレスへの送信が正常終了し、送信完了ログが残ること（IT-11 実行結果）。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-082	IT-03	画面遷移	P2	送信元未設定（判定順序#1）でも送信せず成功扱いでリダイレクトする	管理ログイン済／SEED-M07-04-BUYORDER／買取メール送信元未設定	有効値で送信	1. 買取メール送信元（purchase_mail_address）未設定状態で送信を実行する	メールは送られず致命ログのみで、コントローラは成功フラッシュ付きで詳細編集へリダイレクトし、メール履歴は増えないこと（送信処理 判定順序#1）。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-088	IT-03	画面遷移	P2	SMTP送信失敗（判定順序#3）でも送信せず成功扱いでリダイレクトする	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM／SMTP遮断	有効値で送信	1. SMTP遮断（トランスポート例外）状態で送信を実行する	メールは送られず致命ログのみで、コントローラは成功フラッシュ付きで詳細編集へリダイレクトし、メール履歴は増えないこと（送信処理 判定順序#3）。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-083	IT-22	その他のバリデーション	P2	テンプレTwig破損時は本文が空になり警告ログのみ（変更モード）	管理ログイン済／SEED-M07-04-BUYORDER／file_name 不正のテンプレ	破損テンプレを選択	1. file_name が見つからない/実行時例外となるテンプレを選び変更する	本文が空文字でセットされ、警告ログのみ残り画面は入力テンプレを返すこと。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-084	IT-03	画面遷移	P3	件名255文字超は履歴保存時にDB例外になりうる	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	件名＝256文字以上	1. 件名を255文字超で送信する	履歴保存時に dtb_mail_history.mail_subject の列長制約で環境依存の例外になりうること（フォーム側では事前防止しない）。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-085	IT-25	操作起点	P2	テンプレ候補は自動送信でない許容file_nameの行のみ	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILTEMPLATE	—	1. 入力画面のテンプレ選択の候補を確認する	候補が isAutoSend=false かつ許容 file_name（Mail/no_base.twig・Mail/buy_order*.twig 等）の行のみで、テンプレート名昇順であること。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-089	IT-26	登録内容	P2	送信成功時のメール履歴の保存列値が設計どおり	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	1. 送信後に dtb_mail_history の追加行の各列を確認する	追加行の mail_subject＝確定件名、mail_body＝確定本文、mail_html_body＝未設定、send_date・template_id（テンプレ参照）・buy_order_id・customer_id・base_info_id が当該受注/顧客/店舗情報に紐づくこと（設計書 DBカラム節）。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-090	IT-26	登録内容	P3	件名/本文は受注マスタへ書き戻されない	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	有効値で送信	1. 送信後に一覧/詳細を再読込し受注の表示値を確認する	送信した件名/本文が受注マスタへ書き戻されず、一覧/詳細を再読込してもメール内容由来の変化が生じないこと（設計書 データ整合性「受注マスタに書き戻さない」）。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-091	IT-28	登録内容	P2	宛先/件名最大長・件名/本文の改行/タブ/メタ文字でも送信が正常終了する	管理ログイン済／SEED-M07-04-BUYORDER／SEED-M07-04-MAILFROM	宛先最大長・件名最大長・件名/本文に改行/タブ/メタ文字	1. 各境界/特殊文字条件で送信を実行する	いずれの条件でも送信が正常終了すること（観点表 IT-28 行216-219）。件名255文字超の履歴保存例外は084で別途。				
+m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	E2E-M07-04-092	IT-03	画面遷移	P3	送信時にテンプレート参照が取得できない場合は送信せず入力画面へ戻る	管理ログイン済／SEED-M07-04-BUYORDER	mode=complete・テンプレ参照が解決できない状態	1. 確認後にテンプレ実体が取得できない状態で送信(mode=complete)する	メール送信は行われず、共通処理により入力画面が返ること（設計書 処理フロー mode=complete 4。通常フローでは confirm の template 必須検証通過済のため到達困難＝テンプレ削除競合等の防御分岐）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

@@ -1,0 +1,295 @@
+{
+  "id": "f03-05-mypage-recommend-block-not-connected",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f03-05_0303_sheet-7_sheet.json",
+  "sourceFindingId": "f03-05_0303_sheet-7_sheet-conformance-125cb18180b5",
+  "classification": "フロント商品",
+  "feature": "商品リコメンド",
+  "issueCategory": "実装漏れ",
+  "issue": "マイページで種別mypageの商品リコメンドを非同期取得して表示しない",
+  "designBook": "0303_基本設計仕様書(フロント_商品).xlsx",
+  "reproSteps": [
+    "ログイン会員で http://localhost:8080/ja/mypage/ を開く",
+    "マイページのおすすめ商品ブロックを確認する",
+    "ページ種別 mypage として最新注文商品を基準にしたおすすめ取得が行われるか確認する"
+  ],
+  "expected": [
+    "マイページ・購入完了・商品詳細・買い物かごの各ページに、おすすめ商品をスライダー表示する",
+    "ブロックはページ表示後に非同期でおすすめ内容を取得して描画する",
+    "ページ種別が mypage の場合、ログイン会員の最新注文の商品を基準商品とする",
+    "基準商品がある場合は注文実績からおすすめ商品を抽出し、0件の場合のみおすすめなしメッセージを表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の MypageController::index は Customer と nextDeadlinePointHistory だけを返しており、recommendProducts も block_product_recommend 呼び出し用の値もセットしていない。Mypage/index.twig には『商品リコメンド実装時に追加する』というTODOが残り、recommend_type: mypage の recommend_js include はコメントアウトされているため、マイページから非同期おすすめ取得が起動しない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise MypageController index戻り値",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/MypageController.php",
+          "start": 126,
+          "end": 137,
+          "language": "php",
+          "contains": [
+            "public function index",
+            "'Customer' => $Customer",
+            "'nextDeadlinePointHistory' => $NextDeadlinePointHistory"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise マイページのrecommend_js未接続TODO",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/index.twig",
+          "start": 17,
+          "end": 24,
+          "language": "twig",
+          "contains": [
+            "TODO: ECCUBE_HARERUYA-164",
+            "シート「商品リコメンド」実装時に追加する",
+            "{#{% include 'Block/js/recommend_js.twig' with {'recommend_type': 'mypage'} %}#"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise マイページのrecommendProducts参照",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/index.twig",
+          "start": 242,
+          "end": 267,
+          "language": "twig",
+          "contains": [
+            "{% if recommendProducts is defined and recommendProducts is not empty %}",
+            "{% for Product in recommendProducts %}",
+            "front.product.recommend_no_items"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 共通リコメンドブロックController",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Block/ProductRecommendController.php",
+          "start": 42,
+          "end": 75,
+          "language": "php",
+          "contains": [
+            "block_product_recommend",
+            "$request->query->getInt('product_id', 0)",
+            "findLatestExpensiveItem($Customer)",
+            "getRecommendProductClasses"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、Mypage/index.twig が recommend_type: mypage の recommend_js を読み込み、JSが user_recommend_get に非同期POSTする。Block RecommendController は recommend_type が mypage または complete の場合に findLatestOrder() でログイン会員の最新注文の最高額明細を基準商品にし、OrderDetailRepository::getRecommendItems() でおすすめを抽出して recommend_detail.twig に描画している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 マイページrecommend_js接続",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/index.twig",
+          "start": 12,
+          "end": 17,
+          "language": "twig",
+          "contains": [
+            "{% include 'Block/js/recommend_js.twig' with {'recommend_type': 'mypage'} %}"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 recommend_js非同期取得",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/recommend_js.twig",
+          "start": 1,
+          "end": 40,
+          "language": "twig",
+          "contains": [
+            "path('user_recommend_get')",
+            "data: {'recommend_type' : '{{ recommend_type }}', 'product_id': '{{ product_id }}'}",
+            "$('.StyleR_Line_').html(data)"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 recommend_type=mypageの基準商品決定",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Block/RecommendController.php",
+          "start": 24,
+          "end": 55,
+          "language": "php",
+          "contains": [
+            "getUserRecommendProduct",
+            "$productId = $this->getCondition($app, $request);",
+            "$recommendType === 'mypage' || $recommendType === 'complete'",
+            "findLatestOrder($customer)"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 最新注文の最高額明細取得",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php",
+          "start": 362,
+          "end": 375,
+          "language": "php",
+          "contains": [
+            "public function findLatestOrder",
+            "orderBy('o.order_date', 'DESC')",
+            "addOrderBy('od.price', 'DESC')",
+            "setMaxResults(1)"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 おすすめ抽出",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php",
+          "start": 384,
+          "end": 456,
+          "language": "php",
+          "contains": [
+            "public function getRecommendItems",
+            "where same_order.product_id = :product_id",
+            "order by sales desc",
+            "limit 10"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 0件時メッセージ描画",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/recommend_detail.twig",
+          "start": 1,
+          "end": 24,
+          "language": "twig",
+          "contains": [
+            "{% if products %}",
+            "hareruyaec.product.no_recommend"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "商品リコメンドの対象ページと非同期取得",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 2766,
+      "end": 2772,
+      "language": "html",
+      "contains": [
+        "マイページ表示時のおすすめブロック",
+        "ブロックはページ表示後に非同期でおすすめ内容を取得して描画する",
+        "おすすめが0件の場合はスライダーを出さず"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "ページ種別mypageの基準商品決定と抽出",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 2774,
+      "end": 2778,
+      "language": "html",
+      "contains": [
+        "ページ種別が<code>mypage</code>または<code>complete</code>の場合",
+        "ログイン会員の最新注文の商品を基準商品とする",
+        "おすすめ抽出対象期間内の注文実績"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "おすすめ0件時メッセージ",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 2780,
+      "end": 2782,
+      "language": "html",
+      "contains": [
+        "おすすめなし",
+        "表示するおすすめ商品はまだありません。",
+        "No recommended items to display yet."
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "MypageControllerはおすすめデータを返していない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/MypageController.php",
+      "start": 126,
+      "end": 137,
+      "language": "php",
+      "contains": [
+        "'Customer' => $Customer",
+        "'nextDeadlinePointHistory' => $NextDeadlinePointHistory"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "recommend_type=mypageのJS接続がTODOとしてコメントアウトされている",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/index.twig",
+      "start": 17,
+      "end": 24,
+      "language": "twig",
+      "contains": [
+        "TODO: ECCUBE_HARERUYA-164",
+        "シート「商品リコメンド」実装時に追加する",
+        "{#{% include 'Block/js/recommend_js.twig' with {'recommend_type': 'mypage'} %}#"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "マイページはrecommendProducts変数を直接参照するがControllerから渡されない",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/index.twig",
+      "start": 242,
+      "end": 267,
+      "language": "twig",
+      "contains": [
+        "recommendProducts is defined",
+        "front.product.recommend_no_items"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "マイページでrecommend_type=mypageを接続",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/index.twig",
+      "start": 12,
+      "end": 17,
+      "language": "twig",
+      "contains": [
+        "recommend_type': 'mypage"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "recommend_type=mypageで最新注文から基準商品を決める",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Block/RecommendController.php",
+      "start": 24,
+      "end": 55,
+      "language": "php",
+      "contains": [
+        "$recommendType === 'mypage' || $recommendType === 'complete'",
+        "findLatestOrder($customer)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "最新注文内の高額明細を基準にする",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php",
+      "start": 362,
+      "end": 375,
+      "language": "php",
+      "contains": [
+        "orderBy('o.order_date', 'DESC')",
+        "addOrderBy('od.price', 'DESC')"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "おすすめ抽出と0件時メッセージ",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/recommend_detail.twig",
+      "start": 1,
+      "end": 24,
+      "language": "twig",
+      "contains": [
+        "{% if products %}",
+        "hareruyaec.product.no_recommend"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-09",
+    "checkedBy": "codex",
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f03-05_0303_sheet-7_sheet.json#f03-05_0303_sheet-7_sheet-conformance-125cb18180b5'",
+      "rg -n \"mypage|マイページ|recommend|リコメンド|おすすめ|ProductRecommend|recommendProducts|block_product_recommend|最新注文|最高額\" hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書\\(フロント_商品\\).html hareruya-design-docs/design_impl_drift_report/findings/f03-05_0303_sheet-7_sheet.json",
+      "rg -n \"recommendProducts|block_product_recommend|ProductRecommend|RecommendService|mypage|user_recommend_product|context.*mypage|TODO.*mypage\" ec-cube-enterprise/src/Eccube/Controller ec-cube-enterprise/src/Eccube/Resource/template/default ec-cube-enterprise/src/Eccube/Service",
+      "rg -n \"おすすめ商品|おすすめ|recommend|Recommend|no_recommend|hareruyaec\\.product\\.no_recommend|商品リコメンド|最新注文|最高額\" pf-eccube3/app/Plugin/HareruyaEc/Controller pf-eccube3/app/Plugin/HareruyaEc/Service pf-eccube3/app/Plugin/HareruyaEc/Repository pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default pf-eccube3/app/Plugin/HareruyaEc/Resource/locale",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/index.twig | sed -n '17,24p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/Block/RecommendController.php | sed -n '24,55p'"
+    ],
+    "notes": [
+      "gpt-5.5 high の批判的レビューは利用可能な外部レビュー環境がなく実行できなかったため、review-pack 生成とローカルの設計・base・enterprise ソース照合で確認した。"
+    ]
+  }
+}

@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない機能仕様（検索条件に一致するデッキ一覧と総件数をページング付きで返すJSON API・GET参照系）であり、**両レイヤで網羅**する。本APIはブラウザ向け画面を持たず（正本md「対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない」）、呼び出し元はデッキビルダーアプリで結果が管理画面に現れる範囲も無いため、**UIレイヤ＝0、API/統合レイヤ中心**で分類する。API/統合レイヤ＝Playwright `request`（APIRequestContext）でエンドポイントへGET送信し、HTTPステータス・レスポンス本文（`code`・`message`・`total_count`・`decks`）・絞り込み/ページング/ソート結果・0件時の `total_count=0`＋空配列・`mode=private` 認証失敗時の401で判定する。
 
-**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装のレスポンス形・型・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。pf-apiの正本mdは現行（deck-api）のリバース設計であり、刷新先 ec-cube-enterprise との乖離（エンドポイントパス・応答に追加される `cache_key`・日時形式・`deck_private_flag` 型・`display_token` 含有条件・認証クレーム・仕様未定義の追加並び替えパラメータ・成功メッセージのtransキー未定義等）は**設計書/観点表を上位オラクル**として扱い、付帯表4（不具合候補／要確認）に出す。実装からは位置情報（APIパス・メソッド・認証分岐）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。送信先パスは実装の実効パス `GET /api/decks`（`DeckController.php:262`）に統一し（テストが実在経路へ届くため）、合否は設計書の意味（公開検索＝認証不要で公開デッキ一覧＋総件数＋200／自分のデッキ検索＝認証必須で失敗時401／条件不一致・対象外デッキ種別＝空 `decks`＋`total_count=0`＋200／作成日時の降順／`per_page` 最大100丸め）で判定する。**本APIは仕様上 404 を返さない**（該当なしは200＋空配列）。`mode` 不正値・日付形式不正時の400やタイムアウト時の応答は正典が固定していないため期待値を固定せず `要実機確認`（仕様で固定される失敗応答は `mode=private` 認証失敗の401のみ）。設計⇔実装のパス・応答フィールド・型・日時形式の差異は付帯表4でのみ一元管理し、TSV期待値に実装の現挙動を固定しない。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装のレスポンス形・型・HTTPライブラリ既定値・Form制約を期待値に流用しない（オラクル独立性）。pf-apiの正本mdは現行（deck-api）のリバース設計であり、刷新先 ec-cube-enterprise との乖離（エンドポイントパス・応答に追加される `cache_key`・日時形式・`deck_private_flag` 型・`display_token` 含有条件・認証クレーム・仕様未定義の追加並び替えパラメータ・成功メッセージのtransキー未定義等）は**設計書/観点表を上位オラクル**として扱い、付帯表4（不具合候補／要確認）に出す。実装からは位置情報（APIパス・メソッド・認証分岐）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。送信先パスは実装の実効パス `GET /api/decks`（`DeckController.php:262`）に統一し（テストが実在経路へ届くため）、合否は設計書の意味（公開検索＝認証不要で公開デッキ一覧＋総件数＋200／自分のデッキ検索＝認証必須で失敗時401／条件不一致・対象外デッキ種別＝空 `decks`＋`total_count=0`＋200／作成日時の降順／`per_page` 最大100丸め）で判定する。**本APIは仕様上 404 を返さない**（該当なしは200＋空配列）。`mode` 不正値・日付形式不正時の400やタイムアウト時の応答は正典が固定していないため期待値を固定せず `要実機確認`（仕様で固定される失敗応答は `mode=private` 認証失敗の401のみ）。設計⇔実装のパス・応答フィールド・型・日時形式の差異は付帯表4でのみ一元管理し、TSV期待値に実装の現挙動を固定しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -22,69 +22,69 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-001	IT-09	リクエスト	P1	公開検索（mode=public）で200とデッキ一覧・総件数が返る	SEED-A15-13-PUBLIC-DECKS	mode=public（省略時の既定でも可）	"1. GET /api/decks?mode=public を送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200が返り、本文に code=200・total_count（条件一致の総件数）・公開デッキの decks 配列が含まれること。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200が返り、本文に code=200・total_count（条件一致の総件数）・公開デッキの decks 配列が含まれること。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-002	IT-09	実行結果	P2	正常検索時に取得時点の値が再計算されず返る	SEED-A15-13-PUBLIC-DECKS	mode=public	"1. 対象エンドポイントへGET送信する
-2. decks 各要素の値を確認する"	デッキ名・各日時・順位・参加人数等がレスポンス生成時に丸め・補正されず、DB／リポジトリ取得時点の値がそのまま返ること（業務ルール「取得後に業務値を再計算しない」）。
+2. decks 各要素の値を確認する"	デッキ名・各日時・順位・参加人数等がレスポンス生成時に丸め・補正されず、DB／リポジトリ取得時点の値がそのまま返ること（業務ルール「取得後に業務値を再計算しない」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-003	IT-09	HTTPステータス	P2	正常検索時のHTTPステータスが200である	SEED-A15-13-PUBLIC-DECKS	mode=public	"1. 対象エンドポイントへGET送信する
-2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-004	IT-09	外部取得	P1	検索条件に一致する公開デッキのみが取得される	SEED-A15-13-PUBLIC-DECKS	mode=public＋公開デッキに一致する条件	"1. 対象エンドポイントへGET送信する
-2. decks の内容を確認する"	条件に一致する公開（scope_id=公開）かつ削除日時の無いデッキが返り、非公開・論理削除済みデッキが decks に含まれないこと（集計条件 対象データ）。
+2. decks の内容を確認する"	条件に一致する公開（scope_id=公開）かつ削除日時の無いデッキが返り、非公開・論理削除済みデッキが decks に含まれないこと（集計条件 対象データ）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-005	IT-32	資格情報	P1	自分のデッキ検索（mode=private）で有効JWTにより所有デッキが返り応答が処理結果と一致する	SEED-A15-13-PLAYER-OWNED	有効な jwt-token ヘッダ＋mode=private	"1. 有効な jwt-token を付与し GET /api/decks?mode=private を送信する
-2. HTTPステータスとレスポンス本文を確認する"	認証プレイヤーが特定され、HTTPステータス200で当該プレイヤー所有デッキのみの decks と総件数が返ること（認証成功＝処理結果と一致）。
+2. HTTPステータスとレスポンス本文を確認する"	認証プレイヤーが特定され、HTTPステータス200で当該プレイヤー所有デッキのみの decks と総件数が返ること（認証成功＝処理結果と一致）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-006	IT-32	レスポンス	P2	成功レスポンスが仕様のフィールド構成・型契約と一致する	SEED-A15-13-PUBLIC-DECKS	mode=public	"1. 対象エンドポイントへGET送信する
-2. レスポンス本文のフィールドと型を確認する"	"トップレベルに code（integer・200）・message（string「Deck search success」）・total_count（integer）・decks（array）が含まれ、decks 各要素が仕様の型契約と一致すること：id・format_id・archetype_id・card_id・ranking・participants・scope_id は integer、deck_name・format_name_jp/en・create_date・update_date は string、deck_private_flag は boolean、deck_tags・campaign_tags は array。型・追加フィールド・日時形式・メッセージの実装差異は付帯表4#2/#3/#4/#5で管理する。"
+2. レスポンス本文のフィールドと型を確認する"	トップレベルに code（integer・200）・message（string「Deck search success」）・total_count（integer）・decks（array）が含まれ、decks 各要素が仕様の型契約と一致すること：id・format_id・archetype_id・card_id・ranking・participants・scope_id は integer、deck_name・format_name_jp/en・create_date・update_date は string、deck_private_flag は boolean、deck_tags・campaign_tags は array。型・追加フィールド・日時形式・メッセージの実装差異は付帯表4#2/#3/#4/#5で管理する。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-007	IT-32	必須条件	P2	mode=private で jwt-token 欠落時に401となり正常検索を返さない	SEED-A15-13-AUTH-INVALID	mode=private＋jwt-token ヘッダ無し	"1. jwt-token を付与せず GET /api/decks?mode=private を送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス401が返り、decks（正常検索）を返さないこと（認証・認可「mode=private は認証必須、失敗時は認証拒否（HTTP 401）」）。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス401が返り、decks（正常検索）を返さないこと（認証・認可「mode=private は認証必須、失敗時は認証拒否（HTTP 401）」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-008	IT-32	資格情報	P1	mode=private で無効・署名不正トークン時に401となり正常検索を返さない	SEED-A15-13-AUTH-INVALID	mode=private＋無効/署名不正/該当プレイヤーなしの jwt-token	"1. 無効な jwt-token を付与し GET /api/decks?mode=private を送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス401と message「Access Token is incorrect」相当を含むJSONが返り、decks を返さないこと（レスポンス（失敗）401・前提が欠落/不正な資格情報は対象処理を実行しない。具体メッセージの実装値は付帯表4#9）。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス401と message「Access Token is incorrect」相当を含むJSONが返り、decks を返さないこと（レスポンス（失敗）401・前提が欠落/不正な資格情報は対象処理を実行しない。具体メッセージの実装値は付帯表4#9）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-009	IT-32	リクエスト	P2	異常なパラメータ値（不正mode）で正常検索とならない	SEED-A15-13-PUBLIC-DECKS	mode=invalid（public/private 以外）	"1. mode に public/private 以外を指定してGET送信する
-2. HTTPステータスとレスポンスを確認する"	不正な mode 値では正常検索（200＋デッキ一覧）とならないこと（バリデーション「mode は public または private のみを受け付ける」。仕様で固定される失敗応答は private 認証失敗の401のみで、不正mode時の具体ステータスは要実機確認＝付帯表4#9）。
+2. HTTPステータスとレスポンスを確認する"	不正な mode 値では正常検索（200＋デッキ一覧）とならないこと（バリデーション「mode は public または private のみを受け付ける」。仕様で固定される失敗応答は private 認証失敗の401のみで、不正mode時の具体ステータスは要実機確認＝付帯表4#9）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-010	IT-32	リクエスト	P3	想定外のクエリ項目を加えてもサーバエラーで停止しない（無視可否は要実機確認）	SEED-A15-13-PUBLIC-DECKS	mode=public＋想定外クエリ項目（項目名と値のセット）	"1. 想定外クエリ項目を付与してGET送信する
-2. HTTPステータスとレスポンスを確認する"	未知のクエリ項目があってもサーバエラー（5xx）で停止しないことのみを判定する。想定外クエリ項目の扱いは正本に明記が無いため期待値を固定せず、200で無視され正常検索と同一内容となるかは要実機確認とする。
+2. HTTPステータスとレスポンスを確認する"	未知のクエリ項目があってもサーバエラー（5xx）で停止しないことのみを判定する。想定外クエリ項目の扱いは正本に明記が無いため期待値を固定せず、200で無視され正常検索と同一内容となるかは要実機確認とする。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-011	IT-32	リクエスト	P2	検索モードに応じて対象デッキが正しく絞り込まれる	SEED-A15-13-PUBLIC-DECKS／SEED-A15-13-PLAYER-OWNED	mode=public と mode=private（有効JWT）	"1. mode=public でGET送信する
 2. mode=private（有効JWT）でGET送信する
-3. 両レスポンスの decks を比較する"	mode=public では公開デッキのみ、mode=private では認証プレイヤー所有デッキのみが対象となり、互いの対象範囲が混在しないこと（処理フロー#3・認可「所有デッキのみを対象」）。
+3. 両レスポンスの decks を比較する"	mode=public では公開デッキのみ、mode=private では認証プレイヤー所有デッキのみが対象となり、互いの対象範囲が混在しないこと（処理フロー#3・認可「所有デッキのみを対象」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-012	IT-32	データなし	P1	条件不一致時に空の decks と total_count=0 が200で返る	SEED-A15-13-NONE	mode=public＋一致デッキの存在しない検索条件	"1. 該当デッキの無い条件でGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で decks が空配列、total_count=0 が返ること（エラー処理「条件不一致は空の decks と total_count=0 を返す（HTTP 200）」。本APIは該当なしでも404を返さない）。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で decks が空配列、total_count=0 が返ること（エラー処理「条件不一致は空の decks と total_count=0 を返す（HTTP 200）」。本APIは該当なしでも404を返さない）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-013	IT-10	エラー	P2	mode=private 認証不可時に仕様の401応答が返る	SEED-A15-13-AUTH-INVALID	mode=private＋認証不可（欠落/不正トークン）	"1. 認証不可な jwt-token で GET /api/decks?mode=private を送信する
-2. HTTPステータスとレスポンス本文を確認する"	認証不可で、HTTPステータス401と {code, message} 形式のJSONが返ること（エラー処理「認証不可（mode=private）→認証拒否（HTTP 401）」）。
+2. HTTPステータスとレスポンス本文を確認する"	認証不可で、HTTPステータス401と {code, message} 形式のJSONが返ること（エラー処理「認証不可（mode=private）→認証拒否（HTTP 401）」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-014	IT-10	HTTPステータス	P1	異常（mode=private 認証失敗）時のHTTPステータスが仕様の401と一致する	SEED-A15-13-AUTH-INVALID	mode=private＋認証失敗トークン	"1. 認証失敗トークンでGET送信する
-2. HTTPステータスを確認する"	HTTPステータスが認証拒否を示す401であること。
+2. HTTPステータスを確認する"	HTTPステータスが認証拒否を示す401であること。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-015	IT-10	通信	P1	正常通信で200応答が返る	SEED-A15-13-PUBLIC-DECKS	mode=public	"1. 対象エンドポイントへGET送信する
-2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-016	IT-10	正常	P2	対象条件に該当する正常値で200とデッキ一覧が返る	SEED-A15-13-PUBLIC-DECKS	対象条件に該当する正常な検索パラメータ	"1. 正常値でGET送信する
-2. HTTPステータスとレスポンスを確認する"	正常検索としてHTTPステータス200でデッキ一覧と総件数が返ること。
+2. HTTPステータスとレスポンスを確認する"	正常検索としてHTTPステータス200でデッキ一覧と総件数が返ること。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-017	IT-10	異常系	P2	異常系（mode=private 認証失敗）受信時に正常検索とならない	SEED-A15-13-AUTH-INVALID	mode=private＋不正トークン	"1. 不正トークンでGET送信する
-2. HTTPステータスを確認する"	mode=private の認証失敗では正常検索（200＋デッキ一覧）とならず401が返ること（仕様で固定される失敗応答は private 認証失敗の401）。
+2. HTTPステータスを確認する"	mode=private の認証失敗では正常検索（200＋デッキ一覧）とならず401が返ること（仕様で固定される失敗応答は private 認証失敗の401）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-018	IT-09	実行結果	P2	同一GETの重複呼び出しで同一レスポンス（冪等参照）となる	SEED-A15-13-PUBLIC-DECKS	同一の検索条件を2回送信	"1. 同一リクエストを1回目GET送信する
 2. 同一リクエストを2回目GET送信する
-3. 2回のレスポンスを比較する"	参照系のため2回の呼び出しで同一のHTTPステータス・レスポンス本文（total_count・decks）が返り、業務データの更新（副作用）が発生しないこと（副作用「無し（参照のみ）」）。
+3. 2回のレスポンスを比較する"	参照系のため2回の呼び出しで同一のHTTPステータス・レスポンス本文（total_count・decks）が返り、業務データの更新（副作用）が発生しないこと（副作用「無し（参照のみ）」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-019	IT-10	エラー	P3	タイムアウト時に未捕捉例外で停止せず参照系としてDB不整合が残らない	SEED-A15-13-PUBLIC-DECKS	タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してGET送信する
-2. 応答とDB状態を確認する"	タイムアウト時の応答仕様は正典に定義が無いため期待値を固定せず（未定義挙動を仕様化しない）、参照系のため呼び出しでDBに不整合が残らないことのみを判定する。タイムアウト時の具体応答とその実再現は要実機確認。
+2. 応答とDB状態を確認する"	タイムアウト時の応答仕様は正典に定義が無いため期待値を固定せず（未定義挙動を仕様化しない）、参照系のため呼び出しでDBに不整合が残らないことのみを判定する。タイムアウト時の具体応答とその実再現は要実機確認。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-020	IT-09	リクエスト	P2	フォーマット・アーキタイプ・タグ等の絞り込み条件が反映される	SEED-A15-13-PUBLIC-DECKS	mode=public＋format/archetype/tag/campaign_tag_ids（配列）	"1. 特定の format・archetype・tag を指定してGET送信する
-2. decks と total_count を確認する"	指定した絞り込み条件に一致するデッキのみが decks に返り、total_count も同条件で連動すること（集計条件 絞り込み・「配列で指定された場合のみ絞り込み条件として用いる」）。
+2. decks と total_count を確認する"	指定した絞り込み条件に一致するデッキのみが decks に返り、total_count も同条件で連動すること（集計条件 絞り込み・「配列で指定された場合のみ絞り込み条件として用いる」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-021	IT-09	リクエスト	P1	page・per_page で1ページ分が返り total_count はページング非依存となる	SEED-A15-13-PUBLIC-DECKS	mode=public＋per_page=（任意）・page=（任意）	"1. per_page・page を指定してGET送信する
-2. decks 件数と total_count を確認する"	decks が指定 per_page 以下の1ページ分となり、total_count はページングの影響を受けず条件一致の重複排除後の総件数が返ること（ページネーション 出力「総件数はページングの影響を受けない」）。
+2. decks 件数と total_count を確認する"	decks が指定 per_page 以下の1ページ分となり、total_count はページングの影響を受けず条件一致の重複排除後の総件数が返ること（ページネーション 出力「総件数はページングの影響を受けない」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-022	IT-09	リクエスト	P2	per_page が100超のとき最大100件に丸められる	SEED-A15-13-PUBLIC-DECKS	mode=public＋per_page=101以上（101件以上のデッキが存在）	"1. per_page=101 以上を指定してGET送信する
-2. decks の件数を確認する"	1ページあたりの decks 件数が最大100件に丸められること（ページネーション 入力「per_page は最大100に丸める」）。
+2. decks の件数を確認する"	1ページあたりの decks 件数が最大100件に丸められること（ページネーション 入力「per_page は最大100に丸める」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-023	IT-09	レスポンス	P2	検索結果が作成日時の降順で並ぶ	SEED-A15-13-PUBLIC-DECKS	mode=public（作成日時の異なるデッキが複数存在）	"1. 対象エンドポイントへGET送信する
-2. decks の create_date の並びを確認する"	decks が作成日時（create_date）の降順で並ぶこと（集計条件 並び順・処理フロー#4「作成日時の降順で並べ」）。
+2. decks の create_date の並びを確認する"	decks が作成日時（create_date）の降順で並ぶこと（集計条件 並び順・処理フロー#4「作成日時の降順で並べ」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-024	IT-32	リクエスト	P1	デッキ種別フラグが両方対象外のとき空・total_count=0で返る	SEED-A15-13-PUBLIC-DECKS	mode=public＋event_deck_flag=0＋user_deck_flag=0	"1. event_deck_flag=0・user_deck_flag=0 を指定してGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で decks が空配列、total_count=0 が返ること（集計条件 デッキ種別「いずれも対象外なら空・総件数0を返す」）。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で decks が空配列、total_count=0 が返ること（集計条件 デッキ種別「いずれも対象外なら空・総件数0を返す」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-025	IT-32	レスポンス	P2	自分のデッキ検索（private）で display_token が含まれる	SEED-A15-13-PLAYER-OWNED	mode=private＋有効JWT（限定公開デッキを所有）	"1. 有効JWTで GET /api/decks?mode=private を送信する
-2. decks 各要素のフィールドを確認する"	自分のデッキ検索の応答デッキに display_token（限定公開トークン）が含まれること（入出力 レスポンス（成功）「display_token は private の場合に含める」。含有条件の実装差異は付帯表4#6）。
+2. decks 各要素のフィールドを確認する"	自分のデッキ検索の応答デッキに display_token（限定公開トークン）が含まれること（入出力 レスポンス（成功）「display_token は private の場合に含める」。含有条件の実装差異は付帯表4#6）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-026	IT-32	リクエスト	P2	レギュレーション違反デッキが既定で除外される	SEED-A15-13-PUBLIC-DECKS	mode=public＋regulation_violation_flag 未指定（既定0）	"1. regulation_violation_flag を指定せずGET送信する
-2. decks にレギュレーション違反デッキが含まれないか確認する"	regulation_violation_flag が偽（既定0）のとき、レギュレーション違反フラグの立つデッキが decks に含まれないこと（入出力 リクエスト・集計条件 絞り込み・リニューアル移行時の扱い「既定では違反デッキを除外する」）。
+2. decks にレギュレーション違反デッキが含まれないか確認する"	regulation_violation_flag が偽（既定0）のとき、レギュレーション違反フラグの立つデッキが decks に含まれないこと（入出力 リクエスト・集計条件 絞り込み・リニューアル移行時の扱い「既定では違反デッキを除外する」）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-027	IT-09	実行結果	P3	参照のみで副作用が無い（再検索で対象データ不変）	SEED-A15-13-PUBLIC-DECKS	mode=public	"1. 対象デッキの現在値を取得する
 2. 対象エンドポイントへGET送信する
-3. 対象データを再取得し比較する"	API呼び出し前後で対象デッキのデータが変化しないこと（副作用「無し（参照のみ）」・DB操作は参照系のみ。本ケースは cache_key 未指定であり、cache_key 指定時のキャッシュ挙動は本TSVで未確認＝付帯表5）。
+3. 対象データを再取得し比較する"	API呼び出し前後で対象デッキのデータが変化しないこと（副作用「無し（参照のみ）」・DB操作は参照系のみ。本ケースは cache_key 未指定であり、cache_key 指定時のキャッシュ挙動は本TSVで未確認＝付帯表5）。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-028	IT-32	レスポンス	P3	各デッキに deck_tags・campaign_tags が整形付与される	SEED-A15-13-PUBLIC-DECKS	mode=public（デッキタグ・キャンペーンタグ付きデッキが存在）	"1. 対象エンドポイントへGET送信する
-2. decks 各要素の deck_tags・campaign_tags を確認する"	deck_tags 各要素が id・name_jp・name_en を、campaign_tags 各要素が id・name_jp・name_en・is_during（開催前0・開催中1・開催後2）を持って付与されること（処理フロー#5・入出力 レスポンス（成功））。
+2. decks 各要素の deck_tags・campaign_tags を確認する"	deck_tags 各要素が id・name_jp・name_en を、campaign_tags 各要素が id・name_jp・name_en・is_during（開催前0・開催中1・開催後2）を持って付与されること（処理フロー#5・入出力 レスポンス（成功））。				
 a15-13_api_deck_builder_deck_search（API_デッキビルダー_デッキ検索）	E2E-A15-13-029	IT-09	実行結果	P3	cache_key 指定時に正常検索が200で返り業務データを更新しない（参照系キャッシュ）	SEED-A15-13-PUBLIC-DECKS	mode=public＋cache_key=（任意のキー値）	"1. cache_key を付与して GET /api/decks?mode=public を送信する
 2. 同一 cache_key で再度GET送信する
-3. 両レスポンスと対象デッキの現在値を確認する"	cache_key 指定時も HTTPステータス200で code=200・total_count・公開デッキの decks 配列が返り（cache_key 指定が正常検索を妨げない）、同一 cache_key の2回呼び出しで同一の total_count・decks が返ること。cache_key 指定による結果キャッシュ書込は業務データ（dtb_deck 等）を更新しないこと（副作用「無し（参照のみ）。cache_key 指定時に一覧・件数の結果キャッシュを書き込むが業務データの更新は行わない」・処理フロー#4・集計条件 キャッシュ）。キャッシュ命中の内部状態やキャッシュ有効期間内に最新内容と一致しない事象は決定的に外部観測できないため観測可能範囲外＝付帯表5。
+3. 両レスポンスと対象デッキの現在値を確認する"	cache_key 指定時も HTTPステータス200で code=200・total_count・公開デッキの decks 配列が返り（cache_key 指定が正常検索を妨げない）、同一 cache_key の2回呼び出しで同一の total_count・decks が返ること。cache_key 指定による結果キャッシュ書込は業務データ（dtb_deck 等）を更新しないこと（副作用「無し（参照のみ）。cache_key 指定時に一覧・件数の結果キャッシュを書き込むが業務データの更新は行わない」・処理フロー#4・集計条件 キャッシュ）。キャッシュ命中の内部状態やキャッシュ有効期間内に最新内容と一致しない事象は決定的に外部観測できないため観測可能範囲外＝付帯表5。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

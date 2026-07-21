@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m06_10_admin_store_purchase_purchase_store_return_list_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・ダウンロード発火・HTTP応答ヘッダ・ファイル名・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。CSV各列の値・帳票内容は手動確認とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・ダウンロード発火・HTTP応答ヘッダ・ファイル名・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。CSV各列の値・帳票内容は手動確認とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は「店頭買取管理 > 買取一覧（`admin_otcbuyorder` = `/admin/otcbuyorder`）」のCSVダウンロードメニュー内「戻しリストCSV」（`data-type="otc_buy_order_restock_list_csv"`）から、チェック選択した買取（`otcBuyOrderIds[]`）を `admin_otcbuyorder_export`（POST `/admin/otcbuyorder/export`）へ送信して StreamedResponse でCSV出力する **bulk＋csv_export** 機能である。自動化は「ダウンロード発火・ファイル名・応答ヘッダ・CSVヘッダ8列構成・UI部品（メニュー/リンク表示・選択）・各エラー分岐のフラッシュ＆CSV非出力・CSRF拒否（無効トークンでCSV非出力）・未認証ガード」に限る。CSV本文の各値（SJIS変換・ピッキング区分閾値・色/レアリティ抽出・サプライ品表示＝対象データ依存）と棚戻し済みフラグ更新（DB内部）は手動/間接。
 
@@ -26,34 +26,34 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-001	IT-25	操作起点	P1	買取一覧（戻しリストCSV出力の起点）画面が表示される	管理者ログイン済／SEED-M06-10-ADMIN	—	"1. /admin/otcbuyorder を開く"	店頭買取の買取一覧画面（検索フォーム）が表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-001	IT-25	操作起点	P1	買取一覧（戻しリストCSV出力の起点）画面が表示される	管理者ログイン済／SEED-M06-10-ADMIN	—	1. /admin/otcbuyorder を開く	店頭買取の買取一覧画面（検索フォーム）が表示されること。				
 m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-002	IT-03	画面遷移	P2	検索実行で買取一覧に検索結果セクションが表示される	管理者ログイン済／SEED-M06-10-OTC（対象データあり）	検索条件＝空（全件）	"1. 買取一覧を開く
-2. 検索ボタンを押下"	買取一覧画面に留まり、検索結果の一覧セクションが表示されること。
+2. 検索ボタンを押下"	買取一覧画面に留まり、検索結果の一覧セクションが表示されること。				
 m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-003	IT-25	UI部品	P2	検索結果があるとCSVダウンロードメニューに「戻しリストCSV」が表示される	管理者ログイン済／SEED-M06-10-OTC（対象データあり）	—	"1. 買取一覧で検索を実行する
-2. CSVダウンロードメニューを開く"	メニュー内に「戻しリストCSV」項目が表示されること。
+2. CSVダウンロードメニューを開く"	メニュー内に「戻しリストCSV」項目が表示されること。				
 m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-010	IT-16	実行結果	P1	対象を選択し戻しリストCSVを実行するとダウンロードが発火する	管理者ログイン済／SEED-M06-10-OTC-ELIGIBLE（棚入れ待ち/棚入れ完了・単一店舗）	対象買取を1件選択	"1. 買取一覧で検索を実行する
 2. 対象買取のチェックボックスを選択
-3. CSVダウンロードメニューから「戻しリストCSV」を実行"	CSVダウンロードが発火すること。
+3. CSVダウンロードメニューから「戻しリストCSV」を実行"	CSVダウンロードが発火すること。				
 m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-011	IT-16	実行結果	P2	ダウンロードファイル名が otc_buy_order_restock_list_csv_<日時>.csv 形式である	管理者ログイン済／SEED-M06-10-OTC-ELIGIBLE	対象買取を1件選択	"1. 戻しリストCSVを実行する
-2. ダウンロードファイル名を確認する"	ファイル名が「otc_buy_order_restock_list_csv_<14桁日時>.csv」形式であること。
-m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-012	IT-25	HTTPステータス	P2	エクスポート応答が添付ファイル（octet-stream/attachment）のHTTPヘッダを返す	管理者ログイン済／SEED-M06-10-OTC-ELIGIBLE	export_type=otc_buy_order_restock_list_csv、対象ID1件、有効CSRFトークン	"1. 認証済みコンテキストで /admin/otcbuyorder/export へPOSTする"	HTTP 200・Content-Type application/octet-stream・Content-Disposition attachment（filename=otc_buy_order_restock_list_csv_...）を返すこと。
+2. ダウンロードファイル名を確認する"	ファイル名が「otc_buy_order_restock_list_csv_<14桁日時>.csv」形式であること。				
+m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-012	IT-25	HTTPステータス	P2	エクスポート応答が添付ファイル（octet-stream/attachment）のHTTPヘッダを返す	管理者ログイン済／SEED-M06-10-OTC-ELIGIBLE	export_type=otc_buy_order_restock_list_csv、対象ID1件、有効CSRFトークン	1. 認証済みコンテキストで /admin/otcbuyorder/export へPOSTする	HTTP 200・Content-Type application/octet-stream・Content-Disposition attachment（filename=otc_buy_order_restock_list_csv_...）を返すこと。				
 m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-013	IT-16	実行結果	P2	ダウンロードCSVのヘッダが戻しリスト8列構成である	管理者ログイン済／SEED-M06-10-OTC-ELIGIBLE	対象買取を1件選択	"1. 戻しリストCSVを出力する
-2. ダウンロード本文をSJIS→UTF-8変換し1行目(ヘッダ)を確認する"	ヘッダがExcel原典の8列（ピッキング区分／棚番号／言語・状態／略称／色R／数／商品名／基準価格）であること。各セル値・閾値・色R抽出は手動(E2E-M06-10-040)。
+2. ダウンロード本文をSJIS→UTF-8変換し1行目(ヘッダ)を確認する"	ヘッダがExcel原典の8列（ピッキング区分／棚番号／言語・状態／略称／色R／数／商品名／基準価格）であること。各セル値・閾値・色R抽出は手動(E2E-M06-10-040)。				
 m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-040	IT-23	実行結果	P2	出力CSV各値（閾値・色R抽出・サプライ品表示）が原典どおりである	管理者ログイン済／SEED-M06-10-OTC-ELIGIBLE（区分閾値・色レアリティ・サプライ品を含む対象）	対象買取を選択	"1. 戻しリストCSVを出力する
 2. CSVをExcel等で開く
-3. ピッキング区分(閾値判定)・色R(色レアリティ抽出)・サプライ品表示・各列の値を原典と突合する"	Excel原典 戻しリストCSV定義どおり、ピッキング区分が閾値で分類され、色Rが正しく抽出され、サプライ品が規定表示で、8列の各値が一致すること（CSV本文＝手動確認）。
-m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-020	IT-22	必須制御	P1	1件も選択せず実行すると選択必須エラーが表示されCSVが出力されない	管理者ログイン済／SEED-M06-10-ADMIN	export_type=otc_buy_order_restock_list_csv、otcBuyOrderIds=空、有効CSRFトークン	"1. 何も選択せず戻しリストCSVを送信する"	CSV（octet-stream添付）は出力されず、選択必須エラー（1つ以上の買取注文情報を選択してください。）が表示され買取一覧へ戻ること。
-m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-021	IT-22	DBとの相関バリデーション	P2	存在しないIDで実行すると対象なしエラーが表示されCSVが出力されない	管理者ログイン済／SEED-M06-10-ADMIN	export_type=otc_buy_order_restock_list_csv、存在しないotcBuyOrderId、有効CSRFトークン	"1. 存在しない買取IDを指定して戻しリストCSVを送信する"	CSV（octet-stream添付）は出力されず、対象なしのエラーが表示され買取一覧へ戻ること。
-m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-022	IT-22	相関バリデーション	P2	対象外ステータスの買取を選択するとエラーが表示されCSVが出力されない	管理者ログイン済／SEED-M06-10-OTC-INELIGIBLE-STATUS（棚入れ待ち/完了以外のステータス）	対象外ステータスの買取を選択	"1. 対象外ステータスの買取を選択して戻しリストCSVを実行する"	CSV（octet-stream添付）は出力されず、対象外ステータスのエラーが表示され買取一覧へ戻ること。
-m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-023	IT-22	相関バリデーション	P2	複数店舗の買取を同時選択するとエラーが表示されCSVが出力されない	管理者ログイン済／SEED-M06-10-OTC-MULTISHOP（2店舗以上の対象買取）	異なる店舗の買取を複数選択	"1. 異なる店舗の買取を複数選択して戻しリストCSVを実行する"	CSV（octet-stream添付）は出力されず、複数店舗同時処理不可のエラーが表示され買取一覧へ戻ること。
-m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-024	IT-15	対象データ	P2	権限のない店舗の買取を選択するとエラーが表示されCSVが出力されない	権限が限定された管理者でログイン済／SEED-M06-10-OTC-NOPERM（編集権限外店舗の買取）	編集権限外店舗の買取を選択	"1. 編集権限外店舗の買取を選択して戻しリストCSVを実行する"	CSV（octet-stream添付）は出力されず、権限のない店舗のエラーが表示され買取一覧へ戻ること。
-m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-025	IT-15	CSRF	P2	無効/欠落CSRFトークンで送信すると拒否されCSVが出力されない	管理者ログイン済／SEED-M06-10-ADMIN	export_type=otc_buy_order_restock_list_csv、対象ID、無効な_token	"1. 無効なCSRFトークンを付与して /admin/otcbuyorder/export へPOSTする"	CSV（octet-stream添付）は出力されないこと（CSRF保護により副作用ありPOSTが拒否される）。
-m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-026	IT-22	その他のバリデーション	P2	許容外のexport_typeで送信するとCSVが出力されない	管理者ログイン済／SEED-M06-10-ADMIN	export_type=許容外の値、対象ID、有効CSRFトークン	"1. 許容外のexport_type（戻しリストCSV以外でも定義集合に無い値）を指定して /admin/otcbuyorder/export へPOSTする"	CSV（octet-stream添付）は出力されないこと（出力種別が許容値でない不正入力は対象を確定しない）。許容値・例外文言は照合しない（オラクル独立性）。
+3. ピッキング区分(閾値判定)・色R(色レアリティ抽出)・サプライ品表示・各列の値を原典と突合する"	Excel原典 戻しリストCSV定義どおり、ピッキング区分が閾値で分類され、色Rが正しく抽出され、サプライ品が規定表示で、8列の各値が一致すること（CSV本文＝手動確認）。				
+m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-020	IT-22	必須制御	P1	1件も選択せず実行すると選択必須エラーが表示されCSVが出力されない	管理者ログイン済／SEED-M06-10-ADMIN	export_type=otc_buy_order_restock_list_csv、otcBuyOrderIds=空、有効CSRFトークン	1. 何も選択せず戻しリストCSVを送信する	CSV（octet-stream添付）は出力されず、選択必須エラー（1つ以上の買取注文情報を選択してください。）が表示され買取一覧へ戻ること。				
+m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-021	IT-22	DBとの相関バリデーション	P2	存在しないIDで実行すると対象なしエラーが表示されCSVが出力されない	管理者ログイン済／SEED-M06-10-ADMIN	export_type=otc_buy_order_restock_list_csv、存在しないotcBuyOrderId、有効CSRFトークン	1. 存在しない買取IDを指定して戻しリストCSVを送信する	CSV（octet-stream添付）は出力されず、対象なしのエラーが表示され買取一覧へ戻ること。				
+m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-022	IT-22	相関バリデーション	P2	対象外ステータスの買取を選択するとエラーが表示されCSVが出力されない	管理者ログイン済／SEED-M06-10-OTC-INELIGIBLE-STATUS（棚入れ待ち/完了以外のステータス）	対象外ステータスの買取を選択	1. 対象外ステータスの買取を選択して戻しリストCSVを実行する	CSV（octet-stream添付）は出力されず、対象外ステータスのエラーが表示され買取一覧へ戻ること。				
+m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-023	IT-22	相関バリデーション	P2	複数店舗の買取を同時選択するとエラーが表示されCSVが出力されない	管理者ログイン済／SEED-M06-10-OTC-MULTISHOP（2店舗以上の対象買取）	異なる店舗の買取を複数選択	1. 異なる店舗の買取を複数選択して戻しリストCSVを実行する	CSV（octet-stream添付）は出力されず、複数店舗同時処理不可のエラーが表示され買取一覧へ戻ること。				
+m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-024	IT-15	対象データ	P2	権限のない店舗の買取を選択するとエラーが表示されCSVが出力されない	権限が限定された管理者でログイン済／SEED-M06-10-OTC-NOPERM（編集権限外店舗の買取）	編集権限外店舗の買取を選択	1. 編集権限外店舗の買取を選択して戻しリストCSVを実行する	CSV（octet-stream添付）は出力されず、権限のない店舗のエラーが表示され買取一覧へ戻ること。				
+m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-025	IT-15	CSRF	P2	無効/欠落CSRFトークンで送信すると拒否されCSVが出力されない	管理者ログイン済／SEED-M06-10-ADMIN	export_type=otc_buy_order_restock_list_csv、対象ID、無効な_token	1. 無効なCSRFトークンを付与して /admin/otcbuyorder/export へPOSTする	CSV（octet-stream添付）は出力されないこと（CSRF保護により副作用ありPOSTが拒否される）。				
+m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-026	IT-22	その他のバリデーション	P2	許容外のexport_typeで送信するとCSVが出力されない	管理者ログイン済／SEED-M06-10-ADMIN	export_type=許容外の値、対象ID、有効CSRFトークン	1. 許容外のexport_type（戻しリストCSV以外でも定義集合に無い値）を指定して /admin/otcbuyorder/export へPOSTする	CSV（octet-stream添付）は出力されないこと（出力種別が許容値でない不正入力は対象を確定しない）。許容値・例外文言は照合しない（オラクル独立性）。				
 m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-030	IT-15	未認証	P1	未ログインで買取一覧/エクスポートURLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/otcbuyorder へGETアクセスする
-2. 未ログインで /admin/otcbuyorder/export へPOSTする"	いずれも管理ログイン画面へ誘導され、CSVが出力されないこと。
+2. 未ログインで /admin/otcbuyorder/export へPOSTする"	いずれも管理ログイン画面へ誘導され、CSVが出力されないこと。				
 m06-10_admin_store_purchase_purchase_store_return_list_csv_export（店頭買取管理_戻しリストCSV出力）	E2E-M06-10-031	IT-26	更新内容	P2	CSV出力成功後に対象買取が棚戻し済みになる（間接）	管理者ログイン済／SEED-M06-10-OTC-ELIGIBLE	対象買取を1件選択	"1. 戻しリストCSVを出力する
-2. 当該買取の棚戻し状態を再検索/詳細で確認する"	出力完了後に当該買取が棚戻し済みとして扱われること（DB内部値のため間接確認＝手動）。
+2. 当該買取の棚戻し状態を再検索/詳細で確認する"	出力完了後に当該買取が棚戻し済みとして扱われること（DB内部値のため間接確認＝手動）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

@@ -1,0 +1,36 @@
+{
+  "functionId": "m03-30_0204_sheet-43_csv",
+  "featureNo": "M03-30",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-43:9852,9867-9868,9880-9881",
+      "designExpectation": "M03-30 基準価格変更CSVフォーマットでは、識別ID:5「原価単価」を新規追加し、CSV列として数値(整数)・必須・最大999999999で扱う。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php, src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php, src/Eccube/Repository/ProductClassRepository.php, src/Eccube/Entity/ProductClass.php, src/Eccube/Resource/template/admin/Product, src/Eccube/Resource/locale/messages.ja.yaml）",
+      "implementationActual": "M03-30 の実装は基準価格変更CSVとして存在するが、雛形ヘッダは「商品ID」「言語ID」「基準価格」「買取価格」の4列のみで、取込ハンドラの列定義も同じ4列のみ。dtb_product_class.wholesale_price は存在するが、このCSVで原価単価列を読み込み・検証・更新する処理はない。",
+      "mismatchReason": "設計は原価単価をCSV識別ID:5として新規追加する要求を持つ。一方、ProductStandardPriceCsvController::getCsvHeader は4列だけを返し、getRequiredCsvHeader も4列だけを必須化している。ProductStandardPriceImportHandler::getColumns/initializeColumnDefinitions も productId/languageId/standardPrice/buyPrice の4列だけで、ProductClassRepository::updateProductClassForStandardPriceCsv は standard_price/price02/buy_price のみ更新し wholesale_price を更新しない。原価単価・costUnitPrice・wholesalePrice へ翻案して再検索したが、M03-30取込の列定義・更新処理には存在しなかった。",
+      "comparisonRows": [
+        {
+          "item": "CSV列定義",
+          "design": "5列目に「原価単価」を追加。数値(整数)、必須、最大999999999。",
+          "implementation": "ProductStandardPriceCsvController.php:196-203 は 商品ID/言語ID/基準価格/買取価格 の4列のみ。",
+          "mismatch": "原価単価列が雛形・画面フォーマットに出ない。"
+        },
+        {
+          "item": "取込列バリデーション",
+          "design": "原価単価を必須数値列として取込対象にする。",
+          "implementation": "ProductStandardPriceImportHandler.php:190-197 と 208-214 は4列のみを返す。",
+          "mismatch": "原価単価の必須・数値・桁数検証がない。"
+        },
+        {
+          "item": "DB更新",
+          "design": "原価単価を新規追加したCSV項目として扱う。",
+          "implementation": "ProductClassRepository.php:2720-2755 は standard_price/price02/buy_price/update_date のみ更新。Entity には wholesale_price があるが M03-30 取込では更新されない。",
+          "mismatch": "原価単価相当の wholesale_price 更新がない。"
+        }
+      ]
+    }
+  ]
+}

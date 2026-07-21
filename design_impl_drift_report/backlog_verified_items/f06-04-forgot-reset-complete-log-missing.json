@@ -1,0 +1,164 @@
+{
+  "id": "f06-04-forgot-reset-complete-log-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-04_0306_sheet-6_sheet.json",
+  "sourceFindingId": "f06-04_0306_sheet-6_sheet-conformance-117b757b478f",
+  "classification": "フロント会員",
+  "feature": "パスワード再発行",
+  "issueCategory": "実装漏れ",
+  "issue": "パスワード更新完了時に会員ID・メールアドレス・接続元IPの完了ログが出力されない",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "`http://localhost:8080/ja/forgot` からパスワード再発行を行い、受信メールの再設定URLへアクセスする",
+    "新しいパスワードを入力して変更を完了する",
+    "アプリケーションログに、パスワード更新完了時の会員ID・メールアドレス・接続元IPが記録されているか確認する"
+  ],
+  "expected": [
+    "パスワード更新成功時、新パスワードを保存しリセットキーを消去した後、更新ログを残して更新完了画面を表示する",
+    "パスワード更新完了ログには会員ID、メールアドレス、接続元IPを記録する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `ForgotController::reset()` は、再設定フォームが妥当な場合にパスワードをハッシュ化し、`registration_view` の `password` と `reset_key = null` を更新する。その後 `FRONT_FORGOT_RESET_COMPLETE` イベントを dispatch して `forgot_resetcomplete` へリダイレクトするが、更新成功パスに `log_info()` 等の完了ログ出力はない。同じコントローラの再設定メール送信時には会員識別子・メール・接続元IPを `log_info('send reset password mail to:...')` で出力しているため、更新完了時のログだけが欠落している。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 再設定メール送信時はログ出力あり",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php",
+          "start": 96,
+          "end": 103,
+          "language": "php",
+          "contains": [
+            "$this->mailService->sendPasswordResetNotificationMail($Customer, $reset_url);",
+            "log_info('send reset password mail to:'",
+            "$request->getClientIp()"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise パスワード更新成功パスにログ出力がない",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php",
+          "start": 204,
+          "end": 229,
+          "language": "php",
+          "contains": [
+            "if ($form->isSubmitted() && $form->isValid()) {",
+            "$password = $this->passwordHasher->hashPassword",
+            "'UPDATE registration_view SET password = :password, reset_key = :reset_key WHERE secret_key = :secret_key'",
+            "$this->eventDispatcher->dispatch($event, EccubeEvents::FRONT_FORGOT_RESET_COMPLETE);",
+            "return $this->redirectToRoute('forgot_resetcomplete');"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の `ForgotController::resetComplete()` は、フォーム検証後にパスワードを暗号化して `resetKey` を `null` にし、永続化した直後に `$app['monolog']->addInfo('reset password complete:' . \"{$customer->getId()} {$customer->getEmail()} {$request->getClientIp()}\")` を出力してから完了画面を表示する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 パスワード更新完了ログ",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ForgotController.php",
+          "start": 138,
+          "end": 157,
+          "language": "php",
+          "contains": [
+            "$customer->setPassword($encPass);",
+            "$customer->setResetKey(null);",
+            "$app['orm.em']->flush();",
+            "$app['monolog']->addInfo('reset password complete:' . \"{$customer->getId()} {$customer->getEmail()} {$request->getClientIp()}\");",
+            "return $app->render('Forgot/resetcomplete.twig');"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 再設定完了ルート",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php",
+          "start": 120,
+          "end": 121,
+          "language": "php",
+          "contains": [
+            "$c->match('/forgot/resetcomplete/{resetKey}', '\\Plugin\\HareruyaEc\\Controller\\ForgotController::resetComplete')",
+            "->bind('forgot_resetcomplete');"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "パスワード更新成功時は更新ログを残して完了画面へ進む",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 2473,
+      "end": 2474,
+      "language": "html",
+      "contains": [
+        "パスワードを更新する（POST",
+        "検証成功時、新パスワードを会員のソルトで暗号化して保存し、リセットキーを消去する",
+        "更新ログを残し、更新完了画面を表示する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "ログ・監査で完了ログの記録内容を規定",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 2520,
+      "end": 2521,
+      "language": "html",
+      "contains": [
+        "ログ・監査",
+        "パスワード更新完了",
+        "完了ログ（会員ID・メール・接続元IP）"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "更新成功後はイベントdispatchと完了画面リダイレクトのみ",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php",
+      "start": 204,
+      "end": 229,
+      "language": "php",
+      "contains": [
+        "UPDATE registration_view SET password = :password, reset_key = :reset_key WHERE secret_key = :secret_key",
+        "EccubeEvents::FRONT_FORGOT_RESET_COMPLETE",
+        "return $this->redirectToRoute('forgot_resetcomplete');"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "同コントローラにはメール送信時ログはあるが更新完了ログはない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php",
+      "start": 96,
+      "end": 103,
+      "language": "php",
+      "contains": [
+        "sendPasswordResetNotificationMail",
+        "log_info('send reset password mail to:'",
+        "$request->getClientIp()"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は更新完了直後に会員ID・メール・接続元IPのログを出力する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ForgotController.php",
+      "start": 150,
+      "end": 157,
+      "language": "php",
+      "contains": [
+        "$app['orm.em']->flush();",
+        "$app['monolog']->addInfo('reset password complete:' . \"{$customer->getId()} {$customer->getEmail()} {$request->getClientIp()}\");",
+        "return $app->render('Forgot/resetcomplete.twig');"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-04_0306_sheet-6_sheet.json#f06-04_0306_sheet-6_sheet-conformance-117b757b478f'",
+      "rg -n \"完了ログ|更新完了|パスワード.*ログ|アクセス元|グローバルIP|password.*log|log_info|sendPasswordReset|resetcomplete|reset\\(\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php ec-cube-enterprise/src/Eccube/Service ec-cube-enterprise/src/Eccube/Event pf-eccube3/app/Plugin/HareruyaEc/Controller/ForgotController.php pf-eccube3/app/Plugin/HareruyaEc",
+      "rg -n \"reset password complete|password reset complete|パスワード更新完了|forgot_resetcomplete|send reset password mail to|log_info\\(|addInfo\\(\" ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php ec-cube-enterprise/src/Eccube/Service ec-cube-enterprise/src/Eccube/EventListener ec-cube-enterprise/src/Eccube/EventSubscriber",
+      "rg -n \"reset password complete|send reset password mail to|Un active customer try send reset password email|resetComplete|forgot_resetcomplete\" pf-eccube3/app/Plugin/HareruyaEc/Controller/ForgotController.php pf-eccube3/app/Plugin/HareruyaEc",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '2471,2478p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '2487,2521p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php | sed -n '70,180p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/ForgotController.php | sed -n '180,238p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/ForgotController.php | sed -n '1,220p'"
+    ],
+    "review": "review-pack を生成し、設計HTML、ec-cube-enterprise の ForgotController と関連 Service/EventListener/EventSubscriber 検索、pf-eccube3 の ForgotController を手動で再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

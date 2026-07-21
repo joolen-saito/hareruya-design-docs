@@ -1,0 +1,172 @@
+{
+  "id": "f06-06-shopping-history-smaregi-column-labels-not-switched",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-06_0304_sheet-8_sheet.json",
+  "sourceFindingId": "f06-06_0304_sheet-8_sheet-conformance-e156ea548423",
+  "classification": "フロント注文",
+  "feature": "注文購入履歴一覧",
+  "issueCategory": "実装漏れ",
+  "issue": "スマレジ取引データの列見出しが「購入内容」「支払金額合計」に切り替わらない",
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "reproSteps": [
+    "スマレジ取引データまたは店頭受取受注からスマレジ取引になった注文を持つ会員で `http://localhost:8080/ja/mypage/shopping_history` を表示する",
+    "対象注文行の「注文内容」「注文金額合計」に相当する見出しを確認する",
+    "スマレジ取引データの場合だけ、見出しが「購入内容」「支払金額合計」に切り替わるか確認する"
+  ],
+  "expected": [
+    "スマレジの取引データの場合のみ、注文内容の見出しを「購入内容」に変更する",
+    "スマレジの取引データの場合のみ、注文金額合計の見出しを「支払金額合計」に変更する",
+    "スマレジ以外の注文では通常どおり「注文内容」「注文金額合計」を表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の購入履歴一覧 `shopping_history.twig` は、購入日・取引番号・レシートNo・支払方法では `Order.isSmaregiTransactionOrder` / `Order.isOtcSmaregiLinkedOrder` の分岐を持つ一方、注文内容と注文金額合計の見出しは無条件で `front.mypage.shopping_history.col.items` / `front.mypage.shopping_history.col.total` を表示している。日本語 locale でもこの2キーはそれぞれ「注文内容」「注文金額合計」で、スマレジ用の「購入内容」「支払金額合計」キーや分岐は確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise スマレジ判定は他項目に存在",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 100,
+          "end": 153,
+          "language": "twig",
+          "contains": [
+            "{% if Order.isOtcSmaregiLinkedOrder %}",
+            "{% elseif Order.isSmaregiTransactionOrder %}",
+            "{% if Order.isSmaregiTransactionOrder or Order.isOtcSmaregiLinkedOrder %}",
+            "{{ 'front.mypage.shopping_history.col.receipt_no'|trans }}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 注文内容と合計見出しは固定キー",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 155,
+          "end": 172,
+          "language": "twig",
+          "contains": [
+            "{{ 'front.mypage.shopping_history.col.items'|trans }}",
+            "{{ 'front.mypage.shopping_history.col.total'|trans }}",
+            "{{ Order.payment_total|price }}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise locale は通常見出しのみ",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 981,
+          "end": 1004,
+          "language": "yaml",
+          "contains": [
+            "front.mypage.shopping_history.col.items: 注文内容",
+            "front.mypage.shopping_history.col.total: 注文金額合計",
+            "front.mypage.shopping_history.col.payment_method_otc: 店頭支払"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の購入履歴一覧は、スマレジ取引データを表示する分岐を持たない旧実装で、一覧見出しを「注文内容」「注文金額合計」として固定表示している。今回の切替要求はベース実装由来ではなく、設計書のスマレジ対応カスタマイズ注記に由来する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 購入履歴一覧の固定見出し",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 70,
+          "end": 87,
+          "language": "twig",
+          "contains": [
+            "注文内容",
+            "注文金額合計",
+            "処理状態"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 行側 aria-label も通常見出し",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig",
+          "start": 99,
+          "end": 118,
+          "language": "twig",
+          "contains": [
+            "aria-label=\"注文内容\"",
+            "aria-label=\"注文金額合計\"",
+            "{{ order.total|price }}"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "スマレジ取引データ表示とスマレジ対応文言のカスタマイズが要求されている",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2659,
+      "end": 2675,
+      "language": "html",
+      "contains": [
+        "現行機能をベースに下記カスタマイズを行う",
+        "スマレジの取引データを表示する",
+        "表示文言をスマレジに対応する",
+        "スマレジの取引データの場合は下記に名称を変更する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "図形注記で注文内容と注文金額合計の文言変更を明記",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2741,
+      "end": 2745,
+      "language": "html",
+      "contains": [
+        "購入内容",
+        "支払金額合計",
+        "スマレジの場合のみ文言を<br>・注文内容→購入内容<br>・注文金額合計→支払金額合計<br>とする"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "注文内容と注文金額合計の見出しはスマレジ分岐なしで固定キーを表示",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+      "start": 155,
+      "end": 172,
+      "language": "twig",
+      "contains": [
+        "front.mypage.shopping_history.col.items",
+        "front.mypage.shopping_history.col.total"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "locale上も通常見出しキーのみで、購入内容・支払金額合計のショッピング履歴列キーがない",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+      "start": 981,
+      "end": 1004,
+      "language": "yaml",
+      "contains": [
+        "front.mypage.shopping_history.col.items: 注文内容",
+        "front.mypage.shopping_history.col.total: 注文金額合計"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は通常の購入履歴一覧で固定見出しを表示しており、設計のスマレジ文言切替はベース由来ではなくカスタマイズ注記由来",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig",
+      "start": 70,
+      "end": 87,
+      "language": "twig",
+      "contains": [
+        "注文内容",
+        "注文金額合計"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-06_0304_sheet-8_sheet.json#f06-06_0304_sheet-8_sheet-conformance-e156ea548423'",
+      "rg -n \"スマレジ|購入内容|支払金額合計|注文内容|注文金額合計|isSmaregi|smaregi|col\\.items|col\\.total\" hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html",
+      "rg -n \"isSmaregi|smaregi|col\\.items|col\\.total|注文内容|注文金額合計|購入内容|支払金額合計|front\\.mypage\\.shopping_history\\.col\" ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage ec-cube-enterprise/src/Eccube/Resource/locale",
+      "rg -n \"注文内容|注文金額合計|購入内容|支払金額合計|smaregi|スマレジ\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history_detail.twig",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html | sed -n '2637,2745p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/shopping_history.twig | sed -n '96,184p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml | sed -n '978,1006p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/shopping_history.twig | sed -n '70,122p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLのスマレジ文言変更注記、ec-cube-enterprise の購入履歴一覧テンプレートと locale、pf-eccube3 の旧購入履歴一覧テンプレートを再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

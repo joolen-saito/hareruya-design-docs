@@ -1,0 +1,241 @@
+{
+  "id": "a06-13-identification-invalid-id-returns-404-not-400",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a06-13_0506_sheet-13_sheet.json",
+  "sourceFindingId": "a06-13_0506_sheet-13_sheet-conformance-fb7fac71e0ca",
+  "classification": "API店頭買取管理",
+  "feature": "本人確認更新",
+  "issueCategory": "実装違い",
+  "issue": "本人確認証明書IDがマスタに存在しない場合にHTTP 400ではなくHTTP 404を返す",
+  "designBook": "0506_基本設計仕様書(API_店頭買取管理).xlsx",
+  "reproSteps": [
+    "JWT認証済みの状態で、存在する店頭買取受注IDを指定して PUT http://localhost:8080/api/v1/admin/otcBuyOrder/{id}/identification.json を実行する",
+    "リクエストボディに mtb_identification に存在しない値を identification=999999 のように指定する",
+    "レスポンスのHTTPステータスと本文の code / errors を確認する"
+  ],
+  "expected": [
+    "リクエストの identification が未指定、または本人確認証明書マスタに存在しないIDの場合は HTTP 400 を返す",
+    "HTTP 400 の本文は {code, errors} 形式で、errors に「正しい証明書IDを入力してください」を返す",
+    "受注IDに該当する店頭買取受注が存在しない場合のみ HTTP 404 とする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、`identification` パラメータ欠落時は `MissingRequiredParameterException` により HTTP 400 になる。一方、指定されたIDで `mtbIdentificationRepository->find()` した結果が `MtbIdentification` でない場合は `NotFoundException('正しい証明書IDを入力してください')` を投げる。`NotFoundException` は HTTP 404 として定義され、例外リスナーがその statusCode をそのまま `JsonResponse` のステータスと本文の `code` に使うため、マスタ不存在IDは設計の HTTP 400 ではなく HTTP 404 になる。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise Controller は未指定のみ400、不存在IDは NotFoundException を投げる",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php",
+          "start": 273,
+          "end": 291,
+          "language": "php",
+          "contains": [
+            "#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/identification.json'",
+            "$raw = $request->request->get('identification')",
+            "throw new MissingRequiredParameterException('正しい証明書IDを入力してください')",
+            "$Identification = $this->mtbIdentificationRepository->find($identificationId)",
+            "throw new NotFoundException('正しい証明書IDを入力してください')"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise NotFoundException は HTTP 404 を設定する",
+          "path": "ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php",
+          "start": 20,
+          "end": 35,
+          "language": "php",
+          "contains": [
+            "class NotFoundException extends BaseApiException",
+            "statusCode: Response::HTTP_NOT_FOUND"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise ExceptionListener は BaseApiException の statusCode をJSON応答に使う",
+          "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php",
+          "start": 80,
+          "end": 140,
+          "language": "php",
+          "contains": [
+            "if ($exception instanceof BaseApiException)",
+            "$statusCode = $exception->getStatusCode()",
+            "'code' => $statusCode",
+            "], $statusCode)"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise テストは存在しない証明書IDを HTTP 404 として期待する",
+          "path": "ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OtcBuyOrderControllerTest.php",
+          "start": 794,
+          "end": 813,
+          "language": "php",
+          "contains": [
+            "身分証明書種別がみつからない場合は、404エラーを返すこと",
+            "$nonExistingIdentificationId = 999",
+            "['identification' => $nonExistingIdentificationId]",
+            "$this->assertSame(Response::HTTP_NOT_FOUND, $response['code'])"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、同じ本人確認更新処理で `MtbIdentification` を `findOneBy(['id' => $identificationId])` し、空の場合は `code` に 400、`errors` に「正しい証明書IDを入力してください」を入れた `View` を HTTP 400 で返している。テストでも未指定・空文字・存在しないIDのいずれも HTTP 400 と同じエラーメッセージを期待している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は本人確認更新ルートを同一Controllerへ定義する",
+          "path": "pf-api/config/routes.yaml",
+          "start": 49,
+          "end": 56,
+          "language": "yaml",
+          "contains": [
+            "put_otcbuy_identification_json:",
+            "path: /admin/otcBuyOrder/{id}/identification.json",
+            "put_otcbuy_identification:",
+            "path: /admin/otcBuyOrder/{id}/identification"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api は証明書IDが見つからない場合に HTTP 400 を返す",
+          "path": "pf-api/src/Controller/Admin/OtcBuyOrderIdentificationController.php",
+          "start": 32,
+          "end": 44,
+          "language": "php",
+          "contains": [
+            "$identificationId = $request->get('identification')",
+            "findOneBy(['id' => $identificationId])",
+            "if (empty($putIdentification))",
+            "'code' => Response::HTTP_BAD_REQUEST",
+            "'errors' => ['正しい証明書IDを入力してください']"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api のテストは不存在IDも HTTP 400 と同じエラー文言を期待する",
+          "path": "pf-api/src/Tests/Controller/Admin/OtcBuyOrderIdentificationControllerPutActionTest.php",
+          "start": 78,
+          "end": 108,
+          "language": "php",
+          "contains": [
+            "testFailureNoRequestIdentification",
+            "$this->assertEquals(Response::HTTP_BAD_REQUEST",
+            "testFailureIrregularIdentificationId",
+            "$client = $this->submitTestRequest(['identification' => 99], 1)",
+            "$this->assertEquals(self::BAD_REQUEST_MESSAGE"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "設計は pf-api の挙動を正とし、証明書IDのマスタ不存在を HTTP 400 とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 3412,
+      "end": 3430,
+      "language": "html",
+      "contains": [
+        "挙動は現行を正とし",
+        "リクエストの証明書IDで本人確認証明書マスタを引く",
+        "該当が無い場合は入力不正（HTTP 400）"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "入出力定義は、証明書IDが本人確認証明書マスタに存在しない場合を HTTP 400 と明記する",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 3435,
+      "end": 3442,
+      "language": "html",
+      "contains": [
+        "本人確認証明書マスタに存在しない値の場合は入力不正（HTTP 400）",
+        "証明書IDが本人確認証明書マスタに存在しない（未指定を含む）",
+        "errors",
+        "正しい証明書IDを入力してください"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "バリデーション定義も未指定・存在しないIDを HTTP 400 とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 3452,
+      "end": 3453,
+      "language": "html",
+      "contains": [
+        "未指定・存在しないIDの場合は入力不正（HTTP 400）",
+        "正しい証明書IDを入力してください"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は存在しない証明書IDで NotFoundException を投げる",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php",
+      "start": 281,
+      "end": 291,
+      "language": "php",
+      "contains": [
+        "$raw = $request->request->get('identification')",
+        "throw new MissingRequiredParameterException('正しい証明書IDを入力してください')",
+        "$Identification = $this->mtbIdentificationRepository->find($identificationId)",
+        "throw new NotFoundException('正しい証明書IDを入力してください')"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "NotFoundException は HTTP 404、MissingRequiredParameterException は HTTP 400 として定義される",
+      "path": "ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php",
+      "start": 20,
+      "end": 35,
+      "language": "php",
+      "contains": [
+        "class NotFoundException extends BaseApiException",
+        "statusCode: Response::HTTP_NOT_FOUND"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise テストも存在しない証明書IDを HTTP 404 として固定している",
+      "path": "ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OtcBuyOrderControllerTest.php",
+      "start": 794,
+      "end": 813,
+      "language": "php",
+      "contains": [
+        "身分証明書種別がみつからない場合は、404エラーを返すこと",
+        "$nonExistingIdentificationId = 999",
+        "$this->assertSame(Response::HTTP_NOT_FOUND, $response['code'])"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は本人確認証明書マスタに該当しない場合、HTTP 400 と設計指定メッセージを返す",
+      "path": "pf-api/src/Controller/Admin/OtcBuyOrderIdentificationController.php",
+      "start": 32,
+      "end": 44,
+      "language": "php",
+      "contains": [
+        "findOneBy(['id' => $identificationId])",
+        "Response::HTTP_BAD_REQUEST",
+        "正しい証明書IDを入力してください"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api のテストは存在しない証明書IDを HTTP 400 として固定している",
+      "path": "pf-api/src/Tests/Controller/Admin/OtcBuyOrderIdentificationControllerPutActionTest.php",
+      "start": 99,
+      "end": 108,
+      "language": "php",
+      "contains": [
+        "testFailureIrregularIdentificationId",
+        "['identification' => 99]",
+        "Response::HTTP_BAD_REQUEST",
+        "self::BAD_REQUEST_MESSAGE"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"本人確認更新|証明書ID|正しい証明書ID|HTTP 400|identification\" excel_to_html/output/0506_基本設計仕様書\\(API_店頭買取管理\\).html",
+      "rg -n \"OtcBuyOrderIdentification|otcBuyOrder/\\{id\\}/identification|正しい証明書ID|Identification\" ../pf-api/config ../pf-api/src",
+      "rg -n \"api_admin_otc_buy_order_update_identification|otcBuyOrder/\\{id\\}/identification|正しい証明書ID|MissingRequiredParameterException|NotFoundException|InvalidParameterException|mtbIdentificationRepository\" ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/app/config",
+      "rg -n \"BaseApiException|getStatusCode|JsonResponse|HTTP_NOT_FOUND|HTTP_BAD_REQUEST\" ../ec-cube-enterprise/src/Eccube/Exception/App ../ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php"
+    ],
+    "review": "gpt-5.5 high reviewer Kepler VERDICT: VERIFIED. Design requires HTTP 400 for missing/nonexistent identification, pf-api returns HTTP 400 for empty/nonexistent identification, and ec-cube-enterprise returns HTTP 404 for nonexistent identification via NotFoundException. Reviewer noted enterprise code only treats raw === null as MissingRequiredParameterException/400, so Backlog wording should say parameter absence rather than broad 未入力. Extensionless route absence is a separate source finding d6fe27542ce6 and is not merged into this item."
+  }
+}

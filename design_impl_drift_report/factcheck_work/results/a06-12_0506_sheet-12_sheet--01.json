@@ -1,0 +1,42 @@
+{
+  "chunkId": "a06-12_0506_sheet-12_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-12_0506_sheet-12_sheet.json#a06-12_0506_sheet-12_sheet-conformance-4b813c7dc99a",
+      "functionId": "a06-12_0506_sheet-12_sheet",
+      "featureNo": "A06-12",
+      "title": "A06-12 固定価格部門の部門情報を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "固定価格部門取得APIは設計が {\"code\":200,\"section_id\":\"1\"} のJSONオブジェクトを要求するが、実装は option_value のスカラー文字列だけを返している。",
+      "reason": "設計書のレスポンスデータ定義（HTML 3210-3211行）は code（文字列/整数、必ず200）と section_id（文字列、固定価格商品部門ID）の2フィールドを持つJSONオブジェクトを要求し、詳細設計のサンプル（3275行、3282行）でも {\"code\":200,\"section_id\":\"1\"} を示す。一方、実装 OptionController::getFixedPriceSection() は mtb_option の FIXED_PRICE_SECTION(option_key='fixed_price_section') の option_value を取得し（57行）、new JsonResponse($value) でその値そのもの（例 \"29\"）だけを返している（59行）。code フィールドも section_id フィールドも作っていない。テスト OptionControllerTest.php:184-185 も json_encode($expectedValue) というスカラー契約を期待しており、code/section_id 構造を検証していない。反証として同ディレクトリ配下の他Controller/Service/Dtoやレスポンス整形箇所を確認したが、code+section_id 形へラップする実装は存在しない。したがってレスポンスのトップレベル型・フィールド構成が設計と不一致で、実装違いが事実。",
+      "designEvidence": {
+        "label": "設計要求（レスポンスデータ定義）",
+        "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+        "start": 3210,
+        "end": 3211,
+        "contains": ["code", "section_id", "固定価格商品部門ID"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装（固定価格部門IDの取得）",
+          "note": "option_value のスカラー値をそのままJsonResponseで返しており、code/section_id を持つJSONオブジェクトを構築していない。",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php",
+          "start": 51,
+          "end": 59,
+          "contains": ["getFixedPriceSection", "getOptionValue", "new JsonResponse($value)"]
+        },
+        {
+          "label": "テスト（スカラー契約を固定）",
+          "note": "code/section_id 構造ではなく json_encode($expectedValue) を期待している。",
+          "path": "ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OptionControllerTest.php",
+          "start": 184,
+          "end": 185,
+          "contains": ["json_encode($expectedValue)", "getContent()"]
+        }
+      ]
+    }
+  ]
+}

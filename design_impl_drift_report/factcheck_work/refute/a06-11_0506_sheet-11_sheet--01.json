@@ -1,0 +1,10 @@
+{
+  "chunkId": "a06-11_0506_sheet-11_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-11_0506_sheet-11_sheet.json#a06-11_0506_sheet-11_sheet-conformance-2de4a84f5f4a",
+      "refuted": false,
+      "reason": "反証を複数試みたが実装違いは維持。(1)別実装: sections.json ルートは MTGBuyer/V1/Admin/SectionController.php の1本のみ(rg 'sections.json|api_admin_sections' src で1件)。他の SectionController は Admin/Product 用で別機能。JsonResponse をラップする kernel.view/kernel.response Subscriber/Listener も App/MTGBuyer 配下に存在せず(EventSubscriber ディレクトリ無し)、同ディレクトリの BuyingController 等も 'cards' などの裸配列を返すだけで code/message エンベロープ層は無い。'get sections success' は全リポで0件。(2)引用確認: implEvidence の SectionController.php:38-49 は記載通り。findBy(['visible'=>true],['code'=>'ASC']) 取得後、array_map で section_id/name/code のみ詰めた $payload を new JsonResponse($payload) で返しており code/message/sections ラッパー無し(49行)。designEvidence 3044-3046 も 'code=必ず200','message=必ずget sections successが入る','sections=部門の配列' と一致。図形サンプル(3065)・詳細設計レスポンス表(3113)・サンプル(3118-3125)・処理フロー(3103 コード200・メッセージ・部門一覧をJSONで返す)まで一貫してエンベロープを要求。(3)設計側除外: 『本書で扱わないこと』(3088-3090)は固定価格部門取得と部門管理のみで応答エンベロープは対象外。3095の『要確認』はフィールド名 section_id/name/code と並び順に限定され、トップレベル code/message/sections には掛からない。(4)決定的裏付け: SectionControllerTest.php:110 が空時の応答を json_encode([]) すなわち裸の [] と assertSame しており、もし後段でエンベロープ整形されるなら失敗する。正常系(80-83)も array_column($response,'code') とトップレベル配列前提。よってエンベロープ欠落は確実。指摘は維持。"
+    }
+  ]
+}

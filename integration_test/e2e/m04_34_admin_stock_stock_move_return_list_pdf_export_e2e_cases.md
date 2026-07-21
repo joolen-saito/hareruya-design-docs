@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m04_34_admin_stock_stock_move_return_list_pdf_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・HTTP応答(JSON)・URL等のブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・HTTP応答(JSON)・URL等のブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は「在庫移動・振替一覧で選択した在庫移動・振替情報から戻しリストHTMLを生成し、別ウィンドウ（ポップアップ）で表示してブラウザ印刷する」機能。サーバは `POST .../return_list_pdf_export` を受け、CSRF検証・対象バリデーション後に **JSONで `{success:true, html}` または `{success:false, redirectUrl}`** を返す（ファイルダウンロードではない）。画面タイプは `pdf_export/print`：**ダウンロード発火に相当する JSON応答・エンドポイント・入口ボタンを自動化対象とし、帳票の中身（閾値グループ・並び順・30行ページ分割・列整形・小計）と印刷ダイアログ起動・ポップアップ表示は手動**とする。
 
@@ -23,49 +23,49 @@
 | IT-23 | 取得結果（対象IDの実在庫が含まれる/対象外が含まれない）＝帳票内容/DB（手動・間接） |
 | IT-20 | ログ出力抑止・識別子＝ブラウザ観測外（対象外） |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-001	IT-25	操作起点	P1	在庫移動・振替一覧に「戻しリストPDF出力」ボタンが表示される	管理者ログイン済／SEED-M04-34-ADMIN	—	"1. 在庫移動・振替一覧（/%admin%/product/stock/move_transfer）を開く"	「戻しリストPDF出力」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-001	IT-25	操作起点	P1	在庫移動・振替一覧に「戻しリストPDF出力」ボタンが表示される	管理者ログイン済／SEED-M04-34-ADMIN	—	1. 在庫移動・振替一覧（/%admin%/product/stock/move_transfer）を開く	「戻しリストPDF出力」ボタンが表示されること。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-002	IT-25	送信可否制御	P1	チェック未選択でPDF出力ボタンを押すと選択を促すメッセージが表示され処理が中断する	管理者ログイン済／SEED-M04-34-ADMIN	ids＝未選択	"1. 一覧を開く
-2. 行を1つも選択せず「戻しリストPDF出力」ボタンを押下"	「1つ以上の在庫移動情報を選択してください。」が表示され、ポップアップ表示・出力処理が行われないこと。
+2. 行を1つも選択せず「戻しリストPDF出力」ボタンを押下"	「1つ以上の在庫移動情報を選択してください。」が表示され、ポップアップ表示・出力処理が行われないこと。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-003	IT-27	実行結果	P1	有効なIDを送信すると戻しリストHTMLがJSON（success:true）で返る	管理者ログイン済／SEED-M04-34-EXPORTABLE	有効な在庫移動・振替情報ID（ids[]）＋CSRFトークン	"1. 一覧を開きCSRFトークンを取得
-2. 出力可能な行のIDでエンドポイントへPOST"	`{success:true, html:…}` が返り、html に戻しリストHTML本文が含まれること。
+2. 出力可能な行のIDでエンドポイントへPOST"	`{success:true, html:…}` が返り、html に戻しリストHTML本文が含まれること。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-004	IT-18	フォーマット定義	P2	返却HTMLにタイトル・印刷ボタン・明細列見出しが含まれる	管理者ログイン済／SEED-M04-34-EXPORTABLE	有効なID＋CSRFトークン	"1. 出力可能な行のIDでPOST
-2. 返却 html を検査"	html にタイトル「戻しリスト」・印刷ボタン（#printButton「印刷する」）・列見出し（No／棚番号／言語/状態／略称／色/R／数／商品名／価格／備考）が含まれること。
+2. 返却 html を検査"	html にタイトル「戻しリスト」・印刷ボタン（#printButton「印刷する」）・列見出し（No／棚番号／言語/状態／略称／色/R／数／商品名／価格／備考）が含まれること。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-010	IT-27	出力失敗	P2	選択無し（ids空）でエンドポイントへPOSTするとsuccess:false・redirectUrlが返る	管理者ログイン済／SEED-M04-34-ADMIN	ids＝空配列＋有効なCSRFトークン	"1. 一覧を開きCSRFトークンを取得
-2. ids 空でエンドポイントへPOST"	HTTP200のまま `{success:false, redirectUrl:一覧ページ}` が返ること。
+2. ids 空でエンドポイントへPOST"	HTTP200のまま `{success:false, redirectUrl:一覧ページ}` が返ること。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-011	IT-22	DBとの相関バリデーション	P2	存在しないIDを送信すると検証NGでsuccess:false・redirectUrlが返る	管理者ログイン済／SEED-M04-34-ADMIN	存在しないID（例 999999999）＋有効なCSRFトークン	"1. 一覧を開きCSRFトークンを取得
-2. 存在しないIDでエンドポイントへPOST"	`{success:false, redirectUrl:一覧ページ}` が返り、戻しリストHTMLを返さないこと。
+2. 存在しないIDでエンドポイントへPOST"	`{success:false, redirectUrl:一覧ページ}` が返り、戻しリストHTMLを返さないこと。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-014	IT-22	相関バリデーション	P2	対象外ステータスのIDを送信すると検証NGでsuccess:false・redirectUrlが返る	管理者ログイン済／SEED-M04-34-INVALID	対象外ステータスの在庫移動・振替情報ID＋有効なCSRFトークン	"1. 一覧を開きCSRFトークンを取得
-2. 対象外ステータスの行のIDでエンドポイントへPOST"	`{success:false, redirectUrl:一覧ページ}` が返り、戻しリストHTMLを返さないこと（要シード）。
+2. 対象外ステータスの行のIDでエンドポイントへPOST"	`{success:false, redirectUrl:一覧ページ}` が返り、戻しリストHTMLを返さないこと（要シード）。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-015	IT-22	相関バリデーション	P2	権限外店舗のIDを送信すると検証NGでsuccess:false・redirectUrlが返る	管理者ログイン済／SEED-M04-34-INVALID	ログイン管理者の権限外店舗の在庫移動・振替情報ID＋有効なCSRFトークン	"1. 一覧を開きCSRFトークンを取得
-2. 権限外店舗の行のIDでエンドポイントへPOST"	`{success:false, redirectUrl:一覧ページ}` が返り、戻しリストHTMLを返さないこと（要シード）。
+2. 権限外店舗の行のIDでエンドポイントへPOST"	`{success:false, redirectUrl:一覧ページ}` が返り、戻しリストHTMLを返さないこと（要シード）。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-016	IT-22	相関バリデーション	P2	入庫先店舗未設定のIDを送信すると検証NGでsuccess:false・redirectUrlが返る	管理者ログイン済／SEED-M04-34-INVALID	入庫先店舗未設定（shopId=null）の在庫移動・振替情報ID＋有効なCSRFトークン	"1. 一覧を開きCSRFトークンを取得
-2. 入庫先未設定の行のIDでエンドポイントへPOST"	`{success:false, redirectUrl:一覧ページ}` が返り、戻しリストHTMLを返さないこと（要シード）。
+2. 入庫先未設定の行のIDでエンドポイントへPOST"	`{success:false, redirectUrl:一覧ページ}` が返り、戻しリストHTMLを返さないこと（要シード）。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-017	IT-22	相関バリデーション	P2	複数店舗混在のIDを送信すると検証NGでsuccess:false・redirectUrlが返る	管理者ログイン済／SEED-M04-34-INVALID	複数の入庫先店舗が混在する在庫移動・振替情報ID＋有効なCSRFトークン	"1. 一覧を開きCSRFトークンを取得
-2. 複数店舗混在の行のIDでエンドポイントへPOST"	`{success:false, redirectUrl:一覧ページ}` が返り、戻しリストHTMLを返さないこと（要シード）。
+2. 複数店舗混在の行のIDでエンドポイントへPOST"	`{success:false, redirectUrl:一覧ページ}` が返り、戻しリストHTMLを返さないこと（要シード）。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-012	IT-15	CSRF	P1	CSRFトークン不正で送信すると拒否され戻しリストHTMLを返さない	管理者ログイン済／SEED-M04-34-ADMIN	任意のID＋不正なCSRFトークン	"1. 一覧を開く
-2. 不正なトークンでエンドポイントへPOST"	CSRF検証で拒否され、`success:true`／html を返さないこと。
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-013	IT-15	未認証	P1	未ログインでエンドポイントへPOSTすると管理ログイン画面へ誘導される	未ログイン	任意のリクエスト	"1. 未ログイン状態でエンドポイント（.../return_list_pdf_export）へPOST"	管理ログイン画面へ誘導され、戻しリストPDF出力本処理に到達しないこと。
+2. 不正なトークンでエンドポイントへPOST"	CSRF検証で拒否され、`success:true`／html を返さないこと。				
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-013	IT-15	未認証	P1	未ログインでエンドポイントへPOSTすると管理ログイン画面へ誘導される	未ログイン	任意のリクエスト	1. 未ログイン状態でエンドポイント（.../return_list_pdf_export）へPOST	管理ログイン画面へ誘導され、戻しリストPDF出力本処理に到達しないこと。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-020	IT-03	外部画面	P2	出力成功時にHTML本文が別ウィンドウ（ポップアップ）で表示される	管理者ログイン済／SEED-M04-34-EXPORTABLE	有効なIDを選択	"1. 一覧で出力可能な行を選択
-2. 「戻しリストPDF出力」ボタンを押下"	別ウィンドウに戻しリスト帳票HTMLが表示されること（ポップアップ起動・JS依存のため手動）。
+2. 「戻しリストPDF出力」ボタンを押下"	別ウィンドウに戻しリスト帳票HTMLが表示されること（ポップアップ起動・JS依存のため手動）。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-021	IT-25	UI部品	P2	帳票内「印刷する」ボタン押下でブラウザ印刷ダイアログが起動する	管理者ログイン済／SEED-M04-34-EXPORTABLE	—	"1. ポップアップ帳票を表示
-2. 「印刷する」ボタンを押下"	PC端末の印刷ダイアログが表示されること（window.print のネイティブUIのため手動）。
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-022	IT-18	フォーマット定義	P2	閾値グループ（商品単位／サプライ）ごとの見出しとページングが表示される	管理者ログイン済／SEED-M04-34-EXPORTABLE	複数閾値・サプライを含む対象	"1. 帳票HTMLを表示し見出しを確認"	「戻しリスト（商品単位{閾値ラベル}）」「戻しリスト（サプライ）」とページング（{現在}/{総数}）が表示されること（帳票内容のため手動）。
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-023	IT-18	フォーマット定義	P2	1ページ30行でページ分割され不足行は空行補完される	管理者ログイン済／SEED-M04-34-EXPORTABLE	31行以上の対象	"1. 帳票HTMLを表示しページ分割を確認"	閾値グループごとに30行で改ページされ、末尾ページは30行まで空行補完されること（帳票内容のため手動）。
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-024	IT-18	フォーマット定義	P2	並び順が金額閾値昇順（最後にサプライ）・閾値内は棚番/言語/状態/Foil/略称/レアリティ/色順	管理者ログイン済／SEED-M04-34-EXPORTABLE	混在対象	"1. 帳票HTMLの明細並び順を確認"	仕様の並び順（金額閾値昇順→サプライ、閾値内は棚番→言語→状態→Foil→略称→レアリティ→色、設定された略称タグのソート種別に応じて末尾はコレクター番号昇順または英語カード名昇順）で出力されること（帳票内容のため手動）。
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-025	IT-16	実行結果	P2	列の整形（商品名から略称等除去・サプライ品表示・色/R非表示）が仕様どおり	管理者ログイン済／SEED-M04-34-EXPORTABLE	サプライ品・シングルカードを含む対象	"1. 帳票HTMLの各列を対象データと突き合わせ"	商品名は略称・言語・状態・色・レアリティを除去、サプライ品は「サプライ品」表示・略称/色非表示、棚番は本店のみ表示であること。あわせてNo列はページ内1始まりの連番、言語/状態はFoil時「FoilJP/NM」形式、数列は3桁区切りで数量1以外は太字、価格は基準価格、備考は空文字であること（帳票内容のため手動）。
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-026	IT-23	検索条件	P2	選択IDに紐づく実在庫が取得結果（帳票）に含まれ対象外は含まれない	管理者ログイン済／SEED-M04-34-EXPORTABLE	対象ID・対象外IDの混在	"1. 帳票HTMLの明細を取得結果と突き合わせ"	選択IDに紐づく実在庫が帳票に含まれ、対象外データは含まれないこと（DB/帳票内容のため手動・間接）。
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-027	IT-15	状態変化	P1	戻しリストPDF出力は参照のみで業務データ・履歴を更新しない	管理者ログイン済／SEED-M04-34-EXPORTABLE	有効なID	"1. 出力前後で対象テーブル・履歴を確認"	CSV取込履歴・在庫履歴・ステータス履歴を含む業務データが更新されないこと（DB確認のため対象外/間接）。
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-028	IT-22	相関バリデーション	P2	検証NG時はデータ取得（getReturnListExportRows）を行わない	管理者ログイン済／SEED-M04-34-ADMIN	検証NGとなるID	"1. 検証NGのIDでPOSTし内部処理を確認"	検証NGではデータ取得処理を呼ばないこと（内部処理のため対象外＝単体テスト領域）。
+2. 「印刷する」ボタンを押下"	PC端末の印刷ダイアログが表示されること（window.print のネイティブUIのため手動）。				
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-022	IT-18	フォーマット定義	P2	閾値グループ（商品単位／サプライ）ごとの見出しとページングが表示される	管理者ログイン済／SEED-M04-34-EXPORTABLE	複数閾値・サプライを含む対象	1. 帳票HTMLを表示し見出しを確認	「戻しリスト（商品単位{閾値ラベル}）」「戻しリスト（サプライ）」とページング（{現在}/{総数}）が表示されること（帳票内容のため手動）。				
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-023	IT-18	フォーマット定義	P2	1ページ30行でページ分割され不足行は空行補完される	管理者ログイン済／SEED-M04-34-EXPORTABLE	31行以上の対象	1. 帳票HTMLを表示しページ分割を確認	閾値グループごとに30行で改ページされ、末尾ページは30行まで空行補完されること（帳票内容のため手動）。				
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-024	IT-18	フォーマット定義	P2	並び順が金額閾値昇順（最後にサプライ）・閾値内は棚番/言語/状態/Foil/略称/レアリティ/色順	管理者ログイン済／SEED-M04-34-EXPORTABLE	混在対象	1. 帳票HTMLの明細並び順を確認	仕様の並び順（金額閾値昇順→サプライ、閾値内は棚番→言語→状態→Foil→略称→レアリティ→色、設定された略称タグのソート種別に応じて末尾はコレクター番号昇順または英語カード名昇順）で出力されること（帳票内容のため手動）。				
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-025	IT-16	実行結果	P2	列の整形（商品名から略称等除去・サプライ品表示・色/R非表示）が仕様どおり	管理者ログイン済／SEED-M04-34-EXPORTABLE	サプライ品・シングルカードを含む対象	1. 帳票HTMLの各列を対象データと突き合わせ	商品名は略称・言語・状態・色・レアリティを除去、サプライ品は「サプライ品」表示・略称/色非表示、棚番は本店のみ表示であること。あわせてNo列はページ内1始まりの連番、言語/状態はFoil時「FoilJP/NM」形式、数列は3桁区切りで数量1以外は太字、価格は基準価格、備考は空文字であること（帳票内容のため手動）。				
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-026	IT-23	検索条件	P2	選択IDに紐づく実在庫が取得結果（帳票）に含まれ対象外は含まれない	管理者ログイン済／SEED-M04-34-EXPORTABLE	対象ID・対象外IDの混在	1. 帳票HTMLの明細を取得結果と突き合わせ	選択IDに紐づく実在庫が帳票に含まれ、対象外データは含まれないこと（DB/帳票内容のため手動・間接）。				
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-027	IT-15	状態変化	P1	戻しリストPDF出力は参照のみで業務データ・履歴を更新しない	管理者ログイン済／SEED-M04-34-EXPORTABLE	有効なID	1. 出力前後で対象テーブル・履歴を確認	CSV取込履歴・在庫履歴・ステータス履歴を含む業務データが更新されないこと（DB確認のため対象外/間接）。				
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-028	IT-22	相関バリデーション	P2	検証NG時はデータ取得（getReturnListExportRows）を行わない	管理者ログイン済／SEED-M04-34-ADMIN	検証NGとなるID	1. 検証NGのIDでPOSTし内部処理を確認	検証NGではデータ取得処理を呼ばないこと（内部処理のため対象外＝単体テスト領域）。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-029	IT-03	画面遷移	P3	ポップアップブロック時・データ取得失敗時にメッセージが表示される	管理者ログイン済	ポップアップブロック有効／取得失敗状態	"1. ポップアップブロック有効で出力
-2. データ取得失敗を発生させる"	「ポップアップがブロックされているため…」「戻しリストPDF用データの取得に失敗しました。」が表示されること（ブラウザ設定/JS依存のため手動）。
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-030	IT-13	メソッド境界	P2	エンドポイントへ非POST（GET）で直接アクセスすると戻しリストHTML出力本処理に到達しない	管理者ログイン済／SEED-M04-34-ADMIN	HTTP GET（メソッド不一致）	"1. ログイン状態でエンドポイント（.../return_list_pdf_export）へGETでアクセス"	入口はPOST限定のため、戻しリストHTML（success:true・html）を返さず、メソッド不一致で拒否される（本処理に到達しない）こと。
-m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-031	IT-18	フォーマット定義	P2	各ページ末尾にページ内個数小計「全{合計}点」が表示される	管理者ログイン済／SEED-M04-34-EXPORTABLE	複数明細を含む対象	"1. 帳票HTMLの各ページ末尾の小計を確認"	閾値グループの各ページ末尾にページ内数量合計（全{合計}点）が表示されること（帳票レイアウト識別ID14・帳票内容のため手動）。
+2. データ取得失敗を発生させる"	「ポップアップがブロックされているため…」「戻しリストPDF用データの取得に失敗しました。」が表示されること（ブラウザ設定/JS依存のため手動）。				
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-030	IT-13	メソッド境界	P2	エンドポイントへ非POST（GET）で直接アクセスすると戻しリストHTML出力本処理に到達しない	管理者ログイン済／SEED-M04-34-ADMIN	HTTP GET（メソッド不一致）	1. ログイン状態でエンドポイント（.../return_list_pdf_export）へGETでアクセス	入口はPOST限定のため、戻しリストHTML（success:true・html）を返さず、メソッド不一致で拒否される（本処理に到達しない）こと。				
+m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-031	IT-18	フォーマット定義	P2	各ページ末尾にページ内個数小計「全{合計}点」が表示される	管理者ログイン済／SEED-M04-34-EXPORTABLE	複数明細を含む対象	1. 帳票HTMLの各ページ末尾の小計を確認	閾値グループの各ページ末尾にページ内数量合計（全{合計}点）が表示されること（帳票レイアウト識別ID14・帳票内容のため手動）。				
 m04-34_admin_stock_stock_move_return_list_pdf_export（戻しリストPDF）	E2E-M04-34-032	IT-03	画面遷移	P2	検証NG時はredirectUrlの一覧へ戻りエラーメッセージ（フラッシュ）が表示される	管理者ログイン済／SEED-M04-34-ADMIN	検証NGとなるリクエスト（未選択／不存在ID等）＋有効なCSRFトークン	"1. 検証NGのリクエストでPOSTしredirectUrlを取得
-2. redirectUrlの一覧画面を開く"	一覧画面へ戻り、選択不可・対象データなし等の検証NGに対応するエラーメッセージ（フラッシュ）が表示されること（遷移後表示・JS依存のため手動・間接）。
+2. redirectUrlの一覧画面を開く"	一覧画面へ戻り、選択不可・対象データなし等の検証NGに対応するエラーメッセージ（フラッシュ）が表示されること（遷移後表示・JS依存のため手動・間接）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

@@ -1,0 +1,35 @@
+{
+  "chunkId": "a05-01_0505_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json#a05-01-0505-sheet-3-sheet-ec0665e4d7-01",
+      "refuted": false,
+      "reason": "OrderController.php:43 を実読。#[Route(path:'/api/order/prints/direct/{base_info_id}', methods:['POST'])] で GET は未登録。rg で App/Admin 配下を横断したが /order/print/direct を GET で登録する別ルートは存在せず、print系ルートは全て methods:['POST']（admin_order_print_stack 等も POST）。設計(HTML行1035の利用者視点の入口表)は明確に『GET /order/print/direct（ConnectionTypeがGetRequest）』『POST /order/print/direct（ConnectionTypeがSetResponse）』と GET/POST を割り当てる。実装は GetRequest も POST 経由で ConnectionType 分岐しており、GET でアクセスすれば 405。パス差(/api・prints・{base_info_id})は設計行875『エンドポイントURL変更』で一部容認された移行差だが、HTTPメソッド差(GET未登録)は設計が要求する GET 経路が存在しない実挙動差であり容認されていない。反証不能。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json#a05-01-0505-sheet-3-sheet-3e194ad6b3-03",
+      "refuted": false,
+      "reason": "反証を試みて逆に補強された。設計(HTML行1107)は店頭注文番号欄を dtb_order_number.value（現行 waiting_number）から受注IDで引くと規定。実装 OrderDirectPrintAction::getPrintData は order_number を htmlspecialchars して店頭注文番号欄(ラベル店頭注文番号→値)と注文番号欄の双方に同一出力。別ルート探索で Entity/DtbOrderNumber.php が実在し value 列(comment='店頭注文番号')を持つと確認したが、getPrintOrderListMainShop / getDirectPrintOrderList の SELECT はいずれも o.order_number のみで DtbOrderNumber.value も waiting 系も一切参照しない。つまり店頭注文番号テーブルは実装済みなのに印刷フローが無視し order_number を店頭注文番号欄に印字している。命名揺れ(value/waiting/store number)を横断しても代替実装なし。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json#a05-01-0505-sheet-3-sheet-dd41189da6-05",
+      "refuted": false,
+      "reason": "OrderController.php の最終ブロック(GetRequest/SetResponse いずれにも該当しない分岐)を実読。StreamedResponse 生成→setStatusCode(Response::HTTP_BAD_REQUEST)→Content-Type 'text/plain; charset=utf-8' を設定して return。設計は行1061『本エンドポイントは認証・入力検証による明示的なエラー応答を組み立てない』および行1062『（応答なし）…応答を組み立てず本文を返さない』と二重に明示。実装は明示的な 400 応答を組み立てており（本文は空だがステータス/Content-Type を設定）、設計の『応答を組み立てない』契約に反する。他ルートに委譲する共通例外ハンドラ等の代替もこの分岐には無い。反証材料なし。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json#a05-01-0505-sheet-3-sheet-c4e12489c2-06",
+      "refuted": false,
+      "reason": "OrderRepository.php:1553- getPrintOrderListMainShop と :1610- getDirectPrintOrderList を全文実読。本店 QueryBuilder は orX で (s.Delivery=:otc AND OrderStatus=:orderNew) / (s.Delivery=:smoothOtc AND 未確定・未出荷・未取消・未受領・otc_rsv_date=NULL・smaregi_code IS NOT NULL の条件群) / browser_print_flg=true の3系統を持ち設計相当。支店 getDirectPrintOrderList は生SQLの (OTC+NEW+smaregi_code NOT NULL) UNION (browser_print_flg=true) の2系統のみで smoothOtc(Delivery::SMOOTH_OTC)分岐が完全に欠落。設計(行1044)は本店/支店を区別せず単一系統でスムーズ店頭受取を対象に含める。isMainShop 分岐自体が設計に無く、支店ではスムーズ店頭受取受注が印刷対象から漏れる。smoothOtc を主表・支店SQL双方で横断検索したが支店側に該当なし。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json#a05-01-0505-sheet-3-sheet-2f45bf8cba-07",
+      "refuted": false,
+      "reason": "UpdatePrintedOrderStatusAction.php:86-97 を実読。ブラウザ印刷フラグが立たない分岐で setOrderStatus(PICKING) 後、BaseInfo->isMainShop() で本店 setConfirmDate(new DateTime())・支店 setPickingDate(new DateTime()) に分岐。pick_finish_date は本アクションで一切設定されない(Entity/Order.php:1881 に setPickFinishDate は存在するが Service/Admin/Order 配下の print 系から呼ばれない)。設計DBカラム(行1107)は『picking_date・pick_finish_date を SetResponse でピック中へ更新する際に設定する』と両列を要求するが、いずれの経路でも pick_finish_date が未設定のため、どの読み方でも設計要求を完全には満たさない。加えて設計に無い本店/支店分岐で確定列が分岐(支店は confirm_date 未設定)。指摘は維持(設計自体の flow/DBカラム間の列指定の揺れは finding も明記済み)。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json#a05-01_0505_sheet-3_sheet-conformance-544c0ffa7d15",
+      "refuted": false,
+      "reason": "設計(HTML行879-880)は『XML形式にする前に受注データにスマレジの商品コードが存在するか確認し、存在しない場合は何もしない』と全対象への事前確認を規定。実装を精査: getPrintOrderListMainShop の (otc AND orderNew) 分岐と browser_print_flg=true 分岐に smaregi_code 条件なし(smaregi_code IS NOT NULL は smoothOtc 条件群のみ)。getDirectPrintOrderList も browser_print_flg=true UNION 分岐に smaregi_code 条件なし。OrderDirectPrintAction::getPrintData は取得済み smaregi_code を htmlspecialchars して <barcode> に無ガードで直接出力し、XML生成前の存在確認・空時スキップが存在しない。反証を狙って探した findOtcOrdersAwaitingSmaregiSync(OrderRepository:828) は逆に OTC受注が smaregi 同期待ちで smaregi_code 未採番であり得ることを示し、指摘を補強した。よって空バーコードXMLが生成され得る。指摘は維持。"
+    }
+  ]
+}

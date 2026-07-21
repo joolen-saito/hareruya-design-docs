@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m04_12_admin_stock_stock_split_join_search_list_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・リダイレクト・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・基本設計(在庫管理機能)・観点表）由来**とし、実装の現挙動・POM見出し・Form制約（required/maxlength 等）をオラクル化しない。本機能は新規実装で、URL/検索条件/DBカラム/処理順序は ec-cube-enterprise 実装を正、画面・項目の業務要件は基本設計を正とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・リダイレクト・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・基本設計(在庫管理機能)・観点表）由来**とし、実装の現挙動・POM見出し・Form制約（required/maxlength 等）をオラクル化しない。本機能は新規実装で、URL/検索条件/DBカラム/処理順序は ec-cube-enterprise 実装を正、画面・項目の業務要件は基本設計を正とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 ## 関連ID対応概要
 
@@ -19,49 +19,49 @@
 | IT-23 | 検索条件による絞り込み・0件・実行結果（件数厳密一致はデータ依存で間接） |
 | IT-26 | 参照のみで業務データを更新しない（CSV登録での追加はM04-23へ委譲） |
 
-## テストケースTSV（10列固定）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-060	IT-13	URL直接アクセス	P1	未ログインで一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /%admin%/product/stock/split-join へ直接アクセス"	管理ログイン画面へ誘導されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-060	IT-13	URL直接アクセス	P1	未ログインで一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /%admin%/product/stock/split-join へ直接アクセス	管理ログイン画面へ誘導されること。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-001	IT-25	UI部品	P2	一覧画面の見出し「在庫分割結合一覧」が表示される	管理ログイン済／SEED-M04-12-ADMIN	—	"1. 管理ログインする
-2. 在庫分割結合一覧（/%admin%/product/stock/split-join）を表示する"	見出し「在庫分割結合一覧」が表示されること。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-002	IT-15	対象データ	P1	検索前の初期GETでは検索案内文言が表示される	管理ログイン済／SEED-M04-12-ADMIN	clear/resume 指定なしのGET	"1. 在庫分割結合一覧をパラメータ無しで表示する"	「検索条件を入力し、検索ボタンをクリックしてください。」が表示されること（検索前状態）。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-003	IT-25	UI部品	P2	検索前の初期GETでは件数見出しが表示されない	管理ログイン済／SEED-M04-12-ADMIN	clear/resume 指定なしのGET	"1. 在庫分割結合一覧をパラメータ無しで表示する"	検索結果の件数見出しが表示されないこと（stockSplitJoinSearchPerformed=false）。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-004	IT-25	UI部品	P2	検索フォーム（商品名欄・商品コード欄・検索ボタン）が表示される	管理ログイン済／SEED-M04-12-ADMIN	—	"1. 在庫分割結合一覧を表示する"	商品名入力欄・商品コード入力欄・検索ボタンが表示されること。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-008	IT-25	操作起点	P2	在庫分割CSV登録ボタンと在庫結合CSV登録ボタンが表示される	管理ログイン済／SEED-M04-12-ADMIN	—	"1. 在庫分割結合一覧を表示する"	「在庫分割CSV登録」「在庫結合CSV登録」ボタンが表示されること。
+2. 在庫分割結合一覧（/%admin%/product/stock/split-join）を表示する"	見出し「在庫分割結合一覧」が表示されること。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-002	IT-15	対象データ	P1	検索前の初期GETでは検索案内文言が表示される	管理ログイン済／SEED-M04-12-ADMIN	clear/resume 指定なしのGET	1. 在庫分割結合一覧をパラメータ無しで表示する	「検索条件を入力し、検索ボタンをクリックしてください。」が表示されること（検索前状態）。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-003	IT-25	UI部品	P2	検索前の初期GETでは件数見出しが表示されない	管理ログイン済／SEED-M04-12-ADMIN	clear/resume 指定なしのGET	1. 在庫分割結合一覧をパラメータ無しで表示する	検索結果の件数見出しが表示されないこと（stockSplitJoinSearchPerformed=false）。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-004	IT-25	UI部品	P2	検索フォーム（商品名欄・商品コード欄・検索ボタン）が表示される	管理ログイン済／SEED-M04-12-ADMIN	—	1. 在庫分割結合一覧を表示する	商品名入力欄・商品コード入力欄・検索ボタンが表示されること。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-008	IT-25	操作起点	P2	在庫分割CSV登録ボタンと在庫結合CSV登録ボタンが表示される	管理ログイン済／SEED-M04-12-ADMIN	—	1. 在庫分割結合一覧を表示する	「在庫分割CSV登録」「在庫結合CSV登録」ボタンが表示されること。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-009	IT-25	操作起点	P2	在庫分割CSV登録ボタン押下で分割CSV登録モーダルが開く	管理ログイン済／SEED-M04-12-ADMIN	—	"1. 在庫分割結合一覧を表示する
-2. 「在庫分割CSV登録」ボタンを押下"	分割CSV登録モーダルが表示されること（取込処理・検証はM04-23）。
+2. 「在庫分割CSV登録」ボタンを押下"	分割CSV登録モーダルが表示されること（取込処理・検証はM04-23）。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-011	IT-25	操作起点	P2	在庫結合CSV登録ボタン押下で結合CSV登録モーダルが開く	管理ログイン済／SEED-M04-12-ADMIN	—	"1. 在庫分割結合一覧を表示する
-2. 「在庫結合CSV登録」ボタンを押下"	結合CSV登録モーダルが表示されること（分割009と対。取込処理・検証はM04-23）。
+2. 「在庫結合CSV登録」ボタンを押下"	結合CSV登録モーダルが表示されること（分割009と対。取込処理・検証はM04-23）。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-010	IT-25	UI部品	P2	検索実行後に在庫分割結合CSV出力リンクが表示される	管理ログイン済／SEED-M04-12-ADMIN	—	"1. 在庫分割結合一覧を表示する
-2. 検索ボタンを押下して検索を実行する"	検索実行後（検索結果に対するCSV出力）に「在庫分割結合CSV出力」リンクが表示されること（初期表示では非表示。出力内容はM04-14）。
+2. 検索ボタンを押下して検索を実行する"	検索実行後（検索結果に対するCSV出力）に「在庫分割結合CSV出力」リンクが表示されること（初期表示では非表示。出力内容はM04-14）。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-020	IT-23	検索条件	P1	条件なしで検索を実行すると検索が実行され結果領域が表示される	管理ログイン済／SEED-M04-12-ADMIN	検索条件すべて未選択	"1. 在庫分割結合一覧を表示する
-2. 何も入力せず検索ボタンを押下"	一覧URLに留まり、件数見出しまたは0件メッセージのいずれか（検索実行後の結果領域）が表示されること（未選択＝全件）。
+2. 何も入力せず検索ボタンを押下"	一覧URLに留まり、件数見出しまたは0件メッセージのいずれか（検索実行後の結果領域）が表示されること（未選択＝全件）。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-021	IT-23	検索条件	P2	該当しない商品名で検索すると0件メッセージが表示される	管理ログイン済／SEED-M04-12-ADMIN	商品名＝明らかに存在しない文字列	"1. 在庫分割結合一覧を表示する
-2. 存在しない商品名を入力して検索ボタンを押下"	「検索条件に合致するデータが見つかりませんでした」が表示されること。
+2. 存在しない商品名を入力して検索ボタンを押下"	「検索条件に合致するデータが見つかりませんでした」が表示されること。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-023	IT-23	検索条件	P2	該当しない商品コードで検索すると0件メッセージが表示される	管理ログイン済／SEED-M04-12-ADMIN	商品コード＝明らかに存在しない文字列	"1. 在庫分割結合一覧を表示する
-2. 存在しない商品コードを入力して検索ボタンを押下"	「検索条件に合致するデータが見つかりませんでした」が表示されること（商品コードも部分一致LIKE。商品名021と対）。
+2. 存在しない商品コードを入力して検索ボタンを押下"	「検索条件に合致するデータが見つかりませんでした」が表示されること（商品コードも部分一致LIKE。商品名021と対）。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-030	IT-22	相関バリデーション	P2	登録日From>Toで日付範囲エラーが表示され検索が確定しない	管理ログイン済／SEED-M04-12-ADMIN	登録日From＝2025/12/31、To＝2025/01/01	"1. 在庫分割結合一覧を表示する
-2. 登録日From>Toを入力して検索ボタンを押下"	登録日欄付近に日付範囲エラーが表示され、検索結果（件数見出し）が確定表示されないこと（フォーム不正で検索が確定しない。セッション非保存はブラウザ観測外）。
+2. 登録日From>Toを入力して検索ボタンを押下"	登録日欄付近に日付範囲エラーが表示され、検索結果（件数見出し）が確定表示されないこと（フォーム不正で検索が確定しない。セッション非保存はブラウザ観測外）。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-032	IT-22	相関バリデーション	P2	承認日From>Toで日付範囲エラーが表示され検索が確定しない	管理ログイン済／SEED-M04-12-ADMIN	承認・却下日From＝2025/12/31、To＝2025/01/01	"1. 在庫分割結合一覧で詳細検索を開く
-2. 承認・却下日From>Toを入力して検索ボタンを押下"	承認・却下日欄付近に日付範囲エラーが表示され検索が確定しないこと（登録日030と同一機構。手動：当該欄セレクタ要実機確認）。
+2. 承認・却下日From>Toを入力して検索ボタンを押下"	承認・却下日欄付近に日付範囲エラーが表示され検索が確定しないこと（登録日030と同一機構。手動：当該欄セレクタ要実機確認）。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-033	IT-22	相関バリデーション	P2	更新日From>Toで日付範囲エラーが表示され検索が確定しない	管理ログイン済／SEED-M04-12-ADMIN	更新日From＝2025/12/31、To＝2025/01/01	"1. 在庫分割結合一覧で詳細検索を開く
-2. 更新日From>Toを入力して検索ボタンを押下"	更新日欄付近に日付範囲エラーが表示され検索が確定しないこと（登録日030と同一機構。手動：当該欄セレクタ要実機確認）。
+2. 更新日From>Toを入力して検索ボタンを押下"	更新日欄付近に日付範囲エラーが表示され検索が確定しないこと（登録日030と同一機構。手動：当該欄セレクタ要実機確認）。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-031	IT-22	相関バリデーション	P2	登録日範囲が正順なら日付エラーなく検索が実行される	管理ログイン済／SEED-M04-12-ADMIN	登録日From＝2025/01/01、To＝2025/12/31	"1. 在庫分割結合一覧を表示する
-2. 登録日From<=Toを入力して検索ボタンを押下"	日付範囲エラーが表示されず検索が実行され、結果領域が表示されること。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-040	IT-25	操作起点	P2	検索条件クリア（?clear=1）で一覧へリダイレクトされ検索前状態に戻る	管理ログイン済／SEED-M04-12-ADMIN	?clear=1	"1. /%admin%/product/stock/split-join?clear=1 を開く"	一覧URLへリダイレクトされ、検索案内文言が表示されること（セッションの検索条件破棄）。
+2. 登録日From<=Toを入力して検索ボタンを押下"	日付範囲エラーが表示されず検索が実行され、結果領域が表示されること。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-040	IT-25	操作起点	P2	検索条件クリア（?clear=1）で一覧へリダイレクトされ検索前状態に戻る	管理ログイン済／SEED-M04-12-ADMIN	?clear=1	1. /%admin%/product/stock/split-join?clear=1 を開く	一覧URLへリダイレクトされ、検索案内文言が表示されること（セッションの検索条件破棄）。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-041	IT-03	画面遷移	P2	?resume=1で直前の検索条件が復元され検索実行状態が再表示される	管理ログイン済／SEED-M04-12-ADMIN	事前POST検索→?resume=1	"1. 在庫分割結合一覧で検索を実行する
-2. /%admin%/product/stock/split-join?resume=1 を開く"	検索案内文言ではなく検索実行後の結果領域（件数見出しまたは0件メッセージ）が再表示されること（プロセスフロー#4復元。clearの検索前状態040と対）。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-050	IT-25	操作起点	P2	結合新規遷移でproductStockId未指定だとエラー表示で一覧へ戻る	管理ログイン済／SEED-M04-12-ADMIN	productStockId 未指定	"1. /%admin%/product/stock/join/new へアクセス（productStockId なし）"	一覧へリダイレクトされ、「指定の在庫が見つかりません。」が表示されること。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-053	IT-22	相関バリデーション	P2	結合新規遷移でproductStockIdが不存在でもエラー表示で一覧へ戻る	管理ログイン済／SEED-M04-12-ADMIN	productStockId＝不存在ID（999999999）	"1. /%admin%/product/stock/join/new?productStockId=999999999 へアクセス"	一覧へリダイレクトされ、「指定の在庫が見つかりません。」が表示されること（未指定050と対の不存在分岐。シード不要）。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-070	IT-25	操作起点	P3	在庫分割CSV雛形がダウンロードできる	管理ログイン済／SEED-M04-12-ADMIN	—	"1. /%admin%/product/stock/split-join/split-csv-template へGETアクセス"	CSV雛形ファイル（UTF-8 BOM付き・4列ヘッダ）のダウンロードが発火すること（手動：本機能のGETダウンロード。ヘッダ内容検証はM04-23）。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-071	IT-25	操作起点	P3	在庫結合CSV雛形がダウンロードできる	管理ログイン済／SEED-M04-12-ADMIN	—	"1. /%admin%/product/stock/split-join/join-csv-template へGETアクセス"	CSV雛形ファイル（UTF-8 BOM付き・5列ヘッダ）のダウンロードが発火すること（手動：本機能のGETダウンロード。ヘッダ内容検証はM04-23）。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-080	IT-25	URL	P3	承認通知先メンバー取得が店舗別メンバーのJSONを返す	管理ログイン済／SEED-M04-12-SPLITJOIN（編集権限あり店舗）	storeId＝編集権限のある店舗ID	"1. /%admin%/product/stock/split-join/approval-members?storeId={編集権限店舗} へGETアクセス"	承認権限メンバーの所属別マトリクス＋選択肢のJSONが返ること。店舗未解決は空JSON、編集権限の無い店舗は403（手動：要店舗別シード・権限設定）。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-051	IT-03	画面遷移	P1	結合新規遷移で有効なproductStockIdなら結合新規画面へリダイレクトされる	管理ログイン済／SEED-M04-12-SPLITJOIN	有効な productStockId	"1. /%admin%/product/stock/join/new?productStockId={有効ID} へアクセス"	結合新規画面（admin_stock_join_new）へリダイレクトされること。
-m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-052	IT-03	画面遷移	P2	ステータス照会が{ok,status_id}のJSONを返す	管理ログイン済／SEED-M04-12-SPLITJOIN	対象 DtbStockSplitJoin の id	"1. /%admin%/product/stock/split-join/{id}/status-snapshot へGETアクセス"	{ok:true, status_id:N} のJSONが返ること。
+2. /%admin%/product/stock/split-join?resume=1 を開く"	検索案内文言ではなく検索実行後の結果領域（件数見出しまたは0件メッセージ）が再表示されること（プロセスフロー#4復元。clearの検索前状態040と対）。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-050	IT-25	操作起点	P2	結合新規遷移でproductStockId未指定だとエラー表示で一覧へ戻る	管理ログイン済／SEED-M04-12-ADMIN	productStockId 未指定	1. /%admin%/product/stock/join/new へアクセス（productStockId なし）	一覧へリダイレクトされ、「指定の在庫が見つかりません。」が表示されること。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-053	IT-22	相関バリデーション	P2	結合新規遷移でproductStockIdが不存在でもエラー表示で一覧へ戻る	管理ログイン済／SEED-M04-12-ADMIN	productStockId＝不存在ID（999999999）	1. /%admin%/product/stock/join/new?productStockId=999999999 へアクセス	一覧へリダイレクトされ、「指定の在庫が見つかりません。」が表示されること（未指定050と対の不存在分岐。シード不要）。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-070	IT-25	操作起点	P3	在庫分割CSV雛形がダウンロードできる	管理ログイン済／SEED-M04-12-ADMIN	—	1. /%admin%/product/stock/split-join/split-csv-template へGETアクセス	CSV雛形ファイル（UTF-8 BOM付き・4列ヘッダ）のダウンロードが発火すること（手動：本機能のGETダウンロード。ヘッダ内容検証はM04-23）。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-071	IT-25	操作起点	P3	在庫結合CSV雛形がダウンロードできる	管理ログイン済／SEED-M04-12-ADMIN	—	1. /%admin%/product/stock/split-join/join-csv-template へGETアクセス	CSV雛形ファイル（UTF-8 BOM付き・5列ヘッダ）のダウンロードが発火すること（手動：本機能のGETダウンロード。ヘッダ内容検証はM04-23）。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-080	IT-25	URL	P3	承認通知先メンバー取得が店舗別メンバーのJSONを返す	管理ログイン済／SEED-M04-12-SPLITJOIN（編集権限あり店舗）	storeId＝編集権限のある店舗ID	1. /%admin%/product/stock/split-join/approval-members?storeId={編集権限店舗} へGETアクセス	承認権限メンバーの所属別マトリクス＋選択肢のJSONが返ること。店舗未解決は空JSON、編集権限の無い店舗は403（手動：要店舗別シード・権限設定）。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-051	IT-03	画面遷移	P1	結合新規遷移で有効なproductStockIdなら結合新規画面へリダイレクトされる	管理ログイン済／SEED-M04-12-SPLITJOIN	有効な productStockId	1. /%admin%/product/stock/join/new?productStockId={有効ID} へアクセス	結合新規画面（admin_stock_join_new）へリダイレクトされること。				
+m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-052	IT-03	画面遷移	P2	ステータス照会が{ok,status_id}のJSONを返す	管理ログイン済／SEED-M04-12-SPLITJOIN	対象 DtbStockSplitJoin の id	1. /%admin%/product/stock/split-join/{id}/status-snapshot へGETアクセス	{ok:true, status_id:N} のJSONが返ること。				
 m04-12_admin_stock_stock_split_join_search_list（在庫分割結合検索/一覧）	E2E-M04-12-022	IT-23	実行結果	P2	検索結果一覧が登録日時の降順で表示される	管理ログイン済／SEED-M04-12-SPLITJOIN（登録日時の異なる複数件）	検索条件すべて未選択	"1. 在庫分割結合一覧を表示する
-2. 検索を実行する"	一覧が登録日時（createDate）の降順で表示されること。
+2. 検索を実行する"	一覧が登録日時（createDate）の降順で表示されること。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象セレクタ・仕様根拠・元ITケースID（TSV外）

@@ -1,0 +1,190 @@
+{
+  "id": "f04-02-shopping-otc-remarks-contact-switch-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f04-02_0304_sheet-4_sheet.json",
+  "sourceFindingId": "f04-02-0304-sheet-4-sheet-b88ee5d2eb-01",
+  "classification": "フロント注文",
+  "feature": "ご注文方法指定",
+  "issueCategory": "実装漏れ",
+  "issue": "店頭受取・スムーズ店頭受取時に備考欄を非表示にしてお問い合わせフォーム誘導を表示しない",
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "reproSteps": [
+    "店頭受取またはスムーズ店頭受取の配送方法でカートから http://localhost:8080/ja/shopping に進む",
+    "ご注文方法指定画面のご注文内容確認・備考欄付近を確認する",
+    "備考欄が非表示になり、お問合せフォームはこちらエリアが表示されるか確認する"
+  ],
+  "expected": [
+    "店頭受取・スムーズ店頭受取の場合、備考欄を非表示にする",
+    "店頭受取・スムーズ店頭受取の場合、お問合せフォームはこちらエリアを表示する",
+    "店頭受取・スムーズ店頭受取以外の場合、備考欄を表示し、お問合せフォームはこちらエリアを非表示にする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の Shopping/index.twig は `isDeliveryOTC` を定義し、お届け先や配送希望日時には利用している。しかし備考欄セクションは `isDeliveryOTC` 条件で囲まれておらず、`front.shopping.remarks.request` と `front.shopping.message_info` の textarea を常時描画する。`contact` への問い合わせフォーム誘導リンクもこのセクションに存在しない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise isDeliveryOTC定義と一部利用",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig",
+          "start": 126,
+          "end": 197,
+          "language": "twig",
+          "contains": [
+            "{% set isDeliveryOTC = delivery.id is defined and delivery.id in constant('Eccube\\\\Entity\\\\Delivery::OTC_GROUP') %}",
+            "{% if not isDeliveryOTC and isMainShop %}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 備考欄セクションはOTC条件なしで常時描画",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig",
+          "start": 557,
+          "end": 679,
+          "language": "twig",
+          "contains": [
+            "{# 備考欄 #}",
+            "data-js-shipping-remarks",
+            "{{ 'front.shopping.remarks.request'|trans }}",
+            "{{ 'front.shopping.message_info'|trans }}",
+            "form.message"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 備考欄ロケール",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 1422,
+          "end": 1502,
+          "language": "yaml",
+          "contains": [
+            "front.shopping.remarks.request: ご注文内容に関してのご要望がございましたら下記備考欄にご記入ください。",
+            "front.shopping.message_info: 備考欄",
+            "front.shopping.message_placeholder: お問い合わせ事項がございましたら、こちらにご入力ください。"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では `isDeliveryOTC` の場合に、備考欄ではなく「ご注文内容に関してのご要望がございましたら下記よりお問い合わせください。」と `url('contact', {'tctokyo': 'true'})` の問い合わせフォームリンクを表示する。`isDeliveryOTC` 以外の場合だけ、備考欄案内と `form.message` textarea を描画している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 isDeliveryOTC定義",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/index.twig",
+          "start": 14,
+          "end": 19,
+          "language": "twig",
+          "contains": [
+            "{% set isDeliveryOTC = delivery.id is defined and delivery.id in constant('Plugin\\\\HareruyaEc\\\\Entity\\\\Delivery::OTC_GROUP') %}",
+            "{% set canUsePoint = delivery.id is defined and delivery.id != constant('Plugin\\\\HareruyaEc\\\\Entity\\\\Delivery::OTC') %}"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 OTC時は問い合わせ誘導、非OTC時は備考欄",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/index.twig",
+          "start": 297,
+          "end": 318,
+          "language": "twig",
+          "contains": [
+            "{% if isDeliveryOTC %}",
+            "ご注文内容に関してのご要望がございましたら下記よりお問い合わせください。",
+            "url('contact', {'tctokyo': 'true'})",
+            "【お問い合わせフォーム】はこちら",
+            "{% else %}",
+            "ご注文内容に関してのご要望がございましたら下記備考欄にご記入ください。",
+            "form.message"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 英語版もOTC時にContact Usへ誘導",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/index.en.twig",
+          "start": 284,
+          "end": 302,
+          "language": "twig",
+          "contains": [
+            "{% if isDeliveryOTC %}",
+            "Contact Us",
+            "url('contact', {'tctokyo': 'true'})",
+            "{% else %}",
+            "form.message"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "店頭受取・スムーズ店頭受取時の備考欄と問い合わせ誘導の出し分け",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 1248,
+      "end": 1258,
+      "language": "html",
+      "contains": [
+        "店舗受取の場合は備考欄を非表示とする",
+        "店頭受取、スムーズ店頭受取の場合、画面の表示切り替えをする",
+        "備考欄を非表示とする",
+        "お問合せフォームはこちらエリアを表示する",
+        "お問合せフォームはこちらを非表示とする"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "備考欄の項目定義",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 1270,
+      "end": 1274,
+      "language": "html",
+      "contains": [
+        "備考欄",
+        "テキストエリア",
+        "店舗受取の場合は非表示とする"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "レイアウト注釈でも問い合わせフォーム誘導を要求",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 1698,
+      "end": 1703,
+      "language": "html",
+      "contains": [
+        "配送方法を「店頭受取」「スムーズ店頭受取」に切り替えた場合は備考欄を消し、問い合わせフォームへの誘導とする"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "備考欄がOTC条件なしで描画される",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 557,
+      "end": 679,
+      "language": "twig",
+      "contains": [
+        "p-hareruya-shipping__section--remarks",
+        "{{ 'front.shopping.message_info'|trans }}",
+        "form.message"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3ではOTC時と非OTC時で問い合わせ誘導・備考欄を分岐",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/index.twig",
+      "start": 297,
+      "end": 318,
+      "language": "twig",
+      "contains": [
+        "{% if isDeliveryOTC %}",
+        "【お問い合わせフォーム】はこちら",
+        "{% else %}",
+        "form.message"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"備考欄|お問合せフォーム|お問い合わせフォーム|店頭受取・スムーズ店頭受取|スムーズ店頭受取|通常配送\" hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書\\(フロント_注文\\).html",
+      "rg -n \"message_info|message_placeholder|remarks|備考欄|お問い合わせフォームはこちら|お問合せフォームはこちら|contact|isDeliveryOTC|data-js-shipping-remarks\" ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml ec-cube-enterprise/src/Eccube/Resource/locale/messages.en.yaml",
+      "rg -n \"message_info|message_placeholder|remarks|備考欄|お問い合わせフォームはこちら|お問合せフォームはこちら|contact|isDeliveryOTC|Delivery::OTC_GROUP|form.message\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/index.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/index.en.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.en.yml",
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f04-02_0304_sheet-4_sheet.json#f04-02-0304-sheet-4-sheet-b88ee5d2eb-01'",
+      "python3 design_impl_drift_report/export_verified_backlog_items.py --id f04-02-shopping-otc-remarks-contact-switch-missing --dry-run",
+      "python3 design_impl_drift_report/export_verified_backlog_items.py --id f04-02-shopping-otc-remarks-contact-switch-missing"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。同一内容の f04-02_0304_sheet-4_sheet-conformance-86feeef6a9fa は重複候補として処理する。"
+  }
+}

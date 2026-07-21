@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m04_25_admin_stock_stock_move_instruction_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名・アラート(dialog)の有無などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約をオラクル化しない（未選択アラートの**具体文言**は設計書に定義がなく実装(messages.ja.yaml)由来のためオラクル化しない＝「アラートが表示される／ダウンロードが発火しない」のみで判定）。本機能は画面タイプ`csv_export`（在庫移動指示一覧 M04-24 から起動する2系統のCSV出力＝送り状CSV(POST/CSRF/ids[])と実績入力用CSV雛形(GET)）であり、CSVの中身（送り状23列マッピング・雛形4列見出し・文字コード・改行コード・区切り文字・固定値・関連店舗JOIN・対象0件時の見出しのみ）は**手動**確認、自動化はダウンロード発火・ファイル名・HTTP応答・UI部品・未認証ガード（雛形GET/送り状POST両系統）・未選択アラート(有無)・確認ダイアログ非表示に限る。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名・アラート(dialog)の有無などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約をオラクル化しない（未選択アラートの**具体文言**は設計書に定義がなく実装(messages.ja.yaml)由来のためオラクル化しない＝「アラートが表示される／ダウンロードが発火しない」のみで判定）。本機能は画面タイプ`csv_export`（在庫移動指示一覧 M04-24 から起動する2系統のCSV出力＝送り状CSV(POST/CSRF/ids[])と実績入力用CSV雛形(GET)）であり、CSVの中身（送り状23列マッピング・雛形4列見出し・文字コード・改行コード・区切り文字・固定値・関連店舗JOIN・対象0件時の見出しのみ）は**手動**確認、自動化はダウンロード発火・ファイル名・HTTP応答・UI部品・未認証ガード（雛形GET/送り状POST両系統）・未選択アラート(有無)・確認ダイアログ非表示に限る。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 ## 関連ID対応概要
 
@@ -22,55 +22,55 @@
 | IT-23 | 雛形CSVヘッダ4列定義（100 CSV本文＝手動）・雛形CSV文字コード/BOM（107 手動）・log（対象外） |
 | IT-20 | ログ出力（log_info）＝ブラウザ観測外（対象外） |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-001	IT-25	操作起点	P2	一覧に「在庫移動実績入力用CSVダウンロード」リンクが表示される	管理ログイン済／SEED-M04-25-ADMIN	—	"1. 在庫移動指示一覧（/%admin%/product/stock/move-instruction）を開く"	画面に「在庫移動実績入力用CSVダウンロード」リンクが表示されること。
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-002	IT-25	操作起点	P1	一覧に「送り状CSVダウンロード」ボタンが表示される	管理ログイン済／SEED-M04-25-ADMIN	—	"1. 在庫移動指示一覧を開く"	画面に「送り状CSVダウンロード」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-001	IT-25	操作起点	P2	一覧に「在庫移動実績入力用CSVダウンロード」リンクが表示される	管理ログイン済／SEED-M04-25-ADMIN	—	1. 在庫移動指示一覧（/%admin%/product/stock/move-instruction）を開く	画面に「在庫移動実績入力用CSVダウンロード」リンクが表示されること。				
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-002	IT-25	操作起点	P1	一覧に「送り状CSVダウンロード」ボタンが表示される	管理ログイン済／SEED-M04-25-ADMIN	—	1. 在庫移動指示一覧を開く	画面に「送り状CSVダウンロード」ボタンが表示されること。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-010	IT-25	UI部品	P1	雛形DLリンク押下で雛形CSVダウンロードが発火する	管理ログイン済／SEED-M04-25-ADMIN	—	"1. 一覧を開く
-2. 「在庫移動実績入力用CSVダウンロード」リンクを押下する"	ダウンロード（download）が発火すること。
+2. 「在庫移動実績入力用CSVダウンロード」リンクを押下する"	ダウンロード（download）が発火すること。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-011	IT-25	URL	P1	雛形ファイル名が stock_move_instruction_record_template_<日時14桁>.csv 形式である	管理ログイン済／SEED-M04-25-ADMIN	—	"1. 雛形DLリンクを押下する
-2. ダウンロードファイル名を確認する"	ファイル名が「stock_move_instruction_record_template_{YmdHis}.csv」形式（数字14桁＋.csv）であること。
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-012	IT-13	URL直接アクセス	P2	雛形CSV URLへ直接GETするとダウンロードが発火する	管理ログイン済／SEED-M04-25-ADMIN	GET /%admin%/product/stock/move-instruction/csv-template	"1. 雛形CSV URLへ直接GETアクセスする"	ダウンロード（download）が発火すること。
+2. ダウンロードファイル名を確認する"	ファイル名が「stock_move_instruction_record_template_{YmdHis}.csv」形式（数字14桁＋.csv）であること。				
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-012	IT-13	URL直接アクセス	P2	雛形CSV URLへ直接GETするとダウンロードが発火する	管理ログイン済／SEED-M04-25-ADMIN	GET /%admin%/product/stock/move-instruction/csv-template	1. 雛形CSV URLへ直接GETアクセスする	ダウンロード（download）が発火すること。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-013	IT-25	HTTPステータス	P1	雛形CSV応答がHTTP200を返す	管理ログイン済／SEED-M04-25-ADMIN	GET /%admin%/product/stock/move-instruction/csv-template	"1. 認証済みコンテキストで雛形CSV URLへGETする
-2. HTTPステータスを確認する"	HTTPステータスが200であること。
+2. HTTPステータスを確認する"	HTTPステータスが200であること。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-014	IT-25	URL	P1	雛形CSV応答のContent-Typeが text/csv である	管理ログイン済／SEED-M04-25-ADMIN	GET /%admin%/product/stock/move-instruction/csv-template	"1. 認証済みコンテキストで雛形CSV URLへGETする
-2. 応答ヘッダContent-Typeを確認する"	Content-Type が text/csv（charset付き）であること。
+2. 応答ヘッダContent-Typeを確認する"	Content-Type が text/csv（charset付き）であること。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-015	IT-25	URL	P1	雛形CSV応答が添付ファイルのContent-Dispositionを返す	管理ログイン済／SEED-M04-25-ADMIN	GET /%admin%/product/stock/move-instruction/csv-template	"1. 認証済みコンテキストで雛形CSV URLへGETする
-2. 応答ヘッダContent-Dispositionを確認する"	Content-Disposition が「attachment; filename=stock_move_instruction_record_template_<日時14桁>.csv」であること。
+2. 応答ヘッダContent-Dispositionを確認する"	Content-Disposition が「attachment; filename=stock_move_instruction_record_template_<日時14桁>.csv」であること。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-020	IT-22	必須制御	P1	送り状CSVを未選択で押下するとアラートで送信が抑止される	管理ログイン済／SEED-M04-25-ADMIN	行チェックボックス未選択	"1. 一覧を開く
-2. どの行もチェックせず「送り状CSVダウンロード」を押下する"	アラート(dialog)が表示されて送信が抑止され、ダウンロードが発火しないこと（具体文言は設計書未定義のため照合しない）。
+2. どの行もチェックせず「送り状CSVダウンロード」を押下する"	アラート(dialog)が表示されて送信が抑止され、ダウンロードが発火しないこと（具体文言は設計書未定義のため照合しない）。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-030	IT-25	確認ダイアログ	P1	行を選択して送り状CSVを押下するとダウンロードが発火する	管理ログイン済／SEED-M04-25-INSTRUCTION	—	"1. 一覧で指示行のチェックボックスを選択する
-2. 「送り状CSVダウンロード」を押下する"	ダウンロード（download）が発火すること。
+2. 「送り状CSVダウンロード」を押下する"	ダウンロード（download）が発火すること。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-031	IT-16	実行結果	P1	送り状CSVファイル名が stock_move_instruction_labels_<日時14桁>.csv 形式である	管理ログイン済／SEED-M04-25-INSTRUCTION	—	"1. 行を選択して「送り状CSVダウンロード」を押下する
-2. ダウンロードファイル名を確認する"	ファイル名が「stock_move_instruction_labels_{YmdHis}.csv」形式（数字14桁＋.csv）であること。
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-040	IT-15	未認証	P1	未ログインで雛形CSV URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	GET /%admin%/product/stock/move-instruction/csv-template	"1. 未ログイン状態で雛形CSV URLへ直接アクセスする"	管理ログイン画面へ誘導されること。
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-043	IT-15	未認証	P1	未ログインで送り状CSV(POST /labels)へアクセスすると管理ログイン画面へ誘導される	未ログイン	POST /%admin%/product/stock/move-instruction/labels	"1. 未ログイン状態で送り状CSV labels エンドポイントへPOSTする"	管理ログイン画面へリダイレクト誘導されること（未認証はCSRF/ids検証より前にログインへ誘導）。
+2. ダウンロードファイル名を確認する"	ファイル名が「stock_move_instruction_labels_{YmdHis}.csv」形式（数字14桁＋.csv）であること。				
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-040	IT-15	未認証	P1	未ログインで雛形CSV URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	GET /%admin%/product/stock/move-instruction/csv-template	1. 未ログイン状態で雛形CSV URLへ直接アクセスする	管理ログイン画面へ誘導されること。				
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-043	IT-15	未認証	P1	未ログインで送り状CSV(POST /labels)へアクセスすると管理ログイン画面へ誘導される	未ログイン	POST /%admin%/product/stock/move-instruction/labels	1. 未ログイン状態で送り状CSV labels エンドポイントへPOSTする	管理ログイン画面へリダイレクト誘導されること（未認証はCSRF/ids検証より前にログインへ誘導）。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-041	IT-03	画面遷移	P2	雛形DL後も一覧画面に留まる	管理ログイン済／SEED-M04-25-ADMIN	—	"1. 雛形DLリンクを押下する
-2. ダウンロード後の画面URLを確認する"	在庫移動指示一覧画面に留まること（別画面へ遷移しない）。
+2. ダウンロード後の画面URLを確認する"	在庫移動指示一覧画面に留まること（別画面へ遷移しない）。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-042	IT-25	確認ダイアログ	P2	雛形DL時に確認ダイアログを介さない	管理ログイン済／SEED-M04-25-ADMIN	—	"1. 雛形DLリンクを押下する
-2. 確認ダイアログの有無を確認する"	出力前の確認ダイアログが表示されないこと。
+2. 確認ダイアログの有無を確認する"	出力前の確認ダイアログが表示されないこと。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-050	IT-15	CSRF	P2	送り状CSVへids空でPOSTすると404を返す	管理ログイン済／SEED-M04-25-ADMIN	POST /%admin%/product/stock/move-instruction/labels（有効CSRFトークン・ids空）	"1. 一覧フォームから有効なCSRFトークンを採取する
-2. ids無しで labels エンドポイントへPOSTする"	HTTPステータス404が返ること（**要実機確認＝自動化保留**：有効CSRFトークン採取手順が未確定のため spec は test.fixme、付帯表2集計では自動化対象外として計上）。
+2. ids無しで labels エンドポイントへPOSTする"	HTTPステータス404が返ること（**要実機確認＝自動化保留**：有効CSRFトークン採取手順が未確定のため spec は test.fixme、付帯表2集計では自動化対象外として計上）。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-051	IT-15	CSRF	P2	送り状CSVへ無効/欠落CSRFトークンでPOSTすると送り状CSVが出力されない（CSRF負＝030の異常系の対）	管理ログイン済／SEED-M04-25-INSTRUCTION	POST /%admin%/product/stock/move-instruction/labels（CSRFトークン欠落/改ざん・有効ids）	"1. 行を選択した状態の送り状CSVフォームから、CSRFトークンを欠落/改ざんさせて labels へPOSTする
-2. 応答とダウンロード発火有無を確認する"	CSRFトークンが不正/欠落のとき対象処理（送り状CSV出力）が実行されず、CSV添付応答（octet-stream/attachment）が返らずダウンロードが発火しないこと（設計書「isTokenValid()でCSRF検証」由来。具体的なHTTPステータス・エラー画面文言は実装依存のためオラクル化せず、CSVが出力されない事実のみで判定）（**要実機確認＝自動化保留**：有効セッション確立＋トークン改ざんPOST手順が未確定のため spec は test.fixme、付帯表2集計では自動化対象外として計上）。
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-100	IT-23	登録内容	P2	雛形CSVヘッダが規定の4列・列名・列順で出力される	管理ログイン済／SEED-M04-25-ADMIN	—	"1. 雛形CSVを出力し、出力ファイルの1行目を確認する"	ヘッダ行が 移動指示ID／出庫元店舗(名称)／入庫先店舗(名称)／送り状No. の4列・順序であること。
+2. 応答とダウンロード発火有無を確認する"	CSRFトークンが不正/欠落のとき対象処理（送り状CSV出力）が実行されず、CSV添付応答（octet-stream/attachment）が返らずダウンロードが発火しないこと（設計書「isTokenValid()でCSRF検証」由来。具体的なHTTPステータス・エラー画面文言は実装依存のためオラクル化せず、CSVが出力されない事実のみで判定）（**要実機確認＝自動化保留**：有効セッション確立＋トークン改ざんPOST手順が未確定のため spec は test.fixme、付帯表2集計では自動化対象外として計上）。				
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-100	IT-23	登録内容	P2	雛形CSVヘッダが規定の4列・列名・列順で出力される	管理ログイン済／SEED-M04-25-ADMIN	—	1. 雛形CSVを出力し、出力ファイルの1行目を確認する	ヘッダ行が 移動指示ID／出庫元店舗(名称)／入庫先店舗(名称)／送り状No. の4列・順序であること。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-101	IT-16	実行結果	P2	送り状CSVが規定の23列・出庫元=注文者/入庫先=配送先マッピングで出力される	管理ログイン済／SEED-M04-25-INSTRUCTION	出庫元/入庫先店舗・住所・電話を持つ既知の指示	"1. 行を選択して送り状CSVを出力する
-2. 出力ファイルの列と値を既知データと突合する"	注文番号=移動指示ID・注文者=出庫元店舗・配送先=入庫先店舗・送料/手数料=0固定・郵便種別=0・発送方法=ゆうパック等、23列が規定どおり出力されること。
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-102	IT-16	実行結果	P2	送り状CSVが規定の文字コードで出力される	管理ログイン済／SEED-M04-25-INSTRUCTION	—	"1. 送り状CSVを出力し、文字コードを確認する"	eccube_csv_export_encoding（既定SJIS-win、UTF-8時はBOM付与）で出力されること。
+2. 出力ファイルの列と値を既知データと突合する"	注文番号=移動指示ID・注文者=出庫元店舗・配送先=入庫先店舗・送料/手数料=0固定・郵便種別=0・発送方法=ゆうパック等、23列が規定どおり出力されること。				
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-102	IT-16	実行結果	P2	送り状CSVが規定の文字コードで出力される	管理ログイン済／SEED-M04-25-INSTRUCTION	—	1. 送り状CSVを出力し、文字コードを確認する	eccube_csv_export_encoding（既定SJIS-win、UTF-8時はBOM付与）で出力されること。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-103	IT-15	対象データ	P2	送り状CSVが選択IDと関連店舗(出庫元/入庫先・Pref)のJOIN結果を出力する	管理ログイン済／SEED-M04-25-INSTRUCTION	複数の選択ID	"1. 複数行を選択して送り状CSVを出力する
-2. 各行が選択ID・関連店舗・都道府県と一致するか突合する"	選択した指示IDごとに1行、関連店舗(会社名+店名)・都道府県(Pref.name)が id ASC で出力されること。
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-104	IT-26	登録内容	P1	CSV出力は参照のみで業務データを更新しない	管理ログイン済／SEED-M04-25-INSTRUCTION	—	"1. CSV出力前後で dtb_stock_move_instruction と関連 BaseInfo の値を確認する"	dtb_stock_move_instruction・BaseInfo のレコードが追加・更新されないこと（参照のみ）。
+2. 各行が選択ID・関連店舗・都道府県と一致するか突合する"	選択した指示IDごとに1行、関連店舗(会社名+店名)・都道府県(Pref.name)が id ASC で出力されること。				
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-104	IT-26	登録内容	P1	CSV出力は参照のみで業務データを更新しない	管理ログイン済／SEED-M04-25-INSTRUCTION	—	1. CSV出力前後で dtb_stock_move_instruction と関連 BaseInfo の値を確認する	dtb_stock_move_instruction・BaseInfo のレコードが追加・更新されないこと（参照のみ）。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-105	IT-27	実行結果	P2	対象なし（該当指示なし）のとき送り状CSVがヘッダ行のみで出力される	管理ログイン済／SEED-M04-25-ADMIN	該当しないIDのみを指定	"1. 該当指示が存在しないIDで送り状CSVを出力する
-2. 出力行を確認する"	ヘッダ行のみのCSV（データ行なし）が出力され、明示エラーにならないこと。
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-106	IT-25	URL	P2	送り状CSV応答が octet-stream / attachment を返す	管理ログイン済／SEED-M04-25-INSTRUCTION	POST /%admin%/product/stock/move-instruction/labels（有効CSRF・有効ids）	"1. 送り状CSVを出力し、応答ヘッダを確認する"	Content-Type が application/octet-stream、Content-Disposition が attachment; filename=stock_move_instruction_labels_<日時>.csv であること。
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-107	IT-23	登録内容	P2	雛形CSVが規定の文字コード（既定SJIS-win／UTF-8時のみBOM付与）で出力される	管理ログイン済／SEED-M04-25-ADMIN	—	"1. 雛形CSVを出力し、文字コードと先頭バイトを確認する"	eccube_csv_export_encoding（既定SJIS-win＝windows-31j、各列値は mb_convert_encoding 変換）で出力され、UTF-8設定時のみ先頭にBOM（\xEF\xBB\xBF）が付与されること（観点表マスタ IT-24 文字コード／付帯表4 #6。送り状CSV文字コード102とは別系統）。
-m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-108	IT-16	実行結果	P3	送り状CSV/雛形CSVが規定の区切り文字で出力される	管理ログイン済／SEED-M04-25-INSTRUCTION	—	"1. 送り状CSV・雛形CSVをそれぞれ出力し、列区切り文字を確認する"	eccube_csv_export_separator（既定 `,` カンマ）で各列が区切られていること（観点表マスタ IT-24 区切り文字／付帯表4 #6。改行コードは設計書未定義のため要確認＝本ケース対象外）。
+2. 出力行を確認する"	ヘッダ行のみのCSV（データ行なし）が出力され、明示エラーにならないこと。				
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-106	IT-25	URL	P2	送り状CSV応答が octet-stream / attachment を返す	管理ログイン済／SEED-M04-25-INSTRUCTION	POST /%admin%/product/stock/move-instruction/labels（有効CSRF・有効ids）	1. 送り状CSVを出力し、応答ヘッダを確認する	Content-Type が application/octet-stream、Content-Disposition が attachment; filename=stock_move_instruction_labels_<日時>.csv であること。				
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-107	IT-23	登録内容	P2	雛形CSVが規定の文字コード（既定SJIS-win／UTF-8時のみBOM付与）で出力される	管理ログイン済／SEED-M04-25-ADMIN	—	1. 雛形CSVを出力し、文字コードと先頭バイトを確認する	eccube_csv_export_encoding（既定SJIS-win＝windows-31j、各列値は mb_convert_encoding 変換）で出力され、UTF-8設定時のみ先頭にBOM（\xEF\xBB\xBF）が付与されること（観点表マスタ IT-24 文字コード／付帯表4 #6。送り状CSV文字コード102とは別系統）。				
+m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-108	IT-16	実行結果	P3	送り状CSV/雛形CSVが規定の区切り文字で出力される	管理ログイン済／SEED-M04-25-INSTRUCTION	—	1. 送り状CSV・雛形CSVをそれぞれ出力し、列区切り文字を確認する	eccube_csv_export_separator（既定 `,` カンマ）で各列が区切られていること（観点表マスタ IT-24 区切り文字／付帯表4 #6。改行コードは設計書未定義のため要確認＝本ケース対象外）。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-109	IT-16	実行結果	P3	送り状CSVの氏名/カナが会社名・店名の有無に応じて連結される（連結分岐）	管理ログイン済／SEED-M04-25-INSTRUCTION	会社名のみ／店名のみ／両方空の店舗を含む指示	"1. 会社名のみ・店名のみ・会社名/店名とも空の店舗を持つ指示を選択して送り状CSVを出力する
-2. 注文者氏名/カナ・配送先氏名/カナ列を確認する"	両方ありは半角空白1つで連結、片方のみはその値、両方空は空文字で出力されること（joinWithHalfWidthSpace の3分岐＝設計書「会社名と店名をtrimし両方あれば半角空白1つで連結」由来。観点表マスタ IT-24 出力内容/連結）。
+2. 注文者氏名/カナ・配送先氏名/カナ列を確認する"	両方ありは半角空白1つで連結、片方のみはその値、両方空は空文字で出力されること（joinWithHalfWidthSpace の3分岐＝設計書「会社名と店名をtrimし両方あれば半角空白1つで連結」由来。観点表マスタ IT-24 出力内容/連結）。				
 m04-25_admin_stock_stock_move_instruction_export（在庫移動指示リストエクスポート）	E2E-M04-25-110	IT-20	出力抑止	P3	送り状CSV出力完了が log_info に記録される	管理ログイン済／SEED-M04-25-INSTRUCTION	—	"1. 送り状CSVを出力する
-2. アプリケーションログを確認する"	log_info に「在庫移動指示 送り状CSV出力完了. ファイル名: …」が記録されること。
+2. アプリケーションログを確認する"	log_info に「在庫移動指示 送り状CSV出力完了. ファイル名: …」が記録されること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

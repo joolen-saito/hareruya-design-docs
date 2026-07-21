@@ -1,0 +1,15 @@
+{
+  "chunkId": "a07-02_0507_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-02_0507_sheet-4_sheet.json#a07-02_0507_sheet-4_sheet-conformance-1ab3e04d3312",
+      "refuted": false,
+      "reason": "反証できず、指摘は維持。(1)引用検証: BuyOrderController.php:71-87 を実読し、netBuyOrderId=(string)$buyOrder['id']、applyDate=$buyOrder['orderDate']->format('Y/m/d H:i:s')、freeComment=$buyOrder['memo'] ?? ''、memberName=$buyOrder['memberName'] ?? ''、netOrderStatusId=(string)$buyOrder['buyOrderStatusId']、return new JsonResponse($response) を全て確認。implEvidenceは正確。(2)設計検証: 設計HTML 1142行の応答フィールド表が netBuyOrderId/netOrderStatusId=integer、applyDate=ISO8601、freeComment/memberName=未設定時null と明記、1165行が『camelCase・日時ISO8601・serialize_null有効』と明記、サンプル(1147-1162行)も netBuyOrderId:1001(整数)・applyDate:\"2026-06-01T10:30:00+09:00\"(ISO8601)・freeComment:null を提示。実装は文字列キャスト・非ISO日付・null→空文字で全項目不一致。(3)別実装検証: rgで /admin/buyOrders.json GET のハンドラは当該1件のみ。JsonResponse($response)は既に(string)キャスト・format()済みの配列を出力するため、後段のkernel.responseやserializerがあっても文字列→整数やISO再変換は不可能で契約一致は成立し得ない。(4)設計除外検証: 『現行踏襲』『pf-apiを正とする』の注記(1103-1104行)はあるが、設計は型・ISO8601・serialize_nullを明示契約として定義しており除外扱いではない。ec-cube-enterprise実装は設計スキーマから明確に乖離。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-02_0507_sheet-4_sheet.json#a07-02_0507_sheet-4_sheet-conformance-706cca86312a",
+      "refuted": true,
+      "reason": "反証成立。指摘の中核主張『本文なし401を返す実装は確認できない／App API共通例外処理が401で必ずJSON本文を返す』は誤り。実際の認証失敗経路を追うと空本文401の実装が存在する。security.yaml:32-39のappファイアウォール(^/api/v1/)はaccess_token認証を使い、entry_point も failure_handler も未設定(grepで確認:appにはfailure_handler無し)。トークンが存在するが不正な場合(=設計の『署名不正』『該当する管理者会員なし』の2条件)、JwtTokenHeaderExtractor.extractAccessTokenが値を返し AccessTokenAuthenticator::supports()がnull(=認証実行)となり、JwtTokenHandler検証失敗/UserNotFoundExceptionが AccessTokenAuthenticator::onAuthenticationFailure(vendor/symfony/security-http/Authenticator/AccessTokenAuthenticator.php)へ渡る。failureHandler未設定のため同メソッドは `new Response(null, Response::HTTP_UNAUTHORIZED, ['WWW-Authenticate'=>...])` すなわち本文nullの空ボディ401を返す。AuthenticatorManager::handleAuthenticationFailure(268行)→executeAuthenticator(221-224行)がこのResponseを返し、firewallがkernel.requestでsetResponseするため、Eccube ExceptionListenerのkernel.exception分岐は発火せず、空本文401がそのままクライアントへ返る(WWW-Authenticateはヘッダで本文ではないため『本文を持たない』を満たす)。JSON本文401になるのは『トークン欠落』のみ(空ヘッダ→extractorがnull→supports=false→認証未実行→IsGranted失敗→AccessDenied→entry_point無し→Firewall ExceptionListener.throwUnauthorizedExceptionがHttpException(401)を投げ→Eccube ExceptionListenerがJSON化)。よって設計が主要対象とするトークン検証系の失敗(3条件中2つ)は設計どおり空本文401であり、指摘の前提『本文なし401は存在しない』は反証された。confidence=mediumで実機確認を留保していた点も、authenticator既定失敗応答の見落としが原因。"
+    }
+  ]
+}

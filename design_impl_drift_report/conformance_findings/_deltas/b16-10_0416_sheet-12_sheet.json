@@ -1,0 +1,114 @@
+{
+  "functionId": "b16-10_0416_sheet-12_sheet",
+  "featureNo": "B16-10",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1373",
+      "designExpectation": "B16-10 ステージングデータベース保守バッチは、定期的にステージング環境を最新の本番環境に近い状態に保つため、本番DBスナップショット取得、テンポラリDB作成・加工、ステージングDB再作成、S3同期、個人情報マスクを行う。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource, /home/y-saito/Developments/ec-cube-enterprise/html）",
+      "implementationActual": "B16-10相当のステージングデータベース保守バッチ入口が存在しない。Command一覧にはステージングDB保守用の AsCommand がなく、近傍候補はスマレジ在庫再連携、店頭受取スマレジ商品削除、S3デモアップロード、インストーラDB作成など別用途だった。",
+      "mismatchReason": "設計要求を staging/stage/ステージング、snapshot/スナップショット、DROP DATABASE/CREATE DATABASE/mysqldump/pg_dump/database:drop、aws s3/s3 sync/S3Client、filepool-resized/stg-filepool-resized、smaregi_access_token/smaregi_shop_id、mask/個人情報/anonym へ翻案して再検索したが、B16-10の一連処理を実行する Command/Service/Repository/HTML 配下のスクリプトは確認できない。実装側の Command 登録一覧にも該当名はなく、S3の近傍実装は TestS3UploadDemoCommand.php:22 のデモアップロードのみ、DB作成の近傍実装は InstallerCommand.php:241 のインストール時 doctrine:database:create のみで、設計のステージングDB保守ではない。",
+      "comparisonRows": [
+        {
+          "item": "ステージング環境を本番に近い最新状態へ保つメンテナンス処理",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1373",
+          "implementation": "不在。Command登録一覧に該当バッチなし（例: src/Eccube/Command/SmaregiStockBackfillCommand.php:32 はスマレジ在庫変動再連携、src/Eccube/Command/SmaregiOtcDeleteCommand.php:39 は店頭受取注文スマレジ商品削除）。",
+          "mismatch": "B16-10の機能入口がない。"
+        },
+        {
+          "item": "本番データベースのスナップショットからステージング用にカスタマイズし、ステージングデータベースを作成する",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1375",
+          "implementation": "不在。snapshot/スナップショット、DB作成・削除、dump/restore 系検索で該当処理なし。",
+          "mismatch": "本番DBスナップショットをステージング用DBへ反映する実装がない。"
+        },
+        {
+          "item": "本番データベースのスナップショットを取得する",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1380",
+          "implementation": "不在。mysqldump/pg_dump/snapshot 等のDBスナップショット取得処理なし。",
+          "mismatch": "本番DBスナップショット取得が実装されていない。"
+        },
+        {
+          "item": "テンポラリデータベースを作成し、本番データベースのスナップショットを挿入する",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1381",
+          "implementation": "不在。temporary database/temp DB/CREATE DATABASE/restore 等の該当処理なし。",
+          "mismatch": "テンポラリDB作成とスナップショット投入が実装されていない。"
+        },
+        {
+          "item": "テンポラリデータベースからスマレジIDおよびスマレジトークンを削除する",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1382",
+          "implementation": "不在。スマレジID/トークン関連の実装は設定・連携処理であり、テンポラリDBから削除する処理はない。",
+          "mismatch": "ステージング用データ加工としてのスマレジID/トークン削除がない。"
+        },
+        {
+          "item": "テンポラリデータベースのスナップショットを生成する",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1383",
+          "implementation": "不在。テンポラリDBのdump/snapshot生成処理なし。",
+          "mismatch": "テンポラリDBスナップショット生成が実装されていない。"
+        },
+        {
+          "item": "現在のステージング用データベースを削除する",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1384",
+          "implementation": "不在。DROP DATABASE/database:drop 等のステージングDB削除処理なし。",
+          "mismatch": "既存ステージングDB削除が実装されていない。"
+        },
+        {
+          "item": "新規にステージングデータベースを作成し、テンポラリデータベースのスナップショットを挿入する",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1385",
+          "implementation": "不在。InstallerCommand.php:241 の doctrine:database:create はインストール用であり、テンポラリDBスナップショット投入処理を伴わない。",
+          "mismatch": "ステージングDB再作成とテンポラリスナップショット投入がない。"
+        },
+        {
+          "item": "テンポラリデータベースおよびスナップショットファイル削除する",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1386",
+          "implementation": "不在。テンポラリDB削除、スナップショットファイル削除の後始末処理なし。",
+          "mismatch": "バッチ後のテンポラリDB・スナップショット削除がない。"
+        },
+        {
+          "item": "ステージングデータベースにステージング用スマレジIDを追加する",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1387",
+          "implementation": "不在。smaregi_shop_id や smaregi_access_token の設定・参照はあるが、ステージングDBへステージング用スマレジIDを追加する処理はない。",
+          "mismatch": "ステージング用スマレジID付与が実装されていない。"
+        },
+        {
+          "item": "本番S3バケットの商品画像をステージングS3バケットへ同期する（s3://filepool-resized/product → s3://stg-filepool-resized/product）",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1388",
+          "implementation": "不在。S3近傍実装は src/Eccube/Command/TestS3UploadDemoCommand.php:22 の eccube:demo:s3-upload と src/Eccube/Command/TestS3UploadDemoCommand.php:38-41 の固定デモ putObject のみ。",
+          "mismatch": "指定バケット間の商品画像同期が実装されていない。"
+        },
+        {
+          "item": "本番S3バケットの絵文字(シンボル)をステージングS3バケットへ同期する（s3://filepool-resized/set → s3://stg-filepool-resized/set）",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1390",
+          "implementation": "不在。filepool-resized/stg-filepool-resized/set または s3 sync 相当の処理なし。",
+          "mismatch": "指定バケット間の絵文字(シンボル)同期が実装されていない。"
+        },
+        {
+          "item": "個人情報はマスク処理を行う",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1392",
+          "implementation": "不在。mask近傍実装は Messenger ダッシュボードや Smaregi APIログの機微情報マスクであり、ステージングDB作成時の個人情報マスク処理ではない。",
+          "mismatch": "ステージングDB投入前後の個人情報マスクが実装されていない。"
+        },
+        {
+          "item": "DBスナップショットやリストア待ち時間を含むため Fargate で実行する",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1394",
+          "implementation": "不在。Fargate/インターバル/待ち時間を含む B16-10 実行制御なし。",
+          "mismatch": "設計上の実行基盤・待機前提に対応する実装証跡がない。"
+        },
+        {
+          "item": "実行トリガーはスケジュール起動(Step Functions)、毎月1日 3時",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1396",
+          "implementation": "不在。Step Functions の近傍記載は別バッチ（src/Eccube/Command/SmaregiOtcDeleteCommand.php:37 は毎日4時、src/Eccube/Command/SmaregiStockBackfillCommand.php:30 はスマレジ在庫再連携）であり、B16-10の毎月1日3時ではない。",
+          "mismatch": "B16-10のスケジュール契約が実装側にない。"
+        },
+        {
+          "item": "入力データ元 RDB/S3、出力先 RDB/S3",
+          "design": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-12:1397",
+          "implementation": "不在。B16-10としてRDB/S3を読み書きする処理入口がない。",
+          "mismatch": "外部契約としてのRDB/S3入出力が実装されていない。"
+        }
+      ]
+    }
+  ]
+}

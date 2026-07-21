@@ -1,0 +1,153 @@
+{
+  "id": "f05-03-purchase-empty-result-message-different",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f05-03_0305_sheet-5_sheet.json",
+  "sourceFindingId": "f05-03_0305_sheet-5_sheet-conformance-11dc3c4d1823",
+  "classification": "フロントネット買取",
+  "feature": "ネット買取商品一覧",
+  "issueCategory": "実装漏れ",
+  "issue": "検索結果0件時に買取最低保証とヘルプへの案内が表示されない",
+  "designBook": "0305_基本設計仕様書(フロント_ネット買取).xlsx",
+  "reproSteps": [
+    "http://localhost:8080/ja/purchase/search?purchaseFlg=1&product=<該当しない検索語> を表示し、検索結果0件の状態にする",
+    "一覧本文に表示される0件メッセージを確認する",
+    "「お探しのカードは見つかりませんでした」と買取最低保証・ヘルプへの案内が含まれるか確認する"
+  ],
+  "expected": [
+    "検索結果が0件のとき、一覧本文に「お探しのカードは見つかりませんでした」を表示する",
+    "同じ0件案内内に、買取最低保証の説明を表示する",
+    "同じ0件案内内に、ヘルプへの案内リンクを表示する",
+    "0件時はページ全体をHTTP404の一覧として扱う"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の買取一覧は、UniSearch クライアント設定 `emptyResultMsg` に共通キー `front.product.search__product_not_found` を渡している。この日本語文言は「お探しの商品は見つかりませんでした」の一文のみで、設計の「カード」文言、買取最低保証の説明、ヘルプリンクを含まない。0件時の JS 分岐も `.no_search_results` を表示するだけで、買取専用の補足文やリンクを組み立てていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 買取一覧の0件文言設定",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/search.twig",
+          "start": 48,
+          "end": 57,
+          "language": "twig",
+          "contains": [
+            "emptyResultMsg: 'front.product.search__product_not_found'|trans",
+            "purchase_unisearch_loading_html"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 共通0件文言",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 1103,
+          "end": 1105,
+          "language": "yaml",
+          "contains": [
+            "front.product.search__product_not_found: お探しの商品は見つかりませんでした"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise UniSearch 0件分岐",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/product_unisearch_js.twig",
+          "start": 741,
+          "end": 749,
+          "language": "twig",
+          "contains": [
+            "検索件数が0件の場合",
+            "if (data.response.numFound === 0) {",
+            "$('.message_' + '.no_search_results').css('display', 'block');",
+            "hideSearchForm();"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、買取一覧の0件時に「お探しのカードは見つかりませんでした。」を表示し、続けて買取最低保証の説明と `/ja/user_data/help_buying#block4` へのヘルプリンクを表示している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 買取一覧0件メッセージ",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/product_list.twig",
+          "start": 342,
+          "end": 350,
+          "language": "twig",
+          "contains": [
+            "お探しのカードは見つかりませんでした。",
+            "買取最低保証",
+            "<a href=\"/ja/user_data/help_buying#block4\" target=\"_blank\""
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "0件時は買取最低保証・ヘルプ案内を含む",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 2013,
+      "end": 2013,
+      "language": "html",
+      "contains": [
+        "お探しのカードは見つかりませんでした。",
+        "買取最低保証・ヘルプへの案内を含む",
+        "検索結果が0件のとき"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "0件時の扱い",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 2020,
+      "end": 2020,
+      "language": "html",
+      "contains": [
+        "0件",
+        "一覧をHTTP404とし、見つからなかった旨と買取最低保証・ヘルプ案内を表示する。"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "0件文言は共通の「商品」文言",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+      "start": 1103,
+      "end": 1105,
+      "language": "yaml",
+      "contains": [
+        "お探しの商品は見つかりませんでした"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "0件時は no_search_results 表示のみ",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/product_unisearch_js.twig",
+      "start": 741,
+      "end": 749,
+      "language": "twig",
+      "contains": [
+        "no_search_results"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3では買取最低保証とヘルプ案内を表示",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/product_list.twig",
+      "start": 342,
+      "end": 350,
+      "language": "twig",
+      "contains": [
+        "買取最低保証",
+        "help_buying#block4"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f05-03_0305_sheet-5_sheet.json#f05-03_0305_sheet-5_sheet-conformance-11dc3c4d1823'",
+      "rg -n \"お探しのカード|お探しの商品|最低保証|ヘルプ|見つかりません|search__product_not_found|showEmptyResult|0件|HTTP404\" hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書\\(フロント_ネット買取\\).html ec-cube-enterprise/src/Eccube/Resource/template/default ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書\\(フロント_ネット買取\\).html | sed -n '2011,2021p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase/search.twig | sed -n '48,60p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml | sed -n '1100,1106p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/product_unisearch_js.twig | sed -n '735,755p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Purchase/product_list.twig | sed -n '340,351p'"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。"
+  }
+}

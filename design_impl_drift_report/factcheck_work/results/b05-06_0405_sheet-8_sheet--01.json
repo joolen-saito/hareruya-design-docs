@@ -1,0 +1,130 @@
+{
+  "chunkId": "b05-06_0405_sheet-8_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-06_0405_sheet-8_sheet.json#b05-06_0405_sheet-8_sheet-conformance-74e46f196f17",
+      "functionId": "b05-06_0405_sheet-8_sheet",
+      "featureNo": "B05-06",
+      "title": "B05-06 ポイント二重登録チェック",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "medium",
+      "summary": "重複検知キーに point_type_id・会員が欠落という指摘だが、設計の具体的検索条件は注文ID+ポイント増減量のみで実装と一致する。",
+      "reason": "設計の機能仕様（機能仕様バッジ配下、excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1670,1675）は検知条件を『注文IDとポイント増減量の組合せで検索し複数個存在している』と具体的に定義しており、実装 DtbPointHistoryRepository::findDuplicatePoint() の groupBy('o.id') + addGroupBy('ph.pointChange') + having('COUNT(DISTINCT ph.id) > 1')（src/Eccube/Repository/DtbPointHistoryRepository.php:225-232）と一致する。指摘が根拠にする 1724 行の業務ルール（受注・会員・ポイント履歴の組み合わせ）は概念的記述、1736 行の DBカラム表が point_type_id を列挙するが、これは主要な具体仕様と矛盾する二次的なリバース設計の列一覧である。実装は主要な具体仕様に準拠しているため、実装違いとは確定できない。設計内部の矛盾はあるが、authoritative な検索条件に照らすと未実装・実装違いではない。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-06_0405_sheet-8_sheet.json#b05-06_0405_sheet-8_sheet-conformance-e6e3f693094f",
+      "functionId": "b05-06_0405_sheet-8_sheet",
+      "featureNo": "B05-06",
+      "title": "B05-06 ポイント二重登録チェック",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は通知の注文番号を dtb_order.order_no と指定するが、実装は別カラム order_number を返す getOrderNumber() を使う。",
+      "reason": "設計は通知に添える注文番号のカラムを `dtb_order.order_no` と明記している（1706 行の移行表および 1736 行の DBカラム表）。実装 OrderUtil::getOrderNumbers() は `$order->getOrderNumber()` を格納しており（src/Eccube/Util/OrderUtil.php:37）、getOrderNumber() は `order_number` カラムを返す（Order.php:1768-1770 と Column 定義 647-648）。一方 `order_no` は別カラムで getOrderNo() から取得される（Order.php:464-465, 887-889）。両カラムは実在し別物であり、実装は設計指定の order_no ではなく order_number を通知に使用しているため実装違い。なお order_number のカラムコメントは『注文番号』であり意味的には整合し得るが、設計が literal に order_no を指定している点で相違がある。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+        "start": 1736,
+        "end": 1736,
+        "contains": ["order_no", "通知に添える注文番号"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装",
+          "note": "通知用注文番号として order_number を返す getOrderNumber() を使用",
+          "path": "ec-cube-enterprise/src/Eccube/Util/OrderUtil.php",
+          "start": 33,
+          "end": 37,
+          "contains": ["getOrderNumbers", "getOrderNumber()"]
+        },
+        {
+          "label": "実装(カラム定義)",
+          "note": "getOrderNumber() は order_number を返し、order_no とは別カラム",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/Order.php",
+          "start": 1768,
+          "end": 1770,
+          "contains": ["getOrderNumber", "order_number"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-06_0405_sheet-8_sheet.json#b05-06_0405_sheet-8_sheet-conformance-0df2068bef25",
+      "functionId": "b05-06_0405_sheet-8_sheet",
+      "featureNo": "B05-06",
+      "title": "B05-06 ポイント二重登録チェック",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は送信時エラーをコンソール出力すると要求するが、メール送信例外は MailService 内で catch され log_critical のみで Command に伝播せずコンソール出力されない。",
+      "reason": "設計は失敗時出力/エラー処理として『取得・送信時のエラー → エラーメッセージをコンソールに出力する』と要求する（1732 行および 1742 行）。実装では取得系エラーは CheckDuplicatePointAction::handle() から投げられ Command が \\Throwable を catch して $io->error() でコンソール出力する（src/Eccube/Command/CheckDuplicatePointCommand.php:50-57）。しかしメール送信時の TransportExceptionInterface は MailService::sendOrderDuplicateNotificationMail() 内で catch され log_critical($e->getMessage()) のみ実行、再throwされず戻り値 void（src/Eccube/Service/MailService.php:2273-2275）。よって送信時エラーは Command に伝播せず $io->error() に到達しないため、設計が求めるコンソールへのエラーメッセージ出力にならない。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+        "start": 1742,
+        "end": 1742,
+        "contains": ["取得・送信時のエラー", "エラーメッセージをコンソールに出力する"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(送信エラーを握りつぶす)",
+          "note": "TransportExceptionInterface を catch し log_critical のみ。再throwせず void",
+          "path": "ec-cube-enterprise/src/Eccube/Service/MailService.php",
+          "start": 2273,
+          "end": 2275,
+          "contains": ["catch (TransportExceptionInterface $e)", "log_critical($e->getMessage())"]
+        },
+        {
+          "label": "実装(Command のエラー出力)",
+          "note": "handle() 由来の例外のみ $io->error() でコンソール出力。送信例外は届かない",
+          "path": "ec-cube-enterprise/src/Eccube/Command/CheckDuplicatePointCommand.php",
+          "start": 50,
+          "end": 57,
+          "contains": ["} catch (\\Throwable $e) {", "$io->error("]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-06_0405_sheet-8_sheet.json#b05-06_0405_sheet-8_sheet-conformance-be42ae5d79ec",
+      "functionId": "b05-06_0405_sheet-8_sheet",
+      "featureNo": "B05-06",
+      "title": "B05-06 ポイント二重登録チェック",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は開始・完了のコンソール出力を日時付きで求めるが、実装の開始/完了メッセージには日時の生成・付与処理がない。",
+      "reason": "設計はログ・監査の開始・完了について『開始・完了のコンソール出力（日時付き）』を要求する（1745 行）。実装では開始時に $io->text('ポイント二重登録チェックバッチ開始')（src/Eccube/Command/CheckDuplicatePointCommand.php:46）、完了時に $io->success('ポイント二重登録は検出されませんでした。') もしくは sprintf('ポイント二重登録が検出されました。（%d件）', $count)（同ファイル 60,62 行）を出力するが、いずれも日時の生成・付与処理がなく日時が付いていない。コマンド内に date/DateTime/format 等の日時生成呼び出しは無い。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+        "start": 1745,
+        "end": 1745,
+        "contains": ["開始・完了のコンソール出力（日時付き）"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(開始出力)",
+          "note": "開始メッセージに日時なし",
+          "path": "ec-cube-enterprise/src/Eccube/Command/CheckDuplicatePointCommand.php",
+          "start": 46,
+          "end": 46,
+          "contains": ["$io->text('ポイント二重登録チェックバッチ開始')"]
+        },
+        {
+          "label": "実装(完了出力)",
+          "note": "完了メッセージに日時なし",
+          "path": "ec-cube-enterprise/src/Eccube/Command/CheckDuplicatePointCommand.php",
+          "start": 60,
+          "end": 62,
+          "contains": ["ポイント二重登録は検出されませんでした。", "ポイント二重登録が検出されました。（%d件）"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -n 'date|DateTime|format\\(|Y-m-d|H:i' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/CheckDuplicatePointCommand.php"
+      ]
+    }
+  ]
+}

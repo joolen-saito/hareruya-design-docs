@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m13_12_admin_event_event_entry_register_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・フラッシュ・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。設計源は pf-eccube3（旧システムのリバース）であり、基本設計・観点表を上位オラクルとする。刷新先 ec-cube-enterprise との乖離は付帯表4（不具合候補）に記録し、テストは仕様どおりに書く（落ちて検出する）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・フラッシュ・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。設計源は pf-eccube3（旧システムのリバース）であり、基本設計・観点表を上位オラクルとする。刷新先 ec-cube-enterprise との乖離は付帯表4（不具合候補）に記録し、テストは仕様どおりに書く（落ちて検出する）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 URL方針（オラクル独立性）: 設計書のパスはプレースホルダ表記（/entry/select・/entry/{id}/new 等＝付帯表4#8 要確認）で、実装の実ルート（/entry_registration・/entry_registration/new/{id}）とは別経路。画面到達（goto）と入口URLアサーション（004/016）は**実在する実ルートを使わざるを得ない**（設計プレースホルダURLは存在せず到達不能のため）。一方、設計が具体値を与える遷移先（登録成功→申込編集画面 /event/entry/{id}/edit＝031）は**設計URLを期待**し、実装の遷移先（日程別申込一覧）と相違すれば落ちて検出する。すなわち実装ルートはオラクルではなく到達手段として用い、設計が具体URLを定める箇所のみ設計値で判定する。
 
@@ -24,64 +24,64 @@ URL方針（オラクル独立性）: 設計書のパスはプレースホルダ
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-001	IT-13	URL直接アクセス	P1	未ログインで新規申込URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン／SEED-M13-12-EVENTDETAIL	—	"1. /admin/entry_registration/new/{eventDetailId} へ直接アクセス"	管理ログイン画面へ誘導されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-001	IT-13	URL直接アクセス	P1	未ログインで新規申込URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン／SEED-M13-12-EVENTDETAIL	—	1. /admin/entry_registration/new/{eventDetailId} へ直接アクセス	管理ログイン画面へ誘導されること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-002	IT-25	HTTPステータス	P2	存在しないイベント日程IDの新規申込URLは404になる	ログイン済み管理者／SEED-M13-12-ADMIN	存在しないeventDetailId	"1. 管理ログインする
-2. /admin/entry_registration/new/99999999 へアクセス"	HTTP 404 が返ること。
+2. /admin/entry_registration/new/99999999 へアクセス"	HTTP 404 が返ること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-003	IT-25	UI部品	P2	登録先選択画面に検索フォーム・検索ボタンが表示される	ログイン済み管理者／SEED-M13-12-ADMIN	—	"1. 管理ログインする
-2. /admin/entry_registration を開く"	検索フォーム（店舗・日程条件）と「検索」ボタンが表示されること。
+2. /admin/entry_registration を開く"	検索フォーム（店舗・日程条件）と「検索」ボタンが表示されること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-004	IT-03	画面遷移	P2	登録先選択画面の「新規登録」リンクで新規申込入力画面へ遷移する	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	"1. 登録先選択画面を開く
-2. 一覧の対象日程行の「新規登録」リンクを押下"	新規申込入力画面（/admin/entry_registration/new/{eventDetailId}）へ遷移すること。
+2. 一覧の対象日程行の「新規登録」リンクを押下"	新規申込入力画面（/admin/entry_registration/new/{eventDetailId}）へ遷移すること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-005	IT-25	HTTPステータス	P3	席順アルファベット一覧が参加者数より少ない日程は404になる	ログイン済み管理者／SEED-M13-12-ADMIN／SEED-M13-12-TEAMOVER（席順一覧数<参加者数の日程）	参加者数>席順アルファベット数の日程	"1. 管理ログインする
-2. 席順アルファベット数を超える参加者数の日程の新規申込URLを開く"	HTTP 404 が返ること（設計エッジケース: 席順アルファベット一覧が参加者数より少ない）。
+2. 席順アルファベット数を超える参加者数の日程の新規申込URLを開く"	HTTP 404 が返ること（設計エッジケース: 席順アルファベット一覧が参加者数より少ない）。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-006	IT-15	権限・認可	P2	担当店舗外の管理者は新規申込にアクセスできない	ログイン済み管理者（対象イベントの担当店舗外）／SEED-M13-12-OTHERADMIN／SEED-M13-12-EVENTDETAIL	—	"1. 担当店舗外の管理者でログインする
-2. /admin/entry_registration/new/{eventDetailId} を開く"	アクセスが許可されないこと（404または権限エラーで表示・登録不可）。
-m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-010	IT-25	確認ダイアログ	P2	新規申込画面にイベント名・店舗・フォーマットが読み取り専用で表示される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	"1. 新規申込入力画面を開く"	イベント名・店舗・フォーマットが読み取り専用（入力欄でない）で表示されること。
-m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-011	IT-25	送信可否制御	P2	申込状況セレクトが無効化表示される（参加で固定）	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	"1. 新規申込入力画面を開く"	申込状況セレクトが表示され、操作不可（無効化）であること。
-m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-012	IT-03	外部画面	P2	支払方法セレクトが無効化表示される（管理者で固定）	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	"1. 新規申込入力画面を開く"	支払方法セレクトが表示され、操作不可（無効化）であること。
-m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-013	IT-03	画面遷移	P3	支払金額欄が表示される（初期値はイベント参加費）	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	"1. 新規申込入力画面を開く"	支払金額欄が表示されること（初期値はイベントの参加費）。
-m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-014	IT-26	登録内容	P3	支払会員が新規時は「－」で表示される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	"1. 新規申込入力画面を開く"	支払会員欄が「－」で表示されること。
-m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-015	IT-25	送信可否制御	P1	送信（保存）ボタンが初期状態で無効である	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	"1. 新規申込入力画面を開く"	送信ボタンが初期状態で無効（参加者確定まで送信不可）であること。
+2. /admin/entry_registration/new/{eventDetailId} を開く"	アクセスが許可されないこと（404または権限エラーで表示・登録不可）。				
+m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-010	IT-25	確認ダイアログ	P2	新規申込画面にイベント名・店舗・フォーマットが読み取り専用で表示される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	1. 新規申込入力画面を開く	イベント名・店舗・フォーマットが読み取り専用（入力欄でない）で表示されること。				
+m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-011	IT-25	送信可否制御	P2	申込状況セレクトが無効化表示される（参加で固定）	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	1. 新規申込入力画面を開く	申込状況セレクトが表示され、操作不可（無効化）であること。				
+m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-012	IT-03	外部画面	P2	支払方法セレクトが無効化表示される（管理者で固定）	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	1. 新規申込入力画面を開く	支払方法セレクトが表示され、操作不可（無効化）であること。				
+m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-013	IT-03	画面遷移	P3	支払金額欄が表示される（初期値はイベント参加費）	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	1. 新規申込入力画面を開く	支払金額欄が表示されること（初期値はイベントの参加費）。				
+m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-014	IT-26	登録内容	P3	支払会員が新規時は「－」で表示される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	1. 新規申込入力画面を開く	支払会員欄が「－」で表示されること。				
+m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-015	IT-25	送信可否制御	P1	送信（保存）ボタンが初期状態で無効である	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	1. 新規申込入力画面を開く	送信ボタンが初期状態で無効（参加者確定まで送信不可）であること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-016	IT-03	画面遷移	P3	戻るリンクで登録先選択画面へ遷移する	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	"1. 新規申込入力画面を開く
-2. 戻るリンクを押下"	登録先選択画面（/admin/entry_registration）へ遷移すること。
+2. 戻るリンクを押下"	登録先選択画面（/admin/entry_registration）へ遷移すること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-020	IT-25	操作起点	P1	検索ボタンでプレイヤー検索モーダルが開く	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	—	"1. 新規申込入力画面を開く
-2. 参加者行の検索ボタンを押下"	プレイヤー検索モーダルが開くこと。
+2. 参加者行の検索ボタンを押下"	プレイヤー検索モーダルが開くこと。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-021	IT-25	操作起点	P2	モーダルで検索すると候補一覧がXHRで表示される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER	ヒットする検索語	"1. 新規申込入力画面を開く
 2. 検索モーダルを開く
-3. 検索語を入力し「検索する」を押下"	モーダル内に候補プレイヤー一覧がXHRで表示されること。
+3. 検索語を入力し「検索する」を押下"	モーダル内に候補プレイヤー一覧がXHRで表示されること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-022	IT-25	送信可否制御	P1	候補選択で参加者行に反映され送信ボタンが有効化される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER	ヒットする検索語	"1. 検索モーダルで候補を表示
-2. 候補を1件選択"	参加者行に選択プレイヤーが反映され、送信ボタンが有効化されること。
+2. 候補を1件選択"	参加者行に選択プレイヤーが反映され、送信ボタンが有効化されること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-023	IT-26	登録内容	P2	候補選択で1行目の会員が支払会員欄に反映される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER	会員紐付きプレイヤーの検索語	"1. 検索モーダルで候補を表示
-2. 会員紐付きの候補を1件選択"	支払会員欄が「－」から選択プレイヤーの会員名に変わること。
+2. 会員紐付きの候補を1件選択"	支払会員欄が「－」から選択プレイヤーの会員名に変わること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-024	IT-22	必須制御	P1	参加者を削除すると送信ボタンが無効化される（参加者必須）	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER	ヒットする検索語	"1. 候補を選択して参加者を確定
-2. 参加者行の削除ボタンを押下"	参加者行が未選択になり、送信ボタンが無効化されること。
+2. 参加者行の削除ボタンを押下"	参加者行が未選択になり、送信ボタンが無効化されること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-025	IT-25	HTTPステータス	P3	プレイヤー検索はXHR専用入口であり非XHR/必須パラメータ欠落では候補を返さない	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	非XHRの直接アクセス／event_detail_id欠落	"1. 管理ログインする
-2. /admin/entry_registration/search_player へ非XHRで直接アクセス（または必須パラメータ欠落で要求）"	候補一覧が通常画面として表示されないこと（XHR専用入口として拒否または空応答）。
+2. /admin/entry_registration/search_player へ非XHRで直接アクセス（または必須パラメータ欠落で要求）"	候補一覧が通常画面として表示されないこと（XHR専用入口として拒否または空応答）。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-030	IT-26	登録内容	P1	参加者を選択し登録送信すると成功フラッシュが表示される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER（会員登録済プレイヤー）	会員紐付きプレイヤーの検索語	"1. 候補を選択して参加者を確定
-2. 送信ボタンを押下"	成功フラッシュ「登録が完了しました。」が表示されること。
+2. 送信ボタンを押下"	成功フラッシュ「登録が完了しました。」が表示されること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-031	IT-03	画面遷移	P1	登録成功で登録した申込の編集画面へ遷移する	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER（会員登録済プレイヤー）	会員紐付きプレイヤーの検索語	"1. 候補を選択して参加者を確定
-2. 送信ボタンを押下"	登録した申込の編集画面（/admin/event/entry/{eventEntry}/edit）へ遷移すること。
+2. 送信ボタンを押下"	登録した申込の編集画面（/admin/event/entry/{eventEntry}/edit）へ遷移すること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-040	IT-22	必須バリデーション	P2	参加者未選択での登録送信は失敗となる	ログイン済み管理者／SEED-M13-12-EVENTDETAIL	参加者未選択	"1. 新規申込入力画面を開く
-2. 参加者を選択せず登録送信する（直POST含む）"	登録が完了せず、参加者必須エラー（または登録失敗表示）で新規画面に留まること。
+2. 参加者を選択せず登録送信する（直POST含む）"	登録が完了せず、参加者必須エラー（または登録失敗表示）で新規画面に留まること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-041	IT-22	数値バリデーション	P2	支払金額が非数字だと金額メッセージが表示される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER	支払金額＝非数字	"1. 参加者を確定
-2. 支払金額に非数字を入力して登録送信する"	「半角数字で金額を入力してください。」が表示され、新規画面へリダイレクトされること。
+2. 支払金額に非数字を入力して登録送信する"	「半角数字で金額を入力してください。」が表示され、新規画面へリダイレクトされること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-042	IT-22	DBとの相関バリデーション	P2	参加者が重複すると申込重複メッセージが表示される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-DUP（同日程に既申込のプレイヤー）	既に同日程へ申込済みのプレイヤー	"1. 同日程に既申込のプレイヤーを参加者に選択
-2. 登録送信する"	申込重複メッセージが表示され、新規画面へリダイレクトされ、申込が登録されないこと。
+2. 登録送信する"	申込重複メッセージが表示され、新規画面へリダイレクトされ、申込が登録されないこと。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-043	IT-22	相関バリデーション	P2	申込状況・支払方法を改ざんして送信しても固定値で登録される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER（会員登録済プレイヤー）	申込状況＝参加以外／支払方法＝管理者以外を直POST	"1. 参加者を確定
 2. entryStatus/payment に固定値以外の値を含めて直POST送信
-3. dtb_event_entry の entry_status_id/payment_id を確認"	画面入力値に依らず申込状況＝参加・支払方法＝管理者の固定値で登録されること。
+3. dtb_event_entry の entry_status_id/payment_id を確認"	画面入力値に依らず申込状況＝参加・支払方法＝管理者の固定値で登録されること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-044	IT-26	登録内容	P2	登録失敗時（未送信/金額不正/参加者重複）は申込・申込プレイヤー・申込履歴が増えない	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER／SEED-M13-12-DUP	各失敗条件（未送信・非数字金額・重複プレイヤー）	"1. 各失敗条件で登録送信する
-2. dtb_event_entry／dtb_entry_player／dtb_entry_history の件数を送信前後で比較"	いずれの失敗条件でも3テーブルの件数が増加しないこと。
+2. dtb_event_entry／dtb_entry_player／dtb_entry_history の件数を送信前後で比較"	いずれの失敗条件でも3テーブルの件数が増加しないこと。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-045	IT-22	数値バリデーション	P3	支払金額の必須・空値・小数は金額メッセージで再描画される（境界）	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER	支払金額＝空／小数／半角数字以外（直POST含む）	"1. 参加者を確定
-2. 支払金額を空・小数・非数字にして登録送信する（price は disabled のため直POST）"	「半角数字で金額を入力してください。」が表示され、新規画面へリダイレクトされること。
+2. 支払金額を空・小数・非数字にして登録送信する（price は disabled のため直POST）"	「半角数字で金額を入力してください。」が表示され、新規画面へリダイレクトされること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-050	IT-26	登録内容	P1	登録成功で申込・申込プレイヤー・申込履歴が各1件追加される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER（会員登録済プレイヤー）	会員紐付きプレイヤーの検索語	"1. 参加者を確定して登録送信
-2. dtb_event_entry／dtb_entry_player／dtb_entry_history の件数を登録前後で比較"	dtb_event_entry・dtb_entry_player・dtb_entry_history がそれぞれ1件追加されること。
+2. dtb_event_entry／dtb_entry_player／dtb_entry_history の件数を登録前後で比較"	dtb_event_entry・dtb_entry_player・dtb_entry_history がそれぞれ1件追加されること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-051	IT-26	登録内容	P2	登録成功で各DB列値が仕様どおり保存される	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-PLAYER（会員登録済プレイヤー）	会員紐付きプレイヤーの検索語	"1. 参加者を確定して登録送信
-2. dtb_event_entry（event_detail_id／entry_status_id＝参加／payment_id＝管理者／price＝参加費／paying_customer_id＝1行目会員）・dtb_entry_player（player_id／confirm_flg／seat_order）・dtb_entry_history を確認"	各列が仕様の固定値・採用値（申込状況＝参加・支払方法＝管理者・price＝参加費・paying_customer_id＝1行目会員・seat_order＝1 等）で保存され、申込履歴が1件記録されること。
+2. dtb_event_entry（event_detail_id／entry_status_id＝参加／payment_id＝管理者／price＝参加費／paying_customer_id＝1行目会員）・dtb_entry_player（player_id／confirm_flg／seat_order）・dtb_entry_history を確認"	各列が仕様の固定値・採用値（申込状況＝参加・支払方法＝管理者・price＝参加費・paying_customer_id＝1行目会員・seat_order＝1 等）で保存され、申込履歴が1件記録されること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-060	IT-25	UI部品	P3	複数参加者（チーム）日程では席順・確認列と支払会員注記が表示されJSONへ反映される	ログイン済み管理者／SEED-M13-12-TEAM（チーム人数>1の日程）／SEED-M13-12-PLAYER	チーム人数>1の日程	"1. チーム人数>1の日程の新規申込画面を開く
-2. 複数参加者を選択し席順・確認を変更"	席順・確認列が表示され「一行目の会員が支払会員に設定されます」注記が表示され、席順・確認の変更が隠しプレイヤー情報リスト（JSON）へ反映されること。
+2. 複数参加者を選択し席順・確認を変更"	席順・確認列が表示され「一行目の会員が支払会員に設定されます」注記が表示され、席順・確認の変更が隠しプレイヤー情報リスト（JSON）へ反映されること。				
 m13-12_admin_event_event_entry_register（イベント新規申込登録）	E2E-M13-12-061	IT-23	検索条件	P3	プレイヤー検索候補にソフトデリート済み会員/プレイヤーが含まれない	ログイン済み管理者／SEED-M13-12-EVENTDETAIL／SEED-M13-12-DELETED（削除済み会員/プレイヤー）	削除済みプレイヤーにヒットする検索語	"1. 新規申込画面でプレイヤー検索モーダルを開く
-2. 削除済みプレイヤー/会員にヒットする検索語で検索"	ソフトデリート済みのプレイヤー/会員が候補一覧に表示されないこと（除外読込）。
+2. 削除済みプレイヤー/会員にヒットする検索語で検索"	ソフトデリート済みのプレイヤー/会員が候補一覧に表示されないこと（除外読込）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

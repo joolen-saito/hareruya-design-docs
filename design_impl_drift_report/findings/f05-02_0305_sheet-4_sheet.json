@@ -1,0 +1,2536 @@
+{
+  "functionId": "f05-02_0305_sheet-4_sheet",
+  "featureNo": "F05-02",
+  "title": "F05-02 ネット買取商品検索",
+  "domain": "f05",
+  "kind": "front",
+  "designHtml": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+  "sourceBook": "0305_基本設計仕様書(フロント_ネット買取).html",
+  "sheetId": "sheet-4",
+  "sheetName": "ネット買取商品検索",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "f05-02_0305_sheet-4_sheet-conformance-d263630bbceb",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+      "designRefDetail": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4 (カスタマイズ説明『検索条件のURL形式について』および 機能仕様 処理概要★)",
+      "designExpectation": "★ SEO対策として、タグやカテゴリの検索条件は「/tag/category」のようにURLのパスに含め、それ以外の検索条件は「?key=value」のようにGETパラメータとして扱う。例: https://~/purchase/search/New%20Items/Single%20Cards（カスタマイズ要件・機能仕様★の両方に明記）",
+      "designQuote": "★ SEO対策として、タグやカテゴリの検索条件は「/tag/category」のようにURLのパスに含め、それ以外の検索条件は「?key=value」のようにGETパラメータとして扱う。例: https://~/purchase/search/New%20Items/Single%20Cards（カスタマイズ要件・機能仕様★の両方に明記）",
+      "implRef": "src/Eccube/Controller/Front/Purchase/PurchaseController.php:399 ; src/Eccube/Service/App/Category/CategorySidebarLinkContext.php:42-50",
+      "implementationActual": "買取詳細検索のルートは #[Route(path: '/purchase/search', name: 'purchase_search', methods: ['GET'])] のみで、タグ・カテゴリを含む全条件をGETクエリパラメータ（purchaseFlg=1・tags 等）で受け渡す。パス変数を持つ /purchase/search/{tag}/{category} 相当のSEO用ルートは存在しない。CategorySidebarLinkContext::forPurchase() も listRoute/queryRoute とも 'purchase_search' を指し defaultQueryParams=['purchaseFlg'=>true] とクエリ方式。Twig(search.twig:89, purchase_detailed_search_modal.twig:13, search_purchase.twig:14)のフォームも method=get・action=url('purchase_search')。販売側(ProductController.php:136-138)には /products/search/cate/{categoryId}/tag/{tagId} 等のパス型ルートが存在するがID指定であり買取側には未適用。",
+      "difference": "設計★が要求するタグ・カテゴリのURLパス埋め込み（/tag/category 形式のSEO対策URL）が買取検索実装に存在しない。PurchaseController の全ルート(:139-1173, search は :399)、CategorySidebarLinkContext、purchase系ルーティング(PHP属性/yaml)を探索したが /purchase/search 配下にパス変数tag/categoryを持つルートは皆無で、Twigフォームも一律 url('purchase_search') クエリ送信。設計Excelの★カスタマイズはSEO用パスURLへの変更を新規要件として明示しており、その要件が未反映。実装は存在するが設計と食い違うため実装違いとして確定。",
+      "mismatchReason": "設計★が要求するタグ・カテゴリのURLパス埋め込み（/tag/category 形式のSEO対策URL）が買取検索実装に存在しない。PurchaseController の全ルート(:139-1173, search は :399)、CategorySidebarLinkContext、purchase系ルーティング(PHP属性/yaml)を探索したが /purchase/search 配下にパス変数tag/categoryを持つルートは皆無で、Twigフォームも一律 url('purchase_search')…",
+      "comparisonRows": [
+        {
+          "item": "タグ/カテゴリ検索のURL形式",
+          "design": "URLパスに埋め込む（例: /purchase/search/New%20Items/Single%20Cards）",
+          "implementation": "GETクエリパラメータ（/purchase/search?tags=...&purchaseFlg=1 等）",
+          "mismatch": "パス埋め込みのSEO用ルートが不在、クエリ方式のまま"
+        },
+        {
+          "item": "買取検索ルート定義",
+          "design": "/purchase/search/{tag}/{category} 相当のパス型ルートを想定",
+          "implementation": "PurchaseController.php:399 の /purchase/search のみ（パス変数なし）",
+          "mismatch": "パス変数を持つルートが未定義"
+        },
+        {
+          "item": "カテゴリ/タグ導線の生成",
+          "design": "パス型URLでリンク生成",
+          "implementation": "CategorySidebarLinkContext::forPurchase() が queryRoute='purchase_search'・defaultQueryParams=['purchaseFlg'=>true] でクエリ型リンク生成",
+          "mismatch": "クエリ型リンク生成のためSEO用パスURLにならない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "f05-02_0305_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/Front/Purchase/PurchaseController.php:399 ; src/Eccube/Service/App/Category/CategorySidebarLinkContext.php:42-50",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「★ SEO対策として、タグやカテゴリの検索条件は「/tag/category」のようにURLのパスに含め、それ以外の検索条件は「?key=value」のようにGETパラメータとして扱う。例: https://~/purchase/search/New%20Items/Single%20Cards（カスタマイズ要件・機能仕様★の両方に明記）」。実装は「買取詳細検索のルートは #[Route(path: '/purchase/search', name: 'purchase_search', methods: ['GET'])] のみで、タグ・カテゴリを含む全条件をGETクエリパラメータ（purchaseFlg=1・tags 等）で受け渡す。パス変数を持つ /purchase/search/{tag}/{category} 相当のSEO用ルートは存在しない。CategorySidebarLinkContext::forPurchase() も listRoute…」。乖離理由は「設計★が要求するタグ・カテゴリのURLパス埋め込み（/tag/category 形式のSEO対策URL）が買取検索実装に存在しない。PurchaseController の全ルート(:139-1173, search は :399)、CategorySidebarLinkContext、purchase系ルーティング(PHP属性/yaml)を探索したが /purchase/search 配下にパス変数tag/categoryを持つルートは皆無で、Twigフォームも一律 url('purchase_search')…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ルート・Controller",
+        "Form・入力項目",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html:1366\n1363:       </section>\n1364:       <!-- function-design-embed:end f05-01-f05-01_front_online_purchase_buy_top -->\n1365: </section>\n1366:       <section class=\"sheet-panel\" id=\"sheet-4\">\n1367:         <div class=\"sheet-heading\">\n1368:           <h2>ネット買取商品検索</h2>\n1369:         </div>",
+      "implementationRefs": [
+        "src/Eccube/Controller/Front/Purchase/PurchaseController.php:399",
+        "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php:42-50",
+        "src/Eccube/Controller/Front/Purchase/PurchaseController.php",
+        "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Front/Purchase/PurchaseController.php:399\n396:      * @return array<string, mixed>\n397:      */\n398:     #[Route(path: '/purchase/search', name: 'purchase_search', methods: ['GET'])]\n399:     #[Template(template: 'Purchase/search.twig')]\n400:     public function search(Request $request): array\n401:     {\n402:         // 検索条件がなければフォームだけ返す",
+        "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php:42\n39:         return new self('product_list', 'product_category', [], ProductListOrderBy::COLOR);\n40:     }\n41: \n42:     public static function forPurchase(): self\n43:     {\n44:         return new self(\n45:             'purchase_search',",
+        "src/Eccube/Controller/Front/Purchase/PurchaseController.php:65\n62: /**\n63:  * フロント買取画面\n64:  */\n65: class PurchaseController extends AbstractController\n66: {\n67:     /**\n68:      * 買取カートのセッションキー"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 74,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-666f84f25e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "★ 現行では商品詳細検索画面で表示していたのを、モーダル表示とする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-46076fd5cc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "★ 画面上でモーダル外を押下すると、モーダルを閉じる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-8690ba9ef8",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "(例) タグが「最新入荷アイテム(New Items)」、カテゴリが「シングルカード(Single Cards)」である商品の場合、下記のようなURLとする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-bc0433b0ea",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "複数選択(チェックボックス)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-64cf43c8e9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "・下記の選択肢を画像で表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-a3c4f834f3",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "・管理画面で「商品検索に表示」にチェックをつけて登録しているもののみを表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-a00e1884b1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "※管理画面で「商品検索に表示」を設定する画面は、別紙「基本設計仕様書(カード管理)」のフォーマット詳細(登録・編集・削除)シートを参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-3aa771d3c4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "禁止カードも表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-de43529a3d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "単一選択(チェックボックス)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-679f445461",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "・押下すると、表示しているモーダルを閉じる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-43d05be3aa",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "・入力された各項目の値を空白にする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-455c545333",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "QA469で確認中",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-01d7e8e584",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "ネット買取の買取対象商品を、カード名・カテゴリ・エキスパンション・色・マナコスト・レアリティ・カードタイプ・サブタイプ・フォーマット・イラストレーター・フォイル区分・言語・在庫などの条件で詳細に絞り込むための検索機能である。検索フォームの送信で買取商品一覧（F05-03）へ条件を引き継ぎ、買取価格の付いた商品を出し分けて表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-78d3a9a1b5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの買取詳細検索処理、検索フォーム（ front_product_search ）、検索フォームのテンプレート（ Purchase/search.twig ）、一覧テンプレート（ Purchase/product_list.twig ）、買取検索の絞り込み処理を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-5ab223915e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カスタマイズ区分はカスタマイズとする。挙動の参照リポはpf-eccube3（現行）とし、DB関連（テーブル名・列名・型・制約・関連、DBカラム節、保存先・扱い、データ整合性のDB部分）は ec-cube-enterprise を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-faf3a0cb3d",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索の表示順・ページング指定",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-25ae662d3d",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-e9febcfa5d",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索結果一覧の表示内容・件数表示・上限超過時の挙動（F05-03ネット買取商品一覧を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-a21ac692f4",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "各商品の買取価格の登録・算出（商品データ管理を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-b4e7aea54e",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索条件で表示される選択肢マスタ（色・レアリティ・カードタイプ等）の管理",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-98b3204529",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "現行（pf-eccube3）と移行先（ec-cube-enterprise）のDBスキーマ差分を記録する。検索の挙動・クエリパラメータは現行の確認値を正とし、永続化先の名称は移行先（ec-cube-enterprise）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-fbab08cb72",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "状態・買取価格・高額商品コードの保持単位",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-339fb8f70f",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "移行先では商品サブクラスを商品クラスへ統合し、状態はカード状態マスタ参照とする。状態NMは card_condition_name ／カード状態マスタで判定する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-10da925f75",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "買取詳細検索フォームの表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-53d1ecb822",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームのみを表示する（検索結果は出さない）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-3ffa1d36c4",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "買取詳細検索の送信",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-5d9b323fe7",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "指定条件で買取商品を絞り込み、一覧を表示する（一覧の表示はF05-03を正とする）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-0e4015e760",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カードセット・レアリティ・カテゴリの一覧から検索条件付きの検索へ誘導する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-1925ec6c16",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "_locale はロケール（例: ja ）で、フロント共通のロケールプレフィックスである。管理画面プレフィックスは付かない。検索の送信はGETでクエリパラメータとして条件を渡す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-efc396b847",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カード名入力、カテゴリ選択、エキスパンション（カードセット）選択、色チェックと色条件（含む／一致）ラジオ、マナコストチェック、レアリティチェック、カードタイプチェックとタイプ条件ラジオ、サブタイプ選択、フォーマットラジオ、イラストレーター選択、フォイル区分チェック、言語チェック、検索ボタン。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-f63033075b",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カード名入力はカード名・サプライ名のサジェスト用リスト（JSON）を参照する。検索結果一覧側では絞り込みフィルタ（色・レアリティ・タイプ等のアイコン）を表示・切替する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-5e27821c9e",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームはセクションごとに入力欄を並べる。買取ページ用クラス（ purchase_page ）を付与する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-968bde590e",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームの送信先は買取詳細検索のエンドポイントで、メソッドはGETである。表示順（ sort ）・並び順（ order ）・カードID（ cardId ）は隠しフィールドで引き継ぐ。買取特集タグ（ tags ）も隠しフィールドで引き継ぐ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-dcb2e2eb6f",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームを表示する（GET /{_locale}/purchase/search 、クエリなし）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-54edadfdba",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリが空のため、検索フォームのみを表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-4644f05bcf",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索を送信して絞り込む（GET /{_locale}/purchase/search?… ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-543137cfe5",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "レアリティ・色・カードタイプの選択肢を取得し、一覧を表示する（一覧表示はF05-03を正とする）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-2c0d23e927",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カード名・カテゴリ・カードセット・フォーマット・価格・イラストレーター・サブタイプ・色・色アイデンティティ・マナコスト・レアリティ・カードタイプ・フォイル・言語・タグ・カードIDがいずれも無く、在庫が「すべて表示」のときは、全件検索とみなして検索を実行せず空の結果とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-d547cd7da6",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "常時表示（正常・静的）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-8e5bb90161",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "表示文言（日本語）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-1ac5bf48ba",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームの表示時",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-379f0455eb",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カード名の入力欄に表示する案内文言（フォーム定義の値）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-aa156db1b1",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索結果の件数表示・上限超過・0件時の文言はF05-03を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-2f9ada01b9",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリに買取フラグが無い場合は買取フラグを真として付与し、買取向けの絞り込みを行う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-fc50e0c980",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "表示順は色順（既定）と価格（高い順／安い順）を指定でき、クエリ sort ・ order で引き継ぐ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-515f6438d9",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ product 。テキスト入力。最大長は商品名の設定値（ HareruyaEc.const.product.length.name ＝255）。サジェスト用リストを参照。検索条件として商品名で絞り込む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-0e25affd1c",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ colors[] 。複数チェック。色で絞り込む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-6874d05649",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ colorsType 。ラジオ。色の含む／一致の条件を切り替える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-19f0cad4b5",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ manaCost[] 。複数チェック。マナコストで絞り込む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-987f316adc",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ rarity[] 。複数チェック。レアリティで絞り込む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-448a9b6141",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ cardtypes[] 。複数チェック。カードタイプで絞り込む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-77a1033354",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ cardtypesType 。ラジオ。カードタイプの条件を切り替える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-863c8521e3",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ foilFlg[] 。複数チェック。ノーマル／フォイルで絞り込む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-f4a5b9fb1e",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ language[] 。複数チェック。言語で絞り込む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-8128adde5f",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索条件はすべて任意で、未指定の条件は絞り込みに使わない。表示順（ sort ・ order ）・カードID（ cardId ）・買取特集タグ（ tags ）は検索フォームの隠しフィールドで引き継ぐ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-5ce644020d",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームのみを表示し、検索を実行しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-a1d91b7530",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "送信した検索条件は一覧へクエリとして引き継ぎ、件数・絞り込みフィルタ表示と整合する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-8a23e3a593",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "本機能ではAPI呼び出し・バッチ実行を扱わない。検索結果件数が上限を超えた場合の外部通知はF05-03を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-89b5324b50",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォーム、または絞り込み結果の一覧（一覧表示はF05-03）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-3a59bb31d6",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "本機能固有のエラー応答は持たない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-2422aec7ef",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "テーブル・列名は ec-cube-enterprise を正とする。現行（pf-eccube3）の保持単位は括弧で添える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-4cb13b7a29",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "価格表示・価格順の並び替えに用いる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-16ded06c78",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-8d6710650e",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "最大長255文字（商品名の設定値）。テキスト入力。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-1e02cffcf8",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索条件は全件検索抑止の判定を経て、実質的な条件が無い場合は検索を実行しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-96df3c50a7",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームの送信",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-1129b60f2b",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "買取商品一覧（F05-03、同一エンドポイントに結果を表示）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-1cfa5e5993",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "一覧側の表示順リンク・ページリンク",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-5f14696639",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-79121461df",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-9a3066c9a6",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォーム送信",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-11a2d03e23",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "各検索条件・表示順・カードID・買取特集タグをクエリに載せる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-0d7523c76b",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "一覧で同一条件を反映した結果と選択状態を表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f05-02_0305_sheet-4_sheet-req-1c3c3ea68e",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームのみを表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "front_product_search",
+        "product_list",
+        "buy_price"
+      ],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "tag/category",
+        "purchase/search/New",
+        "Single",
+        "pf-eccube3/f05-02_front_online_purchase_buy_product_search.md",
+        "search.twig",
+        "product_list.twig",
+        "{_locale}",
+        "purchase",
+        "{_locale}/purchase/search",
+        "{_locale}/purchase/category"
+      ],
+      "businessTerms": [
+        "F05",
+        "ネット買取商品検索",
+        "ネット買取",
+        "ネット買取機能",
+        "ネット買取商品の詳細検索ができる",
+        "タグやカテゴリの検索条件は",
+        "ネット買取商品のみを検索対象に含める",
+        "現行では商品詳細検索画面で表示していたのを",
+        "カテゴリが",
+        "である商品の場合",
+        "検索の仕様についてはネット買取商品一覧シートを参",
+        "カテゴリ"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "product_list",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/PageRepository.php:42",
+        "snippet": "* しかし dtb_page には標準ルート名の product_list のみ登録されている為、",
+        "weight": 7
+      },
+      {
+        "term": "product_list",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/PageRepository.php:46",
+        "snippet": "* 目的は同一画面の URLバリアントのため、ルート名を product_list に寄せる方法を採用した。",
+        "weight": 7
+      },
+      {
+        "term": "front_product_search",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Product/ProductSearchConditionCounter.php:20",
+        "snippet": "* `front_product_search[*]` パラメータを受け取り、ヘッダー検索フォームの条件数バッジに表示する値を返す。",
+        "weight": 7
+      },
+      {
+        "term": "front_product_search",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Product/ProductSearchConditionCounter.php:65",
+        "snippet": "* @param array<string, mixed> $searchData `front_product_search` 配下のクエリパラメータ",
+        "weight": 7
+      },
+      {
+        "term": "front_product_search",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Product/PurchaseSearchConditionCounter.php:20",
+        "snippet": "* `front_product_search[*]` パラメータを受け取り、ヘッダー検索フォームの条件数バッジに表示する値を返す。",
+        "weight": 7
+      },
+      {
+        "term": "front_product_search",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Product/PurchaseSearchConditionCounter.php:58",
+        "snippet": "* @param array<string, mixed> $searchData `front_product_search` 配下のクエリパラメータ",
+        "weight": 7
+      },
+      {
+        "term": "product_list",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/TopCategoryListBuilder.php:67",
+        "snippet": "* 各アイテムの href は $linkContext が指すルート（販売: product_list / product_category、買取: purchase_search）で生成する。",
+        "weight": 7
+      },
+      {
+        "term": "product_list.twig",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/ProductController.php:1642",
+        "snippet": "return $this->render('Block/product_list.twig', [",
+        "weight": 6
+      },
+      {
+        "term": "search.twig",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/Purchase/PurchaseController.php:399",
+        "snippet": "#[Template(template: 'Purchase/search.twig')]",
+        "weight": 6
+      },
+      {
+        "term": "product_list.twig",
+        "termType": "path",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Block/product_list.twig:2",
+        "snippet": "移植元: pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/product_list.twig",
+        "weight": 6
+      },
+      {
+        "term": "buy_price",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbOtcBuyOrderSummary.php:40",
+        "snippet": "#[ORM\\Column(name: 'buy_price', type: Types::INTEGER, nullable: true, options: ['unsigned' => true, 'comment' => '買取金額'])]",
+        "weight": 5
+      },
+      {
+        "term": "buy_price",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbPriceHistory.php:40",
+        "snippet": "#[ORM\\Column(name: 'buy_price', type: Types::INTEGER, nullable: true, options: ['unsigned' => true, 'comment' => '購入価格'])]",
+        "weight": 5
+      },
+      {
+        "term": "buy_price",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/ProductClass.php:275",
+        "snippet": "#[ORM\\Column(name: 'buy_price', type: Types::INTEGER, nullable: true, options: ['unsigned' => true, 'comment' => '買取価格'])]",
+        "weight": 5
+      },
+      {
+        "term": "buy_price",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/ProductClass.php:276",
+        "snippet": "private ?int $buy_price = null;",
+        "weight": 5
+      },
+      {
+        "term": "product_list",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/SmaregiPlatformApiCallLog.php:34",
+        "snippet": "public const OPERATION_PRODUCT_LIST = 'product_list';",
+        "weight": 5
+      },
+      {
+        "term": "{_locale}",
+        "termType": "path",
+        "role": "Config",
+        "ref": "app/config/eccube/routes.yaml:18",
+        "snippet": "# 本店では'/{_locale}'、支店では'/{_locale}/{_shop}'となる。",
+        "weight": 4
+      },
+      {
+        "term": "{_locale}",
+        "termType": "path",
+        "role": "Config",
+        "ref": "app/config/eccube/routes.yaml:39",
+        "snippet": "# 本店では'/{_locale}'、支店では'/{_locale}/{_shop}'となる。",
+        "weight": 4
+      },
+      {
+        "term": "{_locale}",
+        "termType": "path",
+        "role": "Config",
+        "ref": "app/config/eccube/routes.yaml:61",
+        "snippet": "# prefix: /{_locale}",
+        "weight": 4
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 3,
+    "implementationGapRequirementCount": 3,
+    "rows": [
+      {
+        "findingId": "f05-02_0305_sheet-4_sheet-conformance-d263630bbceb",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "URLパスに埋め込む（例: /purchase/search/New%20Items/Single%20Cards）",
+        "implementationActual": "GETクエリパラメータ（/purchase/search?tags=...&purchaseFlg=1 等）",
+        "mismatchReason": "パス埋め込みのSEO用ルートが不在、クエリ方式のまま",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/Purchase/PurchaseController.php:399",
+          "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php:42-50",
+          "src/Eccube/Controller/Front/Purchase/PurchaseController.php",
+          "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "タグ/カテゴリ検索のURL形式",
+            "design": "URLパスに埋め込む（例: /purchase/search/New%20Items/Single%20Cards）",
+            "implementation": "GETクエリパラメータ（/purchase/search?tags=...&purchaseFlg=1 等）",
+            "mismatch": "パス埋め込みのSEO用ルートが不在、クエリ方式のまま"
+          }
+        ]
+      },
+      {
+        "findingId": "f05-02_0305_sheet-4_sheet-conformance-d263630bbceb",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "/purchase/search/{tag}/{category} 相当のパス型ルートを想定",
+        "implementationActual": "PurchaseController.php:399 の /purchase/search のみ（パス変数なし）",
+        "mismatchReason": "パス変数を持つルートが未定義",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/Purchase/PurchaseController.php:399",
+          "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php:42-50",
+          "src/Eccube/Controller/Front/Purchase/PurchaseController.php",
+          "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "買取検索ルート定義",
+            "design": "/purchase/search/{tag}/{category} 相当のパス型ルートを想定",
+            "implementation": "PurchaseController.php:399 の /purchase/search のみ（パス変数なし）",
+            "mismatch": "パス変数を持つルートが未定義"
+          }
+        ]
+      },
+      {
+        "findingId": "f05-02_0305_sheet-4_sheet-conformance-d263630bbceb",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "パス型URLでリンク生成",
+        "implementationActual": "CategorySidebarLinkContext::forPurchase() が queryRoute='purchase_search'・defaultQueryParams=['purchaseFlg'=>true] でクエリ型リンク生成",
+        "mismatchReason": "クエリ型リンク生成のためSEO用パスURLにならない",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/Purchase/PurchaseController.php:399",
+          "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php:42-50",
+          "src/Eccube/Controller/Front/Purchase/PurchaseController.php",
+          "src/Eccube/Service/App/Category/CategorySidebarLinkContext.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "カテゴリ/タグ導線の生成",
+            "design": "パス型URLでリンク生成",
+            "implementation": "CategorySidebarLinkContext::forPurchase() が queryRoute='purchase_search'・defaultQueryParams=['purchaseFlg'=>true] でクエリ型リンク生成",
+            "mismatch": "クエリ型リンク生成のためSEO用パスURLにならない"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 74,
+    "verdictedCount": 74,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 74,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-666f84f25e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "★ 現行では商品詳細検索画面で表示していたのを、モーダル表示とする",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-46076fd5cc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "★ 画面上でモーダル外を押下すると、モーダルを閉じる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-8690ba9ef8",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "(例) タグが「最新入荷アイテム(New Items)」、カテゴリが「シングルカード(Single Cards)」である商品の場合、下記のようなURLとする",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-bc0433b0ea",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "複数選択(チェックボックス)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-64cf43c8e9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "・下記の選択肢を画像で表示する",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-a3c4f834f3",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "・管理画面で「商品検索に表示」にチェックをつけて登録しているもののみを表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-a00e1884b1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "※管理画面で「商品検索に表示」を設定する画面は、別紙「基本設計仕様書(カード管理)」のフォーマット詳細(登録・編集・削除)シートを参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-3aa771d3c4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "禁止カードも表示する",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-de43529a3d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "単一選択(チェックボックス)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-679f445461",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "・押下すると、表示しているモーダルを閉じる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-43d05be3aa",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "・入力された各項目の値を空白にする",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-455c545333",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "QA469で確認中",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-01d7e8e584",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "ネット買取の買取対象商品を、カード名・カテゴリ・エキスパンション・色・マナコスト・レアリティ・カードタイプ・サブタイプ・フォーマット・イラストレーター・フォイル区分・言語・在庫などの条件で詳細に絞り込むための検索機能である。検索フォームの送信で買取商品一覧（F05-03）へ条件を引き継ぎ、買取価格の付いた商品を出し分けて表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-78d3a9a1b5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの買取詳細検索処理、検索フォーム（ front_product_search ）、検索フォームのテンプレート（ Purchase/search.twig ）、一覧テンプレート（ Purchase/product_list.twig ）、買取検索の絞り込み処理を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-5ab223915e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カスタマイズ区分はカスタマイズとする。挙動の参照リポはpf-eccube3（現行）とし、DB関連（テーブル名・列名・型・制約・関連、DBカラム節、保存先・扱い、データ整合性のDB部分）は ec-cube-enterprise を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-faf3a0cb3d",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索の表示順・ページング指定",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-25ae662d3d",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-e9febcfa5d",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索結果一覧の表示内容・件数表示・上限超過時の挙動（F05-03ネット買取商品一覧を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-a21ac692f4",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "各商品の買取価格の登録・算出（商品データ管理を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-b4e7aea54e",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索条件で表示される選択肢マスタ（色・レアリティ・カードタイプ等）の管理",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-98b3204529",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "現行（pf-eccube3）と移行先（ec-cube-enterprise）のDBスキーマ差分を記録する。検索の挙動・クエリパラメータは現行の確認値を正とし、永続化先の名称は移行先（ec-cube-enterprise）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-fbab08cb72",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "状態・買取価格・高額商品コードの保持単位",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-339fb8f70f",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "移行先では商品サブクラスを商品クラスへ統合し、状態はカード状態マスタ参照とする。状態NMは card_condition_name ／カード状態マスタで判定する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-10da925f75",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "買取詳細検索フォームの表示",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-53d1ecb822",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームのみを表示する（検索結果は出さない）。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-3ffa1d36c4",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "買取詳細検索の送信",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-5d9b323fe7",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "指定条件で買取商品を絞り込み、一覧を表示する（一覧の表示はF05-03を正とする）。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-0e4015e760",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カードセット・レアリティ・カテゴリの一覧から検索条件付きの検索へ誘導する。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-1925ec6c16",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "_locale はロケール（例: ja ）で、フロント共通のロケールプレフィックスである。管理画面プレフィックスは付かない。検索の送信はGETでクエリパラメータとして条件を渡す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-efc396b847",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カード名入力、カテゴリ選択、エキスパンション（カードセット）選択、色チェックと色条件（含む／一致）ラジオ、マナコストチェック、レアリティチェック、カードタイプチェックとタイプ条件ラジオ、サブタイプ選択、フォーマットラジオ、イラストレーター選択、フォイル区分チェック、言語チェック、検索ボタン。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-f63033075b",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カード名入力はカード名・サプライ名のサジェスト用リスト（JSON）を参照する。検索結果一覧側では絞り込みフィルタ（色・レアリティ・タイプ等のアイコン）を表示・切替する。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-5e27821c9e",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームはセクションごとに入力欄を並べる。買取ページ用クラス（ purchase_page ）を付与する。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-968bde590e",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームの送信先は買取詳細検索のエンドポイントで、メソッドはGETである。表示順（ sort ）・並び順（ order ）・カードID（ cardId ）は隠しフィールドで引き継ぐ。買取特集タグ（ tags ）も隠しフィールドで引き継ぐ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-dcb2e2eb6f",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームを表示する（GET /{_locale}/purchase/search 、クエリなし）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-54edadfdba",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリが空のため、検索フォームのみを表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-4644f05bcf",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索を送信して絞り込む（GET /{_locale}/purchase/search?… ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-543137cfe5",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "レアリティ・色・カードタイプの選択肢を取得し、一覧を表示する（一覧表示はF05-03を正とする）。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-2c0d23e927",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カード名・カテゴリ・カードセット・フォーマット・価格・イラストレーター・サブタイプ・色・色アイデンティティ・マナコスト・レアリティ・カードタイプ・フォイル・言語・タグ・カードIDがいずれも無く、在庫が「すべて表示」のときは、全件検索とみなして検索を実行せず空の結果とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-d547cd7da6",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "常時表示（正常・静的）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-8e5bb90161",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "表示文言（日本語）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-1ac5bf48ba",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームの表示時",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-379f0455eb",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "カード名の入力欄に表示する案内文言（フォーム定義の値）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-aa156db1b1",
+        "category": "買取詳細検索の入口と検索フォームの入力項目",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索結果の件数表示・上限超過・0件時の文言はF05-03を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-2f9ada01b9",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリに買取フラグが無い場合は買取フラグを真として付与し、買取向けの絞り込みを行う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-fc50e0c980",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "表示順は色順（既定）と価格（高い順／安い順）を指定でき、クエリ sort ・ order で引き継ぐ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-515f6438d9",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ product 。テキスト入力。最大長は商品名の設定値（ HareruyaEc.const.product.length.name ＝255）。サジェスト用リストを参照。検索条件として商品名で絞り込む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-0e25affd1c",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ colors[] 。複数チェック。色で絞り込む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-6874d05649",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ colorsType 。ラジオ。色の含む／一致の条件を切り替える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-19f0cad4b5",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ manaCost[] 。複数チェック。マナコストで絞り込む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-987f316adc",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ rarity[] 。複数チェック。レアリティで絞り込む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-448a9b6141",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ cardtypes[] 。複数チェック。カードタイプで絞り込む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-77a1033354",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ cardtypesType 。ラジオ。カードタイプの条件を切り替える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-863c8521e3",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ foilFlg[] 。複数チェック。ノーマル／フォイルで絞り込む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-f4a5b9fb1e",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "クエリ language[] 。複数チェック。言語で絞り込む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-8128adde5f",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索条件はすべて任意で、未指定の条件は絞り込みに使わない。表示順（ sort ・ order ）・カードID（ cardId ）・買取特集タグ（ tags ）は検索フォームの隠しフィールドで引き継ぐ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-5ce644020d",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームのみを表示し、検索を実行しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-a1d91b7530",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "送信した検索条件は一覧へクエリとして引き継ぎ、件数・絞り込みフィルタ表示と整合する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-8a23e3a593",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "本機能ではAPI呼び出し・バッチ実行を扱わない。検索結果件数が上限を超えた場合の外部通知はF05-03を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-89b5324b50",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォーム、または絞り込み結果の一覧（一覧表示はF05-03）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-3a59bb31d6",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "本機能固有のエラー応答は持たない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-2422aec7ef",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "テーブル・列名は ec-cube-enterprise を正とする。現行（pf-eccube3）の保持単位は括弧で添える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-4cb13b7a29",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "価格表示・価格順の並び替えに用いる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-16ded06c78",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-8d6710650e",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "最大長255文字（商品名の設定値）。テキスト入力。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-1e02cffcf8",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索条件は全件検索抑止の判定を経て、実質的な条件が無い場合は検索を実行しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-96df3c50a7",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームの送信",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-1129b60f2b",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "買取商品一覧（F05-03、同一エンドポイントに結果を表示）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-1cfa5e5993",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "一覧側の表示順リンク・ページリンク",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-5f14696639",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-79121461df",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-9a3066c9a6",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォーム送信",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-11a2d03e23",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "各検索条件・表示順・カードID・買取特集タグをクエリに載せる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-0d7523c76b",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "一覧で同一条件を反映した結果と選択状態を表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f05-02_0305_sheet-4_sheet-req-1c3c3ea68e",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-4",
+        "designRequirement": "検索フォームのみを表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      }
+    ],
+    "materialGapRows": []
+  }
+}

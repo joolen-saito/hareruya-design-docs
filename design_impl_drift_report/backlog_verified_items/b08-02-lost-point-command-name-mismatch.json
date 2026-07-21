@@ -1,0 +1,168 @@
+{
+  "id": "b08-02-lost-point-command-name-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b08-02_0408_sheet-4_sheet.json",
+  "sourceFindingId": "b08-02_0408_sheet-4_sheet-conformance-e20853fe542f",
+  "classification": "バッチ会員",
+  "feature": "ポイント失効",
+  "issueCategory": "実装違い",
+  "issue": "ポイント失効バッチを設計どおり `customer:batch lostPoint` で起動できない",
+  "designBook": "0408_基本設計仕様書(バッチ_会員).xlsx",
+  "reproSteps": [
+    "設計書 B08-02 の利用者視点の入口で、実行方法が `customer:batch lostPoint` とされていることを確認する",
+    "ベース実装 pf-eccube3 の `CustomerBatch` が `customer:batch` を登録し、`lostPoint` を `LostPoints` に対応付けていることを確認する",
+    "ec-cube-enterprise の `LostPointsCommand` を確認し、登録されている Symfony コマンド名が `eccube:customer:lost-points` であることを確認する",
+    "ec-cube-enterprise の `src/Eccube/Command` と設定を検索し、`customer:batch lostPoint` または同等 alias が登録されていないことを確認する"
+  ],
+  "expected": [
+    "ポイント失効バッチは `customer:batch lostPoint` で実行できる",
+    "設計コマンド名で、失効対象会員の抽出、スマレジ連携、保有ポイント更新、ポイント履歴記録の処理へ到達できる"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise にはポイント失効バッチ本体は存在するが、登録されている Symfony コマンド名は `eccube:customer:lost-points` である。`customer:batch`、`lostPoint`、`aliases`、`setAliases` を検索しても設計コマンド名を受ける互換入口は確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise のポイント失効コマンドは別名で登録されている",
+          "path": "ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php",
+          "start": 25,
+          "end": 53,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:customer:lost-points', description: 'ポイント失効バッチ')]",
+            "$this->lostPointsAction->handle();",
+            "$io->success('ポイント失効処理が完了しました。');",
+            "return Command::SUCCESS;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise のポイント失効本体はActionとして存在する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php",
+          "start": 41,
+          "end": 85,
+          "language": "php",
+          "contains": [
+            "public function handle(): void",
+            "$lostPointPlayers = $this->pointHistoryRepository->getPlayersForLostPoint();",
+            "$Player->setPoint($remainingPoint);",
+            "$this->pointHistoryEntityManager->save(",
+            "$job = $this->smaregiCustomerPointEventService->registerPointAddJob($LostPointHistory);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `CustomerBatch` が `customer:batch` を登録し、第一引数 `lostPoint` を `LostPoints` に対応付ける。`LostPoints` は失効対象会員を取得し、会員ごとにスマレジ連携、保有ポイント更新、履歴作成へ進む。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は customer:batch lostPoint を登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php",
+          "start": 12,
+          "end": 52,
+          "language": "php",
+          "contains": [
+            "'lostPoint' => 'Plugin\\HareruyaEc\\Service\\Customer\\LostPoints'",
+            "$this->setName('customer:batch')",
+            "$accountList = new $batchNames[$name]($app, $this->createOptions($input));",
+            "$accountList->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の LostPoints はポイント失効処理へ到達する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/LostPoints.php",
+          "start": 33,
+          "end": 63,
+          "language": "php",
+          "contains": [
+            "$lostPointPlayers = $app['hareruya_ec.repository.point_history']->getPlayersForLostPoint($app);",
+            "$response = $app['hareruya_ec.service.smaregi_customer']->postSmaregiPoint($player->getSmaregiId(), $losePoint, false);",
+            "$player->setPoint($lostPointPlayer['remainingPoint']);",
+            "$history = new DtbPointHistory();",
+            "$app['orm.em']->flush();"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B08-02 は利用者視点の入口として `customer:batch lostPoint` を要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+      "start": 1155,
+      "end": 1185,
+      "language": "html",
+      "contains": [
+        "確認値はpf-eccube3",
+        "<code>customer:batch lostPoint</code>",
+        "ポイント失効を実行する（<code>customer:batch lostPoint</code>）",
+        "失効対象の会員と失効後の残ポイントを取得する。"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の登録コマンド名は設計と異なる `eccube:customer:lost-points`",
+      "path": "ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php",
+      "start": 25,
+      "end": 53,
+      "language": "php",
+      "contains": [
+        "eccube:customer:lost-points",
+        "$this->lostPointsAction->handle();",
+        "return Command::SUCCESS;"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise のポイント失効本体は存在するため、差分は本体欠落ではなく設計コマンド名の入口互換欠落に限定する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php",
+      "start": 41,
+      "end": 85,
+      "language": "php",
+      "contains": [
+        "public function handle(): void",
+        "$lostPointPlayers = $this->pointHistoryRepository->getPlayersForLostPoint();",
+        "$this->pointHistoryEntityManager->save("
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `customer:batch` の batch_name として `lostPoint` を受け付ける",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php",
+      "start": 12,
+      "end": 52,
+      "language": "php",
+      "contains": [
+        "'lostPoint' => 'Plugin\\HareruyaEc\\Service\\Customer\\LostPoints'",
+        "$this->setName('customer:batch')",
+        "$accountList->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の LostPoints は設計のポイント失効処理へ到達する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/LostPoints.php",
+      "start": 33,
+      "end": 63,
+      "language": "php",
+      "contains": [
+        "getPlayersForLostPoint($app)",
+        "postSmaregiPoint($player->getSmaregiId(), $losePoint, false)",
+        "$player->setPoint($lostPointPlayer['remainingPoint']);",
+        "$app['orm.em']->flush();"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B08-02|ポイント失効|customer:batch lostPoint|lostPoint|lost-points|LostPoints\" excel_to_html/output/0408_基本設計仕様書\\(バッチ_会員\\).html design_impl_drift_report/findings/b08-02_0408_sheet-4_sheet.json ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/src/Eccube/Service/Admin/Customer ../pf-eccube3/app/Plugin/HareruyaEc/Command ../pf-eccube3/app/Plugin/HareruyaEc/Service/Customer -g '*.php' -g '*.html' -g '*.json'",
+      "rg -n \"customer:batch|lostPoint|lost-points|aliases|setAliases|AsCommand\" ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/app/config -g '*.php' -g '*.yaml' -g '*.yml'",
+      "rg -n \"customer:batch|lostPoint|LostPoints\" ../pf-eccube3/app/Plugin/HareruyaEc/Command ../pf-eccube3/app/Plugin/HareruyaEc/Service/Customer -g '*.php'"
+    ]
+  },
+  "notes": [
+    "本件はポイント失効処理本体の未実装ではなく、設計コマンド名 `customer:batch lostPoint` の互換入口がない差分として扱う。",
+    "B08-02内の日時付き開始・完了出力、会員ごとのインターバル、スマレジ連携引数/API実装などの候補は修正対象が異なるため、このチケットには統合しない。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

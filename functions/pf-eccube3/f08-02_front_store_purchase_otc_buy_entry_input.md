@@ -136,6 +136,8 @@ DB関連は ec-cube-enterprise を正とする。査定申込みの保存先で�
 | ログイン失敗の文言 | - | エントリーのログイン失敗時 | ログインフォーム直下 | 認証の最終エラーを表示する。認証仕様は別機能を正とする |
 | 登録番号を入力してください | Please enter your registration number | 適格請求書発行事業者ありで登録番号が未入力のとき | 登録番号欄 | キー `front.otcbuy.error.not_qualified_invoice_issuer_code_input`（判定はF08-03） |
 | 登録番号に全角を含むことは出来ません | Registration number cannot include full-width characters | 登録番号に全角が含まれるとき | 登録番号欄 | キー `front.otcbuy.error.not_fullwidth_qualified_invoice_issuer_code_input`（判定はF08-03） |
+| F08-02-MSG-001 | 画面中央(ダイアログ) | 要ソース確認（key_unknown: front.otcbuy.error.assessment_only） | 同リンクのclick時に isEntry=false かつ #otc_buy_order_email_first / #otc_buy_order_email_second / #otc_buy_order_password_first / #otc_buy_order_password_second のいずれかに入力があるとき | alert表示後、[id^='otcBuyOrderApply'] の pointer-events を auto に戻し return false でクリック既定動作(javascript:otc_buy_register_customer_form.submit())を中止して会員登録フォームに留まる |
+| F08-02-MSG-002 | 画面中央(ダイアログ) | 要ソース確認（key_unknown: front.otcbuy.error.membership_assessment） | 同ボタン押下で isEntry=true となった状態でフォーム送信され、#otc_buy_order_email_first / #otc_buy_order_email_second / #otc_buy_order_password_first / #otc_buy_order_password_second のいずれかが未入力のとき | alert表示後、[id^='otcBuyOrderApply'] の pointer-events を auto に戻し return false で submit を中止し、確認画面(otc_buy_confirm)へ送信せず会員登録フォームに留まる |
 
 各入力欄の必須・形式エラーはフォーム検証としてフィールド直下に表示する。登録・重複判定などの確認はF08-03を正とする。
 

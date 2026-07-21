@@ -1,0 +1,34 @@
+{
+  "chunkId": "a07-01_0507_sheet-3_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-01_0507_sheet-3_id.json#a07-01_0507_sheet-3_id-conformance-3429d8d12835",
+      "functionId": "a07-01_0507_sheet-3_id",
+      "featureNo": "A07-01",
+      "title": "A07-01 まとめて買取商品IDの取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "まとめ買取商品ID未設定時、設計はHTTP 500(例外)を要求するが、実装は空文字列をHTTP 200で正常応答している。",
+      "reason": "設計書(sheet-3, 968行/980行/993行)では、まとめ買取商品IDの設定がオプションマスタに存在しない場合は『設定値の参照で例外となり、共通例外処理に委ねる（HTTP 500相当）』『設定が無い場合は値を取得できず処理が失敗する』と明記。一方、OptionController::getBulkPurchaseId (line 38-44) は findOneBy が null を返した際に `$Option?->getOptionValue() ?? ''` で空文字列を作り、`new JsonResponse($value)`（デフォルトHTTP 200）で返しており、例外を発生させない。別経路の有無を確認するため rg で optionBulkPurchaseId / api_admin_option_bulk_purchase_id / getBulkPurchaseId / BulkPurchaseIdService を検索したが、当該ルートを処理するのはこの OptionController のみで、未設定時に例外を投げる BulkPurchaseIdService は本APIからは使用されていない。よって実装違いが事実。",
+      "designEvidence": {
+        "label": "設計要求（エラー処理・レスポンス失敗）",
+        "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html",
+        "start": 968,
+        "end": 968,
+        "contains": ["まとめ買取商品IDの設定がオプションマスタに存在しない", "共通例外処理に委ねる"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装（未設定を空文字列でHTTP 200応答）",
+          "note": "$Option が null（未設定）でも例外化せず空文字列を JsonResponse（デフォルト200）で返す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php",
+          "start": 38,
+          "end": 44,
+          "contains": ["$value = $Option?->getOptionValue() ?? ''", "new JsonResponse($value)"]
+        }
+      ]
+    }
+  ]
+}

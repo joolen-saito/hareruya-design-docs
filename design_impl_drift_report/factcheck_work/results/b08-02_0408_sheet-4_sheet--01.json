@@ -1,0 +1,16 @@
+{
+  "chunkId": "b08-02_0408_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b08-02_0408_sheet-4_sheet.json#b08-02_0408_sheet-4_sheet-conformance-4f1c56d8e864",
+      "functionId": "b08-02_0408_sheet-4_sheet",
+      "featureNo": "B08-02",
+      "title": "B08-02 ポイント失効",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "high",
+      "summary": "失効ポイントのスマレジAPI送信は実装済み（別経路の非同期メッセンジャージョブ経由で smaregiId と失効ポイントを実APIに送信）で、指摘の引用は現行コードと不一致。",
+      "reason": "指摘は『LostPointsAction が postSmaregiPoint() を引数なしで呼び、SmaregiCustomerService::postSmaregiPoint は TODO の固定成功レスポンスを返すのみで実API送信を行わない』とするが、現行の ec-cube-enterprise では両方とも事実に反する。(1) LostPointsAction.php は SmaregiCustomerService を直接呼ばず、SmaregiCustomerPointEventService::registerPointAddJob($LostPointHistory)（LostPointsAction.php:83）で EC 失効と同一トランザクションに連携ジョブ(MessengerJob)を積み、commit 成功後に dispatchPointAddMessage()（:114）で非同期メッセージを送る。失効ポイント値 $losePoint（:55）は DtbPointHistory の pointChange として記録され、連携ジョブに引き継がれる。(2) 非同期ハンドラ SmaregiCustomerPointAddMessageHandler は smaregiId と pointChange（=失効ポイント）を解決し、$this->smaregiCustomerService->postSmaregiPoint($smaregiId, $pointChange) を明示引数で呼ぶ（SmaregiCustomerPointAddMessageHandler.php:92）。(3) postSmaregiPoint(?string $smaregiId, ?int $point, ...) は TODO 固定応答ではなく、アクセストークン取得・customerId 解決の上で $this->customerApiClient->addPoint(...) を実行する実API送信である（SmaregiCustomerService.php:494-529）。指摘の行番号(LostPointsAction.php:59 は 'continue;'、SmaregiCustomerService.php:31 は use 文)も主張内容と一致せず、引用が誤り。よって『実API送信を行わない』という指摘は別経路(非同期メッセンジャージョブ)で実現済みであり REFUTED。"
+    }
+  ]
+}

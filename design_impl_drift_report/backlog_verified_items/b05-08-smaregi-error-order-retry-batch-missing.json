@@ -1,0 +1,289 @@
+{
+  "id": "b05-08-smaregi-error-order-retry-batch-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b05-08_0405_sheet-10_ec.json",
+  "sourceFindingId": "b05-08_0405_sheet-10_ec-conformance-01ad972e43ea",
+  "classification": "バッチ受注管理",
+  "feature": "スマレジEC受注連携エラー再連携",
+  "issueCategory": "実装漏れ",
+  "issue": "スマレジ連携エラーEC受注を一覧取得して再連携するバッチが未実装",
+  "designBook": "0405_基本設計仕様書(バッチ_受注管理).xlsx",
+  "reproSteps": [
+    "設計書 B05-08 の利用者視点の入口で、実行方法が `smaregi:batch checkSmaregiErrorOrder` とされていることを確認する",
+    "ベース実装 pf-eccube3 の `SmaregiBatch` が `checkSmaregiErrorOrder` を受け付け、エラー受注一覧を取得して受注ごとにスマレジポイント再連携を行うことを確認する",
+    "ec-cube-enterprise の `src/Eccube/Command` と設定を検索し、`smaregi:batch checkSmaregiErrorOrder` または同等のエラー受注再連携バッチが登録されているか確認する",
+    "ec-cube-enterprise では `OrderRepository::getSmaregiErrorOrder()` が存在するものの呼び出し元がなく、実行可能な近接処理は単一 `orderId` を受け取る `eccube:smaregi:update-point` であることを確認する"
+  ],
+  "expected": [
+    "スマレジ連携エラーEC受注再連携は `smaregi:batch checkSmaregiErrorOrder` で実行できる",
+    "スマレジ連携エラーフラグが立っているEC受注と会員情報を一覧取得する",
+    "受注ごとに会員のスマレジIDとポイント残高でスマレジポイント連携をリトライする",
+    "連携成功時は対象受注のスマレジ連携エラーフラグを解除し、連携失敗時はポイント連携エラーメッセージにレスポンス内容を記録する",
+    "1秒あたりのリクエスト上限を超えないよう、受注ごとに短いインターバルを挟む"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise には設計の `smaregi:batch checkSmaregiErrorOrder` コマンドや同等のエラー受注一覧再連携バッチがない。近接する `eccube:smaregi:update-point` は任意の `orderId` 1件を受け取る単一受注処理で、スマレジ連携エラー受注を一覧取得して走査する入口ではない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の近接コマンドは単一 orderId のスマレジ使用ポイント連携",
+          "path": "ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php",
+          "start": 26,
+          "end": 74,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:smaregi:update-point', description: 'スマレジ使用ポイント連携バッチ')]",
+            "$this->addArgument('orderId', InputArgument::OPTIONAL, '対象受注ID', '');",
+            "$this->smaregiUpdatePointAction->handle((int) $orderId);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の近接Actionは単一 orderId を find して処理する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php",
+          "start": 32,
+          "end": 79,
+          "language": "php",
+          "contains": [
+            "public function handle(int $orderId): void",
+            "$order = $this->orderRepository->find($orderId);",
+            "$response = $this->smaregiCustomerService->postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false);",
+            "->setSmaregiErrorFlg(true);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise にはエラー受注抽出メソッドがあるが呼び出し元がない",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+          "start": 889,
+          "end": 923,
+          "language": "php",
+          "contains": [
+            "public function getSmaregiErrorOrder(): mixed",
+            "->where('o.smaregi_error_flg = 1')",
+            "'order' => $order",
+            "'player' => $players[$order->getCustomer()->getId()]"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `smaregi:batch` が `checkSmaregiErrorOrder` を受け付け、エラー受注一覧を取得して受注ごとに `postSmaregiPoint()` を実行する。成功時はエラーフラグを解除し、失敗時はレスポンスを `pointErrorMessage` に保存し、受注ごとに `usleep(100000)` でインターバルを挟む。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は smaregi:batch checkSmaregiErrorOrder を登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/SmaregiBatch.php",
+          "start": 12,
+          "end": 26,
+          "language": "php",
+          "contains": [
+            "'checkSmaregiErrorOrder' => 'Plugin\\HareruyaEc\\Service\\Smaregi\\CheckSmaregiErrorOrder'",
+            "$this->setName('smaregi:batch')",
+            "->addArgument('batch_name', InputArgument::OPTIONAL);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は開始・完了日時を出してサービスを実行する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/SmaregiBatch.php",
+          "start": 37,
+          "end": 52,
+          "language": "php",
+          "contains": [
+            "$name = $input->getArgument('batch_name');",
+            "echo sprintf(\"Command start:%s \\n\", date('Y/m/d H:i:s'));",
+            "$accountList->execute();",
+            "echo sprintf(\"Command complete:%s \\n\", date('Y/m/d H:i:s'));"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 はエラー受注一覧を走査し、成功/失敗で状態更新し、受注ごとにインターバルを挟む",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php",
+          "start": 27,
+          "end": 50,
+          "language": "php",
+          "contains": [
+            "$orders = $app['hareruya_ec.repository.order_sub']->getSmaregiErrorOrder();",
+            "$response = $app['hareruya_ec.service.smaregi_customer']->postSmaregiPoint($player->getSmaregiId(), $player->getPoint(), true);",
+            "$orderSub->setSmaregiErrorFlg(false);",
+            "$orderSub->setPointErrorMessage(json_encode($response, JSON_UNESCAPED_UNICODE));",
+            "usleep(100000);",
+            "$app['orm.em']->flush();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は smaregiErrorFlg=1 の受注サブと選手情報を取得する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOrderSubRepository.php",
+          "start": 182,
+          "end": 212,
+          "language": "php",
+          "contains": [
+            "public function getSmaregiErrorOrder()",
+            "->where('os.smaregiErrorFlg = 1')",
+            "'orderSub' => $orderSub",
+            "'player' => $players[$orderSub->getOrder()->getCustomer()->getId()]"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B05-08 はスマレジ連携エラーフラグが立っている注文を取得し、スマレジ連携をリトライすることを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1905,
+      "end": 1924,
+      "language": "html",
+      "contains": [
+        "スマレジ連携エラーフラグが立っている注文データ",
+        "取得した注文データのスマレジ連携をリトライする",
+        "リトライに成功したら、当該の注文データのスマレジ連携エラーフラグをオフにする",
+        "スマレジ連携に失敗した場合、注文データのポイント連携エラーメッセージ"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B05-08 の利用者視点の入口は `smaregi:batch checkSmaregiErrorOrder` で、受注ごとの再連携とインターバルを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1935,
+      "end": 1965,
+      "language": "html",
+      "contains": [
+        "確認値はpf-eccube3",
+        "<code>smaregi:batch checkSmaregiErrorOrder</code>",
+        "受注ごとに、会員のスマレジIDとポイントでスマレジポイント連携をリトライする",
+        "連携が成功した場合は受注サブの連携エラーフラグを解除する",
+        "受注ごとに短いインターバルを挟む"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B05-08 は成功/失敗時の副作用と流量制御を定義している",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1967,
+      "end": 1992,
+      "language": "html",
+      "contains": [
+        "連携エラー受注のポイント連携をリトライし、結果で状態を更新する",
+        "成功時出力</td><td>連携成功受注のエラーフラグ解除",
+        "失敗時出力</td><td>連携失敗受注へのエラーメッセージ記録",
+        "流量制御のため受注ごとにインターバルを挟む"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の実行可能な近接コマンドは単一 `orderId` の `eccube:smaregi:update-point` で、B05-08の一覧再連携入口ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php",
+      "start": 26,
+      "end": 74,
+      "language": "php",
+      "contains": [
+        "#[AsCommand(name: 'eccube:smaregi:update-point'",
+        "$this->addArgument('orderId'",
+        "$this->smaregiUpdatePointAction->handle((int) $orderId);"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の近接Actionは単一 `orderId` を処理し、B05-08のエラー受注一覧を走査しない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php",
+      "start": 32,
+      "end": 79,
+      "language": "php",
+      "contains": [
+        "public function handle(int $orderId): void",
+        "$order = $this->orderRepository->find($orderId);",
+        "$this->entityManager->flush();"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise にエラー受注抽出メソッドは存在するが検索上呼び出し元がなく、B05-08バッチとして未配線",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+      "start": 889,
+      "end": 923,
+      "language": "php",
+      "contains": [
+        "public function getSmaregiErrorOrder(): mixed",
+        "o.smaregi_error_flg = 1",
+        "'order' => $order"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "共通HTTPクライアントのRateLimiter待機はあるが、未実装のB05-08エラー受注一覧再連携フローに組み込まれた受注ごとのインターバルではない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiGuzzleClientFactory.php",
+      "start": 84,
+      "end": 95,
+      "language": "php",
+      "contains": [
+        "$limiter = $factory->create(self::RATE_LIMIT_STORAGE_KEY);",
+        "$rateLimit = $limiter->consume(1);",
+        "$rateLimit->wait();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `isSync=true` の場合にスマレジポイント更新を絶対値モードにする",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CustomerService.php",
+      "start": 570,
+      "end": 578,
+      "language": "php",
+      "contains": [
+        "private function getSmaregiPointParams($customerId, $point, $isSync)",
+        "$method = $isSync ? self::METHOD['absolute'] : self::METHOD['relative'];"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `smaregi:batch` の batch_name として `checkSmaregiErrorOrder` を受け付ける",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/SmaregiBatch.php",
+      "start": 12,
+      "end": 26,
+      "language": "php",
+      "contains": [
+        "'checkSmaregiErrorOrder' => 'Plugin\\HareruyaEc\\Service\\Smaregi\\CheckSmaregiErrorOrder'",
+        "$this->setName('smaregi:batch')"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 はエラー受注一覧を走査してポイント再連携、成否更新、受注ごとのインターバルを行う",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php",
+      "start": 27,
+      "end": 50,
+      "language": "php",
+      "contains": [
+        "$orders = $app['hareruya_ec.repository.order_sub']->getSmaregiErrorOrder();",
+        "postSmaregiPoint($player->getSmaregiId(), $player->getPoint(), true)",
+        "$orderSub->setSmaregiErrorFlg(false);",
+        "$orderSub->setPointErrorMessage",
+        "usleep(100000);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は smaregiErrorFlg=1 の受注サブと選手情報を抽出する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOrderSubRepository.php",
+      "start": 182,
+      "end": 212,
+      "language": "php",
+      "contains": [
+        "public function getSmaregiErrorOrder()",
+        "os.smaregiErrorFlg = 1",
+        "'player' => $players[$orderSub->getOrder()->getCustomer()->getId()]"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B05-08|スマレジEC受注連携エラー再連携|checkSmaregiErrorOrder|smaregi:batch|スマレジ連携エラーフラグ|インターバル\" excel_to_html/output/0405_基本設計仕様書\\(バッチ_受注管理\\).html",
+      "rg -n \"checkSmaregiErrorOrder|smaregi:batch|SmaregiErrorOrder|getSmaregiErrorOrder|SmaregiUpdatePoint|update-point|sleep\\(|usleep\\(|RateLimiter|interval\" ../ec-cube-enterprise/src ../ec-cube-enterprise/app/config 2>/dev/null",
+      "rg -n \"checkSmaregiErrorOrder|SmaregiErrorOrder|getSmaregiErrorOrder|smaregi:batch|postSmaregiPoint|usleep\\(|sleep\\(\" ../pf-eccube3/app/Plugin/HareruyaEc 2>/dev/null"
+    ],
+    "notes": [
+      "codex gpt-5.5 high reviewer Schrodinger: VERIFIED。B05-08のコマンド入口・エラー受注一覧処理・受注ごとのインターバルは、同一の `smaregi:batch checkSmaregiErrorOrder` バッチ未配線として統合するのが妥当。enterprise の共通RateLimiterはHTTPクライアントの待機であり、B05-08のエラー受注一覧再連携ループを提供しない。",
+      "レビュー指摘どおり、設計HTMLの `DBへの登録・更新・削除は行わない` という生成文は、同じ設計内の成功時エラーフラグ解除・失敗時エラーメッセージ記録・pf-eccube3実装と矛盾するため根拠には使わない。",
+      "B05-08の3候補（コマンド入口、エラー受注一覧処理、受注ごとのインターバル）は、同じ `smaregi:batch checkSmaregiErrorOrder` バッチ未配線を指すため1件に統合する。",
+      "enterprise の `OrderRepository::getSmaregiErrorOrder()` は設計に近い抽出を持つが、検索上呼び出し元がなく、実行可能な近接処理は単一 `orderId` の `eccube:smaregi:update-point` である。"
+    ]
+  }
+}

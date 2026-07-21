@@ -1,0 +1,10 @@
+{
+  "chunkId": "a06-12_0506_sheet-12_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-12_0506_sheet-12_sheet.json#a06-12_0506_sheet-12_sheet-conformance-4b813c7dc99a",
+      "refuted": false,
+      "reason": "反証できず、指摘は維持。(1)別実装なし: ルート名 api_admin_fixed_price_section を持つのは OptionController::getFixedPriceSection() のみで、実体は `$value = $Option?->getOptionValue() ?? '';`（57行）→`return new JsonResponse($value);`（59行）とスカラー文字列をそのまま返す。code/section_id へラップする箇所を rg 'section_id|code.*=>.*200|onKernelResponse|ResponseEvent' で src/ 全体・EventListener・MTGBuyer配下Controller/Subscriber/Serializer を横断したが、応答本文を {\"code\":200,\"section_id\":...} 形へ整形する実装は存在しない（Log/Maintenance/CSPHeader Listener はヘッダ系のみで本文非改変）。SummaryByDateAggregator は同 option_value を内部集計に使うだけで本APIの応答は生成しない。(2)引用の正しさ: implEvidence の 57/59行、テスト 184-185行（json_encode($expectedValue) 期待、$expectedValue='29'）は実ファイルと完全一致。designEvidence 3210-3211行に code(文字列/必ず200)・section_id(文字列/固定価格商品部門ID) のレスポンスデータ定義があり、詳細設計 3275行(code:integer 成功時200 / section_id:string)・サンプル 3280-3283行 {\"code\":200,\"section_id\":\"1\"}・図形サンプル 3227行 {\"code\":200,\"section_id\":30} と多重に一致。(3)設計側の除外なし: 「本書で扱わないこと」は部門一覧取得・固定価格部門の設定のみで、本APIの応答形は対象。『カスタマイズ区分は現行踏襲／挙動は現行を正とし』は現行pf-apiが code+section_id のJSONオブジェクトを返す挙動を正とする趣旨で、むしろオブジェクト返却を要求する側であり除外にならない。処理フロー 3265行も『コード(200)・部門IDをJSONで返す』と明記。(4)要求の読み違いなし: エンドポイント GET /{api_v1_route}/admin/fixedPriceSection.json は実装ルートと一致し別画面/別APIではない。(5)重複なし。実装はトップレベル型がスカラー文字列で code/section_id フィールドを一切構築しておらず、設計の外部契約と不一致である事実を自ら確認した。"
+    }
+  ]
+}

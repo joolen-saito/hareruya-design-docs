@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m05_22_admin_order_order_shipping_standby_print_delivery_slips_ja_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・新規ウィンドウのHTML/URL・HTTPステータスなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・新規ウィンドウのHTML/URL・HTTPステータスなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 設計源は pf-eccube3 のリバースだが、刷新先 ec-cube-enterprise に同等画面（`ShippingStandby/edit.twig`＋印刷ルート `admin_shipping_standby_print_delivery_slips`）が実在する（screenExists=true）。
 
@@ -25,32 +25,32 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-001	IT-25	操作起点	P1	出荷指示リスト編集画面に「納品書印刷（日本語）」ボタンが表示される	管理ログイン済／SEED-M05-22-STANDBY-JP（編集可能な出荷指示リスト）	—	"1. 出荷指示リスト編集画面（/{admin_route}/standby/{id}/edit）を開く"	「納品書印刷（日本語）」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-001	IT-25	操作起点	P1	出荷指示リスト編集画面に「納品書印刷（日本語）」ボタンが表示される	管理ログイン済／SEED-M05-22-STANDBY-JP（編集可能な出荷指示リスト）	—	1. 出荷指示リスト編集画面（/{admin_route}/standby/{id}/edit）を開く	「納品書印刷（日本語）」ボタンが表示されること。				
 m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-002	IT-25	UI部品	P2	編集画面の一覧に全選択チェックと各行チェック（初期オン）が表示される	管理ログイン済／SEED-M05-22-STANDBY-JP	—	"1. 出荷指示リスト編集画面を開く
-2. 一覧表のチェック列を確認する"	ヘッダの全選択チェックと各受注行のチェックが表示され、各行チェックが初期状態でオンであること。
+2. 一覧表のチェック列を確認する"	ヘッダの全選択チェックと各受注行のチェックが表示され、各行チェックが初期状態でオンであること。				
 m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-010	IT-15	状態変化	P1	チェックオンで押下すると新規ウィンドウが開き納品書HTMLが印刷ルートに表示される	管理ログイン済／SEED-M05-22-STANDBY-JP（国内配送の受注を含む）	受注行のチェックがオン	"1. 出荷指示リスト編集画面を開く
 2. 1件以上の受注行をオンにする
-3. 「納品書印刷（日本語）」を押下する"	新規ウィンドウ（newwin）が開き、印刷ルート /{admin_route}/standby/{id}/print/delivery/ja に納品書HTML（タイトル「納品書」）が表示されること。
+3. 「納品書印刷（日本語）」を押下する"	新規ウィンドウ（newwin）が開き、印刷ルート /{admin_route}/standby/{id}/print/delivery/ja に納品書HTML（タイトル「納品書」）が表示されること。				
 m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-011	IT-18	フォーマット定義	P2	納品書HTMLに帳票フォーマット項目（注文番号・送り主）が描画される	管理ログイン済／SEED-M05-22-STANDBY-JP（国内配送の受注を含む）	受注行のチェックがオン	"1. 編集画面で受注行をオンにし「納品書印刷（日本語）」を押下する
-2. 新規ウィンドウの本文を確認する"	納品書HTML本文に「注文番号」「送り主」の項目が描画されること（対象データが空でない国内配送納品書であること）。
+2. 新規ウィンドウの本文を確認する"	納品書HTML本文に「注文番号」「送り主」の項目が描画されること（対象データが空でない国内配送納品書であること）。				
 m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-012	IT-25	UI部品	P3	納品書HTML画面に「印刷する」ボタンが表示される	管理ログイン済／SEED-M05-22-STANDBY-JP（国内配送の受注を含む）	受注行のチェックがオン	"1. 編集画面で受注行をオンにし「納品書印刷（日本語）」を押下する
-2. 新規ウィンドウを確認する"	納品書HTML画面に「印刷する」ボタンが表示されること。
+2. 新規ウィンドウを確認する"	納品書HTML画面に「印刷する」ボタンが表示されること。				
 m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-013	IT-03	画面遷移	P2	ボタン成功後も親（編集）ウィンドウはその場に留まる	管理ログイン済／SEED-M05-22-STANDBY-JP（国内配送の受注を含む）	受注行のチェックがオン	"1. 編集画面で受注行をオンにし「納品書印刷（日本語）」を押下する
-2. 親ウィンドウのURLを確認する"	子ウィンドウのみ納品書HTMLが表示され、親（編集）ウィンドウは編集画面URLにとどまること。
+2. 親ウィンドウのURLを確認する"	子ウィンドウのみ納品書HTMLが表示され、親（編集）ウィンドウは編集画面URLにとどまること。				
 m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-014	IT-27	実行結果	P2	一部の受注のみオンにして押下するとオンにした受注の納品書のみ印刷され未選択受注は出ない	管理ログイン済／SEED-M05-22-STANDBY-JP（国内配送の受注を複数含む）	一部受注行のみオン	"1. 編集画面で複数受注のうち一部の行のみをオンにする
 2. 「納品書印刷（日本語）」を押下する
-3. 新規ウィンドウの納品書本文を確認する"	オンにした受注の納品書のみが描画され、オフにした受注の注文番号・宛先が納品書に現れないこと（帳票内容の対象/非対象差分は帳票内容検査＝手動/間接）。
+3. 新規ウィンドウの納品書本文を確認する"	オンにした受注の納品書のみが描画され、オフにした受注の注文番号・宛先が納品書に現れないこと（帳票内容の対象/非対象差分は帳票内容検査＝手動/間接）。				
 m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-040	IT-16	実行結果	P2	納品書の請求欄・明細・配送方法名の各値が対象データと一致する	管理ログイン済／SEED-M05-22-STANDBY-JP（国内配送の受注を含む）	受注行のチェックがオン	"1. 編集画面で受注行をオンにし「納品書印刷（日本語）」を押下する
-2. 新規ウィンドウの納品書の請求欄テーブル・明細・配送方法名を確認する"	「小計」「送料」「手数料」「ポイント使用」「発送手段名」「請求金額（税込）」「内税」および明細（商品名・数量）・並び順が対象受注データと一致すること（帳票内容厳密検査＝手動）。
+2. 新規ウィンドウの納品書の請求欄テーブル・明細・配送方法名を確認する"	「小計」「送料」「手数料」「ポイント使用」「発送手段名」「請求金額（税込）」「内税」および明細（商品名・数量）・並び順が対象受注データと一致すること（帳票内容厳密検査＝手動）。				
 m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-020	IT-22	必須制御	P1	全チェックオフで押下するとアクセス不存在相当（order_ids空）となり納品書が表示されない	管理ログイン済／SEED-M05-22-STANDBY-JP	全受注行のチェックをオフ	"1. 編集画面で全受注行のチェックをオフにする
-2. 「納品書印刷（日本語）」を押下する"	送信本文に order_ids が載らずアクセス不存在に相当する異常応答となり、新規ウィンドウに納品書HTML（タイトル「納品書」）が表示されないこと。
-m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-021	IT-13	URL直接アクセス	P2	印刷URLへ order_ids 無しで直接アクセスするとアクセス不存在（404）になる	管理ログイン済／SEED-M05-22-STANDBY-JP	order_ids 無し	"1. 印刷ルート /{admin_route}/standby/{id}/print/delivery/ja（実在リストID）へ order_ids 無しでGETアクセスする"	アクセス不存在に相当する異常応答（HTTP 404）になること。
-m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-022	IT-13	URL直接アクセス	P2	存在しない出荷指示リストIDの印刷URLはアクセス不存在（404）になる	管理ログイン済	存在しないリストID	"1. 印刷ルート /{admin_route}/standby/{存在しないID}/print/delivery/ja へアクセスする"	リスト欠としてアクセス不存在に相当する異常応答（HTTP 404）になること。
-m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-023	IT-22	DBとの相関バリデーション	P2	当該リストに属さない受注IDのみを order_ids に載せた印刷URLはアクセス不存在（404）になる	管理ログイン済／SEED-M05-22-STANDBY-JP	order_ids に当該リスト非所属の受注ID	"1. 印刷ルート /{admin_route}/standby/{実在リストID}/print/delivery/ja へ、当該リストに属さない受注IDを order_ids に載せてアクセスする"	送信対象受注が当リストに属さず配送主キー集合が空となり、アクセス不存在に相当する異常応答（HTTP 404）になること。
-m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-024	IT-15	状態変化	P2	オン受注の配送がすべて海外配送（is_abroad真）のみのとき国内向け結果が空となりアクセス不存在になる	管理ログイン済／SEED-M05-22-STANDBY-ABROAD（全海外配送のみのリスト）	全海外配送受注をオン	"1. 全配送が海外配送方法のみの受注をオンにし「納品書印刷（日本語）」を押下する"	国内配送フラグ偽の結合結果が空となり、納品書が表示されずアクセス不存在に相当する異常応答となること（専用シード要・手動/間接で確認）。
-m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-025	IT-15	対象データ	P3	顧客にプレイヤ紐付けが無い受注では会員結合不能で結果が空または異常になる	管理ログイン済／SEED-M05-22-STANDBY-NOPLAYER（プレイヤ未紐付け顧客の受注）	プレイヤ未紐付け受注をオン	"1. プレイヤ紐付けの無い顧客の受注をオンにし「納品書印刷（日本語）」を押下する"	会員プレイヤ結合が成立せず納品書結果が空または共通例外となること（専用シード要・手動/間接で確認）。
-m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-030	IT-15	未認証	P1	未ログインで印刷URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログイン状態で印刷ルート /{admin_route}/standby/{id}/print/delivery/ja へアクセスする"	管理ログイン画面へ誘導されること。
+2. 「納品書印刷（日本語）」を押下する"	送信本文に order_ids が載らずアクセス不存在に相当する異常応答となり、新規ウィンドウに納品書HTML（タイトル「納品書」）が表示されないこと。				
+m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-021	IT-13	URL直接アクセス	P2	印刷URLへ order_ids 無しで直接アクセスするとアクセス不存在（404）になる	管理ログイン済／SEED-M05-22-STANDBY-JP	order_ids 無し	1. 印刷ルート /{admin_route}/standby/{id}/print/delivery/ja（実在リストID）へ order_ids 無しでGETアクセスする	アクセス不存在に相当する異常応答（HTTP 404）になること。				
+m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-022	IT-13	URL直接アクセス	P2	存在しない出荷指示リストIDの印刷URLはアクセス不存在（404）になる	管理ログイン済	存在しないリストID	1. 印刷ルート /{admin_route}/standby/{存在しないID}/print/delivery/ja へアクセスする	リスト欠としてアクセス不存在に相当する異常応答（HTTP 404）になること。				
+m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-023	IT-22	DBとの相関バリデーション	P2	当該リストに属さない受注IDのみを order_ids に載せた印刷URLはアクセス不存在（404）になる	管理ログイン済／SEED-M05-22-STANDBY-JP	order_ids に当該リスト非所属の受注ID	1. 印刷ルート /{admin_route}/standby/{実在リストID}/print/delivery/ja へ、当該リストに属さない受注IDを order_ids に載せてアクセスする	送信対象受注が当リストに属さず配送主キー集合が空となり、アクセス不存在に相当する異常応答（HTTP 404）になること。				
+m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-024	IT-15	状態変化	P2	オン受注の配送がすべて海外配送（is_abroad真）のみのとき国内向け結果が空となりアクセス不存在になる	管理ログイン済／SEED-M05-22-STANDBY-ABROAD（全海外配送のみのリスト）	全海外配送受注をオン	1. 全配送が海外配送方法のみの受注をオンにし「納品書印刷（日本語）」を押下する	国内配送フラグ偽の結合結果が空となり、納品書が表示されずアクセス不存在に相当する異常応答となること（専用シード要・手動/間接で確認）。				
+m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-025	IT-15	対象データ	P3	顧客にプレイヤ紐付けが無い受注では会員結合不能で結果が空または異常になる	管理ログイン済／SEED-M05-22-STANDBY-NOPLAYER（プレイヤ未紐付け顧客の受注）	プレイヤ未紐付け受注をオン	1. プレイヤ紐付けの無い顧客の受注をオンにし「納品書印刷（日本語）」を押下する	会員プレイヤ結合が成立せず納品書結果が空または共通例外となること（専用シード要・手動/間接で確認）。				
+m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja（受注管理_出荷指示_納品書印刷（日本語））	E2E-M05-22-030	IT-15	未認証	P1	未ログインで印刷URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 未ログイン状態で印刷ルート /{admin_route}/standby/{id}/print/delivery/ja へアクセスする	管理ログイン画面へ誘導されること。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象セレクタ・仕様根拠・元ITケースID（TSV外）

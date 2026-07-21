@@ -1,0 +1,217 @@
+{
+  "id": "f03-06-recently-viewed-empty-message-not-rendered",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f03-06_0303_sheet-8_sheet.json",
+  "sourceFindingId": "f03-06_0303_sheet-8_sheet-conformance-dee3a0ea42e6",
+  "classification": "フロント商品",
+  "feature": "最近チェックした商品",
+  "issueCategory": "実装漏れ",
+  "issue": "履歴Cookieがない場合に最近見た商品なしメッセージが表示されない",
+  "designBook": "0303_基本設計仕様書(フロント_商品).xlsx",
+  "reproSteps": [
+    "履歴Cookieがないブラウザ状態で http://localhost:8080/ja/ を開く",
+    "トップページ下部の最近チェックした商品ブロックを確認する",
+    "必要に応じて http://localhost:8080/ja/products/list または商品詳細画面でも同ブロックを確認する"
+  ],
+  "expected": [
+    "履歴Cookieがない場合でも、最近見た商品の見出しを表示する",
+    "履歴Cookieがない場合は、履歴無しメッセージ「最近見た商品はありません。」を表示する",
+    "英語表示では履歴無しメッセージ「No Recently Seen Items」を表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では RecentlyViewedBlockPayloadBuilder::build() が history Cookie 空文字時に ProductClasses を空配列で返す。Block/recently_viewed.twig は `{% if ProductClasses|length > 0 %}` の中に見出し・一覧描画をすべて入れており、else 分岐や no-content メッセージがないため、履歴Cookieがない場合はブロック自体が出力されない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise history Cookieなし時は空配列を返す",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php",
+          "start": 50,
+          "end": 68,
+          "language": "php",
+          "contains": [
+            "$historyCookie = $mainRequest->cookies->get('history', '');",
+            "if ($historyCookie === '')",
+            "'ProductClasses' => []",
+            "if ($productIds === [])"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise ProductClassesが0件ならブロック全体を描画しない",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/recently_viewed.twig",
+          "start": 1,
+          "end": 58,
+          "language": "twig",
+          "contains": [
+            "{% if ProductClasses|length > 0 %}",
+            "{{ 'front.top.recently_viewed.title'|trans }}",
+            "{% endif %}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 見出しキーのみ存在し履歴無しキーがない",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 1209,
+          "end": 1209,
+          "language": "yaml",
+          "contains": [
+            "front.top.recently_viewed.title: 最近チェックした商品"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では HistoryController が history Cookie がない場合に `Block/history.twig` を変数なしで描画し、テンプレート側が `history is defined` で分岐する。history 未定義時は見出しを表示したうえで `hareruyaec.history.no_content` を出力するため、履歴無しメッセージが表示される。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 history Cookieなし時はテンプレートをそのまま描画",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Block/HistoryController.php",
+          "start": 10,
+          "end": 31,
+          "language": "php",
+          "contains": [
+            "$history = $request->cookies->get('history');",
+            "if (is_null($history))",
+            "return $app->render('Block/history.twig');",
+            "'history' => $historyData"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 history未定義時の履歴無しメッセージ",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/history.twig",
+          "start": 1,
+          "end": 17,
+          "language": "twig",
+          "contains": [
+            "<h2>{{ trans('hareruyaec.history.title') }}</h2>",
+            "{% if history is defined %}",
+            "{{ trans('hareruyaec.history.no_content') }}"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 英語履歴無しメッセージ",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.en.yml",
+          "start": 312,
+          "end": 314,
+          "language": "yaml",
+          "contains": [
+            "history:",
+            "title: Recently Viewed",
+            "no_content: No Recently Seen Items"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 日本語履歴無しメッセージ",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml",
+          "start": 328,
+          "end": 330,
+          "language": "yaml",
+          "contains": [
+            "history:",
+            "no_content: 最近見た商品はありません。"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "最近見た商品ブロックは履歴無し表示を扱う",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 2937,
+      "end": 2944,
+      "language": "html",
+      "contains": [
+        "最近見た商品",
+        "履歴が無い場合の表示",
+        "pf-eccube3"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "履歴なし時の表示要件",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 2961,
+      "end": 2966,
+      "language": "html",
+      "contains": [
+        "履歴が無い場合は、最近見た商品が無い旨のメッセージを表示する",
+        "Cookieが無い場合は、見出しと履歴無しの表示のみを描画する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "エッジケース・エラー処理・表示文言",
+      "path": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+      "start": 2972,
+      "end": 3011,
+      "language": "html",
+      "contains": [
+        "履歴Cookieが無い場合は履歴無しの表示とする",
+        "履歴Cookieが無い",
+        "最近見た商品はありません。",
+        "No Recently Seen Items"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "空履歴時はProductClasses空配列",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php",
+      "start": 50,
+      "end": 68,
+      "language": "php",
+      "contains": [
+        "$historyCookie = $mainRequest->cookies->get('history', '');",
+        "'ProductClasses' => []"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "0件時のelseがないため見出しも履歴無しメッセージも出ない",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/recently_viewed.twig",
+      "start": 1,
+      "end": 58,
+      "language": "twig",
+      "contains": [
+        "{% if ProductClasses|length > 0 %}",
+        "{{ 'front.top.recently_viewed.title'|trans }}",
+        "{% endif %}"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "Cookieなし時のController挙動",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Block/HistoryController.php",
+      "start": 10,
+      "end": 31,
+      "language": "php",
+      "contains": [
+        "if (is_null($history))",
+        "return $app->render('Block/history.twig');"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "履歴なし時のテンプレート分岐",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/history.twig",
+      "start": 1,
+      "end": 17,
+      "language": "twig",
+      "contains": [
+        "{% else %}",
+        "{{ trans('hareruyaec.history.no_content') }}"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"履歴Cookie|最近見た商品はありません|No Recently Seen Items|history.no_content|block/history\" hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書\\(フロント_商品\\).html",
+      "rg -n \"front\\.top\\.recently_viewed\\.title|recently_viewed\\.no|No Recently Seen|最近見た商品はありません|RecentlyViewed|block/history|history\" ec-cube-enterprise/src/Eccube/Controller ec-cube-enterprise/src/Eccube/Service ec-cube-enterprise/src/Eccube/Resource/template ec-cube-enterprise/src/Eccube/Resource/locale",
+      "rg -n \"history\\.no_content|最近見た商品はありません|No Recently Seen Items|Recently Viewed|最近見た商品|block/history|HistoryController|history.twig\" pf-eccube3/app/Plugin/HareruyaEc/Controller pf-eccube3/app/Plugin/HareruyaEc/Resource",
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f03-06_0303_sheet-8_sheet.json#f03-06_0303_sheet-8_sheet-conformance-dee3a0ea42e6'",
+      "python3 design_impl_drift_report/export_verified_backlog_items.py --id f03-06-recently-viewed-empty-message-not-rendered --dry-run",
+      "python3 design_impl_drift_report/export_verified_backlog_items.py --id f03-06-recently-viewed-empty-message-not-rendered"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。"
+  }
+}

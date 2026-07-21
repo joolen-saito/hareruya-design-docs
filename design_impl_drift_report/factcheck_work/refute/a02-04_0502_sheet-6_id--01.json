@@ -1,0 +1,15 @@
+{
+  "chunkId": "a02-04_0502_sheet-6_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-04_0502_sheet-6_id.json#a02-04_0502_sheet-6_id-conformance-45afd3b94cd7",
+      "refuted": false,
+      "reason": "反証失敗。指摘は維持。(1)引用検証: 設計HTML line1568は 404本文を明示的に <code>{code, message}</code>（\"Not Found\"）と記載（確認済）。実装 ProductController.php:361-399 の getPopupProductByOldProductId は該当なし時 NotFoundException('Not Found') を投げ、380-388 の catch(BaseApiException) で {'code'=>getStatusCode(), 'errors'=>getErrors()} を返す。NotFoundException.php は parent::__construct(errors:[$message]) で 'Not Found' を errors配列に格納。よって実際の本文は {code, errors:['Not Found']} で message キー無し（確認済）。(2)別実装探索: rg で 'message' => の全出現を確認したところ、ProductController.php:125-126 で {code, message} を返す分岐は存在するが、それは別ルート products_search（/product/search）であり本件の旧商品IDルートではない。同ファイル line226 も別ルートで {code, errors:['Not Found']} を返す。当該旧商品IDルート(386-387)は明確に errors キー。ExceptionListener による再整形も、コントローラが BaseApiException を自前 catch して直接 JsonResponse を返すため経由しない。(3)設計除外/読み違い/重複: 該当なし。message→errors の観測可能な差異は実在。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-04_0502_sheet-6_id.json#a02-04_0502_sheet-6_id-conformance-571f2ae20163",
+      "refuted": false,
+      "reason": "反証失敗。指摘は維持。最強の反証候補=設計の内部矛盾を検討した。Excel項目表(line1497周辺)は price01/price02/stock/weeklySold を『数値(整数)』=integer と宣言しており、実装(integer)と一致するように見える。しかし同一Excelシート自身のサンプルレスポンス(line1508-1518)は \"price02\":\"50\", \"stock\":\"17\", \"weeklySold\":\"1\" と全て引用符付き文字列で示す。すなわちExcel内部でも『型欄=integer』と『サンプル=string』が矛盾し、具体的なJSONワイヤ契約であるサンプルは string。詳細設計(リバース)line1566 はこの曖昧さを明示的に解消し price01/price02/stock=『Doctrineのdecimal値のため数値文字列で返す』、weeklySold=『集計(SUM)結果のため数値文字列で返す』と理由付きで string を規定、そのサンプル(line1575-1581)も \"500.00\"/\"12.00\"/\"3\" と文字列。4記述中サンプル×2+リバース型表の計3つが string。実装検証: ProductRepository.php:findPopupProductByOldProductId の RSM は price01/price02/stock/weeklySold を全て addScalarResult(...,'integer') でマッピング(Doctrine integer型→PHP int)、PopupResponseBuilder.php:33-34 は price01/price02 を素通し(既にint)、35/41 で stock/weeklySold を (int) キャスト。$this->json()→json_encode で非引用の整数(例 500)を出力し、全サンプルの引用文字列と不一致。同一review set が a4fac59479b1 を『サンプルが項目表を上書きする』論理で REFUTED した基準を本件へ一貫適用すると、サンプル=string / 実装=integer の観測可能な差異は CONFIRMED を支持する。文字列化処理も別ルートも見当たらず反証不成立。"
+    }
+  ]
+}

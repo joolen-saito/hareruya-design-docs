@@ -1,0 +1,72 @@
+{
+  "functionId": "m13-14_0214_sheet-21_sheet",
+  "featureNo": "M13-14",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-21:5477",
+      "designExpectation": "利用者視点の入口は GET /{admin_route}/banner/event、GET /{admin_route}/banner/event/{html_class}、POST /{admin_route}/banner/event または /{admin_route}/banner/event/{html_class}、DELETE /{admin_route}/banner/event/delete とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/BannerController.php:57",
+      "implementationActual": "実装は GET /%eccube_admin_route%/event/banner、GET /%eccube_admin_route%/event/banner/{htmlClass}、POST /%eccube_admin_route%/event/banner/settings、POST /%eccube_admin_route%/event/banner/{htmlClass}/settings、DELETE /%eccube_admin_route%/event/banner/delete を定義している。ナビも admin_event_banner を参照している。",
+      "mismatchReason": "設計の外部URL契約は /banner/event 系だが、実装は /event/banner 系で、POST も /settings サブパスへ分離されている。別キーワード（admin_banner/admin_event_banner/banner/event/event/banner/バナー設定）で Controller/Twig/nav/locale を再検索したが、設計どおりの /banner/event 系ルートは確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "一覧表示 GET",
+          "design": "GET /{admin_route}/banner/event",
+          "implementation": "GET /%eccube_admin_route%/event/banner（BannerController.php:57）",
+          "mismatch": "パス順序が /banner/event ではなく /event/banner。"
+        },
+        {
+          "item": "店舗絞り込み GET",
+          "design": "GET /{admin_route}/banner/event/{html_class}",
+          "implementation": "GET /%eccube_admin_route%/event/banner/{htmlClass}（BannerController.php:58）",
+          "mismatch": "パス順序が /banner/event/{html_class} ではなく /event/banner/{htmlClass}。"
+        },
+        {
+          "item": "設定・更新 POST",
+          "design": "POST /{admin_route}/banner/event または /{admin_route}/banner/event/{html_class}",
+          "implementation": "POST /%eccube_admin_route%/event/banner/settings または /%eccube_admin_route%/event/banner/{htmlClass}/settings（BannerController.php:71-72、banner.twig:148-159）",
+          "mismatch": "設計の同一URL POST ではなく /settings サブパスへ送信する。"
+        },
+        {
+          "item": "削除 DELETE",
+          "design": "DELETE /{admin_route}/banner/event/delete",
+          "implementation": "DELETE /%eccube_admin_route%/event/banner/delete（BannerController.php:121）",
+          "mismatch": "パス順序が /banner/event/delete ではなく /event/banner/delete。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-21:5488",
+      "designExpectation": "バナーの「削除」は DELETE /{admin_route}/banner/event/delete で指定したバナーを削除し、イベントバナーの設定・更新・削除を成功時出力および副作用とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Event/BannerController.php:121",
+      "implementationActual": "DELETE admin_event_banner_delete は select_file クエリを受け取り、EventBannerStorageService::deleteObjectIfExists で S3 上の画像ファイルを削除する。MtbBanner の削除、dtb_banner_base_info/dtb_banner_language 関連の削除、EntityManager::remove は確認できない。",
+      "mismatchReason": "設計はバナー設定そのものの削除を要求しているが、実装の削除導線は画像一覧の保管済み画像削除であり、DB の mtb_banner 設定削除ではない。別キーワード（指定したバナーを削除、select_file、MtbBanner remove、admin_event_banner_delete、dtb_banner_base_info、dtb_banner_language）で Controller/Service/Form/Twig/Repository/Entity を再検索したが、指定バナー設定を削除する実装は確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "削除対象",
+          "design": "指定したバナー設定",
+          "implementation": "select_file で指定された S3 オブジェクト（BannerController.php:141、EventBannerStorageService.php:122）",
+          "mismatch": "DB上のバナー設定ではなく画像ファイルを対象にしている。"
+        },
+        {
+          "item": "削除処理",
+          "design": "イベントバナーの設定・更新・削除",
+          "implementation": "deleteObjectIfExists が S3 ファイル存在時に deleteFile を呼ぶ（EventBannerStorageService.php:162-166）",
+          "mismatch": "mtb_banner や補助表の削除処理がない。"
+        },
+        {
+          "item": "削除後遷移",
+          "design": "削除後は設定画面へ戻る",
+          "implementation": "削除後は #upload_wrap 付きで画像設定枠へ戻る（BannerController.php:367-373）",
+          "mismatch": "バナー設定削除ではなく画像削除フローの戻り先になっている。"
+        }
+      ]
+    }
+  ]
+}

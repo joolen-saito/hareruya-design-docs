@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m07_01_admin_online_purchase_purchase_online_search_list_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は pf-eccube3（HareruyaEc プラグイン）由来のリバース設計だが、刷新先 ec-cube-enterprise に同一画面（route `admin_purchase_list`／`@admin/Purchase/index.twig`／`PurchaseListType`）が実在するためセレクタを導出できた。本機能は**参照系（検索一覧）**であり、登録・更新・削除の永続化は持たない。
 
@@ -24,75 +24,75 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-040	IT-13	URL直接アクセス	P1	未ログインで一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/purchase/list へ直接アクセスする"	管理ログイン画面へ誘導されること。
-m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-001	IT-25	UI部品	P1	初期表示で検索パネルの主要入力項目が表示される	ログイン済／SEED-M07-01-ADMIN	—	"1. 一覧画面(/admin/purchase/list)を開く"	買取状況・買取番号・注文者名・商品名1〜3・検索ボタンが表示されること。
-m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-002	IT-03	画面遷移	P2	初期表示でAND/OR・本人確認・利用回数・棚戻しの入力項目が存在する	ログイン済／SEED-M07-01-ADMIN	—	"1. 一覧画面を開く"	AND/OR検索ラジオ・本人確認チェック・利用回数(下限/上限)・棚戻し未完了のみのチェックが存在すること。
-m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-003	IT-25	UI部品	P2	初期表示で買取依頼日(開始)に既定の日付が設定される	ログイン済／SEED-M07-01-ADMIN	—	"1. 一覧画面を開く"	買取依頼日(開始)に既定値(eccube_default_from_term＝-3month相当)が入っていること。
-m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-004	IT-25	UI部品	P1	初期表示(GET)では結果一覧ブロックが描画されない	ログイン済／SEED-M07-01-ADMIN	—	"1. 一覧画面を開く"	結果一覧ブロックと件数見出しが描画されないこと（検索押下まで一覧を出さない）。
-m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-005	IT-25	操作起点	P2	初期表示で検索ボタンと検索条件クリアボタンが表示される	ログイン済／SEED-M07-01-ADMIN	—	"1. 一覧画面を開く"	「検索」ボタンと「検索条件をクリア」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-040	IT-13	URL直接アクセス	P1	未ログインで一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/purchase/list へ直接アクセスする	管理ログイン画面へ誘導されること。				
+m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-001	IT-25	UI部品	P1	初期表示で検索パネルの主要入力項目が表示される	ログイン済／SEED-M07-01-ADMIN	—	1. 一覧画面(/admin/purchase/list)を開く	買取状況・買取番号・注文者名・商品名1〜3・検索ボタンが表示されること。				
+m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-002	IT-03	画面遷移	P2	初期表示でAND/OR・本人確認・利用回数・棚戻しの入力項目が存在する	ログイン済／SEED-M07-01-ADMIN	—	1. 一覧画面を開く	AND/OR検索ラジオ・本人確認チェック・利用回数(下限/上限)・棚戻し未完了のみのチェックが存在すること。				
+m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-003	IT-25	UI部品	P2	初期表示で買取依頼日(開始)に既定の日付が設定される	ログイン済／SEED-M07-01-ADMIN	—	1. 一覧画面を開く	買取依頼日(開始)に既定値(eccube_default_from_term＝-3month相当)が入っていること。				
+m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-004	IT-25	UI部品	P1	初期表示(GET)では結果一覧ブロックが描画されない	ログイン済／SEED-M07-01-ADMIN	—	1. 一覧画面を開く	結果一覧ブロックと件数見出しが描画されないこと（検索押下まで一覧を出さない）。				
+m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-005	IT-25	操作起点	P2	初期表示で検索ボタンと検索条件クリアボタンが表示される	ログイン済／SEED-M07-01-ADMIN	—	1. 一覧画面を開く	「検索」ボタンと「検索条件をクリア」ボタンが表示されること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-010	IT-23	検索条件	P1	該当しない買取番号で0件メッセージが表示される	ログイン済／SEED-M07-01-ADMIN	買取番号＝存在しない巨大値(2147483647)	"1. 一覧画面を開く
 2. 買取番号に存在しない値を入力
-3. 検索ボタンを押下"	「検索条件に該当するデータがありませんでした。」が表示されること。
+3. 検索ボタンを押下"	「検索条件に該当するデータがありませんでした。」が表示されること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-011	IT-25	HTTPステータス	P2	検索実行で件数見出し(検索結果：N件)が表示される	ログイン済／SEED-M07-01-ADMIN	買取番号＝存在しない巨大値	"1. 一覧画面を開く
-2. 買取番号を入力し検索ボタンを押下"	件数見出し「検索結果：…件」が表示されること（検索後は総件数を表示）。
+2. 買取番号を入力し検索ボタンを押下"	件数見出し「検索結果：…件」が表示されること（検索後は総件数を表示）。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-012	IT-25	送信可否制御	P2	検索結果0件時はCSVダウンロードと表示件数プルダウンが出ない	ログイン済／SEED-M07-01-ADMIN	買取番号＝存在しない巨大値	"1. 一覧画面を開く
-2. 0件になる買取番号で検索する"	CSVダウンロードメニューと表示件数プルダウンが描画されないこと。
+2. 0件になる買取番号で検索する"	CSVダウンロードメニューと表示件数プルダウンが描画されないこと。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-013	IT-22	文字列長バリデーション	P2	買取番号に最大長(255)を入力しても検証エラーにならず検索される	ログイン済／SEED-M07-01-ADMIN	買取番号＝255桁(境界内)	"1. 一覧画面を開く
-2. 買取番号に255桁を入力し検索ボタンを押下"	文字列長エラーが表示されず検索が実行され、件数見出しが表示されること。
+2. 買取番号に255桁を入力し検索ボタンを押下"	文字列長エラーが表示されず検索が実行され、件数見出しが表示されること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-014	IT-22	文字列長バリデーション	P2	買取番号に最大長+1(256)を入力すると文字列長の検証エラーが表示される	ログイン済／SEED-M07-01-ADMIN	買取番号＝256桁(境界外)	"1. 一覧画面を開く
-2. 買取番号に256桁を入力し検索ボタンを押下"	買取番号欄に文字列長の検証エラーが表示され、検索が完了しないこと。
+2. 買取番号に256桁を入力し検索ボタンを押下"	買取番号欄に文字列長の検証エラーが表示され、検索が完了しないこと。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-020	IT-23	検索条件	P1	買取番号一致で結果ブロック・結果テーブルが表示される	ログイン済／SEED-M07-01-PURCHASE	買取番号＝ヒットする既知のb.id	"1. 一覧画面を開く
-2. 既知の買取番号で検索する"	結果一覧ブロックと結果テーブル・件数見出しが表示されること。
-m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-021	IT-25	UI部品	P2	結果テーブルの見出しが仕様の列で表示される	ログイン済／SEED-M07-01-PURCHASE	買取番号＝ヒットする既知のb.id	"1. 既知の買取番号で検索する"	見出しに「買取番号／買取依頼日／買取依頼者氏名／本人確認／買取詳細／箱数／買取状況／利用回数」が表示されること。
+2. 既知の買取番号で検索する"	結果一覧ブロックと結果テーブル・件数見出しが表示されること。				
+m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-021	IT-25	UI部品	P2	結果テーブルの見出しが仕様の列で表示される	ログイン済／SEED-M07-01-PURCHASE	買取番号＝ヒットする既知のb.id	1. 既知の買取番号で検索する	見出しに「買取番号／買取依頼日／買取依頼者氏名／本人確認／買取詳細／箱数／買取状況／利用回数」が表示されること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-022	IT-03	画面遷移	P1	買取番号リンク押下でネット買取編集(詳細)へ遷移する	ログイン済／SEED-M07-01-PURCHASE	買取番号＝ヒットする既知のb.id	"1. 既知の買取番号で検索する
-2. 結果行の買取番号リンクを押下"	/admin/purchase/{id}/edit へ遷移すること。
-m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-023	IT-25	UI部品	P2	検索結果あり時に表示件数プルダウン・CSVダウンロードDDが表示される	ログイン済／SEED-M07-01-PURCHASE	買取番号＝ヒットする既知のb.id	"1. 既知の買取番号で検索する"	表示件数プルダウンとCSVダウンロードメニューが表示されること。
+2. 結果行の買取番号リンクを押下"	/admin/purchase/{id}/edit へ遷移すること。				
+m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-023	IT-25	UI部品	P2	検索結果あり時に表示件数プルダウン・CSVダウンロードDDが表示される	ログイン済／SEED-M07-01-PURCHASE	買取番号＝ヒットする既知のb.id	1. 既知の買取番号で検索する	表示件数プルダウンとCSVダウンロードメニューが表示されること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-030	IT-03	画面遷移	P2	表示件数変更で page/1?page_count 付きURLへ再表示される	ログイン済／SEED-M07-01-PURCHASE	表示件数の選択肢	"1. 既知の買取番号で検索する
-2. 表示件数プルダウンの選択肢URLへ遷移する"	/admin/purchase/page/1?page_count=… のURLで1ページ目から再表示されること。
+2. 表示件数プルダウンの選択肢URLへ遷移する"	/admin/purchase/page/1?page_count=… のURLで1ページ目から再表示されること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-031	IT-03	画面遷移	P2	並び順サブメニューの昇順/降順リンクが page/1?sort&order を指す	ログイン済／SEED-M07-01-PURCHASE	—	"1. 既知の買取番号で検索する
-2. 並び順メニューの昇順/降順リンクのhrefを確認する"	href が /admin/purchase/page/1?sort=…&order=ASC|DESC を指すこと。
+2. 並び順メニューの昇順/降順リンクのhrefを確認する"	href が /admin/purchase/page/1?sort=…&order=ASC|DESC を指すこと。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-050	IT-03	画面遷移	P2	並び順が ASC/DESC 以外だと admin.error.sort で初期一覧相当に戻る	ログイン済／直前にPOST検索済／SEED-M07-01-PURCHASE	sort=有効キー・order=不正値	"1. 検索を実行する
-2. /admin/purchase/page/1?sort=…&order=不正値 へアクセスする"	ソート不正のフラッシュが表示され、一覧カード無し(初期一覧相当)になること。
+2. /admin/purchase/page/1?sort=…&order=不正値 へアクセスする"	ソート不正のフラッシュが表示され、一覧カード無し(初期一覧相当)になること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-051	IT-15	状態変化	P2	ページ繰りで直前検索条件をセッション復元して表示する	ログイン済／2ページ以上ヒット／SEED-M07-01-PURCHASE-MULTI	—	"1. 検索を実行する
-2. /admin/purchase/page/2 へGETアクセスする"	直前の検索条件をセッションから復元し、2ページ目を表示すること。
+2. /admin/purchase/page/2 へGETアクセスする"	直前の検索条件をセッションから復元し、2ページ目を表示すること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-052	IT-03	画面遷移	P2	注文者名リンク押下で買取状況を空にし氏名で再検索される	ログイン済／SEED-M07-01-PURCHASE	—	"1. 既知の買取番号で検索する
-2. 結果行の注文者名リンクを押下する"	買取状況選択が解除され、氏名の部分一致で再検索されること。
+2. 結果行の注文者名リンクを押下する"	買取状況選択が解除され、氏名の部分一致で再検索されること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-053	IT-25	操作起点	P3	検索条件クリアボタンで買取状況のみ空になる	ログイン済／SEED-M07-01-ADMIN	買取状況に選択あり	"1. 買取状況を選択する
-2. 「検索条件をクリア」を押下する"	買取状況の選択のみが空になり、他項目・日付はクライアント側では消えないこと。
+2. 「検索条件をクリア」を押下する"	買取状況の選択のみが空になり、他項目・日付はクライアント側では消えないこと。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-006	IT-15	UI部品	P2	検索フォームにCSRFトークンが出力されない（CSRF無効化）	ログイン済／SEED-M07-01-ADMIN	—	"1. 一覧画面を開く
-2. 検索フォーム内の隠しトークン要素の有無を確認する"	検索フォームにCSRFトークンの隠し項目が存在しないこと（検索フォームはCSRF無効化）。
+2. 検索フォーム内の隠しトークン要素の有無を確認する"	検索フォームにCSRFトークンの隠し項目が存在しないこと（検索フォームはCSRF無効化）。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-024	IT-03	画面遷移	P2	結果行メニューに編集・削除・メール通知リンクが表示される	ログイン済／SEED-M07-01-PURCHASE	買取番号＝ヒットする既知のb.id	"1. 既知の買取番号で検索する
-2. 結果行の行メニューを確認する"	行メニューに編集(/purchase/{id}/edit)・削除(/purchase/{id}/delete)・メール通知リンクが表示されること。
+2. 結果行の行メニューを確認する"	行メニューに編集(/purchase/{id}/edit)・削除(/purchase/{id}/delete)・メール通知リンクが表示されること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-025	IT-25	UI部品	P2	結果行に商品名・枚数・申込金額合計・買取状況名・利用回数が表示される	ログイン済／SEED-M07-01-PURCHASE	買取番号＝ヒットする既知のb.id	"1. 既知の買取番号で検索する
-2. 結果行のデータ列を確認する"	商品名と枚数一覧・申込時買取金額合計・買取状況名・利用回数の各実値が当該行に表示されること。
+2. 結果行のデータ列を確認する"	商品名と枚数一覧・申込時買取金額合計・買取状況名・利用回数の各実値が当該行に表示されること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-026	IT-25	HTTPステータス	P2	本人確認列に本人確認ステータスのラベルが表示される	ログイン済／SEED-M07-01-PURCHASE(本人確認状態あり)	—	"1. 既知の買取番号で検索する
-2. 本人確認列を確認する"	本人確認状態に応じたラベル/アイコンが本人確認列に表示されること（集約問い合わせ後勝ち）。
+2. 本人確認列を確認する"	本人確認状態に応じたラベル/アイコンが本人確認列に表示されること（集約問い合わせ後勝ち）。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-027	IT-23	検索条件	P3	申込時買取金額合計が単価×枚数(複数時NM一致単価)で算出表示される	ログイン済／SEED-M07-01-PURCHASE(ApplicationPrices 1件/複数)	—	"1. 既知の買取番号で検索する
-2. 申込時買取金額合計列を確認する"	ApplicationPricesが1件なら単価×枚数、複数ならNM一致申込単価×枚数で合算され、該当なしは加算されないこと。
+2. 申込時買取金額合計列を確認する"	ApplicationPricesが1件なら単価×枚数、複数ならNM一致申込単価×枚数で合算され、該当なしは加算されないこと。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-028	IT-25	UI部品	P3	買取詳細列がbulk規則で並び個別入力行が出ない	ログイン済／SEED-M07-01-PURCHASE(選んで買取カード複数)	—	"1. 既知の買取番号で検索する
-2. 買取詳細列の並びを確認する"	選んで買取カードがmtb_option優先・単価降順・状態昇順で並び、個別入力行は当該列に出ないこと。
+2. 買取詳細列の並びを確認する"	選んで買取カードがmtb_option優先・単価降順・状態昇順で並び、個別入力行は当該列に出ないこと。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-032	IT-03	操作起点	P3	ソートキー押下で昇順/降順サブメニューが表示される	ログイン済／SEED-M07-01-PURCHASE	—	"1. 既知の買取番号で検索する
-2. 並び順ドロップダウンのソートキーを押下する"	ソートキー押下後に昇順/降順のサブメニューが表示されること（二段ドロップダウン）。
+2. 並び順ドロップダウンのソートキーを押下する"	ソートキー押下後に昇順/降順のサブメニューが表示されること（二段ドロップダウン）。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-033	IT-25	UI部品	P3	CSV/並び順ドロップダウンが展開時に表示される	ログイン済／SEED-M07-01-PURCHASE	—	"1. 既知の買取番号で検索する
-2. CSVダウンロード/並び順メニューを開く"	展開(.show)時にメニューがブロック表示で可視になること（display:none干渉の補正）。
+2. CSVダウンロード/並び順メニューを開く"	展開(.show)時にメニューがブロック表示で可視になること（display:none干渉の補正）。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-034	IT-25	操作起点	P3	ヘッダ全選択で同一フォーム内のbuyOrderIdsのみ同期する	ログイン済／SEED-M07-01-PURCHASE(複数行)	—	"1. 既知の買取番号で検索する
-2. ヘッダの全選択チェックを操作する"	同一フォーム内のbuyOrderIdsを持つチェックのみが同期し、他フォームのチェックは同期しないこと。
+2. ヘッダの全選択チェックを操作する"	同一フォーム内のbuyOrderIdsを持つチェックのみが同期し、他フォームのチェックは同期しないこと。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-035	IT-25	送信可否制御	P3	チェック無しでCSV/PDF送信するとalertで中断される	ログイン済／SEED-M07-01-PURCHASE	—	"1. 既知の買取番号で検索する
-2. 行を未選択のままダウンロード系を送信する"	対象未選択時はalertで中断され、送信が実行されないこと。
+2. 行を未選択のままダウンロード系を送信する"	対象未選択時はalertで中断され、送信が実行されないこと。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-036	IT-03	画面遷移	P3	PDF送信はAJAXでJSONを受け新規ウィンドウへ描画する	ログイン済／SEED-M07-01-PURCHASE	—	"1. 既知の買取番号で検索する
-2. 行を選択しPDF送信する"	AJAXでJSONを受領し新規ウィンドウへ書き込み、ポップアップ無効時はalertになること。
+2. 行を選択しPDF送信する"	AJAXでJSONを受領し新規ウィンドウへ書き込み、ポップアップ無効時はalertになること。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-060	IT-23	検索条件	P2	進捗日付レンジ外の注文が結果に含まれない	ログイン済／SEED-M07-01-PURCHASE(進捗日が範囲外)	進捗日付from/to＝対象注文の進捗日を外す範囲	"1. 進捗日付レンジを対象外の範囲で指定する
-2. 検索する"	レンジ外の進捗日を持つ注文が結果に含まれないこと（日付レンジ内＝020/059の対）。
-m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-061	IT-23	検索条件	P2	棚戻し未完了のみがオフのとき完了/未完了が除外されない	ログイン済／SEED-M07-01-PURCHASE(restocked_flg 真/偽 双方)	棚戻し未完了のみ＝オフ	"1. 棚戻し未完了のみをオフのまま検索する"	棚戻し完了・未完了いずれの注文も除外されず結果に含まれること（未完了のみ絞り込み＝074の対）。
+2. 検索する"	レンジ外の進捗日を持つ注文が結果に含まれないこと（日付レンジ内＝020/059の対）。				
+m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-061	IT-23	検索条件	P2	棚戻し未完了のみがオフのとき完了/未完了が除外されない	ログイン済／SEED-M07-01-PURCHASE(restocked_flg 真/偽 双方)	棚戻し未完了のみ＝オフ	1. 棚戻し未完了のみをオフのまま検索する	棚戻し完了・未完了いずれの注文も除外されず結果に含まれること（未完了のみ絞り込み＝074の対）。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-062	IT-25	操作起点	P3	キャンセルを含まない注文ではキャンセル警告が表示されない	ログイン済／SEED-M07-01-PURCHASE(全て売却=キャンセル無し)	—	"1. 既知の買取番号で検索する
-2. 結果行のキャンセル警告有無を確認する"	sale_flgが全て売却の注文ではキャンセル含有警告が表示されないこと（キャンセルあり＝085の対）。
+2. 結果行のキャンセル警告有無を確認する"	sale_flgが全て売却の注文ではキャンセル含有警告が表示されないこと（キャンセルあり＝085の対）。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-063	IT-25	確認ダイアログ	P3	packageCountが閾値未満/nullのとき強調されない	ログイン済／SEED-M07-01-PURCHASE(package_count<閾値 と null)	—	"1. 既知の買取番号で検索する
-2. 箱数列の表示を確認する"	packageCountが閾値(eccube_buy_order_package_count_warning)未満では警告色/太字にならず、nullは空セルになること（閾値以上＝012の対）。
+2. 箱数列の表示を確認する"	packageCountが閾値(eccube_buy_order_package_count_warning)未満では警告色/太字にならず、nullは空セルになること（閾値以上＝012の対）。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-064	IT-03	画面遷移	P3	mtb_page_maxに無い表示件数値は退避されず採用されない	ログイン済／SEED-M07-01-PURCHASE	page_count＝mtb_page_maxに存在しない値	"1. 既知の買取番号で検索する
-2. page_countに非許可値を付与してpage/1へアクセスする"	非許可の表示件数値はセッションへ退避されず、既定/従前の件数で表示されること（許可値で再表示＝030の対）。
+2. page_countに非許可値を付与してpage/1へアクセスする"	非許可の表示件数値はセッションへ退避されず、既定/従前の件数で表示されること（許可値で再表示＝030の対）。				
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	E2E-M07-01-070	IT-26	更新内容	P2	検索実行で対象DBに登録/更新/削除が発生しない	ログイン済／SEED-M07-01-PURCHASE	—	"1. 検索前後で対象テーブルの状態を取得する
-2. 検索を実行する"	検索の実行前後で対象テーブル(dtb_buy_order等)のレコードが登録・更新・削除されないこと（参照系）。
+2. 検索を実行する"	検索の実行前後で対象テーブル(dtb_buy_order等)のレコードが登録・更新・削除されないこと（参照系）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

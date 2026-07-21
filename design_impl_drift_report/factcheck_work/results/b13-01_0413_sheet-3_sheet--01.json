@@ -1,0 +1,40 @@
+{
+  "chunkId": "b13-01_0413_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b13-01_0413_sheet-3_sheet.json#b13-01_0413_sheet-3_sheet-conformance-203de3fdd9b0",
+      "functionId": "b13-01_0413_sheet-3_sheet",
+      "featureNo": "B13-01",
+      "title": "B13-01 決済処理中チェックバッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は想定外エラーを重複排除して1つにまとめ管理者へ一括通知することを要求するが、実装は申込みごとの catch で即時に個別通知メールを送信しており、集約・重複排除・ループ後一括通知が無い。",
+      "reason": "設計書（0413_基本設計仕様書 sheet-3, B13-01）は処理フロー(936行)・業務ルール(942行)・エラー処理(962行)で『取引不在・未完了以外の想定外エラーは1つにまとめ／重複を除いてまとめ、管理者へ通知する』ことを明確に要求している。実装 PaymentStatusCheckAction.php の foreach 内 164-172行の catch (\\Throwable $e) 節では、その場で $this->mailService->sendEventPaymentErrorAlertMail($EventEntry, $e->getMessage()) を呼び出して申込みごとに即時送信し $cntError++ しているだけである。grep でファイル全体を確認したが、エラーメッセージを蓄積する配列・array_unique 等の重複排除・ループ後にまとめて送信する処理は一切存在しない（167行の内側 catch は $mailException のログ用で集約ではない、176-177行は件数集計のみ）。よって同一の想定外エラーが対象申込みの数だけ重複通知され得るため、設計と実装が異なる『実装違い』として事実確認できる。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html",
+        "start": 936,
+        "end": 942,
+        "contains": [
+          "取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する",
+          "重複を除いてまとめ、管理者へ通知する"
+        ]
+      },
+      "implEvidence": [
+        {
+          "label": "実装",
+          "note": "foreach 内の申込みごとの catch 節で即時に個別メール送信し cntError を加算。集約・重複排除・一括送信は無い。",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+          "start": 164,
+          "end": 172,
+          "contains": [
+            "sendEventPaymentErrorAlertMail($EventEntry, $e->getMessage())",
+            "$cntError++;"
+          ]
+        }
+      ]
+    }
+  ]
+}

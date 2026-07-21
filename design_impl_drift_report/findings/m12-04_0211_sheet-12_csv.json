@@ -1,0 +1,1739 @@
+{
+  "functionId": "m12-04_0211_sheet-12_csv",
+  "featureNo": "M12-04",
+  "title": "M12-04 受注売上分析 CSV出力(カテゴリ)",
+  "domain": "m12",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+  "sourceBook": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+  "sheetId": "sheet-12",
+  "sheetName": "受注売上分析 CSV出力(カテゴリ)",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "m12-04_0211_sheet-12_csv-conformance-75b997efa99f",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12:2854",
+      "designRefDetail": null,
+      "designExpectation": "検索条件セッションが空の場合は、空の検索条件で集計し、出力する。",
+      "designQuote": "検索条件セッションが空の場合は、空の検索条件で集計し、出力する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:100",
+      "implementationActual": "CSV出力時に検索条件セッションが無い場合、エラーを追加して admin_analysis_sales へリダイレクトし、CSV出力を行わない。",
+      "difference": "設計はセッション未保存時も空条件で集計してCSVを出力する仕様だが、実装は SalesAnalysisController::export() で session get 結果が null の場合に addError('検索条件がありません。先に検索を実行してください。') を行い、CSV出力サービスを呼ばずに redirectToRoute('admin_analysis_sales') を返す。反証として Controller/Admin/Analysis、Service/Csv/Exporter、OrderItemRepository の SESSION_KEY、検索条件がありません、exportBySearchData を再検索したが、空条件フォールバックは確認できなかった。",
+      "mismatchReason": "設計はセッション未保存時も空条件で集計してCSVを出力する仕様だが、実装は SalesAnalysisController::export() で session get 結果が null の場合に addError('検索条件がありません。先に検索を実行してください。') を行い、CSV出力サービスを呼ばずに redirectToRoute('admin_analysis_sales') を返す。反証として Controller/Admin/Analysis、Service/Csv/Exporter、Order…",
+      "comparisonRows": [
+        {
+          "item": "セッション空時の処理",
+          "design": "空の検索条件で集計し、CSV出力する。",
+          "implementation": "SalesAnalysisController.php:100-104 でエラー追加後に一覧へリダイレクトする。",
+          "mismatch": "CSVファイルを出力せず、設計の空条件集計・出力になっていない。"
+        },
+        {
+          "item": "CSV出力サービス呼び出し",
+          "design": "検索条件が空でも集計結果CSVを出力する。",
+          "implementation": "SalesAnalysisController.php:117 の exportBySearchData 呼び出しは、セッション null 分岐では到達しない。",
+          "mismatch": "出力経路が遮断される。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m12-04_0211_sheet-12_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:100",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「検索条件セッションが空の場合は、空の検索条件で集計し、出力する。」。実装は「CSV出力時に検索条件セッションが無い場合、エラーを追加して admin_analysis_sales へリダイレクトし、CSV出力を行わない。」。乖離理由は「設計はセッション未保存時も空条件で集計してCSVを出力する仕様だが、実装は SalesAnalysisController::export() で session get 結果が null の場合に addError('検索条件がありません。先に検索を実行してください。') を行い、CSV出力サービスを呼ばずに redirectToRoute('admin_analysis_sales') を返す。反証として Controller/Admin/Analysis、Service/Csv/Exporter、Order…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:100",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:100\n97:     #[Route(path: '/%eccube_admin_route%/analysis/sales/export', name: 'admin_analysis_sales_export', methods: ['GET'])]\n98:     public function export(): StreamedResponse|RedirectResponse\n99:     {\n100:         $viewData = $this->session->get(self::SESSION_KEY);\n101:         if ($viewData === null) {\n102:             $this->addError('検索条件がありません。先に検索を実行してください。', 'admin');\n103: ",
+        "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:30\n27: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n28: use Symfony\\Component\\Routing\\Attribute\\Route;\n29: \n30: class SalesAnalysisController extends AbstractController\n31: {\n32:     private const SESSION_KEY = 'eccube.admin.analysis.sales.search';\n33: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m12-04_0211_sheet-12_csv-conformance-f9f3574c0b03",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12:2824",
+      "designRefDetail": null,
+      "designExpectation": "CSV出力では表示件数の上限を適用せず、集計結果の全件を出力する。",
+      "designQuote": "CSV出力では表示件数の上限を適用せず、集計結果の全件を出力する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:310",
+      "implementationActual": "CSV出力でも検索フォームの page_count が searchData に残ったまま getAnalysisSummary() に渡され、OrderItemRepository が page_count > 0 の場合に setMaxResults($limit) を適用する。",
+      "difference": "設計はCSVでは表示件数上限を外す仕様だが、実装は SalesAnalysisController.php:110-117 でセッション値から復元した検索条件をそのまま SalesAnalysisCsvExporterService に渡し、同サービスの 38 行目で getAnalysisSummary($searchData) を呼ぶ。OrderItemRepository.php:310-312 が page_count を limit として setMaxResults するため、CSVも一覧表示件数に制限される。反証として page_count の削除・0設定・CSV専用の全件取得処理を検索したが、SalesAnalysis のCSV経路には存在しなかった。",
+      "mismatchReason": "設計はCSVでは表示件数上限を外す仕様だが、実装は SalesAnalysisController.php:110-117 でセッション値から復元した検索条件をそのまま SalesAnalysisCsvExporterService に渡し、同サービスの 38 行目で getAnalysisSummary($searchData) を呼ぶ。OrderItemRepository.php:310-312 が page_count を limit として setMaxResults するため、CSVも一覧表示件数に制…",
+      "comparisonRows": [
+        {
+          "item": "CSV出力件数",
+          "design": "表示件数の上限を適用せず全件を出力する。",
+          "implementation": "OrderItemRepository.php:310-312 で page_count を setMaxResults に適用する。",
+          "mismatch": "CSVが一覧の表示件数上限に制限される。"
+        },
+        {
+          "item": "検索条件の引き渡し",
+          "design": "一覧と同条件。ただしCSVでは表示件数上限を除外する。",
+          "implementation": "SalesAnalysisController.php:110-117 が FormUtil::submitAndGetData の結果をそのまま exportBySearchData に渡す。",
+          "mismatch": "page_count を除外・無効化する処理が無い。"
+        },
+        {
+          "item": "CSV集計呼び出し",
+          "design": "M12-03と同じ集計を上限なしで再実行する。",
+          "implementation": "SalesAnalysisCsvExporterService.php:38 が getAnalysisSummary($searchData) を呼び、Repository側の page_count 制限を受ける。",
+          "mismatch": "共通集計に上限解除オプションが無い。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m12-04_0211_sheet-12_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:310",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「CSV出力では表示件数の上限を適用せず、集計結果の全件を出力する。」。実装は「CSV出力でも検索フォームの page_count が searchData に残ったまま getAnalysisSummary() に渡され、OrderItemRepository が page_count > 0 の場合に setMaxResults($limit) を適用する。」。乖離理由は「設計はCSVでは表示件数上限を外す仕様だが、実装は SalesAnalysisController.php:110-117 でセッション値から復元した検索条件をそのまま SalesAnalysisCsvExporterService に渡し、同サービスの 38 行目で getAnalysisSummary($searchData) を呼ぶ。OrderItemRepository.php:310-312 が page_count を limit として setMaxResults するため、CSVも一覧表示件数に制…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Form・入力項目",
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:310",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/OrderItemRepository.php:310\n307:             $qb->orderBy(self::ANALYSIS_SORT_COLUMNS[$sortKey], $ascDesc);\n308:         }\n309: \n310:         $limit = (int) ($searchData['page_count'] ?? 0);\n311:         if ($limit > 0) {\n312:             $qb->setMaxResults($limit);\n313:         }",
+        "src/Eccube/Repository/OrderItemRepository.php:35\n32:  *\n33:  * @extends AbstractRepository<OrderItem>\n34:  */\n35: class OrderItemRepository extends AbstractRepository\n36: {\n37:     private const ANALYSIS_DATE_COLUMNS = ['order_date', 'confirm_date', 'payment_date', 'shipping_date', 'closing_date', 'cancel_date'];\n38: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 44,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-1cadff88fe",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "受注売上分析 CSV出力(カテゴリ)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-0b02b28e39",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "M12-04 受注/売上分析 CSV出力(商品以外)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-8ed83be8d5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "出力結果項目について",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-55531c15aa",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "(集計一覧表示(検索項目) 識別ID 5:「集計単位」で指定した項目ごとの統計を行う)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-f5ee14a3a2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "・ 下記の項目を削除",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-8eb9752d7b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "・ スマレジの取引データは基本的にリアルタイムに送信される",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-b68a49bfc7",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "受注/売上分析のCSVダウンロードは、直前に実行した集計と同じ検索条件で集計し直し、集計結果をCSVとしてストリーミング出力する機能である。表示件数の上限を適用しない点を除き、画面一覧（M12-03）と同じ集計とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-e258d02335",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注/売上分析のエクスポート処理、注文明細の集計用リポジトリ、CSV出力サービスを正とする。本機能のカスタマイズ区分はカスタマイズであり、挙動は現行リポpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。現行と移行先でテーブル名・列の所在が異なる箇所は「リニューアル移行時の扱い」に集約する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-7ca228c01d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計条件・一覧表示はM12-03で扱う。本書はCSV出力の入口・出力列・ファイル形式と、集計条件が一覧と一致することを扱う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-67e6e5d54b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計結果一覧（M12-03）と同じ検索条件によるCSV出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-9e419e0ee8",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "CSV出力時に表示件数の上限を適用しないこと",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-f12e6daddc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-2b0aa1c2c7",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "挙動は現行リポpf-eccube3を正とし、DB関連はec-cube-enterpriseを正とする。CSV出力はM12-03の集計と同じ列を参照するため、スキーマ差はM12-03と同じである。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-1019a4b5a2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "dtb_order に集約（ order_date ・ payment_date ・ confirm_date ・ shipping_date ・ commit_date ・ cancel_date 等）。補助表 dtb_order_sub は移行先に存在しない。各使用日付と移行先列の対応は ec-cube-enterprise 実装で要確認。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-e6db74240a",
+        "category": "検索条件セッション",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計実行時（M12-03）に保存された検索条件。CSV出力はこれを再集計の条件に使う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-ce4a121404",
+        "category": "検索条件セッションの条件で集計し、集計結果をCSVとして出力する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "管理画面プレフィックスは環境により変わるためプレースホルダで示す。集計結果一覧にCSVダウンロードのリンクが表示されている状態（M12-03で検索を実行済み）で押下する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-7f15e08de4",
+        "category": "CSVファイルのダウンロード。画面遷移は伴わない。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "本機能ではダウンロードのみで、動的な表示切替は扱わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-349e4662b8",
+        "category": "CSVファイルのダウンロード。画面遷移は伴わない。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計結果CSVを出力する（ /{admin_route}/analysis/sales/export ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-b24ec2f2f0",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計単位が商品かどうかを判定する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-6f06c6267f",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "注文明細の集計用リポジトリへ検索条件を渡し、表示件数の上限を適用しない集計結果を取得する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-fd4a6c4a2c",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "CSV出力サービスを開き、BOMを出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-af6225075b",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "ヘッダ行を出力する。集計単位が商品のときは「商品」「商品名」、それ以外は集計単位の見出し1列を先頭に置き、続けて「平均単価」「数量」「合計」「件数」を並べる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-ed538b4986",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計結果の各行を出力する。集計単位が商品のときは商品コード、続けて名称、平均単価（合計÷数量を切り捨て、数量0のときは0）、数量、合計、件数の順とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-3903573e94",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "CSV出力サービスを閉じる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-9568fe75cb",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "M12-03の集計実行と同じ注文明細の集計用リポジトリ・検索条件で集計する。対象データ・結合・除外・集計単位・期間はM12-03の集計条件と一致する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-f24fea5d3b",
+        "category": "検索条件はCSV出力時のフォーム送信値ではなく、直前の集計実行で保存された検索条件セッションの値とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "CSV出力では表示件数の上限を適用せず、集計結果の全件を出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-9ceb154df0",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "合計を数量で割り小数点以下を切り捨てる。数量が0のときは0とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-b1eb082e6b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計単位が商品なら商品コードを先頭に出力し、続けて名称・平均単価・数量・合計・件数を出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-9700317a30",
+        "category": "本機能は画面上の入力フォームを持たない。出力する検索条件は検索条件セッションの値による。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "画面表示またはCSV・帳票出力の実行時点で検索条件に一致するデータを参照する。本機能は参照・出力を主とし、業務データを更新しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-0706ef0098",
+        "category": "本機能は画面上の入力フォームを持たない。出力する検索条件は検索条件セッションの値による。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "一覧・出力の整合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-509fcb9ee3",
+        "category": "本機能は画面上の入力フォームを持たない。出力する検索条件は検索条件セッションの値による。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にする。画面表示後に他処理で更新された値は、再検索または再出力するまで反映しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-70371897a0",
+        "category": "本機能は画面上の入力フォームを持たない。出力する検索条件は検索条件セッションの値による。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "出力中に他処理が対象データを更新した場合のスナップショット保証は持たない。行ロックを取得せず、読み取り時点の値を出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-fb0576a811",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "本機能ではAPI呼び出し・バッチ実行を扱わない。CSV出力はストリーミングで行う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-f180c21aae",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計結果のCSVファイル。ファイル名は sales_report_ に出力日時（ YmdHis ）を付けた .csv 。文字コード判別用のBOMを付与する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-4c1f8da452",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "無し（参照・出力のみ）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-7804c7b72c",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。M12-03の集計で参照する列に一致する。テーブル名・列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は現行名を括弧で添える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-8b9784d3a5",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "使用日付による期間絞り込み。現行は補助表 dtb_order_sub の各日付列で保持する。移行先列の対応は ec-cube-enterprise 実装で要確認。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-8c4cba6330",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-15369e1b76",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-16ef0cae88",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計結果のCSV出力が可能。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-bbc01a3994",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "「CSVダウンロード」押下",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-4ee210d385",
+        "category": "検索条件セッションが空",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "空の検索条件で集計し、出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-04_0211_sheet-12_csv-req-32ceb7a761",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "本機能は参照・出力のみであり、楽観ロック・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "designDerivedTerms": {
+      "routeNames": [
+        "admin_route",
+        "product_code",
+        "product_name",
+        "order_date"
+      ],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "pf-eccube3/m12-04_admin_analytics_sales_order_analysis_csv_export.md",
+        "analysis/sales/export"
+      ],
+      "businessTerms": [
+        "M12",
+        "受注売上分析",
+        "CSV出力",
+        "カテゴリ",
+        "受注データを使って集計単位を指定して集計を行うこ",
+        "商品以外",
+        "スマレジについて",
+        "スマレジの取引データは基本的にリアルタイムに送信",
+        "支店やスマレジの取引情報も集計対象として取り扱う",
+        "CSVダウンロード",
+        "売上分析のCSVダウンロードは",
+        "集計結果をCSVとしてストリーミング出力する機能",
+        "のHareruyaEcプラグインの受注",
+        "注文明細の集計用リポジトリ",
+        "CSV出力サービスを正とする",
+        "本書はCSV出力の入口",
+        "と同じ検索条件によるCSV出力",
+        "CSVのヘッダ行",
+        "CSV出力時に表示件数の上限を適用しないこと",
+        "集計機能のCSV",
+        "ログイン",
+        "権限設定の詳細",
+        "CSV出力はM12",
+        "注文明細テーブル"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 16,
+    "candidateRefs": [
+      {
+        "term": "analysis/sales/export",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:97",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/sales/export', name: 'admin_analysis_sales_export', methods: ['GET'])]",
+        "weight": 6
+      },
+      {
+        "term": "analysis/sales/export",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/ProductAllCsv.php:1539",
+        "snippet": "FROM dtb_product_tag_sales_analysis ptsa",
+        "weight": 6
+      },
+      {
+        "term": "analysis/sales/export",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/ProductAllCsv.php:1540",
+        "snippet": "INNER JOIN mtb_tag_sales_analysis tsa ON tsa.id = ptsa.tag_sales_analysis_id",
+        "weight": 6
+      },
+      {
+        "term": "analysis/sales/export",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/ProductAllCsv.php:1554",
+        "snippet": "FROM dtb_product_tag_sales_analysis ptsa",
+        "weight": 6
+      },
+      {
+        "term": "product_name",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbStockSplitJoinDetail.php:221",
+        "snippet": "* 互換用: 旧カラム product_name は廃止。現在は ProductStock から導出する。",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:1301",
+        "snippet": "$this->order_date = $orderDate;",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:132",
+        "snippet": "#[ORM\\Index(columns: ['order_date'], name: 'dtb_order_order_date_idx')]",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:534",
+        "snippet": "#[ORM\\Column(name: 'order_date', type: Types::DATETIMETZ_MUTABLE, nullable: true)]",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:535",
+        "snippet": "private $order_date;",
+        "weight": 5
+      },
+      {
+        "term": "product_name",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/OrderItem.php:140",
+        "snippet": "#[ORM\\Column(name: 'product_name', type: Types::STRING, length: 255)]",
+        "weight": 5
+      },
+      {
+        "term": "product_name",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/OrderItem.php:141",
+        "snippet": "private ?string $product_name = null;",
+        "weight": 5
+      },
+      {
+        "term": "product_code",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/OrderItem.php:143",
+        "snippet": "#[ORM\\Column(name: 'product_code', type: Types::STRING, length: 255, nullable: true)]",
+        "weight": 5
+      },
+      {
+        "term": "product_name",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/OrderItem.php:258",
+        "snippet": "$this->product_name = $productName;",
+        "weight": 5
+      },
+      {
+        "term": "product_code",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Product.php:158",
+        "snippet": "// product_code",
+        "weight": 5
+      },
+      {
+        "term": "product_code",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Product.php:444",
+        "snippet": "* Get Product_code min",
+        "weight": 5
+      },
+      {
+        "term": "product_code",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Product.php:461",
+        "snippet": "* Get Product_code max",
+        "weight": 5
+      },
+      {
+        "term": "カテゴリ",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/CategoryRepository.php:168",
+        "snippet": "* @param Category $Category カテゴリ",
+        "weight": 4
+      },
+      {
+        "term": "カテゴリ",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbStockHistoryRepository.php:160",
+        "snippet": "// category_id カテゴリ",
+        "weight": 4
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 5,
+    "implementationGapRequirementCount": 0,
+    "rows": [
+      {
+        "findingId": "m12-04_0211_sheet-12_csv-conformance-75b997efa99f",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12:2854",
+        "designRequirement": "空の検索条件で集計し、CSV出力する。",
+        "implementationActual": "SalesAnalysisController.php:100-104 でエラー追加後に一覧へリダイレクトする。",
+        "mismatchReason": "CSVファイルを出力せず、設計の空条件集計・出力になっていない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:100",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "セッション空時の処理",
+            "design": "空の検索条件で集計し、CSV出力する。",
+            "implementation": "SalesAnalysisController.php:100-104 でエラー追加後に一覧へリダイレクトする。",
+            "mismatch": "CSVファイルを出力せず、設計の空条件集計・出力になっていない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m12-04_0211_sheet-12_csv-conformance-75b997efa99f",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12:2854",
+        "designRequirement": "検索条件が空でも集計結果CSVを出力する。",
+        "implementationActual": "SalesAnalysisController.php:117 の exportBySearchData 呼び出しは、セッション null 分岐では到達しない。",
+        "mismatchReason": "出力経路が遮断される。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:100",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "CSV出力サービス呼び出し",
+            "design": "検索条件が空でも集計結果CSVを出力する。",
+            "implementation": "SalesAnalysisController.php:117 の exportBySearchData 呼び出しは、セッション null 分岐では到達しない。",
+            "mismatch": "出力経路が遮断される。"
+          }
+        ]
+      },
+      {
+        "findingId": "m12-04_0211_sheet-12_csv-conformance-f9f3574c0b03",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12:2824",
+        "designRequirement": "表示件数の上限を適用せず全件を出力する。",
+        "implementationActual": "OrderItemRepository.php:310-312 で page_count を setMaxResults に適用する。",
+        "mismatchReason": "CSVが一覧の表示件数上限に制限される。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:310",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "CSV出力件数",
+            "design": "表示件数の上限を適用せず全件を出力する。",
+            "implementation": "OrderItemRepository.php:310-312 で page_count を setMaxResults に適用する。",
+            "mismatch": "CSVが一覧の表示件数上限に制限される。"
+          }
+        ]
+      },
+      {
+        "findingId": "m12-04_0211_sheet-12_csv-conformance-f9f3574c0b03",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12:2824",
+        "designRequirement": "一覧と同条件。ただしCSVでは表示件数上限を除外する。",
+        "implementationActual": "SalesAnalysisController.php:110-117 が FormUtil::submitAndGetData の結果をそのまま exportBySearchData に渡す。",
+        "mismatchReason": "page_count を除外・無効化する処理が無い。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:310",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "検索条件の引き渡し",
+            "design": "一覧と同条件。ただしCSVでは表示件数上限を除外する。",
+            "implementation": "SalesAnalysisController.php:110-117 が FormUtil::submitAndGetData の結果をそのまま exportBySearchData に渡す。",
+            "mismatch": "page_count を除外・無効化する処理が無い。"
+          }
+        ]
+      },
+      {
+        "findingId": "m12-04_0211_sheet-12_csv-conformance-f9f3574c0b03",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12:2824",
+        "designRequirement": "M12-03と同じ集計を上限なしで再実行する。",
+        "implementationActual": "SalesAnalysisCsvExporterService.php:38 が getAnalysisSummary($searchData) を呼び、Repository側の page_count 制限を受ける。",
+        "mismatchReason": "共通集計に上限解除オプションが無い。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php:310",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderItemRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "CSV集計呼び出し",
+            "design": "M12-03と同じ集計を上限なしで再実行する。",
+            "implementation": "SalesAnalysisCsvExporterService.php:38 が getAnalysisSummary($searchData) を呼び、Repository側の page_count 制限を受ける。",
+            "mismatch": "共通集計に上限解除オプションが無い。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 43,
+    "verdictedCount": 43,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 43,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-1cadff88fe",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "受注売上分析 CSV出力(カテゴリ)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-0b02b28e39",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "M12-04 受注/売上分析 CSV出力(商品以外)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-8ed83be8d5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "出力結果項目について",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-55531c15aa",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "(集計一覧表示(検索項目) 識別ID 5:「集計単位」で指定した項目ごとの統計を行う)",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-f5ee14a3a2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "・ 下記の項目を削除",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-8eb9752d7b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "・ スマレジの取引データは基本的にリアルタイムに送信される",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-b68a49bfc7",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "受注/売上分析のCSVダウンロードは、直前に実行した集計と同じ検索条件で集計し直し、集計結果をCSVとしてストリーミング出力する機能である。表示件数の上限を適用しない点を除き、画面一覧（M12-03）と同じ集計とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-e258d02335",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの受注/売上分析のエクスポート処理、注文明細の集計用リポジトリ、CSV出力サービスを正とする。本機能のカスタマイズ区分はカスタマイズであり、挙動は現行リポpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。現行と移行先でテーブル名・列の所在が異なる箇所は「リニューアル移行時の扱い」に集約する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-7ca228c01d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計条件・一覧表示はM12-03で扱う。本書はCSV出力の入口・出力列・ファイル形式と、集計条件が一覧と一致することを扱う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-67e6e5d54b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計結果一覧（M12-03）と同じ検索条件によるCSV出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-9e419e0ee8",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "CSV出力時に表示件数の上限を適用しないこと",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-f12e6daddc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-2b0aa1c2c7",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "挙動は現行リポpf-eccube3を正とし、DB関連はec-cube-enterpriseを正とする。CSV出力はM12-03の集計と同じ列を参照するため、スキーマ差はM12-03と同じである。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-1019a4b5a2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "dtb_order に集約（ order_date ・ payment_date ・ confirm_date ・ shipping_date ・ commit_date ・ cancel_date 等）。補助表 dtb_order_sub は移行先に存在しない。各使用日付と移行先列の対応は ec-cube-enterprise 実装で要確認。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-e6db74240a",
+        "category": "検索条件セッション",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計実行時（M12-03）に保存された検索条件。CSV出力はこれを再集計の条件に使う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-ce4a121404",
+        "category": "検索条件セッションの条件で集計し、集計結果をCSVとして出力する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "管理画面プレフィックスは環境により変わるためプレースホルダで示す。集計結果一覧にCSVダウンロードのリンクが表示されている状態（M12-03で検索を実行済み）で押下する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-7f15e08de4",
+        "category": "CSVファイルのダウンロード。画面遷移は伴わない。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "本機能ではダウンロードのみで、動的な表示切替は扱わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-349e4662b8",
+        "category": "CSVファイルのダウンロード。画面遷移は伴わない。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計結果CSVを出力する（ /{admin_route}/analysis/sales/export ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-b24ec2f2f0",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計単位が商品かどうかを判定する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-6f06c6267f",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "注文明細の集計用リポジトリへ検索条件を渡し、表示件数の上限を適用しない集計結果を取得する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-fd4a6c4a2c",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "CSV出力サービスを開き、BOMを出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-af6225075b",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "ヘッダ行を出力する。集計単位が商品のときは「商品」「商品名」、それ以外は集計単位の見出し1列を先頭に置き、続けて「平均単価」「数量」「合計」「件数」を並べる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-ed538b4986",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計結果の各行を出力する。集計単位が商品のときは商品コード、続けて名称、平均単価（合計÷数量を切り捨て、数量0のときは0）、数量、合計、件数の順とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-3903573e94",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "CSV出力サービスを閉じる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-9568fe75cb",
+        "category": "検索条件セッションから検索条件を取得する。保存が無い場合は空とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "M12-03の集計実行と同じ注文明細の集計用リポジトリ・検索条件で集計する。対象データ・結合・除外・集計単位・期間はM12-03の集計条件と一致する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-f24fea5d3b",
+        "category": "検索条件はCSV出力時のフォーム送信値ではなく、直前の集計実行で保存された検索条件セッションの値とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "CSV出力では表示件数の上限を適用せず、集計結果の全件を出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-9ceb154df0",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "合計を数量で割り小数点以下を切り捨てる。数量が0のときは0とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-b1eb082e6b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計単位が商品なら商品コードを先頭に出力し、続けて名称・平均単価・数量・合計・件数を出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-9700317a30",
+        "category": "本機能は画面上の入力フォームを持たない。出力する検索条件は検索条件セッションの値による。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "画面表示またはCSV・帳票出力の実行時点で検索条件に一致するデータを参照する。本機能は参照・出力を主とし、業務データを更新しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-0706ef0098",
+        "category": "本機能は画面上の入力フォームを持たない。出力する検索条件は検索条件セッションの値による。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "一覧・出力の整合",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-509fcb9ee3",
+        "category": "本機能は画面上の入力フォームを持たない。出力する検索条件は検索条件セッションの値による。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にする。画面表示後に他処理で更新された値は、再検索または再出力するまで反映しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-70371897a0",
+        "category": "本機能は画面上の入力フォームを持たない。出力する検索条件は検索条件セッションの値による。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "出力中に他処理が対象データを更新した場合のスナップショット保証は持たない。行ロックを取得せず、読み取り時点の値を出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-fb0576a811",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "本機能ではAPI呼び出し・バッチ実行を扱わない。CSV出力はストリーミングで行う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-f180c21aae",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計結果のCSVファイル。ファイル名は sales_report_ に出力日時（ YmdHis ）を付けた .csv 。文字コード判別用のBOMを付与する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-4c1f8da452",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "無し（参照・出力のみ）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-7804c7b72c",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "機能に直接関係する列のみ記載する。型や一覧の細部はスキーマを参照する。M12-03の集計で参照する列に一致する。テーブル名・列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は現行名を括弧で添える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-8b9784d3a5",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "使用日付による期間絞り込み。現行は補助表 dtb_order_sub の各日付列で保持する。移行先列の対応は ec-cube-enterprise 実装で要確認。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-8c4cba6330",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-15369e1b76",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-16ef0cae88",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "集計結果のCSV出力が可能。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-bbc01a3994",
+        "category": "検索条件セッションに保存された検索条件。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "「CSVダウンロード」押下",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-4ee210d385",
+        "category": "検索条件セッションが空",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "空の検索条件で集計し、出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-12_csv-req-32ceb7a761",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-12",
+        "designRequirement": "本機能は参照・出力のみであり、楽観ロック・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

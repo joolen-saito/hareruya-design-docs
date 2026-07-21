@@ -1,0 +1,1562 @@
+{
+  "functionId": "m07-08_0206_sheet-9_csv",
+  "featureNo": "M07-08",
+  "title": "M07-08 【新規】戻しリストCSV出力",
+  "domain": "m07",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+  "sourceBook": "0206_基本設計仕様書(ネット買取管理機能).html",
+  "sheetId": "sheet-9",
+  "sheetName": "【新規】戻しリストCSV出力",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "m07-08_0206_sheet-9_csv-conformance-24d81b134e43",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9:2012,2026",
+      "designRefDetail": null,
+      "designExpectation": "本機能はCSV出力（参照のみ）でありDB更新を伴わない。状態・データ更新でも、本機能はCSV出力（参照のみ）でありDB更新は行わない。",
+      "designQuote": "本機能はCSV出力（参照のみ）でありDB更新を伴わない。状態・データ更新でも、本機能はCSV出力（参照のみ）でありDB更新は行わない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:78, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:68,77",
+      "implementationActual": "戻しリストCSVのStreamedResponseコールバック内でCSVを書き出した後、buyOrderRestockListService->markBuyOrdersAsRestocked($buyOrderIds) を呼び出し、対象の DtbBuyOrder に setRestockedFlg(true) を行って永続化している。",
+      "difference": "設計はネット買取の戻しリストCSVを参照のみの出力機能と定義し、DB更新を明示的に禁止している。一方、実装は CSV 出力処理の一部として棚戻し済みフラグを true に更新するため、CSV出力によって dtb_buy_order 相当の状態が変更される。反証として PurchaseController の admin_purchase_csv_export_return_list ルート、BuyOrderRestockListCsvExportService、BuyOrderRestockListService、DtbBuyOrderRepository、Purchase Twig/翻訳キーを確認したが、CSV側の更新を抑止する分岐や参照専用経路は確認できなかった。",
+      "mismatchReason": "設計はネット買取の戻しリストCSVを参照のみの出力機能と定義し、DB更新を明示的に禁止している。一方、実装は CSV 出力処理の一部として棚戻し済みフラグを true に更新するため、CSV出力によって dtb_buy_order 相当の状態が変更される。反証として PurchaseController の admin_purchase_csv_export_return_list ルート、BuyOrderRestockListCsvExportService、BuyOrderRestockListService…",
+      "comparisonRows": [
+        {
+          "item": "CSV出力の副作用",
+          "design": "CSV出力（参照のみ）でありDB更新を伴わない",
+          "implementation": "BuyOrderRestockListCsvExportService::exportByIds のコールバックが markBuyOrdersAsRestocked を呼ぶ",
+          "mismatch": "CSVダウンロードがDB更新を発生させる"
+        },
+        {
+          "item": "更新対象",
+          "design": "参照テーブルは dtb_buy_order_stock、dtb_buy_order、dtb_product_class、dtb_shelf_number、dtb_base_info だが更新は行わない",
+          "implementation": "BuyOrderRestockListService::markBuyOrdersAsRestocked が DtbBuyOrder を取得し setRestockedFlg(true) して flush/commit する",
+          "mismatch": "参照のみの要求に対し、買取注文の棚戻し済み状態を更新している"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m07-08_0206_sheet-9_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:78, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:68,77",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「本機能はCSV出力（参照のみ）でありDB更新を伴わない。状態・データ更新でも、本機能はCSV出力（参照のみ）でありDB更新は行わない。」。実装は「戻しリストCSVのStreamedResponseコールバック内でCSVを書き出した後、buyOrderRestockListService->markBuyOrdersAsRestocked($buyOrderIds) を呼び出し、対象の DtbBuyOrder に setRestockedFlg(true) を行って永続化している。」。乖離理由は「設計はネット買取の戻しリストCSVを参照のみの出力機能と定義し、DB更新を明示的に禁止している。一方、実装は CSV 出力処理の一部として棚戻し済みフラグを true に更新するため、CSV出力によって dtb_buy_order 相当の状態が変更される。反証として PurchaseController の admin_purchase_csv_export_return_list ルート、BuyOrderRestockListCsvExportService、BuyOrderRestockListService…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "ルート・Controller",
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:78",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:68,77",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:78\n75:             }\n76: \n77:             $this->csvExportService->fclose();\n78:             $this->buyOrderRestockListService->markBuyOrdersAsRestocked($buyOrderIds);\n79:         });\n80: \n81:         $prefix = 'purchase_restock_list_'.sprintf('%07d', min($buyOrderIds)).'_';",
+        "src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:68\n65:     /**\n66:      * @param array<int, int> $buyOrderIds\n67:      */\n68:     public function markBuyOrdersAsRestocked(array $buyOrderIds): void\n69:     {\n70:         $this->entityManager->beginTransaction();\n71:         try {",
+        "src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:26\n23: /**\n24:  * ネット買取 棚戻しリストCSV（店頭の otc_buy_order_restock_list_csv と同一列構成）\n25:  */\n26: class BuyOrderRestockListCsvExportService\n27: {\n28:     /**\n29:      * 店頭買取 OtcBuyOrderCsvExportService::CSV_TYPES['otc_buy_order_restock_list_csv'] と揃える"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 41,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-0ab7599939",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "【新規】戻しリストCSV出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-1c7a4ad059",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "概要 ネット買取情報の戻しリストCSV出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-ae0b67d5ae",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "店舗ごとの閾値（ネット買取管理の場合は本店しかないため本店の閾値）とサプライを出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-05d23fed51",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "●●円未満、●●円以上▲▲円未満、■■円以上、サプライ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-1e6c33c55f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "閾値の表示も基準価格を参照して行う（セール中で金額が変わっても棚を移動することはないため）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-f66abdb52a",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-33769b24ac",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "サプライ品の場合は表示しない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-9d86df1f6c",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "商品名から取り出した色とレアリティを出力（例: 金R）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-26b4b9c5fd",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-928b54e6dc",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-69f2a4d35a",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "URLエンドポイントとDBカラムは ../ec-cube-enterprise の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-cae7511fad",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-19c7fdd739",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "戻しリストCSVはネット買取のルート admin_purchase_csv_export_return_list で出力する。データ取得は買取注文リポジトリの棚戻しリスト用SQL（ DtbBuyOrderRepository::getBuyOrderRestockListCsvExportData ）であり、実在庫は dtb_buy_order_stock 、買取注文は dtb_buy_order 、規格は dtb_product_class 、棚番は dtb_shelf_number を参照する。金額の閾値は本店の店舗基本情報 dtb_base_info の expensive_threshold1 ・ expensive_threshold2 ・ expensive_threshold3 を参照する。店頭買取の dtb_otc_buy_order ・ dtb_otc_buy_order_stock は別系統であり本機能では参照しない。本機能はCSV出力（参照のみ）でありDB更新を伴わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-3a8f78eedf",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "ネット買取の棚戻し業務用リストをCSV出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-8e1486b608",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "管理画面の検索条件、フォーム入力、CSVアップロード、または画面操作。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-a697b929ea",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "画面表示、CSV/PDFダウンロード、登録完了/エラー表示。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-511439dab2",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-1fdf6986c7",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "画面表示、ファイル出力、登録完了、またはエラー表示が完了する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-ee0cac5861",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-c03015b208",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-6f87824ec5",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-b25fc782e8",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "登録・更新・出力・連携のいずれかの主処理を実行する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-d76496cc87",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-0828689a8d",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は excel_to_html/output の設計書を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-81c714108e",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**対象機能の要点**: ネット買取の棚戻し業務用リストをCSV出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-589e7d5474",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**実装確認値**: ネット買取の棚戻しリストサービス（ BuyOrderRestockListService ）と棚戻しリストCSVエクスポータ（ BuyOrderRestockListCsvExportService ）、ルート admin_purchase_csv_export_return_list を実装確認値とする。店頭買取側の OtcBuyOrderRestockListService はネット買取の本機能とは別系統である。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-dfddbc58a3",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "状態・データ更新",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-3f259b6e01",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "管理画面の対象業務データを参照し、登録系では対象データと履歴を更新する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-a0755eef85",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-9ed61c0960",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "DB関連実装確認値",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-0e0de7c15e",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "参照テーブル: dtb_buy_order_stock （実在庫）、 dtb_buy_order （買取注文）、 dtb_product_class （規格）、 dtb_shelf_number （棚番）、 dtb_base_info （本店の金額閾値 expensive_threshold1 〜 expensive_threshold3 ）。本機能はCSV出力（参照のみ）でありDB更新は行わない。店頭買取の dtb_otc_buy_* 系ではない。列詳細は ../ec-cube-enterprise の Entity / Repository を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-b5f5fbc979",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-3bffc5c707",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-e133cb83b5",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-4d0199655f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-4d3248e36d",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "ネット買取情報の戻しリストCSV出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-9bbc263e5d",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "1ピッキング区分店舗ごとの閾値（ネット買取管理の場合は本店しかないため本店の閾値）とサプライを出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-ae6899a621",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "3言語/状態Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-f3d148d8d2",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "4略称サプライ品の場合は表示しない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-2f1e221398",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "5色/R商品名から取り出した色とレアリティを出力（例: 金R）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-08_0206_sheet-9_csv-req-be7c44d128",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "7商品名サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "designDerivedTerms": {
+      "routeNames": [
+        "admin_purchase_csv_export_return_list",
+        "BuyOrderRestockListService",
+        "BuyOrderRestockListCsvExportService",
+        "OtcBuyOrderRestockListService"
+      ],
+      "translationKeys": [],
+      "classNames": [
+        "DtbBuyOrderRepository",
+        "BuyOrderRestockListService",
+        "BuyOrderRestockListCsvExportService",
+        "OtcBuyOrderRestockListService"
+      ],
+      "paths": [
+        "ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md",
+        "output/0206_",
+        "ec-cube-enterprise",
+        "PDF",
+        "PDF/API",
+        "output",
+        "API"
+      ],
+      "businessTerms": [
+        "M07",
+        "戻しリストCSV出力",
+        "ネット買取管理",
+        "ネット買取情報の戻しリストCSV出力",
+        "戻しリストCSV",
+        "ネット買取管理の場合は本店しかないため本店の閾値",
+        "商品名から取り出した色とレアリティを出力",
+        "サプライ品でない場合は商品名から略称",
+        "ネット買取管理機能",
+        "URLエンドポイントとDBカラムは",
+        "CSV列",
+        "戻しリストCSVはネット買取のルート",
+        "データ取得は買取注文リポジトリの棚戻しリスト用S",
+        "実在庫は",
+        "買取注文は",
+        "店頭買取の",
+        "本機能はCSV出力",
+        "ネット買取の棚戻し業務用リストをCSV出力する",
+        "CSVアップロード",
+        "PDFダウンロード",
+        "CSV取込履歴",
+        "在庫履歴",
+        "管理画面にログイン済みの利用者が対象メニューまた",
+        "CSV出力条件"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "BuyOrderRestockListCsvExportService",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Purchase/PurchaseController.php:103",
+        "snippet": "protected BuyOrderRestockListCsvExportService $buyOrderRestockListCsvExportService,",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListCsvExportService",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Purchase/PurchaseController.php:103",
+        "snippet": "protected BuyOrderRestockListCsvExportService $buyOrderRestockListCsvExportService,",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListCsvExportService",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Purchase/PurchaseController.php:51",
+        "snippet": "use Eccube\\Service\\Csv\\Exporter\\BuyOrderRestockListCsvExportService;",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListCsvExportService",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Purchase/PurchaseController.php:51",
+        "snippet": "use Eccube\\Service\\Csv\\Exporter\\BuyOrderRestockListCsvExportService;",
+        "weight": 7
+      },
+      {
+        "term": "admin_purchase_csv_export_return_list",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Purchase/PurchaseController.php:638",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/purchase/csv_export_return_list', name: 'admin_purchase_csv_export_return_list', methods: ['POST'])]",
+        "weight": 7
+      },
+      {
+        "term": "DtbBuyOrderRepository",
+        "termType": "className",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbBuyOrderRepository.php:1",
+        "snippet": "src/Eccube/Repository/DtbBuyOrderRepository.php",
+        "weight": 7
+      },
+      {
+        "term": "DtbBuyOrderRepository",
+        "termType": "className",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbBuyOrderRepository.php:43",
+        "snippet": "class DtbBuyOrderRepository extends AbstractRepository",
+        "weight": 7
+      },
+      {
+        "term": "admin_purchase_csv_export_return_list",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/Purchase/index.twig:175",
+        "snippet": "<li><button type=\"submit\" id=\"csv_export_return_list\" class=\"dropdown-item text-left\" formaction=\"{{ path('admin_purchase_csv_export_return_list') }}\">{{ 'admin.purchase.online.btn.csv_export_return_list'|trans }}</butt…",
+        "weight": 7
+      },
+      {
+        "term": "OtcBuyOrderRestockListService",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderRestockListService.php:1",
+        "snippet": "src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderRestockListService.php",
+        "weight": 7
+      },
+      {
+        "term": "OtcBuyOrderRestockListService",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderRestockListService.php:1",
+        "snippet": "src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderRestockListService.php",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListService",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:1",
+        "snippet": "src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListService",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:1",
+        "snippet": "src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListCsvExportService",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:1",
+        "snippet": "src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListCsvExportService",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:1",
+        "snippet": "src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListService",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:19",
+        "snippet": "use Eccube\\Service\\Admin\\Purchase\\BuyOrderRestockListService;",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListService",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:19",
+        "snippet": "use Eccube\\Service\\Admin\\Purchase\\BuyOrderRestockListService;",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListCsvExportService",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:26",
+        "snippet": "class BuyOrderRestockListCsvExportService",
+        "weight": 7
+      },
+      {
+        "term": "BuyOrderRestockListCsvExportService",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:26",
+        "snippet": "class BuyOrderRestockListCsvExportService",
+        "weight": 7
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 2,
+    "implementationGapRequirementCount": 0,
+    "rows": [
+      {
+        "findingId": "m07-08_0206_sheet-9_csv-conformance-24d81b134e43",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9:2012,2026",
+        "designRequirement": "CSV出力（参照のみ）でありDB更新を伴わない",
+        "implementationActual": "BuyOrderRestockListCsvExportService::exportByIds のコールバックが markBuyOrdersAsRestocked を呼ぶ",
+        "mismatchReason": "CSVダウンロードがDB更新を発生させる",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:78",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:68,77",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "CSV出力の副作用",
+            "design": "CSV出力（参照のみ）でありDB更新を伴わない",
+            "implementation": "BuyOrderRestockListCsvExportService::exportByIds のコールバックが markBuyOrdersAsRestocked を呼ぶ",
+            "mismatch": "CSVダウンロードがDB更新を発生させる"
+          }
+        ]
+      },
+      {
+        "findingId": "m07-08_0206_sheet-9_csv-conformance-24d81b134e43",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9:2012,2026",
+        "designRequirement": "参照テーブルは dtb_buy_order_stock、dtb_buy_order、dtb_product_class、dtb_shelf_number、dtb_base_info だが更新は行わない",
+        "implementationActual": "BuyOrderRestockListService::markBuyOrdersAsRestocked が DtbBuyOrder を取得し setRestockedFlg(true) して flush/commit する",
+        "mismatchReason": "参照のみの要求に対し、買取注文の棚戻し済み状態を更新している",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:78",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:68,77",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "更新対象",
+            "design": "参照テーブルは dtb_buy_order_stock、dtb_buy_order、dtb_product_class、dtb_shelf_number、dtb_base_info だが更新は行わない",
+            "implementation": "BuyOrderRestockListService::markBuyOrdersAsRestocked が DtbBuyOrder を取得し setRestockedFlg(true) して flush/commit する",
+            "mismatch": "参照のみの要求に対し、買取注文の棚戻し済み状態を更新している"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 41,
+    "verdictedCount": 41,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 41,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-0ab7599939",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "【新規】戻しリストCSV出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-1c7a4ad059",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "概要 ネット買取情報の戻しリストCSV出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-ae0b67d5ae",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "店舗ごとの閾値（ネット買取管理の場合は本店しかないため本店の閾値）とサプライを出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-05d23fed51",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "●●円未満、●●円以上▲▲円未満、■■円以上、サプライ",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-1e6c33c55f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "閾値の表示も基準価格を参照して行う（セール中で金額が変わっても棚を移動することはないため）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-f66abdb52a",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-33769b24ac",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "サプライ品の場合は表示しない",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-9d86df1f6c",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "商品名から取り出した色とレアリティを出力（例: 金R）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-26b4b9c5fd",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-928b54e6dc",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "新規実装機能として、Excel設計書を主、実装を補完情報として初版作成。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-69f2a4d35a",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "URLエンドポイントとDBカラムは ../ec-cube-enterprise の実装確認値を優先する。本文で実装未確認とした項目は、対象 Controller / Route / Entity / Migration の追加確認後に確定する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-cae7511fad",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "Excel設計書に画面項目、CSV列、帳票レイアウトの詳細がある場合、詳細項目は各画面・CSV・帳票設計側を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-19c7fdd739",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "戻しリストCSVはネット買取のルート admin_purchase_csv_export_return_list で出力する。データ取得は買取注文リポジトリの棚戻しリスト用SQL（ DtbBuyOrderRepository::getBuyOrderRestockListCsvExportData ）であり、実在庫は dtb_buy_order_stock 、買取注文は dtb_buy_order 、規格は dtb_product_class 、棚番は dtb_shelf_number を参照する。金額の閾値は本店の店舗基本情報 dtb_base_info の expensive_threshold1 ・ expensive_threshold2 ・ expensive_threshold3 を参照する。店頭買取の dtb_otc_buy_order ・ dtb_otc_buy_order_stock は別系統であり本機能では参照しない。本機能はCSV出力（参照のみ）でありDB更新を伴わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-3a8f78eedf",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "ネット買取の棚戻し業務用リストをCSV出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-8e1486b608",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "管理画面の検索条件、フォーム入力、CSVアップロード、または画面操作。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-a697b929ea",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "画面表示、CSV/PDFダウンロード、登録完了/エラー表示。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-511439dab2",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-1fdf6986c7",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "画面表示、ファイル出力、登録完了、またはエラー表示が完了する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-ee0cac5861",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "Excel設計書に記載された対象条件、検索条件、CSV出力条件、登録条件を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-c03015b208",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "権限、ログイン状態、管理画面プレフィックスなどの共通判定は共通設計および実装側のセキュリティ設定に従う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-6f87824ec5",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "入力値、検索条件、アップロードファイル、またはリクエスト本文を受け付ける。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-b25fc782e8",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "登録・更新・出力・連携のいずれかの主処理を実行する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-d76496cc87",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "成功時は結果画面、CSV/PDF/APIレスポンス、またはバッチ結果を返す。失敗時はエラー内容を返し、更新が必要な処理では不整合が残らないように扱う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-0828689a8d",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**Excel設計優先**: 仕様の目的、対象データ、出力項目、表示項目、業務上の条件は excel_to_html/output の設計書を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-81c714108e",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**対象機能の要点**: ネット買取の棚戻し業務用リストをCSV出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-589e7d5474",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**実装確認値**: ネット買取の棚戻しリストサービス（ BuyOrderRestockListService ）と棚戻しリストCSVエクスポータ（ BuyOrderRestockListCsvExportService ）、ルート admin_purchase_csv_export_return_list を実装確認値とする。店頭買取側の OtcBuyOrderRestockListService はネット買取の本機能とは別系統である。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-dfddbc58a3",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "状態・データ更新",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-3f259b6e01",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "管理画面の対象業務データを参照し、登録系では対象データと履歴を更新する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-a0755eef85",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-9ed61c0960",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "DB関連実装確認値",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-0e0de7c15e",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "参照テーブル: dtb_buy_order_stock （実在庫）、 dtb_buy_order （買取注文）、 dtb_product_class （規格）、 dtb_shelf_number （棚番）、 dtb_base_info （本店の金額閾値 expensive_threshold1 〜 expensive_threshold3 ）。本機能はCSV出力（参照のみ）でありDB更新は行わない。店頭買取の dtb_otc_buy_* 系ではない。列詳細は ../ec-cube-enterprise の Entity / Repository を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-b5f5fbc979",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**入力不備**: 必須項目、CSVヘッダ、CSV行、APIリクエスト本文、検索条件が不正な場合はエラーとして処理し、登録・更新対象を確定しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-3bffc5c707",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**対象なし**: 検索条件や対象IDに該当するデータがない場合は、空の一覧、空CSV、またはエラーレスポンスとして扱う。扱いの細部は対象画面/API/バッチの実装に従う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-e133cb83b5",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**状態不整合**: 既に処理済み、キャンセル済み、承認不可、在庫不足など状態条件に合わない場合は処理対象外またはエラーとする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-4d0199655f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "**外部連携失敗**: スマレジ等の外部連携で失敗した場合は、実装側の再連携・エラーログ・エラーメール・ステータス更新仕様を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-4d3248e36d",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "ネット買取情報の戻しリストCSV出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-9bbc263e5d",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "1ピッキング区分店舗ごとの閾値（ネット買取管理の場合は本店しかないため本店の閾値）とサプライを出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-ae6899a621",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "3言語/状態Foilの場合はFoilをつけて、言語/状態の形式で出力する（例: FoilJP/NM）、サプライ品の場合は「サプライ品」と表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-f3d148d8d2",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "4略称サプライ品の場合は表示しない",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-2f1e221398",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "5色/R商品名から取り出した色とレアリティを出力（例: 金R）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-08_0206_sheet-9_csv-req-be7c44d128",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-9",
+        "designRequirement": "7商品名サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

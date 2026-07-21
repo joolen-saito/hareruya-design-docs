@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/f08_01_front_store_purchase_otc_buy_entry_login_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・HTTPステータス・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（未検証雛形）。カスタマイズ区分は現行踏襲で、画面・処理フロー・表示メッセージは pf-eccube3 を参照リポ、DB（店舗参照のテーブル名・列名）は ec-cube-enterprise を正典とする。
+期待結果は画面表示・遷移・URL・HTTPステータス・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（未検証雛形）。カスタマイズ区分は現行踏襲で、画面・処理フロー・表示メッセージは pf-eccube3 を参照リポ、DB（店舗参照のテーブル名・列名）は ec-cube-enterprise を正典とする。
 
 本画面は店舗ごとのURL `/otcbuy/{name}/entry`（`{name}`＝店舗識別子＝HTMLクラス名、英数字とアンダースコア）で開く。E2E では店舗識別子を環境変数 `ECCUBE_FRONT_SHOP` で与える（未設定時は店舗依存ケースを skip）。認証成功後の申込フォーム遷移は会員資格情報（`ECCUBE_FRONT_USER`/`ECCUBE_FRONT_PASS`）・専用会員シードを要するため `test.fixme` とし、creds が揃う環境向けに `-live` 変種を用意する。ログイン失敗時の文言は会員ログイン機能（f06-03）を正とするため、本機能では文言を断定せず「entry へ戻ること」を観測する。
 
@@ -24,32 +24,32 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-007	IT-25	UI部品	P1	査定申込前ログイン画面でログインフォームのUI部品が表示される	未ログイン／SEED-F08-01-STORE	—	"1. /otcbuy/{name}/entry を開く"	「ログイン」見出し・メールアドレス欄・パスワード欄・「査定申込み開始」ボタンが表示されること。
-f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-008	IT-25	UI部品	P2	言語切替とゲスト導線リンクが表示される	未ログイン／SEED-F08-01-STORE	—	"1. /otcbuy/{name}/entry を開く"	言語切替（JP／EN）と「アカウントをお持ちでない方はこちら」リンクが表示されること。
-f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-014	IT-03	外部画面	P2	未ログインでentryを開くとログインフォームを表示する	未ログイン／SEED-F08-01-STORE	—	"1. /otcbuy/{name}/entry を開く"	ログアウトへ転送されず、当該店舗のログインフォームを表示すること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-007	IT-25	UI部品	P1	査定申込前ログイン画面でログインフォームのUI部品が表示される	未ログイン／SEED-F08-01-STORE	—	1. /otcbuy/{name}/entry を開く	「ログイン」見出し・メールアドレス欄・パスワード欄・「査定申込み開始」ボタンが表示されること。				
+f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-008	IT-25	UI部品	P2	言語切替とゲスト導線リンクが表示される	未ログイン／SEED-F08-01-STORE	—	1. /otcbuy/{name}/entry を開く	言語切替（JP／EN）と「アカウントをお持ちでない方はこちら」リンクが表示されること。				
+f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-014	IT-03	外部画面	P2	未ログインでentryを開くとログインフォームを表示する	未ログイン／SEED-F08-01-STORE	—	1. /otcbuy/{name}/entry を開く	ログアウトへ転送されず、当該店舗のログインフォームを表示すること。				
 f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-013	IT-25	送信可否制御	P2	メール・パスワード未入力で送信すると送信前チェックでentryに留まる	未ログイン／SEED-F08-01-STORE	メール＝空／パスワード＝空	"1. /otcbuy/{name}/entry を開く
-2. 何も入力せず「査定申込み開始」ボタンを押下"	送信時の入力チェックにより entry 画面に留まり、申込フォームへ進まないこと。
+2. 何も入力せず「査定申込み開始」ボタンを押下"	送信時の入力チェックにより entry 画面に留まり、申込フォームへ進まないこと。				
 f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-024	IT-22	必須バリデーション	P2	メール未入力で送信するとentryに留まる	未ログイン／SEED-F08-01-STORE	メール＝空／パスワード＝任意	"1. /otcbuy/{name}/entry を開く
 2. メールを空のままパスワードを入力
-3. 「査定申込み開始」ボタンを押下"	送信前チェックにより entry 画面に留まること。
+3. 「査定申込み開始」ボタンを押下"	送信前チェックにより entry 画面に留まること。				
 f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-025	IT-22	必須バリデーション	P2	パスワード未入力で送信するとentryに留まる	未ログイン／SEED-F08-01-STORE	メール＝任意／パスワード＝空	"1. /otcbuy/{name}/entry を開く
 2. メールを入力しパスワードを空のまま
-3. 「査定申込み開始」ボタンを押下"	送信前チェックにより entry 画面に留まること。
+3. 「査定申込み開始」ボタンを押下"	送信前チェックにより entry 画面に留まること。				
 f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-018	IT-03	画面遷移	P2	誤った資格情報で送信するとentryへ戻る	未ログイン／SEED-F08-01-STORE	存在しないメール／誤ったパスワード	"1. /otcbuy/{name}/entry を開く
 2. 誤った資格情報を入力
-3. 送信"	ログインに失敗し、査定申込前ログイン画面（/otcbuy/{name}/entry）へ戻ること（失敗理由の文言は会員ログイン機能を正とする）。
+3. 送信"	ログインに失敗し、査定申込前ログイン画面（/otcbuy/{name}/entry）へ戻ること（失敗理由の文言は会員ログイン機能を正とする）。				
 f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-016	IT-03	画面遷移	P2	ゲスト導線リンクから当該店舗の申込フォームへ遷移する	未ログイン／SEED-F08-01-STORE	—	"1. /otcbuy/{name}/entry を開く
-2. 「アカウントをお持ちでない方はこちら」を押下"	ログインせず当該店舗の査定申込フォーム（/otcbuy/{name}）へ遷移すること。
-f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-022	IT-25	HTTPステータス	P2	不正な店舗識別子のentry URLは404となる	未ログイン	実在しない店舗識別子を含むURL	"1. /otcbuy/__invalid__/entry を開く"	ページが見つからない扱い（HTTP 404）となること。
+2. 「アカウントをお持ちでない方はこちら」を押下"	ログインせず当該店舗の査定申込フォーム（/otcbuy/{name}）へ遷移すること。				
+f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-022	IT-25	HTTPステータス	P2	不正な店舗識別子のentry URLは404となる	未ログイン	実在しない店舗識別子を含むURL	1. /otcbuy/__invalid__/entry を開く	ページが見つからない扱い（HTTP 404）となること。				
 f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-009	IT-25	操作起点	P1	正しい資格情報でログインし当該店舗の査定申込フォームへ遷移する	未ログイン／SEED-F08-01-STORE／SEED-F08-01-CUSTOMER	有効なメールアドレス・パスワード	"1. /otcbuy/{name}/entry を開く
 2. メール・パスワードを入力
-3. 「査定申込み開始」ボタンを押下"	ログインに成功し、当該店舗の査定申込フォーム（/otcbuy/{name}）へ遷移すること。
-f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-015	IT-03	画面遷移	P2	ログイン済み会員がentryを開くとログアウトへ遷移する	SEED-F08-01-CUSTOMER でログイン済み／SEED-F08-01-STORE	—	"1. 会員ログイン状態で /otcbuy/{name}/entry を開く"	いったんログアウトへ遷移し、ログイン前の状態から申込を開始させること。
+3. 「査定申込み開始」ボタンを押下"	ログインに成功し、当該店舗の査定申込フォーム（/otcbuy/{name}）へ遷移すること。				
+f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-015	IT-03	画面遷移	P2	ログイン済み会員がentryを開くとログアウトへ遷移する	SEED-F08-01-CUSTOMER でログイン済み／SEED-F08-01-STORE	—	1. 会員ログイン状態で /otcbuy/{name}/entry を開く	いったんログアウトへ遷移し、ログイン前の状態から申込を開始させること。				
 f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-023	IT-25	URL	P2	既ログイン状態で開くと認証状態が解除される	SEED-F08-01-CUSTOMER でログイン済み／SEED-F08-01-STORE	—	"1. 会員ログイン状態で /otcbuy/{name}/entry を開く
-2. 認証状態を確認する"	既ログイン時はログアウトへ遷移し、認証状態が解除されること（ログイン前状態で申込を開始）。
+2. 認証状態を確認する"	既ログイン時はログアウトへ遷移し、認証状態が解除されること（ログイン前状態で申込を開始）。				
 f08-01_front_store_purchase_otc_buy_entry_login（店頭買取 — 査定申込前ログイン）	E2E-F08-01-001	IT-15	CSRF	P2	なりすまし対策トークンを改ざんすると認証に失敗しentryへ戻る	未ログイン／SEED-F08-01-STORE	改ざんした _csrf_token	"1. 隠し項目 _csrf_token をDOMで書き換える
-2. 送信"	認証されず、査定申込前ログイン画面（/otcbuy/{name}/entry）へ戻ること。
+2. 送信"	認証されず、査定申込前ログイン画面（/otcbuy/{name}/entry）へ戻ること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

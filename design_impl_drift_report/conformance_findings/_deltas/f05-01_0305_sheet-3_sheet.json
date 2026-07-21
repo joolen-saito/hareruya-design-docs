@@ -1,0 +1,47 @@
+{
+  "functionId": "f05-01_0305_sheet-3_sheet",
+  "featureNo": "F05-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-3（★強化買取商品コーナーの表示）",
+      "designExpectation": "TOPの2番目のコーナーとして『強化買取』タグが付いた商品を、各タグの商品／本店公開／NM／買取価格1円以上／優先表示商品の商品コード順／最大60件の条件で表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Block/purchase_new_product.twig:3,7",
+      "implementationActual": "TOPの2番目のコーナーは存在するが、表示対象タグが Tag::NEW_ITEMS_ID(=1, 新着/新商品) 固定で見出しも『買取新着商品』。『強化買取』のタグ定数・専用ブロック・文字列は src/ 配下・html/ 配下のいずれにも存在しない（grep 0件、Tag.php:55-71 に該当定数なし、dtb_tag.csv id1=新商品）。",
+      "mismatchReason": "設計の★カスタマイズ要件は当該コーナーを『強化買取』タグ商品と規定するが、実装は汎用の新着(NEW_ITEMS_ID=1)タグを表示対象にしており、コーナーは在るが表示対象タグが設計と異なる。",
+      "comparisonRows": [
+        { "item": "2番目コーナーの表示対象タグ", "design": "強化買取タグ", "implementation": "Tag::NEW_ITEMS_ID(=1, 新着/新商品)", "mismatch": "設計は強化買取タグ、実装は新着タグ" },
+        { "item": "コーナー見出し", "design": "強化買取商品コーナー", "implementation": "買取新着商品", "mismatch": "見出しが異なる" }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-3（★各コーナー 条件5：優先表示商品の商品コード順）",
+      "designExpectation": "強化買取／買取特集／目玉買取の各コーナーの商品表示順は、商品管理＞タグ登録で設定できる『優先表示商品』の商品コード順とする。",
+      "implRef": "src/Eccube/Twig/Extension/TaggedUnisearchRequestExtension.php:72-73, src/Eccube/Service/UniSearch/UniSearchService.php:322-324",
+      "implementationActual": "isBuy=true の買取タグブロック（3コーナーが使用）は query['sort']='release_date' を無条件付与し、UniSearch へ 'release_date desc,product desc,...'（発売日降順）を要求する。優先表示商品(Tag::priorityProducts, Tag.php:221)や商品コード順を並び順として渡す処理はなく、DB検索側 TagSubscriber.php:42-68 の優先表示商品ロジックも全てコメントアウト(TODO)。",
+      "mismatchReason": "設計指定の並び順（優先表示商品の商品コード順）と、実装が要求するソート（発売日降順）が矛盾。優先表示商品順・DtbTagSort・商品コード順を参照する処理がクエリ組立に存在しない。",
+      "comparisonRows": [
+        { "item": "各コーナーの並び順", "design": "優先表示商品の商品コード順", "implementation": "release_date desc（発売日降順）", "mismatch": "並び順が異なる" },
+        { "item": "優先表示商品(priorityProducts)の適用", "design": "適用する", "implementation": "クエリ組立で未参照（DB側TagSubscriberもコメントアウト）", "mismatch": "未適用" }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-3（買取特集コーナー 画面部品6 週間販売数 ラベル・PCのみ表示）",
+      "designExpectation": "買取特集コーナーの各商品カードに『週間販売数』ラベルを表示する（PCのみ表示）。",
+      "implRef": "src/Eccube/Resource/template/default/Block/purchase_product_list_unisearch.twig:1-45, src/Eccube/Controller/Front/Purchase/PurchaseController.php:806-809",
+      "implementationActual": "買取特集コーナーは lazyRender='purchase_special_corner' を送るが、Controller の lazy 応答分岐(781-809)は 'detail'/'search'/'purchase_feature' 以外を既定の purchase_product_list_unisearch.twig で描画。同twigのカードは 画像／カード言語ラベル／商品名／買取価格 のみで週間販売数の出力要素がなく、buildPurchaseUnisearchCardsFromDocs もカードに週間販売数を含めない。週間販売数相当の文字列は purchase 系 twig/JS に 0件。",
+      "mismatchReason": "特集コーナー専用の描画分岐が Controller に無く既定twigへフォールバックし、そのtwig・カードデータいずれにも週間販売数(PCのみ)を出力する実装が存在しない。",
+      "comparisonRows": [
+        { "item": "買取特集コーナーカードの週間販売数ラベル(PCのみ)", "design": "表示する", "implementation": "twig・カードデータともに出力要素なし", "mismatch": "未実装" }
+      ]
+    }
+  ]
+}

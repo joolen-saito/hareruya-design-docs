@@ -1,0 +1,244 @@
+{
+  "id": "b13-01-payment-status-check-splinks-inquiry-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b13-01_0413_sheet-3_sheet.json",
+  "sourceFindingId": "b13-01_0413_sheet-3_sheet-conformance-36cb08c5003b",
+  "classification": "バッチイベント",
+  "feature": "決済処理中チェックバッチ",
+  "issueCategory": "実装漏れ",
+  "issue": "決済処理中チェックバッチがSP.LINKS取引照会APIを実行せず例外で停止する",
+  "designBook": "0413_基本設計仕様書(バッチ_イベント).xlsx",
+  "reproSteps": [
+    "設計書 B13-01 の処理概要で、決済中のイベント申込についてSP.LINKSへ取引照会し、照会結果に応じてステータス整合・論理削除・エラー通知を行う仕様であることを確認する",
+    "ベース実装 pf-eccube3 の `EventEntryBatch` を確認し、`entry:batch checkProssesingPayment` が `CheckProcessingPaymentEntry` に対応付けられていることを確認する",
+    "ベース実装 pf-eccube3 の `CheckProcessingPaymentEntry` / `AbstractCheckPaymentEntry` / `SlnSearchHelper` を確認し、対象イベント申込を取得して `SearchLinkPayment()` で取引照会していることを確認する",
+    "ec-cube-enterprise の `PaymentStatusCheckCommand` と `PaymentStatusCheckAction` を確認し、`handle()` は `getApiResponse($paymentNo)` を呼ぶが、`getApiResponse()` が常に `LogicException` を投げることを確認する",
+    "ec-cube-enterprise の決済関連Service/Commandを検索し、`PaymentStatusCheckAction` から利用されるSP.LINKS取引照会実装が存在しないことを確認する"
+  ],
+  "expected": [
+    "決済処理中チェックバッチは、決済中かつ支払番号登録済みで、作成から30分以上経過したイベント申込を対象にする",
+    "対象申込ごとにSP.LINKSへ取引照会を行い、ResponseCdがOKの場合は申込ステータスを申込済みに更新し、申込履歴を追加し、クレジット決済完了メールを送信する",
+    "取引参照自体のエラーコードの場合は申込を保留し、取引不在・失敗の場合はイベント申込を論理削除する",
+    "取引照会処理自体でエラーが発生した場合は、イベント決済確認エラー通知メールを送信する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise には `eccube:payment-status-check` コマンドと `PaymentStatusCheckAction` は存在する。`handle()` は対象イベント申込を取得し、各申込の `paymentNo` で `getApiResponse($paymentNo)` を呼んで照会結果を分岐する構造になっている。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の決済処理中チェックコマンドは PaymentStatusCheckAction を呼ぶ",
+          "path": "ec-cube-enterprise/src/Eccube/Command/PaymentStatusCheckCommand.php",
+          "start": 25,
+          "end": 60,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:payment-status-check', description: '決済処理中チェックバッチ')]",
+            "$result = $this->paymentStatusCheckAction->handle();",
+            "$io->error('決済処理中チェックでエラーが発生しました。 '.$result['detail']);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の PaymentStatusCheckAction は対象イベント申込ごとに getApiResponse を呼ぶ",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+          "start": 76,
+        "end": 108,
+          "language": "php",
+          "contains": [
+            "$EventEntries = $this->eventEntryRepository->getBeforeMinutesEntry(30);",
+            "$paymentNo = $EventEntry->getPaymentNo();",
+            "$resultApi = $this->getApiResponse($paymentNo);",
+            "if ($resultApi === 'OK') {"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "しかし `PaymentStatusCheckAction::getApiResponse()` はSP.LINKS取引照会APIを実行せず、常に `LogicException('SP.LINKS取引照会API未実装...')` を投げる。そのため、設計が要求する取引照会結果に応じたステータス更新・論理削除・履歴追加・メール送信には到達できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の getApiResponse は未実装例外を投げるだけ",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+          "start": 186,
+          "end": 196,
+          "language": "php",
+          "contains": [
+            "public function getApiResponse(?string $paymentNo): ?string",
+            "// SP.LINKS取引照会API未実装のため、後続PRで実装予定",
+            "throw new \\LogicException('SP.LINKS取引照会API未実装のため、決済処理中チェックはまだ実行できません。');",
+            "// return 'OK'; // TODO: 後続PRでSP.LINKS APIのレスポンスを返す"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、`entry:batch checkProssesingPayment` が `CheckProcessingPaymentEntry` を起動する。対象申込は `getPassedLimitEntry()` で抽出され、`AbstractCheckPaymentEntry::check()` が `execSearch()` を呼び、`SlnSearchHelper::execSearch()` 内で `Credit::SearchLinkPayment()` により取引照会を実行する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は entry:batch checkProssesingPayment を登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/EventEntryBatch.php",
+          "start": 11,
+          "end": 45,
+          "language": "php",
+          "contains": [
+            "'checkProssesingPayment' => 'Plugin\\HareruyaEc\\Service\\Payment\\CheckProcessingPaymentEntry'",
+            "$this->setName('entry:batch')",
+            "$result = $payment->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の CheckProcessingPaymentEntry は対象申込を取得して check に渡す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/CheckProcessingPaymentEntry.php",
+          "start": 17,
+          "end": 28,
+          "language": "php",
+          "contains": [
+            "protected $commandName = 'checkProssesingPayment';",
+            "$entries = $this->app['hareruya_ec.repository.event_entry']->getPassedLimitEntry($this->app['config']['HareruyaEc']['const']['payment']['processing_limit_minute'], self::PAYMENT);",
+            "if(count($entries) === 0) {",
+            "return $this->check($entries);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の AbstractCheckPaymentEntry は取引照会結果に応じて更新・削除・通知する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php",
+          "start": 19,
+          "end": 74,
+          "language": "php",
+          "contains": [
+            "$result = $this->execSearch($entry, true);",
+            "$message = $result[0];",
+            "$newStatus = $result[1];",
+            "$this->execRecordOperation($entry, $newStatus);",
+            "$this->app['hareruya_ec.service.mail']->sendCheckPaymentErrorMail($errorMessages);",
+            "$this->app['hareruya_ec.repository.entry_history']->createEntryHistory($this->app, $entries);",
+            "$this->app['orm.em']->flush();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の SlnSearchHelper は SearchLinkPayment で取引照会する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/SlnSearchHelper.php",
+          "start": 50,
+          "end": 91,
+          "language": "php",
+          "contains": [
+            "private function execSearch($entry, $removeFlg = false)",
+            "$res = $this->credit->SearchLinkPayment($this->app, $entry, $this->config);",
+            "return [",
+            "ES::ENTERED",
+            "if (!in_array($errorCode, Credit::SEARCH_ERROR_CODES))",
+            "return [",
+            "Payment::ON_HOLD"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B13-01 はSP.LINKS取引照会APIを入力データ元とし、照会結果に応じた処理を要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html",
+      "start": 832,
+      "end": 898,
+      "language": "html",
+      "contains": [
+        "イベント申込のリンク型決済で、通信障害や決済画面からの離脱で申込完了画面へ遷移しなかった申込について",
+        "SP.LINKSに取引照会を行い、照会結果に応じた処理を行う",
+        "入力データ元</td><td>DB、SP.LINKS取引照会API",
+        "取引照会結果に応じた処理を行う",
+        "取引照会の処理自体でエラーが発生した場合"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計も決済サービスへの取引照会とステータス整合を要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html",
+      "start": 905,
+      "end": 945,
+      "language": "html",
+      "contains": [
+        "決済サービスへ取引状況を照会して申込みステータスを整合させるバッチ",
+        "<code>entry:batch checkProssesingPayment</code>",
+        "申込みごとに決済サービスへ取引を照会し、結果のメッセージと新ステータスを得る",
+        "決済サービスへ取引を照会し、結果でステータスを判定する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "実装は getApiResponse を呼ぶが、同メソッドはSP.LINKS照会をせず未実装例外を投げる",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+      "start": 99,
+      "end": 105,
+      "language": "php",
+      "contains": [
+        "$paymentNo = $EventEntry->getPaymentNo();",
+        "$resultApi = $this->getApiResponse($paymentNo);"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "SP.LINKS取引照会APIは未実装として例外停止する",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php",
+      "start": 191,
+      "end": 196,
+      "language": "php",
+      "contains": [
+        "public function getApiResponse(?string $paymentNo): ?string",
+        "SP.LINKS取引照会API未実装",
+        "throw new \\LogicException"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `entry:batch checkProssesingPayment` を登録している",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/EventEntryBatch.php",
+      "start": 11,
+      "end": 45,
+      "language": "php",
+      "contains": [
+        "'checkProssesingPayment' => 'Plugin\\HareruyaEc\\Service\\Payment\\CheckProcessingPaymentEntry'",
+        "$this->setName('entry:batch')",
+        "$result = $payment->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は対象申込を取得し、共通check処理に渡している",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/CheckProcessingPaymentEntry.php",
+      "start": 17,
+      "end": 28,
+      "language": "php",
+      "contains": [
+        "protected $commandName = 'checkProssesingPayment';",
+        "getPassedLimitEntry",
+        "return $this->check($entries);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の取引照会は SearchLinkPayment を実行する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/SlnSearchHelper.php",
+      "start": 59,
+      "end": 91,
+      "language": "php",
+      "contains": [
+        "$res = $this->credit->SearchLinkPayment($this->app, $entry, $this->config);",
+        "ES::ENTERED",
+        "Payment::ON_HOLD"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B13-01|決済処理中チェック|SP\\\\.LINKS|取引照会|payment_status|PaymentStatusCheck|getApiResponse|checkPayment\" excel_to_html/output/0413_基本設計仕様書\\(バッチ_イベント\\).html design_impl_drift_report/findings/b13-01_0413_sheet-3_sheet.json",
+      "rg -n \"getApiResponse\\\\(|SP\\\\.LINKS取引照会API未実装|SearchPaymentByOrderId|PaymentStatusCheckAction|payment-status-check\" ../ec-cube-enterprise/src/Eccube/Service/Admin/Payment ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/src/Eccube/Service/Payment -g '*.php'",
+      "rg -n \"entry:batch|checkProssesingPayment|checkProcessingPayment|ProcessingPayment|決済処理中チェック|payment_status_check|PaymentStatusCheck\" ../pf-eccube3/app/Plugin/HareruyaEc/Command ../pf-eccube3/app/Plugin/HareruyaEc/Service ../pf-eccube3/app/Plugin/HareruyaEc/Repository -g '*.php'",
+      "rg -n \"SearchLinkPayment|SEARCH_ERROR_CODES|Payment::ON_HOLD|ES::ENTERED|sendCheckPaymentErrorMail|createEntryHistory\" ../pf-eccube3/app/Plugin/HareruyaEc/Service/Payment ../pf-eccube3/app/Plugin/SlnPayment/Service/SlnAction -g '*.php'"
+    ]
+  },
+  "notes": [
+    "同じB13-01内の同一決済番号結果流用、メッセージ収集、トランザクション境界の候補は、SP.LINKS照会実装後にも個別に修正判断が必要な別論点のため、本チケットには統合しない。",
+    "ベース候補として一度 `order:batch checkCreditPaidAndProcessingOrder` も確認したが、設計の `entry:batch checkProssesingPayment` とは別バッチだったため、本件のベース根拠から除外した。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

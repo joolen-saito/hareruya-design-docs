@@ -1,0 +1,52 @@
+{
+  "chunkId": "a02-01_0502_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-01_0502_sheet-3_sheet.json#a02-01_0502_sheet-3_sheet-conformance-e5483f20696d",
+      "functionId": "a02-01_0502_sheet-3_sheet",
+      "featureNo": "A02-01",
+      "title": "A02-01 ポップアップ用商品情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "high",
+      "summary": "言語コードは設計上 ja/en が有効で、実装の ja/en 受付は設計に合致する。",
+      "reason": "指摘は設計が jp/en を外部契約とし実装が jp を404にするというもの。しかし基本設計仕様書のリクエストパラメータ表(行883)は言語コードを『jaもしくはenのいずれか』、入力例『ja』とし、リクエストサンプル(行890)も /api/popup/product/ja/180498 と ja を用いている。指摘が根拠にした行872の『jp表記』は EC-CUBEサーバのフロントURL例(https://www.hareruyamtg.com/ja/goods_api/get_goods?...&lang=jp, 行871)についての注記で、同行に『(EC-CUBEサーバ→APIサーバ通信時にjaに差し替えられる)』と明記されており、当APIエンドポイント(/api/popup/product)はサーバ間通信後の ja を受ける。ec-cube-enterprise の getPopupProductByProductId(ProductController.php:157-162)は match(strtolower($lang)) で 'ja'=>'JP','en'=>'EN' を受付け、これは基本設計の ja/en 契約に一致する。よって『jp が有効なのに404になる』という指摘は設計の解釈誤りで反証される。",
+      "designEvidence": {"label":"設計要求(基本設計・リクエストパラメータ)","path":"hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html","start":883,"end":890,"contains":["jaもしくはenのいずれか","/api/popup/product/ja/180498"]},
+      "implEvidence": [{"label":"実装(言語コード変換)","note":"ja/en を受付け、それ以外は404。設計の ja/en 契約に合致","path":"ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php","start":157,"end":162,"contains":["strtolower($lang)","'ja' => 'JP'","'en' => 'EN'"]}]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-01_0502_sheet-3_sheet.json#a02-01_0502_sheet-3_sheet-conformance-b97fef7cc1b9",
+      "functionId": "a02-01_0502_sheet-3_sheet",
+      "featureNo": "A02-01",
+      "title": "A02-01 ポップアップ用商品情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "404失敗レスポンスの本文キーが設計の message ではなく errors 配列になっている。",
+      "reason": "設計(行988)は失敗時の本文の形を {code, message}（\"Not Found\"）と定義し、処理フロー(行976)・エラー処理(行1024)も『メッセージ「Not Found」のJSON』とする。実装では BaseApiException catch(ProductController.php:177-181)が {'code' => $e->getStatusCode(), 'errors' => $e->getErrors()} を返し、NotFoundException(NotFoundException.php)は errors: [$message] を保持するため、本文は {code, errors:[\"Not Found\"]} となる。文言 Not Found は一致するが、設計が指定するフィールド名 message ではなく errors(配列)に格納される。他に {code, message} を返す経路が無いか ProductController の App コントローラ catch と NotFoundException/BaseApiException を確認したが、全て errors キーで返す実装のみで、message キーで返す経路は見当たらない。よって実装違い。",
+      "designEvidence": {"label":"設計要求(失敗レスポンス本文)","path":"hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html","start":988,"end":988,"contains":["{code, message}","Not Found"]},
+      "implEvidence": [
+        {"label":"実装(404本文キー errors)","note":"設計の message ではなく errors 配列で返す","path":"ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php","start":177,"end":181,"contains":["'errors' => $e->getErrors()","'code' => $e->getStatusCode()"]},
+        {"label":"実装(NotFoundException が errors 配列を保持)","note":"message 文字列を errors 配列に格納","path":"ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php","start":27,"end":33,"contains":["errors: [$message]","HTTP_NOT_FOUND"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-01_0502_sheet-3_sheet.json#a02-01_0502_sheet-3_sheet-conformance-1e958e1ab870",
+      "functionId": "a02-01_0502_sheet-3_sheet",
+      "featureNo": "A02-01",
+      "title": "A02-01 ポップアップ用商品情報取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "price01/price02/stock/weeklySold を設計は数値文字列(string)で返す契約だが、実装は integer 型で返す。",
+      "reason": "設計(行986)は price01・price02・stock を string(『Doctrineのdecimal値のため数値文字列で返す』)、weeklySold を string(『集計（SUM）結果のため数値文字列で返す』)と定義し、基本設計のレスポンスサンプル(行927 \"price02\": \"50\"、行928 \"stock\": \"17\"、行935 \"weeklySold\": \"1\")および詳細設計サンプル(行995-1004)も全て引用符付き=文字列で示す。一方 ec-cube-enterprise の ProductRepository::findPopupProductByProductId のResultSetMapping(ProductRepository.php:2163-2170)は price01・price02・stock・weeklySold を全て 'integer' scalar として取得し、PopupResponseBuilder::build(PopupResponseBuilder.php:33-41)は price01/price02 をそのまま、stock/weeklySold を (int) キャストで返す。よって JSON 上は数値(非引用符)となり、設計の数値文字列契約と異なる。文字列へ整形する別処理を PopupResponseBuilder と当リポジトリメソッドで確認したが無い。なお基本設計の型列(行906-908,915)は『数値(整数)』とも記すため設計内に型表記の不整合はあるが、両サンプルJSONと詳細設計の型定義が string を示すため、外部JSON契約としては文字列で、実装の integer は実装違いと判定。confidence は設計内不整合を考慮し medium。",
+      "designEvidence": {"label":"設計要求(成功レスポンス型=string)","path":"hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html","start":986,"end":986,"contains":["数値文字列で返す","price01","weeklySold"]},
+      "implEvidence": [
+        {"label":"実装(リポジトリ scalar=integer)","note":"price01/price02/stock/weeklySold を integer で取得","path":"ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php","start":2163,"end":2170,"contains":["'price01', 'price01', 'integer'","'price02', 'price02', 'integer'","'weeklysold', 'weeklySold', 'integer'"]},
+        {"label":"実装(ビルダで int キャスト)","note":"stock/weeklySold を (int) にキャストして返す","path":"ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php","start":33,"end":41,"contains":["'stock' => (int)","'weeklySold' => (int)","'price01' => $result['price01']"]}
+      ]
+    }
+  ]
+}

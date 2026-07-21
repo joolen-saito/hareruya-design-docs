@@ -1,0 +1,45 @@
+{
+  "functionId": "f05-03_0305_sheet-5_sheet",
+  "featureNo": "F05-03",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-5（レイアウト図 識別ID8 マイナス 商品数減ボタン）",
+      "designExpectation": "買取商品一覧の「マイナス（商品数減）ボタン」：押下すると商品数を1つ減らす。商品数が1の場合に押下すると、商品数を20にする（20へ循環させる）。",
+      "implRef": "ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/Purchase/purchase_js.twig:44-55",
+      "implementationActual": "買取一覧カード（Block/_purchase_product_card.twig の .purchase-detail-qty）に適用される .btn-minus ハンドラは v>1 の時のみ v-- する実装で、商品数が1のとき押下しても何も起きず1で停止する。コメントに『買取カートは1枚以上が前提のため…1で止める』と明記。",
+      "mismatchReason": "設計は識別ID8で『商品数が1の場合に押下すると、商品数を20にする』循環挙動を明示。実装は1で下限固定し20へ戻さない。card twig は .purchase-detail-qty を用い body_class に purchase_page を含むため当ハンドラが適用される。他JS（hareruya-products.js等）に循環処理は不在。",
+      "comparisonRows": [
+        { "item": "商品数=1でマイナス押下", "design": "商品数を20にする（循環）", "implementation": "1のまま変化なし（v>1判定でスキップ）", "mismatch": "循環（→20）が未実装、1で下限固定" }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-5（フロント挙動 表示要素／表示メッセージ『買取特集タグが1件指定のときは、タグの説明文（フリーエリア）を一覧上部に表示する』）",
+      "designExpectation": "買取特集タグが1件指定のとき、そのタグの説明文（フリーエリア）を買取商品一覧の上部に表示する。",
+      "implRef": "不在（探索: src/Eccube/Controller/Front/Purchase/PurchaseController.php search()返却配列、src/Eccube/Resource/template/default/Purchase/search.twig、getFreeArea参照なし）",
+      "implementationActual": "PurchaseController::search はタグ説明文（フリーエリア）を解決・返却せず、search.twig でも一覧上部にタグ説明文を描画する箇所が無い。tags は検索用フォーム項目のみ。販売側 ProductController は getFreeAreaJp/En でタグのフリーエリアHTMLを一覧上部に出しているが買取側に同等処理が無い。",
+      "mismatchReason": "設計は買取一覧の表示要素として『買取特集タグ説明（該当時）』を挙げ1件指定時のフリーエリア表示を明記。入口(search)・テンプレート(search.twig)・買取Blockを探索したが該当表示は不在。Tagエンティティに free_area 列はあるが買取一覧で参照していない（getFreeArea 呼び出しが Front/Purchase 配下に0件）。",
+      "comparisonRows": [
+        { "item": "タグ1件指定時のタグ説明文表示", "design": "タグのフリーエリア説明文を一覧上部に表示", "implementation": "解決・描画とも無し（tagsは検索フィルタのみ）", "mismatch": "買取特集タグ説明の表示が未実装" }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-5（表示メッセージ『お探しのカードは見つかりませんでした。（買取最低保証・ヘルプへの案内を含む）』／エッジケース0件／エラー処理 検索結果0件）",
+      "designExpectation": "検索結果が0件のとき、一覧本文に『お探しのカードは見つかりませんでした』と、買取最低保証・ヘルプへの案内を含む文言を表示する。",
+      "implRef": "ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-purchase-unisearch-list-client.js:152-157（showEmptyResult）, src/Eccube/Resource/template/default/Purchase/search.twig:46, src/Eccube/Resource/locale/messages.ja.yaml:1096",
+      "implementationActual": "0件時はクライアントJSの showEmptyResult が front.product.search__product_not_found=『お探しの商品は見つかりませんでした』の一文のみ描画する。買取最低保証・ヘルプ案内の文言/リンクは無く、文言も『カード』でなく『商品』。テンプレート全体に『最低保証』文字列は不在。",
+      "mismatchReason": "設計のエラー・警告メッセージ表は0件案内に買取最低保証・ヘルプ案内を含めることを明記。空結果描画(showEmptyResult)とロケール(search__product_not_found)を確認したが単一メッセージのみで導線が欠落。表示文言の内容が設計と相違。",
+      "comparisonRows": [
+        { "item": "0件時の一覧本文文言", "design": "『お探しのカードは見つかりませんでした』＋買取最低保証・ヘルプ案内を含む", "implementation": "『お探しの商品は見つかりませんでした』の一文のみ", "mismatch": "文言（カード/商品）相違＋最低保証・ヘルプ案内が欠落" }
+      ]
+    }
+  ]
+}

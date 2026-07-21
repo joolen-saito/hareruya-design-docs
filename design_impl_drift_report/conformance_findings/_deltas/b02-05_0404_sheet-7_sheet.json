@@ -1,0 +1,132 @@
+{
+  "functionId": "b02-05_0404_sheet-7_sheet",
+  "featureNo": "B02-05",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1410",
+      "designExpectation": "コンソールのバッチコマンドは product:batch saleNotification とし、セール中のお気に入り商品を会員ごとにまとめ、対象会員へセール通知メールを送信する。",
+      "implRef": "src/Eccube/Command/FavoriteSaleNotificationCommand.php:34",
+      "implementationActual": "実装コマンド名は eccube:favorite-sale-notification。クラスコメントの使用例も bin/console eccube:favorite-sale-notification であり、設計の product:batch saleNotification では起動できない。",
+      "mismatchReason": "src/Eccube/Command と src/Eccube/Service/Product を product:batch / saleNotification / FavoriteSaleNotification / favorite-sale-notification で再検索したが、product:batch saleNotification の AsCommand 定義は見つからず、別名コマンドのみ存在する。",
+      "comparisonRows": [
+        {
+          "item": "バッチ入口コマンド名",
+          "design": "product:batch saleNotification",
+          "implementation": "eccube:favorite-sale-notification",
+          "mismatch": "外部契約であるコマンド名が一致しない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1404",
+      "designExpectation": "お気に入り商品は dtb_favorite_product（product_id・player_id・language_id）を使用し、会員（選手情報）は dtb_player（first_name_jp・last_name_jp・email）を通知メールの宛先・本文に使用する。",
+      "implRef": "src/Eccube/Repository/CustomerFavoriteProductRepository.php:211",
+      "implementationActual": "バッチは CustomerFavoriteProductRepository::findSaleFavoriteProducts() を呼び、dtb_customer_favorite_product を表す CustomerFavoriteProduct と Customer を join して customer_id/name01/name02/email を取得している。dtb_favorite_product の player_id・language_id および dtb_player の氏名・email を抽出元にしていない。",
+      "mismatchReason": "DtbFavoriteProductRepository と DtbFavoriteProduct エンティティは存在するが、BatchFavoriteSaleNotificationAction の依存先は CustomerFavoriteProductRepository で、findSaleFavoriteProducts() も CustomerFavoriteProductRepository に実装されている。DtbFavoriteProductRepository 側にはセール通知用 findSaleFavoriteProducts の実装がなくコメントのみだった。",
+      "comparisonRows": [
+        {
+          "item": "お気に入り保持先",
+          "design": "dtb_favorite_product（product_id・player_id・language_id）",
+          "implementation": "dtb_customer_favorite_product（customer_id・product_id）を使う CustomerFavoriteProductRepository",
+          "mismatch": "設計で正典化された移行先テーブルではなく旧系の customer favorite テーブルを参照している。"
+        },
+        {
+          "item": "会員情報",
+          "design": "dtb_player の first_name_jp・last_name_jp・email",
+          "implementation": "Customer の name01・name02・email",
+          "mismatch": "選手情報で識別する設計に対し、Customer ベースで集約・送信している。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1366",
+      "designExpectation": "実行トリガーはスケジュール起動（Step Functions）、実行タイミングは毎週水曜17:30。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: Step Functions, StepFunctions, 17:30, 水曜, saleNotification, product:batch）",
+      "implementationActual": "FavoriteSaleNotificationCommand にはスケジュール・Step Functions・水曜17:30に関する定義やコメントがない。該当検索では別バッチの Step Functions コメントのみヒットした。",
+      "mismatchReason": "被監査範囲内で本バッチに紐づくスケジュール起動設定が確認できない。詳細設計の埋め込み部ではスケジュールを運用・ジョブ設定の対象とする記述もあるが、シート本文の material 要求として実行トリガーと時刻が明記されているため欠落として扱う。",
+      "comparisonRows": [
+        {
+          "item": "起動方式",
+          "design": "Step Functions によるスケジュール起動",
+          "implementation": "該当設定なし",
+          "mismatch": "設計された起動方式が確認できない。"
+        },
+        {
+          "item": "実行時刻",
+          "design": "毎週水曜17:30",
+          "implementation": "該当設定なし",
+          "mismatch": "設計された実行タイミングが確認できない。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1416",
+      "designExpectation": "一定件数ごとに処理メモリを解放しながら集約する。",
+      "implRef": "src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:38",
+      "implementationActual": "findSaleFavoriteProducts() の全結果を $rows に取得し、groupByCustomer() で全件を $grouped 配列へ集約してから送信している。一定件数ごとの clear/detach/flush/バッチ分割などの処理はない。",
+      "mismatchReason": "BatchFavoriteSaleNotificationAction と関連 Repository を clear, detach, batch, limit, offset, chunk, memory, 一定件数 で確認したが、本処理に一定件数ごとのメモリ解放は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "大量件数対応",
+          "design": "一定件数ごとに処理メモリを解放しながら集約する",
+          "implementation": "全件取得し全件配列に集約する",
+          "mismatch": "メモリ解放・分割処理が実装されていない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1440",
+      "designExpectation": "抽出・送信時のエラーはエラーメッセージをコンソールに出力する。",
+      "implRef": "src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:53",
+      "implementationActual": "会員ごとのメール送信例外は BatchFavoriteSaleNotificationAction で catch され、log_error に customer_id と message を出して処理継続する。例外を再throwしないため FavoriteSaleNotificationCommand の $io->error には到達せず、コンソールには送信時エラーが出ない。",
+      "mismatchReason": "Command 側には未捕捉例外の $io->error はあるが、設計が対象にする送信時エラーはサービス内で握りつぶされる。log_error はコンソール出力ではなく、設計の失敗時出力を満たさない。",
+      "comparisonRows": [
+        {
+          "item": "送信時エラー出力",
+          "design": "エラーメッセージをコンソールに出力する",
+          "implementation": "log_error に記録し、コマンドは成功扱いで継続し得る",
+          "mismatch": "失敗時出力先と終了扱いが設計と異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-7:1443",
+      "designExpectation": "開始・完了のコンソール出力（日時付き）。",
+      "implRef": "src/Eccube/Command/FavoriteSaleNotificationCommand.php:55",
+      "implementationActual": "完了相当の success メッセージは出力するが、開始メッセージはなく、出力に日時も付与していない。",
+      "mismatchReason": "FavoriteSaleNotificationCommand と BatchFavoriteSaleNotificationAction を 開始/完了/date/new DateTime/format/datetime/日時 で確認したが、日時付きの開始・完了出力は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "開始出力",
+          "design": "日時付きで開始をコンソール出力",
+          "implementation": "開始出力なし",
+          "mismatch": "開始ログが欠落している。"
+        },
+        {
+          "item": "完了出力",
+          "design": "日時付きで完了をコンソール出力",
+          "implementation": "success メッセージのみで日時なし",
+          "mismatch": "日時付き出力になっていない。"
+        }
+      ]
+    }
+  ]
+}

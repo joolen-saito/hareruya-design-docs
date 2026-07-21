@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m05_24_admin_order_order_shipping_export_for_import_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・ダウンロード発火・遷移・URL・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（pf-eccube3 基本設計＝一次オラクル・観点表）由来**とし、実装の現挙動・CSV列構成・文字コード・区切り・ファイル名prefixを期待値に写さない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・ダウンロード発火・遷移・URL・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（pf-eccube3 基本設計＝一次オラクル・観点表）由来**とし、実装の現挙動・CSV列構成・文字コード・区切り・ファイル名prefixを期待値に写さない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 > **screenExists=true**: 刷新先 `ec-cube-enterprise` に該当機能が存在する。受注メニュー「出荷指示一覧」（`admin_shipping_standby` = `GET/POST /<route>/standby/search`、`ShippingStandbyController.php:93-108` / `@admin/ShippingStandby/index.twig`）から「出荷指示編集」（`admin_shipping_standby_edit` = `GET/POST /<route>/standby/{id}/edit`、`ShippingStandbyController.php:152` / `@admin/ShippingStandby/edit.twig`）へ進み、一覧フォーム `#form_bulk`（edit.twig:113・各行チェックボックス `order_ids[<受注ID>]` は既定でオン edit.twig:157）直上の **「出荷実績入力用CSVダウンロード」ボタン `#orderExportForInput`**（edit.twig:126 / 文言 trans `admin.order.shipping_export_for_import`=「出荷実績入力用CSVダウンロード」messages.ja.yaml:3819）を押下する。JS（edit.twig:37-42）が `#form_bulk` の `target` を除去し `action` を `admin_order_export_for_input` へ差し替えて **POST submit** する。出力ルートは `admin_order_export_for_input` = **GET/POST** `/<route>/order/export/order`（`OrderCsvController.php:191`）で、`order_ids` が配列・非空なら `OrderCsv::exportCsv`（`OrderCsv.php:57`）が `StreamedResponse` でCSVを返す。確認ダイアログは無い（フロント挙動）。
 > **設計(pf-eccube3)と刷新先で同名ルート・同一ボタンID・同一POST submit挙動**であり入口は一致する。郵便番号の保持方式差（`zip01`/`zip02` 2列 → `postal_code` 単一列）は設計「リニューアル移行時の扱い」節（正本md:19-31）で調整済みで、CSVヘッダは引き続き2列出力（DB記述は移行先 ec-cube-enterprise 名称に揃え）。
@@ -29,28 +29,28 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-001	IT-25	操作起点	P1	出荷指示一覧画面（CSV出力の起点導線）が表示される	管理者ログイン済／SEED-M05-24-ADMIN	—	"1. 出荷指示一覧URL（/<route>/standby/search）を開く"	出荷指示一覧画面（サブタイトル「出荷指示リストエクスポート」相当）が表示されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-002	IT-25	UI部品	P1	出荷指示編集画面に「出荷実績入力用CSVダウンロード」ボタン(id=orderExportForInput)が表示される	管理者ログイン済／SEED-M05-24-ADMIN／SEED-M05-24-STANDBY	—	"1. 出荷指示編集画面（/<route>/standby/{id}/edit）を開く"	一覧フォーム直上に id=orderExportForInput の「出荷実績入力用CSVダウンロード」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-001	IT-25	操作起点	P1	出荷指示一覧画面（CSV出力の起点導線）が表示される	管理者ログイン済／SEED-M05-24-ADMIN	—	1. 出荷指示一覧URL（/<route>/standby/search）を開く	出荷指示一覧画面（サブタイトル「出荷指示リストエクスポート」相当）が表示されること。				
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-002	IT-25	UI部品	P1	出荷指示編集画面に「出荷実績入力用CSVダウンロード」ボタン(id=orderExportForInput)が表示される	管理者ログイン済／SEED-M05-24-ADMIN／SEED-M05-24-STANDBY	—	1. 出荷指示編集画面（/<route>/standby/{id}/edit）を開く	一覧フォーム直上に id=orderExportForInput の「出荷実績入力用CSVダウンロード」ボタンが表示されること。				
 m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-003	IT-25	UI部品	P2	出荷指示編集画面の一覧各行チェックボックスが既定でオンである	管理者ログイン済／SEED-M05-24-ADMIN／SEED-M05-24-STANDBY	—	"1. 出荷指示編集画面を開く
-2. 一覧各行のチェック状態を確認する"	各行のチェックボックス（name=order_ids[受注ID]）が既定でオンであること。
+2. 一覧各行のチェック状態を確認する"	各行のチェックボックス（name=order_ids[受注ID]）が既定でオンであること。				
 m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-010	IT-27	実行結果	P1	チェック付きで出力ボタン押下するとCSVダウンロードが発火する	管理者ログイン済／SEED-M05-24-ADMIN／SEED-M05-24-STANDBY	チェック付き受注1件以上	"1. 出荷指示編集画面を開く
-2. 一覧のチェックを残し「出荷実績入力用CSVダウンロード」ボタンを押下する"	CSVファイルのダウンロードが発火すること（成功時出力＝text/csvストリーム）。
+2. 一覧のチェックを残し「出荷実績入力用CSVダウンロード」ボタンを押下する"	CSVファイルのダウンロードが発火すること（成功時出力＝text/csvストリーム）。				
 m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-011	IT-03	画面遷移	P2	出力後も出荷指示編集画面に滞留しダウンロードのみ行われる	管理者ログイン済／SEED-M05-24-ADMIN／SEED-M05-24-STANDBY	チェック付き受注1件以上	"1. 出荷指示編集画面を開く
-2. 出力ボタンを押下しダウンロードを受け取る"	ダウンロード後も出荷指示編集画面のままで、画面遷移を伴わないこと。
+2. 出力ボタンを押下しダウンロードを受け取る"	ダウンロード後も出荷指示編集画面のままで、画面遷移を伴わないこと。				
 m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-012	IT-25	HTTPステータス	P2	ダウンロードCSVのファイル名が order_<出力時刻>.csv である	管理者ログイン済／SEED-M05-24-ADMIN／SEED-M05-24-STANDBY	チェック付き受注1件以上	"1. 出荷指示編集画面で出力ボタンを押下する
-2. 発火したダウンロードのファイル名を確認する"	ファイル名が接頭辞「order_」＋日時（YmdHis）＋拡張子「.csv」であること。
+2. 発火したダウンロードのファイル名を確認する"	ファイル名が接頭辞「order_」＋日時（YmdHis）＋拡張子「.csv」であること。				
 m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-020	IT-27	出力失敗	P1	編集画面で全チェック解除のまま出力ボタンを押すと選択フラッシュが表示され滞留する	管理者ログイン済／SEED-M05-24-ADMIN／SEED-M05-24-STANDBY	order_ids＝空（全チェック解除）	"1. 出荷指示編集画面を開く
 2. 全行のチェックを外す
-3. 出力ボタンを押下する"	「選択してください」のエラーフラッシュが表示され、出荷指示編集画面（Referer）に滞留すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-021	IT-13	URL直接アクセス	P1	出力URLへ order_ids 無しで直接GETすると受注一覧へリダイレクトし選択フラッシュが出る	管理者ログイン済／SEED-M05-24-ADMIN	order_ids無し（直接GET）	"1. 出力URL（/<route>/order/export/order）へ直接GETアクセスする"	受注一覧（admin_order）へリダイレクトされ、「選択してください」のエラーフラッシュが表示されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-022	IT-27	出力失敗	P2	出力URLへ order_ids を非配列（スカラ）で直接POSTすると選択フラッシュが表示されリダイレクトされる	管理者ログイン済／SEED-M05-24-ADMIN	order_ids＝非配列（スカラ値）で直接POST	"1. 出力URL（/<route>/order/export/order）へ order_ids にスカラ値を入れて直接POSTする"	CSVは出力されず「選択してください」のエラーフラッシュが表示され、Referer/受注一覧へリダイレクトされること（order_ids が配列でない分岐）。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-023	IT-03	画面遷移	P2	order_ids無し・Referer無しで直接POSTすると受注一覧へリダイレクトされる	管理者ログイン済／SEED-M05-24-ADMIN	order_ids無し／Refererヘッダ無しで直接POST	"1. Refererヘッダを付けずに出力URLへ order_ids 無しでPOSTする"	受注一覧（admin_order）へリダイレクトされ、「選択してください」のエラーフラッシュが表示されること（Referer空時のリダイレクト先分岐）。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-024	IT-13	URL直接アクセス	P3	GETで出力URLへ入ると受注CSV系ルートが優先されうる（環境依存）	管理者ログイン済／SEED-M05-24-ADMIN	order_ids無し（直接GET）	"1. 出力URL（/<route>/order/export/order）へGETで直接アクセスする"	設計上、GET時に受注dtb_csv系（GETのみ）ルートが優先されうる確認環境があり、遷移先・出力種別は環境依存となること（要実機確認・付帯表4#3。本ルート起動が確実なPOST submit経由＝010を正系とする）。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-030	IT-15	未認証	P1	未ログインで出荷指示一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 出荷指示一覧URL（/<route>/standby/search）へ直接アクセスする"	管理ログイン画面へ誘導されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-031	IT-15	未認証	P1	未ログインで出力URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 出力URL（/<route>/order/export/order）へ直接アクセスする"	CSVは出力されず管理ログイン画面へ誘導されること。
+3. 出力ボタンを押下する"	「選択してください」のエラーフラッシュが表示され、出荷指示編集画面（Referer）に滞留すること。				
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-021	IT-13	URL直接アクセス	P1	出力URLへ order_ids 無しで直接GETすると受注一覧へリダイレクトし選択フラッシュが出る	管理者ログイン済／SEED-M05-24-ADMIN	order_ids無し（直接GET）	1. 出力URL（/<route>/order/export/order）へ直接GETアクセスする	受注一覧（admin_order）へリダイレクトされ、「選択してください」のエラーフラッシュが表示されること。				
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-022	IT-27	出力失敗	P2	出力URLへ order_ids を非配列（スカラ）で直接POSTすると選択フラッシュが表示されリダイレクトされる	管理者ログイン済／SEED-M05-24-ADMIN	order_ids＝非配列（スカラ値）で直接POST	1. 出力URL（/<route>/order/export/order）へ order_ids にスカラ値を入れて直接POSTする	CSVは出力されず「選択してください」のエラーフラッシュが表示され、Referer/受注一覧へリダイレクトされること（order_ids が配列でない分岐）。				
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-023	IT-03	画面遷移	P2	order_ids無し・Referer無しで直接POSTすると受注一覧へリダイレクトされる	管理者ログイン済／SEED-M05-24-ADMIN	order_ids無し／Refererヘッダ無しで直接POST	1. Refererヘッダを付けずに出力URLへ order_ids 無しでPOSTする	受注一覧（admin_order）へリダイレクトされ、「選択してください」のエラーフラッシュが表示されること（Referer空時のリダイレクト先分岐）。				
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-024	IT-13	URL直接アクセス	P3	GETで出力URLへ入ると受注CSV系ルートが優先されうる（環境依存）	管理者ログイン済／SEED-M05-24-ADMIN	order_ids無し（直接GET）	1. 出力URL（/<route>/order/export/order）へGETで直接アクセスする	設計上、GET時に受注dtb_csv系（GETのみ）ルートが優先されうる確認環境があり、遷移先・出力種別は環境依存となること（要実機確認・付帯表4#3。本ルート起動が確実なPOST submit経由＝010を正系とする）。				
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-030	IT-15	未認証	P1	未ログインで出荷指示一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 出荷指示一覧URL（/<route>/standby/search）へ直接アクセスする	管理ログイン画面へ誘導されること。				
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-031	IT-15	未認証	P1	未ログインで出力URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. 出力URL（/<route>/order/export/order）へ直接アクセスする	CSVは出力されず管理ログイン画面へ誘導されること。				
 m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	E2E-M05-24-040	IT-27	出力失敗	P2	取得結果が論理偽となる受注のみ選択時はメッセージ付きフラッシュとリダイレクトになる	管理者ログイン済／SEED-M05-24-ADMIN／SEED-M05-24-NOSHIP（配送無し受注）	配送無し/会員未紐付け受注のみ選択	"1. 出荷指示編集相当の状態で配送無し受注のみを選択する
-2. 出力ボタンを押下する"	CSVダウンロードは発火せず、エラーフラッシュ表示とリダイレクトになること。
+2. 出力ボタンを押下する"	CSVダウンロードは発火せず、エラーフラッシュ表示とリダイレクトになること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

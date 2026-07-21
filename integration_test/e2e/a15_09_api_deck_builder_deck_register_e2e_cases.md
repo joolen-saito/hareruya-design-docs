@@ -7,7 +7,7 @@
 
 本機能は**ブラウザ向けの画面を持たない**機能仕様（JWT認証つきPOST API＝デッキビルダー利用者のデッキ新規登録。正本md「対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない」）であり、**API/統合レイヤ単独で網羅**する。Playwright `request` で `POST /api/deck` へ送信し、HTTPステータス・レスポンス本文（`{code, message, deck_id, display_token}`／`{code, message}`）で判定する。登録副作用（デッキ本体・採用カード・メイビー/アトラクション/ステッカーカード・限定公開トークン・レギュレーション違反フラグ・作成/更新日時）は永続化先テーブル（`dtb_deck`・`dtb_deck_card`・`dtb_maybe_card`・`dtb_attraction_card`・`dtb_sticker_card`）を直接DB照合（DB副作用観測）して判定する。本機能は画面を持たないため、別機能（管理画面 デッキ管理）の表示は合否条件にしない。
 
-**期待結果は仕様（正本md・観点表・基本設計）由来**とし、実装のレスポンス形・バリデーション機構・HTTPライブラリ既定値・DTO/エンティティ制約・ロケール文言を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdを上位オラクル、観点表（基本設計）と食い違う箇所も上位オラクルとして扱い、乖離は付帯表4に出す。実装からは位置情報（APIパス・メソッド・認証方式）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（正本md・観点表・基本設計）由来**とし、実装のレスポンス形・バリデーション機構・HTTPライブラリ既定値・DTO/エンティティ制約・ロケール文言を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdを上位オラクル、観点表（基本設計）と食い違う箇所も上位オラクルとして扱い、乖離は付帯表4に出す。実装からは位置情報（APIパス・メソッド・認証方式）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 本機能は**登録（DB新規作成）系**のため、DB登録観点（IT-26）・入力検証観点（IT-22）・ロールバック観点（IT-06）を網羅に含める。正本md・実装には入力検証（バリデーション節）とDB登録副作用（副作用節・DBカラム節）とトランザクション・ロールバック（排他制御節）が存在するが、既存IT casesの対象外観点表は「本機能に入力検証対象がないため」「該当する処理・I/Fがないため」と誤って除外している。これを上位オラクル（正本md・基本設計）に照らして補正し、入力検証（IT-22）・DB登録（IT-26）・ロールバック（IT-06）を設計書補完ケースとして追加した（母集合外・別管理）。当該誤分類は付帯表4#6に記録する。
 
@@ -27,88 +27,88 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-001	IT-09	リクエスト	P1	正常パラメータでPOSTし200が返る	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	"有効なjwt-tokenヘッダ
 deck_name・format_id・cards（board_id・count付き）等の正常ボディ"	"1. /api/deck へPOSTでリクエストを送信する
-2. HTTPステータスを確認する"	正常登録としてHTTPステータス200が返ること。
+2. HTTPステータスを確認する"	正常登録としてHTTPステータス200が返ること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-002	IT-09	実行結果	P3	登録実行後の処理結果が成功で一致する	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	有効なjwt-token・正常な登録リクエスト	"1. /api/deck へPOSTでリクエストを送信する
-2. レスポンスと後続状態を確認する"	登録処理が実行され、処理結果（成功）がレスポンスと一致すること。
+2. レスポンスと後続状態を確認する"	登録処理が実行され、処理結果（成功）がレスポンスと一致すること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-003	IT-09	HTTPステータス	P3	成功時のHTTPステータスが200である	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	有効なjwt-token・正常な登録リクエスト	"1. /api/deck へPOSTでリクエストを送信する
-2. HTTPステータスを確認する"	HTTPステータスが成功（200）であること。
+2. HTTPステータスを確認する"	HTTPステータスが成功（200）であること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-004	IT-09	外部取得	P1	成功レスポンス本文がcode200・message・deck_idを含む	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	有効なjwt-token・正常な登録リクエスト	"1. /api/deck へPOSTでリクエストを送信する
-2. レスポンス本文を確認する"	成功時のレスポンス本文が `code:200`・`message:「Deck register success」`・発番された `deck_id` を含むこと。
+2. レスポンス本文を確認する"	成功時のレスポンス本文が `code:200`・`message:「Deck register success」`・発番された `deck_id` を含むこと。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-010	IT-32	資格情報	P1	有効なJWTで登録が成功する	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	有効なjwt-token（該当するプレイヤーあり）・正常リクエスト	"1. 有効なjwt-tokenを付与してPOSTで送信する
-2. HTTPステータスを確認する"	資格情報が有効な場合、HTTPステータス200で登録が成功すること。
+2. HTTPステータスを確認する"	資格情報が有効な場合、HTTPステータス200で登録が成功すること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-011	IT-32	リクエスト	P3	異常なパラメータ値で入力不正となる	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・整合性検証に失敗する異常な値を含むリクエスト	"1. 異常な値を含むリクエストをPOSTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400が返り、レスポンス本文に `{code, message}`（検証エラー内容）を含むこと。
+2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400が返り、レスポンス本文に `{code, message}`（検証エラー内容）を含むこと。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-012	IT-32	リクエスト	P3	想定外項目追加時の挙動が要実機確認・仕様化待ちである	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	正常リクエストに仕様未定義の想定外項目（項目名と値のセット）を追加	"1. 想定外項目を含むリクエストをPOSTで送信する
-2. HTTPステータスを確認する"	正本mdに未定義項目の許容/無視/エラーの仕様が無いため、想定外項目追加時の登録成否を固定期待にできず、許容・無視・エラーいずれの挙動とするかは要実機確認・仕様化待ちであること。
+2. HTTPステータスを確認する"	正本mdに未定義項目の許容/無視/エラーの仕様が無いため、想定外項目追加時の登録成否を固定期待にできず、許容・無視・エラーいずれの挙動とするかは要実機確認・仕様化待ちであること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-013	IT-32	必須条件	P3	cards指定時の必須子項目を満たすと登録成功200となる	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	有効なjwt-token・cards各要素にboard_id・countを満たすリクエスト	"1. cards必須子項目を満たすリクエストをPOSTで送信する
-2. HTTPステータスを確認する"	cards指定時の必須子項目（board_id・count）を満たし、HTTPステータス200で登録が成功すること。
+2. HTTPステータスを確認する"	cards指定時の必須子項目（board_id・count）を満たし、HTTPステータス200で登録が成功すること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-014	IT-32	レスポンス	P3	成功レスポンス書式がcode・message・deck_idと一致する	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	有効なjwt-token・公開範囲が公開（1）の正常リクエスト	"1. /api/deck へPOSTで送信する
-2. レスポンス本文の書式を確認する"	成功時のレスポンス書式が仕様の `{code, message, deck_id}`（限定公開以外は display_token を含まない）と一致すること。
+2. レスポンス本文の書式を確認する"	成功時のレスポンス書式が仕様の `{code, message, deck_id}`（限定公開以外は display_token を含まない）と一致すること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-015	IT-32	データなし	P3	任意項目・cards未指定でも登録が成功する	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・deck_name/format_id/cards等の任意項目をすべて未指定	"1. 任意項目を未指定にしてPOSTで送信する
-2. HTTPステータスと後続状態を確認する"	任意項目（deck_name・format_id・archetype_id・scope_id・image_card_id・campaign_tag_ids・cards）が未指定でも検証エラーとならず、HTTPステータス200で登録が成功すること。
+2. HTTPステータスと後続状態を確認する"	任意項目（deck_name・format_id・archetype_id・scope_id・image_card_id・campaign_tag_ids・cards）が未指定でも検証エラーとならず、HTTPステータス200で登録が成功すること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-016	IT-32	受信検証	P1	入力検証を満たすリクエストで登録成功200となる	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	採用カード・デッキ本体の検証をすべて満たすリクエスト	"1. /api/deck へPOSTで送信する
-2. HTTPステータスを確認する"	採用カード・デッキ本体の入力検証を満たし、HTTPステータス200で登録が成功すること。
+2. HTTPステータスを確認する"	採用カード・デッキ本体の入力検証を満たし、HTTPステータス200で登録が成功すること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-020	IT-19	同時実行数の制限	P3	上限到達時の応答が要実機確認・仕様化待ちである	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・一定時間内に上限を超える並行リクエスト	"1. 上限を超える並行リクエストをPOSTで送信する
-2. 応答を確認する"	本APIにレート制限・同時実行数制限の定義が無く、上限到達時の応答（レート制限エラー等）は正典未定義のため固定期待にできず、要実機確認・仕様化待ちであること（並行送信の実再現も要実機確認）。
+2. 応答を確認する"	本APIにレート制限・同時実行数制限の定義が無く、上限到達時の応答（レート制限エラー等）は正典未定義のため固定期待にできず、要実機確認・仕様化待ちであること（並行送信の実再現も要実機確認）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-030	IT-10	エラー	P3	検証失敗時に400となりエラーメッセージを返す	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・採用カードまたはデッキ本体の検証に失敗するリクエスト	"1. 検証に失敗するリクエストをPOSTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400が返り、レスポンス本文 `{code, message}` に検証エラー内容を含むこと。
+2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400が返り、レスポンス本文 `{code, message}` に検証エラー内容を含むこと。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-031	IT-10	エラー	P2	複数項目の検証失敗で400となり検証エラー内容を含む	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・デッキ本体の複数項目が検証に失敗するリクエスト	"1. 複数項目が不正なリクエストをPOSTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	複数項目が検証に失敗した場合、HTTPステータス400が返り、レスポンス本文 `{code, message}` に検証エラー内容を含むこと。全件まとめ返却の有無および返却構造（配列／連結文字列等）は正典未定義のため固定せず、要確認・仕様化待ちとする（付帯表4#5）。
+2. HTTPステータスとレスポンス本文を確認する"	複数項目が検証に失敗した場合、HTTPステータス400が返り、レスポンス本文 `{code, message}` に検証エラー内容を含むこと。全件まとめ返却の有無および返却構造（配列／連結文字列等）は正典未定義のため固定せず、要確認・仕様化待ちとする（付帯表4#5）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-032	IT-10	エラー	P2	マスタ解決を伴う検証失敗で400となり検証エラー内容を含む	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・マスタ解決を伴う項目が検証に失敗するリクエスト	"1. マスタ解決を伴う不正項目を含むリクエストをPOSTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	フォーマット・カード等のマスタ解決を伴う検証に失敗した場合、HTTPステータス400が返り、レスポンス本文 `{code, message}` にマスタ解決を伴う検証エラー内容を含むこと。全件まとめ返却の有無および返却構造は正典未定義のため固定せず、要確認・仕様化待ちとする（付帯表4#5）。
+2. HTTPステータスとレスポンス本文を確認する"	フォーマット・カード等のマスタ解決を伴う検証に失敗した場合、HTTPステータス400が返り、レスポンス本文 `{code, message}` にマスタ解決を伴う検証エラー内容を含むこと。全件まとめ返却の有無および返却構造は正典未定義のため固定せず、要確認・仕様化待ちとする（付帯表4#5）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-033	IT-10	HTTPステータス	P1	認証済みプレイヤーで200が返る	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	認証済みプレイヤーのjwt-token・正常リクエスト	"1. 認証済みプレイヤーのjwt-tokenでPOSTで送信する
-2. HTTPステータスを確認する"	認証済みプレイヤーが自身のデッキを登録でき、HTTPステータス200が返ること。
+2. HTTPステータスを確認する"	認証済みプレイヤーが自身のデッキを登録でき、HTTPステータス200が返ること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-034	IT-10	通信	P1	jwt-tokenヘッダ欠落で401となり登録されない	SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	jwt-tokenヘッダを付与しないリクエスト	"1. jwt-tokenヘッダ無しでPOSTで送信する
-2. HTTPステータスと後続状態を確認する"	認証拒否を示すHTTPステータス401が返り、デッキが登録されないこと。
+2. HTTPステータスと後続状態を確認する"	認証拒否を示すHTTPステータス401が返り、デッキが登録されないこと。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-035	IT-10	正常	P2	署名不正・該当プレイヤーなしのJWTで401となる	SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	署名検証に失敗する、または該当するプレイヤーが存在しないjwt-token	"1. 署名不正／該当プレイヤーなしのjwt-tokenでPOSTで送信する
-2. HTTPステータスと後続状態を確認する"	署名不正または該当プレイヤーなしを認証拒否として扱い、HTTPステータス401が返り、デッキが登録されないこと。
+2. HTTPステータスと後続状態を確認する"	署名不正または該当プレイヤーなしを認証拒否として扱い、HTTPステータス401が返り、デッキが登録されないこと。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-036	IT-10	異常系	P2	異常リクエストで4xxとなり登録されない	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・検証に失敗する異常リクエスト	"1. 異常リクエストをPOSTで送信する
-2. HTTPステータスと後続状態を確認する"	異常を示すHTTPステータス4xxが返り、デッキ本体・採用カードが登録されないこと。
+2. HTTPステータスと後続状態を確認する"	異常を示すHTTPステータス4xxが返り、デッキ本体・採用カードが登録されないこと。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-037	IT-10	重複・順序	P1	追加登録として新規レコードが追加される	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・正常な登録リクエスト	"1. /api/deck へPOSTで送信し200を確認する
-2. 一次オラクルとしてDB副作用（dtb_deckの件数）を照合する"	既存レコードを上書きせず、デッキ本体が新規に1件追加登録されること（DB副作用で判定）。
+2. 一次オラクルとしてDB副作用（dtb_deckの件数）を照合する"	既存レコードを上書きせず、デッキ本体が新規に1件追加登録されること（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-038	IT-10	エラー	P3	処理タイムアウト時に仕様どおりの応答となる	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してPOSTで送信する
-2. 応答と後続状態を確認する"	サーバ無応答・未定義例外で停止せず、エラー応答が返り、デッキが部分登録されないこと（タイムアウト実再現は要実機確認）。
+2. 応答と後続状態を確認する"	サーバ無応答・未定義例外で停止せず、エラー応答が返り、デッキが部分登録されないこと（タイムアウト実再現は要実機確認）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-040	IT-33	区分整合	P1	登録後に他プレイヤー・他デッキのレコードが不変	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・自プレイヤーのデッキを登録する正常リクエスト	"1. /api/deck へPOSTで送信し200と成功応答を確認する
-2. 一次オラクルとしてDB副作用（他プレイヤー・他デッキのレコード）を照合する"	登録対象外の他プレイヤー・他デッキのデッキ本体・採用カードが登録前と一致し、変動しないこと（DB副作用で判定）。
+2. 一次オラクルとしてDB副作用（他プレイヤー・他デッキのレコード）を照合する"	登録対象外の他プレイヤー・他デッキのデッキ本体・採用カードが登録前と一致し、変動しないこと（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-041	IT-33	エラー	P1	検証エラー時に保存へ到達せず未登録となる	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PLAYER-BASE	有効なjwt-token・デッキ本体検証に失敗するリクエスト（正典の検証順では保存より前に検証で弾かれる）	"1. 検証エラーとなるリクエストをPOSTで送信し4xxを確認する
-2. 一次オラクルとしてDB副作用（dtb_deck・dtb_deck_card等）を受信前と照合する"	正典の処理順（採用カード検証→デッキ本体検証→保存）により、検証エラー時はHTTPステータス4xxが返り保存処理に到達しないこと。デッキ本体・採用カード・各カードテーブルがDB副作用上で受信前と一致し、登録が残らないこと（保存処理中の例外時ロールバックはE2E-150で確認。DB副作用で判定）。
+2. 一次オラクルとしてDB副作用（dtb_deck・dtb_deck_card等）を受信前と照合する"	正典の処理順（採用カード検証→デッキ本体検証→保存）により、検証エラー時はHTTPステータス4xxが返り保存処理に到達しないこと。デッキ本体・採用カード・各カードテーブルがDB副作用上で受信前と一致し、登録が残らないこと（保存処理中の例外時ロールバックはE2E-150で確認。DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-100	IT-22	必須バリデーション	P2	cards指定時にboard_id欠落で採用カード検証エラーとなる	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・cards要素のboard_idを未指定	"1. board_id欠落のcardsを含むリクエストをPOSTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	cards指定時に必須のboard_idが欠落し、採用カード検証エラーとしてHTTPステータス400が返り、検証メッセージを含むこと。
+2. HTTPステータスとレスポンス本文を確認する"	cards指定時に必須のboard_idが欠落し、採用カード検証エラーとしてHTTPステータス400が返り、検証メッセージを含むこと。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-101	IT-22	必須バリデーション	P2	cards指定時にcount欠落で採用カード検証エラーとなる	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・cards要素のcountを未指定	"1. count欠落のcardsを含むリクエストをPOSTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	cards指定時に必須のcountが欠落し、採用カード検証エラーとしてHTTPステータス400が返り、検証メッセージを含むこと。
+2. HTTPステータスとレスポンス本文を確認する"	cards指定時に必須のcountが欠落し、採用カード検証エラーとしてHTTPステータス400が返り、検証メッセージを含むこと。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-102	IT-22	その他のバリデーション	P2	デッキ本体の制約未充足で400となりエラーメッセージを返す	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・デッキ本体の制約に違反する値	"1. デッキ本体制約に違反するリクエストをPOSTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	フォーマット・公開範囲・採用カードを設定したデッキ本体の制約が未充足の場合、HTTPステータス400が返り、エラーメッセージを返すこと。
+2. HTTPステータスとレスポンス本文を確認する"	フォーマット・公開範囲・採用カードを設定したデッキ本体の制約が未充足の場合、HTTPステータス400が返り、エラーメッセージを返すこと。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-103	IT-22	必須バリデーション	P2	必須項目あり・任意項目未入力で検証エラーにならない	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER	有効なjwt-token・必須を満たし任意項目（deck_name・format_id等）を未入力	"1. 任意項目を未入力にしたリクエストをPOSTで送信する
-2. HTTPステータスを確認する"	任意項目が未入力でも検証エラーとならず、HTTPステータス200で登録が成功すること。
+2. HTTPステータスを確認する"	任意項目が未入力でも検証エラーとならず、HTTPステータス200で登録が成功すること。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-120	IT-26	登録内容	P1	登録後にdtb_deckへデッキ本体が1件登録される	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・deck_name・format_id等を指定する正常リクエスト	"1. /api/deck へPOSTで送信する
-2. DB副作用（dtb_deck）を照合する"	dtb_deckにデッキ本体が1件登録され、deck_idが発番されデッキ名・フォーマット・プレイヤーが指定値で登録されること（DB副作用で判定）。
+2. DB副作用（dtb_deck）を照合する"	dtb_deckにデッキ本体が1件登録され、deck_idが発番されデッキ名・フォーマット・プレイヤーが指定値で登録されること（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-121	IT-26	登録内容	P1	採用カードがdtb_deck_cardにcard_id・board_id・countで登録される	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・メイン/サイド/統率領域の採用カードを含むリクエスト	"1. /api/deck へPOSTで送信する
-2. DB副作用（dtb_deck_card）を照合する"	採用カードがdtb_deck_cardにdeck_id・card_id・board_id・countで登録されること（DB副作用で判定）。
+2. DB副作用（dtb_deck_card）を照合する"	採用カードがdtb_deck_cardにdeck_id・card_id・board_id・countで登録されること（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-122	IT-26	登録内容	P2	メイビー/アトラクション/ステッカーが各テーブルへ振り分け登録される	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・board_id=4/5/6のカードを含むリクエスト	"1. /api/deck へPOSTで送信する
-2. DB副作用（dtb_maybe_card・dtb_attraction_card・dtb_sticker_card）を照合する"	board_id=4のカードがdtb_maybe_card、5がdtb_attraction_card、6がdtb_sticker_cardへ振り分けて登録されること（DB副作用で判定）。
+2. DB副作用（dtb_maybe_card・dtb_attraction_card・dtb_sticker_card）を照合する"	board_id=4のカードがdtb_maybe_card、5がdtb_attraction_card、6がdtb_sticker_cardへ振り分けて登録されること（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-123	IT-26	登録内容	P1	限定公開（3）で限定公開トークンが生成保存され応答にも含まれる	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・scope_id=限定公開（3）のリクエスト	"1. scope_id=3でPOSTで送信する
-2. レスポンスとDB副作用（dtb_deckのdisplay_token）を照合する"	デッキID発番後に限定公開トークンが生成されdtb_deckのdisplay_tokenに保存され、レスポンス本文にも display_token が含まれること（DB副作用とレスポンスで判定）。
+2. レスポンスとDB副作用（dtb_deckのdisplay_token）を照合する"	デッキID発番後に限定公開トークンが生成されdtb_deckのdisplay_tokenに保存され、レスポンス本文にも display_token が含まれること（DB副作用とレスポンスで判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-124	IT-26	登録内容	P2	枚数範囲外でレギュレーション違反フラグが保存され登録は成功する	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・フォーマットの統率領域/メインボード/サイドボードの枚数範囲を外れる採用カード構成	"1. 枚数範囲外の構成でPOSTで送信する
-2. HTTPステータスとDB副作用（regulation_violation_flg）を照合する"	枚数範囲（統率領域・メインボード・サイドボード）に違反しても登録自体は妨げられずHTTPステータス200が返り、判定結果がdtb_deckのregulation_violation_flgに違反として保存されること（DB副作用で判定）。
+2. HTTPステータスとDB副作用（regulation_violation_flg）を照合する"	枚数範囲（統率領域・メインボード・サイドボード）に違反しても登録自体は妨げられずHTTPステータス200が返り、判定結果がdtb_deckのregulation_violation_flgに違反として保存されること（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-128	IT-26	登録内容	P3	禁止制限カードでレギュレーション違反フラグが保存され登録は成功する	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・当該フォーマットで禁止または制限されたカードを含む採用カード構成	"1. 禁止制限カードを含む構成でPOSTで送信する
-2. HTTPステータスとDB副作用（regulation_violation_flg）を照合する"	禁止制限カードを含んでも登録自体は妨げられずHTTPステータス200が返り、判定結果がdtb_deckのregulation_violation_flgに違反として保存されること（DB副作用で判定）。
+2. HTTPステータスとDB副作用（regulation_violation_flg）を照合する"	禁止制限カードを含んでも登録自体は妨げられずHTTPステータス200が返り、判定結果がdtb_deckのregulation_violation_flgに違反として保存されること（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-129	IT-26	登録内容	P3	4枚制限超過でレギュレーション違反フラグが保存され登録は成功する	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・同一カードを4枚制限を超えて採用する構成	"1. 4枚制限超過の構成でPOSTで送信する
-2. HTTPステータスとDB副作用（regulation_violation_flg）を照合する"	同一カードの4枚制限を超過しても登録自体は妨げられずHTTPステータス200が返り、判定結果がdtb_deckのregulation_violation_flgに違反として保存されること（DB副作用で判定）。
+2. HTTPステータスとDB副作用（regulation_violation_flg）を照合する"	同一カードの4枚制限を超過しても登録自体は妨げられずHTTPステータス200が返り、判定結果がdtb_deckのregulation_violation_flgに違反として保存されること（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-130	IT-26	登録内容	P3	フォーマット不適合でレギュレーション違反フラグが保存され登録は成功する	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・当該フォーマットに適合しないカードを含む採用カード構成	"1. フォーマット不適合カードを含む構成でPOSTで送信する
-2. HTTPステータスとDB副作用（regulation_violation_flg）を照合する"	フォーマットに適合しないカードを含んでも登録自体は妨げられずHTTPステータス200が返り、判定結果がdtb_deckのregulation_violation_flgに違反として保存されること（DB副作用で判定）。
+2. HTTPステータスとDB副作用（regulation_violation_flg）を照合する"	フォーマットに適合しないカードを含んでも登録自体は妨げられずHTTPステータス200が返り、判定結果がdtb_deckのregulation_violation_flgに違反として保存されること（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-131	IT-26	登録内容	P3	統率領域の伝説条件違反でレギュレーション違反フラグが保存され登録は成功する	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・統率領域の伝説条件を満たさない採用カード構成	"1. 統率領域伝説条件に違反する構成でPOSTで送信する
-2. HTTPステータスとDB副作用（regulation_violation_flg）を照合する"	統率領域の伝説条件に違反しても登録自体は妨げられずHTTPステータス200が返り、判定結果がdtb_deckのregulation_violation_flgに違反として保存されること（DB副作用で判定）。
+2. HTTPステータスとDB副作用（regulation_violation_flg）を照合する"	統率領域の伝説条件に違反しても登録自体は妨げられずHTTPステータス200が返り、判定結果がdtb_deckのregulation_violation_flgに違反として保存されること（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-125	IT-26	登録内容	P2	所有者player_idが認証プレイヤーで固定登録される	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	認証プレイヤーのjwt-token・正常リクエスト	"1. 認証プレイヤーのjwt-tokenでPOSTで送信する
-2. DB副作用（dtb_deckのplayer_id）を照合する"	登録されたデッキの所有者player_idが、jwt-tokenから特定した認証プレイヤーで固定登録されること（DB副作用で判定）。
+2. DB副作用（dtb_deckのplayer_id）を照合する"	登録されたデッキの所有者player_idが、jwt-tokenから特定した認証プレイヤーで固定登録されること（DB副作用で判定）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-126	IT-26	登録内容	P3	作成日時・更新日時に現在日時が登録される	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD／SEED-A15-09-PLAYER-BASE	有効なjwt-token・正常リクエスト	"1. /api/deck へPOSTで送信する
-2. dtb_deckのcreate_date・update_dateを確認する"	dtb_deckのcreate_date・update_dateに登録時の現在日時が設定されること（現在日時の確定的判定は要実機確認）。
+2. dtb_deckのcreate_date・update_dateを確認する"	dtb_deckのcreate_date・update_dateに登録時の現在日時が設定されること（現在日時の確定的判定は要実機確認）。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-127	IT-26	登録内容	P2	公開・非公開ではdisplay_tokenを応答に含めない	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PAYLOAD	有効なjwt-token・scope_id=公開（1）または非公開（2）のリクエスト	"1. scope_id=1または2でPOSTで送信する
-2. レスポンス本文を確認する"	公開範囲が限定公開（3）でない場合、レスポンス本文に display_token を含めないこと。
+2. レスポンス本文を確認する"	公開範囲が限定公開（3）でない場合、レスポンス本文に display_token を含めないこと。				
 a15-09_api_deck_builder_deck_register（API_デッキビルダー_デッキ登録）	E2E-A15-09-150	IT-06	ロールバック	P2	保存処理中の例外で500となり部分登録が残らない	SEED-A15-09-JWT-PLAYER／SEED-A15-09-MASTER／SEED-A15-09-PLAYER-BASE	有効なjwt-token・保存処理中の例外を誘発するシナリオ	"1. 保存例外を誘発してPOSTで送信する
-2. 応答とDB副作用（dtb_deck・dtb_deck_card等）を照合する"	処理失敗を示すHTTPステータス500が返り、1トランザクションがロールバックされてデッキ本体・採用カード・各カードテーブルに部分登録が残らないこと（例外の実再現は要実機確認・DB副作用で判定）。
+2. 応答とDB副作用（dtb_deck・dtb_deck_card等）を照合する"	処理失敗を示すHTTPステータス500が返り、1トランザクションがロールバックされてデッキ本体・採用カード・各カードテーブルに部分登録が残らないこと（例外の実再現は要実機確認・DB副作用で判定）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

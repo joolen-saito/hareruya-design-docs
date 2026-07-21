@@ -1,0 +1,60 @@
+{
+  "functionId": "b02-09_0404_sheet-11_sheet",
+  "featureNo": "B02-09",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-11:1837,1844,1848",
+      "designExpectation": "SCPでフィードファイルとdoneファイルをユニサーチのサーバに送信する。入力データ詳細および実行結果詳細では、ユニサーチフィード作成処理で作成したTSVファイル、doneファイルをSCPで送信するとされている。",
+      "implRef": "src/Eccube/Service/UniSearch/UniSearchExportService.php:87,100,103 / src/Eccube/Service/UniSearch/UniSearchSftpService.php:23,48,66",
+      "implementationActual": "実装はTSVをgzip圧縮した .tsv.gz を作成し、phpseclib3\\Net\\SFTP の put() で gzipファイルとdoneファイルをSFTPアップロードしている。SCPコマンド実行は存在しない。",
+      "mismatchReason": "設計はSCPでTSVファイルとdoneファイルを送信する外部契約だが、実装はSFTPライブラリで .tsv.gz とdoneファイルを送信している。反証検索として SCP/scp/feed_upload/SFTP/sftp/ssh_key/tsv.gz/gzipPath/upload を src/Eccube と html 配下で確認し、SCPコマンド実装は見つからず、SFTP実装のみ確認した。",
+      "comparisonRows": [
+        {
+          "item": "転送方式",
+          "design": "SCPでフィードファイルとdoneファイルをユニサーチサーバへ送信する。",
+          "implementation": "UniSearchSftpService が phpseclib3\\Net\\SFTP を使い、SFTP::put() でアップロードする。",
+          "mismatch": "SCP指定に対してSFTP実装になっている。"
+        },
+        {
+          "item": "送信するフィードファイル",
+          "design": "ユニサーチフィード作成処理で作成したTSVファイル、doneファイルを送信する。",
+          "implementation": "UniSearchExportService は $gzipPath = compressFile($tsvPath, gzip) を作成し、$gzipPath と $donePath をアップロードする。",
+          "mismatch": "TSVそのものではなく .tsv.gz を送信している。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-11:1839,1840,1841",
+      "designExpectation": "実行トリガーはスケジュール起動(Step Functions)、実行タイミングは5分おき。現行Cron設定は「*/5 * * * * sh -x /home/ec2-user/feed_upload.sh > /home/ec2-user/feed.log 2>&1」。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: feed_upload, feed.log, /home/ec2-user, */5, Step Functions, 5分, schedule, cron, unisearch:batch）",
+      "implementationActual": "src/Eccube/Command/SendUnisearchProductFeedCommand.php:30 に unisearch:batch コマンドは存在するが、5分おきにStep FunctionsまたはCronから起動する設定・定義は指定探索範囲に存在しない。",
+      "mismatchReason": "設計のスケジュール起動契約は外部からの定期実行まで含むが、実装範囲内で確認できるのは手動実行可能なSymfony Consoleコマンドのみで、5分おき起動や feed_upload.sh/feed.log 相当の定義がない。別キーワードとしてcron/Step Functions/schedule/rate/feed_upload/unisearch:batchへ翻案して再検索したが反証なし。",
+      "comparisonRows": [
+        {
+          "item": "起動方式",
+          "design": "スケジュール起動(Step Functions)。",
+          "implementation": "unisearch:batch コマンド定義のみ。",
+          "mismatch": "定期起動設定が実装範囲にない。"
+        },
+        {
+          "item": "実行タイミング",
+          "design": "5分おき。",
+          "implementation": "5分間隔を示す設定・コードなし。",
+          "mismatch": "実行間隔が実装されていない。"
+        },
+        {
+          "item": "現行Cron相当",
+          "design": "*/5 * * * * sh -x /home/ec2-user/feed_upload.sh > /home/ec2-user/feed.log 2>&1",
+          "implementation": "feed_upload.sh、feed.log、/home/ec2-user への参照なし。",
+          "mismatch": "設計に記載されたCron相当の起動痕跡がない。"
+        }
+      ]
+    }
+  ]
+}

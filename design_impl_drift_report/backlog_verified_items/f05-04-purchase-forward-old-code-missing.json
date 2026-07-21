@@ -1,0 +1,188 @@
+{
+  "id": "f05-04-purchase-forward-old-code-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f05-04_0305_sheet-6_sheet.json",
+  "sourceFindingId": "f05-04_0305_sheet-6_sheet-conformance-6346c6a63723",
+  "classification": "フロントネット買取",
+  "feature": "ネット買取商品詳細",
+  "issueCategory": "実装漏れ",
+  "issue": "旧商品コードから買取商品詳細へ転送するルートが実装されていない",
+  "designBook": "0305_基本設計仕様書(フロント_ネット買取).xlsx",
+  "reproSteps": [
+    "旧商品コードを指定して http://localhost:8080/ja/purchase/forward/{oldCode} にGETアクセスする",
+    "旧商品コードに対応する新商品コードがある場合、新しい買取商品詳細へ遷移するか確認する",
+    "旧商品コードに対応がない場合、トップページへ遷移するか確認する"
+  ],
+  "expected": [
+    "GET /{_locale}/purchase/forward/{oldCode} で旧商品コードから新商品コードへのマッピングを取得する",
+    "マッピングが存在する場合、新商品コードの商品を取得し、買取商品詳細へリダイレクトする",
+    "マッピングが存在しない場合、または商品取得不可の場合はトップページへリダイレクトする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterpriseのPurchaseControllerには買取商品詳細とカート追加のルートはあるが、設計が要求する /purchase/forward/{oldCode} ルートおよび旧商品コードマッピングを使う転送処理が存在しない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise PurchaseControllerの既存ルート",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/PurchaseController.php",
+          "start": 926,
+          "end": 1044,
+          "language": "php",
+          "contains": [
+            "Route(path: '/purchase/detail/{id}'",
+            "Route(path: '/purchase/add'",
+            "public function detail",
+            "public function add"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 商品コード対応表Repository",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/Master/MtbProductCodeMappingRepository.php",
+          "start": 25,
+          "end": 30,
+          "language": "php",
+          "contains": [
+            "class MtbProductCodeMappingRepository",
+            "MtbProductCodeMapping::class"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では、/purchase/forward/{oldCode} のルートが定義され、旧商品コードを findOneByOldProductCode($oldCode) で取得し、新商品詳細またはトップへリダイレクトしている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 旧コード転送ルート",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/Front/PurchaseControllerProvider.php",
+          "start": 44,
+          "end": 48,
+          "language": "php",
+          "contains": [
+            "/forward/{oldCode}",
+            "purchase_forward_old_to_new"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 旧コード転送処理",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/PurchaseController.php",
+          "start": 626,
+          "end": 646,
+          "language": "php",
+          "contains": [
+            "旧コードから新商品詳細へ転送",
+            "findOneByOldProductCode($oldCode)",
+            "findProductByCode($mapping->getProductCode())",
+            "purchase_detail"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "旧商品コード転送の入口と期待挙動",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 2423,
+      "end": 2434,
+      "language": "html",
+      "contains": [
+        "GET /{_locale}/purchase/forward/{oldCode}",
+        "旧コードを新商品コードに対応づけ",
+        "トップページへリダイレクト"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "旧コードアクセス時の遷移先とエラー処理",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 2475,
+      "end": 2478,
+      "language": "html",
+      "contains": [
+        "旧コードアクセス（対応あり）",
+        "新しい買取商品詳細へリダイレクト",
+        "トップページへリダイレクト"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "買取商品詳細とカート追加のみでforwardルートがない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Purchase/PurchaseController.php",
+      "start": 926,
+      "end": 1044,
+      "language": "php",
+      "contains": [
+        "Route(path: '/purchase/detail/{id}'",
+        "Route(path: '/purchase/add'",
+        "public function detail",
+        "public function add"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "商品コード対応表Repositoryは存在するが転送用メソッドを持たない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/Master/MtbProductCodeMappingRepository.php",
+      "start": 25,
+      "end": 30,
+      "language": "php",
+      "contains": [
+        "class MtbProductCodeMappingRepository",
+        "MtbProductCodeMapping::class"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "商品コード対応表Entityにはproduct_code/old_product_codeがある",
+      "path": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbProductCodeMapping.php",
+      "start": 23,
+      "end": 37,
+      "language": "php",
+      "contains": [
+        "mtb_product_code_mapping",
+        "product_code",
+        "old_product_code"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "旧コード転送ルート",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/Front/PurchaseControllerProvider.php",
+      "start": 44,
+      "end": 48,
+      "language": "php",
+      "contains": [
+        "/forward/{oldCode}",
+        "purchase_forward_old_to_new"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "旧コード転送処理",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/PurchaseController.php",
+      "start": 626,
+      "end": 646,
+      "language": "php",
+      "contains": [
+        "findOneByOldProductCode($oldCode)",
+        "findProductByCode($mapping->getProductCode())",
+        "purchase_detail"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex",
+    "commands": [
+      "rg -n \"purchase/forward|forward/\\\\{oldCode\\\\}|旧商品コード|旧コード|mtb_product_code_mapping|old_product_code|product_code_mapping\" excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "rg -n \"purchase/forward|forward|oldCode|old_code|MtbProductCodeMapping|ProductCodeMapping|old_product_code|product_code_mapping\" ../ec-cube-enterprise/src/Eccube/Controller/Front/Purchase ../ec-cube-enterprise/src/Eccube/Repository ../ec-cube-enterprise/src/Eccube/Entity ../ec-cube-enterprise/src/Eccube/Service ../ec-cube-enterprise/src/Eccube/Resource/template/default/Purchase",
+      "rg -n \"purchase_forward|PurchaseController.*forward|forward/\\\\{oldCode\\\\}|purchase/forward\" ../pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider ../pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider ../pf-eccube3/app/Plugin/HareruyaEc",
+      "rg -n \"class .*ProductCodeMapping|findOneByOldProductCode|oldProductCode|product_code_mapping\" ../pf-eccube3/app/Plugin/HareruyaEc/Repository ../pf-eccube3/app/Plugin/HareruyaEc/Entity"
+    ],
+    "notes": [
+      "ec-cube-enterpriseでは商品コード対応表Entity/Repositoryは存在するが、PurchaseControllerに /purchase/forward/{oldCode} のRouteがない。",
+      "ec-cube-enterpriseの該当検索ではPaymentDispatcher等の一般的なforward語はヒットするが、買取旧コード転送の入口・処理ではない。",
+      "pf-eccube3では /forward/{oldCode} ルートと PurchaseController::forward() が存在し、旧商品コード対応がない場合と商品取得不可の場合にトップへ戻す処理がある。"
+    ]
+  }
+}

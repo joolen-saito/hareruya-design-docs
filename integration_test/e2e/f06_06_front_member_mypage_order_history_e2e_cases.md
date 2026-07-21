@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/f06_06_front_member_mypage_order_history_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・別画面での間接確認・再購入APIレスポンスなどブラウザ/HTTPで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（未検証雛形）。カスタマイズ区分はカスタマイズであり、画面・処理フロー・表示メッセージは pf-eccube3 を参照リポ、DB は ec-cube-enterprise を正典とする。
+期待結果は画面表示・遷移・URL・別画面での間接確認・再購入APIレスポンスなどブラウザ/HTTPで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（未検証雛形）。カスタマイズ区分はカスタマイズであり、画面・処理フロー・表示メッセージは pf-eccube3 を参照リポ、DB は ec-cube-enterprise を正典とする。
 
 本画面は会員ログイン必須のマイページ「購入履歴一覧」（参照系）。未認証で保護URLへ直接アクセスするとログインへ誘導される挙動は資格情報不要で live 実装できる。ログイン後の一覧内容・注文番号リンクからの詳細遷移・件数/ページング・注文0件表示・処理中注文の除外・再購入（カート再投入JSON）は要会員資格情報/要注文シードのため `test.skip(!HAS_FRONT_CREDS,…)` 付き live または `test.fixme`（理由付き）で保留する。
 
@@ -24,51 +24,51 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-002	IT-15	未認証	P1	未認証で購入履歴一覧URLへ直接アクセスするとログイン画面へ誘導される	未ログイン	保護URL /{_locale}/mypage/shopping_history	"1. 未ログイン状態で /{_locale}/mypage/shopping_history を開く"	購入履歴一覧を表示せず、会員ログイン画面へ誘導されること。
-f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-019	IT-03	画面遷移	P2	未ログインの失敗時出力として会員ログインへ誘導される	未ログイン	保護URL /{_locale}/mypage/shopping_history	"1. 未ログインで購入履歴一覧URLを開く"	会員ログイン画面（/{_locale}/mypage/login）へ遷移すること。
-f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-021	IT-13	URL直接アクセス	P2	未ログインで購入履歴詳細URLへ直接アクセスするとログインへ誘導される	未ログイン	保護URL /{_locale}/mypage/shopping_history/detail/{id}	"1. 未ログインで /{_locale}/mypage/shopping_history/detail/1 を開く"	詳細を表示せず、会員ログイン画面へ誘導されること。
-f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-086	IT-25	画面レイアウト	P2	購入履歴一覧の表示は会員ログインを要する	未ログイン	保護URL /{_locale}/mypage/shopping_history	"1. 未ログインで購入履歴一覧URLを開く"	見出し「購入履歴一覧」を表示せず、ログイン誘導されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-002	IT-15	未認証	P1	未認証で購入履歴一覧URLへ直接アクセスするとログイン画面へ誘導される	未ログイン	保護URL /{_locale}/mypage/shopping_history	1. 未ログイン状態で /{_locale}/mypage/shopping_history を開く	購入履歴一覧を表示せず、会員ログイン画面へ誘導されること。				
+f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-019	IT-03	画面遷移	P2	未ログインの失敗時出力として会員ログインへ誘導される	未ログイン	保護URL /{_locale}/mypage/shopping_history	1. 未ログインで購入履歴一覧URLを開く	会員ログイン画面（/{_locale}/mypage/login）へ遷移すること。				
+f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-021	IT-13	URL直接アクセス	P2	未ログインで購入履歴詳細URLへ直接アクセスするとログインへ誘導される	未ログイン	保護URL /{_locale}/mypage/shopping_history/detail/{id}	1. 未ログインで /{_locale}/mypage/shopping_history/detail/1 を開く	詳細を表示せず、会員ログイン画面へ誘導されること。				
+f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-086	IT-25	画面レイアウト	P2	購入履歴一覧の表示は会員ログインを要する	未ログイン	保護URL /{_locale}/mypage/shopping_history	1. 未ログインで購入履歴一覧URLを開く	見出し「購入履歴一覧」を表示せず、ログイン誘導されること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-007	IT-25	UI部品	P3	ログイン後の購入履歴一覧に見出しが表示される	SEED-F06-06-CUSTOMER でログイン済み	—	"1. ログインする
-2. /{_locale}/mypage/shopping_history を開く"	見出し「購入履歴一覧」が表示されること。
+2. /{_locale}/mypage/shopping_history を開く"	見出し「購入履歴一覧」が表示されること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-018	IT-03	画面遷移	P2	ログイン後に購入履歴一覧のHTMLが表示される	SEED-F06-06-CUSTOMER でログイン済み	—	"1. ログインする
-2. 購入履歴一覧URLを開く"	購入履歴一覧画面（/{_locale}/mypage/shopping_history）が表示されること。
+2. 購入履歴一覧URLを開く"	購入履歴一覧画面（/{_locale}/mypage/shopping_history）が表示されること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-009	IT-25	操作起点	P1	購入履歴一覧に全件数と現在の表示範囲が併記される	SEED-F06-06-CUSTOMER でログイン済み	—	"1. ログインする
-2. 購入履歴一覧を開く"	全件数を表示し、現在ページの表示範囲を併記すること。
+2. 購入履歴一覧を開く"	全件数を表示し、現在ページの表示範囲を併記すること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-080	IT-20	出力内容	P3	購入履歴一覧は会員の注文を新しい順にページングして表示する	SEED-F06-06-ORDERS（複数注文）でログイン済み	—	"1. ログインする
-2. 購入履歴一覧を開く"	会員の注文が新しい順（注文IDの降順）に一覧表示されること。
+2. 購入履歴一覧を開く"	会員の注文が新しい順（注文IDの降順）に一覧表示されること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-088	IT-25	画面レイアウト	P2	一覧の各注文に詳細遷移用の注文番号リンクが表示される	SEED-F06-06-ORDERS でログイン済み	—	"1. ログインする
-2. 購入履歴一覧を開く"	一覧対象の注文IDから取得した注文番号がリンクとして表示されること。
+2. 購入履歴一覧を開く"	一覧対象の注文IDから取得した注文番号がリンクとして表示されること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-022	IT-25	HTTPステータス	P2	一覧の各注文に注文日が表示される	SEED-F06-06-ORDERS でログイン済み	—	"1. ログインする
-2. 購入履歴一覧を開く"	各注文行に注文日が表示されること。
+2. 購入履歴一覧を開く"	各注文行に注文日が表示されること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-023	IT-25	URL	P2	一覧の各注文に注文金額合計が表示される	SEED-F06-06-ORDERS でログイン済み	—	"1. ログインする
-2. 購入履歴一覧を開く"	各注文行に注文金額合計（注文の保持値）が表示されること。
+2. 購入履歴一覧を開く"	各注文行に注文金額合計（注文の保持値）が表示されること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-003	IT-15	対象データ	P1	ページ送りで指定ページの注文一覧が表示される	SEED-F06-06-ORDERS（11件以上）でログイン済み	page=2	"1. ログインする
-2. /{_locale}/mypage/shopping_history?page=2 を開く"	指定ページ（2ページ目）の注文一覧が表示されること。
+2. /{_locale}/mypage/shopping_history?page=2 を開く"	指定ページ（2ページ目）の注文一覧が表示されること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-004	IT-20	出力抑止	P1	注文番号リンクから購入履歴詳細へ遷移する	SEED-F06-06-ORDERS でログイン済み	—	"1. ログインする
-2. 購入履歴一覧で注文番号リンクを押下"	当該注文の購入履歴詳細（/{_locale}/mypage/shopping_history/detail/{id}）へ遷移すること。
+2. 購入履歴一覧で注文番号リンクを押下"	当該注文の購入履歴詳細（/{_locale}/mypage/shopping_history/detail/{id}）へ遷移すること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-015	IT-03	画面遷移	P2	注文番号リンクから遷移した詳細は同一注文を表示する	SEED-F06-06-ORDERS でログイン済み	—	"1. ログインする
-2. 特定注文の注文番号リンクを押下"	遷移先の詳細が一覧で押下した注文と同一注文を表示すること。
+2. 特定注文の注文番号リンクを押下"	遷移先の詳細が一覧で押下した注文と同一注文を表示すること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-085	IT-15	機密情報	P1	一覧は当該会員の注文のみを対象とする	SEED-F06-06-ORDERS（当該会員＋他会員注文）でログイン済み	—	"1. ログインする
-2. 購入履歴一覧を開く"	当該会員の注文のみが表示され、他会員の注文が表示されないこと。
+2. 購入履歴一覧を開く"	当該会員の注文のみが表示され、他会員の注文が表示されないこと。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-013	IT-25	送信可否制御	P3	注文が0件の会員では一覧を空表示する	SEED-F06-06-NOORDER（注文0件会員）でログイン済み	—	"1. ログインする
-2. 購入履歴一覧を開く"	件数0として一覧を空表示すること。
+2. 購入履歴一覧を開く"	件数0として一覧を空表示すること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-014	IT-03	外部画面	P2	処理中の注文は一覧に表示しない	SEED-F06-06-PROCESSING（処理中注文を含む）でログイン済み	—	"1. ログインする
-2. 購入履歴一覧を開く"	処理中の注文が一覧に表示されないこと。
+2. 購入履歴一覧を開く"	処理中の注文が一覧に表示されないこと。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-084	IT-12	内部情報	P1	処理中の注文を除外して確定済み注文のみを履歴に出す	SEED-F06-06-PROCESSING でログイン済み	—	"1. ログインする
-2. 購入履歴一覧を開く"	処理中を除外し、確定済みの注文のみが履歴として表示されること。
+2. 購入履歴一覧を開く"	処理中を除外し、確定済みの注文のみが履歴として表示されること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-006	IT-15	状態変化	P1	領収書発行の導線から領収書発行画面へ遷移する	SEED-F06-06-ORDERS でログイン済み	注文ID	"1. ログインする
-2. /{_locale}/mypage/shopping_history/printOrderReceipt/{id} を開く"	領収書発行画面が表示されること。
+2. /{_locale}/mypage/shopping_history/printOrderReceipt/{id} を開く"	領収書発行画面が表示されること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-005	IT-20	識別子	P1	再購入で当該注文の商品をカートへ再投入する内容を返す	SEED-F06-06-ORDERS でログイン済み	注文ID	"1. ログインする
-2. 「この注文内容で再度購入する」を押下（POST repurchase）"	当該注文の商品をカートへ再投入する内容を返すこと。
+2. 「この注文内容で再度購入する」を押下（POST repurchase）"	当該注文の商品をカートへ再投入する内容を返すこと。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-017	IT-03	画面遷移	P2	再購入は非同期でカート投入内容をJSONで返す	SEED-F06-06-ORDERS でログイン済み	注文ID	"1. ログインする
-2. POST /{_locale}/mypage/shopping_history/repurchase を送信"	成功フラグと商品・数量を含むカート投入内容がJSONで返ること。
+2. POST /{_locale}/mypage/shopping_history/repurchase を送信"	成功フラグと商品・数量を含むカート投入内容がJSONで返ること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-087	IT-25	画面レイアウト	P2	再購入は画面遷移せず非同期でカート投入内容を返す	SEED-F06-06-ORDERS でログイン済み	注文ID	"1. ログインする
-2. 「この注文内容で再度購入する」を押下"	画面遷移せず（一覧URLに留まり）、非同期でカート投入内容を返すこと。
+2. 「この注文内容で再度購入する」を押下"	画面遷移せず（一覧URLに留まり）、非同期でカート投入内容を返すこと。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-057	IT-22	必須制御	P1	再購入で注文IDが無い場合は不正要求（HTTP404）となる	SEED-F06-06-CUSTOMER でログイン済み	注文ID＝無し	"1. ログインする
-2. 注文IDを付けずに POST repurchase を送信"	不正要求として HTTP404 となること。
+2. 注文IDを付けずに POST repurchase を送信"	不正要求として HTTP404 となること。				
 f06-06_front_member_mypage_order_history（購入履歴一覧）	E2E-F06-06-042	IT-22	その他のバリデーション	P2	再購入で他会員の注文IDを指定すると不正要求（HTTP404）となる	SEED-F06-06-ORDERS（他会員注文）でログイン済み	他会員の注文ID	"1. ログインする
-2. 他会員の注文IDで POST repurchase を送信"	当該会員の注文として特定できず HTTP404 となること。
+2. 他会員の注文IDで POST repurchase を送信"	当該会員の注文として特定できず HTTP404 となること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

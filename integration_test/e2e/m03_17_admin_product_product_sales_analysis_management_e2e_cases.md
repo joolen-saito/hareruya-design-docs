@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_17_admin_product_product_sales_analysis_management_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・HTTPステータス・別画面/DB状態の間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言や Form/Type の制約値（NotBlank/Length=64/Range=1..65535/maxlength）をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・HTTPステータス・別画面/DB状態の間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言や Form/Type の制約値（NotBlank/Length=64/Range=1..65535/maxlength）をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 設計源は pf-eccube3 のリバース詳細であり、刷新先 ec-cube-enterprise（`TagSalesAnalysisController.php` ほか）に当該画面が存在することを確認済み。設計書の「確認値」文言と実装の翻訳文言に差がある箇所（削除拒否メッセージ等）は付帯表4「不具合候補・要確認」に列挙し、テストは仕様（メッセージキーの趣旨）どおりに書く。
 
@@ -24,64 +24,64 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-001	IT-25	UI部品	P1	新規フォーム（名称・並び順入力欄・登録ボタン）と一覧が表示される	ログイン済／SEED-M03-17-ADMIN	—	"1. /admin/product/tag_sales_analysis を開く"	名称入力欄・並び順入力欄・「登録」ボタンと一覧テーブル・表示件数セレクトが表示されること。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-002	IT-25	表示結果	P2	親フレームタイトル「商品管理」・サブタイトル「売上分析タグ」が表示される	ログイン済／SEED-M03-17-ADMIN	—	"1. 新規画面を表示する"	タイトル「商品管理」とサブタイトル「売上分析タグ」が表示されること。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-003	IT-25	UI部品	P2	新規モードのカード見出しが「新規追加」	ログイン済／SEED-M03-17-ADMIN	—	"1. 新規画面を表示する"	上半分カードの見出しが「新規追加」であること。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-004	IT-03	表示結果	P2	一覧テーブル（ID/名称/並び順ヘッダ）と表示件数セレクトが表示される	ログイン済／SEED-M03-17-ADMIN／SEED-M03-17-TAG	—	"1. 新規画面を表示する"	一覧ヘッダに「ID」「名称」「並び順」が表示され、表示件数セレクトが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-001	IT-25	UI部品	P1	新規フォーム（名称・並び順入力欄・登録ボタン）と一覧が表示される	ログイン済／SEED-M03-17-ADMIN	—	1. /admin/product/tag_sales_analysis を開く	名称入力欄・並び順入力欄・「登録」ボタンと一覧テーブル・表示件数セレクトが表示されること。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-002	IT-25	表示結果	P2	親フレームタイトル「商品管理」・サブタイトル「売上分析タグ」が表示される	ログイン済／SEED-M03-17-ADMIN	—	1. 新規画面を表示する	タイトル「商品管理」とサブタイトル「売上分析タグ」が表示されること。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-003	IT-25	UI部品	P2	新規モードのカード見出しが「新規追加」	ログイン済／SEED-M03-17-ADMIN	—	1. 新規画面を表示する	上半分カードの見出しが「新規追加」であること。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-004	IT-03	表示結果	P2	一覧テーブル（ID/名称/並び順ヘッダ）と表示件数セレクトが表示される	ログイン済／SEED-M03-17-ADMIN／SEED-M03-17-TAG	—	1. 新規画面を表示する	一覧ヘッダに「ID」「名称」「並び順」が表示され、表示件数セレクトが表示されること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-005	IT-25	URL	P2	表示件数セレクト変更で page_count クエリ付きURLへ再描画される	ログイン済／SEED-M03-17-ADMIN	表示件数＝50	"1. 新規画面を表示する
-2. 表示件数セレクトを50に変更する"	現在画面へ page_count=50 クエリを付けてフル読み込みされること。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-006	IT-13	URL直接アクセス	P2	/tag_sales_analysis/{id} 直接アクセスで編集モードが表示される	ログイン済／SEED-M03-17-TAG（既存id）	既存タグの id	"1. /admin/product/tag_sales_analysis/{id} を直接開く"	カード見出しが「編集」になり、名称欄に当該行の現行値が載ること。
+2. 表示件数セレクトを50に変更する"	現在画面へ page_count=50 クエリを付けてフル読み込みされること。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-006	IT-13	URL直接アクセス	P2	/tag_sales_analysis/{id} 直接アクセスで編集モードが表示される	ログイン済／SEED-M03-17-TAG（既存id）	既存タグの id	1. /admin/product/tag_sales_analysis/{id} を直接開く	カード見出しが「編集」になり、名称欄に当該行の現行値が載ること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-007	IT-25	操作起点	P2	一覧の編集リンク押下で編集モードへ遷移する	ログイン済／SEED-M03-17-TAG	—	"1. 新規画面を表示する
-2. 一覧の当該行の編集リンクを押下する"	/tag_sales_analysis/{id} へ遷移し、カード見出しが「編集」になること。
+2. 一覧の当該行の編集リンクを押下する"	/tag_sales_analysis/{id} へ遷移し、カード見出しが「編集」になること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-008	IT-03	画面遷移	P3	新規時の一覧ページャリンクが /tag_sales_analysis/page/ を指す	ログイン済／SEED-M03-17-TAG（表示件数超のレコード）	—	"1. 新規画面を表示する
-2. ページャのリンクを確認する"	ページャのリンクが /tag_sales_analysis/page/{page_no} を指すこと（新規モードのページャ経路）。
+2. ページャのリンクを確認する"	ページャのリンクが /tag_sales_analysis/page/{page_no} を指すこと（新規モードのページャ経路）。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-009	IT-03	画面遷移	P3	編集時の一覧ページャリンクが /{id}/page/ を指す	ログイン済／SEED-M03-17-TAG（表示件数超のレコード）	既存タグの id	"1. /tag_sales_analysis/{id} を開く
-2. ページャのリンクを確認する"	ページャのリンクが /tag_sales_analysis/{id}/page/{page_no} を指すこと（編集モードのページャ経路）。
+2. ページャのリンクを確認する"	ページャのリンクが /tag_sales_analysis/{id}/page/{page_no} を指すこと（編集モードのページャ経路）。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-010	IT-25	確認ダイアログ	P2	一覧の削除リンクに削除確認モーダル文言が設定される	ログイン済／SEED-M03-17-TAG（1件以上）	—	"1. 新規画面を表示する
-2. 一覧の削除リンクの属性を確認する"	削除リンク（data-method=delete）に削除確認モーダル文言（名称を埋めた「…削除してよろしいですか？」相当）が設定されること。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-011	IT-15	未認証	P2	未ログインで一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product/tag_sales_analysis へ直接アクセス"	管理ログイン画面へ誘導されること。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-012	IT-13	URL直接アクセス	P2	未ログインで編集URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product/tag_sales_analysis/1 へ直接アクセス"	管理ログイン画面へ誘導されること。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-013	IT-25	HTTPステータス	P2	存在しない id の編集GETで 404 となる	ログイン済／SEED-M03-17-ADMIN	存在しない id	"1. /admin/product/tag_sales_analysis/99999999 を開く"	HTTP 404 が返ること（マスタ読み込み失敗）。
+2. 一覧の削除リンクの属性を確認する"	削除リンク（data-method=delete）に削除確認モーダル文言（名称を埋めた「…削除してよろしいですか？」相当）が設定されること。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-011	IT-15	未認証	P2	未ログインで一覧URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product/tag_sales_analysis へ直接アクセス	管理ログイン画面へ誘導されること。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-012	IT-13	URL直接アクセス	P2	未ログインで編集URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product/tag_sales_analysis/1 へ直接アクセス	管理ログイン画面へ誘導されること。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-013	IT-25	HTTPステータス	P2	存在しない id の編集GETで 404 となる	ログイン済／SEED-M03-17-ADMIN	存在しない id	1. /admin/product/tag_sales_analysis/99999999 を開く	HTTP 404 が返ること（マスタ読み込み失敗）。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-014	IT-25	UI部品	P2	表示件数セレクトに設計どおりの選択肢が表示される	ログイン済／SEED-M03-17-ADMIN	—	"1. 新規画面を表示する
-2. 表示件数セレクトの選択肢を確認する"	表示件数セレクトに 10／50／100／300／500／1000／2000／10000／12000 の選択肢が表示されること。
+2. 表示件数セレクトの選択肢を確認する"	表示件数セレクトに 10／50／100／300／500／1000／2000／10000／12000 の選択肢が表示されること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-015	IT-03	表示結果	P2	新規モードのフォーム初期値が空欄である	ログイン済／SEED-M03-17-ADMIN	—	"1. 新規画面を表示する
-2. 名称欄・並び順欄の初期値を確認する"	新規モードでは名称欄・並び順欄が空欄であること（編集モードの現行値表示E2E-006と対）。
+2. 名称欄・並び順欄の初期値を確認する"	新規モードでは名称欄・並び順欄が空欄であること（編集モードの現行値表示E2E-006と対）。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-016	IT-03	画面遷移	P3	フォームのactionが新規=store／編集=store/{id}に切り替わる	ログイン済／SEED-M03-17-TAG（既存id）	既存タグの id	"1. 新規画面でフォームのaction属性を確認する
-2. /tag_sales_analysis/{id} を開きフォームのaction属性を確認する"	新規時のactionは無修飾 store、編集時は同一主キーを付けた store/{id} を指すこと。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-017	IT-25	操作起点	P3	ナビ「売上分析登録/編集」から当該画面へ遷移しメニューがハイライトされる	ログイン済／SEED-M03-17-ADMIN	—	"1. 管理ナビ「売上分析登録/編集」を押下する"	/product/tag_sales_analysis へ遷移し新規フォームと一覧が表示され、メニューの product・tag_sales_analysis がハイライトされること。
+2. /tag_sales_analysis/{id} を開きフォームのaction属性を確認する"	新規時のactionは無修飾 store、編集時は同一主キーを付けた store/{id} を指すこと。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-017	IT-25	操作起点	P3	ナビ「売上分析登録/編集」から当該画面へ遷移しメニューがハイライトされる	ログイン済／SEED-M03-17-ADMIN	—	1. 管理ナビ「売上分析登録/編集」を押下する	/product/tag_sales_analysis へ遷移し新規フォームと一覧が表示され、メニューの product・tag_sales_analysis がハイライトされること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-020	IT-22	必須バリデーション	P1	名称未入力で登録すると検証失敗となり保存されない	ログイン済／SEED-M03-17-ADMIN	名称＝空／並び順＝1	"1. 新規画面を表示する
-2. 名称を空のまま並び順を入力し登録を押下する"	検証失敗となり「登録が完了しました。」は表示されず、同一画面に「登録できませんでした。」相当のエラーで再描画されること。
+2. 名称を空のまま並び順を入力し登録を押下する"	検証失敗となり「登録が完了しました。」は表示されず、同一画面に「登録できませんでした。」相当のエラーで再描画されること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-021	IT-22	必須バリデーション	P1	並び順未入力で登録すると検証失敗となり保存されない	ログイン済／SEED-M03-17-ADMIN	名称＝任意／並び順＝空	"1. 新規画面を表示する
-2. 並び順を空のまま名称を入力し登録を押下する"	検証失敗となり保存されず、同一画面にエラーで再描画されること。
+2. 並び順を空のまま名称を入力し登録を押下する"	検証失敗となり保存されず、同一画面にエラーで再描画されること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-022	IT-22	文字列長バリデーション	P2	名称が最大長+1（65文字）で登録すると文字列長エラーで保存されない	ログイン済／SEED-M03-17-ADMIN	名称＝65文字／並び順＝1	"1. 新規画面を表示する
-2. 名称に65文字を入力し登録を押下する"	文字列長エラーで保存されず、同一画面に再描画されること。
+2. 名称に65文字を入力し登録を押下する"	文字列長エラーで保存されず、同一画面に再描画されること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-023	IT-22	文字列長バリデーション	P2	名称が最大長ちょうど（64文字）・並び順最小（1）で登録成功する	ログイン済／SEED-M03-17-ADMIN（使い捨て）	名称＝64文字／並び順＝1	"1. 新規画面を表示する
-2. 名称64文字・並び順1を入力し登録を押下する"	境界内のため保存され「登録が完了しました。」が表示されること。
+2. 名称64文字・並び順1を入力し登録を押下する"	境界内のため保存され「登録が完了しました。」が表示されること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-024	IT-22	数値バリデーション	P2	並び順が範囲外（0）で登録すると範囲エラーで保存されない	ログイン済／SEED-M03-17-ADMIN	名称＝任意／並び順＝0	"1. 新規画面を表示する
-2. 並び順に0を入力し登録を押下する"	範囲エラー（並び順は1〜65535）で保存されないこと。
+2. 並び順に0を入力し登録を押下する"	範囲エラー（並び順は1〜65535）で保存されないこと。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-025	IT-22	数値バリデーション	P2	並び順が範囲外（65536）で登録すると範囲エラーで保存されない	ログイン済／SEED-M03-17-ADMIN	名称＝任意／並び順＝65536	"1. 新規画面を表示する
-2. 並び順に65536を入力し登録を押下する"	範囲エラー（並び順は1〜65535）で保存されないこと。
+2. 並び順に65536を入力し登録を押下する"	範囲エラー（並び順は1〜65535）で保存されないこと。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-026	IT-22	数値バリデーション	P3	並び順に非数値を入力すると登録できず保存されない	ログイン済／SEED-M03-17-ADMIN	名称＝任意／並び順＝非数値	"1. 新規画面を表示する
-2. 並び順に非数値を入力し登録を押下する"	整数以外は受け付けられず保存されないこと（並び順は整数）。
+2. 並び順に非数値を入力し登録を押下する"	整数以外は受け付けられず保存されないこと（並び順は整数）。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-027	IT-22	文字列長バリデーション	P2	名称が最小長（1文字）・並び順1で登録成功する	ログイン済／SEED-M03-17-ADMIN（使い捨て）	名称＝1文字／並び順＝1	"1. 新規画面を表示する
-2. 名称1文字・並び順1を入力し登録を押下する"	境界内のため保存され「登録が完了しました。」が表示されること。
+2. 名称1文字・並び順1を入力し登録を押下する"	境界内のため保存され「登録が完了しました。」が表示されること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-028	IT-22	数値バリデーション	P2	並び順が上限ちょうど（65535）で登録成功する	ログイン済／SEED-M03-17-ADMIN（使い捨て）	名称＝新規一意名／並び順＝65535	"1. 新規画面を表示する
-2. 並び順65535を入力し登録を押下する"	範囲上限内のため保存され「登録が完了しました。」が表示されること。
+2. 並び順65535を入力し登録を押下する"	範囲上限内のため保存され「登録が完了しました。」が表示されること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-030	IT-26	登録内容	P1	名称・並び順を入力して新規登録すると成功メッセージと一覧へリダイレクトされる	ログイン済／SEED-M03-17-ADMIN（使い捨て）	名称＝新規一意名／並び順＝任意（1..65535）	"1. 新規画面を表示する
-2. 名称・並び順を入力し登録を押下する"	「登録が完了しました。」が表示され、一覧（クエリ id 付き）へリダイレクトされること。
+2. 名称・並び順を入力し登録を押下する"	「登録が完了しました。」が表示され、一覧（クエリ id 付き）へリダイレクトされること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-031	IT-26	更新内容	P1	既存行を更新すると成功メッセージが表示される	ログイン済／SEED-M03-17-TAG-RESET（使い捨て）	既存id／変更後の名称・並び順	"1. /tag_sales_analysis/{id} を開く
-2. 値を変更し登録を押下する"	「登録が完了しました。」が表示され、一覧へリダイレクトされること。
+2. 値を変更し登録を押下する"	「登録が完了しました。」が表示され、一覧へリダイレクトされること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-032	IT-22	DBとの相関バリデーション	P1	既存名称と重複する名称で登録すると一意制約違反メッセージが表示される	ログイン済／SEED-M03-17-DUP（既存名称あり）	名称＝既存と重複／並び順＝任意	"1. 新規画面を表示する
-2. 既存と重複する名称を入力し登録を押下する"	「値が重複しています。」が表示され、同一画面に再描画され保存されないこと。
+2. 既存と重複する名称を入力し登録を押下する"	「値が重複しています。」が表示され、同一画面に再描画され保存されないこと。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-033	IT-03	画面遷移	P2	検証失敗時は一覧付きフォームが同一画面に再描画される	ログイン済／SEED-M03-17-ADMIN	検証に失敗する入力	"1. 新規画面を表示する
-2. 検証失敗する入力で登録を押下する"	一覧付きフォームHTMLが同一画面に再描画され「登録できませんでした。」相当のエラーが表示されること。
+2. 検証失敗する入力で登録を押下する"	一覧付きフォームHTMLが同一画面に再描画され「登録できませんでした。」相当のエラーが表示されること。				
 m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-034	IT-03	画面遷移	P3	検証失敗時に送信済みの入力値がフォームへ保持される	ログイン済／SEED-M03-17-ADMIN	検証に失敗する入力（例 名称のみ入力／並び順空）	"1. 新規画面を表示する
-2. 一方の項目のみ入力し検証失敗する入力で登録を押下する"	同一画面に再描画され、送信済みの入力値がフォームに保持されること（送信失敗時はPOST済みデータがフォームに残る）。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-040	IT-15	状態変化	P1	紐付けの無いタグをDELETE削除すると行が消え一覧へリダイレクトされる	ログイン済／SEED-M03-17-TAG-DELETABLE（使い捨て・紐付けなし）	削除対象の id／有効なCSRFトークン	"1. 削除確認モーダルから削除（DELETE）を実行する"	「削除しました」が表示され、一覧へリダイレクトされ当該行が消えること。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-041	IT-03	外部画面	P2	商品に紐付くタグはDELETEしても削除されずエラーメッセージが表示される	ログイン済／SEED-M03-17-TAG-PRODUCT（商品紐付けあり）	削除対象の id／有効なCSRFトークン	"1. 削除確認モーダルから削除（DELETE）を実行する"	「商品で使用されているため…削除することができません。」相当のエラーが表示され、一覧へリダイレクトされタグ本体は残ること。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-042	IT-03	画面遷移	P2	注文明細に紐付くタグはDELETEしても削除されずエラーメッセージが表示される	ログイン済／SEED-M03-17-TAG-ORDER（注文明細紐付けあり）	削除対象の id／有効なCSRFトークン	"1. 削除確認モーダルから削除（DELETE）を実行する"	「購入済の商品で使用されているため…削除することができません。」相当のエラーが表示され、一覧へリダイレクトされタグ本体は残ること。
-m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-043	IT-15	CSRF	P1	DELETEのCSRFトークンが不正だとアクセス拒否（403）となる	ログイン済／SEED-M03-17-TAG-DELETABLE	削除対象の id／不正なCSRFトークン	"1. 不正なトークンで削除（DELETE）を発火させる"	HTTP 403（アクセス拒否）となり、削除されないこと。
+2. 一方の項目のみ入力し検証失敗する入力で登録を押下する"	同一画面に再描画され、送信済みの入力値がフォームに保持されること（送信失敗時はPOST済みデータがフォームに残る）。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-040	IT-15	状態変化	P1	紐付けの無いタグをDELETE削除すると行が消え一覧へリダイレクトされる	ログイン済／SEED-M03-17-TAG-DELETABLE（使い捨て・紐付けなし）	削除対象の id／有効なCSRFトークン	1. 削除確認モーダルから削除（DELETE）を実行する	「削除しました」が表示され、一覧へリダイレクトされ当該行が消えること。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-041	IT-03	外部画面	P2	商品に紐付くタグはDELETEしても削除されずエラーメッセージが表示される	ログイン済／SEED-M03-17-TAG-PRODUCT（商品紐付けあり）	削除対象の id／有効なCSRFトークン	1. 削除確認モーダルから削除（DELETE）を実行する	「商品で使用されているため…削除することができません。」相当のエラーが表示され、一覧へリダイレクトされタグ本体は残ること。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-042	IT-03	画面遷移	P2	注文明細に紐付くタグはDELETEしても削除されずエラーメッセージが表示される	ログイン済／SEED-M03-17-TAG-ORDER（注文明細紐付けあり）	削除対象の id／有効なCSRFトークン	1. 削除確認モーダルから削除（DELETE）を実行する	「購入済の商品で使用されているため…削除することができません。」相当のエラーが表示され、一覧へリダイレクトされタグ本体は残ること。				
+m03-17_admin_product_product_sales_analysis_management（商品管理 — 売上分析タグ登録/編集）	E2E-M03-17-043	IT-15	CSRF	P1	DELETEのCSRFトークンが不正だとアクセス拒否（403）となる	ログイン済／SEED-M03-17-TAG-DELETABLE	削除対象の id／不正なCSRFトークン	1. 不正なトークンで削除（DELETE）を発火させる	HTTP 403（アクセス拒否）となり、削除されないこと。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

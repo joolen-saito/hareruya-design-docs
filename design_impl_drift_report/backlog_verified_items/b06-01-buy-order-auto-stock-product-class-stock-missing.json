@@ -1,0 +1,232 @@
+{
+  "id": "b06-01-buy-order-auto-stock-product-class-stock-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b06-01_0406_sheet-3_sheet.json",
+  "sourceFindingId": "b06-01_0406_sheet-3_sheet-conformance-2b35229d0065",
+  "classification": "バッチ店頭買取管理",
+  "feature": "買取自動入庫バッチ",
+  "issueCategory": "実装漏れ",
+  "issue": "買取自動入庫時に dtb_product_class.stock が更新されない",
+  "designBook": "0406_基本設計仕様書(バッチ_店頭買取管理).xlsx",
+  "reproSteps": [
+    "設計書 B06-01 の実行結果詳細とリニューアル移行時の扱いで、在庫数更新対象が `dtb_product_class.stock` と `dtb_product_stock.stock` の両方であることを確認する",
+    "ec-cube-enterprise で `bin/console eccube:buy-order:auto-stock` の実行経路を確認し、店頭買取・ネット買取の入庫処理が `ProductStockEntityManager::save()` に到達することを確認する",
+    "自動入庫経路の `OtcBuyOrderStockInbound`、`BuyOrderStockInbound`、`ProductStockEntityManager`、周辺Repository/Listenerを検索し、`ProductClass->setStock(...)` または `UPDATE dtb_product_class SET stock ...` があるか確認する",
+    "補助根拠として、標準EC-CUBEの在庫更新処理では `ProductStock->setStock(...)` と `ProductClass->setStock(...)` の両方を更新していることを確認する"
+  ],
+  "expected": [
+    "店頭買取の自動入庫では、買取店舗のECCUBE在庫に実在庫を登録し、総在庫・総原価・原価単価を更新する",
+    "ネット買取の自動入庫では、本店のECCUBE在庫に実在庫を登録し、総在庫・総原価・原価単価を更新する",
+    "在庫数は `dtb_product_stock.stock` だけでなく `dtb_product_class.stock` も更新する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の買取自動入庫コマンドは店頭買取・ネット買取の各Actionを実行し、それぞれ `ProductStockEntityManager::save()` で `ProductStock` を保存している。しかし保存処理は `ProductStock->setStock($stock)` のみで、`ProductClass->setStock($stock)` または `dtb_product_class.stock` 更新SQLは自動入庫経路に確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の買取自動入庫コマンドは店頭・ネットのActionを実行する",
+          "path": "ec-cube-enterprise/src/Eccube/Command/BuyOrderAutoStockCommand.php",
+          "start": 36,
+          "end": 62,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:buy-order:auto-stock', description: '買取自動入庫バッチ')]",
+            "$this->otcBatchAutoStockAction->handle();",
+            "$this->netBatchAutoStockAction->handle();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の店頭買取入庫は ProductStockEntityManager::save に stock を渡す",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderStockInbound.php",
+          "start": 50,
+          "end": 83,
+          "language": "php",
+          "contains": [
+            "$ProductClass = $OtcBuyOrderStock->getProductClass();",
+            "$newStock = $ProductStock !== null",
+            "$SavedProductStock = $this->productStockEntityManager->save(",
+            "ProductClass: $ProductClass",
+            "stock: $newStock"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise のネット買取入庫も ProductStockEntityManager::save に stock を渡す",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderStockInbound.php",
+          "start": 50,
+          "end": 83,
+          "language": "php",
+          "contains": [
+            "$ProductClass = $BuyOrderStock->getProductClass();",
+            "$newStock = $ProductStock !== null",
+            "$SavedProductStock = $this->productStockEntityManager->save(",
+            "ProductClass: $ProductClass",
+            "stock: $newStock"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の ProductStockEntityManager は ProductStock のみ更新する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/EntityManager/ProductStockEntityManager.php",
+          "start": 29,
+          "end": 52,
+          "language": "php",
+          "contains": [
+            "public function save(",
+            "ProductClass $ProductClass",
+            "$ProductStock->setProductClass($ProductClass);",
+            "$ProductStock->setStock($stock);",
+            "$this->entityManager->persist($ProductStock);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "B06-01は新規機能であり、現行pf-eccube3に同一バッチは存在しない。補助根拠として、標準EC-CUBEの在庫更新処理では `ProductStock` と `ProductClass` の在庫値を同期して更新している。一方、enterpriseの自動入庫経路は設計が明示する `dtb_product_class.stock` への更新を行っていない。",
+      "snippets": [
+        {
+          "label": "ベース実装 ec-cube の通常在庫減算は ProductStock と ProductClass の両方を更新する",
+          "path": "ec-cube/src/Eccube/Service/PurchaseFlow/Processor/StockReduceProcessor.php",
+          "start": 93,
+          "end": 100,
+          "language": "php",
+          "contains": [
+            "$ProductClass = $item->getProductClass();",
+            "$stock = $callback($productStock->getStock(), $item->getQuantity());",
+            "$productStock->setStock($stock);",
+            "$ProductClass->setStock($stock);"
+          ]
+        },
+        {
+          "label": "ベース実装 ec-cube の在庫差分処理も ProductClass と ProductStock の両方を更新する",
+          "path": "ec-cube/src/Eccube/Service/PurchaseFlow/Processor/StockDiffProcessor.php",
+          "start": 160,
+          "end": 174,
+          "language": "php",
+          "contains": [
+            "$stock = $ProductClass->getStock() - $quantity;",
+            "$ProductClass->setStock($stock);",
+            "$ProductStock->setStock($stock);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B06-01 は店頭買取・ネット買取の実在庫をECCUBE在庫に登録し、総在庫を更新することを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html",
+      "start": 851,
+      "end": 889,
+      "language": "html",
+      "contains": [
+        "買取を行った店舗のECCUBE在庫に登録する",
+        "総在庫、総原価、原価単価の更新を行う",
+        "本店のECCUBE在庫に登録する",
+        "在庫情報を更新する",
+        "在庫履歴を登録する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B06-01 は新規実装で、在庫数更新対象として `dtb_product_class.stock` と `dtb_product_stock.stock` の両方を明示している",
+      "path": "hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html",
+      "start": 919,
+      "end": 929,
+      "language": "html",
+      "contains": [
+        "Excel設計優先",
+        "本機能は新規実装",
+        "在庫数は <code>dtb_product_class.stock</code>・<code>dtb_product_stock.stock</code> を更新する",
+        "列詳細はec-cube-enterpriseのEntity / Repository / Migrationを正とする"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の自動入庫入口は店頭・ネット双方のActionを実行する",
+      "path": "ec-cube-enterprise/src/Eccube/Command/BuyOrderAutoStockCommand.php",
+      "start": 36,
+      "end": 62,
+      "language": "php",
+      "contains": [
+        "eccube:buy-order:auto-stock",
+        "$this->otcBatchAutoStockAction->handle();",
+        "$this->netBatchAutoStockAction->handle();"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の店頭買取自動入庫は ProductStockEntityManager に在庫値を渡すが ProductClass は更新していない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderStockInbound.php",
+      "start": 50,
+      "end": 83,
+      "language": "php",
+      "contains": [
+        "$ProductClass = $OtcBuyOrderStock->getProductClass();",
+        "stock: $newStock",
+        "totalCost: $newTotalCost"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise のネット買取自動入庫も ProductStockEntityManager に在庫値を渡すが ProductClass は更新していない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderStockInbound.php",
+      "start": 50,
+      "end": 83,
+      "language": "php",
+      "contains": [
+        "$ProductClass = $BuyOrderStock->getProductClass();",
+        "stock: $newStock",
+        "totalCost: $newTotalCost"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の保存処理は ProductStock を persist するだけで ProductClass.stock を設定しない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/EntityManager/ProductStockEntityManager.php",
+      "start": 29,
+      "end": 52,
+      "language": "php",
+      "contains": [
+        "$ProductStock->setStock($stock);",
+        "$this->entityManager->persist($ProductStock);",
+        "return $ProductStock;"
+      ]
+    },
+    {
+      "label": "ベース実装 ec-cube",
+      "note": "B06-01と同一バッチではないが、標準EC-CUBEの通常在庫更新では ProductStock と ProductClass の在庫値を同期している",
+      "path": "ec-cube/src/Eccube/Service/PurchaseFlow/Processor/StockReduceProcessor.php",
+      "start": 93,
+      "end": 100,
+      "language": "php",
+      "contains": [
+        "$productStock->setStock($stock);",
+        "$ProductClass->setStock($stock);"
+      ]
+    },
+    {
+      "label": "ベース実装 ec-cube",
+      "note": "B06-01と同一バッチではないが、標準EC-CUBEの在庫差分処理でも ProductClass と ProductStock を同じ値で更新している",
+      "path": "ec-cube/src/Eccube/Service/PurchaseFlow/Processor/StockDiffProcessor.php",
+      "start": 160,
+      "end": 174,
+      "language": "php",
+      "contains": [
+        "$ProductClass->setStock($stock);",
+        "$ProductStock->setStock($stock);"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B06-01|買取自動入庫|dtb_buy_order_stock|dtb_otc_buy_order_stock|dtb_product_class|dtb_product_stock|在庫数\" \"excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html\"",
+      "rg -n \"BuyOrderAutoStock|auto-stock|BatchAutoStock|dtb_buy_order_stock|dtb_otc_buy_order_stock|ProductStockEntityManager|setStock\\(|getStock\\(|product_class\\.stock|dtb_product_class\" ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/app -g '*.php' -g '*.yaml' -g '*.yml'",
+      "rg -n \"ProductClass->setStock|->setStock\\(\\$newStock|dtb_product_class SET stock|UPDATE dtb_product_class.*stock|setStock\\(\\$stock\\)\" ../ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder ../ec-cube-enterprise/src/Eccube/Service/Admin/Purchase ../ec-cube-enterprise/src/Eccube/Service/EntityManager ../ec-cube-enterprise/src/Eccube/Repository -g '*.php'",
+      "rg -n \"StockReduceProcessor|StockDiffProcessor|ProductClass->setStock|ProductStock->setStock\" ../ec-cube/src/Eccube/Service/PurchaseFlow/Processor -g '*.php'"
+    ]
+  },
+  "notes": [
+    "gpt-5.5 highレビューでVERIFIED。B06-01は新規機能で現行pf-eccube3に同一バッチはないため、標準EC-CUBEの在庫更新コードは同一バッチのベース実装ではなく、在庫二重保持を同期更新していた補助根拠として扱う。",
+    "enterprise全体が必ずProductClass.stockを主在庫として使うとは主張しない。設計HTMLがB06-01で `dtb_product_class.stock` 更新を明示している一方、自動入庫実行経路にはその更新がない、という範囲に限定する。"
+  ]
+}

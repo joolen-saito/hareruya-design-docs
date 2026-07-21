@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m04_09_admin_stock_stock_move_transfer_register_edit_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・HTTPステータス・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約（min/max/NotBlank）をオラクル化しない。本機能は新規実装でありpf-eccube3の対応機能は無く、基本設計仕様書（在庫管理機能）とec-cube-enterprise実装を正典とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・HTTPステータス・別画面での間接確認などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約（min/max/NotBlank）をオラクル化しない。本機能は新規実装でありpf-eccube3の対応機能は無く、基本設計仕様書（在庫管理機能）とec-cube-enterprise実装を正典とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 ## 関連ID対応概要
 
@@ -22,59 +22,59 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-001	IT-25	UI部品	P1	移動 初期登録画面に入庫先店舗・在庫区分・移動点数・メモ・登録ボタンが表示される	ログイン済／SEED-M04-09-MOVE-SRC	移動対象の productStockIds	"1. /admin/product/stock/move/new?productStockIds[]=… を開く"	入庫先店舗選択・入庫先在庫区分選択・移動点数入力欄・メモ入力欄・「登録」ボタンが表示されること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-002	IT-25	表示結果	P2	移動 初期登録画面に出庫元店舗・出庫元在庫区分（変更不可）が表示される	ログイン済／SEED-M04-09-MOVE-SRC	先頭在庫が属する店舗・在庫区分	"1. 移動 初期登録画面を開く"	先頭在庫の店舗名（出庫元店舗）・在庫区分名（出庫元在庫区分）が表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-001	IT-25	UI部品	P1	移動 初期登録画面に入庫先店舗・在庫区分・移動点数・メモ・登録ボタンが表示される	ログイン済／SEED-M04-09-MOVE-SRC	移動対象の productStockIds	1. /admin/product/stock/move/new?productStockIds[]=… を開く	入庫先店舗選択・入庫先在庫区分選択・移動点数入力欄・メモ入力欄・「登録」ボタンが表示されること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-002	IT-25	表示結果	P2	移動 初期登録画面に出庫元店舗・出庫元在庫区分（変更不可）が表示される	ログイン済／SEED-M04-09-MOVE-SRC	先頭在庫が属する店舗・在庫区分	1. 移動 初期登録画面を開く	先頭在庫の店舗名（出庫元店舗）・在庫区分名（出庫元在庫区分）が表示されること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-003	IT-25	確認ダイアログ	P2	移動 登録ボタン押下で在庫移動登録確認モーダルが表示される	ログイン済／SEED-M04-09-MOVE-SRC	有効な入庫先・移動点数	"1. 移動 初期登録画面で必要項目を入力
-2. 「登録」ボタンを押下"	在庫移動登録確認モーダル（確認見出し・確定/キャンセル）が表示されること。
+2. 「登録」ボタンを押下"	在庫移動登録確認モーダル（確認見出し・確定/キャンセル）が表示されること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-010	IT-26	登録内容	P1	移動 正常登録で保存メッセージが表示され出庫承認申請画面へ遷移する	ログイン済／SEED-M04-09-MOVE-SRC（使い捨て）	入庫先店舗・在庫区分・移動点数（在庫数以内）	"1. 移動 初期登録画面で入庫先・移動点数を入力
-2. 確認モーダルで確定送信"	「保存しました」が表示され、出庫承認申請画面（/product/stock/move/outbound_approval_request/{id}）へ遷移すること。
+2. 確認モーダルで確定送信"	「保存しました」が表示され、出庫承認申請画面（/product/stock/move/outbound_approval_request/{id}）へ遷移すること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-011	IT-26	登録内容	P2	移動 移動先商品在庫が無い場合は保存に失敗し移動 初期登録画面が再表示される	ログイン済／SEED-M04-09-MOVE-NODEST（移動先ProductStock不在）	入庫先店舗・在庫区分（対応する移動先在庫が存在しない組合せ）・移動点数（在庫数以内）	"1. 移動 初期登録画面で移動先在庫が存在しない入庫先・在庫区分・点数を入力
-2. 確認モーダルで確定送信"	「保存に失敗しました」が表示され、移動 初期登録画面に留まり登録されないこと（移動先在庫なしのAction例外→save_error同画面再表示）。
+2. 確認モーダルで確定送信"	「保存に失敗しました」が表示され、移動 初期登録画面に留まり登録されないこと（移動先在庫なしのAction例外→save_error同画面再表示）。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-020	IT-22	必須バリデーション	P1	移動 入庫先店舗未選択で登録するとエラーが表示され登録されない	ログイン済／SEED-M04-09-MOVE-SRC	入庫先店舗＝未選択	"1. 移動 初期登録画面で入庫先店舗を選ばず移動点数のみ入力
-2. 登録を確定送信"	入力不備のエラーが表示され、移動 初期登録画面に留まり登録されないこと。
+2. 登録を確定送信"	入力不備のエラーが表示され、移動 初期登録画面に留まり登録されないこと。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-021	IT-22	必須バリデーション	P1	移動 移動点数未入力で登録するとエラーが表示され登録されない	ログイン済／SEED-M04-09-MOVE-SRC	移動点数＝空	"1. 移動 初期登録画面で入庫先を選び移動点数を空のまま
-2. 登録を確定送信"	移動点数の入力エラーが表示され、移動 初期登録画面に留まり登録されないこと。
+2. 登録を確定送信"	移動点数の入力エラーが表示され、移動 初期登録画面に留まり登録されないこと。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-022	IT-22	相関バリデーション	P1	移動 出庫元と入庫先が同一店舗・同一区分のとき同一指定エラーが表示される	ログイン済／SEED-M04-09-MOVE-SRC	入庫先＝出庫元と同一店舗・同一在庫区分	"1. 移動 初期登録画面で入庫先に出庫元と同じ店舗・区分を指定
-2. 登録を確定送信"	「出庫元と入庫先が同じです。」が表示され、移動 初期登録画面に留まること。
+2. 登録を確定送信"	「出庫元と入庫先が同じです。」が表示され、移動 初期登録画面に留まること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-023	IT-22	DBとの相関バリデーション	P1	移動 移動点数が現在庫数を超えると在庫超過エラーが表示される	ログイン済／SEED-M04-09-MOVE-SRC（在庫数既知）	移動点数＝現在庫数＋1	"1. 移動 初期登録画面で移動点数に現在庫数を超える値を入力
-2. 登録を確定送信"	「移動点数が現在の在庫数を超えています。」が表示され、移動 初期登録画面に留まること。
+2. 登録を確定送信"	「移動点数が現在の在庫数を超えています。」が表示され、移動 初期登録画面に留まること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-024	IT-22	数値バリデーション	P2	移動 移動点数に1未満を入力するとエラーが表示され登録されない	ログイン済／SEED-M04-09-MOVE-SRC	移動点数＝0	"1. 移動 初期登録画面で移動点数に0を入力
-2. 登録を確定送信"	移動点数の入力エラーが表示され、移動 初期登録画面に留まり登録されないこと。
+2. 登録を確定送信"	移動点数の入力エラーが表示され、移動 初期登録画面に留まり登録されないこと。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-025	IT-22	必須バリデーション	P1	移動 入庫先在庫区分未選択で登録するとエラーが表示され登録されない	ログイン済／SEED-M04-09-MOVE-SRC	入庫先在庫区分＝未選択	"1. 移動 初期登録画面で入庫先店舗のみ選び在庫区分を未選択のまま移動点数を入力
-2. 登録を確定送信"	入力不備のエラーが表示され、移動 初期登録画面に留まり登録されないこと。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-030	IT-25	UI部品	P1	振替 初期登録画面に承認通知先・振替先コード（検索）・振替点数・メモ・登録が表示される	ログイン済／SEED-M04-09-TRANSFER-SRC	振替対象の productStockIds	"1. /admin/product/stock/transfer/new?productStockIds[]=… を開く"	承認通知先選択・振替先商品コード入力欄と「検索」ボタン・振替点数入力欄・メモ・「登録」ボタンが表示されること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-031	IT-25	確認ダイアログ	P2	振替 振替先「検索」ボタンで商品検索モーダルが開く	ログイン済／SEED-M04-09-TRANSFER-SRC	—	"1. 振替 初期登録画面で明細行の「検索」ボタンを押下"	商品検索モーダル（商品検索見出し・検索フォーム）が表示されること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-032	IT-25	表示結果	P2	振替 初期登録画面に出庫元（本店EC）店舗・在庫区分が表示される	ログイン済／SEED-M04-09-TRANSFER-SRC	本店EC所属・先頭在庫の在庫区分	"1. 振替 初期登録画面を開く"	本店EC（出庫元）店舗名・先頭在庫の在庫区分名が表示されること。
+2. 登録を確定送信"	入力不備のエラーが表示され、移動 初期登録画面に留まり登録されないこと。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-030	IT-25	UI部品	P1	振替 初期登録画面に承認通知先・振替先コード（検索）・振替点数・メモ・登録が表示される	ログイン済／SEED-M04-09-TRANSFER-SRC	振替対象の productStockIds	1. /admin/product/stock/transfer/new?productStockIds[]=… を開く	承認通知先選択・振替先商品コード入力欄と「検索」ボタン・振替点数入力欄・メモ・「登録」ボタンが表示されること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-031	IT-25	確認ダイアログ	P2	振替 振替先「検索」ボタンで商品検索モーダルが開く	ログイン済／SEED-M04-09-TRANSFER-SRC	—	1. 振替 初期登録画面で明細行の「検索」ボタンを押下	商品検索モーダル（商品検索見出し・検索フォーム）が表示されること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-032	IT-25	表示結果	P2	振替 初期登録画面に出庫元（本店EC）店舗・在庫区分が表示される	ログイン済／SEED-M04-09-TRANSFER-SRC	本店EC所属・先頭在庫の在庫区分	1. 振替 初期登録画面を開く	本店EC（出庫元）店舗名・先頭在庫の在庫区分名が表示されること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-040	IT-26	登録内容	P1	振替 正常登録で保存メッセージが表示され振替承認待ち画面へ遷移する	ログイン済／SEED-M04-09-TRANSFER-SRC（使い捨て）	振替先商品コード・振替点数・承認通知先メンバー	"1. 振替 初期登録画面で振替先コード・点数・承認通知先を入力
-2. 「登録」を送信"	「保存しました」が表示され、振替承認待ち画面（/product/stock/transfer/{id}/approval）へ遷移すること。
+2. 「登録」を送信"	「保存しました」が表示され、振替承認待ち画面（/product/stock/transfer/{id}/approval）へ遷移すること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-041	IT-22	必須バリデーション	P1	振替 振替先商品コード未入力で登録するとコード必須エラーが表示される	ログイン済／SEED-M04-09-TRANSFER-SRC	振替先商品コード＝空	"1. 振替 初期登録画面で振替先コードを空のまま点数・承認通知先を入力
-2. 「登録」を送信"	「振替先の商品コードを入力してください。」が表示され、振替 初期登録画面に留まること。
+2. 「登録」を送信"	「振替先の商品コードを入力してください。」が表示され、振替 初期登録画面に留まること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-042	IT-22	必須バリデーション	P1	振替 承認通知先メンバー未選択で登録すると通知先必須エラーが表示される	ログイン済／SEED-M04-09-TRANSFER-SRC	承認通知先メンバー＝未選択	"1. 振替 初期登録画面で承認通知先を選ばず振替先コード・点数を入力
-2. 「登録」を送信"	「承認通知先のメンバーを1人以上選択してください。」が表示され、振替 初期登録画面に留まること。
+2. 「登録」を送信"	「承認通知先のメンバーを1人以上選択してください。」が表示され、振替 初期登録画面に留まること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-043	IT-22	数値バリデーション	P2	振替 振替点数に1未満を入力するとエラーが表示され登録されない	ログイン済／SEED-M04-09-TRANSFER-SRC	振替点数＝0	"1. 振替 初期登録画面で振替点数に0を入力
-2. 「登録」を送信"	振替点数の入力エラーが表示され、振替 初期登録画面に留まり登録されないこと。
+2. 「登録」を送信"	振替点数の入力エラーが表示され、振替 初期登録画面に留まり登録されないこと。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-044	IT-22	その他のバリデーション	P2	振替 振替先商品コードが不正（未存在）の場合は保存に失敗し振替 初期登録画面が再表示される	ログイン済／SEED-M04-09-TRANSFER-SRC	振替先商品コード＝未存在コード・振替点数・承認通知先メンバー	"1. 振替 初期登録画面で未存在の振替先コードを設定し点数・承認通知先を入力
-2. 「登録」を送信"	「保存に失敗しました」が表示され、振替 初期登録画面に留まり登録されないこと（振替先コード不正のAction例外→save_error同画面再表示）。
+2. 「登録」を送信"	「保存に失敗しました」が表示され、振替 初期登録画面に留まり登録されないこと（振替先コード不正のAction例外→save_error同画面再表示）。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-045	IT-22	部分入力	P2	振替 登録可能な振替明細が0件の場合は保存に失敗し振替 初期登録画面が再表示される	ログイン済／SEED-M04-09-TRANSFER-SRC	全明細＝点数0またはコード空（登録可能明細0件）	"1. 振替 初期登録画面で全明細の点数を0／コードを空のまま
-2. 「登録」を送信"	「保存に失敗しました」が表示され、振替 初期登録画面に留まり登録されないこと（登録可能明細0件のAction例外→save_error。点数下限のForm検証が先行する可能性は要実機確認）。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-050	IT-25	UI部品	P2	移動 編集（ピック・出庫承認申請）画面に明細・履歴・欠品点数・メモが表示される	ログイン済／SEED-M04-09-MOVE-NEW（新規登録済の移動）	移動振替ID	"1. /admin/product/stock/move/outbound_approval_request/{id} を開く"	移動明細・ステータス履歴・欠品点数/メモの編集フォームが表示されること。
+2. 「登録」を送信"	「保存に失敗しました」が表示され、振替 初期登録画面に留まり登録されないこと（登録可能明細0件のAction例外→save_error。点数下限のForm検証が先行する可能性は要実機確認）。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-050	IT-25	UI部品	P2	移動 編集（ピック・出庫承認申請）画面に明細・履歴・欠品点数・メモが表示される	ログイン済／SEED-M04-09-MOVE-NEW（新規登録済の移動）	移動振替ID	1. /admin/product/stock/move/outbound_approval_request/{id} を開く	移動明細・ステータス履歴・欠品点数/メモの編集フォームが表示されること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-051	IT-26	更新内容	P1	移動 編集 店舗内移動の更新確定で入庫完了となり保存メッセージが表示される	ログイン済／SEED-M04-09-MOVE-SAMESTORE（店舗内移動・新規登録済・使い捨て）	欠品点数・メモ	"1. 店舗内移動の編集画面で欠品点数・メモを入力
-2. 更新を送信"	「保存しました」が表示され、ステータスが入庫完了相当の完了画面へ連鎖遷移すること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-052	IT-03	画面遷移	P1	移動 編集 店舗間移動の更新確定で出庫承認待ちとなり出庫承認画面へ遷移する	ログイン済／SEED-M04-09-MOVE-CROSSSTORE（店舗間移動・新規登録済・使い捨て）	欠品点数・メモ	"1. 店舗間移動の編集画面で更新を送信"	「保存しました」が表示され、出庫承認画面（/product/stock/move/outbound_approval/{id}）へ遷移すること。
+2. 更新を送信"	「保存しました」が表示され、ステータスが入庫完了相当の完了画面へ連鎖遷移すること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-052	IT-03	画面遷移	P1	移動 編集 店舗間移動の更新確定で出庫承認待ちとなり出庫承認画面へ遷移する	ログイン済／SEED-M04-09-MOVE-CROSSSTORE（店舗間移動・新規登録済・使い捨て）	欠品点数・メモ	1. 店舗間移動の編集画面で更新を送信	「保存しました」が表示され、出庫承認画面（/product/stock/move/outbound_approval/{id}）へ遷移すること。				
 m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-026	IT-22	数値バリデーション	P2	移動 編集 欠品点数に不正な数値（移動点数超過/負数）を入力すると更新されず編集画面が再表示される	ログイン済／SEED-M04-09-MOVE-NEW（新規登録済の移動）	欠品点数＝移動点数超過 または 負数	"1. 移動 編集画面で欠品点数に移動点数を超える値（または負数）を入力
-2. 更新を送信"	入力不備のエラーが表示され、移動 編集画面に留まり更新されないこと（欠品点数のForm制約は要実機確認）。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-055	IT-22	必須制御	P2	移動 編集 店舗間移動で承認通知先メンバー未選択の場合は更新されず編集画面が再表示される	ログイン済／SEED-M04-09-MOVE-CROSSSTORE（店舗間移動・新規登録済）	承認通知先メンバー＝未選択	"1. 店舗間移動の編集画面で承認通知先を選ばず更新を送信"	承認通知先必須のエラーが表示され、移動 編集画面に留まり更新されないこと（編集フォームの承認通知先必須制約は要実機確認）。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-053	IT-25	HTTPステータス	P2	存在しない移動振替IDの編集URLは404となる	ログイン済	存在しないID	"1. /admin/product/stock/move/outbound_approval_request/99999999 を開く"	HTTP 404 が返ること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-060	IT-23	実行結果	P2	振替補助API 有効なproduct_class_idで商品情報JSONが200で返る	ログイン済／SEED-M04-09-PRODUCT-CLASS	有効な product_class_id	"1. /admin/product/stock/transfer/dest-product-class-info?product_class_id=<有効ID> をGET"	HTTP 200 で商品名・コード・言語・カード状態・Foil・基準価格を含むJSONが返ること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-061	IT-25	HTTPステータス	P2	振替補助API product_class_id<=0で400となる	ログイン済	product_class_id＝0	"1. /admin/product/stock/transfer/dest-product-class-info?product_class_id=0 をGET"	HTTP 400 が返ること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-062	IT-25	HTTPステータス	P2	振替補助API 未存在のproduct_class_idで404となる	ログイン済	未存在の product_class_id	"1. /admin/product/stock/transfer/dest-product-class-info?product_class_id=99999999 をGET"	HTTP 404 が返ること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-070	IT-13	URL直接アクセス	P2	未ログインで移動 初期登録URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product/stock/move/new へ直接アクセス"	管理ログイン画面へ誘導されること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-071	IT-13	URL直接アクセス	P2	未ログインで振替 初期登録URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product/stock/transfer/new へ直接アクセス"	管理ログイン画面へ誘導されること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-072	IT-15	未認証	P1	未ログインで移動 編集URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product/stock/move/outbound_approval_request/1 へ直接アクセス"	管理ログイン画面へ誘導されること。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-073	IT-13	URL直接アクセス	P2	未ログインで振替補助API URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product/stock/transfer/dest-product-class-info?product_class_id=1 へ直接アクセス"	管理ログイン画面へ誘導され、商品情報JSONが返らないこと。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-074	IT-13	URL直接アクセス	P2	未ログインでPOST系URL（move/store・transfer/store・update）へアクセスすると処理されず管理ログイン画面へ誘導される	未ログイン	—	"1. 未認証で各POSTエンドポイント（move/store・transfer/store・outbound_approval_request/{id}/update）へリクエスト"	管理ログイン画面へ誘導され、登録/更新が実行されないこと（POST未認証時の遷移挙動は要実機確認）。
-m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-080	IT-03	画面遷移	P2	ステータスが現ルートに不適合な移動振替IDの編集URLは対応画面へリダイレクトされる	ログイン済／SEED-M04-09-MOVE-INBOUND（入庫承認待ち等）	ステータス不適合の移動振替ID	"1. 現ステータスに対応しないルート（出庫承認申請）の編集URLを開く"	ステータスに対応する画面へリダイレクトされ、編集画面が表示されないこと。
+2. 更新を送信"	入力不備のエラーが表示され、移動 編集画面に留まり更新されないこと（欠品点数のForm制約は要実機確認）。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-055	IT-22	必須制御	P2	移動 編集 店舗間移動で承認通知先メンバー未選択の場合は更新されず編集画面が再表示される	ログイン済／SEED-M04-09-MOVE-CROSSSTORE（店舗間移動・新規登録済）	承認通知先メンバー＝未選択	1. 店舗間移動の編集画面で承認通知先を選ばず更新を送信	承認通知先必須のエラーが表示され、移動 編集画面に留まり更新されないこと（編集フォームの承認通知先必須制約は要実機確認）。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-053	IT-25	HTTPステータス	P2	存在しない移動振替IDの編集URLは404となる	ログイン済	存在しないID	1. /admin/product/stock/move/outbound_approval_request/99999999 を開く	HTTP 404 が返ること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-060	IT-23	実行結果	P2	振替補助API 有効なproduct_class_idで商品情報JSONが200で返る	ログイン済／SEED-M04-09-PRODUCT-CLASS	有効な product_class_id	1. /admin/product/stock/transfer/dest-product-class-info?product_class_id=<有効ID> をGET	HTTP 200 で商品名・コード・言語・カード状態・Foil・基準価格を含むJSONが返ること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-061	IT-25	HTTPステータス	P2	振替補助API product_class_id<=0で400となる	ログイン済	product_class_id＝0	1. /admin/product/stock/transfer/dest-product-class-info?product_class_id=0 をGET	HTTP 400 が返ること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-062	IT-25	HTTPステータス	P2	振替補助API 未存在のproduct_class_idで404となる	ログイン済	未存在の product_class_id	1. /admin/product/stock/transfer/dest-product-class-info?product_class_id=99999999 をGET	HTTP 404 が返ること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-070	IT-13	URL直接アクセス	P2	未ログインで移動 初期登録URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product/stock/move/new へ直接アクセス	管理ログイン画面へ誘導されること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-071	IT-13	URL直接アクセス	P2	未ログインで振替 初期登録URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product/stock/transfer/new へ直接アクセス	管理ログイン画面へ誘導されること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-072	IT-15	未認証	P1	未ログインで移動 編集URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product/stock/move/outbound_approval_request/1 へ直接アクセス	管理ログイン画面へ誘導されること。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-073	IT-13	URL直接アクセス	P2	未ログインで振替補助API URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product/stock/transfer/dest-product-class-info?product_class_id=1 へ直接アクセス	管理ログイン画面へ誘導され、商品情報JSONが返らないこと。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-074	IT-13	URL直接アクセス	P2	未ログインでPOST系URL（move/store・transfer/store・update）へアクセスすると処理されず管理ログイン画面へ誘導される	未ログイン	—	1. 未認証で各POSTエンドポイント（move/store・transfer/store・outbound_approval_request/{id}/update）へリクエスト	管理ログイン画面へ誘導され、登録/更新が実行されないこと（POST未認証時の遷移挙動は要実機確認）。				
+m04-09_admin_stock_stock_move_transfer_register_edit（在庫移動・振替登録/編集）	E2E-M04-09-080	IT-03	画面遷移	P2	ステータスが現ルートに不適合な移動振替IDの編集URLは対応画面へリダイレクトされる	ログイン済／SEED-M04-09-MOVE-INBOUND（入庫承認待ち等）	ステータス不適合の移動振替ID	1. 現ステータスに対応しないルート（出庫承認申請）の編集URLを開く	ステータスに対応する画面へリダイレクトされ、編集画面が表示されないこと。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

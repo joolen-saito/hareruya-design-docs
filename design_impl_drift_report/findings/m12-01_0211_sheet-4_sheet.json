@@ -1,0 +1,3274 @@
+{
+  "functionId": "m12-01_0211_sheet-4_sheet",
+  "featureNo": "M12-01",
+  "title": "M12-01 日別・月別集計 集計一覧(検索項目-月別)",
+  "domain": "m12",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+  "sourceBook": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+  "sheetId": "sheet-4",
+  "sheetName": "日別・月別集計 集計一覧(検索項目-月別)",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "m12-01_0211_sheet-4_sheet-conformance-f8770e5c7e75",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1141",
+      "designRefDetail": null,
+      "designExpectation": "集計は売上として計上できるもののみとし、注文ステータスが「出荷完了」の注文だけを集計対象とする。",
+      "designQuote": "集計は売上として計上できるもののみとし、注文ステータスが「出荷完了」の注文だけを集計対象とする。",
+      "implRef": "src/Eccube/Repository/DtbDailySummaryRepository.php:42; src/Eccube/Repository/DtbDailySummaryRepository.php:62; src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37",
+      "implementationActual": "日次集計バッチの受注集計SQLは dtb_order を order_date 範囲と base_info_id で集計しており、order_status_id や OrderStatus::DELIVERED の条件がない。",
+      "difference": "DtbDailySummaryRepository::aggregateOrderSummaryByBaseInfo は dtb_order の全ステータスを対象に subtotal + delivery_fee_total + charge を合算する。SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepositoryを OrderStatus/order_status/DELIVERED/出荷完了 で反証検索したが、本集計に適用されるステータス条件は見つからなかった。",
+      "mismatchReason": "DtbDailySummaryRepository::aggregateOrderSummaryByBaseInfo は dtb_order の全ステータスを対象に subtotal + delivery_fee_total + charge を合算する。SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepositoryを OrderStatus/order_status/DELIVERED/出荷完了 …",
+      "comparisonRows": [
+        {
+          "item": "受注の集計対象",
+          "design": "注文ステータスが「出荷完了」の注文のみ集計する。",
+          "implementation": "dtb_order を order_date 範囲で抽出し、order_status_id 条件なしで集計する。",
+          "mismatch": "出荷完了以外の注文も売上集計に含まれ得る。"
+        },
+        {
+          "item": "バッチ集計入力",
+          "design": "売上として計上できる注文だけを事前集計する。",
+          "implementation": "BatchAggregateDailySummaryAction が aggregateOrderSummaryByBaseInfo の結果をそのまま dtb_daily_summary に登録する。",
+          "mismatch": "事前集計テーブル作成時点で設計の売上計上条件が反映されない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m12-01_0211_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Repository/DtbDailySummaryRepository.php:42; src/Eccube/Repository/DtbDailySummaryRepository.php:62; src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「集計は売上として計上できるもののみとし、注文ステータスが「出荷完了」の注文だけを集計対象とする。」。実装は「日次集計バッチの受注集計SQLは dtb_order を order_date 範囲と base_info_id で集計しており、order_status_id や OrderStatus::DELIVERED の条件がない。」。乖離理由は「DtbDailySummaryRepository::aggregateOrderSummaryByBaseInfo は dtb_order の全ステータスを対象に subtotal + delivery_fee_total + charge を合算する。SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepositoryを OrderStatus/order_status/DELIVERED/出荷完了 …」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:42",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:62",
+        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php",
+        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:42\n39:      *\n40:      * @return array<int, array<string, mixed>>\n41:      */\n42:     public function aggregateOrderSummaryByBaseInfo(\\DateTimeInterface $from, \\DateTimeInterface $to): array\n43:     {\n44:         return $this->getEntityManager()->getConnection()->fetchAllAssociative(\n45:             <<<'SQL'",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:62\n59:     FROM dtb_order_item oi\n60:     GROUP BY oi.order_id\n61: ) order_cost ON order_cost.order_id = o.id\n62: WHERE\n63:     o.base_info_id IS NOT NULL\n64:     AND o.order_date >= :summaryDateFrom\n65:     AND o.order_date <= :summaryDateTo",
+        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37\n34:         $summaryDateTo = \\DateTime::createFromInterface($summaryDate)->setTime(23, 59, 59);\n35:         $rootBaseInfoId = (int) $this->eccubeConfig->get('eccube_root_base_info_id');\n36: \n37:         $orderRows = $this->dailySummaryRepository->aggregateOrderSummaryByBaseInfo($summaryDateFrom, $summaryDateTo);\n38:         $purchaseRows = $this->dailySummaryRepository->aggregatePurchaseSummaryByBaseInfo($rootBaseInfoId, $summaryDateFrom, $summaryDateTo);\n39:         $wasteRows = $this->dailySummaryRepository->aggregateDisposalQuantityByBaseInfo($summaryDateFrom, $summaryDateTo);\n40:         $shortageRows = $this->dailySummaryRepository->aggregateShortageQuantityByBaseInfo($summaryDateFrom, $summaryDateTo);"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m12-01_0211_sheet-4_sheet-conformance-dc2427b46aa5",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1149",
+      "designRefDetail": null,
+      "designExpectation": "売上集計用に検索項目に出力するフラグを店舗管理に持たせ、そのフラグで集計対象(各店舗)の店舗一覧を出力する。",
+      "designQuote": "売上集計用に検索項目に出力するフラグを店舗管理に持たせ、そのフラグで集計対象(各店舗)の店舗一覧を出力する。",
+      "implRef": "src/Eccube/Repository/BaseInfoRepository.php:198; src/Eccube/Repository/BaseInfoRepository.php:203; src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:117; src/Eccube/Entity/BaseInfo.php:1548",
+      "implementationActual": "集計対象(各店舗)の選択肢は BaseInfoRepository::getPublicTenantShopsForSummary が isPublicShop=true のテナント店舗を取得している。店舗管理フォームには is_public_shop/is_open_shop はあるが、売上集計用の検索項目出力フラグは見つからない。",
+      "difference": "設計は売上集計専用の出力フラグ追加を要求しているが、実装は公開フラグ is_public_shop を店舗候補条件に流用している。売上集計への表示可否を公開状態とは独立して制御できない。反証検索語 売上集計用/検索項目.*出力/summary.*flag/sales.*flg/is_.*summary でも専用列・Form項目・Twig項目・migration は見つからなかった。",
+      "mismatchReason": "設計は売上集計専用の出力フラグ追加を要求しているが、実装は公開フラグ is_public_shop を店舗候補条件に流用している。売上集計への表示可否を公開状態とは独立して制御できない。反証検索語 売上集計用/検索項目.*出力/summary.*flag/sales.*flg/is_.*summary でも専用列・Form項目・Twig項目・migration は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "店舗管理のフラグ",
+          "design": "売上集計用に検索項目へ出力するフラグを店舗管理に追加する。",
+          "implementation": "dtb_base_info には is_public_shop/is_open_shop があり、MallTenantShopType は公開/開店を編集する。",
+          "mismatch": "売上集計専用フラグが存在しない。"
+        },
+        {
+          "item": "店舗一覧の抽出条件",
+          "design": "売上集計用フラグにより検索項目へ出力する店舗を制御する。",
+          "implementation": "getPublicTenantShopsForSummary は isPublicShop=true のテナントを取得する。",
+          "mismatch": "公開フラグと売上集計表示フラグが同一扱いになっている。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m12-01_0211_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Repository/BaseInfoRepository.php:198; src/Eccube/Repository/BaseInfoRepository.php:203; src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:117; src/Eccube/Entity/BaseInfo.php:1548",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「売上集計用に検索項目に出力するフラグを店舗管理に持たせ、そのフラグで集計対象(各店舗)の店舗一覧を出力する。」。実装は「集計対象(各店舗)の選択肢は BaseInfoRepository::getPublicTenantShopsForSummary が isPublicShop=true のテナント店舗を取得している。店舗管理フォームには is_public_shop/is_open_shop はあるが、売上集計用の検索項目出力フラグは見つからない。」。乖離理由は「設計は売上集計専用の出力フラグ追加を要求しているが、実装は公開フラグ is_public_shop を店舗候補条件に流用している。売上集計への表示可否を公開状態とは独立して制御できない。反証検索語 売上集計用/検索項目.*出力/summary.*flag/sales.*flg/is_.*summary でも専用列・Form項目・Twig項目・migration は見つからなかった。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Form・入力項目",
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Repository/BaseInfoRepository.php:198",
+        "src/Eccube/Repository/BaseInfoRepository.php:203",
+        "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:117",
+        "src/Eccube/Entity/BaseInfo.php:1548",
+        "src/Eccube/Repository/BaseInfoRepository.php",
+        "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php",
+        "src/Eccube/Entity/BaseInfo.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/BaseInfoRepository.php:198\n195: \n196:     public function getMallData(): QueryBuilder\n197:     {\n198:         return $this->createQueryBuilder('bi')\n199:             ->where('bi.id = :root_base_info')\n200:             ->setParameter('root_base_info', $this->eccubeConfig->get('eccube_root_base_info_id'));\n201:     }",
+        "src/Eccube/Repository/BaseInfoRepository.php:203\n200:             ->setParameter('root_base_info', $this->eccubeConfig->get('eccube_root_base_info_id'));\n201:     }\n202: \n203:     /**\n204:      * 管理側での検索用のQueryBuilderを取得する\n205:      *\n206:      * @param array<string, string> $searchData",
+        "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:117\n114:                     'admin.setting.shop.shop.is_main_shop__branch' => BaseInfo::SHOP_BRANCH,\n115:                 ],\n116:             ])\n117:             ->add('is_public_shop', ChoiceType::class, [\n118:                 'required' => true,\n119:                 'expanded' => true,\n120:                 'multiple' => false,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m12-01_0211_sheet-4_sheet-conformance-e658a5eb1036",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1249",
+      "designRefDetail": null,
+      "designExpectation": "期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。",
+      "designQuote": "期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。",
+      "implRef": "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75; src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126; src/Eccube/Repository/DtbDailySummaryRepository.php:304; src/Eccube/Repository/DtbMonthlySummaryRepository.php:83; src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:101",
+      "implementationActual": "AnalysisSummaryBuilder は日次/月次ともサマリーテーブルから取得できた行だけを整形して返す。Repository も指定範囲の既存行を SELECT するだけで、期間内の日付・月を列挙して0行を生成する処理がない。",
+      "difference": "SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepository、summary.twig を 補完/DatePeriod/DateInterval/P1D/P1M/zero/0で で反証検索したが、欠落日付・欠落月を0で補う処理は見つからなかった。Twig の default(0) は既存行の欠落属性を0表示するだけで、存在しない日付・月の行は作らない。",
+      "mismatchReason": "SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepository、summary.twig を 補完/DatePeriod/DateInterval/P1D/P1M/zero/0で で反証検索したが、欠落日付・欠落月を0で補う処理は見つからなかった。Twig の default(0) は既存行の欠落属性を0表示するだけで、存在しない日付・月の行は作らない。",
+      "comparisonRows": [
+        {
+          "item": "欠落日付・月の表示",
+          "design": "集計結果に存在しない日付・月も0行として一覧へ補完する。",
+          "implementation": "fetchSummaryRowsByDateRangeAndTargets / fetchSummaryRowsByMonthRangeAndTargets は既存サマリー行だけを返す。",
+          "mismatch": "データが無い日付・月の行が一覧から欠落する。"
+        },
+        {
+          "item": "バッチ登録データ",
+          "design": "期間内の結果なし日付・月も表示項目を0として扱う。",
+          "implementation": "BatchAggregateDailySummaryAction は order/purchase/waste/shortage のいずれかに行がある base_info だけを summaries に追加する。",
+          "mismatch": "完全に0件の店舗・日はサマリーテーブルへ登録されず、表示側でも補完されない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m12-01_0211_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75; src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126; src/Eccube/Repository/DtbDailySummaryRepository.php:304; src/Eccube/Repository/DtbMonthlySummaryRepository.php:83; src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:101",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。」。実装は「AnalysisSummaryBuilder は日次/月次ともサマリーテーブルから取得できた行だけを整形して返す。Repository も指定範囲の既存行を SELECT するだけで、期間内の日付・月を列挙して0行を生成する処理がない。」。乖離理由は「SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepository、summary.twig を 補完/DatePeriod/DateInterval/P1D/P1M/zero/0で で反証検索したが、欠落日付・欠落月を0で補う処理は見つからなかった。Twig の default(0) は既存行の欠落属性を0表示するだけで、存在しない日付・月の行は作らない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "DB・保存/更新処理未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "ルート・Controller",
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75",
+        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:304",
+        "src/Eccube/Repository/DtbMonthlySummaryRepository.php:83",
+        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:101",
+        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php",
+        "src/Eccube/Repository/DtbMonthlySummaryRepository.php",
+        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75\n72:             [$from, $to] = [$to, $from];\n73:         }\n74: \n75:         $rowsRaw = $this->dtbDailySummaryRepository->fetchSummaryRowsByDateRangeAndTargets($from, $to, $targetBaseInfoIds);\n76:         $rows = [];\n77:         foreach ($rowsRaw as $raw) {\n78:             $storeName = $this->resolveStoreName(",
+        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126\n123:         $rowsRaw = $this->dtbMonthlySummaryRepository->fetchSummaryRowsByMonthRangeAndTargets($from, $to, $targetBaseInfoIds);\n124: \n125:         $rows = [];\n126:         foreach ($rowsRaw as $raw) {\n127:             $storeName = $this->resolveStoreName(\n128:                 (int) ($raw['base_info_id'] ?? 0),\n129:                 (string) ($raw['short_name_jp'] ?? ''),",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:304\n301:      *\n302:      * @return array<int, array<string, mixed>>\n303:      */\n304:     public function fetchSummaryRowsByDateRangeAndTargets(\n305:         \\DateTimeInterface $from,\n306:         \\DateTimeInterface $to,\n307:         array $targetBaseInfoIds,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 92,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-29582646c6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 集計データをバッチであらかじめ作成することで速度改善を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-519fbdaa62",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 検索項目は以下の項目に固定とする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-10ce307d2e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 売上集計用に検索項目に出力するフラグを店舗管理に持たせる(追加)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-a80b8ccf00",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 今回のカスタマイズに伴い、下記項目は削除する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-71f1735071",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 表示項目(注文) ※検索結果の出力項目が固定になるため",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-5809b5f3e9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 表示項目(詳細) ※検索結果の出力項目が固定になるため",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-c64a78acf5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 売上集計用に検索項目に出力するフラグを店舗管理に持たせる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-6666736827",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 識別ID 1:集計タイプの切り替えを行うたびに、集計日の値が上書きされる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-d826325476",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 集計タイプが「日別」の場合、集計日は「当月1日」から「当月末日」を自動入力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-dbb044903b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 集計タイプが「月別」の場合、集計月は「2か月前」から「当月」を自動入力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-cda69d97fb",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 識別ID 4:集計対象(通販)にチェックを入れた場合、通販の売上集計を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-3aea4c00ab",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 識別ID 5:集計対象(各店舗)の追加。店舗一覧から売上集計したい店舗にチェックを入れる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-c82a57a412",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "初期設定として、店舗一覧にログインしたユーザーが所属している店舗にチェックが入った状態で表示される(追加)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-e82da08385",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 識別ID 6:店舗全選択/全解除のチェックボックスは、識別ID 5:集計対象(各店舗)の全チェックボックスと連動",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-89fa707c43",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "チェックを入れると、識別ID 5:集計対象(各店舗)にある全店舗のチェックボックスにチェックが入る",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-a805447c45",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "チェックを外すと、識別ID 5:集計対象(各店舗)にある全店舗のチェックボックスにチェックが外れる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-052ceaa4b5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ スマレジの取引データは基本的にリアルタイムに送信される",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-7dd70f0a86",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "チェックボックス",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-b9758ea87e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索結果に「通販売上集計」を含める場合はチェックを入れる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-422dbeef15",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "店舗一覧から「店舗売上集計」をしたい店舗にチェックを入れる。ログインユーザーの所属店舗には自動的にチェックが入る。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-eae36390e3",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "チェックボックスの設定に沿って、すべての各店舗のチェックボックスと連動",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-3bb254f8ad",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索枠表示・非表示ボタン",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-32999e1d83",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索枠(識別ID 1～6)の表示・非表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-cb42e8880a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "M12-01 日別/月別集計 集計一覧表示 / M12-01（日別/月別集計 集計一覧表示）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-8cd9d27277",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "分析・集計メニューの日別集計・月別集計は、管理者が指定した集計タイプ（日次/月次）・集計日範囲・表示項目に従い、注文・明細・会員・来客の各指標を期間単位で集計し、一覧表で提示する機能である。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-3dd12189d7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。本機能のカスタマイズ区分はカスタマイズであり、現行挙動の確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの分析・集計（日次/月次集計）処理、集計用リポジトリ、検索フォーム種別、一覧テンプレートを正とする。DB関連の記述は ec-cube-enterprise の実装を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-e3bcd1f0f6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "CSVダウンロードはM12-02で扱う。本書は集計一覧の表示までを扱う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-c1e20da12d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "日次集計・月次集計の初期表示時に設定される検索条件の既定値",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-3b7b738bd5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索条件（集計タイプ・集計日・利用端末・表示項目）の指定による集計結果一覧の表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-5ad3266dd1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "一覧に表示する列と合計行の算出",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-1d095b52f0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-10f2e6faa5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "受注・会員・商品の各台帳の更新業務（各機能を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-47bb7a8d76",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "会員の集計対象テーブル dtb_player （登録日 create_date 、メールマガジン配信フラグ mail_magazine_flg ）は現行・移行先（ec-cube-enterprise）で同一スキーマであり、移行先でもそのまま参照する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-cef79c674f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本集計機能（HareruyaEc の日次/月次集計）自体は現行プラグインのカスタマイズであり、ec-cube-enterprise 側の集計画面・集計ロジックの有無と差は移行設計で確認する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-79aab1de0c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "表示項目（注文）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-cf2c6c44b6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "来客数・注文・リピート注文数・会員数・注文確認・入金・出荷指示・出荷・キャンセルの各指標から表示するものを選ぶ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-ad477b8f08",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "表示項目（明細）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-860b6246db",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "商品別の注文・注文確認・入金・出荷指示・出荷・キャンセルの各指標から表示するものを選ぶ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-485f436bd2",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計タイプ日次、集計日を当月初日〜当月末日とした検索画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-b1d013d666",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計タイプ月次、集計日を当月初日の2か月前〜当月末日とした検索画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-7ac22da29a",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "入力された検索条件で集計し、同一画面に集計結果一覧を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-7137c1bee6",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "管理画面プレフィックスは環境により変わるためプレースホルダで示す。初期表示の入口は同一処理を共有し、URLに daily を含むかどうかで集計タイプの既定値を切り替える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-5c1ec01185",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索条件のアコーディオン、検索ボタン、集計結果テーブル。集計結果がある場合は日付列に続けて選択した表示項目の列を並べ、最終行に合計行を表示する。購買率の列は値に % を付けて表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-4967904bfe",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "商品名（日/英）・商品コードのテキスト欄、集計タイプのラジオ、集計日From・To、利用端末のチェックボックス、表示項目（注文）のチェックボックス、表示項目（明細）のチェックボックス。表示項目には「全て選択」のチェックボックスを併設する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-b7753ac1ec",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "日付入力にデートタイムピッカーを適用する。表示項目の「全て選択」チェックで配下のチェックボックスを一括切替する。集計値の非同期取得は行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-1b3b9dd4e8",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索画面初期表示（ /{admin_route}/analysis/summary/daily または /monthly ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-9e9195596b",
+        "category": "検索条件セッションを破棄する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "URLに daily を含む場合は集計タイプを日次にする。含まない場合は集計タイプを月次にし、集計日Fromを2か月前へ繰り上げる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-ec92fe1007",
+        "category": "検索条件セッションを破棄する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索フォームを表示する。集計結果は空とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-5d257f3a8f",
+        "category": "検索条件セッションを破棄する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計実行・一覧表示（ /{admin_route}/analysis/summary/result ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-7fcc0798b5",
+        "category": "検索条件セッションを破棄する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索フォームへ送信値を取り込む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-0d167b707a",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "選択した表示項目から、画面に出す列の見出しを組み立てる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-7440779743",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計用リポジトリへ検索条件と表示項目を渡し、期間単位の集計結果と合計を取得する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-ee524dc3f7",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計結果一覧と合計行を同一画面に表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-2cfdd9c6c6",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計タイプが日次なら注文日を %Y/%m/%d 、月次なら %Y/%m でグループ化する。会員数の集計は会員の登録日（ create_date ）を同じ単位でグループ化する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-9bea3c81d5",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "注文を集計日範囲で抽出し、期間単位の注文件数（購買数）を数える。来客数は期間・会員単位でまとめた注文者数を数える。購買率は来客数を購買数で割り100倍して小数点以下を切り捨てる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-64052bbdc1",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "注文・注文確認・入金・出荷指示・出荷・キャンセル",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-ddc69d632f",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "会員数・メールニュース登録数",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-ecc9e9b1e9",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "会員（ dtb_player ）を登録日の期間単位でグループ化し、登録数とメールマガジン登録フラグが立つ件数を数える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-1dc008b5e3",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "注文回数が2回以上の会員の注文を、期間単位で件数として数える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-e930a95e99",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "利用端末が指定された場合、来客数・注文・商品別・リピート・来客者数の各副問い合わせに端末IDの絞り込みを加える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-9d667009b5",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "平均単価は金額合計を数量合計で割った値とし、表示時に切り上げる。期間内で集計結果が無い日付・月は、件数等を0で補完して一覧に並べる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-a9002693fb",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "注文確認は受注ステータスが新規受付・入金待ち・保留、入金は決済処理中、出荷指示は出荷準備・ピッキング、出荷は出荷済み・対応済み、キャンセルはキャンセルの各ステータスに属する明細のみを算入する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-4725bf689b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "金額合計を数量合計で割る。表示時は切り上げる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-4841394dd9",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "来客数を購買数で割り100倍し、小数点以下を切り捨てる。購買数が0の場合は0とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-2fab260e11",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計結果に存在しない日付・月は、表示項目の各列を0として一覧へ補完する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-a6d1b14a54",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "入力語を空白・カンマで分割し、商品コードまたは商品名の部分一致のいずれかに合致する明細を商品別の集計対象とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-beaa970079",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "フォームキー device_type 。端末マスタの複数選択。各副問い合わせの端末ID絞り込み。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-9044a455ba",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "フォームキー columns_order 。来客数・注文・リピート注文数・会員数・注文確認・入金・出荷指示・出荷・キャンセルから複数選択。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-8aae2b134a",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "フォームキー columns_product 。商品別の注文・注文確認・入金・出荷指示・出荷・キャンセルから複数選択。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-4533acc740",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本フォームはなりすまし対策トークンを使わない（ csrf_protection を無効化）。最大長の根拠は constant.yml.dist 等の確認値とし環境上書きを注記する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-f14035baf0",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "当日の会員登録が無い",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-41a74562fd",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "会員数・メールニュース登録数をNULLから0へ補正する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-bef4fecb8c",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "表示項目を未選択",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-1e47e39c33",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計結果は検索実行時にデータベースから読み取った値である。表示後に受注・会員が更新されても表示中の数値は自動更新しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-d931f3ec2c",
+        "category": "集計実行で検索条件をセッションへ保存する。CSVダウンロードは同じセッションの検索条件で再集計するため、直近の検索条件と同条件の集計となる。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "合計行は表示中の集計結果を合算した値であり、別問い合わせの再集計ではない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-421a914eaf",
+        "category": "集計実行で検索条件をセッションへ保存する。CSVダウンロードは同じセッションの検索条件で再集計するため、直近の検索条件と同条件の集計となる。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本機能は参照のみで台帳を更新しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-dd6f07a09f",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本機能ではAPI呼び出し・バッチ実行を扱わない。集計はデータベースへの問い合わせで行う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-3276f0fab5",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索条件（集計タイプ・集計日・利用端末・表示項目・商品名/商品コード）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-4093edaf47",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "機能に直接関係する列のみ記載する。テーブル名・列名は ec-cube-enterprise を正とし、現行 pf-eccube3 と異なる場合は現行名を括弧で添える。型や一覧の細部はスキーマを参照する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-c9fcf3e7e5",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "メールニュース登録数の集計。現行・移行先で同一スキーマ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-a6defca865",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-40a3206f89",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "日次・月次のいずれかを必須選択。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-44144385e8",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "必須。日付形式（ yyyy-MM-dd ）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-9d9022a391",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "利用端末・表示項目",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-8589f97c25",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "任意の複数選択。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-d629768018",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "同一画面に集計結果一覧を表示。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-25c3f5e83b",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "「CSVダウンロード」押下",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-f480261b0c",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計結果CSVを出力（M12-02）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-a2dad48588",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-a6f6ccef11",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-b41e66d00a",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "CSVダウンロードが同条件で再集計するための条件が保存される。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m12-01_0211_sheet-4_sheet-req-2ef294de87",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計を表示しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "admin_route",
+        "order_status_id",
+        "order_date",
+        "customer_id",
+        "product_code",
+        "product_name"
+      ],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "pf-eccube3/m12-01_admin_analytics_sales_daily_monthly_summary.md",
+        "POST",
+        "analysis/summary/daily",
+        "analysis/summary/monthly",
+        "analysis/summary/result",
+        "monthly"
+      ],
+      "businessTerms": [
+        "M12",
+        "月別集計",
+        "集計一覧",
+        "受注データを使って日別",
+        "スマレジについて",
+        "注文ステータスが",
+        "出荷完了",
+        "集計データをバッチであらかじめ作成することで速度",
+        "店舗一覧にログインしたユーザーが所属している店舗",
+        "スマレジの取引データは基本的にリアルタイムに送信",
+        "支店やスマレジの取引情報も集計対象として取り扱う",
+        "ログインユーザーの所属店舗には自動的にチェックが"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "order_status_id",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/OrderItemRepository.php:107",
+        "snippet": "AND o.order_status_id <> :processing_status",
+        "weight": 7
+      },
+      {
+        "term": "analysis/summary/daily",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:62",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/daily', name: 'admin_summary_daily', methods: ['GET'])]",
+        "weight": 6
+      },
+      {
+        "term": "analysis/summary/monthly",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:72",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/monthly', name: 'admin_summary_monthly', methods: ['GET'])]",
+        "weight": 6
+      },
+      {
+        "term": "analysis/summary/result",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:82",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/result', name: 'admin_summary_result', methods: ['POST'])]",
+        "weight": 6
+      },
+      {
+        "term": "analysis/summary/daily",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/ProductAllCsv.php:1539",
+        "snippet": "FROM dtb_product_tag_sales_analysis ptsa",
+        "weight": 6
+      },
+      {
+        "term": "analysis/summary/daily",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/ProductAllCsv.php:1540",
+        "snippet": "INNER JOIN mtb_tag_sales_analysis tsa ON tsa.id = ptsa.tag_sales_analysis_id",
+        "weight": 6
+      },
+      {
+        "term": "analysis/summary/daily",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/ProductAllCsv.php:1554",
+        "snippet": "FROM dtb_product_tag_sales_analysis ptsa",
+        "weight": 6
+      },
+      {
+        "term": "analysis/summary/monthly",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/ProductAllCsv.php:1555",
+        "snippet": "INNER JOIN mtb_tag_sales_analysis tsa ON tsa.id = ptsa.tag_sales_analysis_id",
+        "weight": 6
+      },
+      {
+        "term": "customer_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/BaseInfo.php:1487",
+        "snippet": "#[ORM\\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "customer_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbBuyOrder.php:135",
+        "snippet": "#[ORM\\JoinColumn(name: 'customer_id', referencedColumnName: 'id', nullable: false)]",
+        "weight": 5
+      },
+      {
+        "term": "product_name",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbStockSplitJoinDetail.php:221",
+        "snippet": "* 互換用: 旧カラム product_name は廃止。現在は ProductStock から導出する。",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:1301",
+        "snippet": "$this->order_date = $orderDate;",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:132",
+        "snippet": "#[ORM\\Index(columns: ['order_date'], name: 'dtb_order_order_date_idx')]",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:534",
+        "snippet": "#[ORM\\Column(name: 'order_date', type: Types::DATETIMETZ_MUTABLE, nullable: true)]",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:535",
+        "snippet": "private $order_date;",
+        "weight": 5
+      },
+      {
+        "term": "customer_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:585",
+        "snippet": "#[ORM\\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "order_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:616",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "order_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:623",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
+        "weight": 5
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 6,
+    "implementationGapRequirementCount": 2,
+    "rows": [
+      {
+        "findingId": "m12-01_0211_sheet-4_sheet-conformance-f8770e5c7e75",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1141",
+        "designRequirement": "注文ステータスが「出荷完了」の注文のみ集計する。",
+        "implementationActual": "dtb_order を order_date 範囲で抽出し、order_status_id 条件なしで集計する。",
+        "mismatchReason": "出荷完了以外の注文も売上集計に含まれ得る。",
+        "implementationRefs": [
+          "src/Eccube/Repository/DtbDailySummaryRepository.php:42",
+          "src/Eccube/Repository/DtbDailySummaryRepository.php:62",
+          "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37",
+          "src/Eccube/Repository/DtbDailySummaryRepository.php",
+          "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "受注の集計対象",
+            "design": "注文ステータスが「出荷完了」の注文のみ集計する。",
+            "implementation": "dtb_order を order_date 範囲で抽出し、order_status_id 条件なしで集計する。",
+            "mismatch": "出荷完了以外の注文も売上集計に含まれ得る。"
+          }
+        ]
+      },
+      {
+        "findingId": "m12-01_0211_sheet-4_sheet-conformance-f8770e5c7e75",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1141",
+        "designRequirement": "売上として計上できる注文だけを事前集計する。",
+        "implementationActual": "BatchAggregateDailySummaryAction が aggregateOrderSummaryByBaseInfo の結果をそのまま dtb_daily_summary に登録する。",
+        "mismatchReason": "事前集計テーブル作成時点で設計の売上計上条件が反映されない。",
+        "implementationRefs": [
+          "src/Eccube/Repository/DtbDailySummaryRepository.php:42",
+          "src/Eccube/Repository/DtbDailySummaryRepository.php:62",
+          "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37",
+          "src/Eccube/Repository/DtbDailySummaryRepository.php",
+          "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "バッチ集計入力",
+            "design": "売上として計上できる注文だけを事前集計する。",
+            "implementation": "BatchAggregateDailySummaryAction が aggregateOrderSummaryByBaseInfo の結果をそのまま dtb_daily_summary に登録する。",
+            "mismatch": "事前集計テーブル作成時点で設計の売上計上条件が反映されない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m12-01_0211_sheet-4_sheet-conformance-dc2427b46aa5",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1149",
+        "designRequirement": "売上集計用に検索項目へ出力するフラグを店舗管理に追加する。",
+        "implementationActual": "dtb_base_info には is_public_shop/is_open_shop があり、MallTenantShopType は公開/開店を編集する。",
+        "mismatchReason": "売上集計専用フラグが存在しない。",
+        "implementationRefs": [
+          "src/Eccube/Repository/BaseInfoRepository.php:198",
+          "src/Eccube/Repository/BaseInfoRepository.php:203",
+          "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:117",
+          "src/Eccube/Entity/BaseInfo.php:1548",
+          "src/Eccube/Repository/BaseInfoRepository.php",
+          "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php",
+          "src/Eccube/Entity/BaseInfo.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "店舗管理のフラグ",
+            "design": "売上集計用に検索項目へ出力するフラグを店舗管理に追加する。",
+            "implementation": "dtb_base_info には is_public_shop/is_open_shop があり、MallTenantShopType は公開/開店を編集する。",
+            "mismatch": "売上集計専用フラグが存在しない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m12-01_0211_sheet-4_sheet-conformance-dc2427b46aa5",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1149",
+        "designRequirement": "売上集計用フラグにより検索項目へ出力する店舗を制御する。",
+        "implementationActual": "getPublicTenantShopsForSummary は isPublicShop=true のテナントを取得する。",
+        "mismatchReason": "公開フラグと売上集計表示フラグが同一扱いになっている。",
+        "implementationRefs": [
+          "src/Eccube/Repository/BaseInfoRepository.php:198",
+          "src/Eccube/Repository/BaseInfoRepository.php:203",
+          "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:117",
+          "src/Eccube/Entity/BaseInfo.php:1548",
+          "src/Eccube/Repository/BaseInfoRepository.php",
+          "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php",
+          "src/Eccube/Entity/BaseInfo.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "店舗一覧の抽出条件",
+            "design": "売上集計用フラグにより検索項目へ出力する店舗を制御する。",
+            "implementation": "getPublicTenantShopsForSummary は isPublicShop=true のテナントを取得する。",
+            "mismatch": "公開フラグと売上集計表示フラグが同一扱いになっている。"
+          }
+        ]
+      },
+      {
+        "findingId": "m12-01_0211_sheet-4_sheet-conformance-e658a5eb1036",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "DB・保存/更新処理未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1249",
+        "designRequirement": "集計結果に存在しない日付・月も0行として一覧へ補完する。",
+        "implementationActual": "fetchSummaryRowsByDateRangeAndTargets / fetchSummaryRowsByMonthRangeAndTargets は既存サマリー行だけを返す。",
+        "mismatchReason": "データが無い日付・月の行が一覧から欠落する。",
+        "implementationRefs": [
+          "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75",
+          "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126",
+          "src/Eccube/Repository/DtbDailySummaryRepository.php:304",
+          "src/Eccube/Repository/DtbMonthlySummaryRepository.php:83",
+          "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:101",
+          "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php",
+          "src/Eccube/Repository/DtbDailySummaryRepository.php",
+          "src/Eccube/Repository/DtbMonthlySummaryRepository.php",
+          "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "欠落日付・月の表示",
+            "design": "集計結果に存在しない日付・月も0行として一覧へ補完する。",
+            "implementation": "fetchSummaryRowsByDateRangeAndTargets / fetchSummaryRowsByMonthRangeAndTargets は既存サマリー行だけを返す。",
+            "mismatch": "データが無い日付・月の行が一覧から欠落する。"
+          }
+        ]
+      },
+      {
+        "findingId": "m12-01_0211_sheet-4_sheet-conformance-e658a5eb1036",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "DB・保存/更新処理未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1249",
+        "designRequirement": "期間内の結果なし日付・月も表示項目を0として扱う。",
+        "implementationActual": "BatchAggregateDailySummaryAction は order/purchase/waste/shortage のいずれかに行がある base_info だけを summaries に追加する。",
+        "mismatchReason": "完全に0件の店舗・日はサマリーテーブルへ登録されず、表示側でも補完されない。",
+        "implementationRefs": [
+          "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75",
+          "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126",
+          "src/Eccube/Repository/DtbDailySummaryRepository.php:304",
+          "src/Eccube/Repository/DtbMonthlySummaryRepository.php:83",
+          "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:101",
+          "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php",
+          "src/Eccube/Repository/DtbDailySummaryRepository.php",
+          "src/Eccube/Repository/DtbMonthlySummaryRepository.php",
+          "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "バッチ登録データ",
+            "design": "期間内の結果なし日付・月も表示項目を0として扱う。",
+            "implementation": "BatchAggregateDailySummaryAction は order/purchase/waste/shortage のいずれかに行がある base_info だけを summaries に追加する。",
+            "mismatch": "完全に0件の店舗・日はサマリーテーブルへ登録されず、表示側でも補完されない。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 92,
+    "verdictedCount": 92,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 92,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-29582646c6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 集計データをバッチであらかじめ作成することで速度改善を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-519fbdaa62",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 検索項目は以下の項目に固定とする",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-10ce307d2e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 売上集計用に検索項目に出力するフラグを店舗管理に持たせる(追加)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-a80b8ccf00",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 今回のカスタマイズに伴い、下記項目は削除する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-71f1735071",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 表示項目(注文) ※検索結果の出力項目が固定になるため",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-5809b5f3e9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 表示項目(詳細) ※検索結果の出力項目が固定になるため",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-c64a78acf5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 売上集計用に検索項目に出力するフラグを店舗管理に持たせる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-6666736827",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 識別ID 1:集計タイプの切り替えを行うたびに、集計日の値が上書きされる",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-d826325476",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 集計タイプが「日別」の場合、集計日は「当月1日」から「当月末日」を自動入力",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-dbb044903b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 集計タイプが「月別」の場合、集計月は「2か月前」から「当月」を自動入力",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-cda69d97fb",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 識別ID 4:集計対象(通販)にチェックを入れた場合、通販の売上集計を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-3aea4c00ab",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 識別ID 5:集計対象(各店舗)の追加。店舗一覧から売上集計したい店舗にチェックを入れる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-c82a57a412",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "初期設定として、店舗一覧にログインしたユーザーが所属している店舗にチェックが入った状態で表示される(追加)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-e82da08385",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ 識別ID 6:店舗全選択/全解除のチェックボックスは、識別ID 5:集計対象(各店舗)の全チェックボックスと連動",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-89fa707c43",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "チェックを入れると、識別ID 5:集計対象(各店舗)にある全店舗のチェックボックスにチェックが入る",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-a805447c45",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "チェックを外すと、識別ID 5:集計対象(各店舗)にある全店舗のチェックボックスにチェックが外れる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-052ceaa4b5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "・ スマレジの取引データは基本的にリアルタイムに送信される",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-7dd70f0a86",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "チェックボックス",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-b9758ea87e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索結果に「通販売上集計」を含める場合はチェックを入れる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-422dbeef15",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "店舗一覧から「店舗売上集計」をしたい店舗にチェックを入れる。ログインユーザーの所属店舗には自動的にチェックが入る。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-eae36390e3",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "チェックボックスの設定に沿って、すべての各店舗のチェックボックスと連動",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-3bb254f8ad",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索枠表示・非表示ボタン",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-32999e1d83",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索枠(識別ID 1～6)の表示・非表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-cb42e8880a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "M12-01 日別/月別集計 集計一覧表示 / M12-01（日別/月別集計 集計一覧表示）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-8cd9d27277",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "分析・集計メニューの日別集計・月別集計は、管理者が指定した集計タイプ（日次/月次）・集計日範囲・表示項目に従い、注文・明細・会員・来客の各指標を期間単位で集計し、一覧表で提示する機能である。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-3dd12189d7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。本機能のカスタマイズ区分はカスタマイズであり、現行挙動の確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの分析・集計（日次/月次集計）処理、集計用リポジトリ、検索フォーム種別、一覧テンプレートを正とする。DB関連の記述は ec-cube-enterprise の実装を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-e3bcd1f0f6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "CSVダウンロードはM12-02で扱う。本書は集計一覧の表示までを扱う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-c1e20da12d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "日次集計・月次集計の初期表示時に設定される検索条件の既定値",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-3b7b738bd5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索条件（集計タイプ・集計日・利用端末・表示項目）の指定による集計結果一覧の表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-5ad3266dd1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "一覧に表示する列と合計行の算出",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-1d095b52f0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-10f2e6faa5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "受注・会員・商品の各台帳の更新業務（各機能を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-47bb7a8d76",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "会員の集計対象テーブル dtb_player （登録日 create_date 、メールマガジン配信フラグ mail_magazine_flg ）は現行・移行先（ec-cube-enterprise）で同一スキーマであり、移行先でもそのまま参照する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-cef79c674f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本集計機能（HareruyaEc の日次/月次集計）自体は現行プラグインのカスタマイズであり、ec-cube-enterprise 側の集計画面・集計ロジックの有無と差は移行設計で確認する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-79aab1de0c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "表示項目（注文）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-cf2c6c44b6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "来客数・注文・リピート注文数・会員数・注文確認・入金・出荷指示・出荷・キャンセルの各指標から表示するものを選ぶ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-ad477b8f08",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "表示項目（明細）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-860b6246db",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "商品別の注文・注文確認・入金・出荷指示・出荷・キャンセルの各指標から表示するものを選ぶ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-485f436bd2",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計タイプ日次、集計日を当月初日〜当月末日とした検索画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-b1d013d666",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計タイプ月次、集計日を当月初日の2か月前〜当月末日とした検索画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-7ac22da29a",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "入力された検索条件で集計し、同一画面に集計結果一覧を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-7137c1bee6",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "管理画面プレフィックスは環境により変わるためプレースホルダで示す。初期表示の入口は同一処理を共有し、URLに daily を含むかどうかで集計タイプの既定値を切り替える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-5c1ec01185",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索条件のアコーディオン、検索ボタン、集計結果テーブル。集計結果がある場合は日付列に続けて選択した表示項目の列を並べ、最終行に合計行を表示する。購買率の列は値に % を付けて表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-4967904bfe",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "商品名（日/英）・商品コードのテキスト欄、集計タイプのラジオ、集計日From・To、利用端末のチェックボックス、表示項目（注文）のチェックボックス、表示項目（明細）のチェックボックス。表示項目には「全て選択」のチェックボックスを併設する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-b7753ac1ec",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "日付入力にデートタイムピッカーを適用する。表示項目の「全て選択」チェックで配下のチェックボックスを一括切替する。集計値の非同期取得は行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-1b3b9dd4e8",
+        "category": "集計実行時に検索条件を保存するセッション領域。CSVダウンロードが同じ条件で集計するために参照する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索画面初期表示（ /{admin_route}/analysis/summary/daily または /monthly ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-9e9195596b",
+        "category": "検索条件セッションを破棄する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "URLに daily を含む場合は集計タイプを日次にする。含まない場合は集計タイプを月次にし、集計日Fromを2か月前へ繰り上げる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-ec92fe1007",
+        "category": "検索条件セッションを破棄する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索フォームを表示する。集計結果は空とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-5d257f3a8f",
+        "category": "検索条件セッションを破棄する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計実行・一覧表示（ /{admin_route}/analysis/summary/result ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-7fcc0798b5",
+        "category": "検索条件セッションを破棄する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索フォームへ送信値を取り込む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-0d167b707a",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "選択した表示項目から、画面に出す列の見出しを組み立てる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-7440779743",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計用リポジトリへ検索条件と表示項目を渡し、期間単位の集計結果と合計を取得する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-ee524dc3f7",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計結果一覧と合計行を同一画面に表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-2cfdd9c6c6",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計タイプが日次なら注文日を %Y/%m/%d 、月次なら %Y/%m でグループ化する。会員数の集計は会員の登録日（ create_date ）を同じ単位でグループ化する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-9bea3c81d5",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "注文を集計日範囲で抽出し、期間単位の注文件数（購買数）を数える。来客数は期間・会員単位でまとめた注文者数を数える。購買率は来客数を購買数で割り100倍して小数点以下を切り捨てる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-64052bbdc1",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "注文・注文確認・入金・出荷指示・出荷・キャンセル",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-ddc69d632f",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "会員数・メールニュース登録数",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-ecc9e9b1e9",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "会員（ dtb_player ）を登録日の期間単位でグループ化し、登録数とメールマガジン登録フラグが立つ件数を数える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-1dc008b5e3",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "注文回数が2回以上の会員の注文を、期間単位で件数として数える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-e930a95e99",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "利用端末が指定された場合、来客数・注文・商品別・リピート・来客者数の各副問い合わせに端末IDの絞り込みを加える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-9d667009b5",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "平均単価は金額合計を数量合計で割った値とし、表示時に切り上げる。期間内で集計結果が無い日付・月は、件数等を0で補完して一覧に並べる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-a9002693fb",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "注文確認は受注ステータスが新規受付・入金待ち・保留、入金は決済処理中、出荷指示は出荷準備・ピッキング、出荷は出荷済み・対応済み、キャンセルはキャンセルの各ステータスに属する明細のみを算入する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-4725bf689b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "金額合計を数量合計で割る。表示時は切り上げる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-4841394dd9",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "来客数を購買数で割り100倍し、小数点以下を切り捨てる。購買数が0の場合は0とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-2fab260e11",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計結果に存在しない日付・月は、表示項目の各列を0として一覧へ補完する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-a6d1b14a54",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "入力語を空白・カンマで分割し、商品コードまたは商品名の部分一致のいずれかに合致する明細を商品別の集計対象とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-beaa970079",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "フォームキー device_type 。端末マスタの複数選択。各副問い合わせの端末ID絞り込み。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-9044a455ba",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "フォームキー columns_order 。来客数・注文・リピート注文数・会員数・注文確認・入金・出荷指示・出荷・キャンセルから複数選択。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-8aae2b134a",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "フォームキー columns_product 。商品別の注文・注文確認・入金・出荷指示・出荷・キャンセルから複数選択。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-4533acc740",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本フォームはなりすまし対策トークンを使わない（ csrf_protection を無効化）。最大長の根拠は constant.yml.dist 等の確認値とし環境上書きを注記する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-f14035baf0",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "当日の会員登録が無い",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-41a74562fd",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "会員数・メールニュース登録数をNULLから0へ補正する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-bef4fecb8c",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "表示項目を未選択",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-1e47e39c33",
+        "category": "フォームキー multi 。商品別集計の商品コード・商品名の部分一致条件に使う。検索条件セッションへ保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計結果は検索実行時にデータベースから読み取った値である。表示後に受注・会員が更新されても表示中の数値は自動更新しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-d931f3ec2c",
+        "category": "集計実行で検索条件をセッションへ保存する。CSVダウンロードは同じセッションの検索条件で再集計するため、直近の検索条件と同条件の集計となる。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "合計行は表示中の集計結果を合算した値であり、別問い合わせの再集計ではない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-421a914eaf",
+        "category": "集計実行で検索条件をセッションへ保存する。CSVダウンロードは同じセッションの検索条件で再集計するため、直近の検索条件と同条件の集計となる。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本機能は参照のみで台帳を更新しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-dd6f07a09f",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本機能ではAPI呼び出し・バッチ実行を扱わない。集計はデータベースへの問い合わせで行う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-3276f0fab5",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "検索条件（集計タイプ・集計日・利用端末・表示項目・商品名/商品コード）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-4093edaf47",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "機能に直接関係する列のみ記載する。テーブル名・列名は ec-cube-enterprise を正とし、現行 pf-eccube3 と異なる場合は現行名を括弧で添える。型や一覧の細部はスキーマを参照する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-c9fcf3e7e5",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "メールニュース登録数の集計。現行・移行先で同一スキーマ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-a6defca865",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-40a3206f89",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "日次・月次のいずれかを必須選択。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-44144385e8",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "必須。日付形式（ yyyy-MM-dd ）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-9d9022a391",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "利用端末・表示項目",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-8589f97c25",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "任意の複数選択。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-d629768018",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "同一画面に集計結果一覧を表示。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-25c3f5e83b",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "「CSVダウンロード」押下",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-f480261b0c",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計結果CSVを出力（M12-02）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-a2dad48588",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-a6f6ccef11",
+        "category": "検索条件セッションへの保存。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-b41e66d00a",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "CSVダウンロードが同条件で再集計するための条件が保存される。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m12-01_0211_sheet-4_sheet-req-2ef294de87",
+        "category": "検索条件を検索条件セッションへ保存する。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4",
+        "designRequirement": "集計を表示しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "id": "f06-26-branch-shop-front-general-restrictions-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-26_0306_sheet-22_pc.json",
+  "sourceFindingId": "f06-26_0306_sheet-22_pc-conformance-ca36f8d02ee5",
+  "classification": "フロント会員",
+  "feature": "店頭PC用アカウント制御",
+  "issueCategory": "実装違い",
+  "issue": "支店店内アカウントで本店店内アカウント向けのアクセス制限画面を利用できる",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "顧客グループが `支店用店内アカウント` の会員でログインする",
+    "`http://localhost:8080/ja/mypage/change`、`http://localhost:8080/ja/contact`、`http://localhost:8080/ja/mypage/delivery` など、設計で店内アカウント制限対象に含まれる画面へアクセスする",
+    "支店店内アカウントでも共通エラー画面ではなく各画面が表示されないか確認する"
+  ],
+  "expected": [
+    "支店店内アカウントは、本店店内アカウントでアクセス制限されている画面にもアクセスできない",
+    "支店店内アカウントは、上記制限に加えて本店からの注文もアクセスできない",
+    "遮断対象機能へアクセスした場合は共通エラー画面を返す"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の支店用店内アカウント seed は `id=5`、`shop_front_flg=0`、`branch_shop_front_flg=1` である。一方、一般的な店内アカウント制限ルート `SHOP_FRONT_RESTRICTED_ROUTES` は `CustomerGroupAccessListener` の `getShopFrontFlg()` 分岐でのみ遮断されるため、支店用店内アカウントには適用されない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 支店用店内アカウントは shop_front_flg=0 / branch_shop_front_flg=1",
+          "path": "ec-cube-enterprise/app/DoctrineMigrations/Version20260618000009.php",
+          "start": 80,
+          "end": 86,
+          "language": "php",
+          "contains": [
+            "['id' => 3, 'name' => '店内アカウント', 'point_percentage' => 0, 'shop_front_flg' => '1', 'branch_shop_front_flg' => '0'",
+            "['id' => 5, 'name' => '支店用店内アカウント', 'point_percentage' => 0, 'shop_front_flg' => '0', 'branch_shop_front_flg' => '1'"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 一般制限は getShopFrontFlg() のみで判定し、支店フラグは本店注文系だけ",
+          "path": "ec-cube-enterprise/src/Eccube/EventListener/CustomerGroupAccessListener.php",
+          "start": 73,
+          "end": 90,
+          "language": "php",
+          "contains": [
+            "if ($CustomerGroup->getShopFrontFlg() && $this->isShopFrontRestrictedRoute($route))",
+            "$CustomerGroup->getBranchShopFrontFlg()",
+            "$this->baseInfoService->getByRequestShop()->isMainShop()",
+            "$this->isBranchShopFrontMainShopRestrictedRoute($route)"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 一般制限対象には会員情報変更・お問い合わせ・配送先・買取等が含まれる",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Front/CustomerGroupAccessRouteRegistry.php",
+          "start": 24,
+          "end": 106,
+          "language": "php",
+          "contains": [
+            "shopFrontFlg = true（店内アカウント）がアクセス不可なルート",
+            "public const SHOP_FRONT_RESTRICTED_ROUTES = [",
+            "'mypage_change'",
+            "'contact'",
+            "'mypage_delivery'",
+            "'purchase_index'",
+            "'mypage_deckentry_edit'"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 支店フラグ側の制限はshopping系のみ",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Front/CustomerGroupAccessRouteRegistry.php",
+          "start": 108,
+          "end": 125,
+          "language": "php",
+          "contains": [
+            "branchShopFrontFlg = true（支店用店内アカウント）が本店でアクセス不可なルート",
+            "public const BRANCH_SHOP_FRONT_MAIN_SHOP_RESTRICTED_ROUTES = [",
+            "'shopping'",
+            "'shopping_confirm'",
+            "'shopping_complete'"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 でも、店内アカウントの多数画面制限は `onRestrictedControllerBefore`、支店店内アカウントの本店購入制限は `onRestrictedControllerBeforeForBranchShopFront` として別フックで登録されている。設計はこの支店制限を『上記の店内アカウントで制限されている画面に加え、本店からの注文』へ拡張しているが、ec-cube-enterprise では支店フラグが本店注文系だけに留まっている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は多数画面制限フックと支店本店注文制限フックを分けて登録",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/event.yml",
+          "start": 26,
+          "end": 106,
+          "language": "yaml",
+          "contains": [
+            "# 店頭注文アカウントアクセス制限",
+            "- [onRestrictedControllerBefore, NORMAL]",
+            "# 支店店頭注文アカウントアクセス制限",
+            "- [onRestrictedControllerBeforeForBranchShopFront, NORMAL]"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 CustomerGroupEvent は shop_front_flg と branch_shop_front_flg を別分岐で遮断",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Event/CustomerGroupEvent.php",
+          "start": 30,
+          "end": 72,
+          "language": "php",
+          "contains": [
+            "public function onRestrictedControllerBefore($event)",
+            "if ($player->getCustomerGroup()->getShopFrontFlg())",
+            "public function onRestrictedControllerBeforeForBranchShopFront($event)",
+            "if ($player->getCustomerGroup()->getBranchShopFrontFlg())"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "店内アカウントと支店店内アカウントの識別",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 7278,
+      "end": 7280,
+      "language": "html",
+      "contains": [
+        "会員の顧客グループが「店内アカウント」のものを、本店の店頭PCアカウントとする",
+        "会員の顧客グループが「支店店内アカウント」のものを、支店の店頭PCアカウントとする"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "支店店内アカウントは本店店内アカウントの制限画面に加えて本店注文を制限",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 7296,
+      "end": 7322,
+      "language": "html",
+      "contains": [
+        "「店内アカウント」(本店店頭PC)にアクセス制限されている画面は以下1~21とする",
+        "15　会員情報変更",
+        "17　お問い合わせ",
+        "21　配送先新規登録・変更",
+        "22　大会申込",
+        "「支店店内アカウント」(支店店頭PC)にアクセス制限されている画面は上記の店内アカウントで制限されている画面に加え、以下とする",
+        "本店からの注文"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "支店用店内アカウントは shop_front_flg=0 のため一般制限分岐に入らない",
+      "path": "ec-cube-enterprise/app/DoctrineMigrations/Version20260618000009.php",
+      "start": 80,
+      "end": 86,
+      "language": "php",
+      "contains": [
+        "'支店用店内アカウント'",
+        "'shop_front_flg' => '0'",
+        "'branch_shop_front_flg' => '1'"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "一般制限と支店本店注文制限が別分岐",
+      "path": "ec-cube-enterprise/src/Eccube/EventListener/CustomerGroupAccessListener.php",
+      "start": 73,
+      "end": 90,
+      "language": "php",
+      "contains": [
+        "getShopFrontFlg()",
+        "isShopFrontRestrictedRoute($route)",
+        "getBranchShopFrontFlg()",
+        "isBranchShopFrontMainShopRestrictedRoute($route)"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 も通常店内制限と支店本店注文制限を別フックとして持つ",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/event.yml",
+      "start": 26,
+      "end": 106,
+      "language": "yaml",
+      "contains": [
+        "# 店頭注文アカウントアクセス制限",
+        "# 支店店頭注文アカウントアクセス制限"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 の判定メソッド",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Event/CustomerGroupEvent.php",
+      "start": 30,
+      "end": 72,
+      "language": "php",
+      "contains": [
+        "if ($player->getCustomerGroup()->getShopFrontFlg())",
+        "if ($player->getCustomerGroup()->getBranchShopFrontFlg())"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-26_0306_sheet-22_pc.json#f06-26_0306_sheet-22_pc-conformance-ca36f8d02ee5'",
+      "rg -n \"ca36f8d02ee5|支店店内|支店用店内|店内アカウント|アクセス制限|本店からの注文|ネット買取|配送先|大会申込|branch_shop_front_flg|shop_front_flg\" design_impl_drift_report/findings/f06-26_0306_sheet-22_pc.json excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"CustomerGroupAccessListener|SHOP_FRONT_RESTRICTED_ROUTES|BRANCH_SHOP_FRONT_MAIN_SHOP_RESTRICTED_ROUTES|branch_shop_front_flg|shop_front_flg|getShopFrontFlg|getBranchShopFrontFlg|支店用店内\" ec-cube-enterprise/src/Eccube/EventListener/CustomerGroupAccessListener.php ec-cube-enterprise/src/Eccube/Service/Front/CustomerGroupAccessRouteRegistry.php ec-cube-enterprise/app/DoctrineMigrations/Version20260618000009.php ec-cube-enterprise/src/Eccube/Entity/DtbCustomerGroup.php",
+      "rg -n \"onRestrictedControllerBefore|onRestrictedControllerBeforeForBranchShopFront|branch_shop_front_flg|shop_front_flg|getShopFrontFlg|getBranchShopFrontFlg|支店店頭注文アカウントアクセス制限|店頭注文アカウントアクセス制限\" pf-eccube3/app/Plugin/HareruyaEc/event.yml pf-eccube3/app/Plugin/HareruyaEc/HareruyaEcEvent.php pf-eccube3/app/Plugin/HareruyaEc/Event/CustomerGroupEvent.php pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbCustomerGroup.php",
+      "nl -ba ec-cube-enterprise/src/Eccube/EventListener/CustomerGroupAccessListener.php | sed -n '73,90p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Service/Front/CustomerGroupAccessRouteRegistry.php | sed -n '24,125p'",
+      "nl -ba ec-cube-enterprise/app/DoctrineMigrations/Version20260618000009.php | sed -n '80,86p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/event.yml | sed -n '26,106p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Event/CustomerGroupEvent.php | sed -n '30,72p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '7278,7280p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '7296,7322p'"
+    ],
+    "review": "review-pack を生成し、設計の『支店店内アカウントは上記制限画面＋本店注文を制限』要求、ec-cube-enterprise の shop_front_flg / branch_shop_front_flg 分岐、支店用店内アカウント seed、pf-eccube3 の通常店内制限・支店本店注文制限フックを手動で批判的に再確認した。外部の codex gpt-5.5 high レビューはこの環境では利用できないため、同等の観点で Listener、RouteRegistry、migration、event.yml、CustomerGroupEvent を検索した。"
+  }
+}

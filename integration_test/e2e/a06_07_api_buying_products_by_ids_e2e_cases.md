@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない参照系のJSON API（商品IDリスト→買取用商品情報の一括取得）であり、**両レイヤ網羅のうちAPI/統合レイヤが主**。参照系GETであり結果が管理画面に現れる範囲を持たないため**UIレイヤは0想定**。API/統合レイヤ＝Playwright `request` でエンドポイントへPOSTし、HTTPステータス・レスポンス本文（型・構造・値）で判定する。
 
-**期待結果は仕様（正本md・観点表）由来**とし、実装のレスポンス形・型キャスト・HTTPライブラリ既定値を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本md・観点表を上位オラクルとし、乖離は付帯表4に出す。型契約（`price`/`stock`＝string、`foilFlg`＝boolean、フィールド名`productCode`等）は仕様の型で期待値化し、実装のint化・別名は付帯表4の不具合候補に出す。仕様未定義の挙動（純粋な型不正IDのparsing・想定外項目・異常系HTTPステータス・タイムアウト）は固定せず`要実機確認`。認可方式は正典未特定（pf-api方針）のため資格情報の負例は`手動（要実機確認）`に置く。送信先は実装の実効パス `POST /api/v1/buying/products` に統一し、設計パス`POST /buying/products`との差異は付帯表4#1でのみ管理する。実装からは位置情報（APIパス・メソッド・認可・整形位置）のみを `file:line` 根拠で取得した。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（正本md・観点表）由来**とし、実装のレスポンス形・型キャスト・HTTPライブラリ既定値を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本md・観点表を上位オラクルとし、乖離は付帯表4に出す。型契約（`price`/`stock`＝string、`foilFlg`＝boolean、フィールド名`productCode`等）は仕様の型で期待値化し、実装のint化・別名は付帯表4の不具合候補に出す。仕様未定義の挙動（純粋な型不正IDのparsing・想定外項目・異常系HTTPステータス・タイムアウト）は固定せず`要実機確認`。認可方式は正典未特定（pf-api方針）のため資格情報の負例は`手動（要実機確認）`に置く。送信先は実装の実効パス `POST /api/v1/buying/products` に統一し、設計パス`POST /buying/products`との差異は付帯表4#1でのみ管理する。実装からは位置情報（APIパス・メソッド・認可・整形位置）のみを `file:line` 根拠で取得した。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -22,58 +22,58 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-001	IT-09	実行結果	P1	複数ID正常取得でHTTP200・買取用商品JSONが返る	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	既知の買取対象カード商品IDを2件以上カンマ区切りで指定（ids）	"1. 対象エンドポイント（POST /api/v1/buying/products）へidsを指定して送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータスが200で、指定IDに対応する買取用商品情報がcardsオブジェクトとしてJSONで返ること。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータスが200で、指定IDに対応する買取用商品情報がcardsオブジェクトとしてJSONで返ること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-002	IT-09	HTTPステータス	P3	正常取得時のHTTPステータスが200	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	既知の買取対象カード商品ID	"1. POST /api/v1/buying/products へ送信する
-2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	HTTPステータスが200（成功）であること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-003	IT-09	リクエスト	P2	正常パラメータでSEED期待値どおりのcards情報が返る	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	既知商品ID（SEED期待値が定義済）	"1. POST /api/v1/buying/products へ送信する
-2. レスポンス本文の各フィールド値を確認する"	返却されたcards配下のcardNameJp・cardNameEn・productId等がSEEDの既知期待値と一致すること。
+2. レスポンス本文の各フィールド値を確認する"	返却されたcards配下のcardNameJp・cardNameEn・productId等がSEEDの既知期待値と一致すること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-004	IT-09	外部取得	P1	複数カードに跨るIDで全対象カードが一括取得される	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	異なるカードに属する商品IDを複数指定	"1. POST /api/v1/buying/products へ送信する
-2. cardsオブジェクトのキー集合を確認する"	指定IDに対応する全カードがcardsオブジェクトのキーとして過不足なく返ること。
+2. cardsオブジェクトのキー集合を確認する"	指定IDに対応する全カードがcardsオブジェクトのキーとして過不足なく返ること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-005	IT-10	通信	P1	通信成立しJSONで応答する	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	既知商品ID	"1. POST /api/v1/buying/products へ送信する
-2. Content-Typeを確認する"	通信が成立し、レスポンスがJSON（application/json）で返ること。
+2. Content-Typeを確認する"	通信が成立し、レスポンスがJSON（application/json）で返ること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-006	IT-10	正常	P2	正常値でcondition配下の各フィールド値がSEED期待値と一致	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	対象条件に該当する正常値	"1. POST /api/v1/buying/products へ送信する
-2. conditionClasses配下の値を照合する"	conditionClasses配下のproductClassId・buyPrice・price・stock等がSEEDの既知期待値と一致すること。
+2. conditionClasses配下の値を照合する"	conditionClasses配下のproductClassId・buyPrice・price・stock等がSEEDの既知期待値と一致すること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-007	IT-10	HTTPステータス	P1	0件でも失敗ステータスを返さずHTTP200	SEED-A06-07-AUTH／SEED-A06-07-NONCARD	カード商品以外のIDのみ指定	"1. POST /api/v1/buying/products へ送信する
-2. HTTPステータスを確認する"	専用の失敗ステータスを返さず、HTTPステータスが200であること。
+2. HTTPステータスを確認する"	専用の失敗ステータスを返さず、HTTPステータスが200であること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-008	IT-10	重複・順序	P1	重複/順不同IDでも対応商品をJSONで返す	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	同一IDの重複・順不同を含む商品IDリスト	"1. POST /api/v1/buying/products へ送信する
-2. レスポンス本文を確認する"	重複・順序によらず、指定IDに対応する買取用商品情報がJSONで返ること。
+2. レスポンス本文を確認する"	重複・順序によらず、指定IDに対応する買取用商品情報がJSONで返ること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-009	IT-32	レスポンス	P3	正常応答の階層構造が仕様の入れ子形式と一致	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	既知商品ID	"1. POST /api/v1/buying/products へ送信する
-2. レスポンスの入れ子構造を確認する"	レスポンスがcards>details>languageClasses>conditionClassesの順に入れ子になった仕様どおりの階層構造であること。
+2. レスポンスの入れ子構造を確認する"	レスポンスがcards>details>languageClasses>conditionClassesの順に入れ子になった仕様どおりの階層構造であること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-010	IT-32	受信検証	P1	正しい形式のPOSTボディを受理しHTTP200	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	idsをボディに持つ正しい形式のPOSTリクエスト	"1. POST /api/v1/buying/products へ送信する
-2. HTTPステータスを確認する"	受信検証を通過し、HTTPステータスが200で正常応答が返ること。
+2. HTTPステータスを確認する"	受信検証を通過し、HTTPステータスが200で正常応答が返ること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-011	IT-32	必須条件	P2	ids空/未指定でも必須エラーにせず空配列を返す	SEED-A06-07-AUTH	idsを空文字または未指定	"1. POST /api/v1/buying/products へ送信する
-2. レスポンス本文を確認する"	必須エラーとならず、仕様どおり空配列（[]）が返ること（実装の0件応答形は付帯表4#3）。
+2. レスポンス本文を確認する"	必須エラーとならず、仕様どおり空配列（[]）が返ること（実装の0件応答形は付帯表4#3）。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-012	IT-32	データなし	P2	カード商品以外IDのみ→0件を正常応答として返す	SEED-A06-07-AUTH／SEED-A06-07-NONCARD	カード商品以外のIDのみ	"1. POST /api/v1/buying/products へ送信する
-2. HTTPステータスと本文を確認する"	カード商品以外のIDのみのとき、エラーとせず0件正常応答（HTTP200）として返り、応答全体が空配列（[]）であること（実装の0件応答形は付帯表4#3で差異検出）。
+2. HTTPステータスと本文を確認する"	カード商品以外のIDのみのとき、エラーとせず0件正常応答（HTTP200）として返り、応答全体が空配列（[]）であること（実装の0件応答形は付帯表4#3で差異検出）。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-020	IT-32	リクエスト	P3	非数値/型不正IDの受理・除外挙動（正典未定義）	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	既知IDに非数値/型不正値を混在	"1. POST /api/v1/buying/products へ送信する
-2. レスポンス本文を確認する"	非数値/型不正IDの受理・除外（エラー化・除外・0件化のいずれか）は正典未定義のため、期待結果を固定せず要実機確認とすること（付帯表4#8）。
+2. レスポンス本文を確認する"	非数値/型不正IDの受理・除外（エラー化・除外・0件化のいずれか）は正典未定義のため、期待結果を固定せず要実機確認とすること（付帯表4#8）。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-021	IT-32	リクエスト	P3	想定外項目を加えて送信した結果	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	idsに加え想定外の項目（項目名と値のセット）を付与	"1. POST /api/v1/buying/products へ送信する
-2. 応答を確認する"	想定外項目の無視可否は正典未定義のため期待結果を固定せず要実機確認とすること。
+2. 応答を確認する"	想定外項目の無視可否は正典未定義のため期待結果を固定せず要実機確認とすること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-022	IT-10	異常系	P2	異常入力でもサーバエラーで停止しない	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	異常系を誘発する入力	"1. POST /api/v1/buying/products へ送信する
-2. 応答を確認する"	サーバ無応答・未定義例外で停止しないこと（具体的なHTTPステータスは正典未定義のため要実機確認）。
+2. 応答を確認する"	サーバ無応答・未定義例外で停止しないこと（具体的なHTTPステータスは正典未定義のため要実機確認）。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-050	IT-32	レスポンス	P2	price/stockがstring（数値文字列）型で返る	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	既知商品ID	"1. POST /api/v1/buying/products へ送信する
-2. conditionClasses配下のprice・stockの型を確認する"	conditionClasses配下のprice・stockが仕様どおりstring（数値文字列）型で返ること（実装はint型の可能性・付帯表4#4,#5）。
+2. conditionClasses配下のprice・stockの型を確認する"	conditionClasses配下のprice・stockが仕様どおりstring（数値文字列）型で返ること（実装はint型の可能性・付帯表4#4,#5）。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-051	IT-09	リクエスト	P1	一部不存在で存在カードのみ返り非対象IDは含まれない	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN／SEED-A06-07-NONCARD	既知カード商品ID＋カード商品以外IDを混在指定	"1. POST /api/v1/buying/products へ送信する
-2. cardsのキー集合を確認する"	存在するカード商品のみがcardsに返り、カード商品以外のIDは結果に含まれないこと。
+2. cardsのキー集合を確認する"	存在するカード商品のみがcardsに返り、カード商品以外のIDは結果に含まれないこと。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-052	IT-10	正常	P3	連続呼び出しで応答が同一（参照のみ・副作用なし）	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	同一idsを2回送信	"1. 同一リクエストを1回目送信する
 2. 同一リクエストを2回目送信する
-3. 両応答を比較する"	2回の応答内容が同一で、参照のみ（副作用なし）であること。
+3. 両応答を比較する"	2回の応答内容が同一で、参照のみ（副作用なし）であること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-053	IT-32	レスポンス	P3	未設定項目がnullで返る	SEED-A06-07-AUTH／SEED-A06-07-NULLFIELDS	未設定項目を持つカード商品ID	"1. POST /api/v1/buying/products へ送信する
-2. 該当フィールドの値を確認する"	cardsetCode・cardsetName・promotionName・storageCodeName・buyPrice・sectionIdが未設定時にnullで返ること。
+2. 該当フィールドの値を確認する"	cardsetCode・cardsetName・promotionName・storageCodeName・buyPrice・sectionIdが未設定時にnullで返ること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-054	IT-32	レスポンス	P3	foilFlgがboolean・ID系がinteger型で返る	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	既知商品ID	"1. POST /api/v1/buying/products へ送信する
-2. 各フィールドの型を確認する"	foilFlgがboolean型、productId・productClassId・sectionIdがinteger型で返ること（実装のfoilFlgはint型の可能性・付帯表4#6）。
+2. 各フィールドの型を確認する"	foilFlgがboolean型、productId・productClassId・sectionIdがinteger型で返ること（実装のfoilFlgはint型の可能性・付帯表4#6）。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-055	IT-32	レスポンス	P3	フィールド名が仕様のproductCodeで返る	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	既知商品ID	"1. POST /api/v1/buying/products へ送信する
-2. conditionClasses配下のフィールド名を確認する"	conditionClasses配下の商品コードがフィールド名productCodeで返ること（実装はproductClassCodeの可能性・付帯表4#7）。
+2. conditionClasses配下のフィールド名を確認する"	conditionClasses配下の商品コードがフィールド名productCodeで返ること（実装はproductClassCodeの可能性・付帯表4#7）。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-070	IT-32	資格情報	P1	資格情報欠落で対象処理が実行されない	SEED-A06-07-CARDS-KNOWN	認証資格情報を欠落させたリクエスト	"1. 資格情報を欠落させてPOST /api/v1/buying/products へ送信する
-2. 応答を確認する"	資格情報欠落時に対象処理を実行せず拒否されること（認可方式が正典未特定のため拒否応答の具体は要実機確認・付帯表4#2）。
+2. 応答を確認する"	資格情報欠落時に対象処理を実行せず拒否されること（認可方式が正典未特定のため拒否応答の具体は要実機確認・付帯表4#2）。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-071	IT-32	資格情報	P1	資格情報不正で対象処理が実行されない	SEED-A06-07-CARDS-KNOWN	不正な資格情報を付与したリクエスト	"1. 不正な資格情報でPOST /api/v1/buying/products へ送信する
-2. 応答を確認する"	資格情報不正時に対象処理を実行せず拒否されること（認可方式が正典未特定のため要実機確認・付帯表4#2）。
+2. 応答を確認する"	資格情報不正時に対象処理を実行せず拒否されること（認可方式が正典未特定のため要実機確認・付帯表4#2）。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-072	IT-19	同時実行数の制限	P3	同時実行数/レート制限の有無と超過時挙動を確認	SEED-A06-07-AUTH	一定時間内に上限を超える連続リクエスト	"1. 上限を超える件数を短時間に連続送信する
-2. 上限超過分の応答を確認する"	本APIにレート制限・同時実行数制限が設計されているか（有無）が正典未特定のため、期待結果を固定せず、制限の有無と超過時の挙動を要実機確認とすること。
+2. 上限超過分の応答を確認する"	本APIにレート制限・同時実行数制限が設計されているか（有無）が正典未特定のため、期待結果を固定せず、制限の有無と超過時の挙動を要実機確認とすること。				
 a06-07_api_buying_products_by_ids（API_店頭仕入_買取商品複数ID取得）	E2E-A06-07-073	IT-10	エラー	P3	タイムアウト時に仕様で定めた挙動となる	SEED-A06-07-AUTH／SEED-A06-07-CARDS-KNOWN	タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してPOST /api/v1/buying/products へ送信する
-2. 応答を確認する"	タイムアウト時に仕様で定めた挙動となること（タイムアウト実再現は外部依存のため要実機確認）。
+2. 応答を確認する"	タイムアウト時に仕様で定めた挙動となること（タイムアウト実再現は外部依存のため要実機確認）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

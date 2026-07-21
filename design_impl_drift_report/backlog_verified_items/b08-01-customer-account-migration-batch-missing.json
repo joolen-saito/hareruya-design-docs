@@ -1,0 +1,270 @@
+{
+  "id": "b08-01-customer-account-migration-batch-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b08-01_0408_sheet-3_sheet.json",
+  "sourceFindingId": "b08-01_0408_sheet-3_sheet-conformance-1e52b28a0a73",
+  "classification": "バッチ会員",
+  "feature": "リニューアル時パスワードリセットメール送信",
+  "issueCategory": "実装漏れ",
+  "issue": "リニューアル時パスワードリセットメール送信バッチが実装されていない",
+  "designBook": "0408_基本設計仕様書(バッチ_会員).xlsx",
+  "reproSteps": [
+    "設計書 B08-01 で、`customer:batch sendAccountMigration <基準日>` により基準日以降に更新された会員へ移行通知メールを送信する要求を確認する",
+    "ベース実装 pf-eccube3 の `CustomerBatch` が `sendAccountMigration` を `SendAccountMigration` に対応付けていることを確認する",
+    "ベース実装 pf-eccube3 の `SendAccountMigration`、`CustomerRepository::findByUpdateDateForAccountMigration()`、`MailService::sendCustomerMigrationNotificationMail()` が対象抽出・言語別テンプレート送信・履歴保存を実行することを確認する",
+    "ec-cube-enterprise の `src/Eccube/Command`、`src/Eccube/Service`、`src/Eccube/Repository` を検索し、`sendAccountMigration`、`customer:batch`、`CustomerMigration`、`customer_migration` を実行するバッチ入口・処理本体がないことを確認する"
+  ],
+  "expected": [
+    "`customer:batch sendAccountMigration <基準日>` でリニューアル時パスワードリセットメール送信バッチを実行できる",
+    "基準日未指定時は日付指定を促して終了する",
+    "`dtb_customer.update_date >= 基準日` かつ `reset_key IS NOT NULL` の会員を抽出し、会員ごとに移行通知メールを1通送信する",
+    "会員の言語・国情報に応じて `Mail/customer_migration.twig` または `Mail/customer_migration.en.twig` を使い分ける"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise には B08-01 用の `sendAccountMigration` コマンドや同等の移行通知バッチ本体がない。会員系バッチとしては必須項目空欄会員通知、ポイント失効、ポイント有効期限通知などが個別 Symfony Command として存在するが、`customer:batch sendAccountMigration <基準日>` または移行通知メール送信バッチは登録されていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の既存会員系バッチ例: 必須項目空欄会員通知",
+          "path": "ec-cube-enterprise/src/Eccube/Command/CheckBlankRequiredItemCustomerCommand.php",
+          "start": 25,
+          "end": 53,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:customer:check-blank-required-item', description: '必須項目空欄会員通知バッチ')]",
+            "$this->checkBlankRequiredItemCustomerAction->handle();",
+            "return Command::SUCCESS;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の既存会員系バッチ例: ポイント失効",
+          "path": "ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php",
+          "start": 25,
+          "end": 53,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:customer:lost-points', description: 'ポイント失効バッチ')]",
+            "$this->lostPointsAction->handle();",
+            "return Command::SUCCESS;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の既存会員系バッチ例: ポイント有効期限通知",
+          "path": "ec-cube-enterprise/src/Eccube/Command/PointExpireNotificationCommand.php",
+          "start": 25,
+          "end": 53,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:customer:point-expire-notification', description: 'ポイント有効期限通知バッチ')]",
+            "$this->pointExpireNotificationAction->handle();",
+            "return Command::SUCCESS;"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ec-cube-enterprise には通常のパスワード再発行メール送信処理と `customer_migration` テンプレートファイルはあるが、通常の `/forgot` フローは利用者操作で1会員へ送る処理であり、B08-01 の基準日抽出・一括送信バッチではない。`CustomerRepository` にも管理画面検索用の `update_date` 条件とユニーク reset_key 生成はあるが、`update_date >= 基準日 AND reset_key IS NOT NULL` のB08-01抽出メソッドは確認できない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の通常パスワード再発行メール送信",
+          "path": "ec-cube-enterprise/src/Eccube/Service/MailService.php",
+          "start": 636,
+          "end": 689,
+          "language": "php",
+          "contains": [
+            "public function sendPasswordResetNotificationMail(Customer|RegisterCustomerView $Customer, string $reset_url): void",
+            "$MailTemplate = $this->mailTemplateRepository->findOneBy([",
+            "'mail_key' => $this->eccubeConfig['eccube_forgot_mail_template_id'],",
+            "$this->mailer->send($message);",
+            "log_info('パスワード再発行メール送信完了');"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の CustomerRepository には汎用更新日検索と reset_key 生成のみがある",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/CustomerRepository.php",
+          "start": 277,
+          "end": 508,
+          "language": "php",
+          "contains": [
+            "->andWhere('c.update_date >= :update_date_start')",
+            "public function getUniqueResetKey(): string",
+            "$Customer = $this->findOneBy(['reset_key' => $key]);",
+            "return $key;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise には customer_migration テンプレート定数とファイルは存在する",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/MailTemplate.php",
+          "start": 71,
+          "end": 72,
+          "language": "php",
+          "contains": [
+            "public const CUSTOMER_MIGRATION_JP = 36;",
+            "public const CUSTOMER_MIGRATION_EN = 37;"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `customer:batch` の第一引数 `sendAccountMigration` が移行通知サービスに対応付けられ、基準日未指定時の案内、対象会員抽出、会員ごとの移行通知メール送信、100件ごとの進捗出力まで実装されている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 の customer:batch 入口",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php",
+          "start": 12,
+          "end": 52,
+          "language": "php",
+          "contains": [
+            "'sendAccountMigration' => 'Plugin\\HareruyaEc\\Service\\Customer\\SendAccountMigration'",
+            "$this->setName('customer:batch')",
+            "echo $resultMessage . \" Nothing args or command.\\n\";",
+            "$accountList->execute();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の移行通知バッチ本体",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/SendAccountMigration.php",
+          "start": 30,
+          "end": 50,
+          "language": "php",
+          "contains": [
+            "$date = count($this->options) > 0 ? $this->options[0] : null;",
+            "echo \"日付を指定してください。\\n\";",
+            "findByUpdateDateForAccountMigration($date)",
+            "sendCustomerMigrationNotificationMail($customer[$i]);",
+            "echo sprintf(\"Count : %s Memory : %s MB\\n\", $i,  memory_get_usage() / (1024 * 1024));"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の移行通知対象抽出",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/CustomerRepository.php",
+          "start": 39,
+          "end": 52,
+          "language": "php",
+          "contains": [
+            "public function findByUpdateDateForAccountMigration(String $date)",
+            "->where('c.update_date >= :update_date')",
+            "->andWhere('c.reset_key is not null')",
+            "DateTime::createFromFormat('YmdHi', $date)"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の移行通知メール送信",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php",
+          "start": 891,
+          "end": 935,
+          "language": "php",
+          "contains": [
+            "public function sendCustomerMigrationNotificationMail($Customer)",
+            "$templateId = MailTemplate::CUSTOMER_MIGRATION_JP;",
+            "$templateId = MailTemplate::CUSTOMER_MIGRATION_EN;",
+            "'resetUrl' => UrlUtil::convDomainUrl($this->app, $this->app->url('forgot_reset'",
+            "insert into dtb_user_mail_history(send_date,subject,mail_body,template_id,customer_id)",
+            "log_info('会員移行通知メール送信完了', ['count' => $count]);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B08-01 は pf-eccube3 を正として、基準日引数つきの移行通知メール送信バッチを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+      "start": 939,
+      "end": 966,
+      "language": "html",
+      "contains": [
+        "確認値はpf-eccube3",
+        "<code>customer:batch sendAccountMigration &lt;基準日&gt;</code>",
+        "基準日が未指定の場合は日付の指定を促して終了する",
+        "基準日以降の更新日を持つ会員を抽出する。",
+        "会員ごとに移行通知メールを送信する。"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B08-01 のAPI/バッチ結果は成功時に対象会員へ移行通知メールを送信することを定義している",
+      "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+      "start": 969,
+      "end": 988,
+      "language": "html",
+      "contains": [
+        "抽出条件</td><td>基準日以降に更新された会員。",
+        "送信単位</td><td>会員1人につき1通の移行通知メール。",
+        "入力はコマンド名と基準日。",
+        "成功時は対象会員へ移行通知メールを送信する。",
+        "基準日が未指定</td><td>日付の指定を促して終了する。"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の会員系 Symfony Command には移行通知バッチがなく、別の会員バッチだけが登録されている",
+      "path": "ec-cube-enterprise/src/Eccube/Command/CheckBlankRequiredItemCustomerCommand.php",
+      "start": 25,
+      "end": 53,
+      "language": "php",
+      "contains": [
+        "eccube:customer:check-blank-required-item",
+        "$this->checkBlankRequiredItemCustomerAction->handle();"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の通常パスワード再発行メールは B08-01 の基準日一括送信バッチではない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/MailService.php",
+      "start": 636,
+      "end": 689,
+      "language": "php",
+      "contains": [
+        "sendPasswordResetNotificationMail",
+        "eccube_forgot_mail_template_id",
+        "$this->mailer->send($message);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `customer:batch sendAccountMigration` を登録する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php",
+      "start": 12,
+      "end": 52,
+      "language": "php",
+      "contains": [
+        "'sendAccountMigration' => 'Plugin\\HareruyaEc\\Service\\Customer\\SendAccountMigration'",
+        "$this->setName('customer:batch')",
+        "$accountList->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は基準日未指定案内、対象抽出、メール送信、進捗出力を実装している",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/SendAccountMigration.php",
+      "start": 30,
+      "end": 50,
+      "language": "php",
+      "contains": [
+        "echo \"日付を指定してください。\\n\";",
+        "findByUpdateDateForAccountMigration($date)",
+        "sendCustomerMigrationNotificationMail($customer[$i]);",
+        "Count : %s Memory : %s MB"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"sendAccountMigration|customer:batch|customer_migration|リニューアル時パスワード|パスワード再設定キーコード|基準日\" excel_to_html/output/0408_基本設計仕様書\\(バッチ_会員\\).html design_impl_drift_report/findings/b08-01_0408_sheet-3_sheet.json",
+      "rg -n \"sendAccountMigration|customer:batch|customer_migration|CustomerMigration|移行通知|日付を指定してください|CUSTOMER_MIGRATION|reset_key IS NOT NULL|reset_key.*null|update_date.*reset_key\" ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/src/Eccube/Service ../ec-cube-enterprise/src/Eccube/Repository ../ec-cube-enterprise/src/Eccube/Resource ../ec-cube-enterprise/app/config -g '*.php' -g '*.twig' -g '*.yaml' -g '*.yml' -g '*.csv'",
+      "rg -n \"sendAccountMigration|customer:batch|customer_migration|CustomerMigration|移行通知|reset_key|パスワード再設定キー|dtb_user_mail_history\" ../pf-eccube3/app/Plugin/HareruyaEc -g '*.php' -g '*.twig' -g '*.yml' -g '*.yaml' -g '*.csv'",
+      "rg -n \"#\\[AsCommand|customer|Customer|migration|sendAccount\" ../ec-cube-enterprise/src/Eccube/Command -g '*.php'"
+    ]
+  },
+  "integrates": [
+    "b08-01_0408_sheet-3_sheet-conformance-731c3ff9219a",
+    "b08-01_0408_sheet-3_sheet-conformance-1559405d5a5b"
+  ],
+  "notes": [
+    "本件は B08-01 の移行通知メール送信バッチ本体の未実装として、コマンド入口・対象抽出・言語別テンプレート送信を統合する。",
+    "インポート後に各会員へ reset_key を一括登録する前処理候補は、修正対象が異なるため本件には統合しない。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

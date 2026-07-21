@@ -1,0 +1,222 @@
+{
+  "id": "f06-18-member-change-back-link-homepage-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-18_0306_sheet-15_sheet.json",
+  "sourceFindingId": "f06-18_0306_sheet-15_sheet-conformance-dc7c7f4b4e31",
+  "classification": "フロント会員",
+  "feature": "会員情報変更",
+  "issueCategory": "実装違い",
+  "issue": "会員情報変更画面・完了画面の戻るがECTOPではなくマイページへ遷移する",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "ログイン済み会員で `http://localhost:8080/ja/mypage/change` を表示する",
+    "画面下部の「戻る」を押下し、遷移先がECTOP画面ではなくマイページになることを確認する",
+    "再度 `http://localhost:8080/ja/mypage/change` から会員情報変更を完了し、`http://localhost:8080/ja/mypage/change_complete` を表示する",
+    "完了画面の「戻る」を押下し、遷移先がECTOP画面ではなくマイページになることを確認する"
+  ],
+  "expected": [
+    "会員情報変更画面の No.1-28「戻る」は、押下するとECTOP画面へ遷移する",
+    "会員情報変更完了画面の No.2-2「戻る」は、押下するとECTOP画面へ遷移する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の会員情報変更画面 `change.twig` では、画面下部の「戻る」リンクが `href=\"{{ url('mypage') }}\"` になっており、ECTOPではなくマイページへ遷移する。パンくずのホームアイコンには `url('homepage')` があるが、これは設計 No.1-28 の戻るボタンではない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 入力画面の戻るはmypageリンク",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change.twig",
+          "start": 694,
+          "end": 703,
+          "language": "twig",
+          "contains": [
+            "<button class=\"c-hareruya-btn c-hareruya-btn--primary c-hareruya-btn--lg\" id=\"submit_button\" type=\"submit\">",
+            "<a class=\"c-hareruya-btn c-hareruya-btn--lg\" href=\"{{ url('mypage') }}\">{{ 'common.back'|trans }}</a>"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 入力画面のパンくずホームはhomepageだが戻るボタンではない",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change.twig",
+          "start": 48,
+          "end": 60,
+          "language": "twig",
+          "contains": [
+            "<a class=\"p-hareruya-breadcrumb__link\" href=\"{{ url('homepage') }}\" itemprop=\"item\" aria-label=\"{{ 'common.home'|trans }}\">",
+            "<a class=\"p-hareruya-breadcrumb__link\" href=\"{{ url('mypage') }}\" itemprop=\"item\">"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ec-cube-enterprise の会員情報変更完了画面 `change_complete.twig` でも、画面下部の戻るリンクは `href=\"{{ url('mypage') }}\"` で、設計のECTOP遷移ではない。`ChangeController` は更新成功後に `mypage_change_complete` へ遷移し、完了画面自体はテンプレートのリンクだけで遷移先を決めている。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 完了画面の戻るはmypageリンク",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change_complete.twig",
+          "start": 41,
+          "end": 49,
+          "language": "twig",
+          "contains": [
+            "<h1 class=\"c-hareruya-heading--lev1\">{{ 'front.mypage.change_complete.page_title'|trans }}</h1>",
+            "<a class=\"c-hareruya-btn c-hareruya-btn--lg u-hareruya-w-full\" href=\"{{ url('mypage') }}\">{{ 'front.mypage.button.back_to_mypage'|trans }}</a>"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise Controllerは完了画面を表示するだけ",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/ChangeController.php",
+          "start": 190,
+          "end": 222,
+          "language": "php",
+          "contains": [
+            "return $this->redirectToRoute('mypage_change_complete');",
+            "#[Route(path: '/mypage/change_complete', name: 'mypage_change_complete', methods: ['GET'])]",
+            "public function complete(): array"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 でも入力画面の「変更しない」は `path('mypage')`、完了画面の「戻る」は `shop ? branch_path('mypage') : path('mypage')` で、どちらもマイページ戻りである。一方、標準 ec-cube の完了画面には `url('homepage')` の戻るリンクが存在する。今回の設計HTMLは No.1-28/No.2-2 とも ECTOP 遷移を明記しているため、enterprise は設計要求に対して遷移先が異なる。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 入力画面はmypageへ戻る",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/change.twig",
+          "start": 328,
+          "end": 337,
+          "language": "twig",
+          "contains": [
+            "<button type=\"submit\" class=\"submit-button submit-button-forward\" id=\"submitButton\">",
+            "<a href=\"{{ path('mypage') }}\" class=\"submit-button submit-button-back\">",
+            "変更しない"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 完了画面はmypageまたは支店mypageへ戻る",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/change_complete.twig",
+          "start": 14,
+          "end": 20,
+          "language": "twig",
+          "contains": [
+            "{% set shop = app.session.get(app['hareruya_ec.config.branch']['session_key']) %}",
+            "<a href=\"{{ shop ? branch_path('mypage') : path('mypage') }}\" class=\"submit-button submit-button-back\">",
+            "戻る"
+          ]
+        },
+        {
+          "label": "標準ec-cube 完了画面はhomepageへ戻る",
+          "path": "ec-cube/src/Eccube/Resource/template/default/Mypage/change_complete.twig",
+          "start": 34,
+          "end": 37,
+          "language": "twig",
+          "contains": [
+            "<a class=\"ec-blockBtn--cancel\" href=\"{{ url('homepage') }}\">{{ 'common.back'|trans }}</a>"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "会員情報変更画面 No.1-28 戻る",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 5108,
+      "end": 5114,
+      "language": "html",
+      "contains": [
+        "id=\"item-sheet-15-1-28\"",
+        "<td>戻る</td><td>ボタン</td>",
+        "・押下すると、ECTOP画面へ遷移する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "会員情報変更完了画面 No.2-2 戻る",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 5130,
+      "end": 5142,
+      "language": "html",
+      "contains": [
+        "id=\"item-sheet-15-2-2\"",
+        "<td>戻る</td><td>リンク</td>",
+        "・押下すると、ECTOP画面へ遷移する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "入力画面の戻るリンクはmypage",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change.twig",
+      "start": 694,
+      "end": 703,
+      "language": "twig",
+      "contains": [
+        "href=\"{{ url('mypage') }}\"",
+        "{{ 'common.back'|trans }}"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "完了画面の戻るリンクはmypage",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change_complete.twig",
+      "start": 41,
+      "end": 49,
+      "language": "twig",
+      "contains": [
+        "href=\"{{ url('mypage') }}\"",
+        "{{ 'front.mypage.button.back_to_mypage'|trans }}"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 入力画面はmypageへ戻る",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/change.twig",
+      "start": 328,
+      "end": 337,
+      "language": "twig",
+      "contains": [
+        "path('mypage')",
+        "変更しない"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3 完了画面はmypageへ戻る",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/change_complete.twig",
+      "start": 14,
+      "end": 20,
+      "language": "twig",
+      "contains": [
+        "branch_path('mypage')",
+        "path('mypage')"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "標準ec-cube 完了画面はhomepageへ戻る",
+      "path": "ec-cube/src/Eccube/Resource/template/default/Mypage/change_complete.twig",
+      "start": 34,
+      "end": 37,
+      "language": "twig",
+      "contains": [
+        "href=\"{{ url('homepage') }}\""
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-18_0306_sheet-15_sheet.json#f06-18_0306_sheet-15_sheet-conformance-dc7c7f4b4e31'",
+      "rg -n --max-columns 300 \"item-sheet-15-1-28|item-sheet-15-2-2|ECTOP画面へ遷移する\" excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"url\\('homepage'\\)|url\\('mypage'\\)|戻る|common.back|back_to_mypage|mypage_change_complete\" ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change.twig ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change_complete.twig ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/ChangeController.php",
+      "rg -n \"url\\('homepage'\\)|url\\('mypage'\\)|path\\('homepage'\\)|path\\('mypage'\\)|branch_path\\('mypage'\\)|戻る|変更しない|common.back\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/change.twig pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/change_complete.twig ec-cube/src/Eccube/Resource/template/default/Mypage/change.twig ec-cube/src/Eccube/Resource/template/default/Mypage/change_complete.twig",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '5108,5114p'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '5130,5142p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change.twig | sed -n '48,60p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change.twig | sed -n '688,704p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/change_complete.twig | sed -n '20,50p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/ChangeController.php | sed -n '190,222p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/change.twig | sed -n '326,338p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/change_complete.twig | sed -n '10,22p'",
+      "nl -ba ec-cube/src/Eccube/Resource/template/default/Mypage/change_complete.twig | sed -n '27,38p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLのNo.1-28/No.2-2、ec-cube-enterprise の change.twig/change_complete.twig/ChangeController、pf-eccube3 の change.twig/change_complete.twig、標準 ec-cube の change_complete.twig を再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

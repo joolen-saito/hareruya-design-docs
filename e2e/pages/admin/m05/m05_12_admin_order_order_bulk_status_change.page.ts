@@ -41,6 +41,7 @@ export class OrderOrderBulkStatusChangePage {
   // 一括対応状況変更UI
   readonly statusSelect: Locator; // 対応状況プルダウン #option_bulk_status
   readonly decisionButton: Locator; // 決定ボタン #btn_bulk_status
+  readonly searchButton: Locator; // 検索ボタン #search_submit（結果行を組み立てる）
 
   // 確認モーダル
   readonly modal: Locator; // #sentUpdateModal
@@ -61,6 +62,7 @@ export class OrderOrderBulkStatusChangePage {
 
     this.statusSelect = page.locator("#option_bulk_status");
     this.decisionButton = page.locator("#btn_bulk_status");
+    this.searchButton = page.locator("#search_submit");
 
     this.modal = page.locator("#sentUpdateModal");
     this.modalMessage = page.locator("#sentUpdateModal .modal-message");
@@ -72,7 +74,11 @@ export class OrderOrderBulkStatusChangePage {
   }
 
   async gotoList() {
-    await this.page.goto(this.listUrl);
+    await this.page.goto(this.listUrl, { waitUntil: "domcontentloaded" });
+    if ((await this.rowCheckboxes.count()) === 0 && (await this.searchButton.count()) > 0) {
+      await this.searchButton.click();
+      await this.rowCheckboxes.first().waitFor({ state: "attached", timeout: 15000 }).catch(() => {});
+    }
   }
 
   /**

@@ -1,0 +1,3768 @@
+{
+  "functionId": "m04-19_0202_sheet-25_sheet",
+  "featureNo": "M04-19",
+  "title": "M04-19 欠品履歴検索一覧(検索結果)",
+  "domain": "m04",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+  "sourceBook": "0202_基本設計仕様書(在庫管理機能).html",
+  "sheetId": "sheet-25",
+  "sheetName": "欠品履歴検索一覧(検索結果)",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "m04-19_0202_sheet-25_sheet-conformance-0b0a82ec2a52",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10732",
+      "designRefDetail": null,
+      "designExpectation": "検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示する。",
+      "designQuote": "検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:143",
+      "implementationActual": "disposal_search 時は MtbStockChangeType::DISPOSAL 配下の全子区分を取得して sh.StockChangeTypeDetail IN 条件にしている。マスタ上の「欠品減算(受注)」id=19 と「欠品減算(移動)」id=21 は MtbStockChangeType::OUT_OF_STOCK 配下であり、この条件に含まれない。",
+      "difference": "DtbStockHistoryRepository、MtbStockChangeTypeDetail 定数、DoctrineMigrations を 欠品減算 / OUT_OF_STOCK / DISPOSAL / ORDER_STOCKOUT_DECREASE / MOVE_SHORTAGE_SUBTRACT で再検索したが、M04-19 の検索条件で id=19,21 を指定する実装はなく、廃棄親区分の一括抽出になっている。",
+      "mismatchReason": "DtbStockHistoryRepository、MtbStockChangeTypeDetail 定数、DoctrineMigrations を 欠品減算 / OUT_OF_STOCK / DISPOSAL / ORDER_STOCKOUT_DECREASE / MOVE_SHORTAGE_SUBTRACT で再検索したが、M04-19 の検索条件で id=19,21 を指定する実装はなく、廃棄親区分の一括抽出になっている。",
+      "comparisonRows": [
+        {
+          "item": "抽出対象の子区分",
+          "design": "欠品減算（受注）・欠品減算（移動）",
+          "implementation": "MtbStockChangeType::DISPOSAL 配下の子区分全体",
+          "mismatch": "設計対象の欠品減算(受注/移動)を抽出せず、廃棄(破損/他事業移動/イベント商品/その他/欠品)側を抽出する。"
+        },
+        {
+          "item": "実装上のマスタ配置",
+          "design": "欠品減算（受注）・欠品減算（移動）を欠品履歴一覧に出す",
+          "implementation": "app/DoctrineMigrations/Version20260108130821.php:173-187 で欠品減算(受注/移動)は OUT_OF_STOCK 配下",
+          "mismatch": "Repository の DISPOSAL 親区分フィルタでは対象外になる。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-19_0202_sheet-25_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:143",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示する。」。実装は「disposal_search 時は MtbStockChangeType::DISPOSAL 配下の全子区分を取得して sh.StockChangeTypeDetail IN 条件にしている。マスタ上の「欠品減算(受注)」id=19 と「欠品減算(移動)」id=21 は MtbStockChangeType::OUT_OF_STOCK 配下であり、この条件に含まれない。」。乖離理由は「DtbStockHistoryRepository、MtbStockChangeTypeDetail 定数、DoctrineMigrations を 欠品減算 / OUT_OF_STOCK / DISPOSAL / ORDER_STOCKOUT_DECREASE / MOVE_SHORTAGE_SUBTRACT で再検索したが、M04-19 の検索条件で id=19,21 を指定する実装はなく、廃棄親区分の一括抽出になっている。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:143",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/DtbStockHistoryRepository.php:143\n140:                 ->setParameter('selected_change_type_detail', $searchData['stock_change_type_detail']);\n141:         }\n142: \n143:         // disposal_search 欠品検索\n144:         if (isset($searchData['disposal_search']) && StringUtil::isNotBlank($searchData['disposal_search'])) {\n145:             $StockChangeTypeIds = $this->stockChangeTypeDetailRepository->getQueryBuilderByStockChangeTypeIds(\n146:                 [MtbStockChangeType::DISPOSAL]",
+        "src/Eccube/Repository/DtbStockHistoryRepository.php:37\n34: /**\n35:  * @extends AbstractRepository<DtbStockHistory>\n36:  */\n37: class DtbStockHistoryRepository extends AbstractRepository\n38: {\n39:     public function __construct(\n40:         ManagerRegistry $registry,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m04-19_0202_sheet-25_sheet-conformance-a7d9733362cc",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10737",
+      "designRefDetail": null,
+      "designExpectation": "第三ソートを各レコードの「登録日時」の降順（最新順）で表示する。",
+      "designQuote": "第三ソートを各レコードの「登録日時」の降順（最新順）で表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:332",
+      "implementationActual": "並び順は pc.code DESC、ps.baseInfo DESC、sh.createDate DESC。画面の登録日表示は Stock.registeredAt を使っているが、ソートは registeredAt ではなく createDate を使っている。",
+      "difference": "DtbStockHistoryRepository と history.twig を registeredAt / createDate / orderBy で再検索した結果、第三ソートに sh.registeredAt を使う実装は確認できない。",
+      "mismatchReason": "DtbStockHistoryRepository と history.twig を registeredAt / createDate / orderBy で再検索した結果、第三ソートに sh.registeredAt を使う実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "第三ソートキー",
+          "design": "各レコードの登録日時の降順",
+          "implementation": "sh.createDate の降順",
+          "mismatch": "表示される登録日時 registeredAt と異なる作成日時 createDate で並ぶ。"
+        },
+        {
+          "item": "登録日表示",
+          "design": "登録日時を基準に最新順",
+          "implementation": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:726 で Stock.registeredAt を表示",
+          "mismatch": "表示基準とソート基準が一致しない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-19_0202_sheet-25_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:332",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「第三ソートを各レコードの「登録日時」の降順（最新順）で表示する。」。実装は「並び順は pc.code DESC、ps.baseInfo DESC、sh.createDate DESC。画面の登録日表示は Stock.registeredAt を使っているが、ソートは registeredAt ではなく createDate を使っている。」。乖離理由は「DtbStockHistoryRepository と history.twig を registeredAt / createDate / orderBy で再検索した結果、第三ソートに sh.registeredAt を使う実装は確認できない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:332",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/DtbStockHistoryRepository.php:332\n329:         if (isset($searchData['stock_change_reason']) && StringUtil::isNotBlank($searchData['stock_change_reason'])) {\n330:             $qb\n331:                 ->andWhere('sh.stockChangeReason LIKE :likeStockChangeReason')\n332:                 ->setParameter('likeStockChangeReason', '%'.str_replace(['%', '_'], ['\\\\%', '\\\\_'], $searchData['stock_change_reason']).'%');\n333:         }\n334: \n335:         // Order By",
+        "src/Eccube/Repository/DtbStockHistoryRepository.php:37\n34: /**\n35:  * @extends AbstractRepository<DtbStockHistory>\n36:  */\n37: class DtbStockHistoryRepository extends AbstractRepository\n38: {\n39:     public function __construct(\n40:         ManagerRegistry $registry,"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m04-19_0202_sheet-25_sheet-conformance-7715adf742ed",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10762",
+      "designRefDetail": null,
+      "designExpectation": "商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示する。",
+      "designQuote": "商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:661",
+      "implementationActual": "商品名列は {{ productSub.name }} のプレーンテキスト表示で、在庫編集画面への a タグや target=\"_blank\" がない。 設計要求に対応する実装が見当たらない（未実装）。",
+      "difference": "history.twig、admin_stock_approval_new、stock_list_index.twig、ProductStock.id で再検索した。stock_list_index.twig には admin_stock_approval_new へのリンク実装があるが、M04-19 の history.twig 商品名列には適用されていない。",
+      "mismatchReason": "history.twig、admin_stock_approval_new、stock_list_index.twig、ProductStock.id で再検索した。stock_list_index.twig には admin_stock_approval_new へのリンク実装があるが、M04-19 の history.twig 商品名列には適用されていない。",
+      "comparisonRows": [
+        {
+          "item": "商品名列の操作",
+          "design": "商品名リンク押下で在庫編集画面を別タブ表示",
+          "implementation": "商品名はプレーンテキスト",
+          "mismatch": "利用者が欠品履歴一覧の商品名から在庫編集へ遷移できない。"
+        },
+        {
+          "item": "リンク先",
+          "design": "押下した商品在庫の在庫編集画面",
+          "implementation": "該当リンクなし",
+          "mismatch": "ProductStock.id を使った admin_stock_approval_new 等へのリンクが M04-19 行に存在しない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-19_0202_sheet-25_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:661",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示する。」。実装は「商品名列は {{ productSub.name }} のプレーンテキスト表示で、在庫編集画面への a タグや target=\"_blank\" がない。 設計要求に対応する実装が見当たらない（未実装）。」。乖離理由は「history.twig、admin_stock_approval_new、stock_list_index.twig、ProductStock.id で再検索した。stock_list_index.twig には admin_stock_approval_new へのリンク実装があるが、M04-19 の history.twig 商品名列には適用されていない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:661",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Resource/template/admin/Stock/history.twig:661\n658:                                             {% set productSub = productClassSub.Product %}\n659:                                             <tr id=\"ex-product-{{ Stock.id }}\">\n660:                                                 <td class=\"align-top fixed-cell\">{{ productClassSub.code }}</td>\n661:                                                 <td class=\"align-top fixed-cell-col2\">{{ productSub.name }}</td>\n662:                                                 <td class=\"align-top\">{{ productClassSub.language_name_jp }}</td>\n663:                                                 <td class=\"align-top\">{{ productClassSub.cardCondition.code ? productClassSub.cardCondition.code : '' }}</td>\n664:                                                 <td class=\"align-top\">{{ productSub.getFoilText|default('-') }}</td>",
+        "src/Eccube/Resource/template/admin/Stock/history.twig:1\n1: {% extends '@admin/default_frame.twig' %}\n2: \n3: {% set menus = ['product_stock', 'stock_history_list'] %}\n4: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m04-19_0202_sheet-25_sheet-conformance-c8a4b29589a4",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10771",
+      "designRefDetail": null,
+      "designExpectation": "欠品時販売価格は、欠品登録時の販売価格を表示し、受注の場合は受注情報で保持している販売価格、移動の場合も移動情報で保持している販売価格を参照する。",
+      "designQuote": "欠品時販売価格は、欠品登録時の販売価格を表示し、受注の場合は受注情報で保持している販売価格、移動の場合も移動情報で保持している販売価格を参照する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:713",
+      "implementationActual": "欠品検索モードの「欠品時販売価格」列は productClassSub.buy_price|price を表示している。これは仕入単価であり、在庫履歴に保存された sell_price ではない。",
+      "difference": "history.twig、StockHistoryDisposalCsv、DtbStockHistory::sell_price を再検索した。CSV は getSellPrice() を使うが、画面一覧だけ buy_price を表示している。",
+      "mismatchReason": "history.twig、StockHistoryDisposalCsv、DtbStockHistory::sell_price を再検索した。CSV は getSellPrice() を使うが、画面一覧だけ buy_price を表示している。",
+      "comparisonRows": [
+        {
+          "item": "欠品時販売価格の値",
+          "design": "受注/移動情報で保持している欠品時の販売価格",
+          "implementation": "ProductClass.buy_price",
+          "mismatch": "販売価格ではなく仕入単価を表示する。"
+        },
+        {
+          "item": "在庫履歴の販売価格",
+          "design": "欠品発生時点の販売価格を参照",
+          "implementation": "DtbStockHistory.sell_price は存在し CSV では使用されるが、画面では未使用",
+          "mismatch": "画面とCSVで同じ欠品時販売価格にならない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-19_0202_sheet-25_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:713",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「欠品時販売価格は、欠品登録時の販売価格を表示し、受注の場合は受注情報で保持している販売価格、移動の場合も移動情報で保持している販売価格を参照する。」。実装は「欠品検索モードの「欠品時販売価格」列は productClassSub.buy_price|price を表示している。これは仕入単価であり、在庫履歴に保存された sell_price ではない。」。乖離理由は「history.twig、StockHistoryDisposalCsv、DtbStockHistory::sell_price を再検索した。CSV は getSellPrice() を使うが、画面一覧だけ buy_price を表示している。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:713",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Resource/template/admin/Stock/history.twig:713\n710:                                                 <td class=\"align-top\">{{ Stock.total_cost_price_after|price }}</td>\n711:                                                 {% else %}\n712:                                                 <td class=\"align-top\">{{ Stock.stock }}</td>\n713:                                                 <td class=\"align-top\">{{ productClassSub.buy_price|price }}</td>\n714:                                                 <td class=\"align-middle\">\n715:                                                     <form class=\"js-disposal-reason-form\" method=\"post\" action=\"{{ url('admin_stock_history_update') }}\">\n716:                                                         <div class=\"editable-container\">",
+        "src/Eccube/Resource/template/admin/Stock/history.twig:1\n1: {% extends '@admin/default_frame.twig' %}\n2: \n3: {% set menus = ['product_stock', 'stock_history_list'] %}\n4: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m04-19_0202_sheet-25_sheet-conformance-f3100a3d2db2",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10903",
+      "designRefDetail": null,
+      "designExpectation": "検索結果0件時は「検索条件に該当するデータがありませんでした。」の見出しを表示する。",
+      "designQuote": "検索結果0件時は「検索条件に該当するデータがありませんでした。」の見出しを表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:220",
+      "implementationActual": "検索成功後の戻り値で has_errors が true 固定になっているため、pagination.totalItemCount が0件の場合、history.twig の has_errors 分岐に入り admin.common.search_invalid_condition を表示する。",
+      "difference": "StockHistoryController と history.twig を has_errors / search_no_result / search_invalid_condition で再検索した。0件時に設計文言へ到達するには has_errors=false が必要だが、検索後の実装は true を返している。",
+      "mismatchReason": "StockHistoryController と history.twig を has_errors / search_no_result / search_invalid_condition で再検索した。0件時に設計文言へ到達するには has_errors=false が必要だが、検索後の実装は true を返している。",
+      "comparisonRows": [
+        {
+          "item": "0件時メッセージ",
+          "design": "検索条件に該当するデータがありませんでした。",
+          "implementation": "検索条件が不正である旨の admin.common.search_invalid_condition 分岐",
+          "mismatch": "0件を入力不正として表示する。"
+        },
+        {
+          "item": "分岐条件",
+          "design": "検索結果0件時に該当データなし見出し",
+          "implementation": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:746-756 で has_errors が優先される",
+          "mismatch": "正常な0件検索が設計どおりの0件表示にならない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-19_0202_sheet-25_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:220",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「検索結果0件時は「検索条件に該当するデータがありませんでした。」の見出しを表示する。」。実装は「検索成功後の戻り値で has_errors が true 固定になっているため、pagination.totalItemCount が0件の場合、history.twig の has_errors 分岐に入り admin.common.search_invalid_condition を表示する。」。乖離理由は「StockHistoryController と history.twig を has_errors / search_no_result / search_invalid_condition で再検索した。0件時に設計文言へ到達するには has_errors=false が必要だが、検索後の実装は true を返している。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "ルート・Controller",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:220",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Stock/StockHistoryController.php:220\n217: \n218:     /**\n219:      * 欠品理由の編集\n220:      *\n221:      * @return RedirectResponse|array<mixed>\n222:      */\n223:     #[Route(",
+        "src/Eccube/Controller/Admin/Stock/StockHistoryController.php:38\n35: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n36: use Symfony\\Component\\Routing\\Attribute\\Route;\n37: \n38: class StockHistoryController extends AbstractController\n39: {\n40:     /**\n41:      * @var array<int, mixed>"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "m04-19_0202_sheet-25_sheet-conformance-e8ba9e3d8fed",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10743",
+      "designRefDetail": null,
+      "designExpectation": "識別ID:2-7 として「在庫区分」列を表示する。",
+      "designQuote": "識別ID:2-7 として「在庫区分」列を表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:624",
+      "implementationActual": "列値は Stock.ProductStock.locationName を表示しているが、列見出しは admin.stock.history.stock_location を使い、ロケール上は「在庫場所」と表示される。",
+      "difference": "history.twig と messages.ja.yaml を 在庫区分 / stock_location / locationName で再検索したが、M04-19 一覧列の見出しとして「在庫区分」を出す実装は確認できない。",
+      "mismatchReason": "history.twig と messages.ja.yaml を 在庫区分 / stock_location / locationName で再検索したが、M04-19 一覧列の見出しとして「在庫区分」を出す実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "列ラベル",
+          "design": "在庫区分",
+          "implementation": "在庫場所",
+          "mismatch": "利用者に見える列名が設計と異なる。"
+        },
+        {
+          "item": "列値",
+          "design": "在庫区分（EC-CUBE/スマレジ）",
+          "implementation": "ProductStock.locationName（EC-CUBE/スマレジ）",
+          "mismatch": "値の方向性は近いが、画面ラベルが設計語に一致しない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m04-19_0202_sheet-25_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:624",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「識別ID:2-7 として「在庫区分」列を表示する。」。実装は「列値は Stock.ProductStock.locationName を表示しているが、列見出しは admin.stock.history.stock_location を使い、ロケール上は「在庫場所」と表示される。」。乖離理由は「history.twig と messages.ja.yaml を 在庫区分 / stock_location / locationName で再検索したが、M04-19 一覧列の見出しとして「在庫区分」を出す実装は確認できない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:624",
+        "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Resource/template/admin/Stock/history.twig:624\n621:                                             <th class=\"border-top-0 pt-2 pb-2\">{{ 'admin.product.card_condition'|trans }}</th>\n622:                                             <th class=\"border-top-0 pt-2 pb-2\">Foil</th>\n623:                                             <th class=\"border-top-0 pt-2 pb-2\">{{ 'admin.stock.history.base_info_name'|trans }}</th>\n624:                                             <th class=\"border-top-0 pt-2 pb-2\">{{ 'admin.stock.history.stock_location'|trans }}</th>\n625:                                             <th class=\"border-top-0 pt-2 pb-2\">{{ 'admin.product.create_source'|trans }}</th>\n626:                                             <th class=\"border-top-0 pt-2 pb-2\"><label data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" title=\"{{ 'admin.product.create_source_id'|trans }}\">{{ 'admin.product.create_source_id'|trans }}<i class=\"fa fa-question-circle fa-lg ms-1\"></i></label></th>\n627:                                             {% if has_search_disposal == false %}",
+        "src/Eccube/Resource/template/admin/Stock/history.twig:1\n1: {% extends '@admin/default_frame.twig' %}\n2: \n3: {% set menus = ['product_stock', 'stock_history_list'] %}\n4: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 99,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-165eaff03f",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "運用想定として金額次第では行わないこととする（捜索を1種合計で、980円以下は行わない）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-44804fd5a8",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "→振替の場合は欠品から振替を行えるようにしたい※ユースケース確認 振替の要件はなくなりました",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-9089b05c66",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "・ 欠品登録時に総在庫を減らす処理を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-76558b9c15",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "★ 1.一覧表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-b1b0ae0aaf",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "1-1.検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-cffb99dc32",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "1-1-1.入庫承認待ち在庫情報は表示しない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-44ba91a0bf",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "1-2-3.第三ソートを各レコードの「登録日時」の降順（最新順）で表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-464afa7ece",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "★ 2.表示条件",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-ddbc2c7505",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "2-1.在庫変動履歴の検索で欠品履歴一覧を表示を選択された場合に表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-58b38f2820",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "★ 3.表示項目カスタマイズ追加",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-600e1d22b3",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "・ 識別ID:2-8登録元を追加",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-a46b591af6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "・ 識別ID:2-9登録元IDを追加",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-45d3c66b1b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "・ 識別ID:2-15最終更新日を追加",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-b1c3efd3d5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "・ 識別ID:2-16最終更新者を追加",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-94b2f86c21",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "EC-CUBE標準のマスタデータ管理の最大ページ表示にて、設定されている表示件数の選択肢を表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-8cc74f65c2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "在庫変動履歴CSVを出力する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-132c6ef2ac",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-6cee6fd0cc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "※運用想定では欠品商品を発見した場合の補填目的で設置",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-d76ce5ee9c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫履歴検索一覧(検索結果)」シート識別ID:2-8登録元を参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-e7ee17367e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫履歴検索一覧(検索結果)」シート識別ID:2-9登録元IDを参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-6fe0b78cfd",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品登録された商品に対する欠品点数を表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-aa4f7d57f4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品登録時の販売販売価格を表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-7fdfc19690",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "受注の場合は、受注情報で保持している販売価格を参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-d6a36ad1ca",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "移動の場合も、移動情報で保持している販売価格を参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-102b3e0623",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品理由を表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-6957d7ba84",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品理由の編集ができるようペンのアイコンを押下するとテキストエリアが表示され、再びペンのアイコンを押下すると編集内容が登録される",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-83fda65aca",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "更新された場合は、更新された更新日と、ログインしているメンバーを更新者として更新する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-5af6ec19ce",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫編集」シート識別ID:4-6登録日を参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-43bba16b4c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫編集」シート識別ID:4-7登録者を参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-8b32e914c9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫履歴検索一覧(検索結果)」シート識別ID:2-26最終更新日を参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-b62d583f7f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫履歴検索一覧(検索結果)」シート識別ID:2-27最終更新者を参照",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-d5e8835861",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "再検索実行し、移動先内容の範囲の内容を表示する画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-67ef0e0852",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "※在庫編集承認一覧(検索入力)の内容を表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-455b33f845",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "受注時に在庫不足で計上できなかった欠品の履歴を、日付帯で検索して一覧表示する画面。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-02291187ea",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴検索/一覧は、受注処理などで在庫が不足し欠品となった記録を、登録日の日付帯で検索して一覧表示する機能である。検索条件・表示件数・ソート条件はセッションに保持し、ページ送り後も同一条件で再検索する。一覧の各行は商品規格編集画面・受注編集画面へのリンクを持つ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-87e5500dda",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。HareruyaEc プラグインの実装と、検索一覧を駆動する共通処理（SearchControllerTrait）を確認値とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-4b2c02d554",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴一覧を開く入口と、検索フォーム送信・ページ送りの挙動",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-a5f8370282",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "日付帯（開始・終了）の指定と保持、登録日での絞り込み",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-48b5c1a37f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "一覧の列構成と件数表示、各行から規格編集・受注編集への遷移",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-f8242e8634",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-cb448aaabd",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴のCSV出力（本機能には存在しない。後述の「本書で扱わないこと」末尾参照）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-70ca31aaf8",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "本機能には欠品履歴のCSV出力ルート・エクスポート処理が存在しない。CSV出力が必要な場合は別機能の追加実装を要する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-2730e0903d",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "DB関連は ec-cube-enterprise を正とする。現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）でスキーマ・仕様が異なる主な点を記録する。確認できない点は推測せず要確認として残す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-b16999d61f",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "商品サブ規格テーブルが存在しない（ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-113da4df8d",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "列として保持しない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-ce0fb5f3e5",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "基本設計（M04-19シート）は欠品理由列の追加を求める。 dtb_stock_history.shortage_reason 等が該当（ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-0c40fb2392",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "基本設計（M04-19シート）が描く店舗・在庫区分・登録元・欠品時販売価格・欠品理由・最終更新者などの追加列は、現行 pf-eccube3 の欠品履歴一覧には未実装である。これらは移行先 ec-cube-enterprise 実装側の仕様であり、本書では現行挙動のみを扱い、追加仕様は「本書で扱わないこと」と本節に集約する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-f6d36b939a",
+        "category": "検索フォームを初期表示し、検索条件セッションを消去して一覧は空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「検索する」で送信",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-bc9362154d",
+        "category": "検索フォームを初期表示し、検索条件セッションを消去して一覧は空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "日付帯を検証・保持し、欠品履歴一覧を1ページ目で組み立てて表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-faa766397b",
+        "category": "セッションの検索条件で一覧のNページ目を表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "表示件数プルダウン変更",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-13411161ea",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "規格編集画面へ遷移する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-f77e188e6f",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "受注編集画面へ遷移する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-6e9aa5967d",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "検索フォームの送信先は常にページ番号1の検索ルートである。ページ送り・表示件数変更は検索ルートへの GET である。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-21ea510313",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "上部に検索フォーム。日付（開始・終了）の入力のみを置く。下部に件数見出しと一覧表、ページネーション。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-43099e14e1",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "日付入力に日時ピッカー（ YYYY-MM-DD ）を適用する。select2 と並び順表示用スクリプトを読み込む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-551432bffb",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "本機能ではモーダル・トーストを表示しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-7e2c0614cb",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴一覧を開く（初期表示）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-b2706b73f3",
+        "category": "検索条件・ページ番号・表示件数のセッションを消去する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "検索フォームを空で初期化し、一覧は空で画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-347c70c36a",
+        "category": "検索条件・ページ番号・表示件数のセッションを消去する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "リクエストの並び順が想定外（ASC・DESC 以外）のときは並び順エラーを表示して初期表示へ戻す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-510535b2f3",
+        "category": "検索条件・ページ番号・表示件数・ソート条件をセッションへ保存する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "一覧を画面へ渡して表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-d89bb7a51b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "開始が指定されたとき、登録日がその日時以降を対象とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-e2e3ae410d",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "終了が指定されたとき、終了日を含めるため終了日の翌日0時未満を対象とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-8a90245df3",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "規格拡張のメモがあればメモを、無ければ状態名を状態列に表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-14384dcfba",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴の集計・再計算は行わない。表示は履歴に記録済みの値をそのまま用いる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-1a1f12b0d2",
+        "category": "欠品履歴の登録日下限。フォームキー date_from 。検索条件セッション admin.stockout_history.search に保持。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "登録日上限。終了日を含める（翌日0時未満）。フォームキー date_to 。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-268d67d04a",
+        "category": "欠品履歴の登録日下限。フォームキー date_from 。検索条件セッション admin.stockout_history.search に保持。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "検索フォームはなりすまし対策トークンの検証を無効化している（履歴検索の照会用フォームとして設定）。CSRF 検証無効は照会フォームの設定であり、更新は行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-ae3126da4e",
+        "category": "欠品履歴の登録日下限。フォームキー date_from 。検索条件セッション admin.stockout_history.search に保持。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "初回表示（検索前）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-1bed21e030",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "日付帯の絞り込みを付けず、検索条件に一致する欠品履歴を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-279036fc70",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "並び順エラーを表示し初期表示へ戻す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-14afbc8a00",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「検索条件に該当するデータがありませんでした。」を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-3ae135c3d7",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "一覧は表示時点で欠品履歴テーブルを読んだ結果である。表示後の更新は自動反映しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-86b636f0fd",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴は欠品発生時点の記録であり、商品の現在在庫・受注の現在状態との一致は保証しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-510e120b41",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "規格編集・受注編集のリンク先で値が変わっても、一覧は再読込まで履歴時点の表示を保つ。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-89ee686c95",
+        "category": "検索フォーム（日付帯）、ページ番号、表示件数、セッションの検索状態。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "並び順エラー時はエラー表示で初期表示へ戻す。0件時は該当データなしの見出し。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-1f4f2b4325",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "当機能の一覧が参照する列を示す。テーブル名・列名は ec-cube-enterprise を正とし、現行（pf-eccube3）と異なる場合は移行先名を主として現行名を括弧で添える。型の細部はスキーマを参照する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-c4e03a8a31",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴の表示・絞り込み。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-8cf40f50bc",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "商品名表示・規格編集リンク。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-c18e93436d",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "dtb_product_sub_class（現行のみ。ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-4d55a81f1c",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-1244a9095a",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴テーブル（現行 dtb_stockout_history。移行先の名称は ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-e8e58945c1",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "検索条件に合致する欠品履歴を抽出し、一覧表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-61d443e65e",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "ASC・DESC（大文字小文字）以外はエラーとし初期表示へ戻す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-cfb8f2fbb5",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "同一画面（検索前の初期表示）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-08bf59f6a2",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "同一画面（一覧を表示）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-f0b531264e",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "同一画面（保存件数で再分割）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-eb0f2edc45",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-9a191321ec",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-1019081912",
+        "category": "検索条件・ページ番号・表示件数・ソートをセッション admin.stockout_history.… に保持",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "同一条件・指定ページで一覧を再表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-c746f4f3e8",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "一覧を空で表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-a2e2a2bb0d",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "該当データなしの見出しを表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-df7f3f2cb2",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "常時表示（正常・静的）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-a35ba2835f",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "表示文言（日本語）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-d68027585f",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "件数が1件以上のとき。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-1f9614491e",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "エラー・警告（インライン）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-9c6d925cb7",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "表示条件（利用者視点）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-0cb744adbc",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "（並び順エラー文言）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-fc66800c69",
+        "category": "本機能におけるセッション",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "キー admin.stockout_history.search 。検索時に保存、ページ送り・件数変更で読む。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-cf0adbe3a7",
+        "category": "本機能におけるセッション",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "検索条件・ページ番号・表示件数を消去する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-bb0d184347",
+        "category": "セッションへ保存しない情報",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "照会フォームが本来保持しない値（パスワード等）は保存しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "admin_route",
+        "stockout_history_id",
+        "product_code",
+        "stockout",
+        "stockout_history",
+        "order_id",
+        "product_class_id",
+        "order_number",
+        "StockoutHistoryController",
+        "admin_product_stockout_history",
+        "admin_product_stockout_history_search",
+        "StockoutHistoryType",
+        "stockout_historylist"
+      ],
+      "translationKeys": [
+        "admin.stockout_history.",
+        "admin.stockout_history.search",
+        "admin.error.sort",
+        "admin.stockout_history.search.page_no",
+        "admin.stockout_history.search.page_count",
+        "admin.stockout_history.sort",
+        "admin.stockout_history.order"
+      ],
+      "classNames": [
+        "StockoutHistoryController",
+        "StockoutHistoryType",
+        "DtbStockoutHistoryRepository"
+      ],
+      "paths": [
+        "8/25",
+        "mm/dd",
+        "pf-eccube3/m04-19_admin_stock_stock_shortage_history_search_list.md",
+        "product/stockout/history",
+        "product/stockout/history/search/1",
+        "product/stockout/history/search/{page_no}",
+        "product/product/{id}/class/{classId}/edit",
+        "Plugin/HareruyaEc/Controller/Admin/Product/StockoutHistoryController.php",
+        "Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php",
+        "Plugin/HareruyaEc/Form/Type/Admin/Product/StockoutHistoryType.php",
+        "Plugin/HareruyaEc/Repository/DtbStockoutHistoryRepository.php",
+        "Plugin/HareruyaEc/Resource/template/admin/Product/stockout_historylist.twig"
+      ],
+      "businessTerms": [
+        "M04",
+        "欠品履歴検索一覧",
+        "在庫管理",
+        "在庫一覧で欠品のみを選択時の一覧画面",
+        "本店在庫",
+        "支店在庫",
+        "スマレジ",
+        "の在庫情報を横断的に検索が可能とする",
+        "欠品登録時に総在庫を減らす処理を行う",
+        "検索した結果の在庫変動履歴の内",
+        "在庫変動理由区分が",
+        "入庫承認待ち在庫情報は表示しない",
+        "在庫履歴情報の一覧は",
+        "第一ソートを商品コードの降順とする",
+        "在庫区分でのソートは行わない",
+        "在庫変動履歴の検索で欠品履歴一覧を表示を選択され",
+        "7在庫区分を追加",
+        "CSVダウンロード",
+        "在庫変動履歴CSVを出力する",
+        "商品コード",
+        "在庫編集",
+        "5商品コードを参照",
+        "3商品名を参照",
+        "商品名を押下すると"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "DtbStockoutHistoryRepository",
+        "termType": "className",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbStockoutHistoryRepository.php:1",
+        "snippet": "src/Eccube/Repository/DtbStockoutHistoryRepository.php",
+        "weight": 7
+      },
+      {
+        "term": "DtbStockoutHistoryRepository",
+        "termType": "className",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbStockoutHistoryRepository.php:24",
+        "snippet": "class DtbStockoutHistoryRepository extends AbstractRepository",
+        "weight": 7
+      },
+      {
+        "term": "admin.error.sort",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/SearchControllerTrait.php:142",
+        "snippet": "$this->addError('admin.error.sort', 'admin');",
+        "weight": 6
+      },
+      {
+        "term": "mm/dd",
+        "termType": "path",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyOrderType.php:146",
+        "snippet": "'format' => 'yyyy/MM/dd',",
+        "weight": 6
+      },
+      {
+        "term": "mm/dd",
+        "termType": "path",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/Front/Purchase/ConfirmType.php:152",
+        "snippet": "'format' => 'yyyy/MM/dd',",
+        "weight": 6
+      },
+      {
+        "term": "Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/S3AccessService.php:142",
+        "snippet": "* カード画像をローカルディレクトリへ保存し、保存したファイル名を返す（旧 HareruyaEc S3AccessService::downloadFile 相当）.",
+        "weight": 6
+      },
+      {
+        "term": "product/product/{id}/class/{classId}/edit",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/Api/Mock/Response/CustomerMockResponse.php:25",
+        "snippet": "* - GET /pos/customers/{id} : 指定 ID の会員スタブを返す (存在確認)",
+        "weight": 6
+      },
+      {
+        "term": "product/product/{id}/class/{classId}/edit",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/Api/Mock/Response/ProductMockResponse.php:26",
+        "snippet": "* - PATCH /pos/products/{id} : リクエストボディをエコー (200)",
+        "weight": 6
+      },
+      {
+        "term": "product/product/{id}/class/{classId}/edit",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/Api/Mock/SmaregiMockResponder.php:125",
+        "snippet": "// /pos/customers/{id} (existence check or delete)",
+        "weight": 6
+      },
+      {
+        "term": "product/product/{id}/class/{classId}/edit",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/Api/Mock/SmaregiMockResponder.php:74",
+        "snippet": "// /pos/products/{id} (update or delete)",
+        "weight": 6
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbPointHistory.php:38",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '注文ID'])]",
+        "weight": 5
+      },
+      {
+        "term": "product_class_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbProductClassImage.php:27",
+        "snippet": "#[ORM\\Column(name: 'product_class_id', type: Types::INTEGER, options: ['unsigned' => true])]",
+        "weight": 5
+      },
+      {
+        "term": "product_class_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbProductClassImage.php:30",
+        "snippet": "private int $product_class_id;",
+        "weight": 5
+      },
+      {
+        "term": "product_class_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbProductClassImage.php:34",
+        "snippet": "return $this->product_class_id;",
+        "weight": 5
+      },
+      {
+        "term": "product_class_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbProductClassImage.php:37",
+        "snippet": "public function setProductClassId(int $product_class_id): DtbProductClassImage",
+        "weight": 5
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbShippingStandby.php:56",
+        "snippet": "#[ORM\\InverseJoinColumn(name: 'order_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "DtbStockoutHistoryRepository",
+        "termType": "className",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbStockoutHistory.php:20",
+        "snippet": "use Eccube\\Repository\\DtbStockoutHistoryRepository;",
+        "weight": 5
+      },
+      {
+        "term": "DtbStockoutHistoryRepository",
+        "termType": "className",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbStockoutHistory.php:23",
+        "snippet": "#[ORM\\Entity(repositoryClass: DtbStockoutHistoryRepository::class)]",
+        "weight": 5
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 12,
+    "implementationGapRequirementCount": 2,
+    "rows": [
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-0b0a82ec2a52",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10732",
+        "designRequirement": "欠品減算（受注）・欠品減算（移動）",
+        "implementationActual": "MtbStockChangeType::DISPOSAL 配下の子区分全体",
+        "mismatchReason": "設計対象の欠品減算(受注/移動)を抽出せず、廃棄(破損/他事業移動/イベント商品/その他/欠品)側を抽出する。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:143",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "抽出対象の子区分",
+            "design": "欠品減算（受注）・欠品減算（移動）",
+            "implementation": "MtbStockChangeType::DISPOSAL 配下の子区分全体",
+            "mismatch": "設計対象の欠品減算(受注/移動)を抽出せず、廃棄(破損/他事業移動/イベント商品/その他/欠品)側を抽出する。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-0b0a82ec2a52",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10732",
+        "designRequirement": "欠品減算（受注）・欠品減算（移動）を欠品履歴一覧に出す",
+        "implementationActual": "app/DoctrineMigrations/Version20260108130821.php:173-187 で欠品減算(受注/移動)は OUT_OF_STOCK 配下",
+        "mismatchReason": "Repository の DISPOSAL 親区分フィルタでは対象外になる。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:143",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "実装上のマスタ配置",
+            "design": "欠品減算（受注）・欠品減算（移動）を欠品履歴一覧に出す",
+            "implementation": "app/DoctrineMigrations/Version20260108130821.php:173-187 で欠品減算(受注/移動)は OUT_OF_STOCK 配下",
+            "mismatch": "Repository の DISPOSAL 親区分フィルタでは対象外になる。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-a7d9733362cc",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10737",
+        "designRequirement": "各レコードの登録日時の降順",
+        "implementationActual": "sh.createDate の降順",
+        "mismatchReason": "表示される登録日時 registeredAt と異なる作成日時 createDate で並ぶ。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:332",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "第三ソートキー",
+            "design": "各レコードの登録日時の降順",
+            "implementation": "sh.createDate の降順",
+            "mismatch": "表示される登録日時 registeredAt と異なる作成日時 createDate で並ぶ。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-a7d9733362cc",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10737",
+        "designRequirement": "登録日時を基準に最新順",
+        "implementationActual": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:726 で Stock.registeredAt を表示",
+        "mismatchReason": "表示基準とソート基準が一致しない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php:332",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "登録日表示",
+            "design": "登録日時を基準に最新順",
+            "implementation": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:726 で Stock.registeredAt を表示",
+            "mismatch": "表示基準とソート基準が一致しない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-7715adf742ed",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10762",
+        "designRequirement": "商品名リンク押下で在庫編集画面を別タブ表示",
+        "implementationActual": "商品名はプレーンテキスト",
+        "mismatchReason": "利用者が欠品履歴一覧の商品名から在庫編集へ遷移できない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:661",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "商品名列の操作",
+            "design": "商品名リンク押下で在庫編集画面を別タブ表示",
+            "implementation": "商品名はプレーンテキスト",
+            "mismatch": "利用者が欠品履歴一覧の商品名から在庫編集へ遷移できない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-7715adf742ed",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10762",
+        "designRequirement": "押下した商品在庫の在庫編集画面",
+        "implementationActual": "該当リンクなし",
+        "mismatchReason": "ProductStock.id を使った admin_stock_approval_new 等へのリンクが M04-19 行に存在しない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:661",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "リンク先",
+            "design": "押下した商品在庫の在庫編集画面",
+            "implementation": "該当リンクなし",
+            "mismatch": "ProductStock.id を使った admin_stock_approval_new 等へのリンクが M04-19 行に存在しない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-c8a4b29589a4",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10771",
+        "designRequirement": "受注/移動情報で保持している欠品時の販売価格",
+        "implementationActual": "ProductClass.buy_price",
+        "mismatchReason": "販売価格ではなく仕入単価を表示する。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:713",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "欠品時販売価格の値",
+            "design": "受注/移動情報で保持している欠品時の販売価格",
+            "implementation": "ProductClass.buy_price",
+            "mismatch": "販売価格ではなく仕入単価を表示する。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-c8a4b29589a4",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10771",
+        "designRequirement": "欠品発生時点の販売価格を参照",
+        "implementationActual": "DtbStockHistory.sell_price は存在し CSV では使用されるが、画面では未使用",
+        "mismatchReason": "画面とCSVで同じ欠品時販売価格にならない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:713",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "在庫履歴の販売価格",
+            "design": "欠品発生時点の販売価格を参照",
+            "implementation": "DtbStockHistory.sell_price は存在し CSV では使用されるが、画面では未使用",
+            "mismatch": "画面とCSVで同じ欠品時販売価格にならない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-f3100a3d2db2",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10903",
+        "designRequirement": "検索条件に該当するデータがありませんでした。",
+        "implementationActual": "検索条件が不正である旨の admin.common.search_invalid_condition 分岐",
+        "mismatchReason": "0件を入力不正として表示する。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:220",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "0件時メッセージ",
+            "design": "検索条件に該当するデータがありませんでした。",
+            "implementation": "検索条件が不正である旨の admin.common.search_invalid_condition 分岐",
+            "mismatch": "0件を入力不正として表示する。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-f3100a3d2db2",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10903",
+        "designRequirement": "検索結果0件時に該当データなし見出し",
+        "implementationActual": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:746-756 で has_errors が優先される",
+        "mismatchReason": "正常な0件検索が設計どおりの0件表示にならない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php:220",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "分岐条件",
+            "design": "検索結果0件時に該当データなし見出し",
+            "implementation": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:746-756 で has_errors が優先される",
+            "mismatch": "正常な0件検索が設計どおりの0件表示にならない。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-e8ba9e3d8fed",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10743",
+        "designRequirement": "在庫区分",
+        "implementationActual": "在庫場所",
+        "mismatchReason": "利用者に見える列名が設計と異なる。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:624",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "列ラベル",
+            "design": "在庫区分",
+            "implementation": "在庫場所",
+            "mismatch": "利用者に見える列名が設計と異なる。"
+          }
+        ]
+      },
+      {
+        "findingId": "m04-19_0202_sheet-25_sheet-conformance-e8ba9e3d8fed",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25:10743",
+        "designRequirement": "在庫区分（EC-CUBE/スマレジ）",
+        "implementationActual": "ProductStock.locationName（EC-CUBE/スマレジ）",
+        "mismatchReason": "値の方向性は近いが、画面ラベルが設計語に一致しない。",
+        "implementationRefs": [
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig:624",
+          "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/history.twig"
+        ],
+        "comparisonRows": [
+          {
+            "item": "列値",
+            "design": "在庫区分（EC-CUBE/スマレジ）",
+            "implementation": "ProductStock.locationName（EC-CUBE/スマレジ）",
+            "mismatch": "値の方向性は近いが、画面ラベルが設計語に一致しない。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 99,
+    "verdictedCount": 99,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 99,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-165eaff03f",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "運用想定として金額次第では行わないこととする（捜索を1種合計で、980円以下は行わない）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-44804fd5a8",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "→振替の場合は欠品から振替を行えるようにしたい※ユースケース確認 振替の要件はなくなりました",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-9089b05c66",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "・ 欠品登録時に総在庫を減らす処理を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-76558b9c15",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "★ 1.一覧表示",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-b1b0ae0aaf",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "1-1.検索した結果の在庫変動履歴の内、在庫変動理由区分が「廃棄」（親区分）、「欠品減算（受注）」・「欠品減算（移動）」（子区分）の履歴を検索し表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-cffb99dc32",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "1-1-1.入庫承認待ち在庫情報は表示しない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-44ba91a0bf",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "1-2-3.第三ソートを各レコードの「登録日時」の降順（最新順）で表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-464afa7ece",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "★ 2.表示条件",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-ddbc2c7505",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "2-1.在庫変動履歴の検索で欠品履歴一覧を表示を選択された場合に表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-58b38f2820",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "★ 3.表示項目カスタマイズ追加",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-600e1d22b3",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "・ 識別ID:2-8登録元を追加",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-a46b591af6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "・ 識別ID:2-9登録元IDを追加",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-45d3c66b1b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "・ 識別ID:2-15最終更新日を追加",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-b1c3efd3d5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "・ 識別ID:2-16最終更新者を追加",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-94b2f86c21",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "EC-CUBE標準のマスタデータ管理の最大ページ表示にて、設定されている表示件数の選択肢を表示する",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-8cc74f65c2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "在庫変動履歴CSVを出力する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-132c6ef2ac",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "商品名を押下すると、押下した商品在庫の在庫編集画面を別タブで表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-6cee6fd0cc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "※運用想定では欠品商品を発見した場合の補填目的で設置",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-d76ce5ee9c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫履歴検索一覧(検索結果)」シート識別ID:2-8登録元を参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-e7ee17367e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫履歴検索一覧(検索結果)」シート識別ID:2-9登録元IDを参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-6fe0b78cfd",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品登録された商品に対する欠品点数を表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-aa4f7d57f4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品登録時の販売販売価格を表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-7fdfc19690",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "受注の場合は、受注情報で保持している販売価格を参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-d6a36ad1ca",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "移動の場合も、移動情報で保持している販売価格を参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-102b3e0623",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品理由を表示する",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-6957d7ba84",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品理由の編集ができるようペンのアイコンを押下するとテキストエリアが表示され、再びペンのアイコンを押下すると編集内容が登録される",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-83fda65aca",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "更新された場合は、更新された更新日と、ログインしているメンバーを更新者として更新する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-5af6ec19ce",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫編集」シート識別ID:4-6登録日を参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-43bba16b4c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫編集」シート識別ID:4-7登録者を参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-8b32e914c9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫履歴検索一覧(検索結果)」シート識別ID:2-26最終更新日を参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-b62d583f7f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「在庫履歴検索一覧(検索結果)」シート識別ID:2-27最終更新者を参照",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-d5e8835861",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "再検索実行し、移動先内容の範囲の内容を表示する画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-67ef0e0852",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "※在庫編集承認一覧(検索入力)の内容を表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-455b33f845",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "受注時に在庫不足で計上できなかった欠品の履歴を、日付帯で検索して一覧表示する画面。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-02291187ea",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴検索/一覧は、受注処理などで在庫が不足し欠品となった記録を、登録日の日付帯で検索して一覧表示する機能である。検索条件・表示件数・ソート条件はセッションに保持し、ページ送り後も同一条件で再検索する。一覧の各行は商品規格編集画面・受注編集画面へのリンクを持つ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-87e5500dda",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。HareruyaEc プラグインの実装と、検索一覧を駆動する共通処理（SearchControllerTrait）を確認値とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-4b2c02d554",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴一覧を開く入口と、検索フォーム送信・ページ送りの挙動",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-a5f8370282",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "日付帯（開始・終了）の指定と保持、登録日での絞り込み",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-48b5c1a37f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "一覧の列構成と件数表示、各行から規格編集・受注編集への遷移",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-f8242e8634",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-cb448aaabd",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴のCSV出力（本機能には存在しない。後述の「本書で扱わないこと」末尾参照）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-70ca31aaf8",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "本機能には欠品履歴のCSV出力ルート・エクスポート処理が存在しない。CSV出力が必要な場合は別機能の追加実装を要する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-2730e0903d",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "DB関連は ec-cube-enterprise を正とする。現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）でスキーマ・仕様が異なる主な点を記録する。確認できない点は推測せず要確認として残す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-b16999d61f",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "商品サブ規格テーブルが存在しない（ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-113da4df8d",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "列として保持しない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-ce0fb5f3e5",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "基本設計（M04-19シート）は欠品理由列の追加を求める。 dtb_stock_history.shortage_reason 等が該当（ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-0c40fb2392",
+        "category": "検索条件・表示件数・ソート条件のセッション保持キー",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "基本設計（M04-19シート）が描く店舗・在庫区分・登録元・欠品時販売価格・欠品理由・最終更新者などの追加列は、現行 pf-eccube3 の欠品履歴一覧には未実装である。これらは移行先 ec-cube-enterprise 実装側の仕様であり、本書では現行挙動のみを扱い、追加仕様は「本書で扱わないこと」と本節に集約する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-f6d36b939a",
+        "category": "検索フォームを初期表示し、検索条件セッションを消去して一覧は空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「検索する」で送信",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-bc9362154d",
+        "category": "検索フォームを初期表示し、検索条件セッションを消去して一覧は空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "日付帯を検証・保持し、欠品履歴一覧を1ページ目で組み立てて表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-faa766397b",
+        "category": "セッションの検索条件で一覧のNページ目を表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "表示件数プルダウン変更",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-13411161ea",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "規格編集画面へ遷移する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-f77e188e6f",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "受注編集画面へ遷移する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-6e9aa5967d",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "検索フォームの送信先は常にページ番号1の検索ルートである。ページ送り・表示件数変更は検索ルートへの GET である。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-21ea510313",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "上部に検索フォーム。日付（開始・終了）の入力のみを置く。下部に件数見出しと一覧表、ページネーション。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-43099e14e1",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "日付入力に日時ピッカー（ YYYY-MM-DD ）を適用する。select2 と並び順表示用スクリプトを読み込む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-551432bffb",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "本機能ではモーダル・トーストを表示しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-7e2c0614cb",
+        "category": "ページマスタに存在する件数ならセッションへ保存し、その件数で分割する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴一覧を開く（初期表示）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-b2706b73f3",
+        "category": "検索条件・ページ番号・表示件数のセッションを消去する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "検索フォームを空で初期化し、一覧は空で画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-347c70c36a",
+        "category": "検索条件・ページ番号・表示件数のセッションを消去する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "リクエストの並び順が想定外（ASC・DESC 以外）のときは並び順エラーを表示して初期表示へ戻す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-510535b2f3",
+        "category": "検索条件・ページ番号・表示件数・ソート条件をセッションへ保存する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "一覧を画面へ渡して表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-d89bb7a51b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "開始が指定されたとき、登録日がその日時以降を対象とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-e2e3ae410d",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "終了が指定されたとき、終了日を含めるため終了日の翌日0時未満を対象とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-8a90245df3",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "規格拡張のメモがあればメモを、無ければ状態名を状態列に表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-14384dcfba",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴の集計・再計算は行わない。表示は履歴に記録済みの値をそのまま用いる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-1a1f12b0d2",
+        "category": "欠品履歴の登録日下限。フォームキー date_from 。検索条件セッション admin.stockout_history.search に保持。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "登録日上限。終了日を含める（翌日0時未満）。フォームキー date_to 。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-268d67d04a",
+        "category": "欠品履歴の登録日下限。フォームキー date_from 。検索条件セッション admin.stockout_history.search に保持。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "検索フォームはなりすまし対策トークンの検証を無効化している（履歴検索の照会用フォームとして設定）。CSRF 検証無効は照会フォームの設定であり、更新は行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-ae3126da4e",
+        "category": "欠品履歴の登録日下限。フォームキー date_from 。検索条件セッション admin.stockout_history.search に保持。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "初回表示（検索前）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-1bed21e030",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "日付帯の絞り込みを付けず、検索条件に一致する欠品履歴を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-279036fc70",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "並び順エラーを表示し初期表示へ戻す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-14afbc8a00",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "「検索条件に該当するデータがありませんでした。」を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-3ae135c3d7",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "一覧は表示時点で欠品履歴テーブルを読んだ結果である。表示後の更新は自動反映しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-86b636f0fd",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴は欠品発生時点の記録であり、商品の現在在庫・受注の現在状態との一致は保証しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-510e120b41",
+        "category": "セッションを消去し、一覧を空で表示する。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "規格編集・受注編集のリンク先で値が変わっても、一覧は再読込まで履歴時点の表示を保つ。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-89ee686c95",
+        "category": "検索フォーム（日付帯）、ページ番号、表示件数、セッションの検索状態。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "並び順エラー時はエラー表示で初期表示へ戻す。0件時は該当データなしの見出し。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-1f4f2b4325",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "当機能の一覧が参照する列を示す。テーブル名・列名は ec-cube-enterprise を正とし、現行（pf-eccube3）と異なる場合は移行先名を主として現行名を括弧で添える。型の細部はスキーマを参照する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-c4e03a8a31",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴の表示・絞り込み。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-8cf40f50bc",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "商品名表示・規格編集リンク。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-c18e93436d",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "dtb_product_sub_class（現行のみ。ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-4d55a81f1c",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-1244a9095a",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品履歴テーブル（現行 dtb_stockout_history。移行先の名称は ec-cube-enterprise 実装で要確認）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-e8e58945c1",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "検索条件に合致する欠品履歴を抽出し、一覧表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-61d443e65e",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "ASC・DESC（大文字小文字）以外はエラーとし初期表示へ戻す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-cfb8f2fbb5",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "同一画面（検索前の初期表示）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-08bf59f6a2",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "同一画面（一覧を表示）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-f0b531264e",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "同一画面（保存件数で再分割）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-eb0f2edc45",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-9a191321ec",
+        "category": "検索条件セッション・ページ番号・表示件数・ソート条件の保存。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-1019081912",
+        "category": "検索条件・ページ番号・表示件数・ソートをセッション admin.stockout_history.… に保持",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "同一条件・指定ページで一覧を再表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-c746f4f3e8",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "一覧を空で表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-a2e2a2bb0d",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "該当データなしの見出しを表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-df7f3f2cb2",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "常時表示（正常・静的）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-a35ba2835f",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "表示文言（日本語）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-d68027585f",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "件数が1件以上のとき。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-1f9614491e",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "エラー・警告（インライン）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-9c6d925cb7",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "表示条件（利用者視点）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-0cb744adbc",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "（並び順エラー文言）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-fc66800c69",
+        "category": "本機能におけるセッション",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "キー admin.stockout_history.search 。検索時に保存、ページ送り・件数変更で読む。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-cf0adbe3a7",
+        "category": "本機能におけるセッション",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "検索条件・ページ番号・表示件数を消去する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-bb0d184347",
+        "category": "セッションへ保存しない情報",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "照会フォームが本来保持しない値（パスワード等）は保存しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

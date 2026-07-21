@@ -1,0 +1,96 @@
+{
+  "functionId": "m03-26_0204_sheet-10_csv",
+  "featureNo": "M03-26",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-10:L2808",
+      "designExpectation": "識別ID14「商品削除フラグ」をCSVフォーマットに含め、0: 削除しない(default) / 1: 削除するを指定できる。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php getStructuredImportHeaders、src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php getColumns/initializeColumnDefinitions、src/Eccube/Service/Csv/ProductCardCsv.php rowBase、src/Eccube/Resource/template/admin/Product/base_csv_upload.twig。反証検索: 商品削除フラグ / productDelFlg / product_del_flg / 削除しない / 削除する）",
+      "implementationActual": "カード商品CSVの画面表示・雛形・取込ハンドラ・カード商品CSV出力の列集合に「商品削除フラグ」が存在しない。汎用の ColumnDefinitions::productDelFlg は存在するが、ProductCardImportHandler と CardCsvController のカード商品CSV列定義には組み込まれていない。",
+      "mismatchReason": "設計は識別ID14として商品削除フラグ列を定義しているが、実装のカード商品CSV列定義は「検索ワード」の次が「規格画像」であり当該列が欠落している。設計フォーマットどおり31列で投入すると、ProductCardImportHandler 側の30列定義と列数不一致になる。",
+      "comparisonRows": [
+        {
+          "item": "CSV列の有無",
+          "design": "識別ID14に「商品削除フラグ」を持つ",
+          "implementation": "CardCsvController::getStructuredImportHeaders と ProductCardImportHandler の列定義に存在しない",
+          "mismatch": "設計列が未実装"
+        },
+        {
+          "item": "指定値",
+          "design": "0: 削除しない(default) / 1: 削除する",
+          "implementation": "値を受けるカード商品CSV用列がない",
+          "mismatch": "外部CSV契約を満たさない"
+        },
+        {
+          "item": "反証結果",
+          "design": "カード商品CSVフォーマットの列として必要",
+          "implementation": "ColumnDefinitions::productDelFlg はあるがカード商品CSV取込・雛形・出力から未参照",
+          "mismatch": "汎用定義のみで本機能には未接続"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-10:L2797",
+      "designExpectation": "識別ID3「商品公開ステータス」は 0: 非公開、1: 公開、2: 廃止(追加) の整数コードを受け付ける。",
+      "implRef": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:228; src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:118; src/Eccube/Entity/Master/ProductStatus.php:39",
+      "implementationActual": "カード商品CSV画面の説明は「1:公開 2:非公開 3:廃止」。取込バリデーションも ProductStatus::DISPLAY_SHOW=1、DISPLAY_HIDE=2、DISPLAY_ABOLISHED=3 を許可値としている。",
+      "mismatchReason": "設計のコード体系は 0/1/2 だが、実装は 1/2/3 のマスタID体系をそのままCSV契約にしているため、設計上の「0:非公開」は拒否され、「2」は廃止ではなく非公開として扱われる。",
+      "comparisonRows": [
+        {
+          "item": "非公開",
+          "design": "0",
+          "implementation": "2",
+          "mismatch": "設計値0を受け付けない"
+        },
+        {
+          "item": "公開",
+          "design": "1",
+          "implementation": "1",
+          "mismatch": "一致"
+        },
+        {
+          "item": "廃止",
+          "design": "2",
+          "implementation": "3",
+          "mismatch": "設計値2が廃止ではなく非公開になる"
+        },
+        {
+          "item": "フォーマット説明",
+          "design": "0: 非公開 1:公開 2:廃止(追加)",
+          "implementation": "1:公開 2:非公開 3:廃止",
+          "mismatch": "利用者に提示するコード表が設計と異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-10:L2912",
+      "designExpectation": "既存規格がセールフラグOFFのとき、CSVの基準価格がそのまま販売価格へ反映される。",
+      "implRef": "src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:681; src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:694; src/Eccube/Service/Csv/Importer/Event/Util/StandardPriceCalculator.php:39",
+      "implementationActual": "既存規格のセールフラグOFF時は、CSVの基準価格そのものではなく、StandardPriceCalculator::calculate() でカード状態別の割引率を適用した $newStandardPrice を price02 に設定している。NM以外で割引設定がある場合、CSV基準価格と販売価格が一致しない。",
+      "mismatchReason": "設計は「CSVの基準価格がそのまま販売価格へ反映」としているが、実装はカード状態と割引率により基準価格を再計算してから販売価格へ代入する。",
+      "comparisonRows": [
+        {
+          "item": "既存規格・セールOFF時の販売価格",
+          "design": "CSVの基準価格をそのまま反映",
+          "implementation": "$sellPrice = $newStandardPrice。$newStandardPrice は StandardPriceCalculator::calculate(discountId, cardConditionId, CSV基準価格) の結果",
+          "mismatch": "NM以外では割引率によりCSV基準価格から変化し得る"
+        },
+        {
+          "item": "基準価格の扱い",
+          "design": "CSV列「基準価格」を standard_price として扱う",
+          "implementation": "カード状態別割引後の値を standardPrice / price02 に使用",
+          "mismatch": "CSV値を直接保存・反映しない条件がある"
+        }
+      ]
+    }
+  ]
+}

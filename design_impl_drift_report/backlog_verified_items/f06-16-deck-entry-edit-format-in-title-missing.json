@@ -1,0 +1,147 @@
+{
+  "id": "f06-16-deck-entry-edit-format-in-title-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-16_0306_sheet-13_sheet.json",
+  "sourceFindingId": "f06-16_0306_sheet-13_sheet-conformance-e12375b047e8",
+  "classification": "フロント会員",
+  "feature": "大会デッキ登録編集",
+  "issueCategory": "実装漏れ",
+  "issue": "大会デッキ登録編集画面の大会名にフォーマットが表示されない",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "デッキ登録可能なイベントを持つ会員で `http://localhost:8080/ja/mypage/deckentry/{eventDetailId}/edit` を表示する",
+    "大会情報エリアの大会名を確認する",
+    "大会名の後ろに括弧付きでフォーマット名が表示されるか確認する"
+  ],
+  "expected": [
+    "大会デッキ登録編集画面の No.4「大会名」はラベルとして表示する",
+    "大会名の `()` 内に対象イベントのフォーマットを表示する",
+    "複数フォーマットがある場合はベース実装と同様にフォーマット名を `/` 区切りで併記する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `deck_entry_edit.twig` は大会名を `{{ EventDetail.event.nameJp }}` だけで描画しており、`Formats` または `EventDetail.event.formats` を括弧内に連結する処理がない。`DeckEntryController::edit()` は `$Formats = $Event->getFormats()` を取得して view に渡しているためフォーマット情報自体は利用可能だが、タイトル表示には使われていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise デッキ編集画面の大会名はイベント名のみ",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+          "start": 164,
+          "end": 190,
+          "language": "twig",
+          "contains": [
+            "<h2 class=\"p-hareruya-deckentry-edit__event-title\">{{ EventDetail.event.nameJp }}</h2>",
+            "{% for Format in Formats %}",
+            "{% if Format.rankingFlg or Format.otherMetaFlg %}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise ControllerはFormatsを取得してviewへ渡している",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+          "start": 60,
+          "end": 92,
+          "language": "php",
+          "contains": [
+            "$Event = $EventDetail->getEvent();",
+            "$Formats = $Event->getFormats();",
+            "'Formats' => $Formats,"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の `Mypage/deckentry.twig` では、大会名の直後に `({% for format in eventDetail.event.formats %}...{{ format.nameJp }}{% endfor %})` を描画している。enterprise はこのフォーマット併記を移植していないため、設計の「()内にフォーマットを表示」と一致しない。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は大会名の括弧内にフォーマット名を表示",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig",
+          "start": 36,
+          "end": 46,
+          "language": "twig",
+          "contains": [
+            "<h2 class=\"tournamentName\">{{ eventDetail.event.nameJp }}(",
+            "{% for format in eventDetail.event.formats %}",
+            "{{ format.nameJp }}"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ControllerはeventDetailをテンプレートへ渡している",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/DeckentryController.php",
+          "start": 124,
+          "end": 139,
+          "language": "php",
+          "contains": [
+            "return $app->render('Mypage/deckentry.twig', [",
+            "'eventDetail' => $eventDetail,",
+            "'player' => $player"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "画面部品 No.4 大会名は括弧内にフォーマットを表示する要求",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 4298,
+      "end": 4310,
+      "language": "html",
+      "contains": [
+        "id=\"item-sheet-13-4\"",
+        "<td>大会名</td><td>ラベル</td>",
+        "()内にフォーマットを表示"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "大会名は EventDetail.event.nameJp のみで、フォーマット併記がない",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+      "start": 164,
+      "end": 190,
+      "language": "twig",
+      "contains": [
+        "{{ EventDetail.event.nameJp }}",
+        "{% for Format in Formats %}"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "ControllerはFormatsを渡しているが、タイトル用の併記文字列は作っていない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+      "start": 60,
+      "end": 92,
+      "language": "php",
+      "contains": [
+        "$Formats = $Event->getFormats();",
+        "'Formats' => $Formats,"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は大会名の直後にフォーマット名を括弧付きで表示している",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig",
+      "start": 36,
+      "end": 46,
+      "language": "twig",
+      "contains": [
+        "{{ eventDetail.event.nameJp }}(",
+        "{{ format.nameJp }}"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-16_0306_sheet-13_sheet.json#f06-16_0306_sheet-13_sheet-conformance-e12375b047e8'",
+      "rg -n \"item-sheet-13-4|大会名|フォーマットを表示|EventDetail.event.nameJp|eventDetail.event.nameJp|event.formats|Formats|formats\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig pf-eccube3/app/Plugin/HareruyaEc/Controller/DeckentryController.php",
+      "rg -n \"item-sheet-13-4|大会名|\\(\\)内にフォーマットを表示\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "rg -n \"p-hareruya-deckentry-edit__event-title|EventDetail\\.event\\.nameJp|Formats|Format\\.nameJp|Format\\.name\" ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+      "rg -n \"tournamentName|eventDetail\\.event\\.formats|format\\.nameJp|deckentry.twig\" pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig pf-eccube3/app/Plugin/HareruyaEc/Controller/DeckentryController.php",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '4298,4310p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig | sed -n '160,190p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/DeckEntryController.php | sed -n '60,92p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/deckentry.twig | sed -n '36,46p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/DeckentryController.php | sed -n '120,140p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLの画面部品 No.4、ec-cube-enterprise の DeckEntryController/deck_entry_edit.twig、pf-eccube3 の DeckentryController/deckentry.twig を再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

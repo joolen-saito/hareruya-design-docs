@@ -1,0 +1,96 @@
+{
+  "functionId": "m12-07_0211_sheet-17_sheet",
+  "featureNo": "M12-07",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-17:3715",
+      "designExpectation": "検索画面初期表示は GET /{admin_route}/analysis/format_sales、集計実行・一覧表示は POST /{admin_route}/analysis/format_sales/result とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:44",
+      "implementationActual": "実装は初期表示を `/%eccube_admin_route%/analysis/format-sales`、検索実行を `/%eccube_admin_route%/analysis/format-sales/search` としている。テンプレートのフォーム送信先も `admin_analysis_format_sales_search` を参照している（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/format_sales.twig:94）。",
+      "mismatchReason": "設計はアンダースコア付き `format_sales` と `/result` を外部URL契約として明記しているが、実装はハイフン付き `format-sales` と `/search` で公開している。反証検索で `analysis/format_sales`、`format_sales/result`、`admin_analysis_format_sales_search`、`format-sales/search` を確認したが、設計どおりのルート定義は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "初期表示URL",
+          "design": "GET /{admin_route}/analysis/format_sales",
+          "implementation": "GET /{admin_route}/analysis/format-sales",
+          "mismatch": "`format_sales` と `format-sales` が異なる。"
+        },
+        {
+          "item": "検索実行URL",
+          "design": "POST /{admin_route}/analysis/format_sales/result",
+          "implementation": "POST /{admin_route}/analysis/format-sales/search",
+          "mismatch": "パス末尾が `/result` ではなく `/search`。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-17:3745",
+      "designExpectation": "入力項目「集計月」の初期値は空（初回表示時は未設定）とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:49",
+      "implementationActual": "初期表示で `$form->get('month')->setData((new \\DateTime())->format('Y-m'));` を実行し、当月を設定している。",
+      "mismatchReason": "設計は初回表示時の集計月を未設定とするが、実装は現在年月を初期値として画面に表示する。反証検索で `month setData`、空文字初期化、テンプレート初期値を確認したが、空初期値にする処理は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "集計月初期値",
+          "design": "空（初回表示時は未設定）",
+          "implementation": "現在年月 `Y-m` を設定",
+          "mismatch": "初期表示の入力値が設計と異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-17:3731",
+      "designExpectation": "表示要素は集計月入力欄、検索ボタン。集計条件は集計月であり、本店のほか支店やスマレジの取引情報も集計対象として取り扱う。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/FormatSalesType.php:48",
+      "implementationActual": "実装は設計にない `mail_order_enabled` と `store_enabled` のチェックボックスを追加し、画面に「集計対象」として表示している（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/format_sales.twig:108）。検索時はこの値で `base_info_id` を絞り込む（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:79）。",
+      "mismatchReason": "設計は集計月のみを入力条件とし、支店・スマレジを含めて集計対象とする仕様だが、実装は利用者が通販/全店舗を切り替えられる設計外フィルタを追加している。反証検索で `mail_order_enabled`、`store_enabled`、`集計対象`、`base_info_id` 条件を確認し、設計にある単一条件の実装ではないことを確認した。",
+      "comparisonRows": [
+        {
+          "item": "入力項目",
+          "design": "集計月のみ",
+          "implementation": "集計月、通販チェックボックス、全店舗チェックボックス",
+          "mismatch": "設計外の入力項目が追加されている。"
+        },
+        {
+          "item": "集計対象",
+          "design": "本店、支店、スマレジ取引情報を集計対象として扱う",
+          "implementation": "チェック状態により `base_info_id = rootId` または `base_info_id != rootId` で絞り込む",
+          "mismatch": "利用者操作で対象範囲が変わる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-17:3715",
+      "designExpectation": "本機能は検索条件をセッションへ保存しない。副作用は無し（参照のみ。検索条件のセッション保存も行わない）。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:31",
+      "implementationActual": "実装は `SESSION_KEY = 'eccube.admin.analysis.format_sales.search'` を定義し、検索時に `$this->session->set(self::SESSION_KEY, FormUtil::getViewData($form));` で検索条件を保存している（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:83）。",
+      "mismatchReason": "設計は検索条件セッション保存なしを明記しているが、実装は検索条件をセッションに保存し、CSVエクスポートでもそのセッションを参照している。反証検索で `SESSION_KEY`、`session->set`、`session->get`、`admin.analysis.format_sales.search` を確認し、保存処理の存在を確認した。",
+      "comparisonRows": [
+        {
+          "item": "検索条件セッション保存",
+          "design": "保存しない",
+          "implementation": "検索時に `eccube.admin.analysis.format_sales.search` へ保存",
+          "mismatch": "設計で禁止された副作用が存在する。"
+        },
+        {
+          "item": "CSV連携状態",
+          "design": "CSVダウンロードへ引き継ぐ状態は持たない",
+          "implementation": "エクスポート時にセッションの検索条件を読む",
+          "mismatch": "M12-07画面がセッション状態を作っている。"
+        }
+      ]
+    }
+  ]
+}

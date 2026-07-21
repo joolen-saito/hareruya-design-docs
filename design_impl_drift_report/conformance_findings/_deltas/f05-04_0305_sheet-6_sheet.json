@@ -1,0 +1,65 @@
+{
+  "functionId": "f05-04_0305_sheet-6_sheet",
+  "featureNo": "F05-04",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-6 (利用者視点の入口/処理フロー『旧商品コードから転送する』/画面遷移『旧コードアクセス(対応あり)→新しい買取商品詳細へリダイレクト』)",
+      "designExpectation": "GET /{_locale}/purchase/forward/{oldCode} で旧商品コードを新商品コードにマッピングし、対応する買取商品詳細へリダイレクト。マッピング無し/商品取得不可はトップへリダイレクト。DBカラム mtb_product_code_mapping.old_product_code/product_code を使用。",
+      "implRef": "不在（src/Eccube/Controller/Front/Purchase/PurchaseController.php にforwardルート無し, src/Eccube/Repository/Master/MtbProductCodeMappingRepository.php に旧コード検索メソッド無し）",
+      "implementationActual": "purchase_detail(/purchase/detail/{id})とpurchase_add のみでforward系ルート無し。MtbProductCodeMappingのEntity/Repositoryは定義済みだが検索メソッドが無く、どのController/Serviceからも参照されていない（grep呼び出し0件）。DeckにはfindOneByOldDeckId(DeckController.php:224)の類似実装があるが買取には無い。",
+      "mismatchReason": "設計はforward入口・処理フロー・画面遷移・エラー処理を明記するが、ルートもマッピング参照処理も全く存在しない。",
+      "comparisonRows": [
+        {"item": "forwardルート", "design": "GET /{_locale}/purchase/forward/{oldCode}", "implementation": "ルート未定義", "mismatch": "未実装"},
+        {"item": "旧コード→新コード変換", "design": "mtb_product_code_mapping参照", "implementation": "Repository検索メソッド無し・呼び出し0件", "mismatch": "未実装"},
+        {"item": "エラー時遷移", "design": "トップへリダイレクト", "implementation": "処理無し", "mismatch": "未実装"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-6 (カード詳細 識別ID6 週間販売数)",
+      "designExpectation": "過去1週間のうちに注文された商品数を表示。注文されていない場合は非表示（現行踏襲）。",
+      "implRef": "不在（src/Eccube/Resource/template/default/Purchase/detail.twig, PurchaseController.php detail()）",
+      "implementationActual": "Purchase/detail.twigに週間販売数の表示要素・ラベルが一切無く（週/weekly/salesQuantity/sales-count/注文 いずれも0件）、detail()コントローラも該当集計・view変数を持たない。販売商品詳細Product/detail.twig:248-250ではweekly_sold()関数で表示している。",
+      "mismatchReason": "現行踏襲の表示項目だが買取詳細のテンプレート/コントローラに表示ロジックが存在しない。",
+      "comparisonRows": [
+        {"item": "週間販売数表示", "design": "過去1週間注文数を表示", "implementation": "要素・ラベル無し", "mismatch": "未実装"},
+        {"item": "非表示条件", "design": "注文0件時は非表示", "implementation": "表示ロジック自体無し", "mismatch": "未実装"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-6 (カード説明 識別ID11 セット名 リンク『押下すると押下したカードセットで検索したの商品一覧を表示する』, ID12-14 リンク)",
+      "designExpectation": "セット名は書式『リンク』で押下時にカードセット検索の商品一覧へ遷移。ブロック・イラストレーター・使用可能フォーマットも書式『リンク』。",
+      "implRef": "src/Eccube/Resource/template/default/Purchase/detail.twig:321-353",
+      "implementationActual": "セット名(321-329)はcardDetail.Cardset.nameJpを<td>にプレーンテキスト出力するのみ。ブロック(334)・イラストレーター(338-343)・使用可能フォーマット(346-353)も全て静的テキストで<a>/href/onclick無し。JS側にセット名検索ハンドラ無し。",
+      "mismatchReason": "設計は書式列を『リンク』と明記し特にセット名は押下で検索一覧遷移を要求するが、実装は静的テキストでリンク・遷移が無い。",
+      "comparisonRows": [
+        {"item": "セット名(ID11)", "design": "リンク・押下でカードセット検索一覧へ遷移", "implementation": "プレーンテキスト", "mismatch": "リンク/遷移欠落"},
+        {"item": "ブロック(ID12)", "design": "リンク", "implementation": "プレーンテキスト", "mismatch": "リンク欠落"},
+        {"item": "イラストレーター(ID13)", "design": "リンク", "implementation": "プレーンテキスト", "mismatch": "リンク欠落"},
+        {"item": "使用可能フォーマット(ID14)", "design": "リンク", "implementation": "プレーンテキスト", "mismatch": "リンク欠落"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-6 (カード詳細 識別ID13 査定例はこちらボタン『査定例のモーダルを表示する』)",
+      "designExpectation": "査定例はこちらボタン押下でモーダルを表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Purchase/detail.twig:197-200",
+      "implementationActual": "<a href=\"https://www.hareruyamtg.com/ja/user_data/purchase_example\" class=\"joutaiWrapper\">という本番外部サイト(ja固定URL)への通常リンク。押下で外部ページへ画面遷移し、モーダル表示ではない。joutaiWrapper/purchase_exampleに対するモーダルJSハンドラはfront.bundle.js含め0件。",
+      "mismatchReason": "設計はモーダル表示を要求するが、実装はハードコード外部URLへの画面遷移リンクでモーダル生成要素・JSが無い。",
+      "comparisonRows": [
+        {"item": "査定例ボタン挙動", "design": "モーダル表示", "implementation": "外部URL(hareruyamtg.com/ja固定)へ画面遷移", "mismatch": "挙動相違"},
+        {"item": "モーダルJSハンドラ", "design": "モーダル生成", "implementation": "joutaiWrapper向けハンドラ0件", "mismatch": "欠落"}
+      ]
+    }
+  ]
+}

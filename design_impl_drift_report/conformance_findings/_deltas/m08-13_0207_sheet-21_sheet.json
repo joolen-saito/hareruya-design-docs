@@ -1,0 +1,108 @@
+{
+  "functionId": "m08-13_0207_sheet-21_sheet",
+  "featureNo": "M08-13",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4723,4724,4729,4730",
+      "designExpectation": "電話番号の場合、チェックの前にハイフンを除去する。電話番号のみ追加で半角数字のみかのチェックを行う。",
+      "implRef": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:78, src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:108",
+      "implementationActual": "電話番号項目の場合、既存行・新規行ともに入力値をそのまま /^[0-9]+$/ で検証している。ハイフン除去処理は BlacklistUpdateType / BlacklistType / BlacklistUpdateAction / BlacklistEntityManager / BlacklistController には存在しない。",
+      "mismatchReason": "設計はチェック前にハイフン除去を要求しているが、実装は除去せず数字のみ判定するため、090-1234-5678 のような入力は設計上は除去後に検証対象となる一方、実装ではエラーになる。反証検索で TruncateHyphenListener は見つかったがブラックリストフォームには接続されていない。",
+      "comparisonRows": [
+        {
+          "item": "電話番号キーワードの正規化",
+          "design": "チェック前にハイフンを除去する",
+          "implementation": "ハイフン除去なしで preg_match('/^[0-9]+$/', $keyword) を実行",
+          "mismatch": "ハイフン付き電話番号の扱いが異なる"
+        },
+        {
+          "item": "探索範囲",
+          "design": "新規登録処理・更新処理の電話番号チェック",
+          "implementation": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php, src/Eccube/Form/Type/Admin/BlacklistType.php, src/Eccube/Service/Admin/Customer, src/Eccube/Service/EntityManager/BlacklistEntityManager.php, src/Eccube/Controller/Admin/Customer/BlacklistController.php",
+          "mismatch": "対象機能内に str_replace('-', '') / preg_replace による除去処理がない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4747,4749",
+      "designExpectation": "項目(新規登録用)・項目(更新用)は単一選択(チェックボックス)で、選択肢は住所、電話番号、氏名。",
+      "implRef": "src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:34, src/Eccube/Form/Type/Admin/BlacklistType.php:32, src/Eccube/Form/Type/Master/BlacklistTagType.php:45, src/Eccube/Form/Type/MasterType.php:29",
+      "implementationActual": "新規用・更新用の項目は BlacklistTagType を使い、BlacklistTagType は MasterType を親にする。MasterType は EntityType かつ expanded=false / multiple=false なのでチェックボックスではなく単一 select として表示される。マスタ投入順も id=1 氏名、id=2 電話番号、id=3 住所で、BlacklistTagType は id ASC で並べる。",
+      "mismatchReason": "設計は項目 UI を単一選択チェックボックスとし、選択肢を住所、電話番号、氏名としているが、実装は select 表示で、並びも氏名、電話番号、住所となる。",
+      "comparisonRows": [
+        {
+          "item": "項目(新規登録用) UI",
+          "design": "単一選択(チェックボックス)",
+          "implementation": "BlacklistTagType -> MasterType -> EntityType expanded=false の select",
+          "mismatch": "画面部品種別が異なる"
+        },
+        {
+          "item": "項目(更新用) UI",
+          "design": "単一選択(チェックボックス)",
+          "implementation": "BlacklistType の BlacklistTag も同じ BlacklistTagType select",
+          "mismatch": "画面部品種別が異なる"
+        },
+        {
+          "item": "選択肢の並び",
+          "design": "住所、電話番号、氏名",
+          "implementation": "id ASC: 氏名、電話番号、住所",
+          "mismatch": "表示順が異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4820",
+      "designExpectation": "登録・編集・削除が完了したとき、登録完了メッセージ（ロケールキー admin.register.complete）を表示する。",
+      "implRef": "src/Eccube/Controller/Admin/Customer/BlacklistController.php:107, src/Eccube/Resource/locale/messages.ja.yaml:1405, src/Eccube/Resource/locale/messages.ja.yaml:1780",
+      "implementationActual": "更新処理成功時は addSuccess('admin.common.save_complete', 'admin') を呼び出し、表示文言は「保存しました」。設計指定の admin.register.complete は「登録が完了しました。」として存在するが、この機能では使用していない。",
+      "mismatchReason": "設計が明示した成功メッセージキー admin.register.complete と、実装が使用する admin.common.save_complete が異なるため、利用者に表示される完了文言も異なる。",
+      "comparisonRows": [
+        {
+          "item": "成功メッセージキー",
+          "design": "admin.register.complete",
+          "implementation": "admin.common.save_complete",
+          "mismatch": "使用ロケールキーが異なる"
+        },
+        {
+          "item": "日本語表示文言",
+          "design": "登録が完了しました。",
+          "implementation": "保存しました",
+          "mismatch": "表示文言が異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-21:4737,4738,4739",
+      "designExpectation": "会員登録、買取時の会員登録時にブラックリスト判定を使用し、登録不可の場合は登録エラー(ブラックリスト)画面を表示する。",
+      "implRef": "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:380, src/Eccube/Controller/Front/Purchase/OtcBuyController.php:437, src/Eccube/Resource/template/default/OtcBuy/complete.twig:31",
+      "implementationActual": "通常会員登録では blacklist 該当時に entry_regist_error へ遷移するが、買取時の会員登録では registerCustomer が false を返し、買取申込完了画面へ register=2 を付けて遷移し、同画面内に会員登録不可メッセージを表示する。",
+      "mismatchReason": "設計は買取時の会員登録も含めて登録不可時に登録エラー(ブラックリスト)画面を表示するとしているが、実装は買取申込完了画面上のメッセージ表示に留まる。",
+      "comparisonRows": [
+        {
+          "item": "通常会員登録のブラックリスト該当時",
+          "design": "登録エラー(ブラックリスト)画面を表示",
+          "implementation": "EntryController で entry_regist_error へ redirect",
+          "mismatch": "通常会員登録は設計に合致"
+        },
+        {
+          "item": "買取時会員登録のブラックリスト該当時",
+          "design": "登録エラー(ブラックリスト)画面を表示",
+          "implementation": "OtcBuy complete へ register=2 付きで遷移し、完了画面内メッセージを表示",
+          "mismatch": "表示画面が異なる"
+        }
+      ]
+    }
+  ]
+}

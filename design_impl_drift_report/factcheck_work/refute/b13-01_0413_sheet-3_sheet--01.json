@@ -1,0 +1,10 @@
+{
+  "chunkId": "b13-01_0413_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b13-01_0413_sheet-3_sheet.json#b13-01_0413_sheet-3_sheet-conformance-203de3fdd9b0",
+      "refuted": false,
+      "reason": "反証を複数試みたが全て失敗し、指摘は維持。(1)別実装の探索: rg で sendEventPaymentErrorAlertMail の呼び出しは PaymentStatusCheckAction.php:166 の1箇所のみ。array_unique / errorMessages / errorList / implode / 集約用配列は Payment 配下・Command・MailService いずれにも存在しない。呼出元 PaymentStatusCheckCommand.php も handle() を1回呼ぶだけで集約処理は無い。(2)引用検証: 実装 PaymentStatusCheckAction.php の foreach(88-173行)内、164-172行の catch(\\Throwable $e) は申込みごとに即時 sendEventPaymentErrorAlertMail($EventEntry, $e->getMessage()) を呼び $cntError++ するのみで、引用は正確。MailService::sendEventPaymentErrorAlertMail(1642行) は単一 DtbEventEntry と単一 message を受け取りテンプレートに entry/message を1件だけ渡す設計で、配列集約を受け付けない。(3)設計側除外の確認: 対象外リスト(920行)はメール本文・宛先設定を対象外とするのみで、エラー集約ロジックは除外していない。リニューアル移行時の扱い(923-925行)もバッチ起動方式を要確認とするだけ。Ph2/現行踏襲/実装しない等の注記は集約要件に付いていない。(4)要求の読み違いの確認: 設計は処理フロー936行『想定外エラーは1つにまとめ、管理者へ通知メールを送信する』、業務ルール942行『重複を除いてまとめ、管理者へ通知する』、エラー処理962行『想定外エラー: 重複を除いてまとめ、管理者へ通知する』と3箇所で一貫して集約・重複排除・一括通知を要求しており誤読の余地なし。実装は申込み単位の即時個別送信で真逆。加えて getApiResponse(191-196行)が常に LogicException(API未実装) を throw するため、全対象申込みが 164行の catch に落ち同一メッセージのメールを対象件数だけ重複送信する構造で、設計が防ごうとした重複通知がまさに発生する。よって実装違いは事実として確定。"
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m04_04_admin_stock_stock_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装の現挙動・Form制約・POM由来文言をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装の現挙動・Form制約・POM由来文言をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は在庫検索一覧（M04-01）の「在庫情報CSV出力」ボタン（GETリンク `admin_stock_list_csv`）からの `StreamedResponse` ダウンロードであり、セッション `admin.stock.list.search` の検索条件で全件をCSV出力する。**CSV構造（0件時ヘッダ行のみ＝1行・ヘッダのカンマ区切り列数19）はダウンロードファイルから自動検証**する（期待値は設計書「出力列数19」/「対象0件＝ヘッダ行のみ」由来）。**CSV各列の値・見出し文言・SJIS-win変換・削除レコード除外は手動確認**とする（実ファイルを開いて確認。列数判定はカンマがCP932のバイト域に現れないため文字コード非依存で安全だが、各列値・文言の正当性は機械判定しない）。
 
@@ -31,30 +31,30 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-001	IT-25	操作起点	P1	在庫情報CSV出力の起点となる在庫一覧画面が表示される	管理者ログイン済／SEED-M04-04-ADMIN	—	"1. 在庫一覧（/admin/product/stock）を開く"	在庫一覧画面（検索フォーム）が表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-001	IT-25	操作起点	P1	在庫情報CSV出力の起点となる在庫一覧画面が表示される	管理者ログイン済／SEED-M04-04-ADMIN	—	1. 在庫一覧（/admin/product/stock）を開く	在庫一覧画面（検索フォーム）が表示されること。				
 m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-002	IT-25	UI部品	P2	検索結果がある場合に「在庫情報CSV出力」ボタンが表示される	管理者ログイン済／在庫データあり／SEED-M04-04-STOCK	—	"1. 在庫一覧を開く
-2. 検索を実行する"	検索結果一覧の上部に「在庫情報CSV出力」ボタンが表示されること。
+2. 検索を実行する"	検索結果一覧の上部に「在庫情報CSV出力」ボタンが表示されること。				
 m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-010	IT-33	ファイル出力	P1	検索実行後にCSV出力URLへアクセスするとダウンロードが発火する	管理者ログイン済／検索実行済（セッションに検索条件あり）／SEED-M04-04-ADMIN	GET /admin/product/stock/csv	"1. 在庫一覧で検索を1回実行する
-2. CSV出力URL（admin_stock_list_csv）へGETアクセスする"	CSVダウンロード（download）が発火し、HTML一覧へ遷移しないこと。
+2. CSV出力URL（admin_stock_list_csv）へGETアクセスする"	CSVダウンロード（download）が発火し、HTML一覧へ遷移しないこと。				
 m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-011	IT-24	フォーマット定義	P1	ダウンロードファイル名が stock_list_<日時>.csv 形式である	管理者ログイン済／検索実行済／SEED-M04-04-ADMIN	GET /admin/product/stock/csv	"1. 検索を1回実行する
-2. CSV出力URLへアクセスしダウンロードファイル名を確認する"	ダウンロードファイル名が stock_list_<YmdHis(14桁)>.csv 形式であること。
+2. CSV出力URLへアクセスしダウンロードファイル名を確認する"	ダウンロードファイル名が stock_list_<YmdHis(14桁)>.csv 形式であること。				
 m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-012	IT-25	HTTPステータス	P1	エクスポート応答が添付ファイルのHTTPヘッダを返す	管理者ログイン済／検索実行済／SEED-M04-04-ADMIN	GET /admin/product/stock/csv	"1. 検索を1回実行する
-2. CSV出力URLの応答ヘッダ（status/Content-Type/Content-Disposition）を確認する"	"HTTP200で Content-Type: application/octet-stream、Content-Disposition: attachment; filename=stock_list_<日時>.csv を返すこと。"
+2. CSV出力URLの応答ヘッダ（status/Content-Type/Content-Disposition）を確認する"	HTTP200で Content-Type: application/octet-stream、Content-Disposition: attachment; filename=stock_list_<日時>.csv を返すこと。				
 m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-013	IT-25	操作起点	P2	「在庫情報CSV出力」ボタン押下でダウンロードが発火する	管理者ログイン済／在庫データあり／SEED-M04-04-STOCK	—	"1. 在庫一覧を開き検索を実行する
-2. 「在庫情報CSV出力」ボタンを押下する"	CSVダウンロード（download）が発火すること。
-m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-020	IT-16	エラー	P1	検索未実行でCSV出力URLへアクセスするとエラーメッセージが表示される	管理者ログイン済／検索未実行（セッションに検索条件なし）／SEED-M04-04-ADMIN	GET /admin/product/stock/csv	"1. 検索を実行しない状態でCSV出力URLへ直接GETアクセスする"	エラー「検索条件を指定してからCSV出力してください。」が表示されること。
-m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-021	IT-03	画面遷移	P1	検索未実行時は在庫一覧へリダイレクトされCSVを出力しない	管理者ログイン済／検索未実行／SEED-M04-04-ADMIN	GET /admin/product/stock/csv	"1. 検索を実行しない状態でCSV出力URLへ直接GETアクセスする"	在庫一覧（admin_stock_list）へリダイレクトされ、CSVダウンロードが発火しないこと。
-m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-030	IT-15	未認証	P1	未ログインでCSV出力URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	GET /admin/product/stock/csv	"1. 未ログイン状態でCSV出力URLへ直接GETアクセスする"	管理ログイン画面へ誘導されること。
-m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-040	IT-27	出力失敗	P2	セッションの検索条件が現行フォームと不整合だとエラー表示し一覧へ戻る	管理者ログイン済／不整合な検索条件セッション注入／SEED-M04-04-BADSESSION	旧フォーム構造の検索条件をセッションに保持	"1. 不整合な検索条件をセッションに保持した状態でCSV出力URLへアクセスする"	エラー「検索条件を指定してからCSV出力してください。」が表示され、在庫一覧へ戻ること。
+2. 「在庫情報CSV出力」ボタンを押下する"	CSVダウンロード（download）が発火すること。				
+m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-020	IT-16	エラー	P1	検索未実行でCSV出力URLへアクセスするとエラーメッセージが表示される	管理者ログイン済／検索未実行（セッションに検索条件なし）／SEED-M04-04-ADMIN	GET /admin/product/stock/csv	1. 検索を実行しない状態でCSV出力URLへ直接GETアクセスする	エラー「検索条件を指定してからCSV出力してください。」が表示されること。				
+m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-021	IT-03	画面遷移	P1	検索未実行時は在庫一覧へリダイレクトされCSVを出力しない	管理者ログイン済／検索未実行／SEED-M04-04-ADMIN	GET /admin/product/stock/csv	1. 検索を実行しない状態でCSV出力URLへ直接GETアクセスする	在庫一覧（admin_stock_list）へリダイレクトされ、CSVダウンロードが発火しないこと。				
+m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-030	IT-15	未認証	P1	未ログインでCSV出力URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	GET /admin/product/stock/csv	1. 未ログイン状態でCSV出力URLへ直接GETアクセスする	管理ログイン画面へ誘導されること。				
+m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-040	IT-27	出力失敗	P2	セッションの検索条件が現行フォームと不整合だとエラー表示し一覧へ戻る	管理者ログイン済／不整合な検索条件セッション注入／SEED-M04-04-BADSESSION	旧フォーム構造の検索条件をセッションに保持	1. 不整合な検索条件をセッションに保持した状態でCSV出力URLへアクセスする	エラー「検索条件を指定してからCSV出力してください。」が表示され、在庫一覧へ戻ること。				
 m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-050	IT-24	出力内容	P2	検索結果0件のときヘッダ行のみのCSVが出力される	管理者ログイン済／結果0件となる検索実行済／SEED-M04-04-EMPTY	GET /admin/product/stock/csv	"1. 結果0件となる条件で検索を実行する
-2. CSV出力URLへアクセスし出力ファイルを取得する"	ヘッダ行のみ（データ行なし＝1行）でヘッダのカンマ区切り列数が19であること（行数・列数は自動検証。各列の値・見出し文言は手動確認）。
+2. CSV出力URLへアクセスし出力ファイルを取得する"	ヘッダ行のみ（データ行なし＝1行）でヘッダのカンマ区切り列数が19であること（行数・列数は自動検証。各列の値・見出し文言は手動確認）。				
 m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-051	IT-24	出力内容	P2	検索結果1件以上のとき該当在庫が全件（ページングなし）データ行として出力される	管理者ログイン済／検索で1件以上ヒット（本店/支店/バックヤード/スマレジの在庫含む）／SEED-M04-04-STOCK	GET /admin/product/stock/csv	"1. 結果1件以上となる条件で検索を実行する
-2. CSV出力URLへアクセスし出力ファイルを取得する"	検索条件に一致する在庫がページングされず全件データ行として出力され、横断範囲（本店/支店/バックヤード/スマレジ）の在庫が対象に含まれること（データ行数・各列値は実ファイルを開いて手動確認。0件のE2E-050と対をなす正常系）。
+2. CSV出力URLへアクセスし出力ファイルを取得する"	検索条件に一致する在庫がページングされず全件データ行として出力され、横断範囲（本店/支店/バックヤード/スマレジ）の在庫が対象に含まれること（データ行数・各列値は実ファイルを開いて手動確認。0件のE2E-050と対をなす正常系）。				
 m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-052	IT-24	出力内容	P2	在庫null時は0・販売数なし時は空文字で各列が整形出力される	管理者ログイン済／在庫nullおよび販売数データなしの規格を含む検索結果／SEED-M04-04-STOCK	GET /admin/product/stock/csv	"1. 在庫null・販売数なしの規格を含む条件で検索を実行する
-2. 出力ファイルを取得し在庫列・販売数列(14〜19列)を確認する"	在庫列はnullのとき0、販売数列(14〜19列)は該当販売数（productClassId_baseInfoId突合）がないとき空文字で出力されること（手動確認）。
+2. 出力ファイルを取得し在庫列・販売数列(14〜19列)を確認する"	在庫列はnullのとき0、販売数列(14〜19列)は該当販売数（productClassId_baseInfoId突合）がないとき空文字で出力されること（手動確認）。				
 m04-04_admin_stock_stock_csv_export（在庫情報CSV出力）	E2E-M04-04-053	IT-15	対象データ	P2	出力ファイルが eccube_csv_export_encoding（既定SJIS-win）に変換される	管理者ログイン済／検索実行済	GET /admin/product/stock/csv	"1. 検索を1回実行する
-2. 出力ファイルを取得し文字コードを確認する"	出力ファイルが eccube_csv_export_encoding（既定 SJIS-win）に変換されていること。UTF-8設定時はBOMが付与されること（バイト列検査＝手動確認・環境設定依存）。
+2. 出力ファイルを取得し文字コードを確認する"	出力ファイルが eccube_csv_export_encoding（既定 SJIS-win）に変換されていること。UTF-8設定時はBOMが付与されること（バイト列検査＝手動確認・環境設定依存）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

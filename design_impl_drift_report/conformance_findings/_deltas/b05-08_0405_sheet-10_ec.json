@@ -1,0 +1,150 @@
+{
+  "functionId": "b05-08_0405_sheet-10_ec",
+  "featureNo": "B05-08",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1957",
+      "designExpectation": "コンソールのバッチコマンド `smaregi:batch checkSmaregiErrorOrder` で、スマレジ連携エラーのEC受注について会員ポイントの連携をリトライし、成否で状態を更新する。",
+      "implRef": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/Repository, src/Eccube/Message, src/Eccube/MessageHandler。検索語: checkSmaregiErrorOrder, smaregi:batch, ErrorOrder, error-order, エラー再連携, 再連携バッチ）",
+      "implementationActual": "指定コマンドは存在しない。近い実装は `eccube:smaregi:update-point` だが、任意の `orderId` 1件を受け取る別コマンドであり、設計の `smaregi:batch checkSmaregiErrorOrder` ではない。",
+      "mismatchReason": "`src/Eccube/Command/SmaregiUpdatePointCommand.php:26` は `#[AsCommand(name: 'eccube:smaregi:update-point')]` で、`src/Eccube/Command` 配下に `smaregi:batch checkSmaregiErrorOrder` または同等のエラー受注再連携コマンドがない。",
+      "comparisonRows": [
+        {
+          "item": "入口コマンド",
+          "design": "`smaregi:batch checkSmaregiErrorOrder`",
+          "implementation": "`eccube:smaregi:update-point` など別名のコマンドのみ存在",
+          "mismatch": "設計された実行入口が未実装"
+        },
+        {
+          "item": "実行対象",
+          "design": "スマレジ連携エラーのEC受注をバッチで処理",
+          "implementation": "`SmaregiUpdatePointCommand` は任意 `orderId` 1件を引数に取る",
+          "mismatch": "エラー受注一括再連携の入口になっていない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1961",
+      "designExpectation": "スマレジ連携エラーのEC受注を取得し、受注ごとに会員のスマレジIDとポイントでスマレジポイント連携をリトライする。",
+      "implRef": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/Repository, src/Eccube/MessageHandler。検索語: getSmaregiErrorOrder, smaregi_error_flg, SmaregiUpdatePointAction, postSmaregiPoint）",
+      "implementationActual": "`OrderRepository::getSmaregiErrorOrder()` は存在するが、呼び出し元が存在しない。実行される近接処理 `SmaregiUpdatePointAction::handle()` は `orderId` 指定の単一受注処理で、エラー受注抽出結果を走査しない。",
+      "mismatchReason": "`src/Eccube/Repository/OrderRepository.php:877` に抽出メソッドはあるが、`rg getSmaregiErrorOrder\\(` で利用箇所は定義のみ。`src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32` は `handle(int $orderId)` で単一受注を `find($orderId)` する実装。",
+      "comparisonRows": [
+        {
+          "item": "対象抽出",
+          "design": "`smaregi_error_flg` が立っているEC受注を取得",
+          "implementation": "`OrderRepository::getSmaregiErrorOrder()` は定義のみで未使用",
+          "mismatch": "バッチ処理に接続されていない"
+        },
+        {
+          "item": "再連携単位",
+          "design": "抽出した受注ごとにリトライ",
+          "implementation": "`SmaregiUpdatePointAction::handle(int $orderId)` は指定IDのみ処理",
+          "mismatch": "エラー受注一覧の再連携処理がない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1962",
+      "designExpectation": "連携が成功した場合は受注サブ（移行先では `dtb_order`）のスマレジ連携エラーフラグを解除する。",
+      "implRef": "src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:71",
+      "implementationActual": "近接実装では成功レスポンス時に `return` するだけで、`smaregi_error_flg` を false に戻さない。実装全体検索でも `setSmaregiErrorFlg(false)` は見つからない。",
+      "mismatchReason": "`SmaregiUpdatePointAction.php:71-72` は `array_key_exists('result', $response)` の場合にそのまま `return` する。`setSmaregiErrorFlg(true)` は同ファイル57-58行、75-76行にあるが、成功時解除処理がない。",
+      "comparisonRows": [
+        {
+          "item": "成功時の状態更新",
+          "design": "成功で `smaregi_error_flg` を解除",
+          "implementation": "成功時は `return` のみ",
+          "mismatch": "エラーフラグが残り、次回も再試行対象になり得る"
+        },
+        {
+          "item": "検索反証",
+          "design": "解除処理が必要",
+          "implementation": "`rg setSmaregiErrorFlg\\(false\\)` で該当なし",
+          "mismatch": "解除実装の不在"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1918",
+      "designExpectation": "ユーザーのポイント数は絶対値で更新を行う。取得したユーザーのスマレジIDとポイント残高を使ってスマレジ連携を行う。",
+      "implRef": "src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:39",
+      "implementationActual": "近接実装は受注の使用ポイント `getSpendedPoints()` を取得し、`postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false)` として差分値を送っている。`dtb_player.point` のポイント残高を絶対値として送っていない。",
+      "mismatchReason": "設計はユーザーのポイント残高を取得し絶対値で更新する要求。実装は `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:39` の使用ポイントを、同54行で負数として送信する差分連携である。",
+      "comparisonRows": [
+        {
+          "item": "連携するポイント値",
+          "design": "ユーザーのポイント残高を絶対値で更新",
+          "implementation": "受注の使用ポイントを負数化して送信",
+          "mismatch": "絶対値更新ではなく差分更新"
+        },
+        {
+          "item": "入力データ",
+          "design": "ユーザーのスマレジIDとポイント残高",
+          "implementation": "スマレジIDは使うが、ポイントは `Order::getSpendedPoints()`",
+          "mismatch": "設計のポイント残高入力と異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1906",
+      "designExpectation": "スマレジ連携APIは廃止予定APIではなくプラットフォームAPIを使用し、取得したデータでスマレジ連携を行う。",
+      "implRef": "src/Eccube/Service/Smaregi/SmaregiCustomerService.php:31",
+      "implementationActual": "ポイント連携に使われる `SmaregiCustomerService::postSmaregiPoint()` は TODO の仮実装で、スマレジAPIを呼び出さず固定成功レスポンスを返す。",
+      "mismatchReason": "`src/Eccube/Service/Smaregi/SmaregiCustomerService.php:33-35` に `TODO: スマレジAPIを実行する実装を追加` とあり、固定の `result.status=success` を返すのみ。`SmaregiCustomerApiClient` は存在するが、`postSmaregiPoint()` から呼び出されていない。",
+      "comparisonRows": [
+        {
+          "item": "API呼び出し",
+          "design": "スマレジプラットフォームAPIで連携",
+          "implementation": "固定成功レスポンスを返す仮実装",
+          "mismatch": "実際のスマレジ連携が行われない"
+        },
+        {
+          "item": "ポイント再連携",
+          "design": "取得したデータを使ってスマレジ連携",
+          "implementation": "外部API未呼び出し",
+          "mismatch": "再連携処理として成立しない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-10:1965",
+      "designExpectation": "リクエスト数の上限に配慮し、受注ごとに短いインターバルを挟む。1秒あたりのリクエスト上限を超えないよう受注ごとにインターバルを挟む。",
+      "implRef": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Smaregi, src/Eccube/MessageHandler。検索語: sleep, usleep, rate, interval, インターバル, 1秒, リクエスト上限）",
+      "implementationActual": "B05-08の受注ごとの待機処理は見つからない。共通HTTPクライアント側にRateLimiter待機はあるが、設計が求めるエラー受注再連携バッチの受注ごとのインターバル実装ではない。",
+      "mismatchReason": "B05-08のバッチ本体が存在せず、抽出受注をループして `sleep`/`usleep` 等で待機する実装もない。`src/Eccube/Service/Smaregi/Api/SmaregiGuzzleClientFactory.php:90-94` の共通RateLimiterは見つかったが、未実装のB05-08再連携フローに組み込まれた受注ごとのインターバルではない。",
+      "comparisonRows": [
+        {
+          "item": "流量制御",
+          "design": "受注ごとに短いインターバル",
+          "implementation": "B05-08フロー上の待機処理なし",
+          "mismatch": "設計された受注単位の待機が未実装"
+        },
+        {
+          "item": "反証結果",
+          "design": "1秒あたりのリクエスト上限を超えない",
+          "implementation": "共通HTTPクライアントのRateLimiterのみ確認",
+          "mismatch": "B05-08の受注ループ要求を満たす根拠にならない"
+        }
+      ]
+    }
+  ]
+}

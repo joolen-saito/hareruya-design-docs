@@ -1,0 +1,36 @@
+{
+  "functionId": "a05-03_0505_sheet-5_sheet",
+  "featureNo": "A05-03",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-5:1463,1476",
+      "designExpectation": "店頭注文番号リストの取得は GET /{_locale}/waiting_api/get_waiting で提供し、本APIはリクエストパラメータを持たない。パスパラメータ {_locale} は言語識別子であり、取得対象の絞り込みには用いない。",
+      "implRef": "src/Eccube/Controller/Front/WaitingNumberController.php:56,57,61,64,69,71,77,79; src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig:96; src/Eccube/Repository/DtbWaitingNumberRepository.php:43,49,50; 不在（探索範囲: src/Eccube と html/template の Route/Twig/YAML/PHP を get_waiting, waiting_api, get_waiting_number で検索し、/{_locale}/waiting_api/get_waiting または get_waiting 名のルートは未検出）",
+      "implementationActual": "実装は GET /waiting_api/get_waiting_number/{base_info_id} の `get_waiting_number` ルートを定義し、Twig も `BaseInfo.id` を渡して呼び出す。Controller は `base_info_id > 0` の場合だけ取得処理に入り、注文番号札・注文番号の双方を BaseInfo で絞り込む。",
+      "mismatchReason": "設計は URL を `/{_locale}/waiting_api/get_waiting` とし、入力パラメータなし、`{_locale}` は取得対象の絞り込みに使わない外部契約としている。一方、実装は URL 名称が `get_waiting_number` で、追加パスパラメータ `{base_info_id}` を必須化し、これを取得対象の店舗絞り込みに使用しているため、呼び出し契約と入力条件が設計と一致しない。反証として `get_waiting`、`waiting_api`、`get_waiting_number`、`base_info_id`、Twig の `url('get_waiting_number')` を検索したが、設計通りの無パラメータ API ルートは確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "HTTPエンドポイント",
+          "design": "GET /{_locale}/waiting_api/get_waiting",
+          "implementation": "#[Route(path: '/waiting_api/get_waiting_number/{base_info_id}', name: 'get_waiting_number', methods: ['GET'])]",
+          "mismatch": "パス末尾が `get_waiting` ではなく `get_waiting_number/{base_info_id}` になっている。"
+        },
+        {
+          "item": "入力パラメータ",
+          "design": "リクエストパラメータなし。`{_locale}` は言語識別子で取得対象の絞り込みには用いない。",
+          "implementation": "Controller メソッドは `int $base_info_id` を受け取り、Twig は `url('get_waiting_number', {'base_info_id': BaseInfo.id})` を生成する。",
+          "mismatch": "設計にない `base_info_id` が API 呼び出し契約に追加されている。"
+        },
+        {
+          "item": "取得対象の絞り込み",
+          "design": "利用者の資格情報による絞り込みは行わず、パスパラメータ `{_locale}` も取得対象の絞り込みに使わない。",
+          "implementation": "`findBy(['BaseInfo' => $base_info_id])` と `getWaitingNumberByStatus(..., $base_info_id)` により BaseInfo で絞り込む。Repository も `IDENTITY(wn.BaseInfo) = :baseInfoId` を条件にしている。",
+          "mismatch": "設計で非入力・非絞り込みのはずの API が、店舗ID相当のパス値を必須条件として取得対象を限定している。"
+        }
+      ]
+    }
+  ]
+}

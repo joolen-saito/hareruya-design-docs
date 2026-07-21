@@ -1,0 +1,6 @@
+■バッチ-B13-02 コンビニ支払チェックバッチ
+【指摘カテゴリ】
+　未実装
+【指摘内容】
+　（仕様）コンビニ支払チェックを実行する（entry:batch checkCvsPayment）。コンビニ決済で入金待ちのイベント申込を抽出し、決済サービスへ取引照会して、入金確認時はステータス更新、取引不在時は申込み記録除去、想定外エラーは重複を除いて管理者へ通知し、申込履歴を記録して最後に確定する。
+　専用の checkCvsPayment コマンドは存在しない。近傍実装として src/Eccube/Command/PaymentStatusCheckCommand.php:35 に eccube:payment-status-check があるが、説明は「決済処理中チェックバッチ」。処理本体 src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:78 は getBeforeMinutesEntry(30) を呼び、Repository 側 src/Eccube/Repository/DtbEventEntryRepository.php:261-268 は既定ステータス PROCESSING_PAYMENT と createDate 基準で抽出する。コンビニ入金待ち WAITING_RECEIVED + EC_CVS の抽出ではない。さらに src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191-194 は SP.LINKS取引照会API未実装として LogicException を投げる。確認お願いします。（設計根拠: excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4:1029,1033,1034,1037,1040,1043,1046,1051,1059,1063,1068 ／ 実装: 不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, src/Eccube/Service/Admin/Payment, src/Eccube/Repository/DtbEventEntryRepository.php, src/Eccube/Entity/Payment.php, src/Eccube/Service/MailService.php, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: checkCvsPayment, CvsPayment, コンビニ支払チェック, コンビニ支払, 入金待ち.*イベント申込, WAITING_RECEIVED, EC_CVS, PAYSUCCESS, REQSUCCESS））

@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない参照系JSON API（`GET /admin/buyOrders.json`）であり、買取アプリ（MTGバイヤー）が査定対象のネット買取受注一覧を取得する。両レイヤ網羅のうち実質はAPI/統合レイヤで網羅する。API/統合レイヤ＝Playwright `request` でエンドポイントへ`jwt-token`ヘッダ付きGET送信し、HTTPステータス・応答配列・各フィールド値（SEEDの既知期待値と照合）で判定する。本APIの結果はEC-CUBE管理画面ではなく外部買取アプリで消費されるため、UIレイヤ観測は本機能のスコープ外（UIレイヤ＝0件）。
 
-**期待結果は仕様（正本md・観点表）由来**とし、実装のレスポンス整形（日時書式・null/空文字の差異・整数/文字列キャスト）を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdを上位オラクルとし、実装からは位置情報（パス・メソッド・認証方式・ステータス定数）のみを `file:line` 根拠で取得する。取れないものは `要実機確認`。設計と実装の食い違いは付帯表4に出し、テストは仕様どおりに書く（実装が違えば落ちて検出する）。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（正本md・観点表）由来**とし、実装のレスポンス整形（日時書式・null/空文字の差異・整数/文字列キャスト）を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdを上位オラクルとし、実装からは位置情報（パス・メソッド・認証方式・ステータス定数）のみを `file:line` 根拠で取得する。取れないものは `要実機確認`。設計と実装の食い違いは付帯表4に出し、テストは仕様どおりに書く（実装が違えば落ちて検出する）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 ## 関連ID対応概要
 
@@ -22,110 +22,110 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-001	IT-09	リクエスト	P1	正常なjwt-tokenで査定対象一覧が200で取得できる	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ（管理者会員）	"1. GET /api/v1/admin/buyOrders.json にjwt-tokenヘッダ付きで送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で、査定対象のネット買取受注を要素とする配列が返ること。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で、査定対象のネット買取受注を要素とする配列が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-002	IT-09	実行結果	P3	正常取得時に受注基本情報と申込者情報を含む配列が返る	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ	"1. エンドポイントへGET送信する
-2. レスポンス本文の構造を確認する"	各要素が受注の基本情報とcustomerInfo（申込者情報）をネストした構造で返ること。
+2. レスポンス本文の構造を確認する"	各要素が受注の基本情報とcustomerInfo（申込者情報）をネストした構造で返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-003	IT-09	HTTPステータス	P3	認証成功時のHTTPステータスが200となる	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER"	有効なjwt-tokenヘッダ	"1. エンドポイントへGET送信する
-2. HTTPステータスを確認する"	認証が成功し、HTTPステータス200が返ること。
+2. HTTPステータスを確認する"	認証が成功し、HTTPステータス200が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-004	IT-09	外部取得	P1	買取アプリからの一覧取得要求に200で配列を返す	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ	"1. エンドポイントへGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で受注配列が返ること。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で受注配列が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-005	IT-10	通信	P1	正常通信でHTTPステータス200が返る	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER"	有効なjwt-tokenヘッダ	"1. エンドポイントへGET送信する
-2. HTTPステータスを確認する"	通信が成立し、HTTPステータス200が返ること。
+2. HTTPステータスを確認する"	通信が成立し、HTTPステータス200が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-006	IT-10	正常	P2	査定対象が存在する条件で200と該当配列が返る	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ	"1. エンドポイントへGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で、査定対象ステータスの受注が配列で返ること。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で、査定対象ステータスの受注が配列で返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-010	IT-32	受信検証	P1	署名不正トークンは認証拒否で401となる	SEED-A07-02-JWT-INVALID	署名が不正なjwt-tokenヘッダ	"1. 署名不正トークンでGET送信する
-2. HTTPステータスを確認する"	認証拒否としてHTTPステータス401が返ること。
+2. HTTPステータスを確認する"	認証拒否としてHTTPステータス401が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-011	IT-32	資格情報	P1	該当する管理者会員がないトークンは401となる	SEED-A07-02-JWT-INVALID	署名は正しいが該当する管理者会員が存在しない利用者IDのjwt-token	"1. 該当会員なしトークンでGET送信する
-2. HTTPステータスを確認する"	認証拒否としてHTTPステータス401が返ること。
+2. HTTPステータスを確認する"	認証拒否としてHTTPステータス401が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-012	IT-32	必須条件	P3	jwt-tokenヘッダ欠落は401で一覧が返らない	SEED-A07-02-ORDERS-ASSESS	jwt-tokenヘッダなし	"1. jwt-tokenヘッダを付けずにGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	認証拒否としてHTTPステータス401が返り、受注一覧が返らないこと。
+2. HTTPステータスとレスポンス本文を確認する"	認証拒否としてHTTPステータス401が返り、受注一覧が返らないこと。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-013	IT-10	形式不正	P2	JWT形式として不正な文字列は成功扱いせず401となる	SEED-A07-02-JWT-INVALID	JWT形式として不正な文字列のjwt-tokenヘッダ	"1. 不正形式トークンでGET送信する
-2. HTTPステータスを確認する"	成功扱いされず認証拒否としてHTTPステータス401が返ること。
+2. HTTPステータスを確認する"	成功扱いされず認証拒否としてHTTPステータス401が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-014	IT-10	HTTPステータス	P1	認証不可の異常時にHTTPステータス401が返る	SEED-A07-02-JWT-INVALID	認証不可となるjwt-tokenヘッダ	"1. 認証不可リクエストでGET送信する
-2. HTTPステータスを確認する"	認証不可の異常時にHTTPステータス401が返ること。
+2. HTTPステータスを確認する"	認証不可の異常時にHTTPステータス401が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-015	IT-10	異常系	P2	異常系リクエストでHTTPステータス401が返る	SEED-A07-02-JWT-INVALID	認証要件を満たさない異常系リクエスト	"1. 異常系リクエストでGET送信する
-2. HTTPステータスを確認する"	HTTPステータス401が返ること。
+2. HTTPステータスを確認する"	HTTPステータス401が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-016	IT-09	リクエスト	P1	認証済み会員は絞り込みなしで査定対象を一律取得する	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	複数の管理者会員に紐づく査定対象受注が混在する状態の有効jwt-token	"1. エンドポイントへGET送信する
-2. 返る受注の範囲を確認する"	認証した管理者会員に紐づく絞り込みを行わず、査定対象の受注が一律に返ること。
+2. 返る受注の範囲を確認する"	認証した管理者会員に紐づく絞り込みを行わず、査定対象の受注が一律に返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-020	IT-32	リクエスト	P3	査定対象ステータスの受注のみ抽出される	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ	"1. エンドポイントへGET送信する
-2. 返る受注のステータスを確認する"	商品到着(2)・査定中(10)・保留(11)・査定再開(12)のステータスの受注のみが配列に含まれること。
+2. 返る受注のステータスを確認する"	商品到着(2)・査定中(10)・保留(11)・査定再開(12)のステータスの受注のみが配列に含まれること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-021	IT-33	区分整合	P1	対象外ステータスの受注は一覧に含まれない	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS
 SEED-A07-02-ORDERS-EXCLUDED"	有効なjwt-tokenヘッダ（対象外ステータスの受注も投入済）	"1. エンドポイントへGET送信する
-2. 返る受注のステータスを確認する"	受付・成立・キャンセル等の対象外ステータスの受注が配列に含まれないこと。
+2. 返る受注のステータスを確認する"	受付・成立・キャンセル等の対象外ステータスの受注が配列に含まれないこと。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-022	IT-32	データなし	P3	該当受注が無い場合は200で空配列が返る	"SEED-A07-02-JWT-VALID
 SEED-A07-02-EMPTY"	有効なjwt-tokenヘッダ（該当受注なし）	"1. エンドポイントへGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で空配列が返ること。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200で空配列が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-023	IT-09	実行結果	P2	配列要素が受注ID昇順で並ぶ	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ（受注ID昇順でない投入順の複数受注）	"1. エンドポイントへGET送信する
-2. 返る配列の並び順を確認する"	配列要素が受注ID（netBuyOrderId）の昇順で並ぶこと。
+2. 返る配列の並び順を確認する"	配列要素が受注ID（netBuyOrderId）の昇順で並ぶこと。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-030	IT-32	レスポンス	P3	応答本体がラッパなしの受注オブジェクト配列である	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ	"1. エンドポイントへGET送信する
-2. レスポンス本体の形を確認する"	応答本体がラッパオブジェクトや件数フィールドを持たない受注オブジェクトの配列であること。
+2. レスポンス本体の形を確認する"	応答本体がラッパオブジェクトや件数フィールドを持たない受注オブジェクトの配列であること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-031	IT-32	リクエスト	P3	想定外クエリパラメータがあっても200で無視される	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ＋想定外のクエリパラメータ（項目名と値のセット）	"1. 想定外クエリ付きでGET送信する
-2. HTTPステータスとレスポンス本文を確認する"	想定外パラメータがあってもエラーにならず、HTTPステータス200で査定対象配列が返ること。
+2. HTTPステータスとレスポンス本文を確認する"	想定外パラメータがあってもエラーにならず、HTTPステータス200で査定対象配列が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-032	IT-32	レスポンス	P2	applyDateがISO8601形式で返る	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ	"1. エンドポイントへGET送信する
-2. applyDateの書式を確認する"	applyDateがISO8601形式の日時文字列で返ること（付帯表4#2に仕様乖離）。
+2. applyDateの書式を確認する"	applyDateがISO8601形式の日時文字列で返ること（付帯表4#2に仕様乖離）。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-033	IT-32	レスポンス	P3	フリーコメント未設定の受注でfreeCommentがnullとなる	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ（フリーコメント未設定の受注を含む）	"1. エンドポイントへGET送信する
-2. 該当受注のfreeCommentを確認する"	フリーコメント未設定の受注でfreeCommentがnullで返ること（付帯表4#3に仕様乖離）。
+2. 該当受注のfreeCommentを確認する"	フリーコメント未設定の受注でfreeCommentがnullで返ること（付帯表4#3に仕様乖離）。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-034	IT-32	レスポンス	P3	会員が紐づかない受注でmemberNameがnullとなる	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ（会員未割当の受注を含む）	"1. エンドポイントへGET送信する
-2. 該当受注のmemberNameを確認する"	申込者を登録した会員が紐づかない受注でmemberNameがnullで返ること（付帯表4#4に仕様乖離）。
+2. 該当受注のmemberNameを確認する"	申込者を登録した会員が紐づかない受注でmemberNameがnullで返ること（付帯表4#4に仕様乖離）。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-035	IT-32	レスポンス	P2	netBuyOrderIdとnetOrderStatusIdがinteger型で既知値どおり返る	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ（応答主要フィールドの既知値を持つ受注）	"1. エンドポイントへGET送信する
-2. 該当受注のnetBuyOrderId・netOrderStatusIdの型と値を確認する"	netBuyOrderIdとnetOrderStatusIdがinteger型で、いずれもシード既知値どおりに返ること（付帯表4#5に仕様乖離）。
+2. 該当受注のnetBuyOrderId・netOrderStatusIdの型と値を確認する"	netBuyOrderIdとnetOrderStatusIdがinteger型で、いずれもシード既知値どおりに返ること（付帯表4#5に仕様乖離）。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-036	IT-32	レスポンス	P2	customerInfoの文字列フィールドが型と既知値で返る	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ（申込者情報の既知値を持つ受注）	"1. エンドポイントへGET送信する
-2. 該当受注のcustomerInfo.firstName・lastName・telNo・zipcodeの型と値を確認する"	customerInfo.firstName・lastName・telNo・zipcodeがいずれもstring型で、シード既知値どおりに返ること。
+2. 該当受注のcustomerInfo.firstName・lastName・telNo・zipcodeの型と値を確認する"	customerInfo.firstName・lastName・telNo・zipcodeがいずれもstring型で、シード既知値どおりに返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-037	IT-32	レスポンス	P2	住所が都道府県名・住所1・住所2の連結となる	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ（都道府県・住所1・住所2を持つ受注）	"1. エンドポイントへGET送信する
-2. 該当受注のcustomerInfo.addressを確認する"	customerInfo.addressが都道府県名・住所1・住所2を半角空白区切りで連結した文字列で返ること。
+2. 該当受注のcustomerInfo.addressを確認する"	customerInfo.addressが都道府県名・住所1・住所2を半角空白区切りで連結した文字列で返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-040	IT-10	エラー	P3	整形処理中の例外時に500相当が返る	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER"	受注取得・整形処理中に例外を誘発するシナリオ	"1. 例外を誘発する状態でGET送信する
-2. HTTPステータスを確認する"	受注取得・整形処理中に例外が発生した場合、共通例外処理によりHTTPステータス500相当が返ること。
+2. HTTPステータスを確認する"	受注取得・整形処理中に例外が発生した場合、共通例外処理によりHTTPステータス500相当が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-041	IT-10	エラー	P3	タイムアウト時の応答を実機観測する（期待値非固定）	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER"	タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してGET送信する
-2. 応答を確認する"	タイムアウト時の具体的な応答内容は正本mdに定義が無いため期待値を固定せず、実機でHTTPステータスと応答本文を観測し記録する（要実機確認）。
+2. 応答を確認する"	タイムアウト時の具体的な応答内容は正本mdに定義が無いため期待値を固定せず、実機でHTTPステータスと応答本文を観測し記録する（要実機確認）。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-042	IT-10	障害	P2	DB障害時の応答を実機観測する（期待値非固定）	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER"	データ取得時のDB障害を誘発するシナリオ	"1. DB障害を誘発してGET送信する
-2. 応答を確認する"	DB障害時の具体的な応答・挙動は正本mdに定義が無いため期待値を固定せず、実機でHTTPステータスと応答本文を観測し記録する（要実機確認）。
+2. 応答を確認する"	DB障害時の具体的な応答・挙動は正本mdに定義が無いため期待値を固定せず、実機でHTTPステータスと応答本文を観測し記録する（要実機確認）。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-043	IT-10	重複・順序	P3	同一トークンの反復取得で副作用なく同一結果が返る	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ	"1. 同一トークンでGET送信を複数回・順不同に行う
-2. 各応答とDB状態を確認する"	複数回・順不同に取得しても副作用なく同一の受注配列が返ること。
+2. 各応答とDB状態を確認する"	複数回・順不同に取得しても副作用なく同一の受注配列が返ること。				
 a07-02_api_online_purchase_buy_order_list（API_オンライン仕入_買取注文一覧）	E2E-A07-02-050	IT-20	追跡情報	P3	ログに個人情報・トークン原値が平文出力されない	"SEED-A07-02-JWT-VALID
 SEED-A07-02-MEMBER
 SEED-A07-02-ORDERS-ASSESS"	有効なjwt-tokenヘッダ／認証失敗トークン	"1. 正常／認証失敗リクエストでGET送信する
-2. アプリケーションログの該当エントリを確認する"	一覧取得・認証失敗のログに申込者の氏名・電話番号・郵便番号・住所等の個人情報およびトークン原値が平文出力されないこと。
+2. アプリケーションログの該当エントリを確認する"	一覧取得・認証失敗のログに申込者の氏名・電話番号・郵便番号・住所等の個人情報およびトークン原値が平文出力されないこと。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

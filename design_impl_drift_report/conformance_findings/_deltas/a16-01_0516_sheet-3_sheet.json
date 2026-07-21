@@ -1,0 +1,60 @@
+{
+  "functionId": "a16-01_0516_sheet-3_sheet",
+  "featureNo": "A16-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0516_基本設計仕様書(API_データ管理).html#sheet-3:955",
+      "designExpectation": "レスポンス（成功）はHTTP 200で、トップバナー情報をJSONで返す。詳細設計の応答フィールドは id, imageUrl, link, dispType, languages[].id, languages[].nameJp, languages[].nameEn, languages[].code とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php:41",
+      "implementationActual": "TopBannerResponseBuilder は id, image_url, link, disp_type, languages[].id, languages[].name_jp, languages[].name_en, languages[].code を返す。ContentController はこの配列をそのまま JSON 200 で返す。",
+      "mismatchReason": "詳細設計埋め込み部ではプロパティは camelCase と明記され、サンプルも imageUrl/dispType/nameJp/nameEn である。一方、実装の単一整形層は snake_case の image_url/disp_type/name_jp/name_en を構築しており、Controller 側にも camelCase 変換処理はない。反証検索では src/Eccube/Controller/App、src/Eccube/Service/App、src/Eccube/Exception/App、src/Eccube/EventListener 配下で TopBannerResponseBuilder/topBanner/imageUrl/dispType/nameJp/nameEn を確認したが、当該API用の別整形層は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "画像URLフィールド",
+          "design": "imageUrl",
+          "implementation": "image_url（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php:43）",
+          "mismatch": "camelCase 指定に対して snake_case を返す"
+        },
+        {
+          "item": "表示タイプフィールド",
+          "design": "dispType",
+          "implementation": "disp_type（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php:45）",
+          "mismatch": "camelCase 指定に対して snake_case を返す"
+        },
+        {
+          "item": "言語名フィールド",
+          "design": "languages[].nameJp / languages[].nameEn",
+          "implementation": "languages[].name_jp / languages[].name_en（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php:35）",
+          "mismatch": "camelCase 指定に対して snake_case を返す"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0516_基本設計仕様書(API_データ管理).html#sheet-3:958",
+      "designExpectation": "レスポンス（失敗）は、該当IDのトップバナーが存在しない場合にHTTP 404で本文 {code, message}（\"Not Found\"）を返す。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:70",
+      "implementationActual": "該当なし時は NotFoundException('Not Found') を投げ、catch(BaseApiException) で {'code': 404, 'errors': ['Not Found']} を返す。",
+      "mismatchReason": "設計は失敗本文の形を {code, message} としているが、実装は message キーを返さず errors 配列を返す。NotFoundException は errors にメッセージを保持し、ContentController は getErrors() を errors キーで JSON 化している。反証検索では ContentController、BaseApiException、NotFoundException、ExceptionListener を確認したが、この経路で {code,message} に変換する処理はない。",
+      "comparisonRows": [
+        {
+          "item": "404本文キー",
+          "design": "{code, message}",
+          "implementation": "{code, errors}（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:71）",
+          "mismatch": "message キーがなく errors 配列になっている"
+        },
+        {
+          "item": "404メッセージ値",
+          "design": "message: \"Not Found\"",
+          "implementation": "errors: ['Not Found']（/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php:29）",
+          "mismatch": "値の内容は同等だが配置フィールドが設計と異なる"
+        }
+      ]
+    }
+  ]
+}

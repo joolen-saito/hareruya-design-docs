@@ -1,0 +1,20 @@
+{
+  "chunkId": "b05-06_0405_sheet-8_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-06_0405_sheet-8_sheet.json#b05-06_0405_sheet-8_sheet-conformance-e6e3f693094f",
+      "refuted": true,
+      "reason": "設計は自ら『確認値はpf-eccube3の…注文番号取得処理…を正とする』『挙動はpf-eccube3を参照』(設計1692-1693行) と宣言しており、現行の注文番号取得はpf-eccube3の Plugin\\HareruyaEc\\Util\\OrderUtil::getOrderNumbers() が `dtb_order_sub.order_number`（$orderSub->getOrderNumber(), dcm.yml column: order_number）から取得している。ec-cube-enterprise 実装の OrderUtil::getOrderNumbers()（src/Eccube/Util/OrderUtil.php:37）が使う $order->getOrderNumber() は Order.php:647 の `order_number`（コメント『注文番号』, length11 unsigned）を返し、これは現行 dtb_order_sub.order_number を統合した正しい移行先。一方 Order.php:464 の `order_no` は length255・コメント無しの別カラム（EC-CUBE標準の受注番号）で意味的にも別物。設計が literal に挙げる `order_no`（1706行 移行表・1736行 DBカラム表）は、同じ 1736 行 DBカラム表を『二次的なリバース設計の列一覧』として退けた姉妹指摘 74e46f196f17（REFUTED）と同一の弱い記述に依拠しており、authoritative な現行挙動と『注文番号』コメント付きカラムはいずれも order_number を指す。実装は現行踏襲かつ意味的に正しく、実装違いとは確定できない。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-06_0405_sheet-8_sheet.json#b05-06_0405_sheet-8_sheet-conformance-0df2068bef25",
+      "refuted": false,
+      "reason": "反証は失敗し指摘は維持。実装は MailService::sendOrderDuplicateNotificationMail() 内で TransportExceptionInterface を catch し log_critical($e->getMessage()) のみ（void, 再throwなし; src/Eccube/Service/MailService.php:2270-2275）、CheckDuplicatePointAction::handle() 経由でも例外は Command に届かず $io->error()（CheckDuplicatePointCommand.php:50-57）に到達しない。log_critical はログファイル出力でコンソールではない。さらに設計が正とする現行 pf-eccube3 は逆にコンソール出力する: sendOrderDuplicateNotificationMail() は $this->app->mail() を try/catch 無しで呼び（MailService.php:1465）、OrderBatch::execute() も $batch->execute() を try/catch 無しで実行（OrderBatch.php:51）するため送信例外は Symfony コンソールへ未捕捉で伝播する。よって literal 設計要求（1732,1742行）と現行挙動の双方が送信エラーのコンソール出力を求めるのに対し、enterprise 実装だけが握りつぶしており実装違い。別出力経路も無し。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-06_0405_sheet-8_sheet.json#b05-06_0405_sheet-8_sheet-conformance-be42ae5d79ec",
+      "refuted": false,
+      "reason": "反証は失敗し指摘は維持。実装の開始 $io->text('ポイント二重登録チェックバッチ開始')（CheckDuplicatePointCommand.php:46）と完了 $io->success(...)（同60,62行）に日時が無く、Command・Action ともに date/DateTime/format/Y-m-d/H:i の呼び出しが皆無であることを rg で確認、コンソール出力にタイムスタンプを付与する ConsoleEvent 系サブスクライバも存在しない。設計が正とする pf-eccube3 の OrderBatch::execute() は成功時にコンソール開始/完了出力を持たない一方、コマンド不一致時のコンソール文言に `date('Y/m/d H:i')` を前置しており（OrderBatch.php:42,45）、現行のバッチコンソール出力規約は日時前置を含む。設計 1745行『開始・完了のコンソール出力（日時付き）』の開始/完了コンソール出力は enterprise 実装の $io->text/$io->success に対応し、追加要求の日時のみが未実装。別実装で日時を補う箇所も無いため、日時付き要求は満たされていない。"
+    }
+  ]
+}

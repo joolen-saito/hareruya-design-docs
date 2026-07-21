@@ -1,0 +1,78 @@
+{
+  "functionId": "m12-01_0211_sheet-4_sheet",
+  "featureNo": "M12-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1141",
+      "designExpectation": "集計は売上として計上できるもののみとし、注文ステータスが「出荷完了」の注文だけを集計対象とする。",
+      "implRef": "src/Eccube/Repository/DtbDailySummaryRepository.php:42; src/Eccube/Repository/DtbDailySummaryRepository.php:62; src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37",
+      "implementationActual": "日次集計バッチの受注集計SQLは dtb_order を order_date 範囲と base_info_id で集計しており、order_status_id や OrderStatus::DELIVERED の条件がない。",
+      "mismatchReason": "DtbDailySummaryRepository::aggregateOrderSummaryByBaseInfo は dtb_order の全ステータスを対象に subtotal + delivery_fee_total + charge を合算する。SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepositoryを OrderStatus/order_status/DELIVERED/出荷完了 で反証検索したが、本集計に適用されるステータス条件は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "受注の集計対象",
+          "design": "注文ステータスが「出荷完了」の注文のみ集計する。",
+          "implementation": "dtb_order を order_date 範囲で抽出し、order_status_id 条件なしで集計する。",
+          "mismatch": "出荷完了以外の注文も売上集計に含まれ得る。"
+        },
+        {
+          "item": "バッチ集計入力",
+          "design": "売上として計上できる注文だけを事前集計する。",
+          "implementation": "BatchAggregateDailySummaryAction が aggregateOrderSummaryByBaseInfo の結果をそのまま dtb_daily_summary に登録する。",
+          "mismatch": "事前集計テーブル作成時点で設計の売上計上条件が反映されない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1149",
+      "designExpectation": "売上集計用に検索項目に出力するフラグを店舗管理に持たせ、そのフラグで集計対象(各店舗)の店舗一覧を出力する。",
+      "implRef": "src/Eccube/Repository/BaseInfoRepository.php:198; src/Eccube/Repository/BaseInfoRepository.php:203; src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:117; src/Eccube/Entity/BaseInfo.php:1548",
+      "implementationActual": "集計対象(各店舗)の選択肢は BaseInfoRepository::getPublicTenantShopsForSummary が isPublicShop=true のテナント店舗を取得している。店舗管理フォームには is_public_shop/is_open_shop はあるが、売上集計用の検索項目出力フラグは見つからない。",
+      "mismatchReason": "設計は売上集計専用の出力フラグ追加を要求しているが、実装は公開フラグ is_public_shop を店舗候補条件に流用している。売上集計への表示可否を公開状態とは独立して制御できない。反証検索語 売上集計用/検索項目.*出力/summary.*flag/sales.*flg/is_.*summary でも専用列・Form項目・Twig項目・migration は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "店舗管理のフラグ",
+          "design": "売上集計用に検索項目へ出力するフラグを店舗管理に追加する。",
+          "implementation": "dtb_base_info には is_public_shop/is_open_shop があり、MallTenantShopType は公開/開店を編集する。",
+          "mismatch": "売上集計専用フラグが存在しない。"
+        },
+        {
+          "item": "店舗一覧の抽出条件",
+          "design": "売上集計用フラグにより検索項目へ出力する店舗を制御する。",
+          "implementation": "getPublicTenantShopsForSummary は isPublicShop=true のテナントを取得する。",
+          "mismatch": "公開フラグと売上集計表示フラグが同一扱いになっている。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-4:1249",
+      "designExpectation": "期間内で集計結果が無い日付・月は、表示項目の各列を0として一覧へ補完する。",
+      "implRef": "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75; src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126; src/Eccube/Repository/DtbDailySummaryRepository.php:304; src/Eccube/Repository/DtbMonthlySummaryRepository.php:83; src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:101",
+      "implementationActual": "AnalysisSummaryBuilder は日次/月次ともサマリーテーブルから取得できた行だけを整形して返す。Repository も指定範囲の既存行を SELECT するだけで、期間内の日付・月を列挙して0行を生成する処理がない。",
+      "mismatchReason": "SummaryController、Analysis配下Service、DtbDailySummaryRepository、DtbMonthlySummaryRepository、summary.twig を 補完/DatePeriod/DateInterval/P1D/P1M/zero/0で で反証検索したが、欠落日付・欠落月を0で補う処理は見つからなかった。Twig の default(0) は既存行の欠落属性を0表示するだけで、存在しない日付・月の行は作らない。",
+      "comparisonRows": [
+        {
+          "item": "欠落日付・月の表示",
+          "design": "集計結果に存在しない日付・月も0行として一覧へ補完する。",
+          "implementation": "fetchSummaryRowsByDateRangeAndTargets / fetchSummaryRowsByMonthRangeAndTargets は既存サマリー行だけを返す。",
+          "mismatch": "データが無い日付・月の行が一覧から欠落する。"
+        },
+        {
+          "item": "バッチ登録データ",
+          "design": "期間内の結果なし日付・月も表示項目を0として扱う。",
+          "implementation": "BatchAggregateDailySummaryAction は order/purchase/waste/shortage のいずれかに行がある base_info だけを summaries に追加する。",
+          "mismatch": "完全に0件の店舗・日はサマリーテーブルへ登録されず、表示側でも補完されない。"
+        }
+      ]
+    }
+  ]
+}

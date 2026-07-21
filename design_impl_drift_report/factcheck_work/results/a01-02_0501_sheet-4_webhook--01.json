@@ -1,0 +1,57 @@
+{
+  "chunkId": "a01-02_0501_sheet-4_webhook--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a01-02_0501_sheet-4_webhook.json#a01-02_0501_sheet-4_webhook-conformance-a1ee892cf844",
+      "functionId": "a01-02_0501_sheet-4_webhook",
+      "featureNo": "A01-02",
+      "title": "A01-02 スマレジwebhook連携エラー再連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は在庫変動履歴を『取引更新時間 バッチ駆動時間(X)からY時間前(X-Y hours、★1では5時間前)』の時間幅で取得するよう要求しているが、再連携バッチは日付単位(target_date)でしか取得しておらず、時間幅の計算・指定が存在しない。",
+      "reason": "設計HTML 1384行の★1『APIでバッチ駆動時間から5時間前までの間のスマレジの在庫変動履歴データを取得する』および1403行の入力データ検索条件『スマレジ在庫変動履歴データ.取引更新時間 バッチ駆動時間(X)からバッチ駆動時間よりY時間前(X-Y hours)の間』が、時間幅(開始時刻〜終了時刻)ベースの取得を要求している。実装側は SmaregiStockBackfillCommand が引数 target-date(日付、未指定時は駆動日)のみを受け取り(44行)、SmaregiStockBackfillAction.handle は target_date を Y-m-d 日付として扱い(67-69行)、listStockChanges クエリに target_date/page/limit のみを渡す(169-179行)。SmaregiStockApiClient.listStockChanges もクエリをそのまま透過するだけ(158-183行)で、from/to 時刻や hours 幅のパラメータは無い。src/Eccube/Service/Smaregi 配下および Command を rg で hours|DateInterval|PT5H|modify|updated_from|target_time 等で走査したが、時間幅を計算・指定する箇所は皆無。取得範囲が日付単位に留まり、設計の X-Y hours 時間幅・5時間前という検索条件を満たしていないため実装違いと判定。バッチ機構自体は存在するため実装漏れではなく実装違い。",
+      "designEvidence": {
+        "label": "設計要求(★1 処理概要 と 入力データ検索条件)",
+        "path": "hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html",
+        "start": 1384,
+        "end": 1403,
+        "contains": [
+          "APIでバッチ駆動時間から5時間前までの間",
+          "バッチ駆動時間(X)からバッチ駆動時間よりY時間前(X-Y hours)の間"
+        ]
+      },
+      "implEvidence": [
+        {
+          "label": "バッチ引数は日付のみ",
+          "note": "取得条件は target-date 日付のみで時間幅指定が無い",
+          "path": "ec-cube-enterprise/src/Eccube/Command/SmaregiStockBackfillCommand.php",
+          "start": 44,
+          "end": 44,
+          "contains": ["target-date", "取得対象日 (未指定時は駆動日)"]
+        },
+        {
+          "label": "APIクエリは target_date/page/limit のみ",
+          "note": "取引更新時間の X-Y hours 範囲条件がクエリに存在しない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Stock/SmaregiStockBackfillAction.php",
+          "start": 175,
+          "end": 179,
+          "contains": ["'target_date' => $targetDate", "'limit' => (string) self::PAGE_LIMIT"]
+        },
+        {
+          "label": "target_date は日付として整形",
+          "note": "未指定時は当日 Y-m-d。時間幅ではなく日付単位。",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Stock/SmaregiStockBackfillAction.php",
+          "start": 66,
+          "end": 69,
+          "contains": ["->format('Y-m-d')"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -n 'hours|hour|PT5H|DateInterval|modify\\(|sub\\(|target_time|from_time|to_time|updated_from|updated_to' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Stock /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiStockBackfillCommand.php",
+        "rg -rn 'target_date|targetDate' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Stock/"
+      ]
+    }
+  ]
+}

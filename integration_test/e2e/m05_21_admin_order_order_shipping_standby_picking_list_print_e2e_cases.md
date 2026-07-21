@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m05_21_admin_order_order_shipping_standby_picking_list_print_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・HTTP応答・URL・別ウィンドウ生成などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は**画面タイプ=print**（一覧の一括フォームから別ウィンドウへ POST し、子ウィンドウが単体HTMLのピッキングリストを表示しブラウザ印刷に委ねる）。ダウンロード/印刷発火・HTTP応答・別ウィンドウ生成・単体ページの存在までを自動化対象とし、**印刷物の内容（集計値・価格帯振り分け・商品名解体・色/レラ抽出・Foil表示・数量太字等）と印刷ダイアログは手動**とする。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・HTTP応答・URL・別ウィンドウ生成などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は**画面タイプ=print**（一覧の一括フォームから別ウィンドウへ POST し、子ウィンドウが単体HTMLのピッキングリストを表示しブラウザ印刷に委ねる）。ダウンロード/印刷発火・HTTP応答・別ウィンドウ生成・単体ページの存在までを自動化対象とし、**印刷物の内容（集計値・価格帯振り分け・商品名解体・色/レラ抽出・Foil表示・数量太字等）と印刷ダイアログは手動**とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 刷新先 `ec-cube-enterprise` に当該画面は存在する（`Controller/Admin/Order/ShippingStandbyController.php` の `edit`／`printPickingList`、`Resource/template/admin/ShippingStandby/edit.twig`／`picking_list.twig`）。設計書は pf-eccube3 のリバースだが、本ルートの処理フロー・画面構成は刷新先と一致する（404/別ウィンドウPOST/単体HTML/印刷ボタン）。乖離・要確認は付帯表4。
 
@@ -24,31 +24,31 @@
 | IT-23 | DB検索（order_ids絞り込み結果は手動/間接、内部値は対象外） |
 | IT-26 | 更新内容（本ルートは更新を行わないため対象外） |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-001	IT-25	操作起点	P1	編集画面に「ピッキングリスト印刷」ボタンが表示される	ログイン済／SEED-M05-21-STANDBY	—	"1. 出荷指示リスト編集画面（/{admin_route}/standby/{id}/edit）を開く"	「ピッキングリスト印刷」ボタンが表示されること。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-002	IT-25	UI部品	P2	編集画面に一括フォームと受注チェック（初期オン）・全選択チェックが表示される	ログイン済／SEED-M05-21-STANDBY（受注あり）	—	"1. 編集画面を開く"	一括フォーム（id=form_bulk）と全選択チェック（check-all）、各受注行のチェック（order_ids[注文ID]）が初期チェックオンで表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-001	IT-25	操作起点	P1	編集画面に「ピッキングリスト印刷」ボタンが表示される	ログイン済／SEED-M05-21-STANDBY	—	1. 出荷指示リスト編集画面（/{admin_route}/standby/{id}/edit）を開く	「ピッキングリスト印刷」ボタンが表示されること。				
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-002	IT-25	UI部品	P2	編集画面に一括フォームと受注チェック（初期オン）・全選択チェックが表示される	ログイン済／SEED-M05-21-STANDBY（受注あり）	—	1. 編集画面を開く	一括フォーム（id=form_bulk）と全選択チェック（check-all）、各受注行のチェック（order_ids[注文ID]）が初期チェックオンで表示されること。				
 m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-010	IT-03	画面遷移	P1	印刷ボタン押下で別ウィンドウにピッキング単体ページが開く	ログイン済／SEED-M05-21-STANDBY（受注あり）	受注チェックは初期のまま維持	"1. 編集画面を開く
-2. 「ピッキングリスト印刷」ボタンを押下"	別ウィンドウ（newwin）が開き、その URL が印刷ルート（/{admin_route}/standby/{id}/print/picking）であり、ピッキングリスト単体ページの印刷ボタン（#printButton）が表示されること（印刷ボタン文言「印刷する」は admin.common.print＝実装リソース由来のため期待値固定しない）。
+2. 「ピッキングリスト印刷」ボタンを押下"	別ウィンドウ（newwin）が開き、その URL が印刷ルート（/{admin_route}/standby/{id}/print/picking）であり、ピッキングリスト単体ページの印刷ボタン（#printButton）が表示されること（印刷ボタン文言「印刷する」は admin.common.print＝実装リソース由来のため期待値固定しない）。				
 m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-011	IT-03	画面遷移	P2	印刷ウィンドウを開いても親画面は編集画面のまま	ログイン済／SEED-M05-21-STANDBY（受注あり）	—	"1. 編集画面を開く
-2. 印刷ボタンを押下し別ウィンドウを開く"	親ページのURLが編集画面（/{admin_route}/standby/{id}/edit）のまま変わらないこと。
+2. 印刷ボタンを押下し別ウィンドウを開く"	親ページのURLが編集画面（/{admin_route}/standby/{id}/edit）のまま変わらないこと。				
 m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-012	IT-18	フォーマット定義	P2	ピッキング単体ページに列見出しが表示される	ログイン済／SEED-M05-21-STANDBY（対象帯に明細あり）	受注チェックは初期のまま維持（order_idsを送信）	"1. 編集画面を開く
-2. 「ピッキングリスト印刷」ボタンを押下し別ウィンドウを開く（order_idsをPOST）"	別ウィンドウの単体ページに列見出し「No」「棚番号」「言語/状態」「略称」「色/R」「数」「商品名」「価格」「備考」が表示されること（列見出しは明細のある帯にのみ描画されるため、order_idsを送信するPOST経路で確認する。GET直叩きはorder_ids空で明細が出ない場合がある）。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-013	IT-03	外部画面	P2	ピッキング単体ページは共通管理フレームを使わない単体HTMLである	ログイン済／SEED-M05-21-STANDBY	—	"1. 印刷単体ページを表示する"	印刷ボタン帯（.printBox／#printButton）と本文（.ContentsAll）を持つ単体HTMLが返り、共通管理ナビゲーションを含まないこと。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-014	IT-25	URL	P2	ピッキング単体ページが pickinglist.css を読み込む	ログイン済／SEED-M05-21-STANDBY	—	"1. 印刷単体ページを表示する"	stylesheet link の href に assets/css/pickinglist.css を含むこと。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-015	IT-16	実行結果	P1	印刷URL（GET）に有効idで直接アクセスしHTTP200・text/htmlが返る	ログイン済／SEED-M05-21-STANDBY	id＝有効な出荷指示リストID	"1. /{admin_route}/standby/{id}/print/picking へGETでアクセス"	HTTP200が返り、Content-Type が text/html であること。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-016	IT-25	HTTPステータス	P3	ピッキング単体ページが<title>を持つ単体HTMLである	ログイン済／SEED-M05-21-STANDBY	—	"1. 印刷単体ページを表示する"	印刷用の単体HTMLが返り、<title>要素が存在し非空であること（タイトル文言「ピッキングリスト」はTwig静的文言＝実装由来のため期待値固定しない。文言一致は補助確認）。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-020	IT-25	HTTPステータス	P1	存在しないidで印刷URLにアクセスすると404	ログイン済	id＝存在しない出荷指示リストID	"1. /{admin_route}/standby/{存在しないid}/print/picking へアクセス"	HTTP404が返ること。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-021	IT-15	未認証	P1	未ログインで印刷URLに直接アクセスすると管理ログインへ誘導される	未ログイン	—	"1. 未ログイン状態で /{admin_route}/standby/{id}/print/picking へアクセス"	管理ログイン画面へ誘導されること。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-023	IT-13	URL直接アクセス	P2	未ログインで編集URLに直接アクセスすると管理ログインへ誘導される	未ログイン	—	"1. 未ログイン状態で /{admin_route}/standby/{id}/edit へアクセス"	管理ログイン画面へ誘導されること。
+2. 「ピッキングリスト印刷」ボタンを押下し別ウィンドウを開く（order_idsをPOST）"	別ウィンドウの単体ページに列見出し「No」「棚番号」「言語/状態」「略称」「色/R」「数」「商品名」「価格」「備考」が表示されること（列見出しは明細のある帯にのみ描画されるため、order_idsを送信するPOST経路で確認する。GET直叩きはorder_ids空で明細が出ない場合がある）。				
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-013	IT-03	外部画面	P2	ピッキング単体ページは共通管理フレームを使わない単体HTMLである	ログイン済／SEED-M05-21-STANDBY	—	1. 印刷単体ページを表示する	印刷ボタン帯（.printBox／#printButton）と本文（.ContentsAll）を持つ単体HTMLが返り、共通管理ナビゲーションを含まないこと。				
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-014	IT-25	URL	P2	ピッキング単体ページが pickinglist.css を読み込む	ログイン済／SEED-M05-21-STANDBY	—	1. 印刷単体ページを表示する	stylesheet link の href に assets/css/pickinglist.css を含むこと。				
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-015	IT-16	実行結果	P1	印刷URL（GET）に有効idで直接アクセスしHTTP200・text/htmlが返る	ログイン済／SEED-M05-21-STANDBY	id＝有効な出荷指示リストID	1. /{admin_route}/standby/{id}/print/picking へGETでアクセス	HTTP200が返り、Content-Type が text/html であること。				
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-016	IT-25	HTTPステータス	P3	ピッキング単体ページが<title>を持つ単体HTMLである	ログイン済／SEED-M05-21-STANDBY	—	1. 印刷単体ページを表示する	印刷用の単体HTMLが返り、<title>要素が存在し非空であること（タイトル文言「ピッキングリスト」はTwig静的文言＝実装由来のため期待値固定しない。文言一致は補助確認）。				
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-020	IT-25	HTTPステータス	P1	存在しないidで印刷URLにアクセスすると404	ログイン済	id＝存在しない出荷指示リストID	1. /{admin_route}/standby/{存在しないid}/print/picking へアクセス	HTTP404が返ること。				
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-021	IT-15	未認証	P1	未ログインで印刷URLに直接アクセスすると管理ログインへ誘導される	未ログイン	—	1. 未ログイン状態で /{admin_route}/standby/{id}/print/picking へアクセス	管理ログイン画面へ誘導されること。				
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-023	IT-13	URL直接アクセス	P2	未ログインで編集URLに直接アクセスすると管理ログインへ誘導される	未ログイン	—	1. 未ログイン状態で /{admin_route}/standby/{id}/edit へアクセス	管理ログイン画面へ誘導されること。				
 m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	E2E-M05-21-022	IT-27	出力失敗	P2	チェックを全て外して印刷するとorder_idsが空集合になる（ふるまい要確認）	ログイン済／SEED-M05-21-STANDBY（受注あり）	order_ids＝空	"1. 編集画面を開く
 2. 全チェックを外す
-3. 「ピッキングリスト印刷」を押下"	order_ids が空で送信され、空集合扱い（明細なし）または実行時エラーとなること（設計書上ORMとDB方言依存でふるまいが定まらず要確認）。
+3. 「ピッキングリスト印刷」を押下"	order_ids が空で送信され、空集合扱い（明細なし）または実行時エラーとなること（設計書上ORMとDB方言依存でふるまいが定まらず要確認）。				
 ```
 
-## 手動テストケースTSV（10列固定・印刷物の内容/選択フィルタ＝ブラウザ自動オラクル化困難なため手動）
+## 手動テストケースTSV（14列固定・末尾4列は実施管理欄・印刷物の内容/選択フィルタ＝ブラウザ自動オラクル化困難なため手動）
 
 印刷物の集計内容・価格帯振り分け・色レラ抽出・Foil・数量太字・略称削除と、order_ids選択フィルタの含む/含まないは「印刷された紙面（または別ウィンドウの本文）」の目視判定が一次オラクルであり自動化対象外（付帯表2/2bで手動・間接に分類済み）。監査可能性のため、各手動観点を実行可能なテストID・前提・期待結果として実体化する。期待結果は設計書「集計条件」「価格帯とサプライ振り分けの判定順序」「業務ルール・計算」「画面上の一覧列とデータ対応」由来。
 

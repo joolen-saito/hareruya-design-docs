@@ -1,0 +1,62 @@
+{
+  "functionId": "f06-04_0306_sheet-6_sheet",
+  "featureNo": "F06-04",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-6（入力項目・業務ルール・データ整合性・バリデーション各節）",
+      "designExpectation": "再設定画面の入力メールアドレスは形式検証（メール形式・空不可）のみで、会員登録メールとの一致照合は行わない。対象会員はリセットキーのみで特定する。",
+      "implRef": "src/Eccube/Controller/Front/ForgotController.php:189、src/Eccube/Repository/Views/RegisterCustomerViewRepository.php:143-160",
+      "implementationActual": "POST時に getRegularCustomerByResetKey($reset_key, $form->get('login_email')->getData()) を呼び、$email 指定時に 'AND c.email = :email' を付加してリセットキー＋メール完全一致で会員を特定する。不一致だと $Customer が null になり front.forgot.reset_not_found（『入力内容を確認してください。』）を表示し更新しない。",
+      "mismatchReason": "設計は再設定画面のメールを形式検証のみとし会員特定はリセットキー単独と明記するが、実装はリセットキー＋メール完全一致で特定しており、登録と異なるメール入力時に更新できない不一致エラーになる。",
+      "comparisonRows": [
+        {"item": "会員特定条件", "design": "リセットキー単独（メール一致照合なし）", "implementation": "リセットキー＋メール完全一致（AND c.email = :email）", "mismatch": "メール一致照合を追加している"},
+        {"item": "入力メール検証", "design": "形式検証（メール形式・空不可）のみ", "implementation": "形式検証に加え登録メールとの一致照合", "mismatch": "登録メール一致チェックが余分"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-6（パスワード再設定完了 レイアウト図／画面遷移／表示メッセージ節）",
+      "designExpectation": "検証成功時は専用の更新完了画面（Forgot/resetcomplete.twig）を表示。見出し『パスワード再設定』、本文『パスワードを変更しました。』、『戻る』ボタンでECTOPへ遷移。",
+      "implRef": "src/Eccube/Controller/Front/ForgotController.php:212-215、src/Eccube/Resource/template/default/Forgot/（resetcomplete.twig 不在）、src/Eccube/Resource/template/default/Mypage/login.twig:73-75",
+      "implementationActual": "更新成功時 addFlash('password_reset_complete', trans('front.forgot.reset_complete')) 後 redirectToRoute('mypage_login') で会員ログイン画面へ遷移し、ログイン画面上にフラッシュ『パスワードを更新しました。』を表示。専用完了テンプレートは存在せず、Forgotディレクトリは index/complete/reset.twig のみ。",
+      "mismatchReason": "設計は独立した更新完了画面（見出し・本文・戻るボタン→ECTOP）を要求するが、実装はログイン画面へリダイレクトしフラッシュ表示で代替。文言も『パスワードを変更しました。』ではなく『パスワードを更新しました。』。",
+      "comparisonRows": [
+        {"item": "完了画面", "design": "専用更新完了画面 resetcomplete.twig", "implementation": "mypage_login へリダイレクト＋フラッシュ", "mismatch": "専用完了画面が不在"},
+        {"item": "完了本文", "design": "パスワードを変更しました。", "implementation": "パスワードを更新しました。", "mismatch": "文言不一致"},
+        {"item": "遷移先ボタン", "design": "『戻る』ボタン→ECTOP", "implementation": "ログイン画面（戻るボタン相当なし）", "mismatch": "遷移導線が異なる"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-6（E-1/E-2 レイアウト図・判定順序・表示メッセージ節）",
+      "designExpectation": "再設定URL到達時、(1)キー不正→『アクセスできません。』エラー画面（E-1、トップへボタン）、(2)GET表示時に有効期限内の有効会員取得不可→『アクセスできません。／有効期限が切れているか、無効なURLです。』エラー画面（E-2）を判定別に表示。",
+      "implRef": "src/Eccube/Controller/Front/ForgotController.php:154-177、src/Eccube/Resource/locale/messages.ja.yaml:508（front.forgot.reset_error 未使用）",
+      "implementationActual": "reset() はキー書式不正時（:166-168）もリセットキーで会員取得不可時（:174-177）もGET/POST共通で throw NotFoundHttpException を投げ標準404画面（『お探しのページが見つかりません。』）を返す。専用文言 front.forgot.reset_error はロケール定義があるがコード上未使用。",
+      "mismatchReason": "設計はキー不正・キー失効（表示時）に『アクセスできません』系の専用エラー画面/文言を求めるが、実装は表示時も含め全ケースを一律404で処理し E-1/E-2 専用画面や reset_error 文言を出力しない。",
+      "comparisonRows": [
+        {"item": "キー不正表示", "design": "E-1『アクセスできません。』専用画面", "implementation": "404 NotFoundHttpException", "mismatch": "専用画面が不在"},
+        {"item": "GET失効/無効表示", "design": "E-2『アクセスできません。／有効期限が切れているか、無効なURLです。』専用画面", "implementation": "404 NotFoundHttpException", "mismatch": "専用画面・reset_error文言が不在"}
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-6（パスワード再設定完了 機能仕様／ログ・監査節）",
+      "designExpectation": "パスワード更新（リセット完了）成功時に完了ログを保存する（会員ID・メールアドレス・アクセス元グローバルIP）。",
+      "implRef": "src/Eccube/Controller/Front/ForgotController.php:186-215（更新成功パスに該当処理なし）",
+      "implementationActual": "reset() の更新成功パス（password ハッシュ化→UPDATE→イベント dispatch→addFlash→redirect）に log_info/log_warning 等のログ出力が一切ない。再発行メール送信時は :103 で完了ログを出すが、更新完了時の対応ログは存在しない。",
+      "mismatchReason": "設計はパスワード更新完了時に会員ID・メール・接続元IPを含む完了ログの保存を要求するが、実装の更新成功パスにはログ出力がなく完了ログのみ欠落している。",
+      "comparisonRows": [
+        {"item": "更新完了ログ", "design": "会員ID・メール・接続元IPを含む完了ログを保存", "implementation": "更新成功パスにログ出力なし", "mismatch": "完了ログ未実装"}
+      ]
+    }
+  ]
+}

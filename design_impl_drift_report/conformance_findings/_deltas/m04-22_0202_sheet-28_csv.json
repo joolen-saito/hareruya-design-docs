@@ -1,0 +1,84 @@
+{
+  "functionId": "m04-22_0202_sheet-28_csv",
+  "featureNo": "M04-22",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28:11639",
+      "designExpectation": "アップロードされたファイルがcsv以外のファイルの場合は登録処理実行時のエラーとする。",
+      "implRef": "不在（探索範囲: src/Eccube/Form/Type/Admin/StockMoveCsvImportType.php:110-120, src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:243-253, src/Eccube/Service/Csv/Importer/CsvImporter.php:138,172-173, src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:852）",
+      "implementationActual": "import_file は NotBlank と File(maxSize) のみで、csv 拡張子または MIME のサーバ側検証がない。画面の accept も text/csv,.csv,text/plain で text/plain を許可している。",
+      "mismatchReason": "mimeTypes / extensions / getClientOriginalExtension / text/csv / text/plain / csv_invalid_format / import_file を再検索したが、在庫移動CSV登録専用の csv 以外拒否処理は見つからない。Controller の admin.common.csv_invalid_format はファイル未指定時のみで、csv 以外でも内容がCSVとして読めれば取込処理へ進む。",
+      "comparisonRows": [
+        {
+          "item": "ファイル種別検証",
+          "design": "csv以外のファイルはエラー",
+          "implementation": "StockMoveCsvImportType は NotBlank と File(maxSize) のみ",
+          "mismatch": "csv限定の拡張子/MIME検証がない"
+        },
+        {
+          "item": "画面のファイル選択",
+          "design": "csvファイルをアップロード",
+          "implementation": "accept='text/csv,.csv,text/plain'",
+          "mismatch": "text/plain も選択可能"
+        },
+        {
+          "item": "Controllerのエラー条件",
+          "design": "csv以外の場合に登録処理エラー",
+          "implementation": "formFile === null の場合だけ csv_invalid_format を追加",
+          "mismatch": "非csvファイル判定がない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28:11642",
+      "designExpectation": "1ファイルあたりに登録できる商品点数の上限を10,000件に設定する。",
+      "implRef": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:252; src/Eccube/Controller/AbstractController.php:364; src/Eccube/Resource/locale/messages.ja.yaml:5440",
+      "implementationActual": "在庫移動CSV登録は AbstractController の ADMIN_CSV_IMPORT_MAX_ROWS=5010 を継承し、countCsvRows($formFile) >= 5010 でエラーにする。画面文言は10,000件だがサーバ判定は5010。",
+      "mismatchReason": "ADMIN_CSV_IMPORT_MAX_ROWS / 10000 / maxrecord を再検索したが、StockMoveTransferController 側に10,000件用の上限オーバーライドはない。同じ10,000件上限の StockChangeCsvController には 10002 への個別オーバーライドがあるため、在庫移動CSV登録は設計値と異なる共通上限のまま。",
+      "comparisonRows": [
+        {
+          "item": "登録上限",
+          "design": "1ファイルあたり10,000件",
+          "implementation": "ADMIN_CSV_IMPORT_MAX_ROWS=5010",
+          "mismatch": "設計値より低い件数でエラーになる"
+        },
+        {
+          "item": "表示と実処理",
+          "design": "上限10,000件として扱う",
+          "implementation": "表示文言は10,000件、Controllerは5010で判定",
+          "mismatch": "利用者表示とサーバ上限が一致しない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28:11673",
+      "designExpectation": "登録CSVの移動点数は数値、必須、0~999999999 の範囲とする。",
+      "implRef": "src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:68; src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:716; src/Eccube/Service/Csv/Importer/Event/StockMoveCsvImportHandler.php:284",
+      "implementationActual": "stockMoveQuantity は最大桁数なしの createUnsignedNumericColumn で定義され、NumericValidator のみが付く。StockMoveCsvImportHandler は <=0 を不正にするため0を拒否し、999999999上限を超える値を弾く専用検証はない。",
+      "mismatchReason": "999999999 / stockMoveQuantity / moveQuantityColumn / LessThanOrEqual / product_stock_change_quantity_max を再検索したが、在庫移動CSV登録の移動点数に 999999999 上限を適用する実装は見つからない。さらに設計の下限0に対し、実装は1以上を要求している。",
+      "comparisonRows": [
+        {
+          "item": "下限",
+          "design": "0~999999999",
+          "implementation": "(int) moveQuantity <= 0 でエラー",
+          "mismatch": "0の扱いが設計と異なる"
+        },
+        {
+          "item": "上限",
+          "design": "999999999まで",
+          "implementation": "NumericMaxLengthValidator や上限比較なし",
+          "mismatch": "上限999999999が実装されていない"
+        }
+      ]
+    }
+  ]
+}

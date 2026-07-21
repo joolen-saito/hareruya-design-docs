@@ -1,0 +1,66 @@
+{
+  "functionId": "m04-02_0202_sheet-6_sheet",
+  "featureNo": "M04-02",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-6:2371",
+      "designExpectation": "総原価及び商品ごとの原価単は一日単位で記録し、呼び出せるようにする",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: 日単位, 一日単位, daily cost, unit_cost date, total_cost date, 原価単価 日, 総原価 日, stock cost history）",
+      "implementationActual": "ProductStock は現在値の total_cost と getUnitCost() を持ち、DtbStockHistory は在庫変動時の unit_cost_price_before/after と total_cost_price_before/after を持つが、商品規格または在庫単位で1日ごとの総原価・原価単価を記録し呼び出す履歴テーブル、バッチ、Repository、APIは確認できなかった。DtbDailySummary は店舗別の日次売上集計、DtbWeeklyStockHistory は在庫数のみの週次履歴であり本要求の保存先ではない。",
+      "mismatchReason": "設計は一日単位の原価スナップショットと呼び出しを要求するが、実装は現在値または変動イベント単位の原価しか保持していない。",
+      "comparisonRows": [
+        {
+          "item": "保存粒度",
+          "design": "総原価・原価単価を一日単位で記録する",
+          "implementation": "ProductStock の現在値と DtbStockHistory の変動前後値のみ",
+          "mismatch": "日次スナップショットがない"
+        },
+        {
+          "item": "呼び出し口",
+          "design": "日単位で記録した原価を呼び出せる",
+          "implementation": "日付指定で商品規格単位の原価を取得する Repository/API/Command/Twig 導線なし",
+          "mismatch": "呼び出し機能がない"
+        },
+        {
+          "item": "反証検索",
+          "design": "日次原価履歴",
+          "implementation": "DtbDailySummary は店舗日次売上集計、DtbWeeklyStockHistory は stock_01 から stock_11 の在庫数のみ",
+          "mismatch": "類似テーブルは本要求を満たさない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-6:2484; /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-3:994",
+      "designExpectation": "識別ID:3-6 承認通知先（所属選択）は、共通処理識別ID1-1を参照し、編集している在庫を保持している店舗の所属マスターデータから取得し選択肢とする。共通処理では所属マスターから取得し、所属マスターデータの並び順項目の昇順で表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockApprovalType.php:224",
+      "implementationActual": "StockApprovalType::getDepartmentChoices() は memberRepository->findBy(['baseInfo' => $BaseInfo]) で対象店舗のメンバーを取得し、各 Member の Department 名を選択肢化している。DepartmentRepository または mtb_department を直接参照せず、mtb_department.sort_no 昇順でもない。",
+      "mismatchReason": "設計の選択肢ソースは店舗の所属マスターデータだが、実装は所属マスターではなく対象店舗に紐づくメンバーの所属から選択肢を作るため、所属マスターに存在しても該当メンバーがいない所属は表示されず、マスターの並び順も保証されない。",
+      "comparisonRows": [
+        {
+          "item": "選択肢ソース",
+          "design": "編集している在庫を保持している店舗の所属マスターデータから取得する",
+          "implementation": "対象店舗に紐づくメンバーの Department 名から重複排除して作成する",
+          "mismatch": "所属マスターそのものを参照していない"
+        },
+        {
+          "item": "並び順",
+          "design": "所属マスターデータの並び順項目の昇順",
+          "implementation": "memberRepository->findBy(['baseInfo' => $BaseInfo]) の結果順で Department 名を追加する",
+          "mismatch": "マスター sort_no 昇順が保証されない"
+        },
+        {
+          "item": "反証検索",
+          "design": "DepartmentRepository/mtb_department を利用する選択肢生成",
+          "implementation": "DepartmentRepository は存在するが StockApprovalType の所属選択肢生成には注入・利用されていない",
+          "mismatch": "別名ルート・翻訳キー・Repository 検索でも設計どおりの取得処理を確認できない"
+        }
+      ]
+    }
+  ]
+}

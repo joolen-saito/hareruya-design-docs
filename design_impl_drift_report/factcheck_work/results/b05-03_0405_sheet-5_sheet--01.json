@@ -1,0 +1,47 @@
+{
+  "chunkId": "b05-03_0405_sheet-5_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-03_0405_sheet-5_sheet.json#b05-03_0405_sheet-5_sheet-conformance-419e320f01a3",
+      "functionId": "b05-03_0405_sheet-5_sheet",
+      "featureNo": "B05-03",
+      "title": "B05-03 店頭注文番号初期化",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は削除と採番カウンタ初期化を単一トランザクションにまとめないと明記するが、実装は beginTransaction()〜commit() の1トランザクションで両テーブル操作と再登録をまとめている。",
+      "reason": "設計書（詳細設計 排他制御・トランザクション節）は line 1369 で『削除と採番カウンタ初期化は1トランザクションでまとめた更新ではなく、それぞれ独立した文として実行する』と明記し、line 1349（データ整合性）でも削除のみ成功しカウンタ初期化前に中断した途中状態を許容する前提を述べている。一方 TruncateWaitingNumberAction::handle() は line 36 で beginTransaction() し、truncate/persist/flush を行って line 53 で commit()、例外時は line 55 で rollback() する単一トランザクション構成である。両テーブル操作と再登録が同一トランザクションにまとめられており、削除のみ成功する途中状態は rollback で作られない。設計文と実装のトランザクション境界が逆になっており実装違いが事実。",
+      "designEvidence": {"label": "設計要求（排他制御・トランザクション/データ整合性）", "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html", "start": 1349, "end": 1369, "contains": ["削除と採番カウンタ初期化は1トランザクションでまとめた更新ではなく、それぞれ独立した文として実行する", "削除のみ成功してカウンタ初期化前に中断した場合でも"]},
+      "implEvidence": [{"label": "実装（単一トランザクション）", "note": "beginTransaction 開始・commit 終了で両テーブル操作をまとめる", "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php", "start": 36, "end": 55, "contains": ["$this->entityManager->beginTransaction();", "$this->entityManager->commit();", "$this->entityManager->rollback();"]}]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-03_0405_sheet-5_sheet.json#b05-03_0405_sheet-5_sheet-conformance-2f037235dc00",
+      "functionId": "b05-03_0405_sheet-5_sheet",
+      "featureNo": "B05-03",
+      "title": "B05-03 店頭注文番号初期化",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は例外を捕捉せずコンソールへ伝播すると明記するが、実装は Command 層で Throwable を捕捉し独自エラーメッセージを出力して Command::FAILURE を返す。",
+      "reason": "設計書は line 1342（API・バッチ結果）で『本バッチは例外捕捉や通知を行わない』、line 1345（入出力）で『例外発生時はコンソールへ例外が伝播する。本バッチ独自のログ・通知は行わない』、line 1360（エラー処理）で『例外を捕捉せず処理を中断し、コンソールへ伝播する』と一貫して非捕捉伝播を求めている。一方 TruncateWaitingNumberCommand::execute() は line 42 で catch (\\Throwable $e) により action の例外を捕捉し、line 43 の $io->error() で『店舗注文番号初期化処理でエラーが発生しました』と例外メッセージを出力、line 48 で Command::FAILURE を返す。例外を捕捉して終了コードへ変換し独自メッセージも出力しており、設計の非捕捉伝播と異なる実装違いが事実。",
+      "designEvidence": {"label": "設計要求（API・バッチ結果/入出力/エラー処理）", "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html", "start": 1342, "end": 1360, "contains": ["本バッチは例外捕捉や通知を行わない", "例外発生時はコンソールへ例外が伝播する", "例外を捕捉せず処理を中断し、コンソールへ伝播する"]},
+      "implEvidence": [{"label": "実装（Throwable 捕捉と FAILURE 変換）", "path": "ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php", "start": 42, "end": 48, "contains": ["} catch (\\Throwable $e) {", "店舗注文番号初期化処理でエラーが発生しました", "return Command::FAILURE;"]}]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-03_0405_sheet-5_sheet.json#b05-03_0405_sheet-5_sheet-conformance-3ba53b7c8364",
+      "functionId": "b05-03_0405_sheet-5_sheet",
+      "featureNo": "B05-03",
+      "title": "B05-03 店頭注文番号初期化",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は起動ログに日時を含め完了ログを出さないとするが、実装は起動ログに日時を含めず、かつ成功時の完了ログを出力する。",
+      "reason": "設計書は line 1363（ログ・監査）で『バッチコマンドの起動時に日時付きのコンソール出力を行う』、line 1364 で『本バッチ独自の件数ログ・完了ログは出力しない』とする。一方 TruncateWaitingNumberCommand::execute() は line 38 で $io->text('店舗注文番号初期化バッチ開始') と固定文言のみを出力し日時を含まず、line 51 で $io->success('店舗注文番号初期化処理が完了しました。') と設計が禁じる完了ログを出力している。同ファイルに date(/DateTime/format( 等の日時付与処理はなく、起動ログの日時欠落と完了ログ出力の双方が設計と異なる実装違いが事実。",
+      "designEvidence": {"label": "設計要求（ログ・監査）", "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html", "start": 1363, "end": 1364, "contains": ["バッチコマンドの起動時に日時付きのコンソール出力を行う", "本バッチ独自の件数ログ・完了ログは出力しない"]},
+      "implEvidence": [{"label": "実装（起動ログに日時なし・完了ログ出力）", "path": "ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php", "start": 38, "end": 51, "contains": ["$io->text('店舗注文番号初期化バッチ開始');", "$io->success('店舗注文番号初期化処理が完了しました。');"]}]
+    }
+  ]
+}

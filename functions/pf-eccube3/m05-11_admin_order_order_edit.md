@@ -303,6 +303,19 @@ Symfony フォーム制約に加え、POST_SUBMIT で以下を行う。
 | M05-11-MSG-015 | 画面上部フラッシュ（成功） | 保存しました | 出荷登録・保存が正常終了したとき（ShippingController.php:196 / messages.ja.yaml:1591） |
 | M05-11-MSG-016 | 画面上部フラッシュ（エラー） | 要確認（キー admin.flash.register_failed はja/adminロケール未定義） | 出荷登録処理でExceptionが発生したとき（ShippingController.php:202） |
 | M05-11-MSG-017 | 画面上部フラッシュ（エラー） | 保存に失敗しました | 出荷編集の登録でPurchaseFlow検証結果にerrorがあるとき（ShippingController.php:205 / messages.ja.yaml:1592） |
+| M05-11-MSG-018 | 画面中央(ダイアログ) | search customer failed. | 検索ボタン押下後、admin_order_search_customer_html への POST Ajax が fail したとき |
+| M05-11-MSG-019 | 画面中央(ダイアログ) | search product failed. | 検索ボタン押下後、admin_search_product への POST Ajax が fail したとき |
+| M05-11-MSG-020 | 画面中央(ダイアログ) | search order item type failed. | その他明細モーダルの show.bs.modal 時、admin_order_search_order_item_type への POST Ajax が fail したとき |
+| M05-11-MSG-021 | 画面中央(ダイアログ) | search product failed. | 商品検索結果のページリンク押下後、リンク href への GET Ajax が fail したとき |
+| M05-11-MSG-022 | 画面中央(ダイアログ) | 一部キャンセル時、在庫数等は以下のように変動します。<br>キャンセルしてもよろしいですか？<br>在庫数：キャンセル分増加<br>使用ポイント：変動なし<br>付与予定ポイント：再計算<br>付与済みポイント：変動なし | 取消への／取消からの遷移に該当せず、フォーム上の数量入力欄数が編集前 arrQuantity の件数より少ない（明細削除）とき |
+| M05-11-MSG-023 | 画面中央(ダイアログ) | 一部キャンセル時、在庫数等は以下のように変動します。<br>キャンセルしてもよろしいですか？<br>在庫数：キャンセル分増加<br>使用ポイント：変動なし<br>付与予定ポイント：再計算<br>付与済みポイント：変動なし | 明細削除に該当せず、編集前数量（arrQuantity）より当該明細の数量が減少したとき |
+| M05-11-MSG-024 | 画面中央(ダイアログ) | 新規登録時に欠品数量は入力できません。 | isNewOrderRegistration が真（新規登録画面）で、いずれかの明細の欠品数量が 0 より大きいとき |
+| M05-11-MSG-025 | 画面中央(ダイアログ) | 全ての商品を削除または数量を0に変更する場合、キャンセルしてください。 | 送信前チェックで商品明細の数量合計 tQuantity が 0 になったとき |
+| M05-11-MSG-026 | 画面中央(ダイアログ) | search product failed. | 検索ボタン押下後、admin_search_product への POST Ajax が fail したとき |
+| M05-11-MSG-027 | 画面中央(ダイアログ) | search order item type failed. | その他明細モーダルの show.bs.modal 時、admin_order_search_order_item_type への POST Ajax が fail したとき |
+| M05-11-MSG-028 | 画面中央(モーダル) | 処理中... | 「出荷メール送信」または「出荷済にする」ボタンで開いた確認モーダルで実行ボタンを押下したとき |
+| M05-11-MSG-029 | 画面中央(モーダル) | システムエラーが発生しました | 確認モーダル実行後の対応状況更新/メール送信のPUT Ajaxがfailしたとき |
+| M05-11-MSG-030 | 画面中央(モーダル) | 完了しました。 | 確認モーダル実行後の対応状況更新/メール送信のAjaxがalwaysに達したとき(成功・失敗を問わない) |
 
 ---
 

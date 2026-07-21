@@ -1,0 +1,78 @@
+{
+  "functionId": "m03-40_0204_sheet-56_csv",
+  "featureNo": "M03-40",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-56:12649,12650,12693",
+      "designExpectation": "ナビゲーション表示名は「棚番号更新CSV登録」で、画面部品には「CSVファイルのアップロード」「棚番号更新CSVファイルフォーマット」を表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:1995,1997,1708; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:73; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:83; /home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube_nav.yaml:73",
+      "implementationActual": "対象画面の翻訳キーとルートは実装されているが、実表示値が設計文言と異なる。",
+      "mismatchReason": "messages.ja.yaml では admin.product.product_shelf_number_csv が「棚番号登録CSVアップロード」、admin.product.product_shelf_number_csv_format_title が「棚番号登録CSVファイルフォーマット」。アップロードボタンも共通キー admin.common.csv_upload により「CSVファイルをアップロード」と表示され、設計の「CSVファイルのアップロード」と一致しない。別キーワード「棚番号更新CSV登録」「棚番号更新CSVファイルフォーマット」で再検索しても UI 翻訳値は見つからず、ログ文言のみだった。",
+      "comparisonRows": [
+        {
+          "item": "ナビ/サブタイトル",
+          "design": "admin.product.product_shelf_number_csv の値は「棚番号更新CSV登録」。",
+          "implementation": "admin.product.product_shelf_number_csv: 棚番号登録CSVアップロード。",
+          "mismatch": "ユーザーが見る機能名が「更新CSV登録」ではなく「登録CSVアップロード」になっている。"
+        },
+        {
+          "item": "フォーマット表見出し",
+          "design": "「棚番号更新CSVファイルフォーマット」。",
+          "implementation": "admin.product.product_shelf_number_csv_format_title: 棚番号登録CSVファイルフォーマット。",
+          "mismatch": "「更新」が落ち、「登録CSV」表記になっている。"
+        },
+        {
+          "item": "アップロードボタン",
+          "design": "「CSVファイルのアップロード」。",
+          "implementation": "admin.common.csv_upload: CSVファイルをアップロード。",
+          "mismatch": "画面部品ラベルの助詞・表現が設計と異なる。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-56:12693,12717,12731,12733,12750",
+      "designExpectation": "CSV の「棚番号」列は棚番号マスタ（dtb_shelf_number）の主キー ID を表し、正の整数 ID のときだけマスタ存在確認して shelf_number_id に書く。空、または 0 以下として解釈される値は NULL 更新（未設定）とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:478,481; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductShelfNumberUpdateImportHandler.php:157,163,168,184,191,204; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbShelfNumberRepository.php:31; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2324",
+      "implementationActual": "実装は棚番号列を主キー ID ではなく棚番号名称として扱い、^[A-Z]-[0-9]{3}$ 形式で検証して DtbShelfNumberRepository::findOneByName() で ID を解決している。",
+      "mismatchReason": "設計は符号なし数値の棚番号 ID を外部契約としているが、実装の ColumnDefinitions::shelfNumberId() は文字列列に RegexValidator('/^[A-Z][-][0-9]{3}$/') を付与している。ProductShelfNumberUpdateImportHandler も変数名 shelfNumberName と findOneByName() により名称検索しており、数値 ID 入力や 0 以下の NULL クリア仕様を満たさない。ID 検索・数値バリデータ・0 以下を null にする別実装を再検索したが、対象ハンドラには存在しない。",
+      "comparisonRows": [
+        {
+          "item": "棚番号列の意味",
+          "design": "dtb_shelf_number.id の主キー ID。",
+          "implementation": "棚番号名称（例: S-002 形式）として扱う。",
+          "mismatch": "CSV 外部契約が ID と名称で異なる。"
+        },
+        {
+          "item": "列検証",
+          "design": "空なら数値検証をスキップし、非空なら符号なし数値として妥当性確認。",
+          "implementation": "文字列列に RegexValidator('/^[A-Z][-][0-9]{3}$/') を付与。",
+          "mismatch": "数値 ID ではなく名称形式を要求する。"
+        },
+        {
+          "item": "マスタ存在確認",
+          "design": "正の整数 ID が解釈されるときだけ dtb_shelf_number.id の存在を確認。",
+          "implementation": "DtbShelfNumberRepository::findOneByName() で name を検索。",
+          "mismatch": "存在確認キーが id ではなく name。"
+        },
+        {
+          "item": "未設定更新",
+          "design": "空、または 0 以下として解釈される値は NULL 更新。",
+          "implementation": "空文字は null になるが、0 や -1 は正規表現不一致で検証エラーになる。",
+          "mismatch": "非正値による未設定化ができない。"
+        },
+        {
+          "item": "DB更新値",
+          "design": "replaceShelfNumber(商品コード, 棚番号 ID または null)。",
+          "implementation": "名称検索で得た ID または null を replaceShelfNumber() に渡す。",
+          "mismatch": "UPDATE 自体は native SQL だが、渡す値の解釈が設計の ID 入力と異なる。"
+        }
+      ]
+    }
+  ]
+}

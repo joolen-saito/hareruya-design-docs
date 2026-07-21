@@ -1,0 +1,54 @@
+{
+  "functionId": "m03-21_0204_sheet-37_csv",
+  "featureNo": "M03-21",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-37:8381",
+      "designExpectation": "棚番号CSVフォーマットの入力項目「並び順」は数値(整数)・必須で、最大値は 0〜32767 とする。",
+      "implRef": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:336; src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:48; src/Eccube/Service/Csv/Importer/Validator/NumericValidator.php:42; src/Eccube/Entity/DtbShelfNumber.php:37",
+      "implementationActual": "CSV雛形/フォーマット表示の「並び順」説明は空で、CSV取込ハンドラは必須・数値・int変換のみを設定している。DB列も unsigned integer で、32767 上限は定義されていない。",
+      "mismatchReason": "設計の 0〜32767 最大値が、CSVフォーマット表示、CSV取込バリデーション、エンティティ定義のいずれにも存在しない。反証検索として 32767, Range, LessThanOrEqual, PositiveOrZero, GreaterThanOrEqual を ShelfNumberController/ShelfNumberMasterImportHandler/ShelfNumberType/DtbShelfNumber/Twig/messages で確認したが該当なし。",
+      "comparisonRows": [
+        {
+          "item": "CSV並び順の最大値",
+          "design": "0〜32767",
+          "implementation": "NumericValidator による半角数字チェックと IntConverter のみ。32767 上限なし。",
+          "mismatch": "設計上の最大値を超える並び順をCSV取込制約として拒否しない。"
+        },
+        {
+          "item": "CSVフォーマット表示",
+          "design": "並び順の最大値として 0〜32767 を示す。",
+          "implementation": "getShelfNumberUpdateCsvHeader() の「並び順」説明は空文字。",
+          "mismatch": "アップロード画面のフォーマット表にも上限が表示されない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-37:8431,8446",
+      "designExpectation": "CSV取込の名称は、画面の正規表現相当の検証をCSVハンドラでは行わず、DBのユニーク制約・長さ制約に依存する。CSVでは画面の形式に合わない名称も保存され得る。",
+      "implRef": "src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:45; src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:47; src/Eccube/Service/Csv/Importer/Validator/RegexValidator.php:40",
+      "implementationActual": "CSV名称列に RegexValidator('/^[A-Z][-][0-9]{3}$/') が設定され、形式不一致時はCSV取込バリデーションエラーになる。",
+      "mismatchReason": "設計はCSV側で画面正規表現を適用しない外部契約を記載しているが、実装はCSV取込にも同じ形式制約を適用している。反証検索として ShelfNumberMasterImportHandler、RegexValidator、BaseCsvColumn、CsvImporter、ShelfNumberType を確認し、名称列のCSV Regex 適用が実装実体だった。",
+      "comparisonRows": [
+        {
+          "item": "CSV名称の形式検証",
+          "design": "CSVハンドラでは画面Regex相当の検証なし。",
+          "implementation": "CSVハンドラで ^[A-Z][-][0-9]{3}$ を検証する。",
+          "mismatch": "CSV取込が設計より厳しく、設計上保存され得る形式不一致名称を拒否する。"
+        },
+        {
+          "item": "形式不一致時の結果",
+          "design": "DBの一意制約・文字列長に依存し得るため、形式外名称が保存され得る。",
+          "implementation": "RegexValidator が addInvalidFormatError を積み、取込処理のエラーになる。",
+          "mismatch": "設計の保存可能性と実装の拒否動作が一致しない。"
+        }
+      ]
+    }
+  ]
+}

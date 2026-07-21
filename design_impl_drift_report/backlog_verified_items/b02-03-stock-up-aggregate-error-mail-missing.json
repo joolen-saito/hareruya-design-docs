@@ -1,0 +1,256 @@
+{
+  "id": "b02-03-stock-up-aggregate-error-mail-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json",
+  "sourceFindingId": "b02-03_0402_sheet-5_sheet-conformance-079bc1f237b8",
+  "classification": "バッチ在庫管理",
+  "feature": "期間別入庫数集計バッチ",
+  "issueCategory": "実装漏れ",
+  "issue": "期間別入庫数集計バッチでエラー時のメール通知が実装されていない",
+  "designBook": "0402_基本設計仕様書(バッチ_在庫管理).xlsx",
+  "reproSteps": [
+    "ec-cube-enterprise のローカル環境で、`BatchAggregateStockUpAction::handle()` 内のリポジトリ処理が例外になる条件を用意する（例: 一時的にDB接続/対象テーブルを不整合にする、またはローカル検証用にリポジトリ例外を発生させる）",
+    "`bin/console eccube:aggregate-stock-up` を実行する",
+    "例外時にコンソールへエラーが出力されることと、期間別入庫数集計バッチ向けに「集計できなかった旨」を通知するメール送信処理が呼ばれないことを確認する",
+    "0402 の B02-03 設計「エラーが発生した場合集計できなかった旨をメールで送信する」と、ec-cube-enterprise の `AggregateStockUpCommand` / `BatchAggregateStockUpAction` を照合する"
+  ],
+  "expected": [
+    "0402 の B02-03 設計を正とする場合、期間別入庫数集計バッチでエラーが発生したら、集計できなかった旨をメールで送信する",
+    "メール送信処理は、B02-03 の例外ハンドリング経路から実行される"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `AggregateStockUpCommand::execute()` は、`BatchAggregateStockUpAction::handle()` の例外を捕捉して `$io->error('集計処理でエラーが発生しました: '.$e->getMessage())` を出力し、`Command::FAILURE` を返すだけで、メール送信処理を呼び出していない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise AggregateStockUpCommand は例外時にコンソール出力のみを行う",
+          "path": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php",
+          "start": 43,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "protected function execute(InputInterface $input, OutputInterface $output): int",
+            "$this->batchAggregateStockUpAction->handle();",
+            "$io->error('集計処理でエラーが発生しました: '.$e->getMessage());",
+            "return Command::FAILURE;"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ec-cube-enterprise の `BatchAggregateStockUpAction` は `DtbStockUpQuantityRepository` と `EntityManagerInterface` だけを注入しており、`MailService` 依存や B02-03 向けメール送信呼び出しがない。例外時はロールバックして再スローするだけである。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise BatchAggregateStockUpAction は MailService を注入していない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php",
+          "start": 18,
+          "end": 27,
+          "language": "php",
+          "contains": [
+            "use Eccube\\Repository\\DtbStockUpQuantityRepository;",
+            "private readonly DtbStockUpQuantityRepository $stockUpQuantityRepository",
+            "private readonly EntityManagerInterface $entityManager"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise BatchAggregateStockUpAction は例外時に rollback して再スローするだけ",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php",
+          "start": 34,
+          "end": 49,
+          "language": "php",
+          "contains": [
+            "public function handle(): void",
+            "$connection->beginTransaction();",
+            "$connection->rollBack();",
+            "throw $e;"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ec-cube-enterprise には近傍バッチとして、週間在庫履歴更新で `MailService` を注入し、例外時に `sendWeeklyStockHistoryErrorMail($e->getMessage())` を呼ぶ実装がある。しかしこれは `BatchUpdateWeeklyStockHistoryAction` 専用で、B02-03 の `AggregateStockUpCommand` / `BatchAggregateStockUpAction` からは参照されていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 近傍実装では MailService 注入とエラー通知呼び出しがある",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php",
+          "start": 20,
+          "end": 30,
+          "language": "php",
+          "contains": [
+            "use Eccube\\Service\\MailService;",
+            "private readonly MailService $mailService"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 近傍実装の週間在庫履歴更新は例外時にメール送信する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php",
+          "start": 75,
+          "end": 80,
+          "language": "php",
+          "contains": [
+            "$this->weeklyStockHistoryRepository->replaceFromTemp();",
+            "$this->mailService->sendWeeklyStockHistoryErrorMail($e->getMessage());",
+            "throw $e;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise MailService には週間在庫履歴更新向けのエラー通知メールだけがある",
+          "path": "ec-cube-enterprise/src/Eccube/Service/MailService.php",
+          "start": 1744,
+          "end": 1780,
+          "language": "php",
+          "contains": [
+            "public function sendWeeklyStockHistoryErrorMail(string $errorMessage): void",
+            "週間在庫履歴更新バッチでエラーが発生しました。",
+            "$this->mailer->send($message);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `ProductBatch` が `updateProductSummaryForStockUp` を `UpdateProductSummaryForStockUp` に対応させて実行するが、共通入口は開始・完了出力と `$product->execute()` 呼び出しだけで、例外捕捉やメール送信処理はない。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は updateProductSummaryForStockUp を実行対象に登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 12,
+          "end": 20,
+          "language": "php",
+          "contains": [
+            "const BATCH_NAMES = [",
+            "'updateProductSummaryForStockUp' => 'Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummaryForStockUp'"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は execute を呼ぶだけでエラーメール送信を行わない",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 43,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "$name = $input->getArgument('batch_name');",
+            "$product = new $batchNames[$name]($app, $this->createOptions($input));",
+            "$product->execute();",
+            "return 0;"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)の `UpdateProductSummaryForStockUp::execute()` は、在庫履歴取得、商品規格サブの入庫数更新、100件ごとの flush/cache clear、最終 flush だけを行っており、`MailService` や `hareruya_ec.service.mail` の呼び出しはない。したがって、ベースにも B02-03 のエラー時メール通知は確認できず、enterprise 側にも 0402 要求を満たす追加実装がない。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 UpdateProductSummaryForStockUp は集計更新のみを行う",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php",
+          "start": 8,
+          "end": 41,
+          "language": "php",
+          "contains": [
+            "class UpdateProductSummaryForStockUp extends ProductBatchService",
+            "$stockHistories = $this->app['hareruya_ec.repository.stock_history']->getStockUpForUpdateSummary($this->app);",
+            "$this->app['hareruya_ec.repository.product_sub_class']->updateProductSummaryColumnsForStockUp($this->app, $history);",
+            "EntityManagerUtil::clearCache($this->app['orm.em']);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "0402 の B02-03 はエラーハンドリングとして、エラー時に集計できなかった旨をメールで送信すると定義している",
+      "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html",
+      "start": 1126,
+      "end": 1172,
+      "language": "html",
+      "contains": [
+        "期間別入庫数集計バッチ",
+        "機能No",
+        "B02-03",
+        "エラーが発生した場合集計できなかった旨をメールで送信する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の B02-03 コマンドは例外時にコンソール出力だけを行い、メール送信処理を呼んでいない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php",
+      "start": 43,
+      "end": 58,
+      "language": "php",
+      "contains": [
+        "$this->batchAggregateStockUpAction->handle();",
+        "$io->error('集計処理でエラーが発生しました: '.$e->getMessage());",
+        "return Command::FAILURE;"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の B02-03 実処理は MailService を注入せず、例外時は rollback 後に再スローする",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php",
+      "start": 18,
+      "end": 49,
+      "language": "php",
+      "contains": [
+        "private readonly DtbStockUpQuantityRepository $stockUpQuantityRepository",
+        "private readonly EntityManagerInterface $entityManager",
+        "$connection->rollBack();",
+        "throw $e;"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "近傍の週間在庫履歴更新では MailService 経由のエラー通知があるが、B02-03 ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php",
+      "start": 20,
+      "end": 80,
+      "language": "php",
+      "contains": [
+        "private readonly MailService $mailService",
+        "$this->mailService->sendWeeklyStockHistoryErrorMail($e->getMessage());"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は updateProductSummaryForStockUp を ProductBatch 経由で実行するが、共通入口にメール送信処理はない",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+      "start": 12,
+      "end": 58,
+      "language": "php",
+      "contains": [
+        "'updateProductSummaryForStockUp' => 'Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummaryForStockUp'",
+        "$product->execute();",
+        "{$name}: Command complete."
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の B02-03 相当処理は集計更新と flush/cache clear のみで、MailService 呼び出しはない",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php",
+      "start": 8,
+      "end": 41,
+      "language": "php",
+      "contains": [
+        "protected $commandName = 'updateProductSummaryForStockUp';",
+        "public function execute()",
+        "getStockUpForUpdateSummary",
+        "updateProductSummaryColumnsForStockUp"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"エラーが発生した場合|集計できなかった|期間別入庫数集計|B02-03|updateProductSummaryForStockUp|product:batch\" excel_to_html/output/0402_基本設計仕様書\\(バッチ_在庫管理\\).html excel_to_html/output/0404_基本設計仕様書\\(バッチ_商品管理\\).html design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json design_impl_drift_report/findings/b02-03_0404_sheet-5_sheet.json",
+      "rg -n \"WeeklyStockHistory|weekly_stock|send.*Error|ErrorMail|エラー通知|期間別入庫|入庫数|aggregate-stock-up|集計できなかった|stock_up|StockUp\" ../ec-cube-enterprise/src/Eccube/Service/MailService.php ../ec-cube-enterprise/src/Eccube/Service/Product ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+      "rg -n \"sendWeeklyStockHistoryErrorMail|MailService|send.*ErrorMail|AggregateStockUp|集計できなかった|期間別入庫\" ../ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php ../ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php ../ec-cube-enterprise/src/Eccube/Service/MailService.php",
+      "rg -n \"hareruya_ec.service.mail|MailService|send.*Error|集計できなかった|updateProductSummaryForStockUp|ProductSummaryForStockUp\" ../pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php ../pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php ../pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php"
+    ],
+    "review": [
+      "codex gpt-5.5 high reviewer Franklin: VERIFIED。0402 の B02-03 にはエラー時メール送信が明記され、enterprise の AggregateStockUpCommand / BatchAggregateStockUpAction には MailService 注入・送信呼び出しがない。近傍バッチの MailService エラー通知は B02-03 から参照されていない。",
+      "レビュー指摘に従い、ベース実装は『ベースにも同メールは確認できず、enterprise でも 0402 要求を満たす追加実装がない』という補助根拠として扱う。"
+    ],
+    "notes": [
+      "0404 側にも B02-03 のコマンド名や100件単位反映など別差分があるが、本件は 0402 のエラー時メール通知要求だけを対象とする。",
+      "MailService には週間在庫履歴更新など他バッチ向けエラー通知はあるが、期間別入庫数集計バッチ向けの送信処理は確認できない。"
+    ]
+  }
+}

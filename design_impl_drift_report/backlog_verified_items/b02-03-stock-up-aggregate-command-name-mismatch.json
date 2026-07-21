@@ -1,0 +1,194 @@
+{
+  "id": "b02-03-stock-up-aggregate-command-name-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0404_sheet-5_sheet.json",
+  "sourceFindingId": "b02-03_0404_sheet-5_sheet-conformance-5fb2a4fad320",
+  "classification": "バッチ商品管理",
+  "feature": "期間別入庫数集計",
+  "issueCategory": "実装違い",
+  "issue": "期間別入庫数集計バッチの実行コマンド名が設計・ベース実装と異なる",
+  "designBook": "0404_基本設計仕様書(バッチ_商品管理).xlsx",
+  "reproSteps": [
+    "ec-cube-enterprise のローカル環境で、設計書に記載された `bin/console product:batch updateProductSummaryForStockUp` を実行できるか確認する",
+    "ec-cube-enterprise の実装済みコマンド一覧または `AggregateStockUpCommand` を確認し、B02-03 の実行コマンド名を確認する",
+    "ベース実装(pf-eccube3)の `ProductBatch` と `CommandRegister` を確認し、`product:batch updateProductSummaryForStockUp` が現行の実行入口であることを確認する",
+    "0404 の B02-03 設計「コンソールのバッチコマンド product:batch updateProductSummaryForStockUp」と照合する"
+  ],
+  "expected": [
+    "コンソールのバッチコマンドは `product:batch updateProductSummaryForStockUp` で実行できる",
+    "コマンド名が一致しない場合は処理を行わずに終了する",
+    "ベース実装と同じ外部実行契約で B02-03 の期間別入庫数集計を起動できる"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の B02-03 は `AggregateStockUpCommand` として実装され、コマンド名は `eccube:aggregate-stock-up` である。設計・ベース実装の `product:batch updateProductSummaryForStockUp` では登録されていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise AggregateStockUpCommand は eccube:aggregate-stock-up として登録されている",
+          "path": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php",
+          "start": 30,
+          "end": 35,
+          "language": "php",
+          "contains": [
+            "bin/console eccube:aggregate-stock-up",
+            "#[AsCommand(name: 'eccube:aggregate-stock-up', description: '期間別入庫数集計バッチ')]",
+            "class AggregateStockUpCommand extends Command"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise AggregateStockUpCommand は登録されたコマンドで集計処理を実行する",
+          "path": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php",
+          "start": 43,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "protected function execute(InputInterface $input, OutputInterface $output): int",
+            "$this->batchAggregateStockUpAction->handle();",
+            "$io->success('期間別入庫数集計が完了しました。');"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `CommandRegister` が `ProductBatch` を console に登録し、`ProductBatch::configure()` がコマンド名 `product:batch` と任意引数 `batch_name` を定義する。`BATCH_NAMES` では `updateProductSummaryForStockUp` が `UpdateProductSummaryForStockUp` に対応しているため、現行の実行入口は `product:batch updateProductSummaryForStockUp` である。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 CommandRegister は ProductBatch を console に登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/CommandRegister.php",
+          "start": 15,
+          "end": 24,
+          "language": "php",
+          "contains": [
+            "public function register(BaseApplication $app)",
+            "$app['console']->add($command);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 CommandRegister の登録コマンド一覧に ProductBatch がある",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/CommandRegister.php",
+          "start": 35,
+          "end": 48,
+          "language": "php",
+          "contains": [
+            "private function getCommands()",
+            "new Command\\ProductBatch()"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は product:batch として登録される",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 28,
+          "end": 36,
+          "language": "php",
+          "contains": [
+            "$this->setName('product:batch')",
+            "->addArgument('batch_name', InputArgument::OPTIONAL)"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は updateProductSummaryForStockUp を処理本体へ対応させる",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 12,
+          "end": 20,
+          "language": "php",
+          "contains": [
+            "const BATCH_NAMES = [",
+            "'updateProductSummaryForStockUp' => 'Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummaryForStockUp'"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は batch_name 引数に対応する処理を実行する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 43,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "$name = $input->getArgument('batch_name');",
+            "$product = new $batchNames[$name]($app, $this->createOptions($input));",
+            "$product->execute();"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "0404 の B02-03 は実行方法を product:batch updateProductSummaryForStockUp とし、コマンド名が一致しない場合は処理しないとしている",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 1085,
+      "end": 1167,
+      "language": "html",
+      "contains": [
+        "B02-03",
+        "期間別入庫数集計",
+        "product:batch updateProductSummaryForStockUp",
+        "コマンド名が一致しない場合は処理を行わずに終了する"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "0402 の B02-03 にも同じ product:batch updateProductSummaryForStockUp の入口要求がある",
+      "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html",
+      "start": 1180,
+      "end": 1209,
+      "language": "html",
+      "contains": [
+        "B02-03",
+        "product:batch updateProductSummaryForStockUp",
+        "期間別入庫数集計を実行する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は B02-03 を eccube:aggregate-stock-up として登録している",
+      "path": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php",
+      "start": 30,
+      "end": 35,
+      "language": "php",
+      "contains": [
+        "bin/console eccube:aggregate-stock-up",
+        "#[AsCommand(name: 'eccube:aggregate-stock-up', description: '期間別入庫数集計バッチ')]"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は ProductBatch を console に登録し、product:batch の batch_name で updateProductSummaryForStockUp を実行する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+      "start": 12,
+      "end": 58,
+      "language": "php",
+      "contains": [
+        "$this->setName('product:batch')",
+        "'updateProductSummaryForStockUp' => 'Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummaryForStockUp'",
+        "$product->execute();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "CommandRegister は ProductBatch を console に追加する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/CommandRegister.php",
+      "start": 15,
+      "end": 48,
+      "language": "php",
+      "contains": [
+        "$app['console']->add($command);",
+        "new Command\\ProductBatch()"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"product:batch updateProductSummaryForStockUp|updateProductSummaryForStockUp|eccube:aggregate-stock-up|AggregateStockUpCommand|aggregate-stock-up\" excel_to_html/output/0404_基本設計仕様書\\(バッチ_商品管理\\).html excel_to_html/output/0402_基本設計仕様書\\(バッチ_在庫管理\\).html ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/app ../pf-eccube3/app/Plugin/HareruyaEc",
+      "rg -n \"ProductBatch|product:batch|CommandRegister|add\\(new .*Batch|console\" ../pf-eccube3/app/Plugin/HareruyaEc ../pf-eccube3/src ../pf-eccube3/app/config",
+      "rg -n \"product:batch|updateProductSummaryForStockUp|aggregate-stock-up|AggregateStockUpCommand\" ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/src/Eccube/Service/Product ../ec-cube-enterprise/app ../pf-eccube3/app/Plugin/HareruyaEc/Command ../pf-eccube3/app/Plugin/HareruyaEc/Service/Product"
+    ],
+    "review": [
+      "codex gpt-5.5 high reviewer Halley: VERIFIED。設計・ベース実装は product:batch updateProductSummaryForStockUp を外部実行コマンドとして要求している一方、enterprise は eccube:aggregate-stock-up のみを AsCommand 登録しており、互換 alias や product:batch 登録は見当たらない。外部実行契約の差分として起票可。カテゴリは実装違いが妥当。sourceFinding は 0404 主体で、0402 は同一入口要求の補助根拠として併記するのが適切。"
+    ],
+    "notes": [
+      "0402 にも同じ入口要求があるが、本件は 0404 の finding を代表にし、0402 は補助設計根拠として併記する。",
+      "同じ B02-03 には開始・完了出力や100件単位反映など別差分もあるが、本件は外部実行コマンド名だけを対象とする。"
+    ]
+  }
+}

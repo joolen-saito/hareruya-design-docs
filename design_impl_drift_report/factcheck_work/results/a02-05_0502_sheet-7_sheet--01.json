@@ -1,0 +1,134 @@
+{
+  "chunkId": "a02-05_0502_sheet-7_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-05_0502_sheet-7_sheet.json#a02-05_0502_sheet-7_sheet-conformance-bd93faefee76",
+      "functionId": "a02-05_0502_sheet-7_sheet",
+      "featureNo": "A02-05",
+      "title": "A02-05 更新商品規格取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は保管コードIDのレスポンスキーを result[].strageCodeId と定めるが、実装は storageCodeId を返しており、設計どおりのキー名では取得できない。",
+      "reason": "設計HTMLは基本設計のレスポンス表(1685行)・詳細設計のレスポンス表(1810行)・サンプル応答(1714,1736,1832行)のいずれも一貫して `strageCodeId`（typo綴り）を用いる。実装 ProductRepository::findProductClassesByUpdateDate では SQL が `sc.id AS storageCodeId`(2218行)、ResultSetMapping が第2引数 `storageCodeId`(2257行) を使い、getArrayResult() の配列キーは `storageCodeId` になる。Controller getUpdatedProductClasses は `$results` をキー変換せず `'result' => $results` としてそのまま JSON 化する(234-237行)。`strageCodeId` は src 全体に存在せず(`rg -rn 'strageCodeId' src/` が exit=1)、別ルート・別クラス・キー変換層でも設計綴りへの変換は見つからない。よって設計綴り `strageCodeId` と実装出力 `storageCodeId` の実装違いが事実。",
+      "designEvidence": {
+        "label": "設計要求(詳細設計レスポンス定義)",
+        "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+        "start": 1810,
+        "end": 1810,
+        "contains": ["result[].strageCodeId", "保管コードのID"]
+      },
+      "implEvidence": [
+        {
+          "label": "SQLエイリアス",
+          "note": "保管コードIDを storageCodeId として SELECT",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php",
+          "start": 2218,
+          "end": 2218,
+          "contains": ["sc.id AS storageCodeId"]
+        },
+        {
+          "label": "ResultSetMappingキー",
+          "note": "配列キーが storageCodeId になる",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php",
+          "start": 2257,
+          "end": 2257,
+          "contains": ["'storagecodeid', 'storageCodeId', 'integer'"]
+        },
+        {
+          "label": "Controllerがキー変換なしで返却",
+          "note": "storageCodeId→strageCodeId の変換なし",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php",
+          "start": 234,
+          "end": 237,
+          "contains": ["'result' => $results"]
+        }
+      ],
+      "absenceCommands": ["rg -rn 'strageCodeId' /home/y-saito/Developments/ec-cube-enterprise/src"]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-05_0502_sheet-7_sheet.json#a02-05_0502_sheet-7_sheet-conformance-8ebccee366bd",
+      "functionId": "a02-05_0502_sheet-7_sheet",
+      "featureNo": "A02-05",
+      "title": "A02-05 更新商品規格取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は result[].stock と result[].price02 を string で返すと定めるが、実装は ResultSetMapping で integer にマッピングし数値として返す。",
+      "reason": "詳細設計のレスポンス表(1810行)は `result[].stock` と `result[].price02` の型を string と明記し、詳細設計サンプル(1827-1828行)も \"5\"/\"300\" と引用符付き文字列、基本設計サンプル(1709-1710行)も \"1\"/\"6000\" と文字列で示す。実装 ProductRepository::findProductClassesByUpdateDate の ResultSetMapping は `addScalarResult('stock', 'stock', 'integer')`(2252行)、`addScalarResult('price02', 'price02', 'integer')`(2253行) で PHP int に変換し、Controller は `$results` を整形なしで JSON 化する(234-237行)ため JSON では数値として出力される。設計は文字列契約であり、対象API用の文字列キャストや ResponseBuilder は反証検索でも見つからないため実装違いが事実。",
+      "designEvidence": {
+        "label": "設計要求(詳細設計レスポンス定義: string型)",
+        "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+        "start": 1810,
+        "end": 1810,
+        "contains": ["result[].stock", "result[].price02"]
+      },
+      "implEvidence": [
+        {
+          "label": "ResultSetMapping: stock/price02 を integer 変換",
+          "note": "設計 string に対し integer マッピング",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php",
+          "start": 2252,
+          "end": 2253,
+          "contains": ["'stock', 'stock', 'integer'", "'price02', 'price02', 'integer'"]
+        },
+        {
+          "label": "Controllerが整形なしで返却",
+          "note": "文字列キャストなし",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php",
+          "start": 234,
+          "end": 237,
+          "contains": ["'result' => $results"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a02-05_0502_sheet-7_sheet.json#a02-05_0502_sheet-7_sheet-conformance-251fa0415684",
+      "functionId": "a02-05_0502_sheet-7_sheet",
+      "featureNo": "A02-05",
+      "title": "A02-05 更新商品規格取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は日時をISO8601で返すと定め result[].productClassUpdateDate / productUpdateDate をISO8601文字列と規定するが、実装はDBの update_date を無整形の string としてそのまま返す。",
+      "reason": "詳細設計は副作用節(1844行)で「プロパティはcamelCase、日時はISO8601とする」と明記し、サンプル(1837-1838行)も `2026-06-01T10:00:00+09:00` のISO8601形式を示す。実装 ProductRepository::findProductClassesByUpdateDate は SQL で `pc.update_date AS productClassUpdateDate`・`p.update_date AS productUpdateDate`(2223-2224行) を取得し、ResultSetMapping では両者を `string`(2262-2263行) にマッピングするのみで T 区切りや +09:00 形式へのフォーマットを行わない。Controller も `$results` を整形せず JSON 化する(234-237行)。App の ProductController には出力日時の ATOM/`format('c')`/ISO8601整形が存在せず（該当 grep が空）、パラメータ側の `->format('c')`(2266-2267行) はクエリ条件用で応答整形ではない。よってDB無整形文字列（PostgreSQLは空白区切り・オフセット短縮形になりISO8601と非一致）を返す実装違いが事実。ただし最終的なJSON文字列の厳密書式はDBドライバ挙動に依存するため confidence は medium。",
+      "designEvidence": {
+        "label": "設計要求(日時はISO8601)",
+        "path": "hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html",
+        "start": 1844,
+        "end": 1844,
+        "contains": ["日時はISO8601とする", "camelCase"]
+      },
+      "implEvidence": [
+        {
+          "label": "SQL: update_date を無整形で SELECT",
+          "note": "ISO8601整形なし",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php",
+          "start": 2223,
+          "end": 2224,
+          "contains": ["pc.update_date AS productClassUpdateDate", "p.update_date AS productUpdateDate"]
+        },
+        {
+          "label": "ResultSetMapping: string マッピングのみ",
+          "note": "DateTime整形せず生文字列",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php",
+          "start": 2262,
+          "end": 2263,
+          "contains": ["'productClassUpdateDate', 'string'", "'productUpdateDate', 'string'"]
+        },
+        {
+          "label": "Controllerが整形なしで返却",
+          "note": "ATOM/format('c') による応答整形なし",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php",
+          "start": 232,
+          "end": 237,
+          "contains": ["'result' => $results"]
+        }
+      ],
+      "absenceCommands": ["rg -n \"ATOM|format\\('c'\\)|8601|productClassUpdateDate|productUpdateDate\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php"]
+    }
+  ]
+}

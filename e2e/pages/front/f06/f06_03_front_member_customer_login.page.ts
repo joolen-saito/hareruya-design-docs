@@ -42,10 +42,10 @@ export class FrontMemberLoginPage {
     this.heading = page.getByRole("heading", { name: /ログイン/ }).first();
     this.body = page.locator("body");
     this.emailInput = page
-      .locator('input[name*="login_email"], input[type="email"], input[name*="email"]')
+      .locator('input[name*="login_email"]:visible, input[type="email"]:visible, input[name*="email"]:visible')
       .first();
     this.passwordInput = page
-      .locator('input[name*="login_pass"], input[type="password"], input[name*="password"]')
+      .locator('input[name*="login_pass"]:visible, input[type="password"]:visible, input[name*="password"]:visible')
       .first();
     this.rememberMe = page.locator('input[name*="login_memory"], input[type="checkbox"][name*="memory"]').first();
     this.csrfToken = page.locator('input[type="hidden"][name="_csrf_token"], input[type="hidden"][name*="csrf"]').first();

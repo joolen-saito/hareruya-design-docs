@@ -1,0 +1,231 @@
+{
+  "id": "b08-06-smaregi-use-point-not-called-from-reprocess",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b08-06_0408_sheet-8_sheet.json",
+  "sourceFindingId": "b08-06_0408_sheet-8_sheet-conformance-30015745aebf",
+  "classification": "バッチ会員",
+  "feature": "スマレジ使用ポイント連携",
+  "issueCategory": "実装漏れ",
+  "issue": "購入完了再処理からスマレジ使用ポイント連携が起動されない",
+  "designBook": "0408_基本設計仕様書(バッチ_会員).xlsx",
+  "reproSteps": [
+    "設計書 B08-06 の概要・利用者視点の入口で、スマレジ使用ポイント連携が購入完了処理および購入完了再処理から別プロセスで呼び出される仕様であることを確認する",
+    "ベース実装 pf-eccube3 の通常購入完了処理と購入完了再処理を確認し、どちらも `smaregi:batch updatePoint <受注ID>` を別プロセス起動していることを確認する",
+    "ec-cube-enterprise の通常購入完了処理を確認し、`SmaregiOrderUsePointEventService` による使用ポイント連携ジョブ登録・dispatch が存在することを確認する",
+    "ec-cube-enterprise の管理受注編集・ステータス変更経路を確認し、出荷完了時に発生ポイント連携だけを登録・dispatch しており、使用ポイント連携ジョブを登録・dispatch していないことを確認する"
+  ],
+  "expected": [
+    "購入完了処理と購入完了再処理のどちらからも、受注で使用したポイントのスマレジ減算連携が別プロセスまたは非同期ジョブとして起動される",
+    "受注の使用ポイントは負の値としてスマレジ会員ポイントへ連携される",
+    "連携失敗時は受注側にエラーメッセージとエラーフラグを記録し、後続の再連携対象にできる"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の通常購入完了処理には使用ポイント連携が存在する。`Front\\ShoppingController` は受注確定トランザクション内で `registerUsePointJob($Order)` を呼び、commit 後に `dispatchUsePointMessage($usePointJob, $Order)` を実行する。したがって本件は使用ポイント連携全体の欠落ではなく、購入完了再処理側の起動漏れである。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の通常購入完了処理は使用ポイント連携ジョブを登録・dispatch する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php",
+          "start": 523,
+          "end": 602,
+          "language": "php",
+          "contains": [
+            "$usePointJob = $this->smaregiOrderUsePointEventService->registerUsePointJob($Order);",
+            "if ($usePointJob !== null) {",
+            "$this->smaregiOrderUsePointEventService->dispatchUsePointMessage($usePointJob, $Order);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の使用ポイント連携サービスは使用ポイント0・スマレジIDなしを除外してジョブ化する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOrderUsePointEventService.php",
+          "start": 25,
+          "end": 83,
+          "language": "php",
+          "contains": [
+            "class SmaregiOrderUsePointEventService",
+            "public function registerUsePointJob(Order $Order): ?MessengerJob",
+            "$spendedPoints = $Order->getSpendedPoints();",
+            "$job->setMessageClass(SmaregiOrderUsePointMessage::class);",
+            "$this->messageBus->dispatch(new SmaregiOrderUsePointMessage((int) $Order->getId(), $jobId));"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "一方、ec-cube-enterprise の管理受注編集・ステータス変更経路では、出荷完了時に `SmaregiOrderGainPointEventService` で発生ポイント連携ジョブを積み、commit 後に `dispatchGainPointMessage()` だけを呼んでいる。`Admin\\Order\\EditController` 内に `registerUsePointJob()` / `dispatchUsePointMessage()` / `SmaregiOrderUsePointEventService` の使用はなく、設計が要求する購入完了再処理からの使用ポイント減算連携起動を満たしていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の管理受注編集保存は出荷完了時に発生ポイント連携だけを登録・dispatch する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php",
+          "start": 676,
+          "end": 713,
+          "language": "php",
+          "contains": [
+            "$this->pointService->gainPoints($TargetOrder);",
+            "$gainPointJob = $this->smaregiOrderGainPointEventService->registerGainPointJob($TargetOrder);",
+            "$this->smaregiOrderGainPointEventService->dispatchGainPointMessage($gainPointJob, $TargetOrder);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の管理受注ステータス変更も発生ポイント連携だけを登録・dispatch する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php",
+          "start": 798,
+          "end": 829,
+          "language": "php",
+          "contains": [
+            "$this->pointService->gainPoints($TargetOrder);",
+            "$gainPointJob = $this->smaregiOrderGainPointEventService->registerGainPointJob($TargetOrder);",
+            "$this->smaregiOrderGainPointEventService->dispatchGainPointMessage($gainPointJob, $TargetOrder);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、通常購入完了処理と購入完了再処理の両方で使用ポイントがある場合に `smaregi:batch updatePoint <受注ID>` を別プロセス起動する。`UpdatePoint` は受注サブの使用ポイントを負の値で `postSmaregiPoint()` に渡し、失敗時は受注サブへエラーを保存する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 の通常購入完了処理は updatePoint を別プロセス起動する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ShoppingController.php",
+          "start": 540,
+          "end": 543,
+          "language": "php",
+          "contains": [
+            "if ($orderSub->getSpendedPoints()) {",
+            "new Process(\"nohup php {$app['config']['root_dir']}/app/console smaregi:batch updatePoint {$order->getId()} &\");",
+            "$process->run();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の購入完了再処理は updatePoint を別プロセス起動する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Order/ResendMail.php",
+          "start": 52,
+          "end": 59,
+          "language": "php",
+          "contains": [
+            "if ($orderSub->getSpendedPoints()) {",
+            "$this->app['hareruya_ec.service.point']->spendPoints($order);",
+            "new Process(\"nohup php {$this->app['config']['root_dir']}/app/console smaregi:batch updatePoint {$order->getId()} &\");",
+            "$process->run();"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 の UpdatePoint は使用ポイントを負の値でスマレジへ連携し、失敗時に受注サブへ保存する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/UpdatePoint.php",
+          "start": 32,
+          "end": 49,
+          "language": "php",
+          "contains": [
+            "if (empty($options) || !is_numeric($options[0])) {",
+            "$response = $app['hareruya_ec.service.smaregi_customer']->postSmaregiPoint($player->getSmaregiId(), -$orderSub->getSpendedPoints(), false);",
+            "->setPointErrorMessage(json_encode($response, JSON_UNESCAPED_UNICODE))",
+            "->setSmaregiErrorFlg(true);"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B08-06 は購入完了処理・購入完了再処理から別プロセスで起動し、使用ポイントを減算連携することを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+      "start": 1681,
+      "end": 1717,
+      "language": "html",
+      "contains": [
+        "購入完了処理や購入完了再処理から別プロセスとして呼び出される",
+        "<code>smaregi:batch updatePoint &lt;受注ID&gt;</code>",
+        "購入完了処理・購入完了再処理から別プロセスで呼び出される",
+        "受注の消費ポイント分を減算してスマレジへ連携する",
+        "連携失敗時はエラーメッセージとエラーフラグを受注サブに残し"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "通常購入完了では使用ポイント連携ジョブを登録・dispatch している",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php",
+      "start": 523,
+      "end": 602,
+      "language": "php",
+      "contains": [
+        "registerUsePointJob($Order)",
+        "dispatchUsePointMessage($usePointJob, $Order)"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "管理受注編集保存では発生ポイント連携だけを登録・dispatch しており、使用ポイント連携の呼び出しがない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php",
+      "start": 676,
+      "end": 713,
+      "language": "php",
+      "contains": [
+        "registerGainPointJob($TargetOrder)",
+        "dispatchGainPointMessage($gainPointJob, $TargetOrder)"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "管理受注ステータス変更でも発生ポイント連携だけを登録・dispatch しており、使用ポイント連携の呼び出しがない",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Admin/Order/EditController.php",
+      "start": 798,
+      "end": 829,
+      "language": "php",
+      "contains": [
+        "registerGainPointJob($TargetOrder)",
+        "dispatchGainPointMessage($gainPointJob, $TargetOrder)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の購入完了再処理は使用ポイントがある受注で `smaregi:batch updatePoint` を別プロセス起動する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Order/ResendMail.php",
+      "start": 52,
+      "end": 59,
+      "language": "php",
+      "contains": [
+        "if ($orderSub->getSpendedPoints()) {",
+        "smaregi:batch updatePoint {$order->getId()}",
+        "$process->run();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の通常購入完了処理も使用ポイントがある受注で `smaregi:batch updatePoint` を別プロセス起動する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ShoppingController.php",
+      "start": 540,
+      "end": 543,
+      "language": "php",
+      "contains": [
+        "if ($orderSub->getSpendedPoints()) {",
+        "smaregi:batch updatePoint {$order->getId()}",
+        "$process->run();"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の UpdatePoint は使用ポイントを負の値でスマレジへ連携し、失敗時にエラーを保存する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/UpdatePoint.php",
+      "start": 32,
+      "end": 49,
+      "language": "php",
+      "contains": [
+        "postSmaregiPoint($player->getSmaregiId(), -$orderSub->getSpendedPoints(), false)",
+        "setPointErrorMessage(json_encode($response, JSON_UNESCAPED_UNICODE))",
+        "setSmaregiErrorFlg(true)"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B08-06|スマレジ使用ポイント連携|smaregi:batch updatePoint|購入完了再処理|消費ポイント|減算連携\" excel_to_html/output/0408_基本設計仕様書\\(バッチ_会員\\).html design_impl_drift_report/findings/b08-06_0408_sheet-8_sheet.json",
+      "rg -n \"SmaregiOrderUsePointEventService|registerUsePointJob|dispatchUsePointMessage|SmaregiOrderGainPointEventService|registerGainPointJob|dispatchGainPointMessage|spendedPoints|postSmaregiProcess\" ../ec-cube-enterprise/src/Eccube/Controller/Front ../ec-cube-enterprise/src/Eccube/Controller/Admin/Order ../ec-cube-enterprise/src/Eccube/Service -g '*.php'",
+      "rg -n \"smaregi:batch updatePoint|UpdatePoint|ResendMail|spendedPoints|postSmaregiPoint|setPointErrorMessage|setSmaregiErrorFlg\" ../pf-eccube3/app/Plugin/HareruyaEc/Controller ../pf-eccube3/app/Plugin/HareruyaEc/Service ../pf-eccube3/app/Plugin/HareruyaEc/Command -g '*.php'"
+    ]
+  },
+  "notes": [
+    "本件はスマレジ使用ポイント連携全体の欠落ではない。ec-cube-enterprise の通常購入完了経路には `SmaregiOrderUsePointEventService` が存在するため、購入完了再処理側の起動漏れに限定する。",
+    "`rg` で `Admin/Order/EditController.php` 内の `SmaregiOrderUsePointEventService`、`registerUsePointJob`、`dispatchUsePointMessage` を検索したが、管理受注編集・ステータス変更経路には該当呼び出しがなかった。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

@@ -1,0 +1,4063 @@
+{
+  "functionId": "f06-02_0306_sheet-4_sheet",
+  "featureNo": "F06-02",
+  "title": "F06-02 本会員登録",
+  "domain": "f06",
+  "kind": "front",
+  "designHtml": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+  "sourceBook": "0306_基本設計仕様書(フロント_会員).html",
+  "sheetId": "sheet-4",
+  "sheetName": "本会員登録",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "f06-02_0306_sheet-4_sheet-conformance-48450eb6b9e7",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "high",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+      "designRefDetail": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4（判定順序表 順序4/5、副作用順序、エラーケース『スマレジ連携が一時的に失敗→本会員化を確定せず…再度URLを開くことで再試行できる』、materialGapRows req 224/227/239/248/254）",
+      "designExpectation": "判定順序4/5: スマレジ会員登録連携が成功した場合にのみ会員・選手情報を保存して本会員化を確定する。連携失敗時は本会員化を確定せず(DBは本会員化前のまま)『会員情報の有効化に失敗しました。』エラー画面を表示し、利用者は再度URLを開くことで再試行できる。",
+      "designQuote": "判定順序4/5: スマレジ会員登録連携が成功した場合にのみ会員・選手情報を保存して本会員化を確定する。連携失敗時は本会員化を確定せず(DBは本会員化前のまま)『会員情報の有効化に失敗しました。』エラー画面を表示し、利用者は再度URLを開くことで再試行できる。",
+      "implRef": "src/Eccube/Controller/Front/EntryController.php:283-289, 302, 384, 393, 410",
+      "implementationActual": "entryActivate() は283-289で UPDATE registration_view SET customer_status_id=REGULAR を明示トランザクション外(auto-commit)で先行確定し、291で『本会員登録完了』を出力してから302で linkSmaregiCustomer() を呼ぶ。連携失敗時は384で EntryActivateFailedException を投げるが確定済み customer_status(REGULAR) はロールバックされない(389のrollbackは連携内トランザクションのみ)。コード自身が393/410で『本会員化は完了済み』と明記。",
+      "difference": "設計の判定順序表・副作用順序・エラーケースを正として実装を精査。会員ステータス更新(283-289)がスマレジ連携(302)より前に自動コミットされ連携失敗時にロールバックが無いため、失敗後に再度URLを開いても getProvisionalCustomerBySecretKey が null→already_activated となり設計要求の再試行が不可能。確定タイミング・ロールバック挙動が設計と逆転している。",
+      "mismatchReason": "設計の判定順序表・副作用順序・エラーケースを正として実装を精査。会員ステータス更新(283-289)がスマレジ連携(302)より前に自動コミットされ連携失敗時にロールバックが無いため、失敗後に再度URLを開いても getProvisionalCustomerBySecretKey が null→already_activated となり設計要求の再試行が不可能。確定タイミング・ロールバック挙動が設計と逆転している。",
+      "comparisonRows": [
+        {
+          "item": "本会員化確定タイミング",
+          "design": "スマレジ連携成功後にのみ確定",
+          "implementation": "スマレジ連携前に auto-commit で確定",
+          "mismatch": "確定順序が逆転"
+        },
+        {
+          "item": "連携失敗時の挙動",
+          "design": "本会員化を確定しない/DBは本会員化前のまま/再度URLで再試行可",
+          "implementation": "customer_status(REGULAR) 確定済みでロールバックせず、再度URLは already_activated となり再試行不可",
+          "mismatch": "ロールバック不在・再試行不可"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "f06-02_0306_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/Front/EntryController.php:283-289, 302, 384, 393, 410",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「判定順序4/5: スマレジ会員登録連携が成功した場合にのみ会員・選手情報を保存して本会員化を確定する。連携失敗時は本会員化を確定せず(DBは本会員化前のまま)『会員情報の有効化に失敗しました。』エラー画面を表示し、利用者は再度URLを開くことで再試行できる。」。実装は「entryActivate() は283-289で UPDATE registration_view SET customer_status_id=REGULAR を明示トランザクション外(auto-commit)で先行確定し、291で『本会員登録完了』を出力してから302で linkSmaregiCustomer() を呼ぶ。連携失敗時は384で EntryActivateFailedException を投げるが確定済み customer_status(REGULAR) はロールバックされない(389のrol…」。乖離理由は「設計の判定順序表・副作用順序・エラーケースを正として実装を精査。会員ステータス更新(283-289)がスマレジ連携(302)より前に自動コミットされ連携失敗時にロールバックが無いため、失敗後に再度URLを開いても getProvisionalCustomerBySecretKey が null→already_activated となり設計要求の再試行が不可能。確定タイミング・ロールバック挙動が設計と逆転している。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:1594\n1591:       </section>\n1592:       <!-- function-design-embed:end f06-19-f06-19_front_member_mypage_credit_card -->\n1593: </section>\n1594:       <section class=\"sheet-panel\" id=\"sheet-4\">\n1595:         <div class=\"sheet-heading\">\n1596:           <h2>本会員登録</h2>\n1597:         </div>",
+      "implementationRefs": [
+        "src/Eccube/Controller/Front/EntryController.php:283-289",
+        "src/Eccube/Controller/Front/EntryController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Front/EntryController.php:283\n280: \n281:         log_info('本会員登録完了');\n282: \n283:         $event = new EventArgs(\n284:             [\n285:                 'Customer' => $Customer,\n286:             ],",
+        "src/Eccube/Controller/Front/EntryController.php:47\n44: use Symfony\\Component\\Validator\\Constraints as Assert;\n45: use Symfony\\Component\\Validator\\Validator\\ValidatorInterface;\n46: \n47: class EntryController extends AbstractController\n48: {\n49:     protected BaseInfo $BaseInfo;\n50: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "f06-02_0306_sheet-4_sheet-conformance-d52de6028d9c",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+      "designRefDetail": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4（判定順序表 順序3、副作用順序『スマレジIDが既にある場合は…完了済みですを表示して終了』、materialGapRows req 146/170/221）",
+      "designExpectation": "判定順序3: 秘密キーで取得した会員の選手情報にスマレジIDが既にある場合は再登録せず、共通エラー画面『完了済みです。／既に会員登録が完了されております。』を表示して終了する。",
+      "designQuote": "判定順序3: 秘密キーで取得した会員の選手情報にスマレジIDが既にある場合は再登録せず、共通エラー画面『完了済みです。／既に会員登録が完了されております。』を表示して終了する。",
+      "implRef": "src/Eccube/Controller/Front/EntryController.php:348-352",
+      "implementationActual": "linkSmaregiCustomer() 349-352 で Player->getSmaregiId() が非空の場合『冪等』として何もせず return $Customer し、そのまま完了メール送信(305)・自動ログイン(315)・本登録完了画面表示へ進む。『完了済みです』エラー画面での終了はこの分岐に存在しない。",
+      "difference": "設計の判定順序3を正として実装を精査。スマレジID保有時の分岐がエラー画面ではなく冪等スキップ+正常完了扱いになっている。『完了済み』判定は customer_status(273-279)でのみ行われ、設計指定のスマレジID保有による判定・画面出力は未実装(activate_error.twig の error_type にも該当ケース無し)。",
+      "mismatchReason": "設計の判定順序3を正として実装を精査。スマレジID保有時の分岐がエラー画面ではなく冪等スキップ+正常完了扱いになっている。『完了済み』判定は customer_status(273-279)でのみ行われ、設計指定のスマレジID保有による判定・画面出力は未実装(activate_error.twig の error_type にも該当ケース無し)。",
+      "comparisonRows": [
+        {
+          "item": "スマレジID保有時の分岐",
+          "design": "共通エラー画面『完了済みです』を表示して終了",
+          "implementation": "冪等スキップして正常完了(メール/自動ログイン/完了画面)",
+          "mismatch": "エラー画面での終了が実装されていない"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "f06-02_0306_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/Front/EntryController.php:348-352",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「判定順序3: 秘密キーで取得した会員の選手情報にスマレジIDが既にある場合は再登録せず、共通エラー画面『完了済みです。／既に会員登録が完了されております。』を表示して終了する。」。実装は「linkSmaregiCustomer() 349-352 で Player->getSmaregiId() が非空の場合『冪等』として何もせず return $Customer し、そのまま完了メール送信(305)・自動ログイン(315)・本登録完了画面表示へ進む。『完了済みです』エラー画面での終了はこの分岐に存在しない。」。乖離理由は「設計の判定順序3を正として実装を精査。スマレジID保有時の分岐がエラー画面ではなく冪等スキップ+正常完了扱いになっている。『完了済み』判定は customer_status(273-279)でのみ行われ、設計指定のスマレジID保有による判定・画面出力は未実装(activate_error.twig の error_type にも該当ケース無し)。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "業務ロジック・外部連携未実装",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:1594\n1591:       </section>\n1592:       <!-- function-design-embed:end f06-19-f06-19_front_member_mypage_credit_card -->\n1593: </section>\n1594:       <section class=\"sheet-panel\" id=\"sheet-4\">\n1595:         <div class=\"sheet-heading\">\n1596:           <h2>本会員登録</h2>\n1597:         </div>",
+      "implementationRefs": [
+        "src/Eccube/Controller/Front/EntryController.php:348-352",
+        "src/Eccube/Controller/Front/EntryController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Front/EntryController.php:348\n",
+        "src/Eccube/Controller/Front/EntryController.php:47\n44: use Symfony\\Component\\Validator\\Constraints as Assert;\n45: use Symfony\\Component\\Validator\\Validator\\ValidatorInterface;\n46: \n47: class EntryController extends AbstractController\n48: {\n49:     protected BaseInfo $BaseInfo;\n50: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "f06-02_0306_sheet-4_sheet-conformance-432b37e81215",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+      "designRefDetail": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4（表示メッセージ 常時表示表: 完了見出し/完了案内/完了補足の日英, materialGapRows req 134/185/188/191）",
+      "designExpectation": "本登録完了画面の表示文言。完了案内(日本語)『本登録が完了いたしました。』/(英語)『Main registration is completed.』、完了見出し(英語)『Main registration complete』。",
+      "designQuote": "本登録完了画面の表示文言。完了案内(日本語)『本登録が完了いたしました。』/(英語)『Main registration is completed.』、完了見出し(英語)『Main registration complete』。",
+      "implRef": "src/Eccube/Resource/locale/messages.ja.yaml:443-445, src/Eccube/Resource/locale/messages.en.yaml:316,323-325",
+      "implementationActual": "complete_message__activated(ja)=『会員登録が完了いたしました。…』(設計の『本登録が完了いたしました。』と語句相違)。complete_title(en)=『Sign-up completed』(設計『Main registration complete』と不一致)。complete_message__activated(en)=『Your registration is now complete. …』(設計『Main registration is completed.』と不一致)。activate.twig/activate.en.twig:20-21 が該当キーを表示。",
+      "difference": "設計の表示文言表(日英明記)を正として実装テンプレート(activate.twig:20-21)と翻訳キー値を突合。日本語完了案内および英語見出し・英語案内が設計値と相違。完了補足(ja)は一致。",
+      "mismatchReason": "設計の表示文言表(日英明記)を正として実装テンプレート(activate.twig:20-21)と翻訳キー値を突合。日本語完了案内および英語見出し・英語案内が設計値と相違。完了補足(ja)は一致。",
+      "comparisonRows": [
+        {
+          "item": "完了案内(ja)",
+          "design": "本登録が完了いたしました。",
+          "implementation": "会員登録が完了いたしました。",
+          "mismatch": "本登録→会員登録"
+        },
+        {
+          "item": "完了見出し(en)",
+          "design": "Main registration complete",
+          "implementation": "Sign-up completed",
+          "mismatch": "文言相違"
+        },
+        {
+          "item": "完了案内(en)",
+          "design": "Main registration is completed.",
+          "implementation": "Your registration is now complete.",
+          "mismatch": "文言相違"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "f06-02_0306_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Resource/locale/messages.ja.yaml:443-445, src/Eccube/Resource/locale/messages.en.yaml:316,323-325",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「本登録完了画面の表示文言。完了案内(日本語)『本登録が完了いたしました。』/(英語)『Main registration is completed.』、完了見出し(英語)『Main registration complete』。」。実装は「complete_message__activated(ja)=『会員登録が完了いたしました。…』(設計の『本登録が完了いたしました。』と語句相違)。complete_title(en)=『Sign-up completed』(設計『Main registration complete』と不一致)。complete_message__activated(en)=『Your registration is now complete. …』(設計『Main registration is completed.』と不一…」。乖離理由は「設計の表示文言表(日英明記)を正として実装テンプレート(activate.twig:20-21)と翻訳キー値を突合。日本語完了案内および英語見出し・英語案内が設計値と相違。完了補足(ja)は一致。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "Repository・Entity・DB",
+        "Twig・画面表示"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:1594\n1591:       </section>\n1592:       <!-- function-design-embed:end f06-19-f06-19_front_member_mypage_credit_card -->\n1593: </section>\n1594:       <section class=\"sheet-panel\" id=\"sheet-4\">\n1595:         <div class=\"sheet-heading\">\n1596:           <h2>本会員登録</h2>\n1597:         </div>",
+      "implementationRefs": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:443-445",
+        "src/Eccube/Resource/locale/messages.en.yaml:316,323",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/locale/messages.en.yaml"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:443\n440: front.entry.complete.go_to_homepage: ホームへ戻る\n441: front.entry.blacklisted: \"ブラックリスト登録あり %name% %keyword%\"\n442: front.entry.blacklist_not_registered: ブラックリスト登録があるため会員登録不可\n443: front.entry.regist_error_title: 会員情報登録エラー\n444: front.entry.regist_error_back: 登録ページへ戻る\n445: front.entry.activate_error.forbidden.title: アクセスできません\n446: front.entry.activate_error.forbidden.message: このURLは無効です。",
+        "src/Eccube/Resource/locale/messages.en.yaml:316\n313:   Review your entry.\n314:   If all looks fine, press 'Sign up'.\n315: front.entry.do_register: Sign up\n316: front.entry.complete_title: Sign-up completed\n317: front.entry.complete_title__temporary: Temporary sign-up completed\n318: front.entry.complete_message__title: Your account is currently in a temporary registration state.\n319: front.entry.complete_message__title_temporary: Your account is currently in a temporary registration state.",
+        "src/Eccube/Resource/locale/messages.ja.yaml:1\n1: #====================================================================================\n2: # 共通\n3: #====================================================================================\n4: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    },
+    {
+      "id": "f06-02_0306_sheet-4_sheet-conformance-ad4965cf8d02",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+      "designRefDetail": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4（エラー・警告 表示メッセージ表, materialGapRows req 203/176/159）",
+      "designExpectation": "共通エラー画面の本文文言。秘密キー不正時『お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。』、スマレジ連携失敗時『大変お手数ですが、サイト管理者までご連絡ください。』。",
+      "designQuote": "共通エラー画面の本文文言。秘密キー不正時『お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。』、スマレジ連携失敗時『大変お手数ですが、サイト管理者までご連絡ください。』。",
+      "implRef": "src/Eccube/Resource/locale/messages.ja.yaml:451-456",
+      "implementationActual": "activate_error.forbidden.message=『このURLは無効です。』(設計本文と不一致)。activate_error.activate_failed.message=『時間を置いて再度お試しいただくか、お問い合わせください。』(設計本文『大変お手数ですが、サイト管理者までご連絡ください。』と不一致)。activate_error.twig:24 が message キーを本文として描画。タイトルおよび already_activated の題・本文は設計と一致。",
+      "difference": "設計のエラー表示文言表を正として activate_error.twig の描画キー('front.entry.activate_error.'~error_type~'.message')と messages.ja.yaml の値を突合。forbidden と activate_failed の本文が設計指定文言と相違することを確認。",
+      "mismatchReason": "設計のエラー表示文言表を正として activate_error.twig の描画キー('front.entry.activate_error.'~error_type~'.message')と messages.ja.yaml の値を突合。forbidden と activate_failed の本文が設計指定文言と相違することを確認。",
+      "comparisonRows": [
+        {
+          "item": "forbidden.message(ja)",
+          "design": "お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。",
+          "implementation": "このURLは無効です。",
+          "mismatch": "本文相違"
+        },
+        {
+          "item": "activate_failed.message(ja)",
+          "design": "大変お手数ですが、サイト管理者までご連絡ください。",
+          "implementation": "時間を置いて再度お試しいただくか、お問い合わせください。",
+          "mismatch": "本文相違"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "f06-02_0306_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Resource/locale/messages.ja.yaml:451-456",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「共通エラー画面の本文文言。秘密キー不正時『お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。』、スマレジ連携失敗時『大変お手数ですが、サイト管理者までご連絡ください。』。」。実装は「activate_error.forbidden.message=『このURLは無効です。』(設計本文と不一致)。activate_error.activate_failed.message=『時間を置いて再度お試しいただくか、お問い合わせください。』(設計本文『大変お手数ですが、サイト管理者までご連絡ください。』と不一致)。activate_error.twig:24 が message キーを本文として描画。タイトルおよび already_activated の題・本文は設計と一致。」。乖離理由は「設計のエラー表示文言表を正として activate_error.twig の描画キー('front.entry.activate_error.'~error_type~'.message')と messages.ja.yaml の値を突合。forbidden と activate_failed の本文が設計指定文言と相違することを確認。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ラベル・メッセージ・翻訳キー",
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html:1594\n1591:       </section>\n1592:       <!-- function-design-embed:end f06-19-f06-19_front_member_mypage_credit_card -->\n1593: </section>\n1594:       <section class=\"sheet-panel\" id=\"sheet-4\">\n1595:         <div class=\"sheet-heading\">\n1596:           <h2>本会員登録</h2>\n1597:         </div>",
+      "implementationRefs": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:451-456",
+        "src/Eccube/Resource/locale/messages.ja.yaml"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:451\n448: front.entry.activate_error.already_activated.message: 既に会員登録が完了されております。\n449: front.entry.activate_error.activate_failed.title: 会員情報の有効化に失敗しました\n450: front.entry.activate_error.activate_failed.message: 時間を置いて再度お試しいただくか、お問い合わせください。\n451: front.entry.blacklist_error: |\n452:   ご入力いただいた内容は使用できません。\n453:   もう一度、登録ページへアクセスして登録情報の変更をお願いいたします。\n454: front.entry.mail.note: 「.@ (@の前にドット)」、「.. (ドット2つ)」を含むメールアドレスはご利用いただけません",
+        "src/Eccube/Resource/locale/messages.ja.yaml:1\n1: #====================================================================================\n2: # 共通\n3: #====================================================================================\n4: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 117,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-4c78d3ea0f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "概要 既に仮会員登録した会員情報を本会員で登録できる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-c9319d8dca",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録完了 レイアウト図",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-20488b3423",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "⌂ > 本会員登録完了",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-9ba8b3801d",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録 / C11 / image 4",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-0d686da613",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 会員登録完了時、支店に会員データ連携を行っていたが不要となる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-08ba706a16",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 下記の条件適合確認を実行",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-871b99bb8e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "1 アクセスしてきたアクティベート用のURLに含まれる秘密鍵文字列の書式の確認",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-a4f7f2b221",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "2 秘密鍵文字列でユーザー情報を検索し、以下の条件でユーザーが存在するか確認",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-a0b42f677f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "3 2のチェックで存在したユーザーがすでにスマレジIDを持っていないかを確認",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-9a99927a0b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ スマレジIDを持っていたら、すでに会員登録済みとみなしエラーとする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-ba00774126",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "条件適合確認で問題があった場合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-4d5df76803",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 1の条件でエラーになった場合、E-1. 秘密鍵書式エラー画面を表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-d0a4ca6781",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 2,3の条件でエラーになった場合、E-2.ユーザー存在チェックエラー画面を表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-b8586a043b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 条件適合確認で問題がなかった場合、以下の処理を実行",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-1ddeb2460a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ スマレジに新規ユーザー登録を行う",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-357301ca9d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジの連携に失敗した場合、E-3. 本会員登録失敗(スマレジAPI会員登録失敗)エラー画面を表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-13b3e1a199",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ スマレジへのユーザー新規登録が成功した場合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-755fa789f9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ ユーザーのステータスを「本会員」にして、ユーザー情報を保存する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-3a4a94ae15",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 支店システムへ更新情報を連携 リニューアルによりこの処理は不要",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-fae3fb4ad2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ ユーザーに会員登録完了メールを送信",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-b45d4f5ac4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・現在表示中のページは押下できないようにする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-7db8cec91a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ホームアイコンを押下すると、本店ECTOP画面へ遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-b9ba31469c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・押下すると、ECTOP画面へ遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-fbe80ebee1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "E-1. 秘密鍵書式エラー画面 レイアウト図",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-290cdd2ecc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録 / Q66 / image 3",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-47c18f5bb6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ アクセスしてきたアクティベート用のURLに含まれる秘密鍵文字列の書式の確認し",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-a8493bef54",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "エラーがあった場合に表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-576dd9daa4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "E-2. ユーザー存在チェックエラー画面 レイアウト図",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-53707e3a85",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録 / Q99 / image 2",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-9818025c00",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "もしくは、既にスマレジIDを持っているユーザーの場合に表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-8567836c27",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "E-3. 本会員登録失敗(スマレジAPI会員登録失敗)エラー画面 レイアウト図",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-4be7277e70",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録 / N130 / image 1",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-baa489926b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ スマレジAPIからスマレジ会員ID発行・取得に失敗により本会員登録が失敗した場合に表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-161ab4be78",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "F06-02 本会員登録 / 会員 — 本会員登録（アクティベート）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-4ac0ad7805",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮会員登録を済ませた利用者が、仮会員登録完了メールに記載されたURL（秘密キー付き）を開くことで本会員へ昇格する機能である。秘密キーの妥当性と既処理の有無を確認したうえで、会員ステータスを本会員へ変更し、店舗POS（スマレジ）へ会員登録を連携し、本会員登録完了メールを送信し、その場で自動ログインしたうえで本登録完了画面または直前の商品検索画面へ遷移する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-5219240353",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの会員アクティベート処理、本登録完了テンプレート（ Entry/activate.twig ・ Entry/activate.en.twig ）、エラー文言（ message.ja.yml ・ message.en.yml ）、会員・選手情報を扱うリポジトリ、スマレジ連携サービスを正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-f6ce6efbad",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本機能のカスタマイズ区分は現行踏襲で、画面・処理フローの挙動は現行リポ（pf-eccube3）を参照し、DB関連（テーブル名・列名）は ec-cube-enterprise を正とする。本機能は言語切替で英語表示へ到達できるため、表示メッセージに英語文言を併記する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-ef3149cf1c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "対象はブラウザ経由のフロント（会員登録）に限定する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-771e02a3ed",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録（アクティベート）の入口とURLの秘密キー",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-915f1560eb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化を許可・拒否する判定順序",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-aca9fe8dd1",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "完了後の遷移と利用者に表示するメッセージ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-6b4bd38aa3",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-99d0dc7415",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮会員登録（入力・確認・仮登録完了メール送信）の仕様（会員仮登録機能を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-18b4c859b3",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮会員登録完了メールの本文・件名（メールテンプレート管理機能を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-97fa05fabb",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ連携サービス・支店連携サービスの内部仕様",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-a9233a5130",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "ブラックリスト登録エラー画面の判定（別機能を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-12dd9e68c8",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "同名・同列（保有判定の補助列 exists_smaregi_flg も存在）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-fb530a65ea",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "挙動・判定順序・画面・メッセージ・自動ログインの動きは現行リポ（pf-eccube3）を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-7c77dd42e7",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "入会申込はしたが本会員化前の会員。ログイン不可の状態。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-8719135315",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "店舗POSの外部サービス。本会員化時に会員登録を連携する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-0f520ebeed",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮会員登録完了メール内のアクティベートURL",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-c455501162",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "秘密キーが正当かつ未本会員化なら本会員化し、自動ログインのうえ本登録完了画面または直前の商品検索画面へ遷移する。判定に該当しない場合はエラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-67ebba7cda",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化成功時は本登録完了画面（見出し「本登録完了」、「本登録が完了いたしました。」の案内、「ホームへ戻る」リンク）。判定で拒否された場合は共通エラー画面（タイトルと本文の組）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-1c979af546",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本機能ではJSによる非同期取得や動的な表示切替を扱わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-18848e9573",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "完了画面で会員登録系のスタイルを読み込む。利用者の挙動理解に影響する分岐表示はない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-0d6c10501e",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "秘密キーの妥当性を確認する。不正な場合は共通エラー画面（アクセスできません）を表示して終了する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-c75bf8229f",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "秘密キーから未本会員の会員を取得する。取得できない場合（該当なし・既処理など）は共通エラー画面（完了済みです）を表示して終了する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-083a5fe8df",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "当該会員の選手情報にスマレジIDが既にある場合は、一度本登録済みと判断して再登録せず、共通エラー画面（完了済みです）を表示して終了する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-3129a202fc",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "選手情報に新しいスマレジIDを採番し、スマレジへ会員登録を連携する。連携が失敗した場合は共通エラー画面（有効化に失敗しました）を表示して終了する（会員ステータス変更は確定しない）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-42830a4a66",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "連携が成功した場合、会員・選手情報を保存して確定する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-0cc308a8f0",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "支店システムへ当該会員の更新を通知する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-3b14bc4f11",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録完了メールを送信する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-8be668bace",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化 時の判定順序",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-ea7504cabb",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "不正なら「アクセスできません。」エラー画面",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-9aa3733404",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "取得不可なら「完了済みです。」エラー画面",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-d64c0a64dd",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "既にあるなら「完了済みです。」エラー画面（再登録しない）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-e3b07ea86c",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジへの会員登録連携が成功するか",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-a8c47bd4d7",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "失敗なら「会員情報の有効化に失敗しました。」エラー画面",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-58ce945569",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化を確定し、連携・メール・自動ログインののち完了画面または商品検索画面へ遷移",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-ece241d84b",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "常時表示（正常・静的）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-221f630561",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "表示文言（日本語）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-887b724045",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "表示文言（英語）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-55ad3e9a76",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本登録が完了いたしました。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-86ab7351cb",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "大会の事前受付、デッキのオンライン登録など、引き続きご利用ください。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-7f58d59ac0",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "エラー・警告（画面全体）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-16a282c860",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "表示条件（利用者視点）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-b8744f21e5",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "アクセスできません。／お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-cb559e95cc",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "完了済みです。／既に会員登録が完了されております。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-a89473b304",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "判定順序2・3。理由は画面上で区別しない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-523ca43899",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ連携が失敗したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-f08e62a034",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "エラー画面はタイトルと本文の組で表示する。本機能はフラッシュ・トーストを生成しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-a328a8c178",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "二重本登録の防止",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-fc8fccbd2c",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "選手情報にスマレジIDがある会員は本登録済みとみなし、再度の本会員化・スマレジ再登録を行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-26a1c729f7",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ会員登録連携の成功を確定の前提とする。失敗時は会員ステータス変更を確定しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-2da678d0e1",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "会員ステータス変更とスマレジID採番のあとにスマレジ連携を行い、成功時のみDBへ確定する。確定後に支店連携・メール送信・自動ログインを行う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-c399320e33",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "未本会員を取得できない、またはスマレジID保有のため「完了済みです。」を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-388fa810e0",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "「アクセスできません。」を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-2ac01f9137",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ連携が一時的に失敗",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-f537447c1b",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化を確定せず「有効化に失敗しました。」を表示する。利用者は再度URLを開くことで再試行できる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-e22a25fb96",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮登録時に商品検索からの遷移があった",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-312fb21f28",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化後、完了画面ではなく直前の商品検索画面へ戻す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-b547dc655c",
+        "category": "本会員化時、会員ステータスと選手情報のスマレジIDを同一トランザクションで確定する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ会員登録の成功を本会員化確定の前提とする。失敗時はDBを変更しないため、画面表示とDBは本会員化前のまま一致する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-2289534fdb",
+        "category": "本会員化時、会員ステータスと選手情報のスマレジIDを同一トランザクションで確定する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化確定後に更新通知を行う。支店側反映の時点整合は本書では保証しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-fd97ea8ef5",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化時にスマレジへ会員登録を連携する。成功時のみ本会員化を確定し、失敗時は確定せずエラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-1243ed6f6a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録完了メールの送信は本会員化確定後に行う。送信の成否は画面のメッセージには反映しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-9857e4875e",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化、自動ログイン、本登録完了画面または商品検索画面への遷移、完了メール送信。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-9aafb0e6f6",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "判定に応じた共通エラー画面（理由別の文言）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-b9315da089",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "採番・保有判定に使用する。保有済みは本登録済みとみなす。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-b3bce3144c",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-ae888f0762",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "妥当性を確認する。不正な場合はエラー画面とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-d5cd4b564a",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "秘密キーで未本会員を取得できることを条件とする。取得不可・既処理はエラー画面とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-9fa88cdcd2",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "「完了済みです。」を表示し、再度の本会員化は行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-3e311a1b94",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本機能はログイン前のアクセスを前提とし、成功時に自動ログインする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-1dcbd8c777",
+        "category": "直前の商品検索画面（セッションの戻り先URL）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本登録完了画面（ Entry/activate.twig ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-8ad86ec8b0",
+        "category": "直前の商品検索画面（セッションの戻り先URL）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "共通エラー画面（理由別文言）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-ba35ff1e60",
+        "category": "直前の商品検索画面（セッションの戻り先URL）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-8fae390e49",
+        "category": "直前の商品検索画面（セッションの戻り先URL）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-0b5a806d98",
+        "category": "直前の商品検索画面（セッションの戻り先URL）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮登録時に商品検索から遷移",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-ae14f4da1d",
+        "category": "本会員化確定後、セッションの商品検索の戻り先を取得し消去する",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "直前の商品検索画面を再表示する（ログイン済み）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-5d7422a841",
+        "category": "本会員化確定後、セッションの商品検索の戻り先を取得し消去する",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "共通エラー画面（アクセスできません）。処理を中止する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-978f6e4532",
+        "category": "本会員化確定後、セッションの商品検索の戻り先を取得し消去する",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "未本会員を取得不可／既本登録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-dd56ae8dde",
+        "category": "共通エラー画面（完了済みです）。処理を中止する。表示メッセージ節を文言の正とする。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ連携失敗",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-a9e3280aed",
+        "category": "共通エラー画面（完了済みです）。処理を中止する。表示メッセージ節を文言の正とする。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "共通エラー画面（有効化に失敗しました）。本会員化を確定しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-cfd154dda2",
+        "category": "共通エラー画面（完了済みです）。処理を中止する。表示メッセージ節を文言の正とする。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録画面へのリダイレクト",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-10f53114f4",
+        "category": "共通エラー画面（完了済みです）。処理を中止する。表示メッセージ節を文言の正とする。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "情報ログ（仮登録処理側）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-c1163b5f66",
+        "category": "共通エラー画面（完了済みです）。処理を中止する。表示メッセージ節を文言の正とする。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "メール送信の情報ログ・送信履歴の保存。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "f06-02_0306_sheet-4_sheet-req-5e50b07d1c",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化時の会員ステータス変更と選手情報更新は同一トランザクションで確定する。スマレジ連携の成功を確定の前提とし、失敗時はDBを変更しない。本機能では楽観ロック・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "customer_status_id",
+        "smaregi_id"
+      ],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "pf-eccube3/f06-02_front_member_entry_activate.md",
+        "activate.twig",
+        "activate.en.twig",
+        "entry/activate/{secret_key}",
+        "flush"
+      ],
+      "businessTerms": [
+        "F06",
+        "本会員登録",
+        "既に仮会員登録した会員情報を本会員で登録できる",
+        "本会員登録完了",
+        "会員登録完了時",
+        "支店に会員データ連携を行っていたが不要となる",
+        "2のチェックで存在したユーザーがすでにスマレジI",
+        "スマレジIDを持っていたら",
+        "すでに会員登録済みとみなしエラーとする",
+        "スマレジに新規ユーザー登録を行う",
+        "スマレジの連携に失敗した場合",
+        "本会員登録失敗",
+        "スマレジAPI会員登録失敗",
+        "スマレジへのユーザー新規登録が成功した場合",
+        "ユーザーに会員登録完了メールを送信",
+        "ユーザーをログイン状態にする"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 17,
+    "candidateRefs": [
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:289",
+        "snippet": "'player.smaregiId AS smaregi_id',",
+        "weight": 7
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Admin/Customer/LostPointsAction.php:64",
+        "snippet": "'smaregi_id' => $Player->getSmaregiId(),",
+        "weight": 7
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/Api/Mock/Response/CustomerMockResponse.php:29",
+        "snippet": "* ことで EC 側の保存済み smaregi_id と整合させる.",
+        "weight": 7
+      },
+      {
+        "term": "activate.twig",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/EntryController.php:212",
+        "snippet": "#[Template(template: 'Entry/activate.twig')]",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CartService.php:242",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CartService.php:83",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CsvExportService.php:202",
+        "snippet": "flush();",
+        "weight": 6
+      },
+      {
+        "term": "flush",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/DeckService.php:285",
+        "snippet": "$this->entityManager->flush();",
+        "weight": 6
+      },
+      {
+        "term": "customer_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:188",
+        "snippet": "#[ORM\\JoinColumn(name: 'customer_status_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbPlayer.php:92",
+        "snippet": "#[ORM\\Column(name: 'smaregi_id', type: Types::STRING, length: 16, nullable: true, options: ['comment' => 'スマレジID'])]",
+        "weight": 5
+      },
+      {
+        "term": "customer_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Views/LoginCustomerView.php:45",
+        "snippet": "#[ORM\\Column(name: 'customer_status_id', type: Types::INTEGER, options: ['unsigned' => true], nullable: true)]",
+        "weight": 5
+      },
+      {
+        "term": "customer_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Views/LoginCustomerView.php:46",
+        "snippet": "private ?int $customer_status_id = null;",
+        "weight": 5
+      },
+      {
+        "term": "customer_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Views/LoginCustomerView.php:81",
+        "snippet": "return $this->customer_status_id;",
+        "weight": 5
+      },
+      {
+        "term": "entry/activate/{secret_key}",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-event.js:1",
+        "snippet": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var s=e[i](o),l=s.value}catch(e){r(e);r…",
+        "weight": 4
+      },
+      {
+        "term": "entry/activate/{secret_key}",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-main.js:1",
+        "snippet": "(()=>{\"use strict\";let e,t;var r,i,n,a,o,s,l,c,u,d,h,p,f,m,v={},g={};function y(e){var t=g[e];if(void 0!==t)return t.exports;var r=g[e]={exports:{}};return v[e](r,r.exports,y),r.exports}y.rv=()=>\"1.7.5\",y.ruid=\"bundler=…",
+        "weight": 4
+      },
+      {
+        "term": "本会員登録完了",
+        "termType": "businessTerm",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Front/EntryController.php:281",
+        "snippet": "log_info('本会員登録完了');",
+        "weight": 4
+      },
+      {
+        "term": "entry/activate/{secret_key}",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbEntryPlayer.php:22",
+        "snippet": "#[ORM\\Table(name: 'dtb_entry_player')]",
+        "weight": 4
+      },
+      {
+        "term": "entry/activate/{secret_key}",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbEntryPlayer.php:39",
+        "snippet": "#[ORM\\JoinColumn(name: 'event_entry_id', nullable: false, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => ' '])]",
+        "weight": 4
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 8,
+    "implementationGapRequirementCount": 1,
+    "rows": [
+      {
+        "findingId": "f06-02_0306_sheet-4_sheet-conformance-48450eb6b9e7",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "high",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ連携成功後にのみ確定",
+        "implementationActual": "スマレジ連携前に auto-commit で確定",
+        "mismatchReason": "確定順序が逆転",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/EntryController.php:283-289",
+          "src/Eccube/Controller/Front/EntryController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "本会員化確定タイミング",
+            "design": "スマレジ連携成功後にのみ確定",
+            "implementation": "スマレジ連携前に auto-commit で確定",
+            "mismatch": "確定順序が逆転"
+          }
+        ]
+      },
+      {
+        "findingId": "f06-02_0306_sheet-4_sheet-conformance-48450eb6b9e7",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "high",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化を確定しない/DBは本会員化前のまま/再度URLで再試行可",
+        "implementationActual": "customer_status(REGULAR) 確定済みでロールバックせず、再度URLは already_activated となり再試行不可",
+        "mismatchReason": "ロールバック不在・再試行不可",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/EntryController.php:283-289",
+          "src/Eccube/Controller/Front/EntryController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "連携失敗時の挙動",
+            "design": "本会員化を確定しない/DBは本会員化前のまま/再度URLで再試行可",
+            "implementation": "customer_status(REGULAR) 確定済みでロールバックせず、再度URLは already_activated となり再試行不可",
+            "mismatch": "ロールバック不在・再試行不可"
+          }
+        ]
+      },
+      {
+        "findingId": "f06-02_0306_sheet-4_sheet-conformance-d52de6028d9c",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "業務ロジック・外部連携未実装",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "共通エラー画面『完了済みです』を表示して終了",
+        "implementationActual": "冪等スキップして正常完了(メール/自動ログイン/完了画面)",
+        "mismatchReason": "エラー画面での終了が実装されていない",
+        "implementationRefs": [
+          "src/Eccube/Controller/Front/EntryController.php:348-352",
+          "src/Eccube/Controller/Front/EntryController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "スマレジID保有時の分岐",
+            "design": "共通エラー画面『完了済みです』を表示して終了",
+            "implementation": "冪等スキップして正常完了(メール/自動ログイン/完了画面)",
+            "mismatch": "エラー画面での終了が実装されていない"
+          }
+        ]
+      },
+      {
+        "findingId": "f06-02_0306_sheet-4_sheet-conformance-432b37e81215",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本登録が完了いたしました。",
+        "implementationActual": "会員登録が完了いたしました。",
+        "mismatchReason": "本登録→会員登録",
+        "implementationRefs": [
+          "src/Eccube/Resource/locale/messages.ja.yaml:443-445",
+          "src/Eccube/Resource/locale/messages.en.yaml:316,323",
+          "src/Eccube/Resource/locale/messages.ja.yaml",
+          "src/Eccube/Resource/locale/messages.en.yaml"
+        ],
+        "comparisonRows": [
+          {
+            "item": "完了案内(ja)",
+            "design": "本登録が完了いたしました。",
+            "implementation": "会員登録が完了いたしました。",
+            "mismatch": "本登録→会員登録"
+          }
+        ]
+      },
+      {
+        "findingId": "f06-02_0306_sheet-4_sheet-conformance-432b37e81215",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "Main registration complete",
+        "implementationActual": "Sign-up completed",
+        "mismatchReason": "文言相違",
+        "implementationRefs": [
+          "src/Eccube/Resource/locale/messages.ja.yaml:443-445",
+          "src/Eccube/Resource/locale/messages.en.yaml:316,323",
+          "src/Eccube/Resource/locale/messages.ja.yaml",
+          "src/Eccube/Resource/locale/messages.en.yaml"
+        ],
+        "comparisonRows": [
+          {
+            "item": "完了見出し(en)",
+            "design": "Main registration complete",
+            "implementation": "Sign-up completed",
+            "mismatch": "文言相違"
+          }
+        ]
+      },
+      {
+        "findingId": "f06-02_0306_sheet-4_sheet-conformance-432b37e81215",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "Main registration is completed.",
+        "implementationActual": "Your registration is now complete.",
+        "mismatchReason": "文言相違",
+        "implementationRefs": [
+          "src/Eccube/Resource/locale/messages.ja.yaml:443-445",
+          "src/Eccube/Resource/locale/messages.en.yaml:316,323",
+          "src/Eccube/Resource/locale/messages.ja.yaml",
+          "src/Eccube/Resource/locale/messages.en.yaml"
+        ],
+        "comparisonRows": [
+          {
+            "item": "完了案内(en)",
+            "design": "Main registration is completed.",
+            "implementation": "Your registration is now complete.",
+            "mismatch": "文言相違"
+          }
+        ]
+      },
+      {
+        "findingId": "f06-02_0306_sheet-4_sheet-conformance-ad4965cf8d02",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。",
+        "implementationActual": "このURLは無効です。",
+        "mismatchReason": "本文相違",
+        "implementationRefs": [
+          "src/Eccube/Resource/locale/messages.ja.yaml:451-456",
+          "src/Eccube/Resource/locale/messages.ja.yaml"
+        ],
+        "comparisonRows": [
+          {
+            "item": "forbidden.message(ja)",
+            "design": "お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。",
+            "implementation": "このURLは無効です。",
+            "mismatch": "本文相違"
+          }
+        ]
+      },
+      {
+        "findingId": "f06-02_0306_sheet-4_sheet-conformance-ad4965cf8d02",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "大変お手数ですが、サイト管理者までご連絡ください。",
+        "implementationActual": "時間を置いて再度お試しいただくか、お問い合わせください。",
+        "mismatchReason": "本文相違",
+        "implementationRefs": [
+          "src/Eccube/Resource/locale/messages.ja.yaml:451-456",
+          "src/Eccube/Resource/locale/messages.ja.yaml"
+        ],
+        "comparisonRows": [
+          {
+            "item": "activate_failed.message(ja)",
+            "design": "大変お手数ですが、サイト管理者までご連絡ください。",
+            "implementation": "時間を置いて再度お試しいただくか、お問い合わせください。",
+            "mismatch": "本文相違"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 117,
+    "verdictedCount": 117,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 117,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-4c78d3ea0f",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "概要 既に仮会員登録した会員情報を本会員で登録できる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-c9319d8dca",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録完了 レイアウト図",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-20488b3423",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "⌂ > 本会員登録完了",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-9ba8b3801d",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録 / C11 / image 4",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-0d686da613",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 会員登録完了時、支店に会員データ連携を行っていたが不要となる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-08ba706a16",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 下記の条件適合確認を実行",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-871b99bb8e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "1 アクセスしてきたアクティベート用のURLに含まれる秘密鍵文字列の書式の確認",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-a4f7f2b221",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "2 秘密鍵文字列でユーザー情報を検索し、以下の条件でユーザーが存在するか確認",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-a0b42f677f",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "3 2のチェックで存在したユーザーがすでにスマレジIDを持っていないかを確認",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-9a99927a0b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ スマレジIDを持っていたら、すでに会員登録済みとみなしエラーとする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-ba00774126",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "条件適合確認で問題があった場合",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-4d5df76803",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 1の条件でエラーになった場合、E-1. 秘密鍵書式エラー画面を表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-d0a4ca6781",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 2,3の条件でエラーになった場合、E-2.ユーザー存在チェックエラー画面を表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-b8586a043b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 条件適合確認で問題がなかった場合、以下の処理を実行",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-1ddeb2460a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ スマレジに新規ユーザー登録を行う",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-357301ca9d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジの連携に失敗した場合、E-3. 本会員登録失敗(スマレジAPI会員登録失敗)エラー画面を表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-13b3e1a199",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ スマレジへのユーザー新規登録が成功した場合",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-755fa789f9",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ ユーザーのステータスを「本会員」にして、ユーザー情報を保存する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-3a4a94ae15",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ 支店システムへ更新情報を連携 リニューアルによりこの処理は不要",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-fae3fb4ad2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ ユーザーに会員登録完了メールを送信",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-b45d4f5ac4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・現在表示中のページは押下できないようにする",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-7db8cec91a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ホームアイコンを押下すると、本店ECTOP画面へ遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-b9ba31469c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・押下すると、ECTOP画面へ遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-fbe80ebee1",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "E-1. 秘密鍵書式エラー画面 レイアウト図",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-290cdd2ecc",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録 / Q66 / image 3",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-47c18f5bb6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ アクセスしてきたアクティベート用のURLに含まれる秘密鍵文字列の書式の確認し",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-a8493bef54",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "エラーがあった場合に表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-576dd9daa4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "E-2. ユーザー存在チェックエラー画面 レイアウト図",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-53707e3a85",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録 / Q99 / image 2",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-9818025c00",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "もしくは、既にスマレジIDを持っているユーザーの場合に表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-8567836c27",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "E-3. 本会員登録失敗(スマレジAPI会員登録失敗)エラー画面 レイアウト図",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-4be7277e70",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録 / N130 / image 1",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-baa489926b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "・ スマレジAPIからスマレジ会員ID発行・取得に失敗により本会員登録が失敗した場合に表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-161ab4be78",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "F06-02 本会員登録 / 会員 — 本会員登録（アクティベート）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-4ac0ad7805",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮会員登録を済ませた利用者が、仮会員登録完了メールに記載されたURL（秘密キー付き）を開くことで本会員へ昇格する機能である。秘密キーの妥当性と既処理の有無を確認したうえで、会員ステータスを本会員へ変更し、店舗POS（スマレジ）へ会員登録を連携し、本会員登録完了メールを送信し、その場で自動ログインしたうえで本登録完了画面または直前の商品検索画面へ遷移する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-5219240353",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの会員アクティベート処理、本登録完了テンプレート（ Entry/activate.twig ・ Entry/activate.en.twig ）、エラー文言（ message.ja.yml ・ message.en.yml ）、会員・選手情報を扱うリポジトリ、スマレジ連携サービスを正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-f6ce6efbad",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本機能のカスタマイズ区分は現行踏襲で、画面・処理フローの挙動は現行リポ（pf-eccube3）を参照し、DB関連（テーブル名・列名）は ec-cube-enterprise を正とする。本機能は言語切替で英語表示へ到達できるため、表示メッセージに英語文言を併記する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-ef3149cf1c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "対象はブラウザ経由のフロント（会員登録）に限定する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-771e02a3ed",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録（アクティベート）の入口とURLの秘密キー",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-915f1560eb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化を許可・拒否する判定順序",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-aca9fe8dd1",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "完了後の遷移と利用者に表示するメッセージ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-6b4bd38aa3",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-99d0dc7415",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮会員登録（入力・確認・仮登録完了メール送信）の仕様（会員仮登録機能を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-18b4c859b3",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮会員登録完了メールの本文・件名（メールテンプレート管理機能を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-97fa05fabb",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ連携サービス・支店連携サービスの内部仕様",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-a9233a5130",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "ブラックリスト登録エラー画面の判定（別機能を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-12dd9e68c8",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "同名・同列（保有判定の補助列 exists_smaregi_flg も存在）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-fb530a65ea",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "挙動・判定順序・画面・メッセージ・自動ログインの動きは現行リポ（pf-eccube3）を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-7c77dd42e7",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "入会申込はしたが本会員化前の会員。ログイン不可の状態。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-8719135315",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "店舗POSの外部サービス。本会員化時に会員登録を連携する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-0f520ebeed",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮会員登録完了メール内のアクティベートURL",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-c455501162",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "秘密キーが正当かつ未本会員化なら本会員化し、自動ログインのうえ本登録完了画面または直前の商品検索画面へ遷移する。判定に該当しない場合はエラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-67ebba7cda",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化成功時は本登録完了画面（見出し「本登録完了」、「本登録が完了いたしました。」の案内、「ホームへ戻る」リンク）。判定で拒否された場合は共通エラー画面（タイトルと本文の組）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-1c979af546",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本機能ではJSによる非同期取得や動的な表示切替を扱わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-18848e9573",
+        "category": "本会員化成立時の副作用（会員ステータス変更、スマレジ連携、支店連携、完了メール、自動ログイン、セッション再生成）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "完了画面で会員登録系のスタイルを読み込む。利用者の挙動理解に影響する分岐表示はない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-0d6c10501e",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "秘密キーの妥当性を確認する。不正な場合は共通エラー画面（アクセスできません）を表示して終了する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-c75bf8229f",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "秘密キーから未本会員の会員を取得する。取得できない場合（該当なし・既処理など）は共通エラー画面（完了済みです）を表示して終了する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-083a5fe8df",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "当該会員の選手情報にスマレジIDが既にある場合は、一度本登録済みと判断して再登録せず、共通エラー画面（完了済みです）を表示して終了する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-3129a202fc",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "選手情報に新しいスマレジIDを採番し、スマレジへ会員登録を連携する。連携が失敗した場合は共通エラー画面（有効化に失敗しました）を表示して終了する（会員ステータス変更は確定しない）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-42830a4a66",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "連携が成功した場合、会員・選手情報を保存して確定する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-0cc308a8f0",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "支店システムへ当該会員の更新を通知する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-3b14bc4f11",
+        "category": "「ホームへ戻る」リンクの遷移先は、店舗指定がセッションにある場合は支店トップ、無い場合は本店トップである。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録完了メールを送信する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-8be668bace",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化 時の判定順序",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-ea7504cabb",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "不正なら「アクセスできません。」エラー画面",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-9aa3733404",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "取得不可なら「完了済みです。」エラー画面",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-d64c0a64dd",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "既にあるなら「完了済みです。」エラー画面（再登録しない）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-e3b07ea86c",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジへの会員登録連携が成功するか",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-a8c47bd4d7",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "失敗なら「会員情報の有効化に失敗しました。」エラー画面",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-58ce945569",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化を確定し、連携・メール・自動ログインののち完了画面または商品検索画面へ遷移",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-ece241d84b",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "常時表示（正常・静的）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-221f630561",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "表示文言（日本語）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-887b724045",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "表示文言（英語）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-55ad3e9a76",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本登録が完了いたしました。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-86ab7351cb",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "大会の事前受付、デッキのオンライン登録など、引き続きご利用ください。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-7f58d59ac0",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "エラー・警告（画面全体）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-16a282c860",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "表示条件（利用者視点）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-b8744f21e5",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "アクセスできません。／お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-cb559e95cc",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "完了済みです。／既に会員登録が完了されております。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-a89473b304",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "判定順序2・3。理由は画面上で区別しない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-523ca43899",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ連携が失敗したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-f08e62a034",
+        "category": "セッションに直前の商品検索の戻り先がある場合はそこへリダイレクトし、戻り先を消去する。無い場合は本登録完了画面を表示する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "エラー画面はタイトルと本文の組で表示する。本機能はフラッシュ・トーストを生成しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-a328a8c178",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "二重本登録の防止",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-fc8fccbd2c",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "選手情報にスマレジIDがある会員は本登録済みとみなし、再度の本会員化・スマレジ再登録を行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-26a1c729f7",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ会員登録連携の成功を確定の前提とする。失敗時は会員ステータス変更を確定しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-2da678d0e1",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "会員ステータス変更とスマレジID採番のあとにスマレジ連携を行い、成功時のみDBへ確定する。確定後に支店連携・メール送信・自動ログインを行う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-c399320e33",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "未本会員を取得できない、またはスマレジID保有のため「完了済みです。」を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-388fa810e0",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "「アクセスできません。」を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-2ac01f9137",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ連携が一時的に失敗",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-f537447c1b",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化を確定せず「有効化に失敗しました。」を表示する。利用者は再度URLを開くことで再試行できる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-e22a25fb96",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮登録時に商品検索からの遷移があった",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-312fb21f28",
+        "category": "本機能は利用者入力のフォームを持たないため入力項目は無い。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化後、完了画面ではなく直前の商品検索画面へ戻す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-b547dc655c",
+        "category": "本会員化時、会員ステータスと選手情報のスマレジIDを同一トランザクションで確定する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ会員登録の成功を本会員化確定の前提とする。失敗時はDBを変更しないため、画面表示とDBは本会員化前のまま一致する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-2289534fdb",
+        "category": "本会員化時、会員ステータスと選手情報のスマレジIDを同一トランザクションで確定する。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化確定後に更新通知を行う。支店側反映の時点整合は本書では保証しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-fd97ea8ef5",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化時にスマレジへ会員登録を連携する。成功時のみ本会員化を確定し、失敗時は確定せずエラー画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-1243ed6f6a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録完了メールの送信は本会員化確定後に行う。送信の成否は画面のメッセージには反映しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-9857e4875e",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化、自動ログイン、本登録完了画面または商品検索画面への遷移、完了メール送信。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-9aafb0e6f6",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "判定に応じた共通エラー画面（理由別の文言）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-b9315da089",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "採番・保有判定に使用する。保有済みは本登録済みとみなす。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-b3bce3144c",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-ae888f0762",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "妥当性を確認する。不正な場合はエラー画面とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-d5cd4b564a",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "秘密キーで未本会員を取得できることを条件とする。取得不可・既処理はエラー画面とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-9fa88cdcd2",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "「完了済みです。」を表示し、再度の本会員化は行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-3e311a1b94",
+        "category": "会員ステータス変更、選手情報のスマレジID採番、スマレジ連携、支店連携、メール送信、自動ログイン、セッション再生成。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本機能はログイン前のアクセスを前提とし、成功時に自動ログインする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-1dcbd8c777",
+        "category": "直前の商品検索画面（セッションの戻り先URL）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本登録完了画面（ Entry/activate.twig ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-8ad86ec8b0",
+        "category": "直前の商品検索画面（セッションの戻り先URL）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "共通エラー画面（理由別文言）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-ba35ff1e60",
+        "category": "直前の商品検索画面（セッションの戻り先URL）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-8fae390e49",
+        "category": "直前の商品検索画面（セッションの戻り先URL）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-0b5a806d98",
+        "category": "直前の商品検索画面（セッションの戻り先URL）",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "仮登録時に商品検索から遷移",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-ae14f4da1d",
+        "category": "本会員化確定後、セッションの商品検索の戻り先を取得し消去する",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "直前の商品検索画面を再表示する（ログイン済み）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-5d7422a841",
+        "category": "本会員化確定後、セッションの商品検索の戻り先を取得し消去する",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "共通エラー画面（アクセスできません）。処理を中止する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-978f6e4532",
+        "category": "本会員化確定後、セッションの商品検索の戻り先を取得し消去する",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "未本会員を取得不可／既本登録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-dd56ae8dde",
+        "category": "共通エラー画面（完了済みです）。処理を中止する。表示メッセージ節を文言の正とする。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "スマレジ連携失敗",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-a9e3280aed",
+        "category": "共通エラー画面（完了済みです）。処理を中止する。表示メッセージ節を文言の正とする。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "共通エラー画面（有効化に失敗しました）。本会員化を確定しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-cfd154dda2",
+        "category": "共通エラー画面（完了済みです）。処理を中止する。表示メッセージ節を文言の正とする。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員登録画面へのリダイレクト",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-10f53114f4",
+        "category": "共通エラー画面（完了済みです）。処理を中止する。表示メッセージ節を文言の正とする。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "情報ログ（仮登録処理側）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-c1163b5f66",
+        "category": "共通エラー画面（完了済みです）。処理を中止する。表示メッセージ節を文言の正とする。",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "メール送信の情報ログ・送信履歴の保存。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "f06-02_0306_sheet-4_sheet-req-5e50b07d1c",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-4",
+        "designRequirement": "本会員化時の会員ステータス変更と選手情報更新は同一トランザクションで確定する。スマレジ連携の成功を確定の前提とし、失敗時はDBを変更しない。本機能では楽観ロック・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

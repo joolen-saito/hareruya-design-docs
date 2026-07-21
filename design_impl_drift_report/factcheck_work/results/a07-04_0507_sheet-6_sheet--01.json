@@ -1,0 +1,85 @@
+{
+  "chunkId": "a07-04_0507_sheet-6_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-04_0507_sheet-6_sheet.json#a07-04_0507_sheet-6_sheet-conformance-fdde371a521b",
+      "functionId": "a07-04_0507_sheet-6_sheet",
+      "featureNo": "A07-04",
+      "title": "A07-04 ネット買取受注ステータス更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は失敗時401/404を『本文を持たない』と定義するが、実装はApp API共通ExceptionListenerで必ずJSON本文 {code, errors} を返す。",
+      "reason": "設計(1510行)の失敗レスポンス表は 401=『認証拒否（本文を持たない）』、404=『該当なし（本文を持たない）』と明記。実装では受注なし時に BuyOrderController::updateStatus が NotFoundException を throw する(BuyOrderController.php:131)。NotFoundException/UnauthenticatedException はいずれも BaseApiException を継承し statusCode(404/401)と errors を保持する。ExceptionListener は isAppApi() 配下(ExceptionListener.php:72)で BaseApiException の getErrors() を取り(81-83行)、必ず JsonResponse(['code'=>$statusCode,'errors'=>$errors], $statusCode) を返す(136-139行)。よって404は {code:404, errors:['買取情報が見つかりません']} の本文付き応答となり、設計の『本文を持たない』と食い違う。認証『該当する管理者会員なし』も controller の UnauthenticatedException(BuyOrderController.php:148)経由で同様にJSON本文401となる。本文なしへ分岐する実装は見つからなかった。（なおトークン欠落・署名不正はSecurityファイアウォール層(security.yaml app: access_token)で処理されるため本文有無は別経路だが、少なくとも404および会員なし401はJSON本文を返す点で設計と相違する。）",
+      "designEvidence": {
+        "label": "設計要求（失敗レスポンス表）",
+        "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html",
+        "start": 1510,
+        "end": 1510,
+        "contains": ["本文を持たない", "認証拒否", "該当なし"]
+      },
+      "implEvidence": [
+        {
+          "label": "受注なしでNotFoundExceptionをthrow",
+          "note": "404はBaseApiException経由でExceptionListenerへ渡る",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php",
+          "start": 127,
+          "end": 131,
+          "contains": ["updateStatus", "throw new NotFoundException('買取情報が見つかりません')"]
+        },
+        {
+          "label": "App API例外は必ずJSON本文{code,errors}を返す",
+          "note": "本文なしに分岐しない",
+          "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php",
+          "start": 72,
+          "end": 139,
+          "contains": ["$this->requestContext->isAppApi()", "$errors = $exception->getErrors();", "'errors' => $errors,"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-04_0507_sheet-6_sheet.json#a07-04_0507_sheet-6_sheet-conformance-04d1056ec78c",
+      "functionId": "a07-04_0507_sheet-6_sheet",
+      "featureNo": "A07-04",
+      "title": "A07-04 ネット買取受注ステータス更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は保存処理中例外の500応答で errors に『例外メッセージ』を返すと定義するが、実装は元例外を固定文言『システムエラーが発生しました』へ隠蔽して返す。",
+      "reason": "設計(1510行の500行および1538行エラー処理表)は『保存処理中の例外は処理失敗(HTTP 500)とし、errorsは例外メッセージ。トランザクションはロールバックする』と明記。実装 UpdateStatusAction::handle は保存の catch(\\Throwable $e) で rollback 後に throw new InternalException('システムエラーが発生しました', $e) する(UpdateStatusAction.php:111-114)。InternalException は errors=[$message] を設定し既定/呼出値は固定文言『システムエラーが発生しました』で、元例外 $e のメッセージは errors に載らない(InternalException.php, BaseApiException.php)。ExceptionListener は BaseApiException の getErrors() をそのまま返す(ExceptionListener.php:81-83, 136-139)。加えて BuyOrderController::updateStatus も catch(\\Throwable) で同じ固定文言に包む(BuyOrderController.php:160)。ロールバックは要求どおり実装済みだが、errors 本文は設計が求める『例外メッセージ』ではなく固定文言となる。元例外 message を errors へ戻す実装は見つからなかった。（『システムエラーが発生しました』自体はInternalExceptionのmessageだが、設計意図の原因例外メッセージ露出とは異なるため medium。）",
+      "designEvidence": {
+        "label": "設計要求（500応答: errorsは例外メッセージ）",
+        "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html",
+        "start": 1510,
+        "end": 1510,
+        "contains": ["例外メッセージ", "トランザクションはロールバックする"]
+      },
+      "implEvidence": [
+        {
+          "label": "保存例外でrollback後に固定文言InternalExceptionをthrow",
+          "note": "元例外$eはpreviousに渡すだけでerrorsには載らない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php",
+          "start": 111,
+          "end": 114,
+          "contains": ["$this->entityManager->rollback();", "throw new InternalException('システムエラーが発生しました', $e)"]
+        },
+        {
+          "label": "InternalExceptionのerrorsは固定文言",
+          "path": "ec-cube-enterprise/src/Eccube/Exception/App/InternalException.php",
+          "start": 26,
+          "end": 34,
+          "contains": ["string $message = 'システムエラーが発生しました'", "errors: [$message]"]
+        },
+        {
+          "label": "ExceptionListenerはBaseApiExceptionのerrorsをそのまま返す",
+          "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php",
+          "start": 81,
+          "end": 83,
+          "contains": ["$exception instanceof BaseApiException", "$errors = $exception->getErrors();"]
+        }
+      ]
+    }
+  ]
+}

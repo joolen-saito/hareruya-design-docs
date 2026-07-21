@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・フラッシュメッセージ・HTTPステータス・確認ダイアログなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約値（必須/最大長）をオラクル化しない。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・フラッシュメッセージ・HTTPステータス・確認ダイアログなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約値（必須/最大長）をオラクル化しない。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 設計源は pf-eccube3（HareruyaEcプラグイン）のリバース。刷新先 ec-cube-enterprise に同一画面が存在する（`admin_otcbuyorder_detail`）。**基本設計・観点表を上位オラクル**とし、pf-eccube3 実装と ec-cube-enterprise 実装の食い違いは付帯表4（不具合候補）に分離し、テストは仕様どおりに書く。
 
@@ -24,62 +24,62 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-080	IT-15	未認証	P1	未認証で買取詳細URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/otcbuyorder/1 へ直接アクセス"	管理ログイン画面へ誘導されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-080	IT-15	未認証	P1	未認証で買取詳細URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/otcbuyorder/1 へ直接アクセス	管理ログイン画面へ誘導されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-005	IT-13	URL直接アクセス	P1	存在しない注文IDの買取詳細GETで404になる	管理者でログイン済／SEED-M06-03-OTC	存在しない otcBuyOrderId（例 999999999）	"1. ログインする
-2. /admin/otcbuyorder/999999999 へGETアクセス"	HTTP 404 が返ること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-001	IT-25	UI部品	P1	買取詳細にサブタイトル『買取詳細』と主要5カードが表示される	管理者でログイン済／SEED-M06-03-OTC	—	"1. 買取詳細（/admin/otcbuyorder/{id}）を表示する"	サブタイトル「買取詳細」と「操作履歴」「ステータス変更履歴」「買取情報」「実在庫情報」「査定申込者情報」の各カードが表示されること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-002	IT-25	UI部品	P3	買取情報カードに査定合計金額が価格表示される	管理者でログイン済／SEED-M06-03-OTC	—	"1. 買取詳細を表示する"	「買取情報」カードに「査定合計金額」が価格フォーマットで表示されること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-003	IT-25	UI部品	P2	査定申込者情報にフリーコメント入力欄が表示される	管理者でログイン済／SEED-M06-03-OTC	—	"1. 買取詳細を表示する"	フリーコメント入力欄（textarea）が表示されること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-004	IT-25	UI部品	P2	フッタに保存・経理払出し済・入庫済み・ステータス変更・一覧戻りが表示される	管理者でログイン済／SEED-M06-03-OTC	—	"1. 買取詳細を表示する"	フッタに「保存」「経理払出し済」「入庫済みにする」「ステータス変更」「店頭買取一覧」が表示されること。
+2. /admin/otcbuyorder/999999999 へGETアクセス"	HTTP 404 が返ること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-001	IT-25	UI部品	P1	買取詳細にサブタイトル『買取詳細』と主要5カードが表示される	管理者でログイン済／SEED-M06-03-OTC	—	1. 買取詳細（/admin/otcbuyorder/{id}）を表示する	サブタイトル「買取詳細」と「操作履歴」「ステータス変更履歴」「買取情報」「実在庫情報」「査定申込者情報」の各カードが表示されること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-002	IT-25	UI部品	P3	買取情報カードに査定合計金額が価格表示される	管理者でログイン済／SEED-M06-03-OTC	—	1. 買取詳細を表示する	「買取情報」カードに「査定合計金額」が価格フォーマットで表示されること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-003	IT-25	UI部品	P2	査定申込者情報にフリーコメント入力欄が表示される	管理者でログイン済／SEED-M06-03-OTC	—	1. 買取詳細を表示する	フリーコメント入力欄（textarea）が表示されること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-004	IT-25	UI部品	P2	フッタに保存・経理払出し済・入庫済み・ステータス変更・一覧戻りが表示される	管理者でログイン済／SEED-M06-03-OTC	—	1. 買取詳細を表示する	フッタに「保存」「経理払出し済」「入庫済みにする」「ステータス変更」「店頭買取一覧」が表示されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-070	IT-25	操作起点	P3	実在庫情報の編集ボタンで増減数入力の編集表に切替わる	管理者でログイン済／SEED-M06-03-OTC（実在庫1件以上）	—	"1. 買取詳細を表示する
-2. 実在庫情報カードの「編集」ボタンを押下"	編集用テーブル（増減数入力欄を含む）が表示されること。
+2. 実在庫情報カードの「編集」ボタンを押下"	編集用テーブル（増減数入力欄を含む）が表示されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-071	IT-25	確認ダイアログ	P3	編集解除時に確認ダイアログが表示される	管理者でログイン済／SEED-M06-03-OTC（実在庫1件以上）	—	"1. 実在庫情報を編集モードにする
-2. もう一度ボタン（編集解除）を押下"	確認ダイアログ「編集した内容は元に戻ります。解除しますか？」が表示されること。
+2. もう一度ボタン（編集解除）を押下"	確認ダイアログ「編集した内容は元に戻ります。解除しますか？」が表示されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-030	IT-25	確認ダイアログ	P1	経理払出し済の送信前に確認ダイアログが表示される	管理者でログイン済／SEED-M06-03-OTC	—	"1. 買取詳細を表示する
-2. 「経理払出し済」ボタンを押下"	確認ダイアログ「経理払出し済みに変更します。よろしいですか？」が表示されること。
+2. 「経理払出し済」ボタンを押下"	確認ダイアログ「経理払出し済みに変更します。よろしいですか？」が表示されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-050	IT-03	外部画面	P2	ステータス変更リンクでステータス変更画面へ遷移する	管理者でログイン済／SEED-M06-03-OTC	—	"1. 買取詳細を表示する
-2. 「ステータス変更」リンクを押下"	ステータス変更専用画面（/admin/otcbuyorder/status/{id}）へ遷移すること。
+2. 「ステータス変更」リンクを押下"	ステータス変更専用画面（/admin/otcbuyorder/status/{id}）へ遷移すること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-051	IT-03	画面遷移	P3	店頭買取一覧リンクで一覧画面へ遷移する	管理者でログイン済／SEED-M06-03-OTC	—	"1. 買取詳細を表示する
-2. 「店頭買取一覧」リンクを押下"	店頭買取一覧（/admin/otcbuyorder/page/{page_no}）へ遷移すること。
+2. 「店頭買取一覧」リンクを押下"	店頭買取一覧（/admin/otcbuyorder/page/{page_no}）へ遷移すること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-060	IT-25	UI部品	P2	個別入力の実在庫情報登録ボタンでモーダルが開く	管理者でログイン済／SEED-M06-03-OTC（未登録の個別入力商品あり）	—	"1. 買取詳細を表示する
-2. 個別入力商品の「実在庫情報登録」ボタンを押下"	実在庫登録モーダル（商品検索）が表示されること。
+2. 個別入力商品の「実在庫情報登録」ボタンを押下"	実在庫登録モーダル（商品検索）が表示されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-010	IT-26	更新内容	P1	フリーコメント保存で成功フラッシュ『保存しました』が表示される	管理者でログイン済／SEED-M06-03-OTC	フリーコメントに任意文字列	"1. 買取詳細を表示する
 2. フリーコメントを入力
-3. 「保存」を押下"	成功フラッシュ「保存しました」が表示されること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-011	IT-03	画面遷移	P2	フリーコメント保存後に同じ買取詳細へリダイレクトされる	管理者でログイン済／SEED-M06-03-OTC	フリーコメントに任意文字列	"1. フリーコメントを入力して保存"	保存後に同じ買取詳細（GET /admin/otcbuyorder/{id}）へリダイレクトされること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-012	IT-22	必須バリデーション	P2	フリーコメントは任意のため空でも保存が継続する	管理者でログイン済／SEED-M06-03-OTC	フリーコメント＝空	"1. フリーコメントを空のまま「保存」を押下"	エラーにならず保存が継続し、成功フラッシュ「保存しました」が表示されること。
+3. 「保存」を押下"	成功フラッシュ「保存しました」が表示されること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-011	IT-03	画面遷移	P2	フリーコメント保存後に同じ買取詳細へリダイレクトされる	管理者でログイン済／SEED-M06-03-OTC	フリーコメントに任意文字列	1. フリーコメントを入力して保存	保存後に同じ買取詳細（GET /admin/otcbuyorder/{id}）へリダイレクトされること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-012	IT-22	必須バリデーション	P2	フリーコメントは任意のため空でも保存が継続する	管理者でログイン済／SEED-M06-03-OTC	フリーコメント＝空	1. フリーコメントを空のまま「保存」を押下	エラーにならず保存が継続し、成功フラッシュ「保存しました」が表示されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-020	IT-26	登録内容	P2	在庫増減を入力して保存すると成功フラッシュが表示される	管理者でログイン済／SEED-M06-03-OTC（在庫更新が許可されるステータス・編集可能店舗）	stock_diff[商品規格ID]＝正の整数	"1. 実在庫情報を編集モードにする
 2. 対象規格の増減数に正の値を入力
-3. 保存"	成功フラッシュ「保存しました」が表示されること。
+3. 保存"	成功フラッシュ「保存しました」が表示されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-021	IT-22	DBとの相関バリデーション	P2	許可ステータス外での在庫更新はエラーフラッシュで詳細へ戻る	管理者でログイン済／SEED-M06-03-OTC（在庫更新が許可されないステータス）	stock_diff[商品規格ID]＝正の整数	"1. 実在庫情報を編集モードにする
-2. 増減数を入力して保存"	HTTP 500 にならず、エラーフラッシュが表示され買取詳細に留まること。
+2. 増減数を入力して保存"	HTTP 500 にならず、エラーフラッシュが表示され買取詳細に留まること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-022	IT-22	数値バリデーション	P2	在庫が負になる増減数は数量下限違反でエラーフラッシュ・詳細滞留	管理者でログイン済／SEED-M06-03-OTC-EDITABLE（在庫更新が許可されるステータス・編集可能店舗）	stock_diff[商品規格ID]＝在庫が負になる減算値	"1. 実在庫情報を編集モードにする
-2. 既存在庫数を超える減算（在庫が負になる値）を入力して保存"	HTTP 500 にならず、エラーフラッシュ（数量が負になる旨）が表示され買取詳細に留まること。
+2. 既存在庫数を超える減算（在庫が負になる値）を入力して保存"	HTTP 500 にならず、エラーフラッシュ（数量が負になる旨）が表示され買取詳細に留まること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-031	IT-15	状態変化	P1	経理払出し待ち→経理払出し済で買取完了へ遷移し成功フラッシュが出る	管理者でログイン済／SEED-M06-03-PENDING（経理払出し待ち・編集可能店舗）	—	"1. 買取詳細を表示する
-2. 「経理払出し済」を押下し確認ダイアログをOK"	成功フラッシュ「保存しました」が表示され、買取詳細へリダイレクトされること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-032	IT-03	画面遷移	P2	経理払出し待ち以外で経理払出し済を実行するとエラーフラッシュが出る	管理者でログイン済／SEED-M06-03-OTC（経理払出し待ち以外のステータス）	—	"1. 「経理払出し済」を押下し確認ダイアログをOK"	エラーフラッシュ「経理払出し待ちステータスの買取ではありません」が表示され買取詳細に留まること。
+2. 「経理払出し済」を押下し確認ダイアログをOK"	成功フラッシュ「保存しました」が表示され、買取詳細へリダイレクトされること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-032	IT-03	画面遷移	P2	経理払出し待ち以外で経理払出し済を実行するとエラーフラッシュが出る	管理者でログイン済／SEED-M06-03-OTC（経理払出し待ち以外のステータス）	—	1. 「経理払出し済」を押下し確認ダイアログをOK	エラーフラッシュ「経理払出し待ちステータスの買取ではありません」が表示され買取詳細に留まること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-040	IT-15	状態変化	P1	入庫済みにするで成功フラッシュが表示される	管理者でログイン済／SEED-M06-03-OTC（編集可能店舗）	—	"1. 買取詳細を表示する
-2. 「入庫済みにする」を押下"	成功フラッシュ「保存しました」が表示され、買取詳細へリダイレクトされること。
+2. 「入庫済みにする」を押下"	成功フラッシュ「保存しました」が表示され、買取詳細へリダイレクトされること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-061	IT-26	登録内容	P1	個別実在庫登録の決定で成功フラッシュが表示される	管理者でログイン済／SEED-M06-03-INDIV（未登録の個別入力商品・編集可能店舗）	product_class_id（モーダルで選択）	"1. 個別入力の「実在庫情報登録」でモーダルを開く
-2. 商品を検索し規格を決定（POST）"	成功フラッシュ「実在庫登録が完了しました。」が表示されること。
+2. 商品を検索し規格を決定（POST）"	成功フラッシュ「実在庫登録が完了しました。」が表示されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-062	IT-22	その他のバリデーション	P3	商品検索Ajax失敗でalertが表示される	管理者でログイン済／SEED-M06-03-OTC／検索Ajaxを失敗させる	—	"1. 実在庫登録モーダルで検索を実行
-2. Ajaxを失敗させる"	alert「商品の検索に失敗しました。」が表示されること。
+2. Ajaxを失敗させる"	alert「商品の検索に失敗しました。」が表示されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-063	IT-22	その他のバリデーション	P3	個別登録で商品規格が取得できないとエラーフラッシュで詳細へ戻る	管理者でログイン済／SEED-M06-03-INDIV	取得できない product_class_id への個別登録POST	"1. 個別入力の実在庫情報登録モーダルを開く
-2. 取得できない商品規格で決定POST"	エラーフラッシュ（商品規格が見つからない旨）が表示され買取詳細へ戻ること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-064	IT-22	その他のバリデーション	P2	個別登録の二重登録は拒否されエラーフラッシュで詳細へ戻る	管理者でログイン済／SEED-M06-03-INDIV（既に実在庫登録済みの個別入力商品）	product_class_id（既登録商品）	"1. 既に実在庫登録済みの個別入力商品に対し個別登録POST"	エラーフラッシュ（既に登録済みの旨）が表示され買取詳細へ戻ること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-065	IT-13	URL直接アクセス	P2	注文に属さない個別入力商品IDの個別登録POSTは404	管理者でログイン済／SEED-M06-03-INDIV	当該注文に属さない individualProductId への個別登録POST	"1. /admin/otcbuyorder/{id}/register-individual-stock/{他注文の個別商品ID} へCSRF付きPOST"	HTTP 404 が返ること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-091	IT-15	CSRF	P2	CSRFトークン無効の個別登録/経理/入庫POSTはエラーフラッシュで詳細へ戻る	管理者でログイン済／SEED-M06-03-OTC	CSRFトークンを除去/改ざんしたPOST	"1. CSRFトークンを無効化した状態で個別登録（または経理払出し済/入庫済み）POST"	エラーフラッシュが表示され買取詳細へ戻ること（HTTP 500 にならない）。
+2. 取得できない商品規格で決定POST"	エラーフラッシュ（商品規格が見つからない旨）が表示され買取詳細へ戻ること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-064	IT-22	その他のバリデーション	P2	個別登録の二重登録は拒否されエラーフラッシュで詳細へ戻る	管理者でログイン済／SEED-M06-03-INDIV（既に実在庫登録済みの個別入力商品）	product_class_id（既登録商品）	1. 既に実在庫登録済みの個別入力商品に対し個別登録POST	エラーフラッシュ（既に登録済みの旨）が表示され買取詳細へ戻ること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-065	IT-13	URL直接アクセス	P2	注文に属さない個別入力商品IDの個別登録POSTは404	管理者でログイン済／SEED-M06-03-INDIV	当該注文に属さない individualProductId への個別登録POST	1. /admin/otcbuyorder/{id}/register-individual-stock/{他注文の個別商品ID} へCSRF付きPOST	HTTP 404 が返ること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-091	IT-15	CSRF	P2	CSRFトークン無効の個別登録/経理/入庫POSTはエラーフラッシュで詳細へ戻る	管理者でログイン済／SEED-M06-03-OTC	CSRFトークンを除去/改ざんしたPOST	1. CSRFトークンを無効化した状態で個別登録（または経理払出し済/入庫済み）POST	エラーフラッシュが表示され買取詳細へ戻ること（HTTP 500 にならない）。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-090	IT-25	UI部品	P3	数量0の在庫表示行は実在庫情報の表に出ない	管理者でログイン済／SEED-M06-03-OTC（数量0の在庫行を含む）	—	"1. 買取詳細を表示する
-2. 実在庫情報の表示テーブルを確認する"	数量 0 の在庫行は表に表示されないこと。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-081	IT-25	HTTPステータス	P2	存在しないIDへ保存POSTすると404になる	管理者でログイン済	存在しない otcBuyOrderId への update POST	"1. /admin/otcbuyorder/999999999/update へCSRF付きPOST"	HTTP 404 が返ること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-033	IT-13	URL直接アクセス	P2	存在しない注文IDへ経理払出し済POSTすると404になる	管理者でログイン済	存在しない otcBuyOrderId への account_team_paid POST	"1. /admin/otcbuyorder/999999999/account_team_paid へCSRF付きPOST"	HTTP 404 が返ること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-041	IT-13	URL直接アクセス	P2	存在しない注文IDへ入庫済みPOSTすると404になる	管理者でログイン済	存在しない otcBuyOrderId への restocked POST	"1. /admin/otcbuyorder/999999999/restocked へCSRF付きPOST"	HTTP 404 が返ること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-092	IT-03	画面遷移	P2	保存POSTがフォーム不正なら成功フラッシュ無しで買取詳細へ戻る	管理者でログイン済／SEED-M06-03-OTC	フォームトークンを無効化/改ざんした保存POST	"1. 保存フォームを不正化（トークン無効化）して update POST"	成功フラッシュ「保存しました」が表示されず、買取詳細（GET /admin/otcbuyorder/{id}）へ戻ること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-093	IT-25	UI部品	P3	実在庫0件のとき編集ボタン・編集表を出さず『実在庫情報はありません。』が表示される	管理者でログイン済／SEED-M06-03-NOSTOCK（実在庫0件）	—	"1. 実在庫が0件の買取詳細を表示する"	実在庫情報の編集ボタンと編集表が表示されず、「実在庫情報はありません。」が表示されること。
-m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-094	IT-22	DBとの相関バリデーション	P2	編集可能店舗と不一致の経理払出し済/入庫済みは拒否される	管理者でログイン済／SEED-M06-03-STORE-MISMATCH	—	"1. 編集可能店舗と買取店舗が不一致の注文で経理払出し済（または入庫済み）を実行"	成功フラッシュ「保存しました」が表示されず、ステータス遷移が拒否されること。
+2. 実在庫情報の表示テーブルを確認する"	数量 0 の在庫行は表に表示されないこと。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-081	IT-25	HTTPステータス	P2	存在しないIDへ保存POSTすると404になる	管理者でログイン済	存在しない otcBuyOrderId への update POST	1. /admin/otcbuyorder/999999999/update へCSRF付きPOST	HTTP 404 が返ること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-033	IT-13	URL直接アクセス	P2	存在しない注文IDへ経理払出し済POSTすると404になる	管理者でログイン済	存在しない otcBuyOrderId への account_team_paid POST	1. /admin/otcbuyorder/999999999/account_team_paid へCSRF付きPOST	HTTP 404 が返ること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-041	IT-13	URL直接アクセス	P2	存在しない注文IDへ入庫済みPOSTすると404になる	管理者でログイン済	存在しない otcBuyOrderId への restocked POST	1. /admin/otcbuyorder/999999999/restocked へCSRF付きPOST	HTTP 404 が返ること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-092	IT-03	画面遷移	P2	保存POSTがフォーム不正なら成功フラッシュ無しで買取詳細へ戻る	管理者でログイン済／SEED-M06-03-OTC	フォームトークンを無効化/改ざんした保存POST	1. 保存フォームを不正化（トークン無効化）して update POST	成功フラッシュ「保存しました」が表示されず、買取詳細（GET /admin/otcbuyorder/{id}）へ戻ること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-093	IT-25	UI部品	P3	実在庫0件のとき編集ボタン・編集表を出さず『実在庫情報はありません。』が表示される	管理者でログイン済／SEED-M06-03-NOSTOCK（実在庫0件）	—	1. 実在庫が0件の買取詳細を表示する	実在庫情報の編集ボタンと編集表が表示されず、「実在庫情報はありません。」が表示されること。				
+m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-094	IT-22	DBとの相関バリデーション	P2	編集可能店舗と不一致の経理払出し済/入庫済みは拒否される	管理者でログイン済／SEED-M06-03-STORE-MISMATCH	—	1. 編集可能店舗と買取店舗が不一致の注文で経理払出し済（または入庫済み）を実行	成功フラッシュ「保存しました」が表示されず、ステータス遷移が拒否されること。				
 m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit（店頭買取管理 — 買取詳細（買取情報の確認と保存））	E2E-M06-03-095	IT-25	UI部品	P3	明細小計が表示され数量0の明細/個別入力行は表に出ない	管理者でログイン済／SEED-M06-03-OTC（数量0の明細・個別入力行を含む）	—	"1. 買取詳細を表示する
-2. 買取情報カードの明細表・個別入力表を確認する"	数量0の明細・個別入力行は表に表示されず、表示行には明細小計（数量×単価）が表示されること。
+2. 買取情報カードの明細表・個別入力表を確認する"	数量0の明細・個別入力行は表に表示されず、表示行には明細小計（数量×単価）が表示されること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

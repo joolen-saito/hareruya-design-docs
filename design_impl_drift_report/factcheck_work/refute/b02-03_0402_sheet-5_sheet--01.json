@@ -1,0 +1,30 @@
+{
+  "chunkId": "b02-03_0402_sheet-5_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json#b02-03_0402_sheet-5_sheet-conformance-c335ae095d27",
+      "refuted": true,
+      "reason": "設計側が自ら反証根拠を提供している。詳細設計は line 1185 で『確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグイン...を正とする』と述べ、line 1187 で『本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う』と明記する。すなわち line 1205/1209 の product:batch updateProductSummaryForStockUp は現行 pf-eccube3(Symfony3系)の旧コマンド文字列を転記したものであり、設計は具体コマンド名を拘束要求としない旨を自己免責している。要求の本質（本書で扱うこと=バッチの起動方法（コンソールコマンド））は、実際に存在する console コマンド bin/console eccube:aggregate-stock-up（AggregateStockUpCommand.php:34、handle() で BatchAggregateStockUpAction::handle を呼ぶ）で満たされている。product:batch という別コマンドを rg しても存在しないが、これは『別名の未実装』ではなく EC-CUBE4系の新命名規約への正当な改名。line 1206 の『コマンド名が一致しない場合は処理を行わずに終了する』は Symfony の未知コマンド一般挙動の説明にすぎず、特定文字列の実装義務ではない。指摘自身 confidence=medium で line 1187 の断りを認めており証拠は弱い。指摘は論破。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json#b02-03_0402_sheet-5_sheet-conformance-112a0c932cda",
+      "refuted": false,
+      "reason": "反証を試みたが実装は要求を満たさない。(1)別実装の不在: DtbStockUpQuantity エンティティ(実読)は ProductClass(product_class_id, line57-59)と BaseInfo(base_info_id, line73-75)の2キーのみで、stock_location 系の列/関連を一切持たない。集計SQL(DtbStockUpQuantityRepository.php:179)は GROUP BY ps.product_class_id, sh.base_info_id、更新判定(line199 findOneBy / line246 UPDATE WHERE)も product_class_id と base_info_id のみ。rg でも当該バッチ経路に stock_location_id の SELECT/GROUP BY/WHERE は無い。(2)用語の正しさ: 設計★の『在庫区分』『在庫場所』は ProductStock.stock_location_id(実読 line263 コメント『在庫場所（区分）』, default STOCK_LOCATION_ECCUBE=1)を指し、店舗(base_info_id)とは別次元。default=1 以外(スマレジ等)の在庫場所が存在し得るのに、実装は商品規格×店舗へ在庫場所を畳み込んで合算し、在庫区分別の内訳を失う。(3)設計側除外の不在: line1199 が deferする対象は『在庫変動区分による対象判定』であって、集計キー(在庫区分/在庫場所)の粒度ではない。★項目(line1148/1152/1156/1158)は新規カスタマイズ要求として在庫区分/在庫場所を集計・一致キーに繰り返し明示しており除外注記も無い。実装は当該★要求を満たさない。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json#b02-03_0402_sheet-5_sheet-conformance-e40284592248",
+      "refuted": true,
+      "reason": "設計側の明示的な除外/実装委任がある。同じ設計HTMLの詳細設計 line1199 は『在庫増加分（旧在庫を上回る差分）を入庫とみなす集計ロジックは現行を踏襲する。移行先の在庫変動区分による対象判定の対応はec-cube-enterprise実装で要確認とする』と述べ、対象在庫変動区分の判定を移行先(ec-cube-enterprise)実装に委任・要確認としている。つまり本トピック(対象区分の判定)については実装が正典側であり、実装値を『設計違反』とする前提が崩れる。加えて設計文書内に矛盾がある: ★基本設計(line1154)は『入庫・買取』とする一方、詳細設計は line1184/1213/1216/1219 で一貫して『入庫・マスタ更新』を対象区分と定義する。実装 getStockUpForAggregate は BE_STOCKED(入庫)+INVENTORY_ADJUSTMENT(=在庫調整/マスタ更新相当)を対象とし(DtbStockUpQuantityRepository.php:147-148,177)、詳細設計の『入庫・マスタ更新』側と整合する。指摘は矛盾する2記述のうち★側のみを採り、line1199 の実装委任と詳細設計を無視して『買取欠落』と断じた読み。反証成立、指摘は論破。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json#b02-03_0402_sheet-5_sheet-conformance-8de1795d9358",
+      "refuted": false,
+      "reason": "反証を試みたが実装挙動は設計と実際に乖離する。BatchAggregateStockUpAction::handle()(実読 line36-44)は beginTransaction 後、無条件で clearStockUpQuantityForAggregate() を先に呼び(line39)、その後 getStockUpForAggregate()(line40)、foreach で行更新、最後に commit(line44)する。clearStockUpQuantityForAggregate は DELETE FROM dtb_stock_up_quantity を実行(DtbStockUpQuantityRepository.php:99-103)。getStockUpForAggregate が空配列を返した場合でも foreach は素通りし commit(line44)されるため、全削除が確定コミットされる。ガード/復元処理は存在しない(handle 全文確認)。設計モデルは upsert(該当行を更新、無ければ新規)であって全削除→再挿入ではなく、line1210 step3 と line1235 は『対象なし→更新を行わず終了/完了』を要求する。よって『対象なし時に既存集計を全削除して確定する』という破壊的挙動は設計要求と観測可能に異なり、データ消失リスクを伴う実挙動差。別実装・別ガードも無い。指摘は維持。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json#b02-03_0402_sheet-5_sheet-conformance-c15a39b6d476",
+      "refuted": true,
+      "reason": "『100件ごとの反映・キャッシュクリア』はメモリ管理のための旧ORM実装技法であり機能要求ではなく、新実装は同等目的を別手段で達成している。設計 line1243 は当該処理を『長時間処理に備えて実行時間制限を解除し、100件ごとに変更を反映しキャッシュをクリアしてメモリを管理する』と、目的=メモリ管理として説明する。これは現行 pf-eccube3 の Doctrine/ORM バッチ(entity 蓄積→flush/clear)由来の技法。新実装は updateStockUpQuantityColumns がネイティブ SQL(executeUpdate)を行ごとに直接実行し(DtbStockUpQuantityRepository.php:195-248)、ORM identity-map に entity を蓄積しないため 100件毎 flush/clear は本質的に不要=目的(メモリ管理)は自動的に満たされる。データ整合性の核となる不変条件(line1225『上書き更新のため再実行で正しい集計値に収束する。部分反映は次回実行で回収される』および line1219 再実行時『重複加算は起きない』)も、実装の全体トランザクション+全削除→再挿入方式で保証される(再実行で全再計算し二重加算なし)。『途中失敗時は反映済みの行のみ残る』は 100件flush技法の副次的帰結の記述であって独立要求ではなく、実装の全ロールバックの方がむしろ収束性を損なわない。要求の実質(長時間バッチのメモリ管理+再実行収束)は満たされており、指摘は実装技法差を機能違反と誤認したもの。論破。"
+    }
+  ]
+}

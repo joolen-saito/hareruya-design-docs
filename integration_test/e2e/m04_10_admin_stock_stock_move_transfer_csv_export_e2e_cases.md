@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m04_10_admin_stock_stock_move_transfer_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約をオラクル化しない。本機能は画面タイプ`csv_export`であり、CSVの中身（列定義・整形・全件・並び・対象0件時の見出しのみ）は**手動**確認、自動化はダウンロード発火・ファイル名・HTTP応答・UI部品・未認証ガード・確認ダイアログ非表示に限る。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言・Form制約をオラクル化しない。本機能は画面タイプ`csv_export`であり、CSVの中身（列定義・整形・全件・並び・対象0件時の見出しのみ）は**手動**確認、自動化はダウンロード発火・ファイル名・HTTP応答・UI部品・未認証ガード・確認ダイアログ非表示に限る。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 ## 関連ID対応概要
 
@@ -21,39 +21,39 @@
 | IT-27 | 出力失敗・バッチ・JSON・コピー・削除・移動リネーム（本機能非該当＝対象外、出力内容一致は手動） |
 | IT-20 | ログ出力（log_info）＝ブラウザ観測外（対象外） |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-001	IT-25	操作起点	P2	在庫移動・振替一覧に「在庫移動振替CSV出力」リンクが表示される	管理ログイン済／SEED-M04-10-ADMIN	—	"1. 在庫移動・振替検索/一覧（/%admin%/product/stock/move_transfer）を開く"	画面に「在庫移動振替CSV出力」リンクが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-001	IT-25	操作起点	P2	在庫移動・振替一覧に「在庫移動振替CSV出力」リンクが表示される	管理ログイン済／SEED-M04-10-ADMIN	—	1. 在庫移動・振替検索/一覧（/%admin%/product/stock/move_transfer）を開く	画面に「在庫移動振替CSV出力」リンクが表示されること。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-010	IT-33	ファイル出力	P1	「在庫移動振替CSV出力」押下でCSVダウンロードが発火する	管理ログイン済／SEED-M04-10-ADMIN	—	"1. 在庫移動・振替検索/一覧を開く
-2. 「在庫移動振替CSV出力」リンクを押下する"	ダウンロード（download）が発火し、一覧HTMLへ遷移しないこと。
+2. 「在庫移動振替CSV出力」リンクを押下する"	ダウンロード（download）が発火し、一覧HTMLへ遷移しないこと。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-011	IT-24	フォーマット定義	P1	ダウンロードファイル名が stock_move_transfer_list_<日時14桁>.csv 形式である	管理ログイン済／SEED-M04-10-ADMIN	—	"1. 一覧で「在庫移動振替CSV出力」を押下する
-2. ダウンロードファイル名を確認する"	ファイル名が「stock_move_transfer_list_{YmdHis}.csv」形式（数字14桁＋.csv）であること。
-m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-012	IT-13	URL直接アクセス	P2	CSV出力URLへ直接GETするとダウンロードが発火する	管理ログイン済／SEED-M04-10-ADMIN	GET /%admin%/product/stock/move_transfer/csv_export	"1. CSV出力URLへ直接GETアクセスする"	ダウンロード（download）が発火すること。
+2. ダウンロードファイル名を確認する"	ファイル名が「stock_move_transfer_list_{YmdHis}.csv」形式（数字14桁＋.csv）であること。				
+m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-012	IT-13	URL直接アクセス	P2	CSV出力URLへ直接GETするとダウンロードが発火する	管理ログイン済／SEED-M04-10-ADMIN	GET /%admin%/product/stock/move_transfer/csv_export	1. CSV出力URLへ直接GETアクセスする	ダウンロード（download）が発火すること。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-013	IT-25	HTTPステータス	P1	CSV出力応答がHTTP200を返す	管理ログイン済／SEED-M04-10-ADMIN	GET /%admin%/product/stock/move_transfer/csv_export	"1. 認証済みコンテキストでCSV出力URLへGETする
-2. HTTPステータスを確認する"	HTTPステータスが200であること。
+2. HTTPステータスを確認する"	HTTPステータスが200であること。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-014	IT-25	URL	P1	CSV出力応答のContent-Typeが application/octet-stream である	管理ログイン済／SEED-M04-10-ADMIN	GET /%admin%/product/stock/move_transfer/csv_export	"1. 認証済みコンテキストでCSV出力URLへGETする
-2. 応答ヘッダContent-Typeを確認する"	Content-Type が application/octet-stream であること。
+2. 応答ヘッダContent-Typeを確認する"	Content-Type が application/octet-stream であること。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-015	IT-24	フォーマット定義	P1	CSV出力応答が添付ファイルのContent-Dispositionを返す	管理ログイン済／SEED-M04-10-ADMIN	GET /%admin%/product/stock/move_transfer/csv_export	"1. 認証済みコンテキストでCSV出力URLへGETする
-2. 応答ヘッダContent-Dispositionを確認する"	Content-Disposition が「attachment; filename=stock_move_transfer_list_<日時14桁>.csv」であること。
-m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-020	IT-15	未認証	P1	未ログインでCSV出力URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	GET /%admin%/product/stock/move_transfer/csv_export	"1. 未ログイン状態でCSV出力URLへ直接アクセスする"	管理ログイン画面へ誘導されること。
+2. 応答ヘッダContent-Dispositionを確認する"	Content-Disposition が「attachment; filename=stock_move_transfer_list_<日時14桁>.csv」であること。				
+m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-020	IT-15	未認証	P1	未ログインでCSV出力URLへアクセスすると管理ログイン画面へ誘導される	未ログイン	GET /%admin%/product/stock/move_transfer/csv_export	1. 未ログイン状態でCSV出力URLへ直接アクセスする	管理ログイン画面へ誘導されること。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-030	IT-25	確認ダイアログ	P2	CSV出力押下時に確認ダイアログを介さない	管理ログイン済／SEED-M04-10-ADMIN	—	"1. 一覧で「在庫移動振替CSV出力」を押下する
-2. 確認ダイアログの有無を確認する"	出力前の確認ダイアログが表示されないこと。
+2. 確認ダイアログの有無を確認する"	出力前の確認ダイアログが表示されないこと。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-031	IT-03	画面遷移	P2	CSV出力押下後も一覧画面に留まる	管理ログイン済／SEED-M04-10-ADMIN	—	"1. 一覧で「在庫移動振替CSV出力」を押下する
-2. ダウンロード後の画面URLを確認する"	在庫移動・振替検索/一覧画面に留まること（別画面へ遷移しない）。
-m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-040	IT-24	出力内容	P2	CSVヘッダが規定の14列・列名・列順で出力される	管理ログイン済／SEED-M04-10-MOVE	—	"1. CSV出力を実行し、出力ファイルの1行目を確認する"	ヘッダ行が在庫移動振替ID／移動指示ID／移動タイプ／出庫元店舗／出庫元在庫区分／入庫先店舗／入庫先在庫区分／移動点数／基準価格合計／ステータス／出庫日／入庫日／登録者／登録日の14列・順序であること。
+2. ダウンロード後の画面URLを確認する"	在庫移動・振替検索/一覧画面に留まること（別画面へ遷移しない）。				
+m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-040	IT-24	出力内容	P2	CSVヘッダが規定の14列・列名・列順で出力される	管理ログイン済／SEED-M04-10-MOVE	—	1. CSV出力を実行し、出力ファイルの1行目を確認する	ヘッダ行が在庫移動振替ID／移動指示ID／移動タイプ／出庫元店舗／出庫元在庫区分／入庫先店舗／入庫先在庫区分／移動点数／基準価格合計／ステータス／出庫日／入庫日／登録者／登録日の14列・順序であること。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-041	IT-24	実行結果	P2	セッション検索条件に一致する全件が出力される	管理ログイン済／SEED-M04-10-MOVE	M04-08で絞り込んだ検索条件	"1. 在庫移動・振替検索/一覧で検索条件を実行する
 2. CSV出力を実行する
-3. 出力件数/IDを既知データと突合する"	セッション検索条件に一致する全件（ページングなし、登録日降順→ID降順）が出力されること。
-m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-042	IT-24	出力内容	P2	各列が規定の整形で出力される	管理ログイン済／SEED-M04-10-MOVE	移動・振替の既知レコード	"1. CSV出力を実行し、各列の値を確認する"	移動タイプ（在庫移動/在庫振替）・出庫元店舗名・出庫元在庫区分名（EC-CUBE/スマレジ）・入庫先店舗名（振替時は出庫元と同一）・入庫先在庫区分名（振替時は出庫元と同一）・移動点数（明細集計の合計）・基準価格合計（四捨五入整数）・ステータス名・出庫日/入庫日/登録日（Y/m/d H:i、NULLは空）・登録者氏名・移動指示ID（未登録は空）が、全14列規定どおり出力されること。
+3. 出力件数/IDを既知データと突合する"	セッション検索条件に一致する全件（ページングなし、登録日降順→ID降順）が出力されること。				
+m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-042	IT-24	出力内容	P2	各列が規定の整形で出力される	管理ログイン済／SEED-M04-10-MOVE	移動・振替の既知レコード	1. CSV出力を実行し、各列の値を確認する	移動タイプ（在庫移動/在庫振替）・出庫元店舗名・出庫元在庫区分名（EC-CUBE/スマレジ）・入庫先店舗名（振替時は出庫元と同一）・入庫先在庫区分名（振替時は出庫元と同一）・移動点数（明細集計の合計）・基準価格合計（四捨五入整数）・ステータス名・出庫日/入庫日/登録日（Y/m/d H:i、NULLは空）・登録者氏名・移動指示ID（未登録は空）が、全14列規定どおり出力されること。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-043	IT-16	実行結果	P2	対象0件のときヘッダ行のみのCSVが出力される	管理ログイン済／SEED-M04-10-EMPTY	一致レコード0件となる検索条件	"1. 一致レコードが0件になる条件で検索する
-2. CSV出力を実行し、出力行を確認する"	ヘッダ行のみのCSV（データ行なし）が出力され、エラーにならないこと。
+2. CSV出力を実行し、出力行を確認する"	ヘッダ行のみのCSV（データ行なし）が出力され、エラーにならないこと。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-044	IT-24	実行結果	P2	セッション検索条件が無い状態でも既定値で全件が出力されエラーにならない	管理ログイン済／SEED-M04-10-MOVE	セッション検索条件なし（M04-08で検索未実行）	"1. 検索を実行せずセッション検索条件が無い状態にする
-2. CSV出力を実行し、出力件数/IDを確認する"	フォーム既定値（条件なし）で全件が出力され、エラーにならないこと（検索未実行分岐）。
+2. CSV出力を実行し、出力件数/IDを確認する"	フォーム既定値（条件なし）で全件が出力され、エラーにならないこと（検索未実行分岐）。				
 m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-045	IT-24	実行結果	P2	100件超のデータでチャンク境界・端数まで全件が欠落・重複なく出力される	管理ログイン済／SEED-M04-10-BULK	対象が101件以上となる検索条件	"1. 対象が101件以上になる条件で検索する
-2. CSV出力を実行し、出力行数/各行の集計値を確認する"	100件チャンク境界・端数チャンクを含む全件（登録日降順→ID降順）が欠落・重複なく出力され、各行の移動点数/基準価格合計の集計値が正しいこと。
-m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-050	IT-15	状態変化	P1	CSV出力は参照のみで業務データを更新しない	管理ログイン済／SEED-M04-10-MOVE	—	"1. CSV出力前後で対象レコードの値を確認する"	dtb_stock_move_transfer／dtb_stock_move_transfer_detail のレコード値が変更されないこと（参照のみ）。
+2. CSV出力を実行し、出力行数/各行の集計値を確認する"	100件チャンク境界・端数チャンクを含む全件（登録日降順→ID降順）が欠落・重複なく出力され、各行の移動点数/基準価格合計の集計値が正しいこと。				
+m04-10_admin_stock_stock_move_transfer_csv_export（在庫移動・振替情報CSV出力）	E2E-M04-10-050	IT-15	状態変化	P1	CSV出力は参照のみで業務データを更新しない	管理ログイン済／SEED-M04-10-MOVE	—	1. CSV出力前後で対象レコードの値を確認する	dtb_stock_move_transfer／dtb_stock_move_transfer_detail のレコード値が変更されないこと（参照のみ）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

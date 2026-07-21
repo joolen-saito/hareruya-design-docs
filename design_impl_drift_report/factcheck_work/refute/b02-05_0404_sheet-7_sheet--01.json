@@ -1,0 +1,25 @@
+{
+  "chunkId": "b02-05_0404_sheet-7_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-05_0404_sheet-7_sheet.json#b02-05_0404_sheet-7_sheet-conformance-b6ebaf57e647",
+      "refuted": true,
+      "reason": "コマンド名 product:batch saleNotification は現行(pf-eccube3)の ProductBatch 集約コマンドの表記であり、設計本文自身が『本文ではフレームワークのコマンド型名やサービス型名を主説明としない』(設計 sheet-7 概要)と明記して当該文字列を正典化していない。ec-cube-enterprise 版では 3系の product:batch 集約バッチが機能単位の eccube:* コマンドへ分割されており、同一パターンが InventoryReflectionCommand.php:29-32 で明文化(『3系 HareruyaEc(pf-eccube3) の ProductBatch(product:batch)に集約されていたバッチ処理』→ eccube: 系へ)されている。したがって eccube:favorite-sale-notification は product:batch saleNotification のリニューアル実装であり、意図的な改名であって外部契約違反(ドリフト)とはいえない。指摘の『コマンド名が一致しない場合は処理せず終了』は任意CLIに自明な性質であり、恒久的な文字列契約を課すものではない。証拠が弱いため refuted。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-05_0404_sheet-7_sheet.json#b02-05_0404_sheet-7_sheet-conformance-a6e9facf54fe",
+      "refuted": false,
+      "reason": "反証を試みたが指摘は維持。稼働経路 BatchFavoriteSaleNotificationAction::handle() は customerFavoriteProductRepository->findSaleFavoriteProducts()(CustomerFavoriteProductRepository.php)を呼び、当該メソッドは createQueryBuilder('cfp')→join('cfp.Customer','c')→c.name01/c.name02/c.email を抽出。CustomerFavoriteProduct のテーブルは dtb_customer_favorite_product(Entity/CustomerFavoriteProduct.php:24)で、設計が正典化する dtb_favorite_product / dtb_player ではない。dtb_favorite_product 用の DtbFavoriteProductRepository::findSaleFavoriteProducts(playerId/player 系, dtb_player join)は 39-69行で丸ごとコメントアウトされ未使用。findSaleFavoriteProducts の実呼び出しは CustomerFavoriteProduct 版のみ(rg で全件確認)。DtbFavoriteProduct/DtbPlayer エンティティは存在しフロント側お気に入り(ProductController/MypageController)では使われるが、本バッチは別テーブル(Customer系)を参照しており設計の dtb_favorite_product.player_id/language_id・dtb_player 氏名/email を抽出に用いていない。別実装なし。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-05_0404_sheet-7_sheet.json#b02-05_0404_sheet-7_sheet-conformance-3caf4c948a18",
+      "refuted": false,
+      "reason": "反証失敗。BatchFavoriteSaleNotificationAction.php:53-58 で会員ごとの送信例外は catch(\\Throwable $e)→log_error('お気に入りセール通知メール送信失敗',[...])→continue し、再throwしない。Command 側 FavoriteSaleNotificationCommand::execute の try/catch(47-53行)は handle() 全体の \\Exception のみ捕捉し $io->error に到達するが、ループ内送信例外はそこへ伝播しない。log_error は EC-CUBE のロガー(var/log)向けでありコンソール(SymfonyStyle)出力ではない。コンソール事件を橋渡しする console.command 系イベントリスナも存在しない(grep で ConsoleEvents/console.terminate ヒットなし)。よって送信時エラーはコンソール未出力でコマンドは success 扱いになり得、設計(エラー処理表: 抽出・送信時のエラー→コンソール出力)を送信エラーについて満たさない。別経路なし。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-05_0404_sheet-7_sheet.json#b02-05_0404_sheet-7_sheet-conformance-d1d5ddadf70c",
+      "refuted": false,
+      "reason": "反証失敗。FavoriteSaleNotificationCommand::execute(42-62行)は $io = new SymfonyStyle 後に try{handle()} し、末尾で $io->success(...)のみ。開始メッセージ・日時(DateTime/date/format)は皆無。呼ばれる handle() は $io を受け取らずコンソール出力を一切持たない。基底は Symfony の Command 直継承(35行)で、開始/完了に日時を付す共通ラッパやイベントリスナも無い(ConsoleEvents/console.command リスナ grep でヒットなし)。したがって設計(ログ・監査表 1444行『開始・完了のコンソール出力(日時付き)』、入出力 1431行の成功時出力)の日時付き開始・完了出力は実装されていない。別実装なし、指摘維持。"
+    }
+  ]
+}

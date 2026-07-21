@@ -1,0 +1,144 @@
+{
+  "id": "f06-08-notifylist-limit-extension-notice-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-08_0306_sheet-8_sheet.json",
+  "sourceFindingId": "f06-08_0306_sheet-8_sheet-conformance-b70b98c3f6fb",
+  "classification": "フロント会員",
+  "feature": "入荷待ち商品一覧",
+  "issueCategory": "実装漏れ",
+  "issue": "入荷通知登録上限が拡張された旨の案内が表示されない",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "入荷通知登録がある会員で `http://localhost:8080/ja/mypage/notifylist` を表示し、一覧上部の案内文を確認する",
+    "入荷通知登録がない会員でも同じURLを表示し、空表示時の案内文を確認する",
+    "いずれの場合も、入荷通知登録上限が拡張された旨の案内が表示されるか確認する"
+  ],
+  "expected": [
+    "入荷待ち商品一覧に、入荷時に登録メールアドレスへ通知する旨の案内を表示する",
+    "入荷通知登録の上限が拡張された旨の案内を表示する",
+    "上限拡張案内は、一覧がある場合・ない場合のいずれでも表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `notifylist.twig` は、入荷通知登録がある場合に `front.mypage.notifylist.body` だけを表示し、登録がない場合に `front.mypage.notifylist.empty` だけを表示する。`messages.ja.yaml` の `front.mypage.notifylist.*` / `front.product_request.*` には通常案内、空表示、上限到達エラーはあるが、上限が拡張された旨の案内文言は存在しない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise notifylist の案内表示",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/notifylist.twig",
+          "start": 24,
+          "end": 33,
+          "language": "twig",
+          "contains": [
+            "{{ 'front.mypage.nav__notifylist'|trans }}",
+            "{% if ProductRequests|length > 0 %}",
+            "{{ 'front.mypage.notifylist.body'|trans }}",
+            "{{ 'front.mypage.notifylist.empty'|trans }}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise notifylist/product_request locale",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 952,
+          "end": 964,
+          "language": "yaml",
+          "contains": [
+            "front.mypage.notifylist.body: 下記の商品が入荷した際、ご登録されているメールアドレスにお知らせをお送りいたします。",
+            "front.mypage.notifylist.empty: 入荷待ち商品はありません。",
+            "front.product_request.over_request_count.message: 入荷通知登録上限数に達してしまうため登録できません"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の `notify_request_list.twig` は、一覧がある場合も空の場合も、通常案内/空表示に続けて `NEW！もっと便利に。入荷通知の登録上限が20件から100件に増えました` を赤字で表示している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 一覧あり/なし両方の上限拡張案内",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/notify_request_list.twig",
+          "start": 29,
+          "end": 38,
+          "language": "twig",
+          "contains": [
+            "{% if list.count %}",
+            "下記の商品が入荷した際、ご登録されているメールアドレスにお知らせをお送りいたします。",
+            "NEW！もっと便利に。入荷通知の登録上限が20件から100件に増えました",
+            "入荷待ち商品はありません。"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 notifylist ルート",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php",
+          "start": 123,
+          "end": 124,
+          "language": "php",
+          "contains": [
+            "$c->match('/mypage/notifylist'",
+            "->bind('mypage_notifylist')"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "表示要素として上限拡張案内を要求し、一覧あり/なし両方で表示すると規定",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 3037,
+      "end": 3039,
+      "language": "html",
+      "contains": [
+        "入荷通知登録の上限拡張の案内",
+        "入荷通知の登録上限が拡張された旨の案内を、一覧がある場合・無い場合のいずれでも表示する。"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "業務ルールでも登録上限拡張案内を定義",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 3048,
+      "end": 3049,
+      "language": "html",
+      "contains": [
+        "登録上限",
+        "入荷通知登録の上限が拡張された旨を案内する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "一覧あり時は通常案内のみ、空時は空メッセージのみ",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/notifylist.twig",
+      "start": 24,
+      "end": 33,
+      "language": "twig",
+      "contains": [
+        "front.mypage.notifylist.body",
+        "front.mypage.notifylist.empty"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は一覧あり/なし両方に上限拡張案内を表示",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/notify_request_list.twig",
+      "start": 29,
+      "end": 38,
+      "language": "twig",
+      "contains": [
+        "NEW！もっと便利に。入荷通知の登録上限が20件から100件に増えました"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-08_0306_sheet-8_sheet.json#f06-08_0306_sheet-8_sheet-conformance-b70b98c3f6fb'",
+      "rg -n \"入荷通知|入荷待ち|上限|拡張|登録上限|通知登録|notifylist|over_request|product_request\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml ec-cube-enterprise/src/Eccube/Controller/Front/Mypage pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml",
+      "rg -n \"登録上限が20件から100件|もっと便利|入荷通知の登録上限|入荷待ち商品一覧|notify_request_list|notifylist\" pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider pf-eccube3/app/Plugin/HareruyaEc/Controller pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/notify_request_list.twig ec-cube-enterprise/src/Eccube/Controller/Front/Mypage ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/notifylist.twig",
+      "rg -n \"入荷通知登録の上限|登録上限|20件から100件|もっと便利|上限が拡張|拡張された旨|入荷通知.*上限\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '3028,3051p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/notifylist.twig | sed -n '1,80p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml | sed -n '944,966p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/notify_request_list.twig | sed -n '1,48p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLの表示要素/業務ルール、ec-cube-enterprise の notifylist テンプレート/locale、pf-eccube3 の notify_request_list テンプレートとルートを再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

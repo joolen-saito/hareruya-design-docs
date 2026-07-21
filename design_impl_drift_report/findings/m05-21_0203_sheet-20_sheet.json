@@ -1,0 +1,2013 @@
+{
+  "functionId": "m05-21_0203_sheet-20_sheet",
+  "featureNo": "M05-21",
+  "title": "M05-21 ピッキングリスト印刷",
+  "domain": "m05",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+  "sourceBook": "0203_基本設計仕様書(受注管理機能).html",
+  "sheetId": "sheet-20",
+  "sheetName": "ピッキングリスト印刷",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "dimension": "② 業務ルール・計算",
+      "severity": "high",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+      "designQuote": "ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。…強制側ならステップ2のマップを読まず goods。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html:246",
+      "implRef": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:343",
+      "difference": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無($hasSubInfo)で分岐している(348行 if($hasSubInfo)、非該当は375行 $c='goods')。getSubInfosByProductClassIds は ProductClass→Language/CardCondition, Product→CardDetail の INNER JOIN(ProductClassRepository.php:3042-3067)で行が取れるか＝カード明細を持つ規格かどうかを判定する仕組みで、カテゴリ定数比較とは判定基準が別物。クエリでは categoryId(MIN(ct.category_id)) を SELECT(DtbShippingStandbyRepository.php:168)しているがループ内で未使用。この結果、goods帯に落ちる明細・価格帯(low/middle/high)分類とその合計点数が設計と食い違いうる。",
+      "confidence": "CONFIRMED",
+      "verdict": "CONFIRMED",
+      "evidence": "実装: ec-cube-enterprise/src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:343-376 (343行 getSubInfosByProductClassIds、345行 $hasSubInfo、348行 if($hasSubInfo)…373行 $c=$class[class1][class2]、374-376行 else $c='goods')。getSubInfos定義: ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:3042-3067 (Language/CardCondition/CardDetailをINNER JOIN)。categoryId未使用のSELECT: ec-cube-enterprise/src/Eccube/Repository/DtbShippingStandbyRepository.php:168。設計(正)の裏付け=現行 pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Order/ShippingStandbyController.php:250 が『intval($item[categoryId]) !== Category::GOODS_ID && !== Category::RESERVED_GOODS_ID』でカテゴリ定数比較→else goods。判定基準が別物であることを両リポで確認。implRef行番号(343)は正しい。 / 旧レポート所見 m05-21_admin_order_order_shipping_standby_picking_list_print をExcelシート母数 m05-21_0203_sheet-20_sheet へ移行。",
+      "id": "m05-21-0203-sheet-20-sheet-a123eaf26b-01",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "designExpectation": "ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。…強制側ならステップ2のマップを読まず goods。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html:246",
+      "implementationActual": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無($hasSubInfo)で分岐している(348行 if($hasSubInfo)、非該当は375行 $c='goods')。getSubInfosByProductClassIds は ProductClass→Language/CardCondition, Product→CardDetail の INNER JOIN(ProductClassRepository.php:3042-3067)で行が取れるか＝カード明細を持つ規格かどうかを判定する仕組みで、カテゴリ定数比較とは判定基準が別物。クエリでは categoryId(MIN(ct.category_id)) を SELECT(DtbShippingStandbyRepository.php:168)しているがループ内で未使用。この結果、goods帯に落ちる明細・価格帯(low/middle/high)分類とその合計点数が設計と食い違いうる。",
+      "fixTarget": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:343",
+      "implementationRefs": [
+        "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:343"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:343\n340:             // サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く\n341:             if (intval($item['categoryId']) !== Category::GOODS_ID && intval($item['categoryId']) !== Category::RESERVED_GOODS_ID) {\n342:                 if (preg_match('/\\['.$item['cardsetName'].'\\]/', $productName, $matchedSetName)) {\n343:                     $productName = str_replace($matchedSetName[0], '', $productName);\n344:                 } else {\n345:                     // 商品名内に[略称タグ]が含まれない場合は[～]を削除\n346:                     $productName = preg_replace('/\\[.+?\\]/', '', $productName);"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ],
+      "comparisonRows": [
+        {
+          "item": "② 業務ルール・計算",
+          "design": "ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。…強制側ならステップ2のマップを読まず goods。",
+          "implementation": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無(…",
+          "mismatch": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無($hasSubInfo)で分岐している(348行 if($hasSubInfo)、非該当は375行 $c='goods')。getSubInfosByProductClassIds は ProductClass→Language/CardCondition, Product→CardDetail の INNER JOI…"
+        }
+      ],
+      "comparisonSummary": "② 業務ルール・計算：設計は「ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。…強制側ならステップ2のマップを読まず goods。」。実装は「設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無(…」。乖離理由は「設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無(…」。",
+      "mismatchReason": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無(…",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6908\n6905:       </section>\n6906:       <!-- function-design-embed:end m05-20-m05-20_admin_order_order_shipping_standby_detail_edit_delete -->\n6907: </section>\n6908:       <section class=\"sheet-panel\" id=\"sheet-20\">\n6909:         <div class=\"sheet-heading\">\n6910:           <h2>ピッキングリスト印刷</h2>\n6911:         </div>",
+      "auditAspects": [
+        "Service・業務ルール",
+        "Repository・Entity・DB"
+      ]
+    },
+    {
+      "dimension": "④ DBカラム・DB操作 / ⑦ エラー処理",
+      "severity": "low",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+      "designQuote": "このクエリでは mtb_option へ findBy(['option_key' => ['order_list_threshold_price_1','order_list_threshold_price_2'], …]) 相当で複数行を一度に読み、その返却順の最初の行値を :price1、2番目を :price2 に結びつける。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html:240",
+      "implRef": "src/Eccube/Repository/DtbShippingStandbyRepository.php:143",
+      "difference": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (…PRICE_2) で読み、null時は0にフォールバックして $thresholdPrice1/$thresholdPrice2 を作り :price1/:price2 に setParameter(214-215行)している。よって設計が挙げる『返却順による取り違え』も『[0]/[1]未定義添字クラッシュ』も実装では発生せず、取得ロジック自体が設計(現行)と異なる。",
+      "confidence": "CONFIRMED",
+      "verdict": "CONFIRMED",
+      "evidence": "実装: ec-cube-enterprise/src/Eccube/Repository/DtbShippingStandbyRepository.php:143-151 (キー別 findOneBy + null→0 フォールバック)、:price1/:price2 のsetParameterは214-215行。設計(正)の裏付け=現行 pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbShippingStandbyRepository.php:149-153 が findByOptionKey([PRICE_1,PRICE_2]) 一括取得、194-195行で $thresholdPrices[0]/[1]->getOptionValue() を :price1/:price2 に束ねる=[0]/[1]添字依存。両リポで取得ロジックの相違を確認。implRef行番号(143)・designRef行番号(240)とも正しい。 / 旧レポート所見 m05-21_admin_order_order_shipping_standby_picking_list_print をExcelシート母数 m05-21_0203_sheet-20_sheet へ移行。",
+      "id": "m05-21-0203-sheet-20-sheet-7cea0d5b60-02",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "designExpectation": "このクエリでは mtb_option へ findBy(['option_key' => ['order_list_threshold_price_1','order_list_threshold_price_2'], …]) 相当で複数行を一度に読み、その返却順の最初の行値を :price1、2番目を :price2 に結びつける。 / 旧根拠: function_spec_html_preview/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.html:240",
+      "implementationActual": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (…PRICE_2) で読み、null時は0にフォールバックして $thresholdPrice1/$thresholdPrice2 を作り :price1/:price2 に setParameter(214-215行)している。よって設計が挙げる『返却順による取り違え』も『[0]/[1]未定義添字クラッシュ』も実装では発生せず、取得ロジック自体が設計(現行)と異なる。",
+      "fixTarget": "src/Eccube/Repository/DtbShippingStandbyRepository.php:143",
+      "implementationRefs": [
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php:143"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php:143\n140:             ->findBy(['option_key' => [\n141:                 MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,\n142:                 MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,\n143:             ],\n144:             ]);\n145: \n146:         $qb = $this->createQueryBuilder('ss')"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ],
+      "comparisonRows": [
+        {
+          "item": "④ DBカラム・DB操作 / ⑦ エラー処理",
+          "design": "このクエリでは mtb_option へ findBy(['option_key' => ['order_list_threshold_price_1','order_list_threshold_price_2'], …]) 相当で複数行を一度に読み、その返却順の最初の行値を :price1、2番目を :price2 に結びつける。",
+          "implementation": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (……",
+          "mismatch": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (…PRICE_2) で読み、null時は0にフォールバックして $thresholdPrice1/$thresholdPrice2 を作り :price1/:price2 に setParameter(214-215行)している。よって設計が挙げる『返却順による取り違え』も『[0]/[1]未定義添字クラッシュ』も実装では…"
+        }
+      ],
+      "comparisonSummary": "④ DBカラム・DB操作 / ⑦ エラー処理：設計は「このクエリでは mtb_option へ findBy(['option_key' => ['order_list_threshold_price_1','order_list_threshold_price_2'], …]) 相当で複数行を一度に読み、その返却順の最初の行値を :price1、2番目を :price2 に結びつける。」。実装は「設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (……」。乖離理由は「設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (……」。",
+      "mismatchReason": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (……",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6908\n6905:       </section>\n6906:       <!-- function-design-embed:end m05-20-m05-20_admin_order_order_shipping_standby_detail_edit_delete -->\n6907: </section>\n6908:       <section class=\"sheet-panel\" id=\"sheet-20\">\n6909:         <div class=\"sheet-heading\">\n6910:           <h2>ピッキングリスト印刷</h2>\n6911:         </div>",
+      "auditAspects": [
+        "Repository・Entity・DB",
+        "権限・セッション・副作用・エラー・ログ"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 56,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-994524a2b5",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "概要 ピッキングリストの印刷ができるようピッキングリストがポップアップ表示されます。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-61bcb303e5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "・ ピッキングリスト印刷用画面を表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-32fc000e09",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "・ 「印刷する」ボタンを押下するとブラウザの印刷ダイアログを開く。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-cfa8563a2d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "・ カードの価格帯、サプライ品でグループ分けして表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-c24e1227f5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "商品単位_980円未満",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-abbcdf9fbe",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "商品単位_980円以上_4800円未満",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-1d70ce6816",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "商品単位_4800円以上",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-6d499f12e4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "画面最上部にのみ表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-325cc6a184",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "グループの最終頁最終行にグループの合計ピック数を表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-7d1aaffa76",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "管理画面の「受注管理」メニュー配下にある「出荷指示リスト」（ナビ定義上は admin.order.shipping_instructions と同じブロック）の編集画面から、一覧に並ぶ受注のうちチェックが付いたものだけを対象に、ピッキング用の単体HTMLを別ウィンドウで開き、ブラウザの印刷機能で用紙に落とすための機能である。メニュー項目名では「ピッキングリスト印刷」と翻訳キー admin.order.shipping_standby_list_print が使われている。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-ac919c5c99",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値とするソースはSymfony管理画面チャネルの出荷指示編集ルート、 print/picking ルート、出荷指示保存先を扱うリポジトリの一覧取得処理、印刷用 Twig、共通管理JS、印刷用CSSとする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-c995c09018",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本機能のカスタマイズ区分は現行踏襲であり、画面挙動と処理フローは現行リポ pf-eccube3 の実装を確認値とし、永続化に関わるテーブル・列の記述は ec-cube-enterprise を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-d6841ca928",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "DB関連の記述は ec-cube-enterprise を正とする。本機能が参照する永続化先は確認時点で現行（pf-eccube3）と移行先（ec-cube-enterprise）で同一スキーマである。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-0f1051ebda",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "dtb_shipping_standby （主キー id 、備考 comment 、最終更新者 member_id ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-4759c859d1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "同一スキーマ。テーブル名・列名とも一致する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-cfc28d786d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "同一スキーマ。結合表名・対応関係とも一致する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-4459dfde2a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "同一スキーマ。オプションキー・値列とも一致する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-e298eff982",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "コメント用フォームと、紐づく受注表（チェックは初期ですべてオン）、一括操作ボタン行が現れる（詳細は出荷指示編集の別設計を正）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-cf3e146043",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "印刷に含める受注だけチェックを残し、「ピッキングリスト印刷」を押す",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-13bb82786b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "親画面の #form_bulk の action が当パスになり target=newwin で送信され、ウィンドウ内に単体のピッキングリストHTMLが表示される。送信のたび隠し name=id と値 ja が追記されるが、サーバは印刷結果にこれを参照しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-b3bac8b694",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "チェックをすべて外してからピッキング印刷を押す",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-5d752cc102",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本文にチェック状態が載らず order_ids が無いときは空集合扱いになりうる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-6a1621f321",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "表示要素（編集）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-54b287fae4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "共通管理フレーム @admin/default_frame 。一括フォーム id=\"form_bulk\" に「ピッキングリスト印刷」ボタン id=\"printPickingList\" 、各受注行のチェックボックスは order_ids[<注文ID>] とし、一覧ヘッダの id=\"check-all\" と行 id=\"check-<注文ID>\" が共通JSの全選択慣例に一致するようになっている（初期チェックオンはテンプレの checked 属性）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-23d2f71aa4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "クリック時に縦横700程度の名前付きウィンドウを空で開き、 #form_bulk の action をピッキング印刷URL、 target を newwin にセットし、 type=hidden 、 name=id 、 value=ja を毎回 append してから submit 。納品書ボタンは同ウィンドウ名を再利用する別ハンドラである。送信後、 action と target を他ボタンのハンドラが都度張り替える設計とは独立に、親ページURLは編集画面のままである。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-f04f7ed504",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "表示要素（印刷）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-d1027db597",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "アセットパス経由で assets/css/pickinglist.css （成果物は html/template/admin/assets/css/ 側）を読む。コンテンツ幅720px、 @media print で .printBox を非表示。 .multipage は page-break-after: always で強制改ページを付ける（最終チャンク含めて当該 DIV に付く）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-422717f2fa",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "共通モーダルはなく、確認はブラウザの印刷ダイアログに委ねる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-2a82bd8844",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "受注一覧で印刷に含める行だけチェックオンにする（既定はすべてオン）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-a15b69e23e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "最小カテゴリがグッズ定数・予約グッズ定数のいずれでもないとき、収納略称に一致する角括弧略称、 【言語コード/状態コード】 、複数順の色レア抽出正規表現で商品名を削り、ヒットした断片は色レラ列へ。抽出に使う定数群はピッキング印刷と納品書系で共有しないが、文言ルール自体はソース先頭で定める。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-9ff6beea50",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "WITH句側で、そのスタンバイにぶらさがっている注文のうち、渡された注文ID集合への IN 一致を追加している。集合が論理空のときのクエリ評価はORMと方言の確認値とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-bea026c672",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "価格帯とサプライ振り分けの判定順序",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-5cf12d7a91",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "[1][1]→low 、 [0][1]→middle 、 [0][0]→high 。組み [1][0] はマップ未定義となる。論理的には単価が「閾値2以上かつ閾値1未満」となるが、運用上閾値1≤閾値2でないときに現れうる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-5e2fc53b03",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-25d8d6cb93",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "画面上の文言は Twig が thresholdPrice1 ・ thresholdPrice2 （コントローラの単独読み込み結果、欠落時0）から「○○円未満」「○○〜△△」「△△円以上」系のキーを組み立てる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-228245a07b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "Twig の価格列はクエリ結果 price02 が price エイリアスで載った値を出力する実装であり、画面上の並びクエリ側の CASE が参照する閾値比較 oi.price と一致することをソース上は狙っている。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-1a0f80f6a2",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "商品名の略称削除",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-730ff1ce31",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "[storageCode と一致する収納略称] が商品名にあるときその括弧を削る。無いとき [ … ] 最初一致を総取り削除。続けて 【languageCode/conditionCode】 を完全一致削除。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-acae32ad66",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "文末パターン、括弧直前パターン、語間空白パターン、旧角括弧直前パターンの順に最初のヒットのみ採用し、ヒットぶんだけ商品名からも削除する（いずれも未ヒット時は後続へ）。パターン内の許容色名・末尾レター群はソース定義の列挙に従う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-ba8f725f82",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "言語状態列の表示",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-34a55fb441",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "!= 1 のときのみ数量セルを太字スタイルにする（整数桁ゼロの桁区切り表示）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-0bd385dba9",
+        "category": "本機能には永続化する入力フォームが無いため「### 入力項目」は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "クエリ送信時点の注文明細とマスタ状態を読む。編集画面の受注表の並びと一致する保証は本機能では論じない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-4340952fd7",
+        "category": "本機能には永続化する入力フォームが無いため「### 入力項目」は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本ルートの応答処理は受注明細や出荷指示、在庫を更新しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-f3206ae713",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "入力（HTTP）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-fd7439dcf4",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "パスのスタンバイID、 order_ids をキーにもつチェック状態（およびフロントが付けるがサーバ無視の隠し id=ja ）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-5157e24629",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "Symfonyフォームオブジェクトでの束ねはなく、チェック状態の集合はブラウザがPOST本文に載せるかだけが実質的な入力検証となる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-288f09490d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "管理チャネルの共通規則でログイン誘導または拒否となる（設定を確認値とする）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-134543a15d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-e61e7b70a4",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-e18a2ba0e6",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "チェック集合をフォーム送信するのみ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-6ae9f9b36c",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-5490986b8b",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-f755f8d691",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "ピッキング表示成功時に専用の業務ログ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-7b274df03b",
+        "category": "セッションへ保存しない情報",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "変更しうるチェック状態はHTTP本文でのみウィンドウ子へ運ばれる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-b05799d145",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本機能は一覧取得のみでトランザクション境界による楽観排他オブジェクト更新は載せない。同一注文在庫への同時変更と印刷内容の競合については一覧と異なる状態を読む可能性だけは残るが、明示的ロックはしない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-21_0203_sheet-20_sheet-req-00cbe95918",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "実装確認のgrep用パスのみ列挙する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "designDerivedTerms": {
+      "routeNames": [
+        "order_list_threshold_price_1",
+        "order_list_threshold_price_2",
+        "admin_route",
+        "admin_shipping_standby_edit",
+        "order_ids",
+        "admin_shipping_standby_print_picking_list",
+        "product_name"
+      ],
+      "translationKeys": [
+        "admin.order.shipping_instructions",
+        "admin.order.shipping_standby_list_print"
+      ],
+      "classNames": [
+        "ShippingStandbyController",
+        "DtbShippingStandbyRepository"
+      ],
+      "paths": [
+        "pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md",
+        "picking",
+        "standby/{id}/edit",
+        "standby/{id}/print/picking",
+        "print/picking",
+        "default_frame",
+        "template/admin/assets/css",
+        "middle",
+        "conditionCode",
+        "html",
+        "Eccube/Controller/Admin/Order/ShippingStandbyController.php",
+        "Eccube/Repository/DtbShippingStandbyRepository.php",
+        "Eccube/Repository/Traits/SortProductTrait.php",
+        "Eccube/Resource/template/admin/ShippingStandby/edit.twig",
+        "Eccube/Resource/template/admin/ShippingStandby/picking_list.twig"
+      ],
+      "businessTerms": [
+        "M05",
+        "ピッキングリスト印刷",
+        "受注管理",
+        "受注管理機能",
+        "ボタンを押下するとブラウザの印刷ダイアログを開く",
+        "商品単位",
+        "出荷指示リスト番号"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "ShippingStandbyController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php",
+        "weight": 7
+      },
+      {
+        "term": "admin_shipping_standby_edit",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:152",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/standby/{id}/edit', name: 'admin_shipping_standby_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]",
+        "weight": 7
+      },
+      {
+        "term": "admin_shipping_standby_print_picking_list",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:283",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/standby/{id}/print/picking', name: 'admin_shipping_standby_print_picking_list', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]",
+        "weight": 7
+      },
+      {
+        "term": "order_ids",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:291",
+        "snippet": "$orderIdList = array_keys($request->get('order_ids', []));",
+        "weight": 7
+      },
+      {
+        "term": "order_ids",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:401",
+        "snippet": "$orderIdList = array_keys($request->get('order_ids', []));",
+        "weight": 7
+      },
+      {
+        "term": "ShippingStandbyController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:44",
+        "snippet": "class ShippingStandbyController extends AbstractController",
+        "weight": 7
+      },
+      {
+        "term": "ShippingStandbyController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:58",
+        "snippet": "* ShippingStandbyController constructor.",
+        "weight": 7
+      },
+      {
+        "term": "admin_shipping_standby_edit",
+        "termType": "routeName",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/Admin/ShippingStandbyCommentType.php:49",
+        "snippet": "return 'admin_shipping_standby_edit';",
+        "weight": 7
+      },
+      {
+        "term": "DtbShippingStandbyRepository",
+        "termType": "className",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:1",
+        "snippet": "src/Eccube/Repository/DtbShippingStandbyRepository.php",
+        "weight": 7
+      },
+      {
+        "term": "order_list_threshold_price_1",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:141",
+        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
+        "weight": 7
+      },
+      {
+        "term": "order_list_threshold_price_2",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:142",
+        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
+        "weight": 7
+      },
+      {
+        "term": "order_list_threshold_price_1",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:231",
+        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
+        "weight": 7
+      },
+      {
+        "term": "order_list_threshold_price_2",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:232",
+        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
+        "weight": 7
+      },
+      {
+        "term": "DtbShippingStandbyRepository",
+        "termType": "className",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:30",
+        "snippet": "class DtbShippingStandbyRepository extends AbstractRepository implements ServiceEntityRepositoryInterface",
+        "weight": 7
+      },
+      {
+        "term": "order_list_threshold_price_1",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/OrderRepository.php:1106",
+        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
+        "weight": 7
+      },
+      {
+        "term": "order_list_threshold_price_2",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/OrderRepository.php:1107",
+        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
+        "weight": 7
+      },
+      {
+        "term": "admin_shipping_standby_print_picking_list",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:14",
+        "snippet": "$('#form_bulk').attr('action', \"{{ url('admin_shipping_standby_print_picking_list', { 'id' : shippingStandby.id }) }}\");",
+        "weight": 7
+      },
+      {
+        "term": "order_ids",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:157",
+        "snippet": "<input type=\"checkbox\" checked id=\"check-{{ Order.id }}\" data-id=\"{{ Order.id }}\" data-shipping-id=\"{{ (Order.Shippings|first).id ?? '' }}\" name=\"order_ids[{{ Order.id }}]\"></td>",
+        "weight": 7
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。 限定的な非実装記載あり（機能全体の非実装判定には使わない）: 実装しない。インフラ系アクセスログは環境に従う。"
+  },
+  "designNonImplementationReason": "実装しない。インフラ系アクセスログは環境に従う。",
+  "designNonImplementationScope": "SCOPED_REQUIREMENT",
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 2,
+    "implementationGapRequirementCount": 0,
+    "rows": [
+      {
+        "findingId": "m05-21-0203-sheet-20-sheet-a123eaf26b-01",
+        "dimension": "② 業務ルール・計算",
+        "severity": "high",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。…強制側ならステップ2のマップを読まず goods。",
+        "implementationActual": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無(…",
+        "mismatchReason": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無($hasSubInfo)で分岐している(348行 if($hasSubInfo)、非該当は375行 $c='goods')。getSubInfosByProductClassIds は ProductClass→Language/CardCondition, Product→CardDetail の INNER JOI…",
+        "implementationRefs": [
+          "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:343"
+        ],
+        "comparisonRows": [
+          {
+            "item": "② 業務ルール・計算",
+            "design": "ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。…強制側ならステップ2のマップを読まず goods。",
+            "implementation": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無(…",
+            "mismatch": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無($hasSubInfo)で分岐している(348行 if($hasSubInfo)、非該当は375行 $c='goods')。getSubInfosByProductClassIds は ProductClass→Language/CardCondition, Product→CardDetail の INNER JOI…"
+          }
+        ]
+      },
+      {
+        "findingId": "m05-21-0203-sheet-20-sheet-7cea0d5b60-02",
+        "dimension": "④ DBカラム・DB操作 / ⑦ エラー処理",
+        "severity": "low",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "このクエリでは mtb_option へ findBy(['option_key' => ['order_list_threshold_price_1','order_list_threshold_price_2'], …]) 相当で複数行を一度に読み、その返却順の最初の行値を :price1、2番目を :price2 に結びつける。",
+        "implementationActual": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (……",
+        "mismatchReason": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (…PRICE_2) で読み、null時は0にフォールバックして $thresholdPrice1/$thresholdPrice2 を作り :price1/:price2 に setParameter(214-215行)している。よって設計が挙げる『返却順による取り違え』も『[0]/[1]未定義添字クラッシュ』も実装では…",
+        "implementationRefs": [
+          "src/Eccube/Repository/DtbShippingStandbyRepository.php:143"
+        ],
+        "comparisonRows": [
+          {
+            "item": "④ DBカラム・DB操作 / ⑦ エラー処理",
+            "design": "このクエリでは mtb_option へ findBy(['option_key' => ['order_list_threshold_price_1','order_list_threshold_price_2'], …]) 相当で複数行を一度に読み、その返却順の最初の行値を :price1、2番目を :price2 に結びつける。",
+            "implementation": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (……",
+            "mismatch": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (…PRICE_2) で読み、null時は0にフォールバックして $thresholdPrice1/$thresholdPrice2 を作り :price1/:price2 に setParameter(214-215行)している。よって設計が挙げる『返却順による取り違え』も『[0]/[1]未定義添字クラッシュ』も実装では…"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 56,
+    "verdictedCount": 56,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 56,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-994524a2b5",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "概要 ピッキングリストの印刷ができるようピッキングリストがポップアップ表示されます。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-61bcb303e5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "・ ピッキングリスト印刷用画面を表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-32fc000e09",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "・ 「印刷する」ボタンを押下するとブラウザの印刷ダイアログを開く。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-cfa8563a2d",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "・ カードの価格帯、サプライ品でグループ分けして表示する。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-c24e1227f5",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "商品単位_980円未満",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-abbcdf9fbe",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "商品単位_980円以上_4800円未満",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-1d70ce6816",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "商品単位_4800円以上",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-6d499f12e4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "画面最上部にのみ表示",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-325cc6a184",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "グループの最終頁最終行にグループの合計ピック数を表示",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-7d1aaffa76",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "管理画面の「受注管理」メニュー配下にある「出荷指示リスト」（ナビ定義上は admin.order.shipping_instructions と同じブロック）の編集画面から、一覧に並ぶ受注のうちチェックが付いたものだけを対象に、ピッキング用の単体HTMLを別ウィンドウで開き、ブラウザの印刷機能で用紙に落とすための機能である。メニュー項目名では「ピッキングリスト印刷」と翻訳キー admin.order.shipping_standby_list_print が使われている。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-ac919c5c99",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値とするソースはSymfony管理画面チャネルの出荷指示編集ルート、 print/picking ルート、出荷指示保存先を扱うリポジトリの一覧取得処理、印刷用 Twig、共通管理JS、印刷用CSSとする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-c995c09018",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本機能のカスタマイズ区分は現行踏襲であり、画面挙動と処理フローは現行リポ pf-eccube3 の実装を確認値とし、永続化に関わるテーブル・列の記述は ec-cube-enterprise を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-d6841ca928",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "DB関連の記述は ec-cube-enterprise を正とする。本機能が参照する永続化先は確認時点で現行（pf-eccube3）と移行先（ec-cube-enterprise）で同一スキーマである。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-0f1051ebda",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "dtb_shipping_standby （主キー id 、備考 comment 、最終更新者 member_id ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-4759c859d1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "同一スキーマ。テーブル名・列名とも一致する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-cfc28d786d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "同一スキーマ。結合表名・対応関係とも一致する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-4459dfde2a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "同一スキーマ。オプションキー・値列とも一致する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-e298eff982",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "コメント用フォームと、紐づく受注表（チェックは初期ですべてオン）、一括操作ボタン行が現れる（詳細は出荷指示編集の別設計を正）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-cf3e146043",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "印刷に含める受注だけチェックを残し、「ピッキングリスト印刷」を押す",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-13bb82786b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "親画面の #form_bulk の action が当パスになり target=newwin で送信され、ウィンドウ内に単体のピッキングリストHTMLが表示される。送信のたび隠し name=id と値 ja が追記されるが、サーバは印刷結果にこれを参照しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-b3bac8b694",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "チェックをすべて外してからピッキング印刷を押す",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-5d752cc102",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本文にチェック状態が載らず order_ids が無いときは空集合扱いになりうる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-6a1621f321",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "表示要素（編集）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-54b287fae4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "共通管理フレーム @admin/default_frame 。一括フォーム id=\"form_bulk\" に「ピッキングリスト印刷」ボタン id=\"printPickingList\" 、各受注行のチェックボックスは order_ids[<注文ID>] とし、一覧ヘッダの id=\"check-all\" と行 id=\"check-<注文ID>\" が共通JSの全選択慣例に一致するようになっている（初期チェックオンはテンプレの checked 属性）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-23d2f71aa4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "クリック時に縦横700程度の名前付きウィンドウを空で開き、 #form_bulk の action をピッキング印刷URL、 target を newwin にセットし、 type=hidden 、 name=id 、 value=ja を毎回 append してから submit 。納品書ボタンは同ウィンドウ名を再利用する別ハンドラである。送信後、 action と target を他ボタンのハンドラが都度張り替える設計とは独立に、親ページURLは編集画面のままである。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-f04f7ed504",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "表示要素（印刷）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-d1027db597",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "アセットパス経由で assets/css/pickinglist.css （成果物は html/template/admin/assets/css/ 側）を読む。コンテンツ幅720px、 @media print で .printBox を非表示。 .multipage は page-break-after: always で強制改ページを付ける（最終チャンク含めて当該 DIV に付く）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-422717f2fa",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "共通モーダルはなく、確認はブラウザの印刷ダイアログに委ねる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-2a82bd8844",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "受注一覧で印刷に含める行だけチェックオンにする（既定はすべてオン）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-a15b69e23e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "最小カテゴリがグッズ定数・予約グッズ定数のいずれでもないとき、収納略称に一致する角括弧略称、 【言語コード/状態コード】 、複数順の色レア抽出正規表現で商品名を削り、ヒットした断片は色レラ列へ。抽出に使う定数群はピッキング印刷と納品書系で共有しないが、文言ルール自体はソース先頭で定める。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-9ff6beea50",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "WITH句側で、そのスタンバイにぶらさがっている注文のうち、渡された注文ID集合への IN 一致を追加している。集合が論理空のときのクエリ評価はORMと方言の確認値とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-bea026c672",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "価格帯とサプライ振り分けの判定順序",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-5cf12d7a91",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "[1][1]→low 、 [0][1]→middle 、 [0][0]→high 。組み [1][0] はマップ未定義となる。論理的には単価が「閾値2以上かつ閾値1未満」となるが、運用上閾値1≤閾値2でないときに現れうる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-5e2fc53b03",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-25d8d6cb93",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "画面上の文言は Twig が thresholdPrice1 ・ thresholdPrice2 （コントローラの単独読み込み結果、欠落時0）から「○○円未満」「○○〜△△」「△△円以上」系のキーを組み立てる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-228245a07b",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "Twig の価格列はクエリ結果 price02 が price エイリアスで載った値を出力する実装であり、画面上の並びクエリ側の CASE が参照する閾値比較 oi.price と一致することをソース上は狙っている。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-1a0f80f6a2",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "商品名の略称削除",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-730ff1ce31",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "[storageCode と一致する収納略称] が商品名にあるときその括弧を削る。無いとき [ … ] 最初一致を総取り削除。続けて 【languageCode/conditionCode】 を完全一致削除。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-acae32ad66",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "文末パターン、括弧直前パターン、語間空白パターン、旧角括弧直前パターンの順に最初のヒットのみ採用し、ヒットぶんだけ商品名からも削除する（いずれも未ヒット時は後続へ）。パターン内の許容色名・末尾レター群はソース定義の列挙に従う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-ba8f725f82",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "言語状態列の表示",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-34a55fb441",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "!= 1 のときのみ数量セルを太字スタイルにする（整数桁ゼロの桁区切り表示）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-0bd385dba9",
+        "category": "本機能には永続化する入力フォームが無いため「### 入力項目」は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "クエリ送信時点の注文明細とマスタ状態を読む。編集画面の受注表の並びと一致する保証は本機能では論じない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-4340952fd7",
+        "category": "本機能には永続化する入力フォームが無いため「### 入力項目」は置かない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本ルートの応答処理は受注明細や出荷指示、在庫を更新しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-f3206ae713",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "入力（HTTP）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-fd7439dcf4",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "パスのスタンバイID、 order_ids をキーにもつチェック状態（およびフロントが付けるがサーバ無視の隠し id=ja ）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-5157e24629",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "Symfonyフォームオブジェクトでの束ねはなく、チェック状態の集合はブラウザがPOST本文に載せるかだけが実質的な入力検証となる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-288f09490d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "管理チャネルの共通規則でログイン誘導または拒否となる（設定を確認値とする）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-134543a15d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "遷移時に引き継ぐ状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-e61e7b70a4",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "遷移後の初期状態",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-e18a2ba0e6",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "チェック集合をフォーム送信するのみ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-6ae9f9b36c",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-5490986b8b",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-f755f8d691",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "ピッキング表示成功時に専用の業務ログ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-7b274df03b",
+        "category": "セッションへ保存しない情報",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "変更しうるチェック状態はHTTP本文でのみウィンドウ子へ運ばれる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-b05799d145",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "本機能は一覧取得のみでトランザクション境界による楽観排他オブジェクト更新は載せない。同一注文在庫への同時変更と印刷内容の競合については一覧と異なる状態を読む可能性だけは残るが、明示的ロックはしない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-21_0203_sheet-20_sheet-req-00cbe95918",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-20",
+        "designRequirement": "実装確認のgrep用パスのみ列挙する。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "chunkId": "b05-04_0405_sheet-6_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-04_0405_sheet-6_sheet.json#b05-04_0405_sheet-6_sheet-conformance-f001105d0d35",
+      "refuted": false,
+      "reason": "反証4観点を試したが全て失敗。指摘は維持。(1)別実装探索: enterprise 全 src を sendSmaregiErrorMail / sendSmaregi* / send*ErrorMail / '通信エラー' / smaregi×mail で横断したが、スマレジ商品・在庫再連携の失敗を契機に管理者へ通信エラーメールを送る経路は皆無。MailService の smaregi 関連送信は sendOrderDuplicateNotificationMail のみで用途はポイント重複通知(2235-2276行)。B05-04 バッチ本体は OtcOrderSmaregiPostCommand→SmaregiOtcOrderPostAction→SmaregiOtcSyncMessageHandler→SmaregiOtcOrderSyncService で構成され、失敗時は markError(323-332: logger->error+setSmaregiErrorFlg のみ)/failJob(163-171: MessengerJob を FAILED+errorMessage のみ)/PostAction(72行: enqueue 失敗 log のみ)で、いずれもメール送信なし。OrderRepository::getSmaregiErrorOrder(933)・getResendSmaregiProduct(797)は存在するが呼び出し元ゼロ(dead code)で、エラー注文を集めてメール送信する別バッチも無い。(2)引用検証: markError/failJob/sendOrderDuplicateNotificationMail の該当行を実開封し記載通りと確認。(3)設計除外: 図形テキスト『こちらのバッチは不要となる』とリバース詳細設計の失敗時=コンソール出力記述は反証候補だが、バッチは実際に実装済み(OtcOrderSmaregiPostCommand)で除外は成立せず、権威ある基本設計(更新2025-10-02)は 1406/1409/1431 行で『連携に失敗した場合はスマレジ通信エラーメール送信』『発生したスマレジ連携ごとにメールで管理者に通知』を明記。(4)要求の読み違い検証: 現行正リポ pf-eccube3 の同一処理 SmaregiService::postSmaregiProcess(53/65/78行)が失敗時に sendSmaregiErrorMail を実際に呼んでおり、メール送信要求が実在かつ移行先で欠落していることを裏付け。よって実装漏れは確定。"
+    }
+  ]
+}

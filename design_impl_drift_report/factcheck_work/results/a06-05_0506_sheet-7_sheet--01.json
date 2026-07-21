@@ -1,0 +1,54 @@
+{
+  "chunkId": "a06-05_0506_sheet-7_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-05_0506_sheet-7_sheet.json#a06-05_0506_sheet-7_sheet-conformance-2db6ee35f99c",
+      "functionId": "a06-05_0506_sheet-7_sheet",
+      "featureNo": "A06-05",
+      "title": "A06-05 店頭買取情報ステータス更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "ステータスID不正時の返却文言が設計指定の「正しい店頭買取ステータスIDを入力してください」と異なる。",
+      "reason": "設計は status のマスタ不存在／不正時に「正しい店頭買取ステータスIDを入力してください」を HTTP 400 で返すことを固定要求している（処理フロー・レスポンス失敗表・バリデーション・エラー処理の各節）。実装 OtcBuyOrderController::updateStatus は status 欠落・空・非数値時に MissingRequiredParameterException('ステータスが不正です')（198-201行）、店頭買取ステータスマスタ未存在時に InvalidParameterException('ステータスが見つかりません')（204-206行）を投げ、いずれも設計指定文言と異なる。同一ファイル内・関連 Action を確認したが設計文言を返す経路は無い。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html","start":1874,"end":1874,"contains":["正しい店頭買取ステータスIDを入力してください","店頭買取ステータスマスタを引く"]},
+      "implEvidence": [
+        {"label":"実装（不正/欠落時文言）","note":"設計指定文言を返さない最寄り実装","path":"ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php","start":198,"end":207,"contains":["ステータスが不正です","ステータスが見つかりません","InvalidParameterException"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-05_0506_sheet-7_sheet.json#a06-05_0506_sheet-7_sheet-conformance-1746b2fbb080",
+      "functionId": "a06-05_0506_sheet-7_sheet",
+      "featureNo": "A06-05",
+      "title": "A06-05 店頭買取情報ステータス更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "他担当者査定中エラー文言に、設計が要求する担当者名を囲む鉤括弧と末尾句点が無い。",
+      "reason": "設計は査定中占有時に「この受注は「（査定担当者名）」が査定中です。」を返すよう要求している（処理フロー6・レスポンス失敗表・エラー処理表）。実装 UpdateStatusAction::handle は101行で InvalidStatusTransitionException(\"この受注は{$input->OtcBuyOrder->getMember()->getName()}が査定中です\") を投げており、担当者名を囲む「」鉤括弧と末尾の句点。が欠落している。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html","start":1874,"end":1874,"contains":["この受注は「（査定担当者名）」が査定中です。"]},
+      "implEvidence": [
+        {"label":"実装","note":"鉤括弧・句点なし","path":"ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php","start":101,"end":101,"contains":["この受注は{","が査定中です"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-05_0506_sheet-7_sheet.json#a06-05_0506_sheet-7_sheet-conformance-04f8de66896c",
+      "functionId": "a06-05_0506_sheet-7_sheet",
+      "featureNo": "A06-05",
+      "title": "A06-05 店頭買取情報ステータス更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は 401/404 を本文なしと定めるが、App API 共通例外リスナーは 401/404 でも {code, errors} 本文を返す。",
+      "reason": "設計のレスポンス失敗表（1887行）は 401 を「認証拒否（本文を持たない）」、404 を「該当なし（本文を持たない）」と明記する。実装 ExceptionListener::onKernelException は isAppApi 経路（72行）で必ず JsonResponse(['code'=>$statusCode,'errors'=>$errors])（136-139行）を返す。401 は Unauthenticated(BaseApiException 401, errors=['認証エラー'])・404 は NotFoundException(BaseApiException 404, errors=[メッセージ])としていずれも本文を持ち、設計の本文なし要求と異なる。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html","start":1887,"end":1887,"contains":["認証拒否（本文を持たない）","該当なし（本文を持たない）"]},
+      "implEvidence": [
+        {"label":"App API 共通例外応答","note":"必ず本文を設定","path":"ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php","start":136,"end":139,"contains":["'code' => $statusCode,","'errors' => $errors,"]},
+        {"label":"401 文言固定","note":"本文ありで返す","path":"ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php","start":94,"end":101,"contains":["HTTP_UNAUTHORIZED => ['認証エラー']"]}
+      ]
+    }
+  ]
+}

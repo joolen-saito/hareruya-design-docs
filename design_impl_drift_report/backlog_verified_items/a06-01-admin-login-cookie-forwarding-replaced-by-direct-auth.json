@@ -1,0 +1,244 @@
+{
+  "id": "a06-01-admin-login-cookie-forwarding-replaced-by-direct-auth",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a06-01_0506_sheet-3_sheet.json",
+  "sourceFindingId": "a06-01_0506_sheet-3_sheet-conformance-3b7af86b1a0d",
+  "classification": "API店頭買取管理",
+  "feature": "買取アプリ用ログイン",
+  "issueCategory": "実装違い",
+  "issue": "買取アプリ用ログインが管理画面ログインへCookie付き中継せず、login_member_viewの直接認証に置き換わっている",
+  "designBook": "0506_基本設計仕様書(API_店頭買取管理).xlsx",
+  "reproSteps": [
+    "POST http://localhost:8080/api/v1/admin/login.json に login_id と password をフォーム値で送信する",
+    "ec-cube-enterprise の LoginController で /admin/login へのGET、login_check へのPOST、一時Cookieファイルの作成削除が行われるか確認する",
+    "pf-api の同機能実装と比較し、管理ログインへのHTTP中継ではなく login_member_view と UserPasswordHasherInterface による直接認証になっていることを確認する"
+  ],
+  "expected": [
+    "買取アプリ用ログインは、受け取ったログインIDとパスワードをEC-CUBE管理画面の買取アプリ用ログインへ中継して認証する",
+    "中継前に管理画面の /admin/login へアクセスし、セッション確立用CookieをログインID別の一時ファイルに保存する",
+    "保存したCookieを送信しながら login_check にログインIDとパスワードをPOSTする",
+    "処理後に一時Cookieファイルを削除する",
+    "認証成功時は中継先が返した会員情報とJWTトークンのJSONを返し、認証失敗時は中継先応答のエラー文言をもとにHTTP 401を返す"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、買取アプリ用ログインAPIが `/%eccube_api_v1_route%/admin/login.json` として実装されている。Controller は `login_id` と `password` を読み、`login_member_view` を `LoginMemberViewRepository` で検索し、`Member` を組み立てて `UserPasswordHasherInterface::isPasswordValid()` で直接パスワード検証する。`/admin/login` へのGET、login_check へのPOST、`/tmp/login{$loginId}.cookie` の作成削除はこの実装にない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise Controller は LoginMemberViewRepository と passwordHasher を注入する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php",
+          "start": 31,
+          "end": 37,
+          "language": "php",
+          "contains": [
+            "class LoginController extends AbstractController",
+            "private readonly LoginMemberViewRepository $loginMemberViewRepository",
+            "private readonly UserPasswordHasherInterface $passwordHasher"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise Controller は login_id/password を読み login_member_view を直接検索する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php",
+          "start": 45,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "#[Route('/%eccube_api_v1_route%/admin/login.json'",
+            "$loginId = (string) $request->request->get('login_id', '')",
+            "$password = (string) $request->request->get('password', '')",
+            "$this->loginMemberViewRepository->findOneBy"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise Controller は Member を組み立てて passwordHasher で直接認証する",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php",
+          "start": 61,
+          "end": 70,
+          "language": "php",
+          "contains": [
+            "$member = new Member()",
+            "$member->setPassword($viewMember->getPassword())",
+            "$member->setSalt($viewMember->getSalt())",
+            "$this->passwordHasher->isPasswordValid($member, $password)"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、`admin_login_url` の既定値として `/admin/login`、`admin_login_check_url` の既定値として `/admin/login_check` を用意し、ログインID別の `/tmp/login{$loginId}.cookie` を作成する。`/admin/login` へのGETで `CURLOPT_COOKIEJAR` にCookieを保存し、login_check へのPOSTで `CURLOPT_COOKIEFILE` から保存Cookieを送信し、処理後に `unlink($cookieFile)` で削除する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は /admin/login と login_check のURL、ログインID別Cookieファイルを用意する",
+          "path": "pf-api/src/Controller/Admin/LoginController.php",
+          "start": 16,
+          "end": 21,
+          "language": "php",
+          "contains": [
+            "$loginCheckUrl = $this->container->getParameter('admin_login_check_url')",
+            "$loginUrl = $this->container->getParameter('admin_login_url')",
+            "$cookieFile = \"/tmp/login{$loginId}.cookie\""
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api は /admin/login にGETしてCookieを一時ファイルへ保存する",
+          "path": "pf-api/src/Controller/Admin/LoginController.php",
+          "start": 23,
+          "end": 35,
+          "language": "php",
+          "contains": [
+            "CURLOPT_URL => $loginUrl",
+            "CURLOPT_CUSTOMREQUEST => 'GET'",
+            "CURLOPT_COOKIEJAR => $cookieFile",
+            "$response = curl_exec($ch)"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api は保存Cookieを使って login_check へPOSTし、Cookieファイルを削除する",
+          "path": "pf-api/src/Controller/Admin/LoginController.php",
+          "start": 37,
+          "end": 56,
+          "language": "php",
+          "contains": [
+            "CURLOPT_URL => $loginCheckUrl",
+            "CURLOPT_POST => true",
+            "CURLOPT_COOKIEFILE => $cookieFile",
+            "CURLOPT_POSTFIELDS => $fields",
+            "unlink($cookieFile)"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "基本設計は現行踏襲、/admin/login Cookie取得、login_check呼び出し、/tmp/login{$loginId}.cookie 保存を要求する",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 887,
+      "end": 899,
+      "language": "html",
+      "contains": [
+        "/api/admin/login.json",
+        "現行踏襲",
+        "本店管理画面の/admin/loginを呼び出しCookieを取得する",
+        "/tmp/login{$loginId}.cookie",
+        "本店管理画面の/admin_api/login_checkを呼び出し"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計は pf-api のログイン中継処理を正とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 962,
+      "end": 965,
+      "language": "html",
+      "contains": [
+        "pf-api（買取連携用のAPIアプリケーション）",
+        "ログインIDとパスワードをEC-CUBE管理画面の買取アプリ用ログインへ中継",
+        "確認値はpf-apiのログイン中継処理",
+        "挙動の参照リポはpf-api"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "処理フローはCookie一時ファイル、login_check送信、削除を要求する",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 991,
+      "end": 993,
+      "language": "html",
+      "contains": [
+        "中継先のログイン画面へアクセス",
+        "Cookieを一時ファイルに保存する",
+        "保存したCookieとともに中継先のログイン確認へ送信する",
+        "一時Cookieファイルを削除する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "Controller は login_member_view と passwordHasher による直接認証",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php",
+      "start": 45,
+      "end": 70,
+      "language": "php",
+      "contains": [
+        "$this->loginMemberViewRepository->findOneBy",
+        "$member = new Member()",
+        "$this->passwordHasher->isPasswordValid($member, $password)"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "login_member_view の読み取りRepository",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/Views/LoginMemberViewRepository.php",
+      "start": 22,
+      "end": 39,
+      "language": "php",
+      "contains": [
+        "@extends AbstractEnterpriseRepository<LoginMemberView>",
+        "class LoginMemberViewRepository",
+        "LoginMemberView::class"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "LoginMemberView は login_member_view を参照する",
+      "path": "ec-cube-enterprise/src/Eccube/Entity/Views/LoginMemberView.php",
+      "start": 21,
+      "end": 64,
+      "language": "php",
+      "contains": [
+        "#[ORM\\Table(name: 'login_member_view')]",
+        "private string $login_id",
+        "private string $password",
+        "private ?int $base_info_id"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は CookieJAR/CookieFILE による管理ログイン中継を行う",
+      "path": "pf-api/src/Controller/Admin/LoginController.php",
+      "start": 16,
+      "end": 56,
+      "language": "php",
+      "contains": [
+        "$cookieFile = \"/tmp/login{$loginId}.cookie\"",
+        "CURLOPT_COOKIEJAR => $cookieFile",
+        "CURLOPT_COOKIEFILE => $cookieFile",
+        "unlink($cookieFile)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は /admin/login.json と /admin/login を同一処理へ向ける",
+      "path": "pf-api/config/routes.yaml",
+      "start": 1,
+      "end": 8,
+      "language": "yaml",
+      "contains": [
+        "path: /admin/login.json",
+        "controller: App\\Controller\\Admin\\LoginController::postAction",
+        "path: /admin/login"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex + gpt-5.5 high critical review",
+    "commands": [
+      "nl -ba excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html | sed -n '887,1020p'",
+      "nl -ba pf-api/src/Controller/Admin/LoginController.php | sed -n '16,72p'",
+      "nl -ba pf-api/config/routes.yaml | sed -n '1,8p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php | sed -n '31,75p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Repository/Views/LoginMemberViewRepository.php | sed -n '1,80p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Entity/Views/LoginMemberView.php | sed -n '1,130p'",
+      "rg -n \"admin_api/login_check|admin/login_check|admin_login_check_url|admin_login_url|COOKIEJAR|COOKIEFILE|cookieFile|/tmp/login|login\\\\{\\\\$loginId\\\\}\\\\.cookie|HttpClient|curl_init|Guzzle\" ec-cube-enterprise/src ec-cube-enterprise/app/config ec-cube-enterprise/tests",
+      "rg -n \"api_admin_login|admin/login.json|/%eccube_api_v1_route%/admin/login.json|/admin/login\" ec-cube-enterprise/src ec-cube-enterprise/app/config",
+      "rg -n \"login_member_view|LoginMemberView|isPasswordValid|createToken\" ec-cube-enterprise/src ec-cube-enterprise/tests"
+    ],
+    "notes": [
+      "gpt-5.5 high の批判的レビューでは、設計が現行踏襲かつ pf-api/pf-eccube3 を正典としており、Cookie取得・保存・login_check中継・削除まで明記されているため VERIFIED と判定された。",
+      "設計HTMLは /admin_api/login_check と記載し、pf-api 実装のフォールバックは /admin/login_check で、実際の中継先は admin_login_check_url 環境値に依存する。そのため本項目では、パス文字列単体ではなく、管理ログインへのHTTP中継とCookieファイル管理が直接認証へ置換されている点を差分として扱う。",
+      "A06-01 のルート差分、未入力検証、401レスポンス形、JWT iss/aud、店舗なし時空文字は別候補として扱う。未入力検証と401レスポンス形は本項目の派生差分として関連付け可能。"
+    ]
+  }
+}

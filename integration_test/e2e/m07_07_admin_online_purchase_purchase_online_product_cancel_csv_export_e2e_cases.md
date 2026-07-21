@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md`（分類母集合＝観点表全516観点行）／ 既存IT: `integration_test/m07_07_admin_online_purchase_purchase_online_product_cancel_csv_export_it_cases.md`
 
-期待結果は画面表示・遷移・URL・HTTP応答・ダウンロード発火・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言や Form 制約をオラクル化しない。**CSVの中身（列・値・sale_flg抽出）の検査は手動**（ダウンロード発火・ファイル名・HTTP応答のみE2E）。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・HTTP応答・ダウンロード発火・フラッシュメッセージなどブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言や Form 制約をオラクル化しない。**CSVの中身（列・値・sale_flg抽出）の検査は手動**（ダウンロード発火・ファイル名・HTTP応答のみE2E）。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は独立画面を持たず、買取一覧（`admin_purchase_list` = `/admin/purchase/list`）の検索結果一覧上の一括ダウンロードメニュー「買取商品（キャンセル）CSV」（POST専用ルート `admin_purchase_csv_export_product_list?type=notSale`）から出力する。売却CSV（M07-06、`type=sale`）と同一ルート・同一サービスを共用し、非売却（`sale_flg`が偽）の明細を集計する参照系機能であり、DB更新・履歴記録を伴わない。
 
@@ -27,30 +27,30 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-001	IT-27	実行結果	P1	1件選択でキャンセルCSV出力するとダウンロードが発火し.csvファイルが取得できる（ファイル名規約は手動）	管理者ログイン済／検索結果に買取注文1件以上／SEED-M07-07-PURCHASE	先頭行のチェックボックスを選択	"1. /admin/purchase/list を開き空条件で検索する
 2. 検索結果先頭行のチェックボックスを選択
 3. ダウンロードメニューを開く
-4. 「買取商品（キャンセル）CSV」を押下"	CSVダウンロードが発火し、.csv ファイルが取得できること。ファイル名の具体的接頭辞・命名規約は実装値のためオラクル化せず、基本設計（M07-05/06）を正典に手動検証する。
+4. 「買取商品（キャンセル）CSV」を押下"	CSVダウンロードが発火し、.csv ファイルが取得できること。ファイル名の具体的接頭辞・命名規約は実装値のためオラクル化せず、基本設計（M07-05/06）を正典に手動検証する。				
 m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-002	IT-25	UI部品	P2	ダウンロードメニューに「買取商品（キャンセル）CSV」ボタンが表示される	管理者ログイン済／検索結果に買取注文1件以上／SEED-M07-07-PURCHASE	—	"1. 買取一覧を空条件で検索する
-2. ダウンロードメニューを開く"	メニュー内に「買取商品（キャンセル）CSV」ボタンが表示されること。
-m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-003	IT-25	UI部品	P2	検索結果一覧に行チェックボックスと全選択チェックボックスが表示される	管理者ログイン済／検索結果に買取注文1件以上／SEED-M07-07-PURCHASE	—	"1. 買取一覧を空条件で検索する"	検索結果一覧に行ごとの選択チェックボックスと全選択チェックボックスが表示されること。
-m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-004	IT-25	操作起点	P2	買取一覧画面が表示され検索フォームが出る	管理者ログイン済	—	"1. /admin/purchase/list を開く"	買取一覧画面が表示され、検索フォームが表示されること。
+2. ダウンロードメニューを開く"	メニュー内に「買取商品（キャンセル）CSV」ボタンが表示されること。				
+m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-003	IT-25	UI部品	P2	検索結果一覧に行チェックボックスと全選択チェックボックスが表示される	管理者ログイン済／検索結果に買取注文1件以上／SEED-M07-07-PURCHASE	—	1. 買取一覧を空条件で検索する	検索結果一覧に行ごとの選択チェックボックスと全選択チェックボックスが表示されること。				
+m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-004	IT-25	操作起点	P2	買取一覧画面が表示され検索フォームが出る	管理者ログイン済	—	1. /admin/purchase/list を開く	買取一覧画面が表示され、検索フォームが表示されること。				
 m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-010	IT-22	必須制御	P1	未選択でキャンセルCSVを押下すると未選択エラーが表示され一覧に留まる	管理者ログイン済／検索結果に買取注文1件以上／SEED-M07-07-PURCHASE	チェックボックス未選択	"1. 買取一覧を空条件で検索する
 2. 何も選択せずダウンロードメニューを開く
-3. 「買取商品（キャンセル）CSV」を押下"	「1つ以上の買取注文情報を選択してください。」が表示され、ダウンロードは発火せず買取一覧（検索結果＝/purchase 配下）に留まること（具体的なpage_noルートは実装詳細のため固定しない）。
+3. 「買取商品（キャンセル）CSV」を押下"	「1つ以上の買取注文情報を選択してください。」が表示され、ダウンロードは発火せず買取一覧（検索結果＝/purchase 配下）に留まること（具体的なpage_noルートは実装詳細のため固定しない）。				
 m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-011	IT-22	必須バリデーション	P2	全選択でキャンセルCSVを出力するとダウンロードが発火する	管理者ログイン済／検索結果に買取注文1件以上／SEED-M07-07-PURCHASE	全選択チェックボックスをオン	"1. 買取一覧を空条件で検索する
 2. 全選択チェックボックスをオン
-3. ダウンロードメニューを開き「買取商品（キャンセル）CSV」を押下"	CSVダウンロードが発火し、.csv ファイルが取得できること。ファイル名の具体的接頭辞・命名規約はオラクル化せず手動検証する。
+3. ダウンロードメニューを開き「買取商品（キャンセル）CSV」を押下"	CSVダウンロードが発火し、.csv ファイルが取得できること。ファイル名の具体的接頭辞・命名規約はオラクル化せず手動検証する。				
 m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-012	IT-27	出力失敗	P2	実在IDに存在しない買取注文IDを混在して送信すると存在しないID含むエラーが表示される	管理者ログイン済／検索結果に買取注文1件以上／SEED-M07-07-PURCHASE	実在IDに実在しないbuyOrderIds[]値を混在注入	"1. 買取一覧を空条件で検索する
 2. フォームに実在ID＋実在しない買取注文IDを混在注入する
-3. 「買取商品（キャンセル）CSV」を押下"	「存在しない買取注文情報IDが含まれています。」が表示され、買取一覧に留まること（1件でも非実在IDが含まれれば失敗分岐となる）。
+3. 「買取商品（キャンセル）CSV」を押下"	「存在しない買取注文情報IDが含まれています。」が表示され、買取一覧に留まること（1件でも非実在IDが含まれれば失敗分岐となる）。				
 m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-013	IT-27	出力失敗	P3	不正なCSV種別（type=sale/notSale以外）をPOSTするとエラー表示で一覧に滞留しダウンロードが発火しない	管理者ログイン済／検索結果に買取注文1件以上／SEED-M07-07-PURCHASE	type=不正値をPOST	"1. 買取一覧を空条件で検索する
-2. エクスポートURLへ type=不正値 でPOST送信（UIのformactionはtype=notSale固定のためPOST直叩き）"	エラーが表示され買取一覧に留まり、ダウンロードが発火しないこと（判定順序のCSV種別不正分岐）。実装のエラー文言はオラクル化しない。
-m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-020	IT-13	URL直接アクセス	P3	POST専用エクスポートURLへGET直接アクセスすると405が返る	管理者ログイン済	—	"1. /admin/purchase/csv_export_product_list?type=notSale へGETで直接アクセス"	HTTPステータス405（Method Not Allowed）が返ること。
+2. エクスポートURLへ type=不正値 でPOST送信（UIのformactionはtype=notSale固定のためPOST直叩き）"	エラーが表示され買取一覧に留まり、ダウンロードが発火しないこと（判定順序のCSV種別不正分岐）。実装のエラー文言はオラクル化しない。				
+m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-020	IT-13	URL直接アクセス	P3	POST専用エクスポートURLへGET直接アクセスすると405が返る	管理者ログイン済	—	1. /admin/purchase/csv_export_product_list?type=notSale へGETで直接アクセス	HTTPステータス405（Method Not Allowed）が返ること。				
 m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-030	IT-15	未認証	P1	未ログインで買取一覧/エクスポートURLへGETアクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/purchase/list へアクセス
-2. 未ログインで /admin/purchase/csv_export_product_list?type=notSale へアクセス"	いずれも管理ログイン画面へ誘導されること（買取一覧・POST専用エクスポートURLの双方が未認証ガード対象）。
-m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-031	IT-15	未認証	P1	未ログインでエクスポートURL（POST専用）へPOSTすると管理ログインへ誘導され処理が実行されない	未ログイン	buyOrderIds[]を含めてPOST	"1. 未ログインで /admin/purchase/csv_export_product_list?type=notSale へbuyOrderIds[]付きでPOST"	管理ログイン画面へ誘導され、CSVが返らず（ダウンロード不実行）処理が実行されないこと（未認証ガードはGETだけでなくPOST実処理にも及ぶ）。
+2. 未ログインで /admin/purchase/csv_export_product_list?type=notSale へアクセス"	いずれも管理ログイン画面へ誘導されること（買取一覧・POST専用エクスポートURLの双方が未認証ガード対象）。				
+m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export（買取商品（キャンセル）CSV）	E2E-M07-07-031	IT-15	未認証	P1	未ログインでエクスポートURL（POST専用）へPOSTすると管理ログインへ誘導され処理が実行されない	未ログイン	buyOrderIds[]を含めてPOST	1. 未ログインで /admin/purchase/csv_export_product_list?type=notSale へbuyOrderIds[]付きでPOST	管理ログイン画面へ誘導され、CSVが返らず（ダウンロード不実行）処理が実行されないこと（未認証ガードはGETだけでなくPOST実処理にも及ぶ）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

@@ -1,0 +1,78 @@
+{
+  "functionId": "m04-01_0202_sheet-4_sheet",
+  "featureNo": "M04-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-4:1205",
+      "designExpectation": "店舗検索条件の選択肢は、店舗管理に登録されており閉店となっていない店舗のみ取得する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchStockListType.php:123",
+      "implementationActual": "base_info は BaseInfo::class の EntityType として定義されているが、閉店店舗を除外する query_builder が無く、TODO コメントで未対応とされている。BaseInfo には is_open_shop カラムが存在し、BaseInfoRepository::getOpenShops() では開店中条件が実装されている。",
+      "mismatchReason": "設計は閉店店舗を選択肢から除外する要求だが、実装は BaseInfo 全体を候補にする EntityType のままで、SearchStockListType.php:131 に「閉店フラグが BaseInfo に追加された後、query_builder で絞り込む」とあり未対応。反証検索で BaseInfoRepository::getOpenShops() は見つかったが SearchStockListType の base_info 選択肢には使われていない。",
+      "comparisonRows": [
+        {
+          "item": "店舗選択肢",
+          "design": "店舗管理に登録されており、閉店となっていない店舗のみ取得",
+          "implementation": "EntityType(BaseInfo) に query_builder なし。閉店除外 TODO のみ。",
+          "mismatch": "閉店店舗が候補に含まれ得る。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-4:1133",
+      "designExpectation": "検索パターン名を入力することで検索条件保存ボタンが活性化する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369",
+      "implementationActual": "検索条件保存ボタンは初期表示から disabled 属性なしで描画され、JS も pattern_name 入力に応じた活性/非活性制御を持たない。未入力時は Controller 側で admin.common.save_pattern.error.name_empty を出してリダイレクトする。",
+      "mismatchReason": "設計は利用者可視のボタン活性制御を要求しているが、実装は常時押下可能で、未入力時にサーバエラー表示へ流す挙動になっている。反証検索でも savePatternBtn に対する disabled 制御や pattern_name 入力イベントは見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "検索条件保存ボタン",
+          "design": "検索パターン名入力後に活性化",
+          "implementation": "button は disabled なし。クリック時にフォーム送信し、未入力は Controller でエラー。",
+          "mismatch": "活性条件が画面側に実装されていない。"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-4:1135",
+      "designExpectation": "検索条件保存では、ボタン押下時に設定されている検索条件を保存する。ただし店舗は検索条件の保存に含めない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:332",
+      "implementationActual": "savePattern() は FormUtil::getViewData($searchForm) の結果を $dataToStore に入れ、_token だけ unset して serialize($dataToStore) している。base_info は除外されない。",
+      "mismatchReason": "設計では店舗を検索条件保存から除外する必要があるが、実装は _token 以外を保存対象に残す。反証検索で base_info を unset する処理、保存前正規化、DtbSearchPattern 側の除外処理はいずれも確認できなかった。",
+      "comparisonRows": [
+        {
+          "item": "検索パターン保存対象",
+          "design": "店舗は保存に含めない",
+          "implementation": "$dataToStore = $viewData; unset($dataToStore['_token']); のみで base_info を保存対象から外していない。",
+          "mismatch": "保存パターンに店舗条件が混入する。"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-4:1392",
+      "designExpectation": "在庫移動・振替登録では、複数在庫区分の在庫が選択された場合、アラートを表示し遷移させない。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml）",
+      "implementationActual": "一覧行チェックボックスには data-zone が出力されるが、在庫移動・振替ボタンのクリック処理は編集権限、複数店舗、在庫0のみを判定しており、選択行の data-zone が複数かどうかを判定する関数やアラートが無い。",
+      "mismatchReason": "設計は複数在庫区分選択時の遷移禁止を要求するが、実装の stockMoveBtn/stockTransferBtn クリック処理には isSameZone 相当の判定が存在しない。反証検索で「複数在庫区分」「data-zone」「stockLocationId」「isSameZone」等へ翻案して確認したが、該当する M04-01 一覧側制御は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "在庫移動・振替の遷移禁止条件",
+          "design": "複数在庫区分の在庫が選択された場合はアラート表示し遷移させない",
+          "implementation": "data-zone は出力されるが未使用。クリック時は権限、同一店舗、在庫0のみ判定。",
+          "mismatch": "EC-CUBE在庫とスマレジ在庫など複数在庫区分の同時選択を止められない。"
+        }
+      ]
+    }
+  ]
+}

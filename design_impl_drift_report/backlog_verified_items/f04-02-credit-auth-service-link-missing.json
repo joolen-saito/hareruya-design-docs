@@ -1,0 +1,147 @@
+{
+  "id": "f04-02-credit-auth-service-link-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f04-02_0304_sheet-4_sheet.json",
+  "sourceFindingId": "f04-02_0304_sheet-4_sheet-conformance-ebc99bc30f32",
+  "classification": "フロント注文",
+  "feature": "ご注文方法指定",
+  "issueCategory": "実装漏れ",
+  "issue": "クレジットカード決済選択時に本人認証サービスリンクが表示されない",
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "reproSteps": [
+    "クレジットカード決済を選択できる商品をカートに入れ、http://localhost:8080/ja/shopping に進む",
+    "ご注文方法指定画面のお支払い方法で「クレジットカード決済」を選択する",
+    "お支払い方法欄に本人認証サービスリンクが表示されるか確認する"
+  ],
+  "expected": [
+    "クレジットカード決済を選択した場合のみ、本人認証サービスリンクを表示する",
+    "クレジットカード決済以外を選択した場合は、本人認証サービスリンクを表示しない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise のご注文方法指定画面は、お支払い方法欄で `form.Payment` のラジオボタンと支払方法ラベルを描画するのみで、クレジットカード決済選択時に表示する本人認証サービスリンクや `notice_creditcard_payment` 相当の領域を持たない。関連JS `hareruya-checkout.js` も支払確認チェックボックスの有効化制御だけで、本人認証サービスリンクの表示制御を行っていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise お支払い方法欄は支払方法ラジオのみを描画",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig",
+          "start": 415,
+          "end": 555,
+          "language": "twig",
+          "contains": [
+            "{# お支払い情報 #}",
+            "{{ 'front.shopping.payment_method'|trans }}",
+            "{% for key, child in form.Payment %}",
+            "{{ form_widget(child, { 'attr': { 'class': 'c-hareruya-radio__input', 'data-trigger': 'change' }, 'label': false }) }}",
+            "<span class=\"c-hareruya-text\">{{ child.vars.label|trans }}</span>"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise チェックアウトJSは本人認証サービスリンクを制御していない",
+          "path": "ec-cube-enterprise/html/template/default/assets/hareruya/js/hareruya-checkout.js",
+          "start": 1,
+          "end": 1,
+          "language": "javascript",
+          "contains": [
+            "var u=document.querySelector(\"[data-js-payment-confirm-checkbox]\")",
+            "s=document.querySelector(\"[data-js-payment-submit]\")",
+            "s.addEventListener(\"click\",function(e){s.disabled&&e.preventDefault()})"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、お支払い方法欄の直下に `.notice_creditcard_payment` を置き、本人認証サービス（3Dセキュア2.0）の案内と `id=\"about-3dsv2\"` のリンクを描画している。`shopping_js.twig` は選択中の支払方法ラベルがクレジットカード決済の場合だけ `.notice_creditcard_payment` を表示する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 本人認証サービスリンク",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/index.twig",
+          "start": 204,
+          "end": 228,
+          "language": "twig",
+          "contains": [
+            "<h2 class=\"common_headline2_\" id=\"payment_info\" name=\"payment_info\">お支払い情報</h2>",
+            "{% for child in form.payment %}",
+            "<div class=\"notice_creditcard_payment\">",
+            "本人認証サービス（3Dセキュア2.0）を導入いたしました",
+            "<a id=\"about-3dsv2\">本人認証サービス（3Dセキュア2.0）について</a>"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 クレジットカード決済選択時だけ表示",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/shopping_js.twig",
+          "start": 6,
+          "end": 18,
+          "language": "javascript",
+          "contains": [
+            "if (\"{{ app.locale }}\" == 'ja') {",
+            "$('input[name=\"shopping[payment]\"]:checked').parent().text().replace(' ', '') == \"{{ trans('クレジットカード決済') }}\"",
+            "$('.notice_creditcard_payment').css('display', 'block');"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "本人認証サービスリンクはクレジットカード決済選択時のみ表示",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 1599,
+      "end": 1599,
+      "language": "html",
+      "contains": [
+        "本人認証サービスリンク",
+        "クレジットカード決済を選択した場合のみ「本人認証サービスリンク」を表示する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "お支払い方法欄に本人認証サービスリンクの描画がない",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 415,
+      "end": 555,
+      "language": "twig",
+      "contains": [
+        "{# お支払い情報 #}",
+        "{% for key, child in form.Payment %}",
+        "{{ form_errors(form.Payment) }}"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "検索では本人認証サービスリンク相当の実装が見つからず、3Dセキュアはプライバシーポリシー文言と汎用PaymentResultコメントのみ",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Payment/PaymentResult.php",
+      "start": 79,
+      "end": 79,
+      "language": "php",
+      "contains": [
+        "3Dセキュアなど, 決済中に他のサイトへリダイレクトが必要な特殊な用途に使用します."
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3ではお支払い方法欄直下に本人認証サービスリンクを表示",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/index.twig",
+      "start": 224,
+      "end": 227,
+      "language": "twig",
+      "contains": [
+        "<div class=\"notice_creditcard_payment\">",
+        "本人認証サービス（3Dセキュア2.0）を導入いたしました",
+        "<a id=\"about-3dsv2\">本人認証サービス（3Dセキュア2.0）について</a>"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f04-02_0304_sheet-4_sheet.json#f04-02_0304_sheet-4_sheet-conformance-ebc99bc30f32'",
+      "python3 - <<'PY' ... search excel_to_html/output/0304_基本設計仕様書(フロント_注文).html for 本人認証サービスリンク excluding data:image lines ... PY",
+      "rg -n \"本人認証|認証サービス|3D|3-D|3d|secure|セキュア|クレジットカード決済|notice_creditcard|creditcard|credit card\" pf-eccube3/app/Plugin/HareruyaEc ec-cube-enterprise/src/Eccube ec-cube-enterprise/html/template/default/assets/hareruya/js",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Shopping/index.twig | sed -n '204,228p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Block/js/shopping_js.twig | sed -n '1,22p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Shopping/index.twig | sed -n '400,565p'",
+      "python3 - <<'PY' ... confirm absence terms in enterprise Shopping/index.twig and hareruya-checkout.js ... PY"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。"
+  }
+}

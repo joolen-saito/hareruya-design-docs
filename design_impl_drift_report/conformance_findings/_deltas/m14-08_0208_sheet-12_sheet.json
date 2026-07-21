@@ -1,0 +1,186 @@
+{
+  "functionId": "m14-08_0208_sheet-12_sheet",
+  "featureNo": "M14-08",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-12:3379,3390,3397,3398",
+      "designExpectation": "新規／編集の送信は POST admin_cardset_update（/{admin_route}/cardset/edit）に card_set フォームを送り、hidden の id で更新判別し、成功時は admin.register.complete を積んで GET /{admin_route}/cardset/{id}/edit へリダイレクトする。編集入口の送信ボタンは「更新」。",
+      "implRef": "src/Eccube/Controller/Admin/Card/CardsetController.php:116; src/Eccube/Controller/Admin/Card/CardsetController.php:148; src/Eccube/Controller/Admin/Card/CardsetController.php:129; src/Eccube/Controller/Admin/Card/CardsetController.php:163; app/template/admin/Cardset/edit.twig:26; app/template/admin/Cardset/edit.twig:164; src/Eccube/Form/Type/Admin/CardsetType.php:176; 不在（探索範囲: src/Eccube/Controller/Admin/Card, src/Eccube/Form/Type/Admin, app/template/admin/Cardset; admin_cardset_update, /cardset/edit, card_set, hidden id）",
+      "implementationActual": "実装は admin_cardset_update / /cardset/edit を持たず、新規は /cardset/new、編集は /cardset/{id}/edit に直接 POST する。フォーム prefix は admin_cardset、hidden id はなく、成功フラッシュは admin.common.save_complete、ボタン文言は常に「登録」。",
+      "mismatchReason": "設計の POST 専用ルート名・パス、フォーム名、hidden id、成功フラッシュ、編集時ボタン文言が実装の外部契約と一致しない。別名検索（admin_cardset_update, cardset/edit, card_set, hidden id）でも該当実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "POST 先",
+          "design": "POST /{admin_route}/cardset/edit（admin_cardset_update）",
+          "implementation": "POST /{admin_route}/cardset/new または POST /{admin_route}/cardset/{id}/edit",
+          "mismatch": "ルート名・パスが異なる"
+        },
+        {
+          "item": "フォーム識別",
+          "design": "フォーム種別名 card_set、hidden id で更新判別",
+          "implementation": "getBlockPrefix は admin_cardset、フォームは route の id / 新規 route で判別",
+          "mismatch": "設計の form name と hidden id 契約がない"
+        },
+        {
+          "item": "成功フラッシュ",
+          "design": "admin.register.complete（登録が完了しました。）",
+          "implementation": "admin.common.save_complete（保存しました）",
+          "mismatch": "利用者に出る成功文言が異なる"
+        },
+        {
+          "item": "編集時送信ボタン",
+          "design": "更新",
+          "implementation": "admin.common.registration（登録）",
+          "mismatch": "編集画面でも登録表記になる"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-12:3390,3407",
+      "designExpectation": "Symfony フォーム isValid が偽の場合、admin.register.failed をエラーフラッシュに積み、同テンプレートを再描画する。",
+      "implRef": "src/Eccube/Controller/Admin/Card/CardsetController.php:125; src/Eccube/Controller/Admin/Card/CardsetController.php:159; 不在（探索範囲: src/Eccube/Controller/Admin/Card/CardsetController.php, src/Eccube/Resource/locale/messages.ja.yaml; admin.register.failed, addError）",
+      "implementationActual": "new/edit とも isSubmitted && isValid の成功分岐だけを処理し、検証失敗時は addError せずフォームを返す。",
+      "mismatchReason": "CardsetController 内に admin.register.failed または登録失敗の addError が存在しないため、設計のエラーフラッシュが積まれない。",
+      "comparisonRows": [
+        {
+          "item": "検証失敗時フラッシュ",
+          "design": "admin.register.failed をエラーフラッシュに積む",
+          "implementation": "成功時のみ addSuccess。失敗時の addError は不在",
+          "mismatch": "設計のエラーフラッシュが未実装"
+        },
+        {
+          "item": "再描画",
+          "design": "同一テンプレートを再描画",
+          "implementation": "フォームエラー付きで edit.twig を返す",
+          "mismatch": "再描画自体はあるが、指定フラッシュがない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-12:3314,3379,3427",
+      "designExpectation": "削除は DELETE /{admin_route}/cardset/{id}/delete で実行し、削除リンクは固定文言「このカードセットを削除してもよろしいですか？」のポップアップを表示し、その後「実行」で削除する。",
+      "implRef": "src/Eccube/Controller/Admin/Card/CardsetController.php:186; src/Eccube/Controller/Admin/Card/CardsetController.php:187; app/template/admin/Cardset/edit.twig:154; app/template/admin/Cardset/edit.twig:155; app/template/admin/Cardset/delete_modal.twig:21; app/template/admin/Cardset/delete_modal.twig:23; src/Eccube/Resource/locale/messages.ja.yaml:1754",
+      "implementationActual": "削除ルートは /{admin_route}/product/cardset/{id}/delete。確認は共通モーダルで admin.common.delete_modal__message を使い、実行ボタン文言は「削除」。",
+      "mismatchReason": "設計の削除 URL と固定確認文言が実装と一致しない。別キーワード（このカードセットを削除してもよろしいですか、cardset/{id}/delete）でも該当の専用文言・専用パスは確認できない。",
+      "comparisonRows": [
+        {
+          "item": "DELETE パス",
+          "design": "/{admin_route}/cardset/{id}/delete",
+          "implementation": "/{admin_route}/product/cardset/{id}/delete",
+          "mismatch": "product セグメントが入り、設計 URL と異なる"
+        },
+        {
+          "item": "確認文言",
+          "design": "このカードセットを削除してもよろしいですか？",
+          "implementation": "この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？",
+          "mismatch": "固定文言ではなく共通削除文言"
+        },
+        {
+          "item": "確認後の実行ボタン",
+          "design": "実行",
+          "implementation": "削除",
+          "mismatch": "ボタン文言が異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-12:3392,3395,3404,3407,3422",
+      "designExpectation": "削除時は cardDetails コレクション件数を事前判定し、1 件以上なら admin.cardset.delete.failed（第1引数に日本語セット名）をエラーフラッシュに積んで Referer へ戻す。成功時は admin.delete.complete を積み、セッションの eccube.admin.cardset.page_no（既定1）の一覧ページへ戻す。",
+      "implRef": "src/Eccube/Controller/Admin/Card/CardsetController.php:198; src/Eccube/Controller/Admin/Card/CardsetController.php:208; src/Eccube/Controller/Admin/Card/CardsetController.php:211; src/Eccube/Controller/Admin/Card/CardsetController.php:213; src/Eccube/Controller/Admin/Card/CardsetController.php:216; src/Eccube/Controller/Admin/Card/CardsetController.php:224; src/Eccube/Resource/locale/messages.ja.yaml:1561; src/Eccube/Resource/locale/messages.ja.yaml:4473; 不在（探索範囲: src/Eccube/Controller/Admin/Card/CardsetController.php; getCardDetails/count, admin.cardset.delete.failed, Referer）",
+      "implementationActual": "実装は cardDetails 件数を事前判定せず、シンボル画像を削除してから repository->delete() を試み、外部キー制約例外で admin.card.cardset.error.delete_has_cards 相当の文言を積む。成功・失敗とも最後は admin_cardset_list へ戻る。",
+      "mismatchReason": "設計の削除可否判定、失敗キー、Referer 復帰、成功時のページ番号復帰が実装にない。さらに実装は削除不可でも試行前に画像削除を行う可能性がある。",
+      "comparisonRows": [
+        {
+          "item": "削除可否判定",
+          "design": "mtb_card_detail が当該 cardset_id で1件でもあれば削除しない（cardDetails count）",
+          "implementation": "事前 count なし。delete 実行後の ForeignKeyConstraintViolationException を catch",
+          "mismatch": "判定タイミングと根拠が異なる"
+        },
+        {
+          "item": "削除不可時メッセージキー",
+          "design": "admin.cardset.delete.failed（日本語セット名を第1引数）",
+          "implementation": "admin.card.cardset.error.delete_has_cards（%name%）",
+          "mismatch": "翻訳キーと引数形式が異なる"
+        },
+        {
+          "item": "削除不可時遷移",
+          "design": "Referer へ HTTP リダイレクト",
+          "implementation": "admin_cardset_list へリダイレクト",
+          "mismatch": "直前画面へ戻らない"
+        },
+        {
+          "item": "削除成功時遷移",
+          "design": "GET /{admin_route}/cardset/{page_no}（セッション page_no、既定1）",
+          "implementation": "admin_cardset_list（/{admin_route}/cardset）",
+          "mismatch": "セッション保持ページへ戻らない"
+        },
+        {
+          "item": "削除成功文言",
+          "design": "admin.delete.complete / 「削除が完了しました。」",
+          "implementation": "admin.common.delete_complete / 「削除しました」",
+          "mismatch": "成功フラッシュが異なる"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-12:3313,3382",
+      "designExpectation": "編集時のみ収録カードリストを表示し、各リンクは admin_card_edit を新規タブで開く。",
+      "implRef": "src/Eccube/Controller/Admin/Card/CardsetController.php:168; src/Eccube/Controller/Admin/Card/CardsetController.php:169; app/template/admin/Cardset/edit.twig:132; app/template/admin/Cardset/edit.twig:135",
+      "implementationActual": "収録カードリスト自体は表示されるが、リンクは <a href=\"...\"> のみで target=\"_blank\" 等がない。",
+      "mismatchReason": "設計の「新規タブ」指定がテンプレートに実装されていない。admin_card_edit へのリンク実装はあるため、遷移先ではなく開き方の差異。",
+      "comparisonRows": [
+        {
+          "item": "収録カードリスト",
+          "design": "編集時のみ表示",
+          "implementation": "Cardset.id がある場合に cardList を表示",
+          "mismatch": "実装済み"
+        },
+        {
+          "item": "カード名リンク",
+          "design": "admin_card_edit を新規タブで開く",
+          "implementation": "admin_card_edit へ同一タブ遷移する通常リンク",
+          "mismatch": "target=\"_blank\" 等がない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-12:3261,3379,3404,3416",
+      "designExpectation": "フッタ「検索画面に戻る」は GET /{admin_route}/cardset/{page_no}?resume=1 へ遷移し、一覧がセッション保持の件数・並びで再表示される。",
+      "implRef": "app/template/admin/Cardset/edit.twig:151; src/Eccube/Controller/Admin/Card/CardsetController.php:49; src/Eccube/Controller/Admin/Card/CardsetController.php:50; src/Eccube/Controller/Admin/Card/CardsetController.php:77; src/Eccube/Controller/Admin/Card/CardsetController.php:99",
+      "implementationActual": "戻るリンクは pageNo > 1 の場合 /cardset/page/{pageNo}、それ以外は /cardset へ遷移し、resume=1 は付与しない。一覧側は eccube.admin.cardset.search.page_count、sort/order、page_no をセッション利用する。",
+      "mismatchReason": "一覧保持に近い実装はあるが、設計が指定する /cardset/{page_no}?resume=1 という遷移 URL ではない。",
+      "comparisonRows": [
+        {
+          "item": "戻るリンク URL",
+          "design": "/{admin_route}/cardset/{page_no}?resume=1",
+          "implementation": "/{admin_route}/cardset/page/{page_no} または /{admin_route}/cardset",
+          "mismatch": "パス形式と resume クエリが異なる"
+        },
+        {
+          "item": "保持対象",
+          "design": "表示件数と並び順を保持",
+          "implementation": "page_count、sort/order、page_no をセッション保持",
+          "mismatch": "保持自体は概ねあるが、設計の resume ルールではない"
+        }
+      ]
+    }
+  ]
+}

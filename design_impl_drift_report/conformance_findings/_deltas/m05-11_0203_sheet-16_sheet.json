@@ -1,0 +1,132 @@
+{
+  "functionId": "m05-11_0203_sheet-16_sheet",
+  "featureNo": "M05-11",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-16:5480,5493,5555-5556,5654",
+      "designExpectation": "【新規】受注情報履歴として、受注情報の履歴を確認でき、受注データ更新履歴の履歴データを表示し、対象会員の購入履歴を取得する。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/Order/*.php, src/Eccube/Resource/template/admin/Order/*.twig, src/Eccube/Form/Type/Admin/*Order*Type.php, src/Eccube/Resource/locale/messages*.yaml, app/config/eccube/packages/eccube_nav.yaml）",
+      "implementationActual": "Admin/Order には履歴専用 Controller/Twig/route/翻訳キーがなく、近接実装は src/Eccube/Controller/Admin/Order/EditController.php:146-148 の /order/{id}/edit のみ。OrderRepository の購入履歴取得 QueryBuilder も Admin/Order からは呼び出されていない。",
+      "mismatchReason": "受注情報履歴画面、入口、対象会員購入履歴取得処理が不在。admin_order_history、order_history、受注情報履歴、受注データ更新履歴、対象会員の購入履歴などへ翻案して再検索したが、OtcBuyOrder 履歴、Customer 買取履歴、front マイページ履歴のみで、M05-11 の Admin/Order 実装は確認できない。",
+      "comparisonRows": [
+        {
+          "item": "画面",
+          "design": "【新規】受注情報履歴で受注情報の履歴を確認できる",
+          "implementation": "Admin/Order は新規/編集画面のみ",
+          "mismatch": "履歴専用画面が存在しない"
+        },
+        {
+          "item": "履歴データ",
+          "design": "受注データ更新履歴を履歴データ表示する",
+          "implementation": "履歴専用 Twig/Controller が不在",
+          "mismatch": "履歴表示の実装がない"
+        },
+        {
+          "item": "対象会員購入履歴",
+          "design": "対象会員の購入履歴を取得する",
+          "implementation": "Admin/Order から購入履歴 QueryBuilder 呼び出しなし",
+          "mismatch": "取得処理が実装されていない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-16:5558-5561,5574,5578-5597,5602-5605,5655-5658,5680,5682-5683",
+      "designExpectation": "履歴データ表示ではデータは編集不可、ボタンは非活性、リンクは非活性とする。明細部では欠品登録以外のボタンは非活性とする。",
+      "implRef": "src/Eccube/Resource/template/admin/Order/edit.twig:789,840,863,977,1102,1133,1788,1874; src/Eccube/Controller/Admin/Order/EditController.php:620",
+      "implementationActual": "edit.twig は POST 可能フォームで、OrderStatus、日付クリア、スマレジメモ、ショップメモ、商品リンク、削除、登録、戻る、メール作成などが有効。EditController は POST で persist/flush し保存完了フラッシュを積む。",
+      "mismatchReason": "履歴表示用に同テンプレートを読み取り専用化する分岐や disabled 制御がない。OrderType でも全体 disabled は設定されず、確認できた disabled は pointErrorMessage など一部に限られるため、設計の編集不可/非活性条件と異なる。",
+      "comparisonRows": [
+        {
+          "item": "フォーム",
+          "design": "履歴データは編集不可",
+          "implementation": "edit.twig:789 で POST フォームを表示し、EditController.php:620 以降で保存処理を行う",
+          "mismatch": "履歴表示として読み取り専用になっていない"
+        },
+        {
+          "item": "受注ステータス/日付",
+          "design": "セレクトやクリアリンクは非活性",
+          "implementation": "edit.twig:840 の OrderStatus、edit.twig:863 などの clear_date リンクが有効",
+          "mismatch": "非活性ではない"
+        },
+        {
+          "item": "リンク",
+          "design": "リンクは非活性",
+          "implementation": "edit.twig:1102 の商品リンク、edit.twig:1861 のメール作成リンクなどが有効",
+          "mismatch": "遷移リンクが有効"
+        },
+        {
+          "item": "ボタン",
+          "design": "欠品登録以外のボタンは非活性",
+          "implementation": "edit.twig:1133 の削除、edit.twig:1874 の受注情報登録などが有効",
+          "mismatch": "設計で非活性のボタンが押下可能"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-16:5569-5570",
+      "designExpectation": "注文番号は、スマレジ受注の場合は（）内に EC 受注時の注文番号を表示し、店頭受取時の注文番号が複数存在する場合はカンマ区切りにしてリンクとし、リンク選択で受注詳細へ遷移する。店頭販売用整理番号は存在する場合のみリンク表示する。",
+      "implRef": "src/Eccube/Resource/template/admin/Order/edit.twig:817; src/Eccube/Controller/Admin/Order/EditController.php:1037",
+      "implementationActual": "admin edit は Order.order_number と waitingNumber を括弧表示するだけ。waitingNumber は DtbWaitingNumberRepository から取得され、複数注文番号リスト、EC 受注時注文番号、受注詳細への href は描画されていない。",
+      "mismatchReason": "設計の EC 受注時注文番号および複数店頭受取注文番号リンクのデータソース/描画が Admin/Order 実装にない。反証検索では front Mypage に linked order numbers 表示があるが、M05-11 の Admin/Order 画面には確認できない。",
+      "comparisonRows": [
+        {
+          "item": "スマレジ受注時の括弧内表示",
+          "design": "EC 受注時の注文番号を（）内に表示",
+          "implementation": "waitingNumber を（）内に表示",
+          "mismatch": "表示対象が設計と異なる"
+        },
+        {
+          "item": "複数注文番号",
+          "design": "店頭受取時の注文番号が複数存在する場合はカンマ区切り",
+          "implementation": "単一の Order.order_number と waitingNumber のみ",
+          "mismatch": "複数注文番号リストがない"
+        },
+        {
+          "item": "リンク",
+          "design": "注文番号リンク選択で受注詳細へ遷移",
+          "implementation": "注文番号表示に href がない",
+          "mismatch": "受注詳細へのリンクが未実装"
+        },
+        {
+          "item": "店頭販売用整理番号",
+          "design": "存在する場合のみリンク表示",
+          "implementation": "waitingNumber は括弧内テキスト表示",
+          "mismatch": "リンク表示ではない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-16:5674",
+      "designExpectation": "受注商品情報のフレームは、特殊フレームの場合のみ表示する。",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/Order/EditController.php, src/Eccube/Resource/template/admin/Order/edit.twig; 関連表示は src/Eccube/Resource/template/admin/Order/edit.twig:1088）",
+      "implementationActual": "受注商品サブ情報は言語、状態、Foil のみ表示される。frame_flg は商品側 Repository/Entity に存在するが、Admin/Order 編集・履歴表示では描画されない。",
+      "mismatchReason": "フレーム、特殊フレーム、frame、frame_flg へ翻案して Admin/Order の Controller/Twig を再検索したが、受注商品行にフレームを表示する実装がない。",
+      "comparisonRows": [
+        {
+          "item": "Foil",
+          "design": "Foilカードの時のみ表示",
+          "implementation": "edit.twig:1088 付近で Foil バッジを条件表示",
+          "mismatch": "実装済みのため指摘対象外"
+        },
+        {
+          "item": "フレーム",
+          "design": "特殊フレームの場合のみ表示",
+          "implementation": "Admin/Order の商品行にフレーム表示なし",
+          "mismatch": "設計項目が未実装"
+        }
+      ]
+    }
+  ]
+}

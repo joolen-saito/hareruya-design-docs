@@ -1,0 +1,76 @@
+{
+  "chunkId": "b02-05_0404_sheet-7_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-05_0404_sheet-7_sheet.json#b02-05_0404_sheet-7_sheet-conformance-b6ebaf57e647",
+      "functionId": "b02-05_0404_sheet-7_sheet",
+      "featureNo": "B02-05",
+      "title": "B02-05 お気に入り商品セール通知",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計はバッチ入口コマンドを product:batch saleNotification と規定するが、実装のコマンド名は eccube:favorite-sale-notification で一致しない。",
+      "reason": "設計は利用者視点の入口(1411行)および処理フロー見出し(1415行)でコンソールコマンドを product:batch saleNotification と明記し、コマンド名が一致しない場合は処理せず終了するとする外部契約である。実装 FavoriteSaleNotificationCommand.php の #[AsCommand] は name: 'eccube:favorite-sale-notification' でありクラスコメントの使用例も bin/console eccube:favorite-sale-notification。src/Eccube/Command 全体を product:batch / saleNotification で検索したが該当 AsCommand は存在せず(別バッチの ProductBatch コメントのみヒット)、設計値では起動できない。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html", "start": 1411, "end": 1411, "contains": ["product:batch saleNotification", "コンソールのバッチコマンド"]},
+      "implEvidence": [{"label": "実装コマンド名", "note": "AsCommand 定義", "path": "ec-cube-enterprise/src/Eccube/Command/FavoriteSaleNotificationCommand.php", "start": 34, "end": 35, "contains": ["eccube:favorite-sale-notification", "AsCommand"]}]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-05_0404_sheet-7_sheet.json#b02-05_0404_sheet-7_sheet-conformance-a6e9facf54fe",
+      "functionId": "b02-05_0404_sheet-7_sheet",
+      "featureNo": "B02-05",
+      "title": "B02-05 お気に入り商品セール通知",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は dtb_favorite_product / dtb_player を抽出元とするが、実装は dtb_customer_favorite_product(CustomerFavoriteProduct)と Customer を join して抽出している。",
+      "reason": "設計はリニューアル移行表(1404行)とDBカラム表(1435行)で、お気に入りは dtb_favorite_product(product_id・player_id・language_id)、会員(選手情報)は dtb_player(first_name_jp・last_name_jp・email)を抽出元・宛先とすると正典化している。実装のバッチ BatchFavoriteSaleNotificationAction は CustomerFavoriteProductRepository::findSaleFavoriteProducts() を呼び、同メソッド(230行〜)は createQueryBuilder('cfp')(CustomerFavoriteProduct=テーブル dtb_customer_favorite_product)で cfp.Customer を join し c.name01・c.name02・c.email を取得する。DtbFavoriteProductRepository には findSaleFavoriteProducts が存在するがコメントアウト(39行〜)されており、稼働経路は Customer 系。設計が指す dtb_favorite_product.player_id/language_id・dtb_player の氏名/email は抽出に使われていない。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html", "start": 1435, "end": 1435, "contains": ["dtb_favorite_product", "dtb_player", "first_name_jp"]},
+      "implEvidence": [
+        {"label": "抽出リポジトリ", "note": "CustomerFavoriteProduct と Customer を join", "path": "ec-cube-enterprise/src/Eccube/Repository/CustomerFavoriteProductRepository.php", "start": 230, "end": 243, "contains": ["findSaleFavoriteProducts", "createQueryBuilder('cfp')", "->join('cfp.Customer', 'c')"]},
+        {"label": "テーブル名", "note": "CustomerFavoriteProduct は dtb_customer_favorite_product", "path": "ec-cube-enterprise/src/Eccube/Entity/CustomerFavoriteProduct.php", "start": 24, "end": 24, "contains": ["dtb_customer_favorite_product"]},
+        {"label": "バッチの依存先", "note": "CustomerFavoriteProductRepository/CustomerRepository を注入", "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php", "start": 24, "end": 38, "contains": ["CustomerFavoriteProductRepository", "findSaleFavoriteProducts"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-05_0404_sheet-7_sheet.json#b02-05_0404_sheet-7_sheet-conformance-3caf4c948a18",
+      "functionId": "b02-05_0404_sheet-7_sheet",
+      "featureNo": "B02-05",
+      "title": "B02-05 お気に入り商品セール通知",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は抽出・送信時のエラーをコンソールに出力するとするが、送信時例外は log_error で握りつぶされ処理継続しコンソールに出ない。",
+      "reason": "設計エラー処理表(1441行)は「抽出・送信時のエラー→エラーメッセージをコンソールに出力する」とする。実装では抽出例外は Command 側 try/catch で $io->error に到達しコンソール出力されるが、会員ごとの送信例外は BatchFavoriteSaleNotificationAction の内側 try/catch(56-58行)で catch (\\Throwable $e) → log_error に customer_id と message を残して continue し、再throwしない。よって送信時エラーはログファイル止まりでコンソールに出力されず、コマンドは成功扱いで完了し得る。設計の失敗時出力(コンソール)を送信エラーについて満たさない。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html", "start": 1441, "end": 1441, "contains": ["抽出・送信時のエラー", "エラーメッセージをコンソールに出力する"]},
+      "implEvidence": [{"label": "送信例外の握りつぶし", "note": "log_error で記録し continue、再throwなし", "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php", "start": 53, "end": 59, "contains": ["catch (\\Throwable $e)", "log_error", "お気に入りセール通知メール送信失敗"]}]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-05_0404_sheet-7_sheet.json#b02-05_0404_sheet-7_sheet-conformance-d1d5ddadf70c",
+      "functionId": "b02-05_0404_sheet-7_sheet",
+      "featureNo": "B02-05",
+      "title": "B02-05 お気に入り商品セール通知",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は日時付きの開始・完了コンソール出力を求めるが、実装は完了相当の success のみで開始出力がなく日時も付与しない。",
+      "reason": "設計ログ・監査表(1444行)は「開始・完了→開始・完了のコンソール出力（日時付き）」、入出力表(1431行)も成功時出力に開始・完了のコンソール出力を含める。実装 FavoriteSaleNotificationCommand::execute は handle() 実行後に $io->success(成功メッセージ)を出すのみで、開始メッセージが存在せず日時(DateTime/date/format)も付与しない。同ファイルを開始/DateTime/date/format で検索してもライセンスヘッダ以外にヒットせず、日時付き開始・完了出力は実装されていない。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html", "start": 1444, "end": 1444, "contains": ["開始・完了のコンソール出力（日時付き）"]},
+      "implEvidence": [{"label": "完了のみ・開始/日時なし", "note": "success のみで start 出力も日時もない", "path": "ec-cube-enterprise/src/Eccube/Command/FavoriteSaleNotificationCommand.php", "start": 44, "end": 62, "contains": ["$io->success", "SymfonyStyle"]}],
+      "absenceCommands": ["rg -n 'writeln|開始|DateTime|date\\(|format' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/FavoriteSaleNotificationCommand.php"]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-05_0404_sheet-7_sheet.json#b02-05_0404_sheet-7_sheet-conformance-03301f061bb3",
+      "functionId": "b02-05_0404_sheet-7_sheet",
+      "featureNo": "B02-05",
+      "title": "B02-05 お気に入り商品セール通知",
+      "dimension": "⑦要求網羅・未実装",
+      "verdict": "REFUTED",
+      "confidence": "medium",
+      "reason": "実行トリガー(Step Functions・毎週水曜17:30)はサマリシート見出し(1366行)に記載があるが、正典とされる詳細設計(1391行で確認値を正とすると明記)の「本書で扱わないこと」(1400行)が『バッチの起動スケジュール（運用・ジョブ設定を正とする）』と明示的にスコープ外とし、運用・ジョブ設定側を正典としている。加えて Step Functions はAWSインフラ/ジョブ設定であり、被監査対象の ec-cube-enterprise アプリケーションソース内で表現される要素ではない。本バッチはコンソールコマンドとして実装され外部スケジューラから起動される設計であるため、アプリケーションソースにスケジュール定義が無いことは仕様どおりであり実装漏れとはいえない。よって REFUTED。"
+    }
+  ]
+}

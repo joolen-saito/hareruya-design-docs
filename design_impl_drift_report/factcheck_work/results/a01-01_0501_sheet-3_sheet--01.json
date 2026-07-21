@@ -1,0 +1,77 @@
+{
+  "chunkId": "a01-01_0501_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a01-01_0501_sheet-3_sheet.json#a01-01-0501-sheet-3-sheet-ab53b180e7-01",
+      "functionId": "a01-01_0501_sheet-3_sheet",
+      "featureNo": "A01-01",
+      "title": "A01-01 スマレジ連携処理",
+      "dimension": "②業務ルール・外部連携",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "high",
+      "summary": "設計はECCUBE→スマレジの在庫反映(API個別=在庫相対値更新/Patch一括=在庫一括相対値更新)を定義するが、SmaregiStockApiClientに相対値更新・一括相対値更新の更新APIメソッドが無く、管理画面操作からのスマレジ在庫反映が実装されていない。",
+      "reason": "SmaregiStockApiClient の公開メソッドは add(正数加算 /pos/stock/{productId}/add)・getStockChange・listStocks・listStockChanges のみで、設計D『在庫相対値更新API(updateStockRelatively, 負値含む相対更新)』およびF『在庫一括相対値更新API(postBulkUpdate)』に相当する更新メソッドが存在しない。リポジトリ全体を rg で探しても updateStockRelatively/postBulkUpdate/相対値更新/一括相対値 のスマレジ更新実装は見つからない。同クライアントの利用元も SmaregiStockProcessMessageHandler(webhook受信処理)・SmaregiStockBackfillAction(再連携バッチ)・SmaregiOtcOrderSyncService(店頭受取連携)のみで、管理画面の在庫編集/移動/分割結合/棚卸しからスマレジへ在庫を押し出す経路は無い。finding原文は『参照系のみ』と表現しadd()を見落としているが、add()は正数加算専用の別エンドポイントであり設計の相対値更新/一括相対値更新は満たさないため、要求(ECCUBE→スマレジ反映)の不在という結論は成立する。",
+      "designEvidence": {"label": "設計要求(スマレジ連携方式一覧: 2:API個別/3:Patch一括)", "path": "hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html", "start": 889, "end": 891, "contains": ["2:API個別", "3:Patch一括", "編集結果をスマレジ側に反映する"]},
+      "implEvidence": [{"label": "SmaregiStockApiClient(更新系メソッド不在)", "note": "add(正数加算)と参照系3メソッドのみ。相対値更新/一括相対値更新メソッドが無い", "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php", "start": 43, "end": 175, "contains": ["public function add(", "public function getStockChange(", "public function listStocks("]}],
+      "absenceCommands": [
+        "rg -rn 'updateStockRelatively|postBulkUpdate|相対値更新|一括相対値' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi",
+        "rg -n 'public function' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a01-01_0501_sheet-3_sheet.json#a01-01_0501_sheet-3_sheet-conformance-7a53702bfc73",
+      "functionId": "a01-01_0501_sheet-3_sheet",
+      "featureNo": "A01-01",
+      "title": "A01-01 スマレジ連携処理",
+      "dimension": "⑦要求網羅・未実装",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "high",
+      "summary": "在庫編集・在庫一括編集で在庫場所区分がスマレジの場合にスマレジ在庫相対値更新APIへ反映する処理と、件数上限超過時にエラー表示してCSV登録を促す分岐が実装されていない。",
+      "reason": "在庫編集の保存を担う StockApprovalStoreAction は ProductStock 更新・StockHistory 登録・StockApprovalList 登録のみで(productStockEntityManager->save 行95, stockHistoryEntityManager->save 行105, stockApprovalListEntityManager->save 行128)、スマレジ更新API呼び出しが無い。StockBulkApprovalStoreAction にも Smaregi 依存/呼び出しが無い(rg で smaregi 参照ゼロ)。SmaregiStockApiClient 側にも相対値更新メソッドが無いため反映入口自体が存在しない。設計889-890行の『実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す』に相当する上限判定・CSV誘導エラーも src/Eccube/Service/Admin/Stock・Controller/Admin/Stock に見当たらない(在庫変更CSVの10002件チェックは別処理で、管理画面編集件数上限のスマレジ反映制御ではない)。",
+      "designEvidence": {"label": "設計要求(在庫編集/一括編集のスマレジ反映と件数上限エラー)", "path": "hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html", "start": 889, "end": 890, "contains": ["在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する", "実行できる件数上限を設定し", "CSV登録を促す"]},
+      "implEvidence": [{"label": "StockApprovalStoreAction(承認/履歴/在庫DBのみ、スマレジ反映なし)", "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php", "start": 128, "end": 128, "contains": ["stockApprovalListEntityManager->save("]}],
+      "absenceCommands": [
+        "rg -rn -i 'smaregi|相対値|CSV登録' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockBulkApprovalStoreAction.php",
+        "rg -rn 'SmaregiStockApiClient' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a01-01_0501_sheet-3_sheet.json#a01-01_0501_sheet-3_sheet-conformance-52d4079f412f",
+      "functionId": "a01-01_0501_sheet-3_sheet",
+      "featureNo": "A01-01",
+      "title": "A01-01 スマレジ連携処理",
+      "dimension": "⑦要求網羅・未実装",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "high",
+      "summary": "在庫変更CSV登録の一括処理でスマレジ在庫一括相対値更新API連携・CSVのS3保存・100件毎分割・CSV履歴への処理結果反映が実装されていない。",
+      "reason": "在庫変更CSVを取り込む StockChangeCsvImportHandler には smaregi/s3/callback/相対値/一括/100件分割 のいずれの参照も無く(rg 結果ゼロ)、CSV行から DtbStockEditApprovalDetail と DtbStockApprovalList を作成するDB登録のみ。Service/Smaregi 配下にも S3 保存・在庫一括相対値更新API(postBulkUpdate)呼び出し・100件毎分割の実装が見つからない。SmaregiStockApiClient に一括相対値更新メソッドも無い。設計1088-1093行が定義するPatch一括連携(コールバックURL設定・CSVのS3保存・100件毎分割・CSV履歴表示)の要求が満たされていない。",
+      "designEvidence": {"label": "設計要求(Patch一括: S3保存/100件毎分割/CSV履歴)", "path": "hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html", "start": 1090, "end": 1093, "contains": ["S3に保存しておく", "100件毎の小データにCSVを分割してS3に上げて履歴表示", "CSV履歴として表示し処理結果を明示"]},
+      "implEvidence": [{"label": "StockChangeCsvImportHandler(承認明細/承認一覧のDB登録のみ、スマレジ一括API/S3なし)", "path": "ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php", "start": 38, "end": 38, "contains": ["class StockChangeCsvImportHandler extends BaseCsvImportHandler"]}],
+      "absenceCommands": [
+        "rg -n -i 'smaregi|s3|callback|相対値|bulk|100|分割' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php",
+        "rg -rn -i 's3|amazonaws|putObject|一括相対値|postBulkUpdate' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a01-01_0501_sheet-3_sheet.json#a01-01_0501_sheet-3_sheet-conformance-63e8ff81693c",
+      "functionId": "a01-01_0501_sheet-3_sheet",
+      "featureNo": "A01-01",
+      "title": "A01-01 スマレジ連携処理",
+      "dimension": "⑦要求網羅・未実装",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "high",
+      "summary": "在庫一括相対値更新APIの非同期処理結果をコールバックURLで受信し、問合せID/CSVを特定してS3からダウンロードしECCUBE在庫を更新、処理結果をCSV処理履歴に登録する一連の処理が実装されていない。",
+      "reason": "スマレジWebhook受信は WebhookController の単一ルート smaregi_webhook(行41)のみで、受信内容をログ出力し SmaregiWebhookEventMessage を dispatch する検証用実装。在庫一括相対値更新のコールバック(問合せID・結果配列・エラーメッセージ)を受ける専用エンドポイント/処理は無い。Controller・Service/Smaregi 全体に inquiryId/問合せID/callback による対象CSV特定・S3ダウンロード・CSV処理履歴登録の実装が見つからない。Webhook/Stock 配下(StockEventDispatcher/SmaregiStockChangeApplier)は pos:stock の在庫変動履歴を受信して取り込む側(スマレジ→ECCUBE)であり、設計1098-1100行が定義する一括API結果の非同期受信フローは実装されていない。",
+      "designEvidence": {"label": "設計要求(★3-3 コールバック非同期受信・S3ダウンロード・CSV処理履歴登録)", "path": "hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html", "start": 1098, "end": 1100, "contains": ["問合せ用IDやコールバックURLのパラメータに従い処理対象のCSVを特定", "S3よりダウンロードしてECCUBE側の処理を実行", "処理結果をCSV処理履歴に登録する"]},
+      "implEvidence": [{"label": "WebhookController(単一のsmaregi_webhookルート、一括API callback用受信なし)", "path": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php", "start": 41, "end": 42, "contains": ["name: 'smaregi_webhook'", "public function index("]}],
+      "absenceCommands": [
+        "rg -rn -i 'inquiryId|問合せID|callback|一括相対値' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Smaregi /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi",
+        "rg -rn -i 's3|amazonaws|CSV処理履歴|processResult' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi"
+      ]
+    }
+  ]
+}

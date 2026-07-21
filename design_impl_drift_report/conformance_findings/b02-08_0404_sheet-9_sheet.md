@@ -1,0 +1,6 @@
+■バッチ-B02-08 ユニサーチフィード作成
+【指摘カテゴリ】
+　実装違い
+【指摘内容】
+　（仕様）定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能。管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時はフィードファイル作成を行う。
+　管理画面の「フィードファイルを更新する」POSTは UniSearchFeedCreateAction::handle() に入り、exportAndUpload(false) を呼ぶ。UniSearchExportService は false の場合に SFTP アップロードをスキップせず、既存リモート削除後に gz と done ファイルをアップロードする。確認お願いします。（設計根拠: excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1643, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1644, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1659, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1666, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1667 ／ 実装: src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19, src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21, src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:46, src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:47, src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:27, src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29, src/Eccube/Service/UniSearch/UniSearchExportService.php:96, src/Eccube/Service/UniSearch/UniSearchExportService.php:100, src/Eccube/Service/UniSearch/UniSearchExportService.php:103, src/Eccube/Service/UniSearch/UniSearchExportService.php:107）

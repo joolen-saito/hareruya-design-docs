@@ -1,0 +1,1325 @@
+{
+  "functionId": "b13-02_0413_sheet-4_sheet",
+  "featureNo": "B13-02",
+  "title": "B13-02 コンビニ支払チェックバッチ",
+  "domain": "b13",
+  "kind": "batch",
+  "designHtml": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+  "sourceBook": "0413_基本設計仕様書(バッチ_イベント).html",
+  "sheetId": "sheet-4",
+  "sheetName": "コンビニ支払チェックバッチ",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "b13-02_0413_sheet-4_sheet-conformance-327a3570a7a4",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4:1029,1033,1034,1037,1040,1043,1046,1051,1059,1063,1068",
+      "designRefDetail": null,
+      "designExpectation": "コンビニ支払チェックを実行する（entry:batch checkCvsPayment）。コンビニ決済で入金待ちのイベント申込を抽出し、決済サービスへ取引照会して、入金確認時はステータス更新、取引不在時は申込み記録除去、想定外エラーは重複を除いて管理者へ通知し、申込履歴を記録して最後に確定する。",
+      "designQuote": "コンビニ支払チェックを実行する（entry:batch checkCvsPayment）。コンビニ決済で入金待ちのイベント申込を抽出し、決済サービスへ取引照会して、入金確認時はステータス更新、取引不在時は申込み記録除去、想定外エラーは重複を除いて管理者へ通知し、申込履歴を記録して最後に確定する。",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, src/Eccube/Service/Admin/Payment, src/Eccube/Repository/DtbEventEntryRepository.php, src/Eccube/Entity/Payment.php, src/Eccube/Service/MailService.php, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: checkCvsPayment, CvsPayment, コンビニ支払チェック, コンビニ支払, 入金待ち.*イベント申込, WAITING_RECEIVED, EC_CVS, PAYSUCCESS, REQSUCCESS）",
+      "implementationActual": "専用の checkCvsPayment コマンドは存在しない。近傍実装として src/Eccube/Command/PaymentStatusCheckCommand.php:35 に eccube:payment-status-check があるが、説明は「決済処理中チェックバッチ」。処理本体 src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:78 は getBeforeMinutesEntry(30) を呼び、Repository 側 src/Eccube/Repository/DtbEventEntryRepository.php:261-268 は既定ステータス PROCESSING_PAYMENT と createDate 基準で抽出する。コンビニ入金待ち WAITING_RECEIVED + EC_CVS の抽出ではない。さらに src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191-194 は SP.LINKS取引照会API未実装として LogicException を投げる。",
+      "difference": "設計は entry:batch checkCvsPayment の外部契約として、コンビニ決済かつ入金待ちのイベント申込を照会・更新・削除・履歴記録・管理者通知することを要求している。実装に該当コマンド/専用Actionはなく、既存の PaymentStatusCheckAction は決済処理中チェック用で抽出条件が異なり、取引照会APIも未実装例外で停止するため、B13-02 のバッチ契約は実装されていない。",
+      "mismatchReason": "設計は entry:batch checkCvsPayment の外部契約として、コンビニ決済かつ入金待ちのイベント申込を照会・更新・削除・履歴記録・管理者通知することを要求している。実装に該当コマンド/専用Actionはなく、既存の PaymentStatusCheckAction は決済処理中チェック用で抽出条件が異なり、取引照会APIも未実装例外で停止するため、B13-02 のバッチ契約は実装されていない。",
+      "comparisonRows": [
+        {
+          "item": "起動入口",
+          "design": "entry:batch checkCvsPayment でコンビニ支払チェックを実行する。",
+          "implementation": "PaymentStatusCheckCommand は eccube:payment-status-check（src/Eccube/Command/PaymentStatusCheckCommand.php:35）で、checkCvsPayment は不在。",
+          "mismatch": "設計コマンド/同等のCVS専用入口が存在しない。"
+        },
+        {
+          "item": "抽出対象",
+          "design": "コンビニ決済で入金待ちのイベント申込。",
+          "implementation": "PaymentStatusCheckAction は getBeforeMinutesEntry(30) を呼び、Repository 既定値は PROCESSING_PAYMENT（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:78、src/Eccube/Repository/DtbEventEntryRepository.php:261-268）。",
+          "mismatch": "WAITING_RECEIVED かつ EC_CVS の抽出ではない。"
+        },
+        {
+          "item": "決済照会",
+          "design": "申込みごとに決済サービスへ取引を照会し、結果のメッセージと新ステータスを得る。",
+          "implementation": "getApiResponse は SP.LINKS取引照会API未実装として LogicException を投げる（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191-194）。",
+          "mismatch": "照会処理が実行可能な実装になっていない。"
+        },
+        {
+          "item": "結果反映",
+          "design": "取引不在時は記録除去、入金確認時は新ステータス更新、申込履歴記録、想定外エラー通知を行う。",
+          "implementation": "近傍処理は OK の場合 ENTERED 更新・履歴追加、その他は論理削除、例外ごとに通知するが、CVS入金待ち照会APIに到達しない（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:107-166）。",
+          "mismatch": "B13-02 の対象抽出と照会が未実装のため、設計の結果反映契約を満たせない。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "b13-02_0413_sheet-4_sheet",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command, src/Eccube/Service/Admin/Payment, src/Eccube/Repository/DtbEventEntryRepository.php, src/Eccube/Entity/Payment.php, src/Eccube/Service/MailService.php, /home/y-saito/Developments/ec-cube-enterprise/html。検索語: checkCvsPayment, CvsPayment, コンビニ支払チェック, コンビニ支払, 入金待ち.*イベント申込, WAITING_RECEIVED, EC_CVS, PAYSUCCESS, REQSUCCESS）",
+      "comparisonSummary": "⑦要求網羅・未実装：設計は「コンビニ支払チェックを実行する（entry:batch checkCvsPayment）。コンビニ決済で入金待ちのイベント申込を抽出し、決済サービスへ取引照会して、入金確認時はステータス更新、取引不在時は申込み記録除去、想定外エラーは重複を除いて管理者へ通知し、申込履歴を記録して最後に確定する。」。実装は「専用の checkCvsPayment コマンドは存在しない。近傍実装として src/Eccube/Command/PaymentStatusCheckCommand.php:35 に eccube:payment-status-check があるが、説明は「決済処理中チェックバッチ」。処理本体 src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:78 は getBeforeMinutesEntry(30) を呼び、Repository 側 …」。乖離理由は「設計は entry:batch checkCvsPayment の外部契約として、コンビニ決済かつ入金待ちのイベント申込を照会・更新・削除・履歴記録・管理者通知することを要求している。実装に該当コマンド/専用Actionはなく、既存の PaymentStatusCheckAction は決済処理中チェック用で抽出条件が異なり、取引照会APIも未実装例外で停止するため、B13-02 のバッチ契約は実装されていない。」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "implementationGap": true,
+      "implementationGapType": "その他の明確な実装漏れ",
+      "implementationGapLabel": "明確な実装漏れ",
+      "auditAspects": [
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "CSV・API・Batch・PDF・印刷",
+        "権限・セッション・副作用・エラー・ログ"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Repository/DtbEventEntryRepository.php",
+        "src/Eccube/Entity/Payment.php",
+        "src/Eccube/Service/MailService.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Repository/DtbEventEntryRepository.php:34\n31: /**\n32:  * @extends AbstractRepository<DtbEventEntry>\n33:  */\n34: class DtbEventEntryRepository extends AbstractRepository\n35: {\n36:     private const DEFAULT_ENTRY_LIST_SORT_KEY = 'create_date';\n37: ",
+        "src/Eccube/Entity/Payment.php:33\n30:     #[ORM\\Table(name: 'dtb_payment')]\n31:     #[ORM\\HasLifecycleCallbacks]\n32:     #[ORM\\Entity(repositoryClass: PaymentRepository::class)]\n33:     class Payment extends AbstractEntity implements FileManagerDataInterface, \\Stringable\n34:     {\n35:         use S3_Trait;\n36: ",
+        "src/Eccube/Service/MailService.php:69\n66: use Twig\\Error\\SyntaxError;\n67: use Twig\\Markup;\n68: \n69: class MailService\n70: {\n71:     protected BaseInfo $BaseInfo;\n72: "
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 34,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-dc7015e20e",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "コンビニ支払チェックバッチ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-e820cd26d0",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "イベントう申込で利用されたコンビニ決済の支払い状況をチェックするバッチだが、",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-ef3bb99eaa",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "B13-02 コンビニ支払チェックバッチ / バッチ イベント管理 — コンビニ支払チェックバッチ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-063cc3ce50",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "コンビニ決済で入金待ちのイベント申込を対象に、決済サービスへ取引状況を照会して申込みステータスを整合させるバッチである。コマンドライン（コンソールコマンド）から実行する。照会結果に応じてステータスを更新または申込みを取り除き、想定外のエラーは管理者へまとめて通知する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-c35ec18f19",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの決済チェックバッチ（コンビニ支払チェック処理）、イベント申込を扱うリポジトリ、決済照会・申込履歴処理、エラー通知メール送信処理を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-453a784e54",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "本機能のカスタマイズ区分は現行踏襲であり、挙動の確認はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-d1667f8ee8",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "想定外エラーの管理者通知と申込履歴の記録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-fa7a2172ce",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-c28132d11c",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "イベント申込そのものの入力・確定（イベント申込機能を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-705ddddab4",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "エラー通知メールの本文・宛先設定（メール設定・テンプレート管理を正とする）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-75f4e2ca82",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "ec-cube-enterprise実装で要確認",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-f58c6cf9d3",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "イベント申込・申込履歴のテーブルは現行と移行先で同名・概ね同一スキーマであり、主キー列名のみ差がある。バッチの起動方式（コマンド名・実行基盤）は移行先で異なる可能性があり、ec-cube-enterprise実装で要確認とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-4bb5f45054",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "入金が確認できていない申込みステータス。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-47ea203e2a",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "決済サービスへ取引の状況を問い合わせること。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-2e77e617a8",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-133a50d807",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "コンビニ支払チェックを実行する（ entry:batch checkCvsPayment ）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-f78919a2df",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "対象が0件の場合は、対象が無い旨を返して終了する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-a19770cb35",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "取引が存在しない場合は当該申込みの記録を取り除く。入金が確認できた場合は新ステータスへ更新する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-7a74750195",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-414a8bca69",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "申込履歴を記録し、更新を確定する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-38ea57eaa0",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "照会結果に応じて、更新・記録除去・エラー通知のいずれかを行う。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-85f0e13f41",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "取引不在・未完了以外のエラーは重複を除いてまとめ、管理者へ通知する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-186d792fca",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "入力はコマンド名。成功時は対象申込みのステータスを整合させる。対象が0件なら何もせず完了する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-bdfbf091cd",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "決済サービスへ取引を照会し、結果でステータスを判定する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-6240504968",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "申込みステータスの更新・記録除去、申込履歴の記録、想定外エラーの管理者通知。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-0ba019dfe3",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "取引不在・未完了等のメッセージ収集、想定外エラーの通知。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-973f54780d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "申込みステータス更新、記録除去、申込履歴記録、エラー通知メール。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-230ff88b49",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は括弧で添える。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-ae0158987c",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "抽出・照会・更新に使用する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-076db23200",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-6f79a8f6cb",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "コマンド名が未指定・不一致",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-b59fb0eec7",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "管理者へのエラー通知メール。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-0232402e09",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "メール送信の認証情報",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b13-02_0413_sheet-4_sheet-req-615b905c4b",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "照会・更新を積み、最後に確定する。本バッチは楽観ロック・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "CONFIRMED_IMPLEMENTATION_GAP",
+    "designDerivedTerms": {
+      "routeNames": [
+        "entry_status_id"
+      ],
+      "translationKeys": [],
+      "classNames": [],
+      "paths": [
+        "pf-eccube3/b13-02_batch_event_event_check_cvs_payment.md"
+      ],
+      "businessTerms": [
+        "B13",
+        "コンビニ支払チェックバッチ",
+        "イベントう申込で利用されたコンビニ決済の支払い状",
+        "況をチェックするバッチだが",
+        "イベント申込の決済方法はクレジットカードのみにな",
+        "当バッチは廃止する",
+        "コンビニ決済で入金待ちのイベント申込を対象に",
+        "決済サービスへ取引状況を照会して申込みステータス",
+        "を整合させるバッチである",
+        "のHareruyaEcプラグインの決済チェックバ",
+        "コンビニ支払チェック処理",
+        "決済照会",
+        "実行はコンソールのバッチコマンドで行う",
+        "バッチの起動方法",
+        "コンビニ決済の入金待ちイベント申込の抽出",
+        "決済サービスへの取引照会とステータス整合",
+        "決済サービスの照会API仕様",
+        "バッチの起動スケジュール",
+        "決済番号列",
+        "決済種別",
+        "決済参照",
+        "バッチ起動方式",
+        "バッチの起動方式",
+        "コンビニ決済"
+      ]
+    },
+    "candidateCount": 8,
+    "strongSignalCount": 4,
+    "candidateRefs": [
+      {
+        "term": "entry_status_id",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/Exporter/EventEntryCsvExporterService.php:107",
+        "snippet": "case 'entry_status_id':",
+        "weight": 7
+      },
+      {
+        "term": "entry_status_id",
+        "termType": "routeName",
+        "role": "Source",
+        "ref": "app/DoctrineMigrations/Version20251117010327.php:75",
+        "snippet": "'field_name' => 'entry_status_id',",
+        "weight": 5
+      },
+      {
+        "term": "entry_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbEntryHistory.php:37",
+        "snippet": "#[ORM\\JoinColumn(name: 'entry_status_id', nullable: false, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => ' '])]",
+        "weight": 5
+      },
+      {
+        "term": "entry_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbEventEntry.php:39",
+        "snippet": "#[ORM\\JoinColumn(name: 'entry_status_id', nullable: false, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => ' '])]",
+        "weight": 5
+      },
+      {
+        "term": "コンビニ決済",
+        "termType": "businessTerm",
+        "role": "Source",
+        "ref": "app/DoctrineMigrations/Version20251128150157.php:167",
+        "snippet": "'payment_method' => 'コンビニ決済',",
+        "weight": 2
+      },
+      {
+        "term": "コンビニ決済",
+        "termType": "businessTerm",
+        "role": "Source",
+        "ref": "app/DoctrineMigrations/Version20251128150157.php:227",
+        "snippet": "'payment_method' => 'コンビニ決済（GMO）',",
+        "weight": 2
+      },
+      {
+        "term": "コンビニ決済",
+        "termType": "businessTerm",
+        "role": "Source",
+        "ref": "app/DoctrineMigrations/Version20251128150157.php:547",
+        "snippet": "'payment_method' => 'コンビニ決済',",
+        "weight": 2
+      },
+      {
+        "term": "コンビニ決済",
+        "termType": "businessTerm",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Payment.php:60",
+        "snippet": "public const EC_CVS_METHOD = 'コンビニ決済';",
+        "weight": 2
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 4,
+    "implementationGapRequirementCount": 4,
+    "rows": [
+      {
+        "findingId": "b13-02_0413_sheet-4_sheet-conformance-327a3570a7a4",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4:1029,1033,1034,1037,1040,1043,1046,1051,1059,1063,1068",
+        "designRequirement": "entry:batch checkCvsPayment でコンビニ支払チェックを実行する。",
+        "implementationActual": "PaymentStatusCheckCommand は eccube:payment-status-check（src/Eccube/Command/PaymentStatusCheckCommand.php:35）で、checkCvsPayment は不在。",
+        "mismatchReason": "設計コマンド/同等のCVS専用入口が存在しない。",
+        "implementationRefs": [
+          "src/Eccube/Repository/DtbEventEntryRepository.php",
+          "src/Eccube/Entity/Payment.php",
+          "src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "起動入口",
+            "design": "entry:batch checkCvsPayment でコンビニ支払チェックを実行する。",
+            "implementation": "PaymentStatusCheckCommand は eccube:payment-status-check（src/Eccube/Command/PaymentStatusCheckCommand.php:35）で、checkCvsPayment は不在。",
+            "mismatch": "設計コマンド/同等のCVS専用入口が存在しない。"
+          }
+        ]
+      },
+      {
+        "findingId": "b13-02_0413_sheet-4_sheet-conformance-327a3570a7a4",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4:1029,1033,1034,1037,1040,1043,1046,1051,1059,1063,1068",
+        "designRequirement": "コンビニ決済で入金待ちのイベント申込。",
+        "implementationActual": "PaymentStatusCheckAction は getBeforeMinutesEntry(30) を呼び、Repository 既定値は PROCESSING_PAYMENT（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:78、src/Eccube/Repository/DtbEventEntryRepository.php:261-268）。",
+        "mismatchReason": "WAITING_RECEIVED かつ EC_CVS の抽出ではない。",
+        "implementationRefs": [
+          "src/Eccube/Repository/DtbEventEntryRepository.php",
+          "src/Eccube/Entity/Payment.php",
+          "src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "抽出対象",
+            "design": "コンビニ決済で入金待ちのイベント申込。",
+            "implementation": "PaymentStatusCheckAction は getBeforeMinutesEntry(30) を呼び、Repository 既定値は PROCESSING_PAYMENT（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:78、src/Eccube/Repository/DtbEventEntryRepository.php:261-268）。",
+            "mismatch": "WAITING_RECEIVED かつ EC_CVS の抽出ではない。"
+          }
+        ]
+      },
+      {
+        "findingId": "b13-02_0413_sheet-4_sheet-conformance-327a3570a7a4",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4:1029,1033,1034,1037,1040,1043,1046,1051,1059,1063,1068",
+        "designRequirement": "申込みごとに決済サービスへ取引を照会し、結果のメッセージと新ステータスを得る。",
+        "implementationActual": "getApiResponse は SP.LINKS取引照会API未実装として LogicException を投げる（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191-194）。",
+        "mismatchReason": "照会処理が実行可能な実装になっていない。",
+        "implementationRefs": [
+          "src/Eccube/Repository/DtbEventEntryRepository.php",
+          "src/Eccube/Entity/Payment.php",
+          "src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "決済照会",
+            "design": "申込みごとに決済サービスへ取引を照会し、結果のメッセージと新ステータスを得る。",
+            "implementation": "getApiResponse は SP.LINKS取引照会API未実装として LogicException を投げる（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191-194）。",
+            "mismatch": "照会処理が実行可能な実装になっていない。"
+          }
+        ]
+      },
+      {
+        "findingId": "b13-02_0413_sheet-4_sheet-conformance-327a3570a7a4",
+        "dimension": "⑦要求網羅・未実装",
+        "severity": "med",
+        "implementationGap": true,
+        "implementationGapType": "その他の明確な実装漏れ",
+        "traceVerdict": "NOT_FOUND",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4:1029,1033,1034,1037,1040,1043,1046,1051,1059,1063,1068",
+        "designRequirement": "取引不在時は記録除去、入金確認時は新ステータス更新、申込履歴記録、想定外エラー通知を行う。",
+        "implementationActual": "近傍処理は OK の場合 ENTERED 更新・履歴追加、その他は論理削除、例外ごとに通知するが、CVS入金待ち照会APIに到達しない（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:107-166）。",
+        "mismatchReason": "B13-02 の対象抽出と照会が未実装のため、設計の結果反映契約を満たせない。",
+        "implementationRefs": [
+          "src/Eccube/Repository/DtbEventEntryRepository.php",
+          "src/Eccube/Entity/Payment.php",
+          "src/Eccube/Service/MailService.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "結果反映",
+            "design": "取引不在時は記録除去、入金確認時は新ステータス更新、申込履歴記録、想定外エラー通知を行う。",
+            "implementation": "近傍処理は OK の場合 ENTERED 更新・履歴追加、その他は論理削除、例外ごとに通知するが、CVS入金待ち照会APIに到達しない（src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:107-166）。",
+            "mismatch": "B13-02 の対象抽出と照会が未実装のため、設計の結果反映契約を満たせない。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 34,
+    "verdictedCount": 34,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 34,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-dc7015e20e",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "コンビニ支払チェックバッチ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-e820cd26d0",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "イベントう申込で利用されたコンビニ決済の支払い状況をチェックするバッチだが、",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-ef3bb99eaa",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "B13-02 コンビニ支払チェックバッチ / バッチ イベント管理 — コンビニ支払チェックバッチ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-063cc3ce50",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "コンビニ決済で入金待ちのイベント申込を対象に、決済サービスへ取引状況を照会して申込みステータスを整合させるバッチである。コマンドライン（コンソールコマンド）から実行する。照会結果に応じてステータスを更新または申込みを取り除き、想定外のエラーは管理者へまとめて通知する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-c35ec18f19",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はpf-eccube3（EC-CUBE3系）のHareruyaEcプラグインの決済チェックバッチ（コンビニ支払チェック処理）、イベント申込を扱うリポジトリ、決済照会・申込履歴処理、エラー通知メール送信処理を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-453a784e54",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "本機能のカスタマイズ区分は現行踏襲であり、挙動の確認はpf-eccube3を参照し、DB関連の記述はec-cube-enterpriseを正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-d1667f8ee8",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "想定外エラーの管理者通知と申込履歴の記録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-fa7a2172ce",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-c28132d11c",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "イベント申込そのものの入力・確定（イベント申込機能を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-705ddddab4",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "エラー通知メールの本文・宛先設定（メール設定・テンプレート管理を正とする）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-75f4e2ca82",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "ec-cube-enterprise実装で要確認",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-f58c6cf9d3",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "イベント申込・申込履歴のテーブルは現行と移行先で同名・概ね同一スキーマであり、主キー列名のみ差がある。バッチの起動方式（コマンド名・実行基盤）は移行先で異なる可能性があり、ec-cube-enterprise実装で要確認とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-4bb5f45054",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "入金が確認できていない申込みステータス。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-47ea203e2a",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "決済サービスへ取引の状況を問い合わせること。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-2e77e617a8",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "本機能はHTTPで届く画面を持たない。コマンド名が一致しない場合は処理を行わずに終了する。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-133a50d807",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "コンビニ支払チェックを実行する（ entry:batch checkCvsPayment ）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-f78919a2df",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "対象が0件の場合は、対象が無い旨を返して終了する。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-a19770cb35",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "取引が存在しない場合は当該申込みの記録を取り除く。入金が確認できた場合は新ステータスへ更新する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-7a74750195",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "取引不在・未完了以外の想定外エラーは1つにまとめ、管理者へ通知メールを送信する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-414a8bca69",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "申込履歴を記録し、更新を確定する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-38ea57eaa0",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "照会結果に応じて、更新・記録除去・エラー通知のいずれかを行う。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-85f0e13f41",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "取引不在・未完了以外のエラーは重複を除いてまとめ、管理者へ通知する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-186d792fca",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "入力はコマンド名。成功時は対象申込みのステータスを整合させる。対象が0件なら何もせず完了する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-bdfbf091cd",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "決済サービスへ取引を照会し、結果でステータスを判定する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-6240504968",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "申込みステータスの更新・記録除去、申込履歴の記録、想定外エラーの管理者通知。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-0ba019dfe3",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "取引不在・未完了等のメッセージ収集、想定外エラーの通知。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-973f54780d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "申込みステータス更新、記録除去、申込履歴記録、エラー通知メール。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-230ff88b49",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "列名はec-cube-enterpriseを正とし、現行（pf-eccube3）と異なる場合は括弧で添える。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-ae0158987c",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "抽出・照会・更新に使用する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-076db23200",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "本機能は参照系（検索）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-6f79a8f6cb",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "コマンド名が未指定・不一致",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-b59fb0eec7",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "管理者へのエラー通知メール。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-0232402e09",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "メール送信の認証情報",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b13-02_0413_sheet-4_sheet-req-615b905c4b",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html#sheet-4",
+        "designRequirement": "照会・更新を積み、最後に確定する。本バッチは楽観ロック・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

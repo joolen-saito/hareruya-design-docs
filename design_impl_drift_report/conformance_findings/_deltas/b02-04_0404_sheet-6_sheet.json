@@ -1,0 +1,138 @@
+{
+  "functionId": "b02-04_0404_sheet-6_sheet",
+  "featureNo": "B02-04",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-6:1289",
+      "designExpectation": "コンソールのバッチコマンド product:batch checkNoSectionProduct で部門未設定チェックを実行し、公開中かつ部門未設定の商品を抽出して該当があれば管理者へアラートメールを送信する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:45 / 不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Product, src/Eccube/Repository/ProductClassRepository.php, src/Eccube/Repository/ProductRepository.php, html; 検索語: product:batch, checkNoSectionProduct, NoSection, 部門未設定, section_id）",
+      "implementationActual": "実装済みの近似コマンドは eccube:otc-buy-order:aggregate-summary で、商品管理バッチ product:batch checkNoSectionProduct は存在しない。",
+      "mismatchReason": "設計は商品管理バッチのコマンド名 product:batch checkNoSectionProduct を外部契約としているが、Command 定義一覧に当該コマンドはなく、部門未設定通知は店頭買取集計バッチ eccube:otc-buy-order:aggregate-summary の副処理として実装されている。",
+      "comparisonRows": [
+        {
+          "item": "コマンド名",
+          "design": "product:batch checkNoSectionProduct",
+          "implementation": "eccube:otc-buy-order:aggregate-summary",
+          "mismatch": "設計された起動入口が存在しない"
+        },
+        {
+          "item": "機能領域",
+          "design": "商品管理バッチ B02-04",
+          "implementation": "店頭買取集計バッチ",
+          "mismatch": "別バッチの副処理になっている"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-6:1282",
+      "designExpectation": "公開中かつ部門未設定の商品規格を dtb_product.product_status_id と dtb_product_class.section_id を使って抽出する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:949 / /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:2325",
+      "implementationActual": "有効な抽出処理は dtb_otc_buy_order_detail.section_id / dtb_otc_buy_order_indivisual_input_product.section_id が NULL の店頭買取データを対象にしている。ProductClassRepository には商品規格向けの NoSection メソッド痕跡があるが全体がコメントアウトされている。",
+      "mismatchReason": "設計は dtb_product / dtb_product_class の公開商品規格を対象にするが、実装は dtb_otc_buy_order 系の完了日範囲データを対象にしており、dtb_product.product_status_id による公開判定もない。コメントアウト済みコードは実装済み根拠にできない。",
+      "comparisonRows": [
+        {
+          "item": "対象テーブル",
+          "design": "dtb_product / dtb_product_class / mtb_section",
+          "implementation": "dtb_otc_buy_order / dtb_otc_buy_order_detail / dtb_otc_buy_order_indivisual_input_product / dtb_product_class / dtb_product",
+          "mismatch": "店頭買取明細由来の抽出で、商品管理の商品規格抽出ではない"
+        },
+        {
+          "item": "公開判定",
+          "design": "dtb_product.product_status_id が公開",
+          "implementation": "getNoSectionProducts に product_status_id 条件なし",
+          "mismatch": "公開中商品の条件を満たさない"
+        },
+        {
+          "item": "部門未設定判定",
+          "design": "dtb_product_class.section_id が未設定",
+          "implementation": "obod.section_id IS NULL または oboi.section_id IS NULL",
+          "mismatch": "商品規格の部門ではなく店頭買取明細側の部門を見ている"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-6:1236",
+      "designExpectation": "件数の範囲で、一定件数（10000件）ずつ部門未設定の商品規格を取得することを繰り返す。一覧は最大10,000件まで取得し、それ以降は省略する。",
+      "implRef": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Product, src/Eccube/Repository/ProductClassRepository.php, src/Eccube/Repository/ProductRepository.php, src/Eccube/Service/Admin/OtcBuyOrder, src/Eccube/Repository/DtbOtcBuyOrderRepository.php）",
+      "implementationActual": "有効な部門未設定通知処理には 10000 件単位の繰り返し取得、または最大10000件で省略する制御がない。ProductClassRepository の LIMIT/OFFSET 付き NoSection 取得はコメントアウトされている。",
+      "mismatchReason": "設計の大量件数対応は外部出力量に影響する material 要求だが、有効コードで 10000 件上限・オフセット反復を確認できない。",
+      "comparisonRows": [
+        {
+          "item": "取得単位",
+          "design": "最大10000件ずつ取得して繰り返す",
+          "implementation": "DtbOtcBuyOrderRepository::getNoSectionProducts は上限なしの fetch 相当",
+          "mismatch": "取得単位制御がない"
+        },
+        {
+          "item": "出力省略",
+          "design": "一覧は最大10,000件まで、それ以降は省略",
+          "implementation": "メール送信時に products 全件を Twig に渡す",
+          "mismatch": "省略条件がない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-6:1235",
+      "designExpectation": "「部門未設定商品通知メール」という件名で管理者にメール通知され、本文には検索に該当した「商品名,商品コード」の一覧が記載される。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/app/DoctrineMigrations/Version20260303143331.php:38 / /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/default/Mail/Mall/otc_buy_order_no_section_alert.twig:1",
+      "implementationActual": "近似テンプレートは mail_key eccube.mail.mall.otc_buy_order_no_section_alert、件名は「【店頭買取】部門未設定商品通知」。本文は「商品名, 商品コード」と products の product_name/product_code を出力する。",
+      "mismatchReason": "本文項目は近いが、テンプレート自体が店頭買取集計バッチ用で、設計の件名「部門未設定商品通知メール」と一致せず、B02-04 商品管理バッチ用テンプレートとしても確認できない。",
+      "comparisonRows": [
+        {
+          "item": "メール件名",
+          "design": "部門未設定商品通知メール",
+          "implementation": "【店頭買取】部門未設定商品通知",
+          "mismatch": "件名が異なる"
+        },
+        {
+          "item": "テンプレート用途",
+          "design": "商品部門未設定チェック",
+          "implementation": "店頭買取集計バッチ 部門未設定商品通知メール",
+          "mismatch": "別バッチ用途のテンプレート"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-6:1319",
+      "designExpectation": "開始・完了のコンソール出力（日時付き）を行い、抽出・送信時のエラーではエラーメッセージをコンソールに出力する。",
+      "implRef": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Product; 近似: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:78）",
+      "implementationActual": "商品管理バッチ product:batch checkNoSectionProduct 自体がなく、B02-04 としての開始・完了日時付きコンソール出力、抽出・送信時エラーのコンソール出力は確認できない。近似の店頭買取集計バッチは集計対象日、例外時エラー、完了メッセージを出すが日時付き開始・完了ではない。",
+      "mismatchReason": "設計は利用者が直接見るバッチ出力を要求しているが、該当コマンドも該当出力も存在しない。",
+      "comparisonRows": [
+        {
+          "item": "開始出力",
+          "design": "開始のコンソール出力（日時付き）",
+          "implementation": "該当コマンドなし",
+          "mismatch": "未実装"
+        },
+        {
+          "item": "完了出力",
+          "design": "完了のコンソール出力（日時付き）",
+          "implementation": "近似コマンドは「店頭買取集計が完了しました。」のみ",
+          "mismatch": "対象違いかつ日時なし"
+        },
+        {
+          "item": "抽出・送信時エラー",
+          "design": "エラーメッセージをコンソールに出力",
+          "implementation": "B02-04 の抽出・送信処理が存在しない",
+          "mismatch": "未実装"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "functionId": "f06-12_0305_sheet-11_sheet",
+  "featureNo": "F06-12",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-11（利用者視点の入口／画面遷移／処理フロー）",
+      "designExpectation": "買取履歴詳細は GET /{_locale}/mypage/purchase_history/detail/{id}、「承諾確定」ボタン押下は POST /{_locale}/mypage/purchase_history/update/{id} のパスパターンで提供する（設計注記によりサイトルートからのパスパターンを利用者視点の入口として明記）。",
+      "implRef": "src/Eccube/Controller/Front/Mypage/PurchaseHistoryController.php:99-106,127-133,189-196; src/Eccube/Resource/template/default/Mypage/purchase_history_detail_net.twig:10",
+      "implementationActual": "詳細表示を買取種別ごとに分離。ネット買取 GET /mypage/purchase_history/net/{buyOrderId}（mypage_purchase_history_detail_net）、店頭買取 GET /mypage/purchase_history/otc/{otcBuyOrderId}（mypage_purchase_history_detail_otc）。承諾確定は POST /mypage/purchase_history/net/{buyOrderId}/confirm（mypage_purchase_history_net_confirm）。テンプレートのフォームactionも同confirmルートを指す。",
+      "mismatchReason": "PurchaseHistoryController.php の全Route定義を確認したが、設計が『利用者視点の入口』『画面遷移』『処理フロー』で明記する統合詳細パス /purchase_history/detail/{id}・承諾パス /purchase_history/update/{id} は src/Eccube・html を全検索しても存在しない（grep 'purchase_history/detail' 0件、'purchase_history/update' 0件）。実装は net/otc/confirm という別のURL構造で提供しており、設計のパスパターンと相違する。機能自体は動作するがURL構造が設計と相違（PLAUSIBLE）。",
+      "comparisonRows": [
+        {
+          "item": "詳細表示の入口URL",
+          "design": "GET /{_locale}/mypage/purchase_history/detail/{id}（種別統合）",
+          "implementation": "GET /mypage/purchase_history/net/{buyOrderId} と /mypage/purchase_history/otc/{otcBuyOrderId}（種別分離）",
+          "mismatch": "detail/{id} 統合パスは不在、net/otc に分割"
+        },
+        {
+          "item": "承諾確定の送信先URL",
+          "design": "POST /{_locale}/mypage/purchase_history/update/{id}",
+          "implementation": "POST /mypage/purchase_history/net/{buyOrderId}/confirm",
+          "mismatch": "update/{id} パスは不在、net/.../confirm を使用"
+        }
+      ]
+    }
+  ]
+}

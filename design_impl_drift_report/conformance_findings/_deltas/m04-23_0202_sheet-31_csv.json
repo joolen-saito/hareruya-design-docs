@@ -1,0 +1,150 @@
+{
+  "functionId": "m04-23_0202_sheet-31_csv",
+  "featureNo": "M04-23",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-31:12678",
+      "designExpectation": "選択した条件に対して、CSVの結合先商品コード、結合数、結合元商品コード、結合元在庫区分、結合元在庫数をもとに在庫結合の登録および承認申請を行う",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php::listJoinCsvImport, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php。反証語: StockJoinApplyApprovalAction, StockJoinApplyApprovalInput, admin_stock_join_apply_approval）",
+      "implementationActual": "CSV取込は在庫結合登録後に欠品入力まで進めるだけで、承認申請アクションは呼ばない。成功文言も「%count% 件の結合を登録し、欠品入力まで進めました。」となっている（messages.ja.yaml:4844）。",
+      "mismatchReason": "設計はCSV登録処理内で承認申請まで行う要求だが、実装のCSV取込経路には StockJoinApplyApprovalAction 呼び出しが存在せず、承認申請は別画面の admin_stock_join_apply_approval ルートに分離されている。",
+      "comparisonRows": [
+        {
+          "item": "CSV取込後処理",
+          "design": "在庫結合の登録および承認申請を行う",
+          "implementation": "StockJoinRegisterAction 後、StockJoinMoveToShortageEntryAction で欠品入力まで進める",
+          "mismatch": "承認申請が未実行"
+        },
+        {
+          "item": "成功メッセージ",
+          "design": "承認申請まで完了する前提",
+          "implementation": "「結合を登録し、欠品入力まで進めました。」",
+          "mismatch": "完了到達点が設計より手前"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-31:12689",
+      "designExpectation": "結合元商品の在庫数が結合元在庫数以上であることをそれぞれチェック",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:363; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php:187",
+      "implementationActual": "CSVハンドラは結合元ProductStockを解決して数量を合算するが、現在庫 >= CSV結合元在庫数の検証をしない。Action側は min(要求数量, 現在庫) で数量を丸めて処理する。",
+      "mismatchReason": "在庫不足時にエラーにせず、要求数量を現在庫へ丸めて登録が進むため、設計の在庫数チェックと異なる。source_register_quantity_over_stock/source_exceeds_stock は一覧CSV取込経路では使用されていない。",
+      "comparisonRows": [
+        {
+          "item": "在庫不足時",
+          "design": "結合元商品の在庫数が結合元在庫数以上でなければエラー",
+          "implementation": "要求数量を現在庫に丸める",
+          "mismatch": "不足を検知して登録停止しない"
+        },
+        {
+          "item": "検証箇所",
+          "design": "登録処理実行時に各結合元をチェック",
+          "implementation": "StockJoinListCsvImportHandler に在庫数比較がない",
+          "mismatch": "業務バリデーション不足"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-31:12683",
+      "designExpectation": "アップロードされたファイルがcsv以外のファイルの場合は登録処理実行時のエラーとする",
+      "implRef": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php::listJoinCsvImport, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php, /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/StockJoinCsvUploadType.php。反証語: mimeTypes, getMimeType, getClientOriginalExtension, csv以外, handleRequest, isValid）",
+      "implementationActual": "StockJoinCsvUploadType には MIME 制約があるが、POST処理ではフォームの handleRequest/isValid を実行せず、UploadedFile::isValid のみ確認する。CsvImporter は拡張子 tsv の場合にTSV区切りとして読み込む（CsvImporter.php:172）。",
+      "mismatchReason": "サーバ側で「csv以外」を拒否する検証が実行されないため、TSV等の非CSVファイルが取込処理へ進める。",
+      "comparisonRows": [
+        {
+          "item": "ファイル種別検証",
+          "design": "csv以外はエラー",
+          "implementation": "UploadedFile::isValid のみ",
+          "mismatch": "CSV拡張子/MIMEのサーバ検証なし"
+        },
+        {
+          "item": "TSVファイル",
+          "design": "csv以外なのでエラー",
+          "implementation": "tsv拡張子ならタブ区切りとして処理",
+          "mismatch": "非CSVを許容"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-31:12681",
+      "designExpectation": "0201_基本設計仕様書(システム設定).xlsx の権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:333; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:348; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:438",
+      "implementationActual": "画面表示時の店舗選択肢は編集可能店舗から作るが、CSV POSTでは送信された store ID で BaseInfo を find するだけで、ログインMemberの isEditableShop を検証しない。isEditableShop 検証は approvalMembers など別経路にはある。",
+      "mismatchReason": "POST改ざんで編集不可店舗IDを送れる外部契約に対し、listJoinCsvImport のサーバ側で編集可能店舗処理が実行されない。",
+      "comparisonRows": [
+        {
+          "item": "店舗選択肢",
+          "design": "編集可能店舗処理に応じた制御",
+          "implementation": "表示候補は getEditableBaseInfos 由来",
+          "mismatch": "UIのみ部分対応"
+        },
+        {
+          "item": "CSV登録POST",
+          "design": "選択店舗にも編集可能店舗制御が必要",
+          "implementation": "BaseInfo find とログイン確認のみ",
+          "mismatch": "権限未検証"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-31:12719",
+      "designExpectation": "登録CSV 2-2「結合数」: 数値、必須、最大値1~999999999、入力例100、在庫結合先の結合数を記入",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_join_csv_modal_body.twig:52; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4942",
+      "implementationActual": "モーダルのCSVフォーマット表2行目は admin.stock.join_csv_modal.format_join_quantity を表示し、その日本語文言が「結合元在庫数」になっている。",
+      "mismatchReason": "設計のカラム名/ラベルは「結合数」だが、画面表示は「結合元在庫数」で、2-5「結合元在庫数」と重複して利用者に誤ったCSV列名を示す。",
+      "comparisonRows": [
+        {
+          "item": "2-2 表示ラベル",
+          "design": "結合数",
+          "implementation": "結合元在庫数",
+          "mismatch": "文言相違"
+        },
+        {
+          "item": "取込ヘッダ",
+          "design": "結合数",
+          "implementation": "ハンドラは結合数を要求",
+          "mismatch": "取込は正しいが画面表示だけ不一致"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-31:12719; /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-31:12722",
+      "designExpectation": "登録CSV 2-2「結合数」および2-5「結合元在庫数」は数値必須で最大値1~999999999",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:153; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:169",
+      "implementationActual": "結合数は ctype_digit かつ 1以上、結合元在庫数も ctype_digit かつ 1以上のみを検証し、999999999 以下の上限チェックをしない。",
+      "mismatchReason": "設計の最大値1~999999999を超える10桁以上の数値を、CSV行バリデーションで拒否しない。",
+      "comparisonRows": [
+        {
+          "item": "結合数",
+          "design": "1~999999999",
+          "implementation": "1以上のみ",
+          "mismatch": "上限未検証"
+        },
+        {
+          "item": "結合元在庫数",
+          "design": "1~999999999",
+          "implementation": "1以上のみ",
+          "mismatch": "上限未検証"
+        }
+      ]
+    }
+  ]
+}

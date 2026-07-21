@@ -1,0 +1,96 @@
+{
+  "functionId": "m04-25_0202_sheet-33_sheet",
+  "featureNo": "M04-25",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-33:23-24",
+      "designExpectation": "0201_基本設計仕様書(システム設定).xlsxの権限制御シート（機能ID: M11-03）の「2.編集可能店舗処理」に応じた権限制御が行われる",
+      "implRef": "不在（探索範囲: src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php, src/Eccube/Repository/DtbStockMoveInstructionRepository.php, src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php, src/Eccube/Service/Admin/Stock/StockMoveInstruction*, src/Eccube/Repository/MemberRepository.php; 検索語: canEdit/editable/編集可能店舗/BaseInfo/Member/memberRepository/権限）",
+      "implementationActual": "在庫移動指示一覧・詳細・更新・削除処理はログインメンバー取得のみで、移動元/移動先店舗がログインメンバーの編集可能店舗かを絞り込み・拒否する処理がない。",
+      "mismatchReason": "Controller のコンストラクタには MemberRepository 等の権限判定依存がなく、index/detail/delete/registerTracking は対象 DtbStockMoveInstruction をそのまま検索・更新している。Repository の検索QueryBuilderも店舗検索条件のみで、ログインメンバーの編集可能店舗制約を付与していない。",
+      "comparisonRows": [
+        {
+          "item": "権限制御",
+          "design": "M11-03「2.編集可能店舗処理」に応じて制御する",
+          "implementation": "StockMoveInstructionController.php:49-58 に権限判定依存なし、同:134-135 で無制限の検索QueryBuilderをpaginate、同:165-171 でID指定の詳細を直接取得",
+          "mismatch": "編集可能店舗に基づく一覧絞り込み・詳細アクセス拒否・更新拒否が見当たらない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-33:122-128",
+      "designExpectation": "送状No.は全角・半角を許容し、最大値は65535byte",
+      "implRef": "src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php:34-40; src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:262-263; src/Eccube/Entity/DtbStockMoveInstruction.php:176",
+      "implementationActual": "詳細画面フォームは Assert\\Length max 255、一覧モーダル input も maxlength=\"255\"、Entity の tracking_no も length 255。",
+      "mismatchReason": "設計最大値 65535byte に対し、実装は255文字/DB 255長で入力・保存上限が小さい。",
+      "comparisonRows": [
+        {
+          "item": "送状No.最大長",
+          "design": "65535byte",
+          "implementation": "StockMoveInstructionDetailType.php:39 Assert\\Length(['max' => 255]); stock_move_instruction_index.twig:263 maxlength=\"255\"; DtbStockMoveInstruction.php:176 length: 255",
+          "mismatch": "設計より短い255に制限される"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-33:32-34,162-168",
+      "designExpectation": "備考情報の内容の登録は、まとめられている移動のステータスが出庫承認済みまたは移動中の時のみ可能。備考は入庫完了以外で入力可能。",
+      "implRef": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:79-83; src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:174-188; src/Eccube/Service/Admin/Stock/StockMoveInstructionDetailUpdateAction.php:34-55",
+      "implementationActual": "備考フォームは常に表示され、POSTがvalidならステータス確認なしに detailUpdateAction->handle() が呼ばれ flush される。",
+      "mismatchReason": "出庫承認済み/移動中/入庫完了以外といった移動ステータス条件が Twig、Controller、Action のいずれにも存在しない。",
+      "comparisonRows": [
+        {
+          "item": "備考編集可否",
+          "design": "まとめられている移動のステータスが出庫承認済みまたは移動中の時のみ可能、入庫完了以外で入力可能",
+          "implementation": "stock_move_instruction_detail.twig:79-80 で常時 form.memo を描画、Controller.php:174-188 でステータス条件なしに保存、DetailUpdateAction.php:34-55 でステータス条件なしにflush",
+          "mismatch": "入庫完了など設計上不可の状態でも備考更新できる可能性がある"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-33:35-37",
+      "designExpectation": "送り状No.および備考の内容が変更された場合にのみ登録ボタンを活性化する",
+      "implRef": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:82-83; 不在（探索範囲: stock_move_instruction_detail.twig, stock_move_instruction_index.twig, html/template/default/assets/hareruya/js; 検索語: disabled/changed/change/trackingNo/memo/register）",
+      "implementationActual": "詳細画面の登録ボタンは常に通常の submit button として描画され、初期表示時の disabled 属性や変更検知JSがない。",
+      "mismatchReason": "設計は変更時のみ活性だが、実装は未変更でも押下可能。",
+      "comparisonRows": [
+        {
+          "item": "登録ボタン活性制御",
+          "design": "送り状No.または備考の変更時のみ活性",
+          "implementation": "stock_move_instruction_detail.twig:83 <button type=\"submit\" class=\"btn btn-ec-conversion\">... disabledなし。変更検知JSも不在",
+          "mismatch": "未変更状態でも登録ボタンが活性"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-33:42-45,178-184",
+      "designExpectation": "削除は、発送済みでないかつ送り状No.が登録されていない在庫移動指示のみ削除可能。項目説明では出庫待ち状態の場合のみ削除可能。",
+      "implRef": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:84-87,144-159; src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:256-279,294-311",
+      "implementationActual": "画面の削除ボタン/モーダル表示とサーバ側削除可否は trackingNo の有無だけで判定している。紐づく在庫移動のステータス確認はない。",
+      "mismatchReason": "設計の「出庫待ち状態の場合のみ」または発送状態の業務ステータス条件に対し、実装は送り状No.未登録ならステータスを問わず削除する。",
+      "comparisonRows": [
+        {
+          "item": "削除可能条件",
+          "design": "発送済みでない、送り状No.未登録、出庫待ち状態の場合のみ",
+          "implementation": "twig:84-87 は instruction.trackingNo の有無だけで削除ボタン制御。Controller.php:296-299 も trackingNo のみを確認し、301-311 で紐づくTransferの状態を見ずに削除",
+          "mismatch": "移動ステータス条件が未実装"
+        }
+      ]
+    }
+  ]
+}

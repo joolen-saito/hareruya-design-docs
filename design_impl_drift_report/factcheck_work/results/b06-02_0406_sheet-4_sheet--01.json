@@ -1,0 +1,42 @@
+{
+  "chunkId": "b06-02_0406_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b06-02_0406_sheet-4_sheet.json#b06-02_0406_sheet-4_sheet-conformance-7350f356752e",
+      "functionId": "b06-02_0406_sheet-4_sheet",
+      "featureNo": "B06-02",
+      "title": "B06-02 買取集計バッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "部門未設定商品一覧を取得する getNoSectionProducts() の SQL が WHERE 直後に AND を置く構文不正で、部門未設定商品通知メールが正常に生成できない。",
+      "reason": "設計は集計日の店頭買取から部門未設定商品の一覧を取得し、その商品名・商品コードを本文に載せた通知メールを送ることを要求している（処理フローstep6 / 通知本文 / 入出力）。実装 BatchAggregateSummaryAction::handle() は getNoSectionProducts() の戻り値が空でなければ sendNoSectionAlertMail() を呼ぶ流れ（DtbOtcBuyOrderRepository.php:50-52）を持つが、getNoSectionProducts() のネイティブ SQL は本体・UNION 側の両方で `WHERE` 直後に `AND obo.complete_date >= :from` が続いており（956-958行・969-971行）、SQL 構文として実行不能。対象日に店頭買取データが存在すると createNativeQuery 実行時に構文エラーで例外となり、handle() の catch により通知は送られず集計エラーメールに転じるため、部門未設定商品一覧の取得・通知本文生成に到達しない。加えて同 SQL には集計対象ステータス条件（設計: 完了・ダブルチェック済み・入力済みに限定）が無く、complete_date 範囲のみで判定している。実装違いを確認した。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html",
+        "start": 1094,
+        "end": 1094,
+        "contains": ["部門未設定商品の通知メールには商品名・商品コードの一覧を本文に載せる"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(構文不正SQL)",
+          "note": "getNoSectionProducts() の SQL。WHERE 直後に AND が続き実行不能。UNION 側の 969-971 行も同様。",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php",
+          "start": 956,
+          "end": 958,
+          "contains": ["WHERE", "AND obo.complete_date >= :from", "AND obo.complete_date <= :to"]
+        },
+        {
+          "label": "呼び出し元",
+          "note": "戻り値が空でなければ通知メールを送る流れ。SQL が例外化すると catch に落ちて通知は送られない。",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php",
+          "start": 50,
+          "end": 53,
+          "contains": ["getNoSectionProducts", "sendNoSectionAlertMail"]
+        }
+      ]
+    }
+  ]
+}

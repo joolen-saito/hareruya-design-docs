@@ -1,0 +1,21 @@
+{
+  "functionId": "f06-26_0306_sheet-22_pc",
+  "featureNo": "F06-26",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-22（機能仕様「7.アクセス制限がない画面に遷移」／本店・支店の相違点表：支店＝店内アカウント制限画面＋本店注文）",
+      "designExpectation": "「支店店内アカウント」(支店店頭PC)のアクセス制限画面は、本店店内アカウントで制限されている 1～22 画面（ネット買取トップ/一覧/詳細/カート/買取手続き、パスワード変更、購入履歴一覧/詳細、入荷待ち商品一覧、お気に入り一覧、ポイント履歴、買取履歴一覧/詳細、まとめて買取査定結果、会員情報変更、退会、お問い合わせ、お問い合わせ履歴、マイイベント・デッキ登録、大会デッキ登録編集、配送先新規登録・変更、大会申込）に加え『本店からの注文』も制限対象とする。",
+      "implRef": "src/Eccube/EventListener/CustomerGroupAccessListener.php:74-90, src/Eccube/Service/Front/CustomerGroupAccessRouteRegistry.php:28-149, app/DoctrineMigrations/Version20260618000009.php:84",
+      "implementationActual": "支店店内アカウントは顧客グループ id=5『支店用店内アカウント』で shop_front_flg=0 / branch_shop_front_flg=1（Version20260618000009.php:84）。CustomerGroupAccessListener::onKernelRequest の 1～22 画面（SHOP_FRONT_RESTRICTED_ROUTES）遮断分岐は line74 で getShopFrontFlg()（本店店内 id=3 のみ true）を条件とするため支店 id=5 には適用されない。支店に効く分岐は line81-90 のみで、対象は BRANCH_SHOP_FRONT_MAIN_SHOP_RESTRICTED_ROUTES（RouteRegistry の shopping系＝本店注文のみ）かつ isMainShop() 時に限定。結果として支店店内アカウントは 1～22 画面（買取・会員情報変更・退会・お問い合わせ・入荷通知一覧・お気に入り・ポイント履歴・購入/買取履歴・デッキ登録・配送先・大会申込 等）を遮断されず利用できる。src/Eccube・html 全域を grep しても支店を 1～22 画面で遮断する別経路は存在しない。",
+      "mismatchReason": "設計は支店店内アカウントの遮断画面＝『店内アカウントの 1～22』＋『本店注文』と明記。実装は 1～22 の遮断を getShopFrontFlg()（本店店内 id=3 のみ true）でゲートしており、支店は branch_shop_front_flg 経由の本店注文遮断しか持たないため、支店アカウントに対する 1～22 の制限が実装されていない（部分実装＝実装違い）。DtbCustomerGroup(id=5) の shop_front_flg=0 はseedマイグレーション Version20260618000009.php:84 で確定。反証として getBranchShopFrontFlg / getShopFrontFlg / SHOP_FRONT_RESTRICTED_ROUTES の全参照を確認したが、支店を 1～22 で遮断する別 Listener/Service/Twig は不在。",
+      "comparisonRows": [
+        {"item": "支店店内アカウント(id=5)の判定フラグ", "design": "本店店内と同じ 1～22 制限の対象", "implementation": "shop_front_flg=0 のため getShopFrontFlg() ゲート(line74)を通過し 1～22 制限が非適用", "mismatch": "支店に 1～22 制限が効かない"},
+        {"item": "1～22画面(買取/会員情報変更/退会/お問い合わせ/入荷通知/お気に入り/ポイント/履歴/デッキ/配送先/大会申込)の遮断", "design": "支店店内アカウントも遮断", "implementation": "遮断なし（利用可能）", "mismatch": "未遮断（欠落）"},
+        {"item": "本店からの注文(shopping系)の遮断", "design": "支店店内アカウントは本店注文不可", "implementation": "branch_shop_front_flg かつ isMainShop() 時に BRANCH_SHOP_FRONT_MAIN_SHOP_RESTRICTED_ROUTES を遮断(line81-90)", "mismatch": "一致（この部分のみ実装済み）"}
+      ]
+    }
+  ]
+}

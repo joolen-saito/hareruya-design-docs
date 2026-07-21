@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m05_05_admin_order_order_shipping_custom_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。**CSVの中身（ヘッダ・配送ごと行分割・受注→配送フォールバック・列順=rank昇順/同順位sort_no昇順・検索条件一致・BOM/エンコーディング）は当面手動確認**とする。これは技術的には Playwright の `download.saveAs()`／本文読取で自動化可能だが、(1) 本リポジトリでは Playwright を実行しない（構造参考のみ）、(2) 内容オラクルが列定義・受注・配送のシードに強く依存し脆弱になりやすい、ため。**将来の自動化候補（要確認）**として付帯表5・付帯表2bに明示する。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。**CSVの中身（ヘッダ・配送ごと行分割・受注→配送フォールバック・列順=rank昇順/同順位sort_no昇順・検索条件一致・BOM/エンコーディング）は当面手動確認**とする。これは技術的には Playwright の `download.saveAs()`／本文読取で自動化可能だが、(1) 本リポジトリでは Playwright を実行しない（構造参考のみ）、(2) 内容オラクルが列定義・受注・配送のシードに強く依存し脆弱になりやすい、ため。**将来の自動化候補（要確認）**として付帯表5・付帯表2bに明示する。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 本機能は pf-eccube3（HareruyaEc プラグイン）のリバース詳細設計が一次オラクルで、刷新先 ec-cube-enterprise にコア機能として存在する（`CustomExportCsvController` / `admin_custom_export` ルート / 受注一覧 `Order/index.twig` のドロップダウン）。セレクタはこの刷新先実装から位置情報のみ導出した。
 
@@ -23,60 +23,60 @@
 | IT-23 | 検索条件に合致する受注抽出＝CSV内容経由でのみ観測＝手動/間接。dtb_csv等のDB内部値は対象外 |
 | IT-26 | 本機能は参照系でDB登録・更新を行わない。登録観点スタブは対象外/手動 |
 
-## テストケースTSV（10列固定・既存IT casesと同一形式）
+## テストケースTSV（14列固定・末尾4列は実施管理欄）
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-001	IT-25	UI部品	P2	受注一覧に「カスタム配送CSVダウンロード」ドロップダウンが表示される	管理ログイン済／SEED-M05-05-ADMIN	—	"1. 受注一覧（/admin/order）を開く"	「カスタム配送CSVダウンロード」ドロップダウンボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-001	IT-25	UI部品	P2	受注一覧に「カスタム配送CSVダウンロード」ドロップダウンが表示される	管理ログイン済／SEED-M05-05-ADMIN	—	1. 受注一覧（/admin/order）を開く	「カスタム配送CSVダウンロード」ドロップダウンボタンが表示されること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-002	IT-25	UI部品	P2	ドロップダウンに「出力項目設定」リンクが表示される	管理ログイン済／SEED-M05-05-ADMIN	—	"1. 受注一覧を開く
-2. カスタム配送CSVダウンロードのドロップダウンを開く"	ドロップダウン内に「出力項目設定」リンク（設定画面への導線）が表示されること。
+2. カスタム配送CSVダウンロードのドロップダウンを開く"	ドロップダウン内に「出力項目設定」リンク（設定画面への導線）が表示されること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-003	IT-25	UI部品	P2	ドロップダウンに登録済みフォーマット名リンクが表示される	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	—	"1. 受注一覧を開く
-2. カスタム配送CSVダウンロードのドロップダウンを開く"	登録済みの配送カスタムCSVフォーマット名がダウンロードリンクとして並ぶこと。
+2. カスタム配送CSVダウンロードのドロップダウンを開く"	登録済みの配送カスタムCSVフォーマット名がダウンロードリンクとして並ぶこと。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-010	IT-27	実行結果	P1	フォーマット名リンク押下でCSVダウンロードが発火する	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット（csvExtensionId）	"1. 受注一覧を開く
 2. ドロップダウンを開く
-3. フォーマット名リンクを押下"	CSVファイルのダウンロードが発火すること。
-m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-011	IT-27	実行結果	P1	ダウンロードファイル名が shipping_+日時+.csv である	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット（csvExtensionId）	"1. フォーマット名リンクを押下しダウンロードする"	ダウンロードファイル名が接頭辞 shipping_ ＋日時（YmdHis）＋ .csv であること。
-m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-012	IT-25	HTTPステータス	P1	ダウンロード応答が添付CSV（Content-Type/Content-Disposition）である	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット（csvExtensionId）	"1. ダウンロードURLを認証済みで取得し応答ヘッダを確認する"	"応答が200で、Content-Type が application/octet-stream、Content-Disposition が attachment（filename に shipping_）であること。"
-m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-013	IT-03	画面遷移	P2	ダウンロード後も受注一覧ページに留まる	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット（csvExtensionId）	"1. 受注一覧でフォーマット名リンクを押下しダウンロードする"	同一タブでダウンロードが始まり、受注一覧ページにそのまま留まること。
-m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-014	IT-27	実行結果	P2	POST直接アクセスでもGETと同一のCSVがダウンロードされる	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット（csvExtensionId）／POSTリクエスト	"1. ダウンロードURLを認証済みコンテキストでPOST取得し応答を確認する"	応答が200で添付CSV（Content-Type application/octet-stream・Content-Disposition attachment）となり、GETと同一処理でCSVが返ること。
+3. フォーマット名リンクを押下"	CSVファイルのダウンロードが発火すること。				
+m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-011	IT-27	実行結果	P1	ダウンロードファイル名が shipping_+日時+.csv である	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット（csvExtensionId）	1. フォーマット名リンクを押下しダウンロードする	ダウンロードファイル名が接頭辞 shipping_ ＋日時（YmdHis）＋ .csv であること。				
+m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-012	IT-25	HTTPステータス	P1	ダウンロード応答が添付CSV（Content-Type/Content-Disposition）である	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット（csvExtensionId）	1. ダウンロードURLを認証済みで取得し応答ヘッダを確認する	応答が200で、Content-Type が application/octet-stream、Content-Disposition が attachment（filename に shipping_）であること。				
+m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-013	IT-03	画面遷移	P2	ダウンロード後も受注一覧ページに留まる	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット（csvExtensionId）	1. 受注一覧でフォーマット名リンクを押下しダウンロードする	同一タブでダウンロードが始まり、受注一覧ページにそのまま留まること。				
+m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-014	IT-27	実行結果	P2	POST直接アクセスでもGETと同一のCSVがダウンロードされる	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット（csvExtensionId）／POSTリクエスト	1. ダウンロードURLを認証済みコンテキストでPOST取得し応答を確認する	応答が200で添付CSV（Content-Type application/octet-stream・Content-Disposition attachment）となり、GETと同一処理でCSVが返ること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-015	IT-25	UI部品	P2	フォーマット名押下時に確認ダイアログ/モーダルが出ず直接ダウンロードされる	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット（csvExtensionId）	"1. ドロップダウンを開く
-2. フォーマット名リンクを押下する"	JSの出力前確認ダイアログ・モーダルが表示されず、そのままダウンロードが発火すること。
+2. フォーマット名リンクを押下する"	JSの出力前確認ダイアログ・モーダルが表示されず、そのままダウンロードが発火すること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-020	IT-03	画面遷移	P2	「出力項目設定」クリックで配送カスタムCSV設定画面へGET遷移する	管理ログイン済／SEED-M05-05-ADMIN	—	"1. 受注一覧を開く
 2. ドロップダウンを開く
-3. 「出力項目設定」リンクを押下"	配送カスタムCSVの設定画面（/admin/setting/shop/custom_csv/4）へGET遷移すること。
-m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-030	IT-25	送信可否制御	P1	存在しないcsvExtensionIdで404になる	管理ログイン済／SEED-M05-05-ADMIN	存在しない csvExtensionId（例 999999999）	"1. /admin/custom_csv/export/{存在しないID} へGETアクセスする"	HTTP404（アクセス拒否）となること。
-m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-031	IT-23	出力失敗	P2	論理削除済みcsvExtensionIdで404になる（手動/要実機）	管理ログイン済／SEED-M05-05-DELETED-EXT（deleted_at設定済の配送CSV拡張）	論理削除済み csvExtensionId	"1. 論理削除済みの拡張IDで /admin/custom_csv/export/{id} へGETアクセスする"	拡張行が取得できずHTTP404（アクセス拒否）となること。
-m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-032	IT-22	バリデーション	P2	非数値csvExtensionIdでは出力に到達しない（手動/要実機）	管理ログイン済／SEED-M05-05-ADMIN	非数値の csvExtensionId（例 abc）	"1. /admin/custom_csv/export/abc へGETアクセスする"	数値パス境界（int束縛）を満たさずCSV出力に到達しない（404相当）こと。
-m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-040	IT-13	URL直接アクセス	P1	未ログインでダウンロードURL直接アクセス→管理ログイン画面へ誘導	未ログイン	—	"1. /admin/custom_csv/export/1 へ直接アクセスする"	管理ログイン画面へ誘導されること。
-m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-041	IT-13	URL直接アクセス	P2	未ログインで受注一覧URL直接アクセス→管理ログイン画面へ誘導	未ログイン	—	"1. /admin/order へ直接アクセスする"	管理ログイン画面へ誘導されること。
+3. 「出力項目設定」リンクを押下"	配送カスタムCSVの設定画面（/admin/setting/shop/custom_csv/4）へGET遷移すること。				
+m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-030	IT-25	送信可否制御	P1	存在しないcsvExtensionIdで404になる	管理ログイン済／SEED-M05-05-ADMIN	存在しない csvExtensionId（例 999999999）	1. /admin/custom_csv/export/{存在しないID} へGETアクセスする	HTTP404（アクセス拒否）となること。				
+m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-031	IT-23	出力失敗	P2	論理削除済みcsvExtensionIdで404になる（手動/要実機）	管理ログイン済／SEED-M05-05-DELETED-EXT（deleted_at設定済の配送CSV拡張）	論理削除済み csvExtensionId	1. 論理削除済みの拡張IDで /admin/custom_csv/export/{id} へGETアクセスする	拡張行が取得できずHTTP404（アクセス拒否）となること。				
+m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-032	IT-22	バリデーション	P2	非数値csvExtensionIdでは出力に到達しない（手動/要実機）	管理ログイン済／SEED-M05-05-ADMIN	非数値の csvExtensionId（例 abc）	1. /admin/custom_csv/export/abc へGETアクセスする	数値パス境界（int束縛）を満たさずCSV出力に到達しない（404相当）こと。				
+m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-040	IT-13	URL直接アクセス	P1	未ログインでダウンロードURL直接アクセス→管理ログイン画面へ誘導	未ログイン	—	1. /admin/custom_csv/export/1 へ直接アクセスする	管理ログイン画面へ誘導されること。				
+m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-041	IT-13	URL直接アクセス	P2	未ログインで受注一覧URL直接アクセス→管理ログイン画面へ誘導	未ログイン	—	1. /admin/order へ直接アクセスする	管理ログイン画面へ誘導されること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-050	IT-15	対象データ	P2	登録フォーマット0件時はフォーマットリンクが無く設定導線のみ	管理ログイン済／SEED-M05-05-NOEXT（配送CSV拡張0件）	—	"1. 受注一覧を開く
-2. カスタム配送CSVダウンロードのドロップダウンを開く"	フォーマット名リンクは表示されず、設定画面への導線（出力項目設定）のみが残ること。
+2. カスタム配送CSVダウンロードのドロップダウンを開く"	フォーマット名リンクは表示されず、設定画面への導線（出力項目設定）のみが残ること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-060	IT-16	実行結果	P2	CSVヘッダ行が列定義の表示名で出力される（手動）	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	登録済みフォーマット	"1. CSVをダウンロードする
-2. 1行目（ヘッダ）と列の並び順を確認する"	1行目に各CSV列定義の表示名が、列定義の並び順（rank昇順・同順位はsort_no昇順）でヘッダとして出力されること。
+2. 1行目（ヘッダ）と列の並び順を確認する"	1行目に各CSV列定義の表示名が、列定義の並び順（rank昇順・同順位はsort_no昇順）でヘッダとして出力されること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-061	IT-27	実行結果	P2	データ行が配送ごとに分割される（手動）	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT＋複数配送の受注	登録済みフォーマット	"1. 配送がN件ある受注を含む条件でCSVをダウンロードする
-2. データ行数を確認する"	1受注につき配送件数ぶんの行に分割されて出力されること。
+2. データ行数を確認する"	1受注につき配送件数ぶんの行に分割されて出力されること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-062	IT-25	操作起点	P2	列値が受注→配送のフォールバック順で帰属する（手動）	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	受注/配送に跨る列定義のフォーマット	"1. CSVをダウンロードする
-2. 各列の値の由来を確認する"	受注から値が取れればその値を採用し、ヌルのときのみ配送から解決した値が出力されること。
+2. 各列の値の由来を確認する"	受注から値が取れればその値を採用し、ヌルのときのみ配送から解決した値が出力されること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-063	IT-23	検索条件	P2	抽出が受注一覧の検索セッション条件と一致する（手動/間接）	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	受注一覧で設定した検索条件	"1. 受注一覧で検索条件を指定して検索する
 2. 同条件のままカスタム配送CSVをダウンロードする
-3. 出力対象を確認する"	セッション（eccube.admin.order.search）の検索条件に合致する受注のみが抽出されること。
+3. 出力対象を確認する"	セッション（eccube.admin.order.search）の検索条件に合致する受注のみが抽出されること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-064	IT-23	実行結果	P2	検索ヒット0件でヘッダ行のみのファイルになる（手動）	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	ヒット0件となる検索条件	"1. ヒット0件の検索条件にする
 2. カスタム配送CSVをダウンロードする
-3. ファイル内容を確認する"	ヘッダ行のみのCSVファイルとなること。
+3. ファイル内容を確認する"	ヘッダ行のみのCSVファイルとなること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-065	IT-23	検索条件	P2	検索セッション未初期化時は受注一覧初期表示と整合する（手動/間接）	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	受注検索セッション（eccube.admin.order.search）が未設定の状態	"1. 一度も受注検索していない状態（または別ブラウザ/新規セッション）でダウンロードURLへ直接アクセスする
-2. 出力対象を確認する"	セッションに検索条件が無い場合、空配列を検索フォームへ渡した正規化結果＝受注一覧の初期表示と整合する受注集合が抽出されること。
+2. 出力対象を確認する"	セッションに検索条件が無い場合、空配列を検索フォームへ渡した正規化結果＝受注一覧の初期表示と整合する受注集合が抽出されること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-066	IT-23	検索条件	P2	検索条件に非該当の受注はCSVに出力されない（手動/間接）	管理ログイン済／SEED-M05-05-SEARCH（該当/非該当の受注）	非該当受注を除外する検索条件	"1. 受注一覧で特定条件を検索する
 2. 同条件のままCSVをダウンロードする
-3. 非該当受注が出力対象に含まれないことを確認する"	検索条件に合致しない受注は出力されないこと（含む=063の対）。
+3. 非該当受注が出力対象に含まれないことを確認する"	検索条件に合致しない受注は出力されないこと（含む=063の対）。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-067	IT-25	操作起点	P2	配送が1件の受注はデータ行が1行になる（手動）	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT＋配送1件の受注	配送1件の受注	"1. 配送1件の受注を含む条件でCSVをダウンロードする
-2. データ行数を確認する"	当該受注のデータ行が1行であること（061＝複数配送の対）。
+2. データ行数を確認する"	当該受注のデータ行が1行であること（061＝複数配送の対）。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-068	IT-25	操作起点	P2	受注フィールドのみの列定義では配送件数分の繰り返し行になる（手動）	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT（受注列のみ）＋複数配送の受注	受注フィールドのみの列定義	"1. 受注列のみのフォーマットで複数配送の受注をCSVダウンロードする
-2. 各行の値を確認する"	各行とも受注由来の値が重複し、配送件数ぶんの繰り返し行になること。
+2. 各行の値を確認する"	各行とも受注由来の値が重複し、配送件数ぶんの繰り返し行になること。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-069	IT-25	操作起点	P2	空文字の列は配送へフォールバックせず、どちらにも該当しない列は空欄になる（手動）	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT（空文字列・非該当列を含む）	空文字/非該当の列定義	"1. CSVをダウンロードする
-2. 空文字列・非該当列の値を確認する"	受注側が空文字の列は配送へフォールバックせず空文字のまま、受注・配送いずれにも該当しない列は空欄相当で出力されること（062＝ヌル時フォールバックの対）。
+2. 空文字列・非該当列の値を確認する"	受注側が空文字の列は配送へフォールバックせず空文字のまま、受注・配送いずれにも該当しない列は空欄相当で出力されること（062＝ヌル時フォールバックの対）。				
 m05-05_admin_order_order_shipping_custom_csv_export（受注管理_配送カスタムCSV出力）	E2E-M05-05-070	IT-25	確認ダイアログ	P2	ダウンロード直前に列定義を変更するとその定義がリクエストに適用される（手動）	管理ログイン済／SEED-M05-05-SHIPPING-CSV-EXT	列定義を変更した直後のダウンロード	"1. 列定義を変更する
 2. 直後にCSVをダウンロードする
-3. ヘッダ/列構成を確認する"	変更後の列定義がそのダウンロードに適用されること。
+3. ヘッダ/列構成を確認する"	変更後の列定義がそのダウンロードに適用されること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

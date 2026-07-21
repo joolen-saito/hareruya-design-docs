@@ -1,0 +1,1416 @@
+{
+  "functionId": "m03-12_0204_sheet-26_csv",
+  "featureNo": "M03-12",
+  "title": "M03-12 カテゴリCSV出力",
+  "domain": "m03",
+  "kind": "admin",
+  "designHtml": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+  "sourceBook": "0204_基本設計仕様書(商品管理).html",
+  "sheetId": "sheet-26",
+  "sheetName": "カテゴリCSV出力",
+  "auditStatus": "AUDITED_WITH_FINDINGS",
+  "findings": [
+    {
+      "id": "m03-12_0204_sheet-26_csv-conformance-5715da9b4c08",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26:6415,6426",
+      "designRefDetail": null,
+      "designExpectation": "対象商品数以外のCSV項目はCSV出力サービスの一般セル値取得に渡し、得られた値がnullまたは空文字のときは空セルに正規化する。一般列は項目定義のエンティティ名・フィールド名に基づいて値を取り出し、関連エンティティは参照フィールド名でスカラ化する。",
+      "designQuote": "対象商品数以外のCSV項目はCSV出力サービスの一般セル値取得に渡し、得られた値がnullまたは空文字のときは空セルに正規化する。一般列は項目定義のエンティティ名・フィールド名に基づいて値を取り出し、関連エンティティは参照フィールド名でスカラ化する。",
+      "implRef": "src/Eccube/Controller/Admin/Product/CategoryController.php:557",
+      "implementationActual": "CategoryController::export() は target_product_count だけでなく Parent フィールドも特例扱いし、親カテゴリが無いカテゴリの親カテゴリID列に空セルではなく文字列 '0' を出力する。",
+      "difference": "設計では対象商品数のみを特例列とし、それ以外は CsvExportService::getData() に渡して null/空文字を空セルに正規化する要求になっている。実装は Parent を別分岐にしており、親なしの場合も CsvExportService の一般列規則を通らず '0' を出力する。反証として CATEGORY_CSV_FIELD_PARENT、親カテゴリID、Parent、最上位、CSV出力、CsvExportService::getData、カテゴリCSV登録/アップロード関連を src/Eccube と app/DoctrineMigrations で再検索したが、sheet-26内の出力仕様として Parent を対象商品数と同様の特例列にする根拠は見つからなかった。",
+      "mismatchReason": "設計では対象商品数のみを特例列とし、それ以外は CsvExportService::getData() に渡して null/空文字を空セルに正規化する要求になっている。実装は Parent を別分岐にしており、親なしの場合も CsvExportService の一般列規則を通らず '0' を出力する。反証として CATEGORY_CSV_FIELD_PARENT、親カテゴリID、Parent、最上位、CSV出力、CsvExportService::getData、カテゴリCSV登録/アップロード関連を src/E…",
+      "comparisonRows": [
+        {
+          "item": "特例列の範囲",
+          "design": "フィールド名が対象商品数の定数と一致する場合のみ集計マップ値を出力し、それ以外はCSV出力サービスの一般セル値取得に渡す。",
+          "implementation": "target_product_count に加えて Parent も CategoryController::export() 内で特例処理している。",
+          "mismatch": "設計上の特例列が1列なのに、実装は親カテゴリIDも特例化している。"
+        },
+        {
+          "item": "親なしカテゴリの親カテゴリIDセル",
+          "design": "Parent は対象商品数ではないため一般列規則に従う。関連エンティティが無い場合は null となり、行組み立てで空セルになる。",
+          "implementation": "$Parent !== null ? (string) $Parent->getId() : '0' により、親なしカテゴリは '0' になる。",
+          "mismatch": "空セルになるべきケースで '0' を出力する。"
+        },
+        {
+          "item": "一般列処理の利用",
+          "design": "CSV出力サービスの「項目定義とエンティティからセル値を取り出す」処理を通す。",
+          "implementation": "Parent 分岐では CsvExportService::getData() を呼ばず continue する。",
+          "mismatch": "一般列に求められる CsvExportService 経由の変換規則から外れている。"
+        }
+      ],
+      "verdict": "CONFIRMED",
+      "confidence": "CONFIRMED",
+      "source": "design_impl_conformance_audit",
+      "functionId": "m03-12_0204_sheet-26_csv",
+      "impact": "設計書を正とした場合、画面操作・データ更新・外部連携・運用手順のいずれかで実装挙動が異なる。",
+      "fixTarget": "src/Eccube/Controller/Admin/Product/CategoryController.php:557",
+      "comparisonSummary": "⑦要求網羅・実装違い：設計は「対象商品数以外のCSV項目はCSV出力サービスの一般セル値取得に渡し、得られた値がnullまたは空文字のときは空セルに正規化する。一般列は項目定義のエンティティ名・フィールド名に基づいて値を取り出し、関連エンティティは参照フィールド名でスカラ化する。」。実装は「CategoryController::export() は target_product_count だけでなく Parent フィールドも特例扱いし、親カテゴリが無いカテゴリの親カテゴリID列に空セルではなく文字列 '0' を出力する。」。乖離理由は「設計では対象商品数のみを特例列とし、それ以外は CsvExportService::getData() に渡して null/空文字を空セルに正規化する要求になっている。実装は Parent を別分岐にしており、親なしの場合も CsvExportService の一般列規則を通らず '0' を出力する。反証として CATEGORY_CSV_FIELD_PARENT、親カテゴリID、Parent、最上位、CSV出力、CsvExportService::getData、カテゴリCSV登録/アップロード関連を src/E…」。",
+      "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
+      "auditAspects": [
+        "ルート・Controller",
+        "Service・業務ルール",
+        "Repository・Entity・DB",
+        "Twig・画面表示",
+        "CSV・API・Batch・PDF・印刷"
+      ],
+      "designSnippet": "",
+      "implementationRefs": [
+        "src/Eccube/Controller/Admin/Product/CategoryController.php:557",
+        "src/Eccube/Controller/Admin/Product/CategoryController.php"
+      ],
+      "implementationSnippets": [
+        "src/Eccube/Controller/Admin/Product/CategoryController.php:557\n554: \n555:                         continue;\n556:                     }\n557:                     if ($Csv->getFieldName() === self::CATEGORY_CSV_FIELD_PARENT) {\n558:                         $Parent = $Category->getParent();\n559:                         $row[] = $Parent !== null ? (string) $Parent->getId() : '0';\n560: ",
+        "src/Eccube/Controller/Admin/Product/CategoryController.php:43\n40: use Symfony\\Component\\HttpKernel\\Exception\\NotFoundHttpException;\n41: use Symfony\\Component\\Routing\\Attribute\\Route;\n42: \n43: class CategoryController extends AbstractController\n44: {\n45:     /** dtb_csv.field_name。エンティティに無く、出力時に {@see ProductCategoryRepository::getProductCountMapByCategoryIds()} で埋める */\n46:     private const CATEGORY_CSV_FIELD_TARGET_PRODUCT_COUNT = 'target_product_count';"
+      ],
+      "auditChecklist": [
+        "設計HTMLの該当節を確認",
+        "Controller/Form/Service/Repository/Twig/CSV/API/Batch の候補実装を確認",
+        "比較項目ごとに設計値・実装値・乖離理由を明文化",
+        "実装者が修正対象を追えるよう、file:line とコード断片を添付"
+      ]
+    }
+  ],
+  "auditEvidence": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / ラベル・メッセージ・翻訳キー / 権限・セッション・副作用・エラー・ログ",
+  "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
+  "requirementTraceGate": {
+    "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
+    "extractedRequirementCount": 35,
+    "explicitRequirementCount": 0,
+    "requirements": [
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-69dfb900bb",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "カテゴリCSV出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-41c465e937",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "M03-12 カテゴリCSV出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-d54b4c1489",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "フロント非表示フラグ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-f9a6faeb72",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "支店非表示フラグ",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-fd01bedf28",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "商品情報に紐づくカテゴリのマスター情報を登録することができる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-c36f851aa0",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "CSV出力項目について",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-b4371d32e5",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "・ カテゴリに紐づいている対象商品数を出力する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-0e54f884f7",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "・ カテゴリに紐づいているカテゴリ子検索条件を出力する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-f0923e6344",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "・ カテゴリに紐づいているカテゴリアイコン画像パス、最新セットバナー画像パスを出力する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-75e4fba8e6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "★ 管理画面メニュー「システム設定CSV＞出力項目設定」の「カテゴリCSV」に",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-976a78aa1e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "識別ID:4「カテゴリ名(英)」、識別ID:7「フロント非表示フラグ」～識別ID:12「対象商品数」を追加する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-134da1f4fd",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "CSV出力項目を設定しているテーブル にレコードを追加",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-162eab0a7a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "・ CSVの出力順は表示ランクの降順とする(現行踏襲)",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-4f47e9f61e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "M03-12 カテゴリCSV出力 / 商品管理 — カテゴリ CSV 出力",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-c70510af0e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "管理画面の「商品管理」配下であるカテゴリ一覧画面から、店舗設定で有効化されたカテゴリ用 CSV 項目定義（ dtb_csv 、 csv_type_id がカテゴリ CSV 種別）に沿って、全カテゴリ行を 1 ファイルにストリーミング出力する機能である。画面のパンくずやツリー表示順ではなく、永続化上の sort_no 降順でフラットに並べる。対象商品数列はカテゴリエンティティに無い仮想列として、商品カテゴリ紐づけから集計して埋める。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-43be52b341",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値は EC-CUBE Enterprise の src/Eccube 配下（Symfony ルートプレフィックス %eccube_admin_route% ）とする。カスタマイズ区分はカスタマイズであり、現行挙動は pf-eccube3 を参照し、DB関連（テーブル名・列名・型・制約・関連）は ec-cube-enterprise を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-2c47570b0c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "現行（pf-eccube3）と移行先（ec-cube-enterprise）のDBスキーマを比較した結果は次のとおり。相違が判明した場合は ec-cube-enterprise 実装を正とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-48dfe7c71b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "出力は sort_no 降順",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-f2be97056a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "同一。論理削除・物理削除の差は本機能（参照のみ）に無い。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-393333b8b2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "同じ画面の「CSV出力項目設定」",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-ddac2d14eb",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "出力列の追加・無効化・並びはここで変わる。本書の列一覧は現行マスタを前提とし、設定変更後はヘッダと列数が変わり得る。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-d7db0021a7",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "CSV ダウンロード専用のクライアント制御は無い。リンクは通常の GET 遷移。並び替え用の Ajax は本機能とは別。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-c2f60698f4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "出力前の確認ダイアログは無い。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-1366ac7461",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "StreamedResponse のコールバック内で CSV 出力サービスを開き、手順 4 の各行の表示名を並べて 1 行目を書く。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-b6e990069e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "手順 6 の各カテゴリについてデータ行を組み立てる。各 CSV 項目定義について、(a) フィールド名が対象商品数の定数と一致すればマップの件数（無ければ 0）を文字列化、(b) それ以外は CSV 出力サービスの「項目定義とエンティティからセル値を取り出す」処理に渡す。得られた値が null または空文字のときは空セルに正規化する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-32ea02dd82",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "各行を CSV 出力サービス経由で書き込み、最後に閉じる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-d10f1b0ba0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "情報ログに出力ファイル名を記録する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-10a7bb1d77",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "項目定義のエンティティ名が出力中のカテゴリと一致し、かつフィールド名がカテゴリのオフセット配列に存在するとき値を取り出す。関連エンティティは参照フィールド名でスカラ化。真偽は 1／0 文字列。日時は設定 eccube_csv_export_date_format 。コレクションは設定 eccube_csv_export_multidata_separator で連結。一致しない／存在しない場合は null になり、行組み立てで空セルになる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-70a008b106",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "本処理パスにフラッシュメッセージやリダイレクト分岐は実装されていない。認可失敗やサーバ例外は管理画面共通の扱い。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-0142cbd342",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "DB 更新は行わない。情報ログにファイル名を残す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-86d4e1f92d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "カテゴリ種別・有効・並びで出力形が決まる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-55cb83ee04",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-65da78f0f7",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-981259997a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "リクエストパラメータの検証は無い。出力内容の整合はマスタとエンティティの状態に依存する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-12_0204_sheet-26_csv-req-b527c7bbc7",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "読み取りとストリーム出力のみ。楽観・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      }
+    ],
+    "missingRequirementCount": 0,
+    "noDriftAllowed": true
+  },
+  "functionImplementationAudit": {
+    "verdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "designDerivedTerms": {
+      "routeNames": [
+        "product_id",
+        "admin_route",
+        "admin_product_category_export",
+        "ProductCategoryRepository"
+      ],
+      "translationKeys": [
+        "admin.common.csv_download"
+      ],
+      "classNames": [
+        "CategoryController",
+        "CsvExportService",
+        "CsvRepository",
+        "ProductCategoryRepository"
+      ],
+      "paths": [
+        "pf-eccube3/m03-12_admin_product_product_category_csv_export.md",
+        "Eccube",
+        "product/category/export",
+        "setting/shop/csv/{id}",
+        "category/{id}/edit",
+        "octet-stream",
+        "Eccube/Controller/Admin/Product/CategoryController.php",
+        "Eccube/Service/CsvExportService.php",
+        "Eccube/Repository/CsvRepository.php",
+        "Eccube/Repository/ProductCategoryRepository.php",
+        "Eccube/Resource/template/admin/Product/category.twig"
+      ],
+      "businessTerms": [
+        "M03",
+        "カテゴリCSV出力",
+        "商品管理機能",
+        "カテゴリID",
+        "カテゴリ名",
+        "親カテゴリID",
+        "カテゴリアイコン",
+        "対象商品数",
+        "商品情報に紐づくカテゴリのマスター情報を登録する",
+        "CSV出力項目について",
+        "カテゴリに紐づいている対象商品数を出力する",
+        "カテゴリに紐づいているカテゴリ子検索条件を出力す",
+        "カテゴリに紐づいているカテゴリアイコン画像パス",
+        "システム設定CSV",
+        "カテゴリCSV",
+        "CSV出力項目を設定しているテーブル",
+        "CSVの出力順は表示ランクの降順とする",
+        "商品管理",
+        "カテゴリ",
+        "配下であるカテゴリ一覧画面から",
+        "店舗設定で有効化されたカテゴリ用",
+        "がカテゴリ",
+        "全カテゴリ行を",
+        "対象商品数列はカテゴリエンティティに無い仮想列と"
+      ]
+    },
+    "candidateCount": 18,
+    "strongSignalCount": 18,
+    "candidateRefs": [
+      {
+        "term": "CategoryController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/CategoryController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Product/CategoryController.php",
+        "weight": 7
+      },
+      {
+        "term": "admin_product_category_export",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/CategoryController.php:519",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/product/category/export', name: 'admin_product_category_export', methods: ['GET'])]",
+        "weight": 7
+      },
+      {
+        "term": "CategoryController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/CategoryController.php:1",
+        "snippet": "src/Eccube/Controller/App/CategoryController.php",
+        "weight": 7
+      },
+      {
+        "term": "CategoryController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/CategoryController.php:26",
+        "snippet": "class CategoryController extends AbstractController",
+        "weight": 7
+      },
+      {
+        "term": "ProductCategoryRepository",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/ProductCategoryRepository.php:1",
+        "snippet": "src/Eccube/Repository/ProductCategoryRepository.php",
+        "weight": 7
+      },
+      {
+        "term": "ProductCategoryRepository",
+        "termType": "className",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/ProductCategoryRepository.php:1",
+        "snippet": "src/Eccube/Repository/ProductCategoryRepository.php",
+        "weight": 7
+      },
+      {
+        "term": "ProductCategoryRepository",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/ProductCategoryRepository.php:21",
+        "snippet": "* ProductCategoryRepository",
+        "weight": 7
+      },
+      {
+        "term": "ProductCategoryRepository",
+        "termType": "className",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/ProductCategoryRepository.php:21",
+        "snippet": "* ProductCategoryRepository",
+        "weight": 7
+      },
+      {
+        "term": "admin_product_category_export",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/Product/category.twig:243",
+        "snippet": "<a class=\"btn btn-primary\" href=\"{{ url('admin_product_category_export') }}\">",
+        "weight": 7
+      },
+      {
+        "term": "CsvExportService",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CsvExportService.php:1",
+        "snippet": "src/Eccube/Service/CsvExportService.php",
+        "weight": 7
+      },
+      {
+        "term": "CsvExportService",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CsvExportService.php:182",
+        "snippet": "* @param \\Closure(mixed $result, CsvExportService $service): void $closure",
+        "weight": 7
+      },
+      {
+        "term": "CsvRepository",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CsvExportService.php:32",
+        "snippet": "use Eccube\\Repository\\CsvRepository;",
+        "weight": 7
+      },
+      {
+        "term": "CsvExportService",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CsvExportService.php:46",
+        "snippet": "class CsvExportService",
+        "weight": 7
+      },
+      {
+        "term": "CsvExportService",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CsvExportService.php:67",
+        "snippet": "* CsvExportService constructor.",
+        "weight": 7
+      },
+      {
+        "term": "CsvRepository",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/CsvExportService.php:69",
+        "snippet": "public function __construct(protected ?EntityManagerInterface $entityManager, protected CsvRepository $csvRepository, protected CsvTypeRepository $csvTypeRepository, protected OrderRepository $orderRepository, protected…",
+        "weight": 7
+      },
+      {
+        "term": "octet-stream",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/AbstractController.php:436",
+        "snippet": "$response->headers->set('Content-Type', 'application/octet-stream');",
+        "weight": 6
+      },
+      {
+        "term": "product/category/export",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/CategoryController.php:519",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/product/category/export', name: 'admin_product_category_export', methods: ['GET'])]",
+        "weight": 6
+      },
+      {
+        "term": "setting/shop/csv/{id}",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Setting/Shop/CsvController.php:46",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/setting/shop/csv/{id}', name: 'admin_setting_shop_csv', requirements: ['id' => '\\d+'], defaults: ['id' => CsvType::CSV_TYPE_ORDER], methods: ['GET', 'POST'])]",
+        "weight": 6
+      }
+    ],
+    "searchedAreas": [
+      "src/Eccube Controller/Form/Service/Repository/Entity/Command/Resource/template/Resource/locale",
+      "app",
+      "html/template/default/assets/hareruya",
+      "html/template/admin/assets"
+    ],
+    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。"
+  },
+  "designNonImplementationReason": null,
+  "designNonImplementationScope": null,
+  "requirementDifferenceAudit": {
+    "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
+    "confirmedDifferenceCount": 3,
+    "implementationGapRequirementCount": 0,
+    "rows": [
+      {
+        "findingId": "m03-12_0204_sheet-26_csv-conformance-5715da9b4c08",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26:6415,6426",
+        "designRequirement": "フィールド名が対象商品数の定数と一致する場合のみ集計マップ値を出力し、それ以外はCSV出力サービスの一般セル値取得に渡す。",
+        "implementationActual": "target_product_count に加えて Parent も CategoryController::export() 内で特例処理している。",
+        "mismatchReason": "設計上の特例列が1列なのに、実装は親カテゴリIDも特例化している。",
+        "implementationRefs": [
+          "src/Eccube/Controller/Admin/Product/CategoryController.php:557",
+          "src/Eccube/Controller/Admin/Product/CategoryController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "特例列の範囲",
+            "design": "フィールド名が対象商品数の定数と一致する場合のみ集計マップ値を出力し、それ以外はCSV出力サービスの一般セル値取得に渡す。",
+            "implementation": "target_product_count に加えて Parent も CategoryController::export() 内で特例処理している。",
+            "mismatch": "設計上の特例列が1列なのに、実装は親カテゴリIDも特例化している。"
+          }
+        ]
+      },
+      {
+        "findingId": "m03-12_0204_sheet-26_csv-conformance-5715da9b4c08",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26:6415,6426",
+        "designRequirement": "Parent は対象商品数ではないため一般列規則に従う。関連エンティティが無い場合は null となり、行組み立てで空セルになる。",
+        "implementationActual": "$Parent !== null ? (string) $Parent->getId() : '0' により、親なしカテゴリは '0' になる。",
+        "mismatchReason": "空セルになるべきケースで '0' を出力する。",
+        "implementationRefs": [
+          "src/Eccube/Controller/Admin/Product/CategoryController.php:557",
+          "src/Eccube/Controller/Admin/Product/CategoryController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "親なしカテゴリの親カテゴリIDセル",
+            "design": "Parent は対象商品数ではないため一般列規則に従う。関連エンティティが無い場合は null となり、行組み立てで空セルになる。",
+            "implementation": "$Parent !== null ? (string) $Parent->getId() : '0' により、親なしカテゴリは '0' になる。",
+            "mismatch": "空セルになるべきケースで '0' を出力する。"
+          }
+        ]
+      },
+      {
+        "findingId": "m03-12_0204_sheet-26_csv-conformance-5715da9b4c08",
+        "dimension": "⑦要求網羅・実装違い",
+        "severity": "med",
+        "implementationGap": false,
+        "implementationGapType": null,
+        "traceVerdict": "DRIFT",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26:6415,6426",
+        "designRequirement": "CSV出力サービスの「項目定義とエンティティからセル値を取り出す」処理を通す。",
+        "implementationActual": "Parent 分岐では CsvExportService::getData() を呼ばず continue する。",
+        "mismatchReason": "一般列に求められる CsvExportService 経由の変換規則から外れている。",
+        "implementationRefs": [
+          "src/Eccube/Controller/Admin/Product/CategoryController.php:557",
+          "src/Eccube/Controller/Admin/Product/CategoryController.php"
+        ],
+        "comparisonRows": [
+          {
+            "item": "一般列処理の利用",
+            "design": "CSV出力サービスの「項目定義とエンティティからセル値を取り出す」処理を通す。",
+            "implementation": "Parent 分岐では CsvExportService::getData() を呼ばず continue する。",
+            "mismatch": "一般列に求められる CsvExportService 経由の変換規則から外れている。"
+          }
+        ]
+      }
+    ]
+  },
+  "requirementConformanceAudit": {
+    "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
+    "requirementCount": 35,
+    "verdictedCount": 35,
+    "unverdictedCount": 0,
+    "coverageComplete": true,
+    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "counts": {
+      "実装済み": 35,
+      "要確認": 0,
+      "未実装候補": 0,
+      "対象外": 0
+    },
+    "materialGapCount": 0,
+    "rows": [
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-69dfb900bb",
+        "category": "設計要求",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "カテゴリCSV出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-41c465e937",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "M03-12 カテゴリCSV出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-d54b4c1489",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "フロント非表示フラグ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-f9a6faeb72",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "支店非表示フラグ",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-fd01bedf28",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "商品情報に紐づくカテゴリのマスター情報を登録することができる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-c36f851aa0",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "CSV出力項目について",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-b4371d32e5",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "・ カテゴリに紐づいている対象商品数を出力する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-0e54f884f7",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "・ カテゴリに紐づいているカテゴリ子検索条件を出力する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-f0923e6344",
+        "category": "処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "・ カテゴリに紐づいているカテゴリアイコン画像パス、最新セットバナー画像パスを出力する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-75e4fba8e6",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "★ 管理画面メニュー「システム設定CSV＞出力項目設定」の「カテゴリCSV」に",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-976a78aa1e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "識別ID:4「カテゴリ名(英)」、識別ID:7「フロント非表示フラグ」～識別ID:12「対象商品数」を追加する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-134da1f4fd",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "CSV出力項目を設定しているテーブル にレコードを追加",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-162eab0a7a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "・ CSVの出力順は表示ランクの降順とする(現行踏襲)",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-4f47e9f61e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "M03-12 カテゴリCSV出力 / 商品管理 — カテゴリ CSV 出力",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-c70510af0e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "管理画面の「商品管理」配下であるカテゴリ一覧画面から、店舗設定で有効化されたカテゴリ用 CSV 項目定義（ dtb_csv 、 csv_type_id がカテゴリ CSV 種別）に沿って、全カテゴリ行を 1 ファイルにストリーミング出力する機能である。画面のパンくずやツリー表示順ではなく、永続化上の sort_no 降順でフラットに並べる。対象商品数列はカテゴリエンティティに無い仮想列として、商品カテゴリ紐づけから集計して埋める。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-43be52b341",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値は EC-CUBE Enterprise の src/Eccube 配下（Symfony ルートプレフィックス %eccube_admin_route% ）とする。カスタマイズ区分はカスタマイズであり、現行挙動は pf-eccube3 を参照し、DB関連（テーブル名・列名・型・制約・関連）は ec-cube-enterprise を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-2c47570b0c",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "現行（pf-eccube3）と移行先（ec-cube-enterprise）のDBスキーマを比較した結果は次のとおり。相違が判明した場合は ec-cube-enterprise 実装を正とする。",
+        "source": "html_requirement_extractor",
+        "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-48dfe7c71b",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "出力は sort_no 降順",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-f2be97056a",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "同一。論理削除・物理削除の差は本機能（参照のみ）に無い。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-393333b8b2",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "同じ画面の「CSV出力項目設定」",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-ddac2d14eb",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "出力列の追加・無効化・並びはここで変わる。本書の列一覧は現行マスタを前提とし、設定変更後はヘッダと列数が変わり得る。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-d7db0021a7",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "CSV ダウンロード専用のクライアント制御は無い。リンクは通常の GET 遷移。並び替え用の Ajax は本機能とは別。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-c2f60698f4",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "出力前の確認ダイアログは無い。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-1366ac7461",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "StreamedResponse のコールバック内で CSV 出力サービスを開き、手順 4 の各行の表示名を並べて 1 行目を書く。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-b6e990069e",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "手順 6 の各カテゴリについてデータ行を組み立てる。各 CSV 項目定義について、(a) フィールド名が対象商品数の定数と一致すればマップの件数（無ければ 0）を文字列化、(b) それ以外は CSV 出力サービスの「項目定義とエンティティからセル値を取り出す」処理に渡す。得られた値が null または空文字のときは空セルに正規化する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-32ea02dd82",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "各行を CSV 出力サービス経由で書き込み、最後に閉じる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-d10f1b0ba0",
+        "category": "機能仕様 処理概要（★はカスタマイズ項目）",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "情報ログに出力ファイル名を記録する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-10a7bb1d77",
+        "category": "業務ルール・計算",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "項目定義のエンティティ名が出力中のカテゴリと一致し、かつフィールド名がカテゴリのオフセット配列に存在するとき値を取り出す。関連エンティティは参照フィールド名でスカラ化。真偽は 1／0 文字列。日時は設定 eccube_csv_export_date_format 。コレクションは設定 eccube_csv_export_multidata_separator で連結。一致しない／存在しない場合は null になり、行組み立てで空セルになる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-70a008b106",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "本処理パスにフラッシュメッセージやリダイレクト分岐は実装されていない。認可失敗やサーバ例外は管理画面共通の扱い。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-0142cbd342",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "DB 更新は行わない。情報ログにファイル名を残す。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-86d4e1f92d",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "カテゴリ種別・有効・並びで出力形が決まる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-55cb83ee04",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "本機能は参照系（検索・出力）であり、DBへの登録・更新・削除は行わない。テーブル名は ec-cube-enterprise を正典とする。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-65da78f0f7",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "検索条件に合致するレコードを抽出する。抽出結果を所定フォーマットでファイル出力する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-981259997a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "リクエストパラメータの検証は無い。出力内容の整合はマスタとエンティティの状態に依存する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-12_0204_sheet-26_csv-req-b527c7bbc7",
+        "category": "排他制御・トランザクション",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-26",
+        "designRequirement": "読み取りとストリーム出力のみ。楽観・悲観ロックの対象は持たない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      }
+    ],
+    "materialGapRows": []
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "functionId": "m03-31_0204_sheet-44_csv",
+  "featureNo": "M03-31",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-44（処理フロー『取込が成功した場合、支店システムへ取込対象の商品更新を通知する』、API/バッチ結果『取込成功時に支店システムへ取込対象の商品更新を通知する』、副作用『支店システムへの更新通知』、materialGapRows #41/#68/#86）",
+      "designExpectation": "取込が成功した場合、支店システムへ取込対象の商品更新を通知する（トランザクション確定後に支店連携を通知）。",
+      "implRef": "src/Eccube/Service/Csv/Importer/Event/ProductPriceImportHandler.php:87-93",
+      "implementationActual": "onAfterImport() の支店システム連携ブロックがコメントアウト（// TODO: BranchUpdateService の移植が必要 / // $branchUpdate->noticeProductUpdate(array_unique($this->importedIds));）。ec-cube-enterprise 側に class BranchUpdate / noticeProductUpdate の本体実装は不在（grep でヒットは3ハンドラのコメント行のみ）。取込成功時の支店通知は一切実行されない。",
+      "mismatchReason": "設計は取込成功時の支店システム通知を副作用として要求。実装は連携ブロックがコメントアウト＋TODO移植待ちで、BranchUpdateService 自体が enterprise 側に未移植のため通知が発生しない。スマレジ連携は別系統で本要求を満たさない。ProductPriceCsvController.php / ProductPriceImportHandler.php / src/Eccube/Service 全域を確認し不在を確認。",
+      "comparisonRows": [
+        {"item": "取込成功時の支店システム通知", "design": "取込成功時に支店システムへ商品更新を通知する", "implementation": "連携ブロックがコメントアウト（TODO移植待ち）、BranchUpdateService 未移植で通知なし", "mismatch": "通知処理が未実装"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-44（表示メッセージ＞フラッシュ『商品登録CSVファイルをアップロードしました。／取込が成功したとき。キー admin.product.csv_import.save.complete』）",
+      "designExpectation": "取込成功時のフラッシュとして『商品登録CSVファイルをアップロードしました。』（キー admin.product.csv_import.save.complete）を表示する。",
+      "implRef": "src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:176",
+      "implementationActual": "$this->addSuccess('admin.register.complete', 'admin') を呼び、messages.ja.yaml:1929 で admin.register.complete = 『登録が完了しました。』を表示。設計指定キー admin.product.csv_import.save.complete は locale に存在しない（grep で不在確認）。",
+      "mismatchReason": "設計は成功フラッシュの表示文言を『表示メッセージ』節で正とし具体文言と翻訳キーを明記しているが、実装は汎用キー admin.register.complete（『登録が完了しました。』）を使用しており、利用者が目にする成功メッセージの文言が設計と相違する。",
+      "comparisonRows": [
+        {"item": "取込成功フラッシュ文言", "design": "商品登録CSVファイルをアップロードしました。（admin.product.csv_import.save.complete）", "implementation": "登録が完了しました。（admin.register.complete）", "mismatch": "文言・翻訳キーが相違"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,209 @@
+{
+  "id": "a14-02-card-detail-id-route-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a14-02_0514_sheet-4_id.json",
+  "sourceFindingId": "a14-02_0514_sheet-4_id-conformance-8302edfcae7f",
+  "classification": "APIカード管理",
+  "feature": "カード詳細IDからカード詳細情報を取得",
+  "issueCategory": "実装漏れ",
+  "issue": "カード詳細ID指定でカード詳細情報を取得する GET /cardDetails/{id} が実装されていない",
+  "designBook": "0514_基本設計仕様書(API_カード管理).xlsx",
+  "reproSteps": [
+    "GET http://localhost:8080/cardDetails/54321 を実行する",
+    "レスポンスのHTTPステータスとJSON本文を確認する",
+    "近似APIとして管理画面AJAX /{admin_route}/product/detail/search/id?id=54321 や GET http://localhost:8080/api/v1/buying/54321.json が存在するか確認し、設計の /cardDetails/{id} と同一入口かを確認する"
+  ],
+  "expected": [
+    "GET /cardDetails/{id} でパスパラメータ id を受け取り、該当するカード詳細マスタ情報をJSONで返す",
+    "該当するカード詳細が存在しない場合は HTTP 404 で code と message: Not Found を返す",
+    "管理画面AJAXやネット買取向け買取商品APIではなく、APIカード管理の公開入口として /cardDetails/{id} を提供する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、設計が要求する `GET /cardDetails/{id}` の Route は定義されていない。近い実装として管理画面AJAX `/%eccube_admin_route%/product/detail/search/id` はあるが、XHR前提で `id` をリクエストパラメータから受け取り、カード詳細選択UI用の `name`・`productNameJp`・`detailId`・`images` だけを返す。ネット買取向けの `/%eccube_api_v1_route%/buying/{cardDetailId}.json` もカード詳細IDを使うが、買取用商品情報を返す別APIであり、A14-02 のカード詳細マスタ情報取得ではない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 管理画面AJAXは /cardDetails/{id} ではなく、XHR前提の部分情報検索である",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php",
+          "start": 986,
+          "end": 1034,
+          "language": "php",
+          "contains": [
+            "#[Route(path: '/%eccube_admin_route%/product/detail/search/id', name: 'admin_product_search_card_detail_by_id', methods: ['GET', 'POST'])]",
+            "$cardDetailId = $request->get('id')",
+            "if (!$request->isXmlHttpRequest() || !isset($cardDetailId))",
+            "$CardDetail = $this->cardDetailRepository->find($cardDetailId)",
+            "'detailId' => $cardDetailId",
+            "'images' => []",
+            "return $this->json($cardDetail)"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise ネット買取APIは /api/v1/buying/{cardDetailId}.json で買取用商品情報を返す別機能である",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php",
+          "start": 43,
+          "end": 61,
+          "language": "php",
+          "contains": [
+            "カード詳細IDから買取用商品情報を取得",
+            "#[Route('/%eccube_api_v1_route%/buying/{cardDetailId}.json', name: 'api_buying', methods: ['GET'])]",
+            "public function getByCardDetailId(int $cardDetailId): JsonResponse",
+            "getBuyingCardsByCardDetailIds([$cardDetailId], $storeId, $stockLocationId)",
+            "return new JsonResponse($this->buyingCardsFormatter->format($cards))"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、`config/routes.yaml` に `GET /cardDetails/{id}` が明示され、`CardController::getCardDetailAction($id)` が `MtbCardDetailRepository::findOneById($id)` でカード詳細を取得する。該当なしの場合は `{ code: 404, message: 'Not Found' }` を HTTP 404 で返すため、設計HTMLの入口・取得条件・404契約の根拠になっている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は GET /cardDetails/{id} を CardController::getCardDetailAction に割り当てる",
+          "path": "pf-api/config/routes.yaml",
+          "start": 171,
+          "end": 174,
+          "language": "yaml",
+          "contains": [
+            "get_card_detail:",
+            "path: /cardDetails/{id}",
+            "controller: App\\Controller\\CardController::getCardDetailAction",
+            "methods: GET"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api はカード詳細IDで MtbCardDetail を取得し、該当なしは Not Found のHTTP 404を返す",
+          "path": "pf-api/src/Controller/CardController.php",
+          "start": 44,
+          "end": 59,
+          "language": "php",
+          "contains": [
+            "public function getCardDetailAction($id)",
+            "->getRepository(MtbCardDetail::class)",
+            "->findOneById($id)",
+            "\"code\" => 404",
+            "\"message\" => 'Not Found'",
+            "return $cardDetail"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "設計HTMLは A14-02 のエンドポイントを /cardDetails/{id}、HTTPメソッドを GET とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html",
+      "start": 1275,
+      "end": 1286,
+      "language": "html",
+      "contains": [
+        "機能No</dt><dd>A14-02",
+        "カード詳細IDからカード情報を取得",
+        "エンドポイントURL",
+        "/cardDetails/{id}",
+        "メソッド　GET"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計は GET /cardDetails/{id} でカード詳細IDに対応するカード詳細情報を返し、該当なしは404とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html",
+      "start": 1493,
+      "end": 1499,
+      "language": "html",
+      "contains": [
+        "GET /cardDetails/{id}",
+        "カード詳細IDに対応するカード詳細情報をJSONで返す",
+        "該当が無い場合は404を返す",
+        "パスのカード詳細IDを受け取る",
+        "取得できない場合はコード404・「Not Found」のJSONを返す"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "詳細設計はリクエスト id をパスの必須integerとし、失敗レスポンス本文を {code, message}(\"Not Found\") とする",
+      "path": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html",
+      "start": 1504,
+      "end": 1513,
+      "language": "html",
+      "contains": [
+        "id</code></td><td>パス</td><td>integer</td><td>必須",
+        "カード詳細マスタの主キーで該当カード詳細を取得する",
+        "レスポンス（失敗）",
+        "404",
+        "{code, message}",
+        "Not Found"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の管理画面AJAXは /cardDetails/{id} ではなく、UI用の部分情報のみを返す",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php",
+      "start": 986,
+      "end": 1034,
+      "language": "php",
+      "contains": [
+        "#[Route(path: '/%eccube_admin_route%/product/detail/search/id'",
+        "$cardDetailId = $request->get('id')",
+        "if (!$request->isXmlHttpRequest() || !isset($cardDetailId))",
+        "'detailId' => $cardDetailId",
+        "'images' => []"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise のネット買取APIはカード詳細IDを使うが、買取用商品情報取得の別APIである",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php",
+      "start": 43,
+      "end": 61,
+      "language": "php",
+      "contains": [
+        "カード詳細IDから買取用商品情報を取得",
+        "#[Route('/%eccube_api_v1_route%/buying/{cardDetailId}.json'",
+        "getBuyingCardsByCardDetailIds([$cardDetailId], $storeId, $stockLocationId)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は設計と同じ GET /cardDetails/{id} を定義している",
+      "path": "pf-api/config/routes.yaml",
+      "start": 171,
+      "end": 174,
+      "language": "yaml",
+      "contains": [
+        "get_card_detail:",
+        "path: /cardDetails/{id}",
+        "controller: App\\Controller\\CardController::getCardDetailAction",
+        "methods: GET"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api はカード詳細IDで MtbCardDetail を検索し、該当なしはHTTP 404のNot Foundを返す",
+      "path": "pf-api/src/Controller/CardController.php",
+      "start": 44,
+      "end": 59,
+      "language": "php",
+      "contains": [
+        "public function getCardDetailAction($id)",
+        "->getRepository(MtbCardDetail::class)",
+        "->findOneById($id)",
+        "\"code\" => 404",
+        "\"message\" => 'Not Found'"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"A14-02|/cardDetails/\\\\{id\\\\}|GET /cardDetails|カード詳細IDからカード\" excel_to_html/output/0514_基本設計仕様書\\(API_カード管理\\).html design_impl_drift_report/findings/a14-02_0514_sheet-4_id.json",
+      "rg -n \"get_card_detail:|path: /cardDetails/\\\\{id\\\\}|getCardDetailAction|Not Found\" ../pf-api/config/routes.yaml ../pf-api/src/Controller/CardController.php",
+      "rg -n \"Route.*cardDetails|/cardDetails|CardDetailAction|getCardDetailAction|admin_product_search_card_detail_by_id|api_buying\" ../ec-cube-enterprise/src/Eccube/Controller ../ec-cube-enterprise/app/config",
+      "rg -n \"cardDetails/\\\\{id\\\\}|cardDetails|cardDetail|detail/search|buying/\\\\{cardDetailId\\\\}|api/buying\" ../pf-api/config ../pf-api/src/Controller ../deck-api/config ../deck-api/src/Controller ../ec-cube-enterprise/src/Eccube/Controller ../ec-cube-enterprise/app/config"
+    ],
+    "notes": [
+      "enterprise 側では管理画面AJAX `/%eccube_admin_route%/product/detail/search/id` とネット買取向け `/api/v1/buying/{cardDetailId}.json` は確認できるが、設計と同じ `/cardDetails/{id}` の Route 定義は確認できなかった。",
+      "ベース実装は pf-api の `GET /cardDetails/{id}` と `CardController::getCardDetailAction($id)` を根拠とした。",
+      "gpt-5.5 high reviewer Heisenberg verdict: VERIFIED. 管理画面AJAXはXHR前提・UI用部分情報のみ、`/api/v1/buying/{cardDetailId}.json` は認証必須のネット買取向け買取用商品情報APIであり、A14-02 のカード詳細マスタJSON取得とは同一扱いできない。"
+    ]
+  }
+}

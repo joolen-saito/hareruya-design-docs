@@ -1,0 +1,55 @@
+{
+  "chunkId": "a07-03_0507_sheet-5_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-03_0507_sheet-5_sheet.json#a07-03_0507_sheet-5_sheet-conformance-945dae5295e4",
+      "functionId": "a07-03_0507_sheet-5_sheet",
+      "featureNo": "A07-03",
+      "title": "A07-03 ネット買取受注コメント更新",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "500応答の errors に保存例外のメッセージを返すべき設計に対し、実装は例外メッセージを破棄し固定文言「システムエラーが発生しました」へ置換している。",
+      "reason": "設計書（1326行・1354行）は保存処理中の例外時に HTTP 500 と {code, errors} を返し、errors は『例外メッセージ』であることを要求している。実装を追うと、UpdateFreeCommentAction::handle は catch 節で entityManager->rollback() 後、元の $e のメッセージを使わず throw new \\RuntimeException('システムエラーが発生しました') を投げる（UpdateFreeCommentAction.php:44）。Controller::updateFreeComment は Throwable を catch し throw new InternalException('システムエラーが発生しました', $e) と固定文言で包み直す（BuyOrderController.php:117）。InternalException は errors: [$message] を持ち、$message の既定値も固定文言（InternalException.php:27,30）。ExceptionListener は BaseApiException から $exception->getErrors() を取り出し（ExceptionListener.php:83）、JsonResponse に code と errors を詰めて返す（ExceptionListener.php:136-139）。よって外部契約上、errors には保存例外の実メッセージではなく固定の汎用文言が露出する。ロールバック（UpdateFreeCommentAction.php:42）と {code, errors} の JSON 形は設計どおり実装済みで、差異は errors の値のみ。別ルート・別ハンドラで例外メッセージを返す経路は存在せず、置換が確定的。",
+      "designEvidence": {
+        "label": "設計要求（エラー処理／レスポンス失敗）",
+        "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html",
+        "start": 1353,
+        "end": 1354,
+        "contains": ["保存処理中の例外", "例外メッセージを返す"]
+      },
+      "implEvidence": [
+        {
+          "label": "Action が固定文言の例外を投げる",
+          "note": "元の $e のメッセージを使わず固定文言で再スロー",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateFreeCommentAction.php",
+          "start": 41,
+          "end": 44,
+          "contains": ["rollback", "RuntimeException", "システムエラーが発生しました"]
+        },
+        {
+          "label": "Controller が固定文言で InternalException に包み直す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php",
+          "start": 115,
+          "end": 118,
+          "contains": ["throw new InternalException", "システムエラーが発生しました"]
+        },
+        {
+          "label": "InternalException は errors に固定文言メッセージを格納",
+          "path": "ec-cube-enterprise/src/Eccube/Exception/App/InternalException.php",
+          "start": 27,
+          "end": 31,
+          "contains": ["システムエラーが発生しました", "errors: [$message]"]
+        },
+        {
+          "label": "ExceptionListener が errors をそのまま JSON 応答に返す",
+          "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php",
+          "start": 81,
+          "end": 138,
+          "contains": ["$exception->getErrors()", "'errors' => $errors"]
+        }
+      ]
+    }
+  ]
+}

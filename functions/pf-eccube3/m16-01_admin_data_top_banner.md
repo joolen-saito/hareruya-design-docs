@@ -245,6 +245,7 @@ HareruyaEc プラグインが管理画面「データ管理」配下に提供す
 | M16-01-MSG-015 | 並び順項目直下（フォームエラー） | 並び順が重複しています。 | 並び順の値が重複したまま送信したとき（POST_SUBMIT リスナーが重複全項目へ FormError 追加・同一画面を再表示） |
 | M16-01-MSG-016 | 確認ダイアログ（window.confirm） | 一度削除したデータは元に戻せません。削除してもよろしいですか？ | 削除リンククリック時（`data-message`。OKで `_token`/`_method=delete` を持つ隠しフォームを生成し POST 送信、キャンセルで中断） |
 | M16-01-MSG-017 | バナー設定フォーム上部（text-danger errormsg） | 要ソース確認 | 設定フォームが妥当だが storeTopBanners 内で RuntimeException が送出されたとき（`bannerError.message` を trans して同一画面に表示）。例外由来の可変文言で、TopBannerStoreAction/TopBannerEntityManager 経路に RuntimeException の送出箇所は未特定 |
+| M16-01-MSG-018 | 確認ダイアログ | 一度削除したデータは元に戻せません。削除してもよろしいですか？ | 削除リンクをクリックしたとき（data-confirm 未指定のため共通JSが常に確認ダイアログを表示し、data-message の文言を用いる） |
 
 ---
 

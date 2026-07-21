@@ -7,7 +7,7 @@
 
 本機能は**ブラウザ向けの画面を持たない**機能仕様（JWT認証つきPUT API＝店頭買取受注の本人確認証明書を更新。正本md「対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない」）であり、**API/統合レイヤ単独で網羅**する。Playwright `request` で `PUT /api/v1/admin/otcBuyOrder/{id}/identification.json` へ送信し、HTTPステータス・レスポンス本文（成功`{code:200}`／失敗`{code, errors}`）で判定する。更新副作用（本人確認証明書`identification_id`・更新担当者`member_id`・更新日時`update_date`の3列のみ更新）は永続化先テーブル `dtb_otc_buy_order` を直接DB照合（DB副作用観測）して判定する。本機能は画面を持たないため、別機能（管理画面 店頭買取受注詳細）の表示は合否条件にしない。
 
-**期待結果は仕様（正本md・観点表・基本設計）由来**とし、実装のレスポンス形・例外機構・HTTPライブラリ既定値・Form/DTO制約を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdを上位オラクル、観点表（基本設計）と食い違う箇所も上位オラクルとして扱い、乖離は付帯表4に出す。実装からは位置情報（APIパス・メソッド・認証方式・セレクタ）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（正本md・観点表・基本設計）由来**とし、実装のレスポンス形・例外機構・HTTPライブラリ既定値・Form/DTO制約を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdを上位オラクル、観点表（基本設計）と食い違う箇所も上位オラクルとして扱い、乖離は付帯表4に出す。実装からは位置情報（APIパス・メソッド・認証方式・セレクタ）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 更新系のため、DB更新観点（IT-26/IT-05）を網羅に含める。正本md・実装には入力検証（証明書IDの存在確認）とDB更新（3列更新）が存在するが、既存IT casesの対象外観点表は「本機能に入力検証対象がないため」「本機能に更新処理がないため」と誤って除外している。これを上位オラクル（正本md 副作用節・バリデーション節・DBカラム節）に照らして補正し、DB更新（IT-26/IT-05）を設計書補完ケースとして追加した（母集合外・別管理）。当該誤分類は付帯表4#6に記録する。
 
@@ -25,62 +25,62 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-001	IT-09	リクエスト	P1	正常な証明書IDでPUTし200が返る	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	"有効なjwt-tokenヘッダ
 identification=本人確認証明書マスタに存在するID"	"1. 対象受注IDへPUTでリクエストを送信する
-2. HTTPステータスを確認する"	正常更新としてHTTPステータス200が返ること。
+2. HTTPステータスを確認する"	正常更新としてHTTPステータス200が返ること。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-002	IT-09	実行結果	P3	更新実行後の処理結果が一致する	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token・正常な本人確認更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. レスポンスと後続状態を確認する"	更新処理が実行され、処理結果（成功）がレスポンスと一致すること。
+2. レスポンスと後続状態を確認する"	更新処理が実行され、処理結果（成功）がレスポンスと一致すること。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-003	IT-09	HTTPステータス	P3	成功時のHTTPステータスが200である	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token・正常な本人確認更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. HTTPステータスを確認する"	HTTPステータスが成功（200）であること。
+2. HTTPステータスを確認する"	HTTPステータスが成功（200）であること。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-004	IT-09	外部取得	P1	成功レスポンス本文がcode=200を含む	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token・正常な本人確認更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. レスポンス本文を確認する"	成功時のレスポンス本文が `{code:200}` であること。
+2. レスポンス本文を確認する"	成功時のレスポンス本文が `{code:200}` であること。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-005	IT-10	通信	P1	正常通信で200が返る	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token・正常な本人確認更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること。
+2. HTTPステータスを確認する"	通信が成立し、HTTPステータスが200（成功）であること。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-006	IT-10	正常	P2	対象条件に該当する正常値で200が返る	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	対象条件に該当する正常な本人確認更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. HTTPステータスと後続状態を確認する"	正常更新としてHTTPステータスが200（成功）であること。
+2. HTTPステータスと後続状態を確認する"	正常更新としてHTTPステータスが200（成功）であること。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-007	IT-32	レスポンス	P3	成功レスポンス書式がcode:200と一致する	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token・正常な本人確認更新リクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. レスポンス本文の書式を確認する"	成功時のレスポンス書式が仕様の `{code:200}`（codeフィールドのみ・camelCase・日時はISO8601）と一致すること。
+2. レスポンス本文の書式を確認する"	成功時のレスポンス書式が仕様の `{code:200}`（codeフィールドのみ・camelCase・日時はISO8601）と一致すること。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-008	IT-32	受信検証	P1	マスタ存在の証明書IDで本人確認更新が成功200となる	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	本人確認証明書マスタに存在するidentificationを指定したリクエスト	"1. 対象受注IDへPUTでリクエストを送信する
-2. HTTPステータスを確認する"	証明書IDが本人確認証明書マスタに存在する検証を満たし、HTTPステータス200で更新が成功すること。
+2. HTTPステータスを確認する"	証明書IDが本人確認証明書マスタに存在する検証を満たし、HTTPステータス200で更新が成功すること。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-009	IT-32	リクエスト	P3	想定外項目追加時の挙動が要実機確認・仕様化待ちである	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	正常リクエストに仕様未定義の想定外項目（項目名と値のセット）を追加	"1. 想定外項目を含むリクエストをPUTで送信する
-2. HTTPステータスを確認する"	正本mdに未定義項目の許容/無視/エラーの仕様が無いため、想定外項目追加時の更新成否を固定期待にできず、許容・無視・エラーいずれの挙動とするかは要実機確認・仕様化待ちであること。
+2. HTTPステータスを確認する"	正本mdに未定義項目の許容/無視/エラーの仕様が無いため、想定外項目追加時の更新成否を固定期待にできず、許容・無視・エラーいずれの挙動とするかは要実機確認・仕様化待ちであること。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-020	IT-32	資格情報	P1	有効なJWTで更新が成功する	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token（該当する管理者会員あり）・正常リクエスト	"1. 有効なjwt-tokenを付与してPUTで送信する
-2. HTTPステータスを確認する"	資格情報が有効な場合、HTTPステータス200で更新が成功すること。
+2. HTTPステータスを確認する"	資格情報が有効な場合、HTTPステータス200で更新が成功すること。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-021	IT-32	資格情報	P1	jwt-tokenヘッダ欠落で401となり更新されない	SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	jwt-tokenヘッダを付与しないリクエスト	"1. jwt-tokenヘッダ無しでPUTで送信する
-2. HTTPステータスと受注状態を確認する"	認証拒否を示すHTTPステータス401が返り、応答本文を持たない（空）こと（実装の共通例外リスナーが本文を返すなら落ちて検出＝付帯表4#8）。対象受注の本人確認証明書が更新されないこと。
+2. HTTPステータスと受注状態を確認する"	認証拒否を示すHTTPステータス401が返り、応答本文を持たない（空）こと（実装の共通例外リスナーが本文を返すなら落ちて検出＝付帯表4#8）。対象受注の本人確認証明書が更新されないこと。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-022	IT-10	重複・順序	P1	該当する管理者会員が無いJWTで401となる	SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	利用者IDに該当する管理者会員が存在しないjwt-token	"1. 該当会員なしのjwt-tokenでPUTで送信する
-2. HTTPステータスと受注状態を確認する"	JWTの利用者IDから管理者会員を特定できず、HTTPステータス401が返り更新されないこと。
+2. HTTPステータスと受注状態を確認する"	JWTの利用者IDから管理者会員を特定できず、HTTPステータス401が返り更新されないこと。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-023	IT-32	資格情報	P1	署名不正のJWTで401となり更新されない	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	署名検証に失敗するjwt-token（署名シークレット不正）	"1. 署名不正のjwt-tokenでPUTで送信する
-2. HTTPステータスと受注状態を確認する"	署名検証に失敗し、認証拒否を示すHTTPステータス401が返り、対象受注が更新されないこと。
+2. HTTPステータスと受注状態を確認する"	署名検証に失敗し、認証拒否を示すHTTPステータス401が返り、対象受注が更新されないこと。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-030	IT-32	データなし	P1	存在しない受注IDで404となり更新されない	SEED-A06-13-JWT-ADMIN／SEED-A06-13-IDENT-MTB	有効なjwt-token・該当しない受注ID	"1. 存在しない受注IDへPUTで送信する
-2. HTTPステータスと後続状態を確認する"	該当なしを示すHTTPステータス404が返り、応答本文を持たない（空）こと（実装の共通例外リスナーが本文を返すなら落ちて検出＝付帯表4#8）。本人確認証明書の更新が行われないこと。
+2. HTTPステータスと後続状態を確認する"	該当なしを示すHTTPステータス404が返り、応答本文を持たない（空）こと（実装の共通例外リスナーが本文を返すなら落ちて検出＝付帯表4#8）。本人確認証明書の更新が行われないこと。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-040	IT-10	エラー	P2	identification未指定で400となりerrorsを含む	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER	有効なjwt-token・identification未指定（ボディに証明書IDなし）	"1. identificationを未指定にしてPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400が返り、レスポンス本文 `errors` に「正しい証明書IDを入力してください」を含むこと。
+2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400が返り、レスポンス本文 `errors` に「正しい証明書IDを入力してください」を含むこと。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-041	IT-10	異常系	P2	マスタ非存在の証明書IDで400となりerrorsを含む	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token・本人確認証明書マスタに存在しないidentification	"1. マスタ非存在のidentificationでPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400が返り、レスポンス本文 `errors` に「正しい証明書IDを入力してください」を含むこと（実装は404を返す可能性＝付帯表4#2。期待は仕様の400で判定）。
+2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400が返り、レスポンス本文 `errors` に「正しい証明書IDを入力してください」を含むこと（実装は404を返す可能性＝付帯表4#2。期待は仕様の400で判定）。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-042	IT-10	HTTPステータス	P1	証明書ID不正時のHTTPステータスが400である	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token・証明書IDが不正（未指定またはマスタ非存在）なリクエスト	"1. 証明書ID不正のリクエストをPUTで送信する
-2. HTTPステータスを確認する"	入力不正を示すHTTPステータスが400であること（実装は404を返す可能性＝付帯表4#2。期待は仕様の400で判定）。
+2. HTTPステータスを確認する"	入力不正を示すHTTPステータスが400であること（実装は404を返す可能性＝付帯表4#2。期待は仕様の400で判定）。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-043	IT-32	必須条件	P3	identificationは必須で未指定時に更新されない	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER	有効なjwt-token・identification未指定	"1. identificationを未指定にしてPUTで送信する
-2. HTTPステータスと受注状態を確認する"	identificationが必須であり、未指定時はHTTPステータス400が返り、対象受注の本人確認証明書が更新されないこと。
+2. HTTPステータスと受注状態を確認する"	identificationが必須であり、未指定時はHTTPステータス400が返り、対象受注の本人確認証明書が更新されないこと。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-050	IT-33	区分整合	P1	更新後に更新対象外の他受注・他列の数量と金額が不変	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER（対象受注＋別受注）／SEED-A06-13-IDENT-MTB／SEED-M01-ADMIN	有効なjwt-token・対象受注のみを更新する正常リクエスト	"1. 対象受注IDへPUTで送信し200と成功応答を確認する
-2. 一次オラクルとしてDB副作用（別受注の各列・対象受注の本人確認以外の列＝買取合計金額・ステータス・明細）を照合する"	別受注の各列、および対象受注の本人確認証明書・更新担当者・更新日時以外の列（数量・金額・ステータス）が更新前と一致し変動しないこと（DB副作用で判定）。
+2. 一次オラクルとしてDB副作用（別受注の各列・対象受注の本人確認以外の列＝買取合計金額・ステータス・明細）を照合する"	別受注の各列、および対象受注の本人確認証明書・更新担当者・更新日時以外の列（数量・金額・ステータス）が更新前と一致し変動しないこと（DB副作用で判定）。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-051	IT-33	エラー	P1	証明書ID不正時に本人確認・更新担当者・更新日時が部分更新されない	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB／SEED-M01-ADMIN	有効なjwt-token・証明書IDが不正（マスタ非存在）なリクエスト	"1. 証明書ID不正のリクエストをPUTで送信し4xxを確認する
-2. 一次オラクルとしてDB副作用（対象受注の identification_id・member_id・update_date）を受信前と照合する"	証明書ID不正時は保存が行われず、本人確認証明書・更新担当者・更新日時がDB副作用上で受信前と一致（部分更新されない）こと（DB副作用で判定）。
+2. 一次オラクルとしてDB副作用（対象受注の identification_id・member_id・update_date）を受信前と照合する"	証明書ID不正時は保存が行われず、本人確認証明書・更新担当者・更新日時がDB副作用上で受信前と一致（部分更新されない）こと（DB副作用で判定）。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-060	IT-19	同時実行数の制限	P3	同一受注の同時更新で片側更新の不整合が残らない	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token・同一受注への並行する2リクエスト（異なる証明書ID）	"1. 同一受注へ2リクエストを並行してPUTで送信する
-2. 最終状態を確認する"	本APIは排他制御を持たず同時更新は後勝ちとなり、いずれか一方の証明書IDが一貫して反映され、本人確認・更新担当者・更新日時が片側だけ更新された不整合が残らないこと（並行送信の実再現は要実機確認）。
+2. 最終状態を確認する"	本APIは排他制御を持たず同時更新は後勝ちとなり、いずれか一方の証明書IDが一貫して反映され、本人確認・更新担当者・更新日時が片側だけ更新された不整合が残らないこと（並行送信の実再現は要実機確認）。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-061	IT-10	エラー	P3	処理タイムアウト時に仕様どおりの応答となる	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token・タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してPUTで送信する
-2. 応答と受注状態を確認する"	サーバ無応答・未定義例外で停止せず、エラー応答が返り、対象受注が部分更新されず一致すること（タイムアウト実再現は要実機確認）。
+2. 応答と受注状態を確認する"	サーバ無応答・未定義例外で停止せず、エラー応答が返り、対象受注が部分更新されず一致すること（タイムアウト実再現は要実機確認）。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-120	IT-26	更新内容	P1	更新後に本人確認証明書が指定証明書へ更新される	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB／SEED-M01-ADMIN	有効なjwt-token・指定証明書IDを設定する正常リクエスト	"1. 対象受注IDへPUTで送信する
-2. DB副作用（dtb_otc_buy_order.identification_id）を照合する"	店頭買取受注の本人確認証明書（identification_id）が指定した証明書IDに更新されること（DB副作用で判定）。
+2. DB副作用（dtb_otc_buy_order.identification_id）を照合する"	店頭買取受注の本人確認証明書（identification_id）が指定した証明書IDに更新されること（DB副作用で判定）。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-121	IT-26	更新内容	P1	更新担当者に認証した管理者会員が記録される	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB／SEED-M01-ADMIN	認証した管理者会員のjwt-token・正常リクエスト	"1. 認証管理者会員のjwt-tokenでPUTで送信する
-2. DB副作用（dtb_otc_buy_order.member_id）を照合する"	更新担当者（member_id）にjwt-tokenから特定した認証管理者会員が記録されること（DB副作用で判定）。
+2. DB副作用（dtb_otc_buy_order.member_id）を照合する"	更新担当者（member_id）にjwt-tokenから特定した認証管理者会員が記録されること（DB副作用で判定）。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-122	IT-26	更新内容	P2	更新日時が更新時の現在時刻で更新される	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB／SEED-M01-ADMIN	有効なjwt-token・正常リクエスト	"1. 対象受注IDへPUTで送信する
-2. dtb_otc_buy_order.update_date を確認する"	更新日時（update_date）が更新時の現在時刻で更新されること（現在時刻の確定的判定は要実機確認）。
+2. dtb_otc_buy_order.update_date を確認する"	更新日時（update_date）が更新時の現在時刻で更新されること（現在時刻の確定的判定は要実機確認）。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-123	IT-26	更新内容	P1	本人確認・担当者・日時の3列のみ更新し受注他項目は不変	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB／SEED-M01-ADMIN	有効なjwt-token・正常リクエスト	"1. 対象受注IDへPUTで送信する
-2. DB副作用（dtb_otc_buy_order の identification_id・member_id・update_date と他項目・ステータス）を照合する"	本人確認証明書・更新担当者・更新日時の3列のみが更新され、受注の他項目・ステータスは変更されないこと（DB副作用で判定）。
+2. DB副作用（dtb_otc_buy_order の identification_id・member_id・update_date と他項目・ステータス）を照合する"	本人確認証明書・更新担当者・更新日時の3列のみが更新され、受注の他項目・ステータスは変更されないこと（DB副作用で判定）。				
 a06-13_api_store_purchase_otc_buy_order_identification（API_店頭仕入_買取注文本人確認）	E2E-A06-13-150	IT-05	実行結果	P3	保存処理中の例外時に部分更新が残らない	SEED-A06-13-JWT-ADMIN／SEED-A06-13-ORDER／SEED-A06-13-IDENT-MTB	有効なjwt-token・保存中の例外を誘発するシナリオ	"1. 保存例外を誘発してPUTで送信する
-2. 応答と受注状態を確認する"	共通例外処理に委ね（HTTP 500相当）、対象受注の本人確認証明書・更新担当者・更新日時が受信前と一致し部分更新が残らないこと（例外の実再現は要実機確認）。
+2. 応答と受注状態を確認する"	共通例外処理に委ね（HTTP 500相当）、対象受注の本人確認証明書・更新担当者・更新日時が受信前と一致し部分更新が残らないこと（例外の実再現は要実機確認）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

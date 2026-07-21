@@ -1,0 +1,96 @@
+{
+  "functionId": "m06-04_0205_sheet-11_sheet",
+  "featureNo": "M06-04",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-11:3170",
+      "designExpectation": "ステータス変更画面はITチームのみが使用可能な画面とする（権限で設定）。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:302; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:337; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Twig/Extension/IsAccessibleRouteExtension.php:65; 不在（探索範囲: src/Eccube/Controller/Admin/OtcBuyOrder, src/Eccube/Twig/Extension, app/DoctrineMigrations（sql除外）, app/config/eccube/packages/eccube_nav.yaml）",
+      "implementationActual": "ステータス変更のGET/POSTは管理画面認証後に isAccessibleRoute('admin_otcbuyorder_status') / isAccessibleRoute('admin_otcbuyorder_status_update') を確認しているが、ITチーム専用のロール・権限キー・PermissionAccessUrl登録は確認できない。IsAccessibleRouteExtension は会員権限の deny_url に一致した場合だけ false を返し、それ以外は true を返す実装である。",
+      "mismatchReason": "設計はITチーム限定を要求しているが、実装は汎用の管理者ロールおよび deny-list 型のルート制限に留まり、M06-04 ステータス変更画面をITチームだけに限定する正の権限制約が存在しない。",
+      "comparisonRows": [
+        {
+          "item": "利用可能ユーザ",
+          "design": "ITチームのみ",
+          "implementation": "ROLE_ADMIN 相当の管理画面利用者に対し、deny_url が設定されていなければ通過",
+          "mismatch": "ITチーム限定ではない"
+        },
+        {
+          "item": "権限設定",
+          "design": "権限で設定",
+          "implementation": "当該ルート用のITチーム専用権限・PermissionAccessUrl seed を確認できない",
+          "mismatch": "設計上の専用権限制御が未確認"
+        },
+        {
+          "item": "画面遷移",
+          "design": "ステータス変更画面の利用自体をITチームに限定",
+          "implementation": "Controller 側で isAccessibleRoute による汎用deny判定のみ実施",
+          "mismatch": "画面単位のITチーム限定制御になっていない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-11:3144",
+      "designExpectation": "経理払い出し済みボタンを詳細画面につけて、経理のみ更新可能とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:389; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:400; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:405; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:411; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/detail.twig:470; 不在（探索範囲: src/Eccube/Controller/Admin/OtcBuyOrder, src/Eccube/Twig/Extension, app/DoctrineMigrations（sql除外）, app/config/eccube/packages/eccube_nav.yaml）",
+      "implementationActual": "詳細画面の「経理払出し済」ボタンとPOST処理は存在する。POST処理はCSRF、ログインMember、編集可能店舗、isAccessibleRoute('admin_otcbuyorder_update_status_account_team_paid')、現在ステータスが経理払出し待ちであることを確認して STATUS_COMPLETE に更新する。ただし、経理ロールまたは経理専用権限に限定する実装は確認できない。",
+      "mismatchReason": "設計は「経理のみ更新可能」を要求しているが、実装は店舗編集権限と汎用deny-url判定であり、経理ユーザだけに許可する判定・権限定義・マイグレーション登録が存在しない。",
+      "comparisonRows": [
+        {
+          "item": "ボタン表示",
+          "design": "詳細画面に経理払い出し済みボタンを付ける",
+          "implementation": "detail.twig に「経理払出し済」ボタンが存在する",
+          "mismatch": "ボタン自体は実装済み"
+        },
+        {
+          "item": "更新権限",
+          "design": "経理のみ更新可能",
+          "implementation": "Member存在、編集可能店舗、isAccessibleRoute のdeny判定で通過判定",
+          "mismatch": "経理限定ではない"
+        },
+        {
+          "item": "専用権限定義",
+          "design": "経理だけが操作できる権限分離",
+          "implementation": "accounting/finance/経理専用のロール判定または当該ルート権限seedを確認できない",
+          "mismatch": "設計上の権限分離が欠落"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0205_基本設計仕様書(店頭買取管理).html#sheet-11:3146",
+      "designExpectation": "入庫済みボタンを詳細画面につけて、買取管理を使えるユーザが更新可能とする。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:457; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:469; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:474; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:481; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/OtcBuyOrder/detail.twig:473; 不在（探索範囲: src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php 内の admin_otcbuyorder_update_status_restocked 権限チェック、app/DoctrineMigrations（sql除外）, app/config/eccube/packages/eccube_nav.yaml）",
+      "implementationActual": "詳細画面の「入庫済みにする」ボタンとPOST処理は存在する。POST処理はCSRF、ログインMember、編集可能店舗を確認し、STATUS_STOCKING_COMPLETE へ更新する。一方で、同Controllerのステータス変更POSTや経理払出し済POSTにある isAccessibleRoute によるルート権限チェックすら restocked POST には存在せず、買取管理を使えるユーザに限定する実装を確認できない。",
+      "mismatchReason": "設計は買取管理を使えるユーザに更新を限定する要求だが、実装は編集可能店舗の確認のみで、買取管理機能の利用権限または該当ルートのアクセス権限を確認していない。",
+      "comparisonRows": [
+        {
+          "item": "ボタン表示",
+          "design": "詳細画面に入庫済みボタンを付ける",
+          "implementation": "detail.twig に「入庫済みにする」ボタンが存在する",
+          "mismatch": "ボタン自体は実装済み"
+        },
+        {
+          "item": "更新権限",
+          "design": "買取管理を使えるユーザが更新可能",
+          "implementation": "CSRF、Member存在、編集可能店舗のみ確認",
+          "mismatch": "買取管理利用権限の確認がない"
+        },
+        {
+          "item": "ルート権限チェック",
+          "design": "権限分離された操作",
+          "implementation": "admin_otcbuyorder_update_status_restocked では isAccessibleRoute チェックが存在しない",
+          "mismatch": "他のステータス更新系処理と比べても権限制御が不足"
+        }
+      ]
+    }
+  ]
+}

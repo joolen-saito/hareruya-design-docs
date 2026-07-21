@@ -1,0 +1,102 @@
+{
+  "functionId": "m07-05_0206_sheet-8_csv",
+  "featureNo": "M07-05",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-8:1874",
+      "designExpectation": "CSV出力項目4は「販売価格」として出力する。備考: 商品規格に紐づく現在の基準価格、個別入力商品または状態がない場合は何も出力しない。",
+      "implRef": "src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:34",
+      "implementationActual": "CSVヘッダ定義は standard_price => 「基準価格」。値は DtbBuyOrderRepository::getProductListDataForExportCsv で pc.standard_price を出力している。",
+      "mismatchReason": "設計のCSV項目名は「販売価格」だが、実装の外部出力ヘッダは「基準価格」。値の取得元が基準価格である点は備考と一致するが、CSV列名の外部契約が設計と異なる。反証検索で purchase_product_cancel_list、CSV_HEADER、販売価格、standard_price を確認したが、本CSVのヘッダを「販売価格」にする実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "4列目ヘッダ",
+          "design": "販売価格",
+          "implementation": "基準価格",
+          "mismatch": "CSV列名が設計と異なる"
+        },
+        {
+          "item": "4列目値",
+          "design": "商品規格に紐づく現在の基準価格。個別入力商品または状態なしは空欄",
+          "implementation": "状態ありは pc.standard_price、個別入力商品は NULL、状態なしは NULL",
+          "mismatch": "値取得は備考と整合するが、ヘッダのみ不一致"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-8:1876",
+      "designExpectation": "CSV出力項目6「言語ID」は、個別入力商品または状態がない場合は [1: 日本語] 固定。",
+      "implRef": "src/Eccube/Repository/DtbBuyOrderRepository.php:637",
+      "implementationActual": "通常商品（状態なし）ブランチで bmc.card_condition_id IS NULL を対象にしながら、language_id は bmc.language_id を出力している。個別入力商品ブランチのみ 1 固定。",
+      "mismatchReason": "設計は「状態がない場合」も言語IDを 1 固定とするが、実装は状態なし通常商品で買取明細の language_id をそのまま出力するため、bmc.language_id が 1 以外なら設計と異なるCSVになる。反証検索で language_id、card_condition_id IS NULL、CSV_HEADER、言語ID を確認したが、状態なしブランチで 1 固定へ補正する後段処理は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "個別入力商品",
+          "design": "1: 日本語 固定",
+          "implementation": "1 AS language_id",
+          "mismatch": "一致"
+        },
+        {
+          "item": "状態なし通常商品",
+          "design": "1: 日本語 固定",
+          "implementation": "bmc.language_id AS language_id",
+          "mismatch": "固定値ではなく明細値を出力している"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-8:1877",
+      "designExpectation": "CSV出力項目7「略称タグ」は、個別入力商品または状態がない場合は何も出力しない。",
+      "implRef": "src/Eccube/Repository/DtbBuyOrderRepository.php:637",
+      "implementationActual": "個別入力商品ブランチは '' AS storage_code だが、通常商品（状態なし）ブランチでは sc.name AS storage_code を出力している。",
+      "mismatchReason": "設計は状態なしの場合も略称タグを空欄にする要求だが、実装は状態なし通常商品で mtb_storage_code.name を出力する。反証検索で storage_code、略称タグ、card_condition_id IS NULL、product_cancel を確認したが、状態なしブランチの略称タグを空欄へ補正する処理は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "個別入力商品",
+          "design": "空欄",
+          "implementation": "'' AS storage_code",
+          "mismatch": "一致"
+        },
+        {
+          "item": "状態なし通常商品",
+          "design": "空欄",
+          "implementation": "sc.name AS storage_code",
+          "mismatch": "略称タグを出力している"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-8:1878",
+      "designExpectation": "CSV出力項目8「レアリティ」は、個別入力商品または状態がない場合は何も出力しない。",
+      "implRef": "src/Eccube/Repository/DtbBuyOrderRepository.php:637",
+      "implementationActual": "個別入力商品ブランチは '' AS rarity_code だが、通常商品（状態なし）ブランチでは r.code AS rarity_code を出力している。",
+      "mismatchReason": "設計は状態なしの場合もレアリティを空欄にする要求だが、実装は状態なし通常商品で mtb_rarity.code を出力する。反証検索で rarity_code、レアリティ、card_condition_id IS NULL、product_cancel を確認したが、状態なしブランチのレアリティを空欄へ補正する処理は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "個別入力商品",
+          "design": "空欄",
+          "implementation": "'' AS rarity_code",
+          "mismatch": "一致"
+        },
+        {
+          "item": "状態なし通常商品",
+          "design": "空欄",
+          "implementation": "r.code AS rarity_code",
+          "mismatch": "レアリティを出力している"
+        }
+      ]
+    }
+  ]
+}

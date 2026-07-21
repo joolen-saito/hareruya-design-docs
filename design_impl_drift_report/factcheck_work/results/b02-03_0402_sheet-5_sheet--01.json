@@ -1,0 +1,89 @@
+{
+  "chunkId": "b02-03_0402_sheet-5_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json#b02-03_0402_sheet-5_sheet-conformance-c335ae095d27",
+      "functionId": "b02-03_0402_sheet-5_sheet",
+      "featureNo": "B02-03",
+      "title": "B02-03 期間別入庫数集計バッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計が定める起動コマンド名 product:batch updateProductSummaryForStockUp と実装の AsCommand name eccube:aggregate-stock-up が一致しない。",
+      "reason": "設計書は利用者視点の入口としてコンソールコマンド product:batch updateProductSummaryForStockUp を明示し（line 1205/1209）、コマンド名が一致しない場合は処理を行わずに終了するとまで記載している（line 1206）。一方 ec-cube-enterprise の AggregateStockUpCommand.php は #[AsCommand(name: 'eccube:aggregate-stock-up', ...)] で定義され（line 34）、bin/console eccube:aggregate-stock-up で起動する。src/Eccube/Command・src/Eccube/Service 配下を rg で検索しても updateProductSummaryForStockUp / product:batch は存在しない。設計文にはフレームワークのコマンド型名を主説明としない旨の断りがある（line 1187）ため confidence は medium とするが、実行方法の外部契約であるコマンド文字列が実装と異なるのは事実。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html", "start": 1205, "end": 1206, "contains": ["product:batch updateProductSummaryForStockUp", "コマンド名が一致しない場合は処理を行わずに終了する"]},
+      "implEvidence": [{"label": "実装コマンド名", "note": "AsCommand の name が設計と異なる", "path": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php", "start": 33, "end": 34, "contains": ["AsCommand(name: 'eccube:aggregate-stock-up'", "class AggregateStockUpCommand"]}],
+      "absenceCommands": ["rg -rn \"updateProductSummaryForStockUp|product:batch\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service"]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json#b02-03_0402_sheet-5_sheet-conformance-112a0c932cda",
+      "functionId": "b02-03_0402_sheet-5_sheet",
+      "featureNo": "B02-03",
+      "title": "B02-03 期間別入庫数集計バッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は商品コード・店舗・在庫区分（在庫場所）単位での集計/更新を要求するが、実装は商品規格ID・店舗ID単位でのみ集計し在庫場所を集計キーに含めない。",
+      "reason": "基本設計の★カスタマイズ項目は「商品コードごと、店舗ごと、在庫区分ごとに集計」（line 1148/1152/1156）、更新判定は「商品コード、店舗、在庫場所が一致する集計データ」（line 1158）と在庫場所（区分）を集計/一致キーとして要求する。実装の getStockUpForAggregate は GROUP BY ps.product_class_id, sh.base_info_id のみ（DtbStockUpQuantityRepository.php:179）、更新判定も WHERE product_class_id AND base_info_id のみ（line 199 の findOneBy / line 246 の UPDATE WHERE）で stock_location_id を扱わない。反映先 DtbStockUpQuantity エンティティも ProductClass と BaseInfo のみを保持し stock_location_id 列を持たない（DtbStockUpQuantity.php:57,73）。在庫場所は ProductStock.stock_location_id（ProductStock.php:263 '在庫場所（区分）'）として存在するが当該集計SQLでは SELECT/GROUP BY に使われていない。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html", "start": 1152, "end": 1158, "contains": ["在庫区分ごとに集計するバッチ", "商品コード、店舗、在庫場所が一致する集計データ"]},
+      "implEvidence": [
+        {"label": "集計SQLの集計キー", "note": "在庫場所/在庫区分を含まず product_class_id と base_info_id のみで GROUP BY", "path": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php", "start": 179, "end": 179, "contains": ["GROUP BY ps.product_class_id, sh.base_info_id"]},
+        {"label": "更新判定キー", "note": "在庫場所一致条件が無い", "path": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php", "start": 246, "end": 246, "contains": ["WHERE product_class_id = :product_class_id AND base_info_id = :base_info_id"]},
+        {"label": "反映先エンティティ", "note": "stock_location_id 列を持たない", "path": "ec-cube-enterprise/src/Eccube/Entity/DtbStockUpQuantity.php", "start": 57, "end": 75, "contains": ["name: 'product_class_id'", "name: 'base_info_id'"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json#b02-03_0402_sheet-5_sheet-conformance-e40284592248",
+      "functionId": "b02-03_0402_sheet-5_sheet",
+      "featureNo": "B02-03",
+      "title": "B02-03 期間別入庫数集計バッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は対象区分を親区分「入庫」「買取」のみと定めるが、実装は BE_STOCKED（入庫）と INVENTORY_ADJUSTMENT（在庫調整/棚卸）を対象にし買取を含まない。",
+      "reason": "基本設計の★項目は「取得対象の在庫変動区分は親区分が『入庫』『買取』のもののみとする」（line 1154）。実装 getStockUpForAggregate は $beStocked = MtbStockChangeType::BE_STOCKED, $inventoryAdjustment = MtbStockChangeType::INVENTORY_ADJUSTMENT を用い、SQL条件は sctd.stock_change_type_id IN (:be_stocked, :inventory_adjustment)（DtbStockUpQuantityRepository.php:147-148,177）。MtbStockChangeType には BE_STOCKED=1・PURCHASE=2（買取）・INVENTORY_ADJUSTMENT=5 が定義されており（MtbStockChangeType.php:27-31）、設計が求める買取(PURCHASE=2)は対象条件に含まれず、代わりに設計に無い在庫調整(INVENTORY_ADJUSTMENT=5)が含まれている。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html", "start": 1154, "end": 1155, "contains": ["親区分が「入庫」「買取」のもののみとする", "移動や分割などで入庫した在庫は集計に含まない"]},
+      "implEvidence": [
+        {"label": "対象区分定数", "note": "買取(PURCHASE)ではなく在庫調整(INVENTORY_ADJUSTMENT)を使用", "path": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php", "start": 147, "end": 148, "contains": ["MtbStockChangeType::BE_STOCKED", "MtbStockChangeType::INVENTORY_ADJUSTMENT"]},
+        {"label": "SQL対象条件", "note": "", "path": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php", "start": 177, "end": 177, "contains": ["stock_change_type_id IN (:be_stocked, :inventory_adjustment)"]},
+        {"label": "区分定数の定義", "note": "PURCHASE=2 が買取として存在するが未使用", "path": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbStockChangeType.php", "start": 27, "end": 31, "contains": ["BE_STOCKED = 1", "PURCHASE = 2", "INVENTORY_ADJUSTMENT = 5"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json#b02-03_0402_sheet-5_sheet-conformance-8de1795d9358",
+      "functionId": "b02-03_0402_sheet-5_sheet",
+      "featureNo": "B02-03",
+      "title": "B02-03 期間別入庫数集計バッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は対象が無い場合は更新を行わず終了することを要求するが、実装は対象有無を判定する前に集計テーブルを全 DELETE する。",
+      "reason": "設計の処理フローは「集計一覧取得→対象が無い場合は更新を行わずに終了する」（line 1210 step3）、エラー処理表でも対象なしは「更新を行わず完了する」（line 1235）。実装 handle() は集計データ取得より前に clearStockUpQuantityForAggregate() を呼び（BatchAggregateStockUpAction.php:39）、その後 getStockUpForAggregate() を取得する（line 40）。clearStockUpQuantityForAggregate は DELETE FROM dtb_stock_up_quantity を実行する（DtbStockUpQuantityRepository.php:99-103）。対象が空でも復元処理はなく、対象なし判定より破壊的削除が先行する。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html", "start": 1210, "end": 1210, "contains": ["対象が無い場合は更新を行わずに終了する"]},
+      "implEvidence": [
+        {"label": "処理順序（削除が集計取得より先）", "note": "", "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php", "start": 39, "end": 40, "contains": ["clearStockUpQuantityForAggregate()", "getStockUpForAggregate()"]},
+        {"label": "全削除の実体", "note": "", "path": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php", "start": 99, "end": 103, "contains": ["clearStockUpQuantityForAggregate", "DELETE FROM dtb_stock_up_quantity"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json#b02-03_0402_sheet-5_sheet-conformance-c15a39b6d476",
+      "functionId": "b02-03_0402_sheet-5_sheet",
+      "featureNo": "B02-03",
+      "title": "B02-03 期間別入庫数集計バッチ",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は100件ごとに変更を反映しキャッシュをクリアし途中失敗時は反映済み行のみ残す部分反映モデルを要求するが、実装は全体を1トランザクションで commit/rollBack する。",
+      "reason": "設計は「100件ごとに変更を反映しキャッシュをクリアしながら処理する」（line 1210 step5, line 1243）、失敗結果は「途中失敗時は反映済みの行のみ更新が残る」（line 1219）とし、データ整合性でも「部分反映は次回実行で回収される」（line 1225）としている。実装 handle() は $connection->beginTransaction() で全体を包み（BatchAggregateStockUpAction.php:36）、正常時 commit（line 43）、例外時 rollBack で全体を戻す（line 44）。100件ごとの flush/clear や部分コミットは無く、BatchAggregateStockUpAction・DtbStockUpQuantityRepository を rg しても 100件単位の反映処理は存在しない。途中失敗時は全ロールバックとなり設計の残存挙動と一致しない。",
+      "designEvidence": {"label": "設計要求", "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html", "start": 1210, "end": 1210, "contains": ["100件ごとに変更を反映しキャッシュをクリアしながら処理する"]},
+      "implEvidence": [
+        {"label": "単一トランザクション/全体ロールバック", "note": "100件ごとの反映ではなく全体を1トランザクション化", "path": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php", "start": 36, "end": 45, "contains": ["$connection->beginTransaction();", "$connection->commit();", "$connection->rollBack();"]}
+      ]
+    }
+  ]
+}

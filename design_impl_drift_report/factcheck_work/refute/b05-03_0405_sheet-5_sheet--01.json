@@ -1,0 +1,20 @@
+{
+  "chunkId": "b05-03_0405_sheet-5_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-03_0405_sheet-5_sheet.json#b05-03_0405_sheet-5_sheet-conformance-419e320f01a3",
+      "refuted": true,
+      "reason": "指摘の核心的主張『両テーブル操作と再登録が同一トランザクションにまとめられており、削除のみ成功する途中状態は rollback で作られない』は設計の対象DBMS(MySQL、設計 line 1339 の ALTER TABLE ... AUTO_INCREMENT=1 が示す)では事実誤認。削除処理は DtbWaitingNumberRepository::truncateWaitingNumber:40 と DtbWaitingNumberCounterRepository::truncateWaitingNumberCounter:72 でいずれも `executeStatement('TRUNCATE TABLE ...')` を実行しており、MySQL/MariaDB の TRUNCATE TABLE は DDL で暗黙コミットを伴い rollback 不可。よって Action::handle:36 の beginTransaction()〜commit() の囲みは2つの削除に対して無効で、削除は即時確定・不可逆となる。結果、設計 line 1349/1369 が前提とする『削除のみ成功してカウンタ初期化前に中断』した途中状態は実装でも発生し得て、再実行で空テーブル・カウンタへ収束する冪等性(design line 1342/1349)も満たされる。トランザクション境界の挙動が設計と逆になっているという指摘の behavioral 前提は成立せず、要求(独立文実行・部分成功許容・冪等)は満たされている。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-03_0405_sheet-5_sheet.json#b05-03_0405_sheet-5_sheet-conformance-2f037235dc00",
+      "refuted": false,
+      "reason": "反証できず指摘は維持。実装は TruncateWaitingNumberCommand::execute の line 42 で `catch (\\Throwable $e)` により Action の例外を捕捉し、line 43-46 で $io->error(['店舗注文番号初期化処理でエラーが発生しました', ...]) を出力、line 48 で return Command::FAILURE と終了コードへ変換しており、例外はコンソールへ再スロー/伝播されない。設計は line 1342『本バッチは例外捕捉や通知を行わない』、line 1345『例外発生時はコンソールへ例外が伝播する。本バッチ独自のログ・通知は行わない』、line 1360『例外を捕捉せず処理を中断し、コンソールへ伝播する』と3箇所で一貫して非捕捉伝播を要求。rg で truncate-waiting-number を処理する Command は本ファイルのみ(別ルート・別Subscriber・通知経路なし)。designQuote は該当行に実在。実装違いは事実。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-03_0405_sheet-5_sheet.json#b05-03_0405_sheet-5_sheet-conformance-3ba53b7c8364",
+      "refuted": false,
+      "reason": "反証できず指摘は維持。起動ログは line 38 `$io->text('店舗注文番号初期化バッチ開始')` の固定文言のみで日時を含まず、同ファイルおよび EventListener/EventSubscriber・monolog に日時を付与する ConsoleFormatter/console 購読者は存在しない(rg 該当なし)。さらに line 51 `$io->success('店舗注文番号初期化処理が完了しました。')` で設計 line 1364『本バッチ独自の件数ログ・完了ログは出力しない』が禁じる完了ログを出力。設計 line 1363『起動時に日時付きのコンソール出力』も未充足。完了ログ出力の一点だけでも設計違反が確定し、二重に成立。designQuote は該当行に実在。実装違いは事実。"
+    }
+  ]
+}

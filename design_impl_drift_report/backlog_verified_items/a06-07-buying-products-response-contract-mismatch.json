@@ -1,0 +1,211 @@
+{
+  "id": "a06-07-buying-products-response-contract-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a06-07_0506_sheet-9_id.json",
+  "sourceFindingId": "a06-07_0506_sheet-9_id-conformance-6d0f2fb4703d",
+  "classification": "API店頭買取管理",
+  "feature": "商品IDリストから買取用商品情報を取得",
+  "issueCategory": "実装違い",
+  "issue": "買取用商品情報レスポンスのconditionClassesが設計のproductCode・型定義と一致していない",
+  "designBook": "0506_基本設計仕様書(API_店頭買取管理).xlsx",
+  "reproSteps": [
+    "JWT認証済みの状態で、POST http://localhost:8080/api/v1/buying/products に ids=<カード商品の商品ID> をフォーム値で送信する",
+    "レスポンスの cards.<cardId>.details.<detailId>.languageClasses.<languageCode>.conditionClasses.<conditionCode> を確認する",
+    "同じ項目について、設計HTML・pf-api の階層定義・ec-cube-enterprise の BuyingCardsFormatter を比較する"
+  ],
+  "expected": [
+    "conditionClasses.<conditionCode> は productClassId, productCode, buyPrice, price, stock, sectionId を返す",
+    "details.<detailId>.foilFlg は boolean として返す",
+    "conditionClasses.<conditionCode>.price と stock は string として返す"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、`BuyingController::getByProductIds()` が `MtbCardRepository::getBuyingCardsByProductIds()` の結果を `BuyingCardsFormatter::format()` に渡し、その結果をそのまま `JsonResponse` で返す。formatter は `conditionClasses` 配下に `productClassCode` を出力し、設計が要求する `productCode` は出力していない。また `foilFlg` は int、`price` は `standardPrice` の int|null、`stock` は int として返る。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise Controller は formatter 結果をそのまま JsonResponse で返す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php",
+          "start": 67,
+          "end": 93,
+          "language": "php",
+          "contains": [
+            "#[Route('/%eccube_api_v1_route%/buying/products'",
+            "$cards = $this->mtbCardRepository->getBuyingCardsByProductIds",
+            "return new JsonResponse($this->buyingCardsFormatter->format($cards))"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise Repository は productClass.code を productClassCode として選択する",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php",
+          "start": 175,
+          "end": 199,
+          "language": "php",
+          "contains": [
+            "productClass.code AS productClassCode",
+            "productClass.standardPrice AS standardPrice",
+            "productStock.stock AS stock"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise DTO は productClassCode、int foilFlg、int stock を受け取る",
+          "path": "ec-cube-enterprise/src/Eccube/Dto/Repository/Master/GetBuyingCardsQueryResponseDto.php",
+          "start": 25,
+          "end": 47,
+          "language": "php",
+          "contains": [
+            "public int $foilFlg",
+            "public string $productClassCode",
+            "public ?int $standardPrice",
+            "public int $stock"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise Formatter は productClassCode を返し、productCode を返さない",
+          "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php",
+          "start": 83,
+          "end": 123,
+          "language": "php",
+          "contains": [
+            "'foilFlg' => $dto->foilFlg",
+            "'productClassCode' => $dto->productClassCode",
+            "'price' => $dto->standardPrice",
+            "'stock' => $dto->stock"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、`DtbProductRepository::PRODUCTS_HIERALCHY` が `conditionClasses` 配下の返却項目として `productCode` を定義し、`getProductsByProductIdList()` も `productClass.productCode` を選択する。`HierarchicalDataTrait::makeHierarchy()` はこの階層定義のフィールド名をそのままレスポンス配列のキーにするため、ベース実装の外部キーは `productCode` であり `productClassCode` ではない。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api の階層定義は conditionClasses に productCode を含める",
+          "path": "pf-api/src/Repository/DtbProductRepository.php",
+          "start": 15,
+          "end": 43,
+          "language": "php",
+          "contains": [
+            "'conditionClasses:conditionCode' => [",
+            "'productClassId'",
+            "'productCode'",
+            "'price'",
+            "'stock'"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api は productClass.productCode を選択する",
+          "path": "pf-api/src/Repository/DtbProductRepository.php",
+          "start": 207,
+          "end": 237,
+          "language": "php",
+          "contains": [
+            "productClass.productCode",
+            "productClass.price02 AS price",
+            "productClass.stock",
+            "return $this->makeHierarchy(self::PRODUCTS_HIERALCHY, $result)"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-api の階層化処理は定義されたフィールド名をレスポンスキーにする",
+          "path": "pf-api/src/Repository/HierarchicalDataTrait.php",
+          "start": 19,
+          "end": 48,
+          "language": "php",
+          "contains": [
+            "public function makeHierarchy(array $hierarchy, array $data)",
+            "$this->recursiveLoad",
+            "$parent[$record[$keyName]][$field] = $record[$field]"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "A06-07 のサンプルレスポンスは foilFlg boolean、conditionClasses 配下の productCode、price/stock 文字列を示す",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 2290,
+      "end": 2314,
+      "language": "html",
+      "contains": [
+        "\"foilFlg\": false",
+        "\"productCode\": \"P-40001\"",
+        "\"price\": \"300\"",
+        "\"stock\": \"5\""
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "同じ設計HTML内のレスポンス定義でも productCode、price string、stock string を要求する",
+      "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html",
+      "start": 2508,
+      "end": 2538,
+      "language": "html",
+      "contains": [
+        "\"foilFlg\": false",
+        "\"productCode\": \"P-40001\"",
+        "\"price\": \"300\"",
+        "\"stock\": \"5\""
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "Controller は formatter 結果を変換せず JsonResponse で返す",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php",
+      "start": 67,
+      "end": 93,
+      "language": "php",
+      "contains": [
+        "$this->mtbCardRepository->getBuyingCardsByProductIds",
+        "$this->buyingCardsFormatter->format($cards)"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "Repository/DTO/Formatter は productClassCode を生成・出力し productCode を出力しない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php",
+      "start": 83,
+      "end": 123,
+      "language": "php",
+      "contains": [
+        "'productClassCode' => $dto->productClassCode",
+        "'price' => $dto->standardPrice",
+        "'stock' => $dto->stock"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は productCode をレスポンス階層定義に含める",
+      "path": "pf-api/src/Repository/DtbProductRepository.php",
+      "start": 15,
+      "end": 43,
+      "language": "php",
+      "contains": [
+        "'productCode'",
+        "'price'",
+        "'stock'"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は productClass.productCode を選択し階層化して返す",
+      "path": "pf-api/src/Repository/DtbProductRepository.php",
+      "start": 207,
+      "end": 237,
+      "language": "php",
+      "contains": [
+        "productClass.productCode",
+        "return $this->makeHierarchy(self::PRODUCTS_HIERALCHY, $result)"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"conditionClasses|productClassCode|productCode|foilFlg|buyPrice|standardPrice|BuyingCardsFormatter|find.*Buying|cardIds|商品IDリスト\" excel_to_html/output/0506_基本設計仕様書\\(API_店頭買取管理\\).html ../ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1 ../ec-cube-enterprise/src/Eccube/Repository ../pf-api ../deck-api --glob '!vendor/**' --glob '!var/**'",
+      "rg -n \"productClassCode|conditionClasses|standardPrice|sectionId|foilFlg\" ../ec-cube-enterprise/src/Eccube/Repository ../ec-cube-enterprise/src/Eccube/Dto ../ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1 --glob '!var/**'",
+      "rg -n \"PRODUCTS_HIERALCHY|productClass.productCode|makeHierarchy|conditionClasses:conditionCode\" ../pf-api/src/Repository/DtbProductRepository.php ../pf-api/src/Repository/HierarchicalDataTrait.php",
+      "rg -n \"buying/products|getByProductIds|BuyingCardsFormatter|JsonResponse\" ../ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php ../ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php"
+    ],
+    "review": "gpt-5.5 high reviewer VERDICT: VERIFIED. 設計は productCode、price/stock string、foilFlg boolean を明示し、pf-api は productCode を階層定義・select して返す。enterprise は Controller が formatter 結果をそのまま返し、Repository/DTO/Formatter は productClassCode、int foilFlg、int stock、int|null standardPrice を返す。型差分も同じレスポンス整形問題として同一課題に含めてよいが、最重要差分は productCode 欠落。A06-06/A06-08/A06-17/A06-10/A06-18 など同 formatter 利用APIは関連・統合候補。"
+  }
+}

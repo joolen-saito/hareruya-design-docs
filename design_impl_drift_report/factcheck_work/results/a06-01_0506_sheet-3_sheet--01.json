@@ -1,0 +1,90 @@
+{
+  "chunkId": "a06-01_0506_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-01_0506_sheet-3_sheet.json#a06-01_0506_sheet-3_sheet-conformance-20b1b16c5681",
+      "functionId": "a06-01_0506_sheet-3_sheet",
+      "featureNo": "A06-01",
+      "title": "A06-01 買取アプリ用ログイン",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計のエンドポイント /api/admin/login.json・/admin/login.json・/admin/login のいずれとも異なり、実装は /api/v1/admin/login.json を提供している。",
+      "reason": "設計は基本設計で POST /api/admin/login.json（HTML 888行）、詳細設計の利用者視点の入口で POST /admin/login.json と POST /admin/login（HTML 984行）を掲げる。実装 LoginController の Route は '/%eccube_api_v1_route%/admin/login.json'（LoginController.php:45）で、eccube_api_v1_route の既定値は 'api/v1'（eccube.yaml:6 の ECCUBE_API_V1_ROUTE、eccube.yaml:72 で参照）のため実URLは /api/v1/admin/login.json。ファイアウォールの member login user routes も /api/v1/admin/login.json のみを許可（eccube.yaml:314）。設計の3経路のいずれも実ルートとして存在せず、実装はバージョン付き別パスだけを提供している。",
+      "designEvidence": {"label": "設計要求（エンドポイントURL）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 887, "end": 889, "contains": ["エンドポイントURL", "/api/admin/login.json"]},
+      "implEvidence": [
+        {"label": "実装ルート", "note": "バージョン付きパス", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php", "start": 45, "end": 45, "contains": ["/%eccube_api_v1_route%/admin/login.json", "api_admin_login"]},
+        {"label": "route既定値", "note": "api/v1", "path": "ec-cube-enterprise/app/config/eccube/packages/eccube.yaml", "start": 6, "end": 6, "contains": ["ECCUBE_API_V1_ROUTE): 'api/v1'"]},
+        {"label": "ファイアウォール許可ルート", "path": "ec-cube-enterprise/app/config/eccube/packages/eccube.yaml", "start": 314, "end": 314, "contains": ["/api/v1/admin/login.json"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-01_0506_sheet-3_sheet.json#a06-01_0506_sheet-3_sheet-conformance-c2ecb4548b46",
+      "functionId": "a06-01_0506_sheet-3_sheet",
+      "featureNo": "A06-01",
+      "title": "A06-01 買取アプリ用ログイン",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "medium",
+      "reason": "指摘は「pf-api側で必須検証せず中継先に委ねる」設計に対し、実装が空文字で例外を投げる点を実装違いとする。しかし設計の観測可能な要求は『未入力・誤りは認証失敗として認証拒否（HTTP 401）となる』（HTML 1020行、および1004-1005行の失敗レスポンス）である。実装 LoginController.php:51-53 は login_id/password が空のとき UnauthenticatedException を投げ、UnauthenticatedException は statusCode を Response::HTTP_UNAUTHORIZED=401 に設定する（UnauthenticatedException.php:29-34）ため、未入力→401 という設計指定の結果は満たされる。『pf-api側で検証しない』はpf-api＋中継先の二層（現行）アーキテクチャにおける責務配分の記述であり、中継を廃した ec-cube-enterprise の単層実装では検証位置が内部的に移るだけで、外部契約（未入力→401）に違反しない。よって実装違いとは言えない。なお失敗時のレスポンス本文の形・文言差は別項目(16e5a539edac)で扱う。",
+      "designEvidence": {"label": "設計要求（バリデーション）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1020, "end": 1020, "contains": ["形式・必須の検証を行わず", "認証拒否（HTTP 401）"]},
+      "implEvidence": [
+        {"label": "空入力時の401例外", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php", "start": 51, "end": 53, "contains": ["$loginId === '' || $password === ''", "UnauthenticatedException"]},
+        {"label": "UnauthenticatedExceptionは401", "path": "ec-cube-enterprise/src/Eccube/Exception/App/UnauthenticatedException.php", "start": 29, "end": 34, "contains": ["Response::HTTP_UNAUTHORIZED"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-01_0506_sheet-3_sheet.json#a06-01_0506_sheet-3_sheet-conformance-16e5a539edac",
+      "functionId": "a06-01_0506_sheet-3_sheet",
+      "featureNo": "A06-01",
+      "title": "A06-01 買取アプリ用ログイン",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "認証失敗レスポンスは設計の {code, message}（中継先画面エラー文言）と異なり、実装は {code, errors:[固定文言]} を返す。",
+      "reason": "設計の失敗レスポンスは 401 で本文 {code, message}、message は中継先の画面エラー文言から改行表記を除いたもので pf-api 独自文言を設けない（HTML 1004-1005行）。実装では UnauthenticatedException が errors:[$message] を持ち statusCode 401（UnauthenticatedException.php:29-34）、API 例外ハンドラ ExceptionListener が JsonResponse で {'code'=>$statusCode, 'errors'=>$errors} を返す（ExceptionListener.php:136-139）。すなわちフィールド名が message ではなく errors（配列）で、契約が構造的に一致しない。さらに文言は LoginController がセットする固定文字列（例 'ログインIDまたはパスワードが正しくありません' LoginController.php:58, 70）で、中継が存在しないため中継先画面エラー文言の抽出も行われていない。HTTP ステータス 401 のみ一致。",
+      "designEvidence": {"label": "設計要求（失敗レスポンス）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1004, "end": 1005, "contains": ["{code, message}", "中継先の画面エラー文言"]},
+      "implEvidence": [
+        {"label": "例外のerrors配列と401", "path": "ec-cube-enterprise/src/Eccube/Exception/App/UnauthenticatedException.php", "start": 29, "end": 34, "contains": ["errors: [$message]", "Response::HTTP_UNAUTHORIZED"]},
+        {"label": "APIエラー応答の形", "note": "code+errors配列で返す", "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php", "start": 136, "end": 139, "contains": ["'code' => $statusCode", "'errors' => $errors"]},
+        {"label": "独自固定文言", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php", "start": 57, "end": 58, "contains": ["ログインIDまたはパスワードが正しくありません"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-01_0506_sheet-3_sheet.json#a06-01_0506_sheet-3_sheet-conformance-03e74a89e57b",
+      "functionId": "a06-01_0506_sheet-3_sheet",
+      "featureNo": "A06-01",
+      "title": "A06-01 買取アプリ用ログイン",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "JWTペイロードは設計が発行者(iss)と利用者ID(aud)を要求するのに対し、実装は sub のみを格納している。",
+      "reason": "設計はトークンのペイロードが発行者と利用者ID（管理者会員のID）を持ち署名方式は HS256 と明記（HTML 987-988行）、レスポンスサンプルの jwtToken もデコードすると {\"iss\":\"Sekappy Inc.\",\"aud\":825} を含む（HTML 948行）。実装 JwtTokenService::createToken はペイロードを ['sub' => (string) $memberId] のみで生成し（JwtTokenService.php:79-81）、addSignature で alg=HS256 を付与する（JwtTokenService.php:86）。署名方式 HS256 は一致するが、設計が要求する iss(発行者)クレームが無く、利用者ID は aud ではなく sub という別クレーム名・文字列型で格納されている。",
+      "designEvidence": {"label": "設計要求（トークン発行）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 987, "end": 988, "contains": ["発行者と利用者ID", "署名方式はHS256"]},
+      "implEvidence": [
+        {"label": "JWTペイロード生成", "note": "subのみ・iss/aud無し・HS256", "path": "ec-cube-enterprise/src/Eccube/Security/AccessToken/JwtTokenService.php", "start": 79, "end": 87, "contains": ["'sub' => (string) $memberId", "'alg' => 'HS256'"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a06-01_0506_sheet-3_sheet.json#a06-01_0506_sheet-3_sheet-conformance-50ab5349484e",
+      "functionId": "a06-01_0506_sheet-3_sheet",
+      "featureNo": "A06-01",
+      "title": "A06-01 買取アプリ用ログイン",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "会員に店舗が紐づかない場合に shopName/shopAddr を空文字で返す設計に対し、実装は非nullなBaseInfoを前提とし店舗未紐付けを扱えず例外化する。",
+      "reason": "設計は店舗が紐づかない場合 shopName・shopAddr を空文字で返すと明記（HTML 1003行、1023行）。実装では LoginMemberView.base_info_id と getBaseInfoId() が nullable（?int, LoginMemberView.php:63-64,121）だが、LoginController.php:67 は entityManager->find(BaseInfo::class, getBaseInfoId()) の結果を Member::setBaseInfo(BaseInfo $baseInfo) に渡す。Member の baseInfo プロパティは 'public BaseInfo $baseInfo'（非null型）で getBaseInfo():BaseInfo・setBaseInfo(BaseInfo)（Member.php:188-205）。base_info_id が null または対応 BaseInfo が無い場合 find は null を返し、非nullable引数へ null 渡しで TypeError となる。続く LoginController.php:73-85 は $baseInfo->getAddr01()/getAddr02()/getShopName() を無条件に呼ぶだけで、店舗未紐付け時に空文字を返す分岐が存在しない。よって設計の空文字応答契約を満たさない。",
+      "designEvidence": {"label": "設計要求（成功レスポンス shopName/shopAddr）", "path": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html", "start": 1003, "end": 1003, "contains": ["店舗が紐づかない場合は空文字"]},
+      "implEvidence": [
+        {"label": "base_info_idはnullable", "path": "ec-cube-enterprise/src/Eccube/Entity/Views/LoginMemberView.php", "start": 63, "end": 64, "contains": ["base_info_id", "nullable: true"]},
+        {"label": "Memberは非nullなBaseInfo前提", "path": "ec-cube-enterprise/src/Eccube/Entity/Member.php", "start": 188, "end": 205, "contains": ["public BaseInfo $baseInfo", "setBaseInfo(BaseInfo $baseInfo)"]},
+        {"label": "店舗未紐付け分岐なし", "note": "無条件にBaseInfoメソッドを呼ぶ", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php", "start": 67, "end": 85, "contains": ["$member->setBaseInfo", "getShopName()"]}
+      ]
+    }
+  ]
+}

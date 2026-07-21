@@ -1,0 +1,10 @@
+{
+  "chunkId": "a07-03_0507_sheet-5_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-03_0507_sheet-5_sheet.json#a07-03_0507_sheet-5_sheet-conformance-945dae5295e4",
+      "refuted": false,
+      "reason": "反証を試みたが全て崩れ、指摘は維持。(1)引用検証:UpdateFreeCommentAction.php:44 は catch(\\Exception $e) 内で rollback + logger->error 後、元の $e のメッセージを使わず throw new \\RuntimeException('システムエラーが発生しました') を投げる（引用正確）。BuyOrderController.php:117 は catch(\\Throwable $e){ throw new InternalException('システムエラーが発生しました', $e); } で固定文言に包み直す（引用正確、しかも直前に『システムエラーの場合は隠蔽して500エラーを返す』というコメントあり=意図的隠蔽）。InternalException.php:29 は errors:[$message] で $message 既定も固定文言（正確）。ExceptionListener.php:83 は BaseApiException から getErrors() を取得、:136-139 で {code, errors} JsonResponse を返す（正確）。(2)別実装:rg で freeComment/UpdateFreeCommentAction を全 src 横断。対象機能(ネット買取受注 A07-03)を処理するのは BuyOrder\\UpdateFreeCommentAction のみで、もう一つ存在する OtcBuyOrder\\UpdateFreeCommentAction は別機能(店頭買取)。500 時に保存例外の実メッセージを errors へ返す経路は存在しない。InternalException は BaseApiException なので ExceptionListener は常に固定 getErrors() を返し、仮に RuntimeException が漏れても default 分岐で 'システムエラーが発生しました' となる。$previous のメッセージを errors へ復元する処理は ExceptionListener/Exception 配下に無い。(3)設計側除外:設計HTML(0507_...html)は line~1329 レスポンス(失敗)表『500|保存処理中の例外|{code, errors}（errorsは例外メッセージ。トランザクションはロールバックする）』および line~1354 エラー処理表『保存処理中の例外|処理失敗(HTTP 500)とし、例外メッセージを返す。トランザクションをロールバックする。』の2箇所で明示要求。Ph2/対象外/現行踏襲/隠蔽の注記は近傍に無い。(4)要求読み違い:400 は固定文言『コメントを入力してください』、500 は『例外メッセージ』と明確に対比させており、500 は原例外メッセージの露出を意図。実装は原メッセージを破棄し固定汎用文言へ置換=外部契約不一致が確定。ロールバックと {code,errors} 形は実装済みで差異は errors の値のみ。"
+    }
+  ]
+}

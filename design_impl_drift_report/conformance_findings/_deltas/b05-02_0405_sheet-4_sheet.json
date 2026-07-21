@@ -1,0 +1,174 @@
+{
+  "functionId": "b05-02_0405_sheet-4_sheet",
+  "featureNo": "B05-02",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-4:1204",
+      "designExpectation": "コンソールのバッチコマンド `order:batch resendMail` で購入完了手続き再処理を実行し、メール未送信の受注についてポイント・在庫を整え、注文完了メールを再送信する。",
+      "implRef": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/Repository, src/Eccube/Controller, html。検索語: order:batch resendMail / resendMail / ResendMail / 購入完了手続き再処理 / メール未送信受注 / 注文完了メールを再送 / eccube:resend / eccube:order:resend）",
+      "implementationActual": "`src/Eccube/Command` 配下に B05-02 相当の `order:batch resendMail` / `ResendMailCommand` は存在しない。近接する実装は B05-07 の `eccube:check-not-reflected-point-usage` と、単体の `eccube:smaregi:update-point` のみ。",
+      "mismatchReason": "現在のコマンド一覧では `CheckNotReflectedPointUsageCommand` がポイント利用未反映の検出・通知のみを行い、B05-02 のメール未送信受注再処理バッチ入口を提供していない。`SmaregiUpdatePointCommand` もスマレジポイント連携単体であり、B05-02 の再処理フロー入口ではない。",
+      "comparisonRows": [
+        {
+          "item": "バッチ入口",
+          "design": "`order:batch resendMail`",
+          "implementation": "不在。`eccube:check-not-reflected-point-usage` と `eccube:smaregi:update-point` は存在するが別目的。",
+          "mismatch": "設計コマンドが実装されていない"
+        },
+        {
+          "item": "期待動作",
+          "design": "メール未送信受注のポイント・在庫・注文完了メール再送を一括再処理する",
+          "implementation": "B05-07 は検出通知のみ、スマレジポイント連携は単体コマンドのみ",
+          "mismatch": "購入完了手続き再処理の業務フローが存在しない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-4:1136",
+      "designExpectation": "注文ステータスが「新規」「入金待ち」「ピック中」、注文完了メール送信履歴なし、注文日時がバッチ起動時間の5分前から1分前までの注文を処理対象として取得する。",
+      "implRef": "不在（探索範囲: src/Eccube/Repository/OrderRepository.php, src/Eccube/Command, src/Eccube/Service/Admin/Order, src/Eccube/Service。検索語: メール未送信 / MailHistories / MailHistory / dtb_mail_history / 5分前 / 1分前 / getNotReflectedPointsUsage / findTargetOrdersFor）",
+      "implementationActual": "受注完了メール送信履歴は `MailService::sendOrderMail()` で保存されるが、B05-02 用に「送信履歴なし」「注文日時5分前〜1分前」「新規・入金待ち・ピック中」を組み合わせて抽出する実装は見つからない。近接する `OrderRepository::getNotReflectedPointsUsage()` は決済・金額差分・直近1時間を条件にした通知用抽出で、メール未送信受注の抽出ではない。",
+      "mismatchReason": "`OrderRepository.php:1824` の抽出は `plg_sln_order_payment_status`、金額差分、`payment_date BETWEEN NOW() - INTERVAL '1 hour' AND NOW()` を条件にしており、設計のメール履歴なし・注文日時5分前〜1分前・対象ステータス条件を満たさない。",
+      "comparisonRows": [
+        {
+          "item": "メール履歴なし条件",
+          "design": "注文に紐づく注文完了メール送信履歴が存在しない",
+          "implementation": "B05-02 用抽出では不在。通常送信時の履歴保存は `MailService.php:501` に存在",
+          "mismatch": "未送信受注抽出条件がない"
+        },
+        {
+          "item": "日時条件",
+          "design": "注文日時がバッチ起動時間の5分前から1分前まで",
+          "implementation": "近接実装は `payment_date BETWEEN NOW() - INTERVAL '1 hour' AND NOW()`",
+          "mismatch": "基準日時・範囲が異なる"
+        },
+        {
+          "item": "ステータス条件",
+          "design": "新規・入金待ち・ピック中",
+          "implementation": "B05-02 用条件として不在",
+          "mismatch": "対象受注の抽出条件が未実装"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-4:1140",
+      "designExpectation": "受注サブに消費ポイントがあり、かつポイント履歴が無い場合は、ポイント履歴を作成し、ポイント残高を減らし、ポイント処理を重複して行わない。移行先では `dtb_order.spended_points` と `dtb_point_history.order_id` を使用する。",
+      "implRef": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service, src/Eccube/Repository, src/Eccube/Entity。検索語: spended_points / getSpendedPoints / DtbPointHistory / dtb_point_history / point_history.order_id / PointHistoryEntityManager / CheckNotReflectedPointUsage）",
+      "implementationActual": "`Order` に `spended_points`、`DtbPointHistory` と `PointHistoryEntityManager` は存在するが、B05-02 の対象受注に対して `spended_points` と `dtb_point_history.order_id` を照合し、未履歴時だけポイント履歴作成・残高減算を行う再処理は見つからない。`CheckNotReflectedPointUsageAction` は対象検出後に通知メールを送るだけで、受注・会員・ポイント履歴を更新しない。",
+      "mismatchReason": "`CheckNotReflectedPointUsageAction.php:36` は `getNotReflectedPointsUsage()` の結果を取得し、`CheckNotReflectedPointUsageAction.php:44` でアラートメール送信のみを行う。ポイント履歴作成、会員ポイント残高減算、冪等判定の処理がない。",
+      "comparisonRows": [
+        {
+          "item": "冪等判定",
+          "design": "消費ポイントがあり、ポイント履歴が無い場合だけ処理する",
+          "implementation": "B05-02 用の `dtb_point_history.order_id` 照合なし",
+          "mismatch": "重複防止付きポイント再処理が未実装"
+        },
+        {
+          "item": "ポイント履歴登録",
+          "design": "`dtb_point_history` に履歴を登録する",
+          "implementation": "共通作成部品はあるが B05-02 フローから未接続",
+          "mismatch": "対象受注に対する履歴登録がない"
+        },
+        {
+          "item": "残高減算",
+          "design": "ポイント残高を減らす",
+          "implementation": "B05-02 再処理内の残高減算なし",
+          "mismatch": "購入完了画面未到達時の補正処理がない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-4:1211",
+      "designExpectation": "消費ポイントがある場合は、スマレジポイント連携を別プロセスのコマンドで実行する。",
+      "implRef": "src/Eccube/Command/SmaregiUpdatePointCommand.php:26",
+      "implementationActual": "スマレジポイント連携単体コマンド `eccube:smaregi:update-point` は存在するが、B05-02 の再処理バッチが消費ポイントありの受注ごとに別プロセスとして起動する実装は見つからない。",
+      "mismatchReason": "`SmaregiUpdatePointCommand.php:26` は単体コマンド定義、`SmaregiUpdatePointCommand.php:38` は `orderId` 引数、`SmaregiUpdatePointCommand.php:62` は同期的な action 呼び出しである。B05-02 コマンド側から `Process` 等で別プロセス起動する呼び出しは探索範囲に不在。",
+      "comparisonRows": [
+        {
+          "item": "連携コマンド",
+          "design": "消費ポイントがある場合に別プロセスのコマンドで実行",
+          "implementation": "単体の `eccube:smaregi:update-point` は存在",
+          "mismatch": "呼び出し元の B05-02 再処理バッチがない"
+        },
+        {
+          "item": "起動条件",
+          "design": "対象受注の消費ポイントあり",
+          "implementation": "B05-02 対象受注ループからの起動条件なし",
+          "mismatch": "スマレジ連携が再処理フローに組み込まれていない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-4:1210",
+      "designExpectation": "受注ごとにトランザクションを開始し、在庫履歴と販売数を更新して確定する。失敗時は当該受注のみ巻き戻し、エラーメッセージを出力して次の受注へ進む。",
+      "implRef": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/PurchaseFlow, src/Eccube/Service/EntityManager, src/Eccube/Repository。検索語: ResendMail / stock_history / StockHistoryEntityManager / sale_count / sales / transaction / beginTransaction / rollback / commit / sendOrderMail）",
+      "implementationActual": "通常購入フロー用の在庫履歴処理やメール送信履歴保存は存在するが、B05-02 のメール未送信受注を受注単位トランザクションで処理し、1件失敗時に当該受注だけ rollback して継続するコマンド実装は見つからない。",
+      "mismatchReason": "B05-02 の対象抽出・受注ループ・begin/commit/rollback・エラー出力を持つコマンド/サービスが不在。通常フローの部品存在だけでは、設計が求める再処理バッチの受注単位独立性を満たさない。",
+      "comparisonRows": [
+        {
+          "item": "受注単位トランザクション",
+          "design": "受注ごとに開始・確定し、失敗時は当該受注のみ巻き戻す",
+          "implementation": "B05-02 用ループ/トランザクション不在",
+          "mismatch": "失敗時の独立性が実装されていない"
+        },
+        {
+          "item": "在庫履歴・販売数",
+          "design": "受注単位で在庫履歴と販売数を更新する",
+          "implementation": "通常フロー部品はあるが B05-02 から未接続",
+          "mismatch": "再処理対象への適用がない"
+        },
+        {
+          "item": "エラー出力",
+          "design": "受注処理失敗時にエラーメッセージをコンソール出力して次へ進む",
+          "implementation": "B05-02 コマンド不在",
+          "mismatch": "設計の失敗時処理がない"
+        }
+      ]
+    },
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-4:1211",
+      "designExpectation": "注文完了メールを再送信する。宛先言語は会員の都道府県が海外なら英語、それ以外は日本語とし、メール送信後に送信履歴を登録する。",
+      "implRef": "src/Eccube/Service/MailService.php:400",
+      "implementationActual": "通常の `MailService::sendOrderMail()` は存在し、送信後に履歴を保存する。ただしテンプレート選択は現在ロケールで分岐しており、B05-02 の再送バッチから会員都道府県が海外かどうかで英語/日本語を選ぶ実装は見つからない。",
+      "mismatchReason": "`MailService.php:404`〜`409` は `getCurrentLocale()` によるテンプレート選択で、設計の「会員の都道府県が海外なら英語、それ以外は日本語」ではない。`MailService.php:501`〜`502` で履歴保存は確認できるため履歴登録要求は反証済みだが、B05-02 の言語判定付き再送フローが不在。",
+      "comparisonRows": [
+        {
+          "item": "メール再送",
+          "design": "B05-02 対象受注へ注文完了メールを再送する",
+          "implementation": "通常の `sendOrderMail()` は存在するが B05-02 呼び出し元なし",
+          "mismatch": "再処理バッチからの再送が未実装"
+        },
+        {
+          "item": "言語判定",
+          "design": "会員の都道府県が海外なら英語、それ以外は日本語",
+          "implementation": "現在ロケールでテンプレート選択",
+          "mismatch": "判定基準が設計と異なる/再処理フローに存在しない"
+        },
+        {
+          "item": "送信履歴",
+          "design": "メール送信後、メール送信履歴を登録する",
+          "implementation": "`MailService.php:501`〜`502` で保存あり",
+          "mismatch": "履歴保存部品は存在するが B05-02 再送フローがない"
+        }
+      ]
+    }
+  ]
+}

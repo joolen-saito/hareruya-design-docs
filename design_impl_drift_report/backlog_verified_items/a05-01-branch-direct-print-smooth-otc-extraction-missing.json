@@ -1,0 +1,183 @@
+{
+  "id": "a05-01-branch-direct-print-smooth-otc-extraction-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json",
+  "sourceFindingId": "a05-01_0505_sheet-3_sheet-conformance-fa8757b994c6",
+  "classification": "API受注管理",
+  "feature": "注文印刷_印刷情報をプリンタへ送信",
+  "issueCategory": "実装漏れ",
+  "issue": "支店向け注文印刷でスムーズ店頭受取の受注が印刷対象に含まれない",
+  "designBook": "0505_基本設計仕様書(API_受注管理).xlsx",
+  "reproSteps": [
+    "支店のBaseInfoに紐づく、配送方法がスムーズ店頭受取で、所定の支払方法・未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注を用意する",
+    "ec-cube-enterprise の注文印刷API POST http://localhost:8080/api/order/prints/direct/{支店base_info_id} に ConnectionType=GetRequest を指定して呼び出す",
+    "返却される印刷情報XMLに、条件を満たすスムーズ店頭受取の受注が含まれるか確認する"
+  ],
+  "expected": [
+    "印刷対象の受注一覧には、店頭受取で注文受領の受注を含める",
+    "印刷対象の受注一覧には、スムーズ店頭受取で所定の支払方法かつ未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありの受注を含める",
+    "印刷対象の受注一覧には、ブラウザ印刷フラグが立つ受注を含める",
+    "取得件数は最大10件とする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise では、`BaseInfo` が本店でない場合に支店向けの `getDirectPrintOrderList($base_info_id)` を呼び出す。この支店向けSQLは、店頭受取の注文受領分岐と `browser_print_flg = true` 分岐だけで構成されており、`Delivery::SMOOTH_OTC`、所定支払方法、未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードありのスムーズ店頭受取分岐を持たない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise は本店以外で支店向け getDirectPrintOrderList を呼び出す",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php",
+          "start": 37,
+          "end": 48,
+          "language": "php",
+          "contains": [
+            "$BaseInfo = $this->baseInfoRepository->find($base_info_id)",
+            "$BaseInfo && $BaseInfo->isMainShop()",
+            "$OrderDataList = $this->orderRepository->getPrintOrderListMainShop($base_info_id)",
+            "$OrderDataList = $this->orderRepository->getDirectPrintOrderList($base_info_id)"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 支店向け印刷対象取得は OTC NEW と browser_print_flg のみで smoothOtc 分岐がない",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+          "start": 1550,
+          "end": 1618,
+          "language": "php",
+          "contains": [
+            "public function getDirectPrintOrderList(int $base_info_id): array",
+            "AND s.delivery_id = :otc",
+            "AND o.order_status_id = :orderNew",
+            "AND o.browser_print_flg = true",
+            "LIMIT 10"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-api)では、単一の `getPrintOrderList()` が店頭受取の注文受領分岐、スムーズ店頭受取の支払方法・各日時未設定・スマレジコードあり分岐、ブラウザ印刷フラグ分岐をまとめて抽出し、最大10件に制限している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-api は smoothOtc 条件を印刷対象抽出に含める",
+          "path": "pf-api/src/Repository/DtbOrderRepository.php",
+          "start": 21,
+          "end": 63,
+          "language": "php",
+          "contains": [
+            "public function getPrintOrderList()",
+            "s.delivery = :smoothOtc",
+            "o.payment IN (:payments)",
+            "os.confirmDate IS NULL",
+            "os.otcRsvDate IS NULL",
+            "os.smaregiCode IS NOT NULL",
+            "os.browserPrintFlg = 1",
+            "->setMaxResults(10)"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "印刷対象受注の抽出条件",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1277,
+      "end": 1278,
+      "language": "html",
+      "contains": [
+        "印刷対象の受注一覧を取得する",
+        "スムーズ店頭受取で所定の支払方法",
+        "未確定・未出荷・未取消・未受領・店頭予約日なし・スマレジコードあり",
+        "最大10件"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "配送方法は店頭受取・スムーズ店頭受取の判別と抽出条件に用いる",
+      "path": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html",
+      "start": 1106,
+      "end": 1107,
+      "language": "html",
+      "contains": [
+        "配送<code>dtb_shipping</code>",
+        "店頭受取・スムーズ店頭受取の判別",
+        "抽出条件"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "本店以外では支店向け印刷対象取得を呼び出す",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php",
+      "start": 37,
+      "end": 48,
+      "language": "php",
+      "contains": [
+        "$BaseInfo && $BaseInfo->isMainShop()",
+        "getPrintOrderListMainShop",
+        "getDirectPrintOrderList"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "本店向け取得には smoothOtc 分岐がある",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+      "start": 1493,
+      "end": 1540,
+      "language": "php",
+      "contains": [
+        "public function getPrintOrderListMainShop(int $base_info_id): array",
+        "s.Delivery = :smoothOtc",
+        "o.Payment IN (:payments)",
+        "o.otc_rsv_date IS NULL",
+        "Delivery::SMOOTH_OTC"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "支店向け取得には smoothOtc 分岐がない",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+      "start": 1550,
+      "end": 1618,
+      "language": "php",
+      "contains": [
+        "public function getDirectPrintOrderList(int $base_info_id): array",
+        "AND s.delivery_id = :otc",
+        "AND o.order_status_id = :orderNew",
+        "AND o.browser_print_flg = true",
+        "LIMIT 10"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-api",
+      "note": "pf-api は smoothOtc 条件を含む単一抽出を実装している",
+      "path": "pf-api/src/Repository/DtbOrderRepository.php",
+      "start": 21,
+      "end": 63,
+      "language": "php",
+      "contains": [
+        "s.delivery = :smoothOtc",
+        "o.payment IN (:payments)",
+        "os.confirmDate IS NULL",
+        "os.otcRsvDate IS NULL",
+        "os.smaregiCode IS NOT NULL",
+        "->setMaxResults(10)"
+      ]
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-07-08",
+    "checkedBy": "codex + gpt-5.5 high critical review",
+    "commands": [
+      "rg -n \"印刷対象の受注一覧|スムーズ店頭受取|所定の支払方法|未確定|未出荷|未取消|未受領|店頭予約日|スマレジコード|ブラウザ印刷フラグ|最大10件\" hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html hareruya-design-docs/design_impl_drift_report/findings/a05-01_0505_sheet-3_sheet.json",
+      "rg -n \"getPrintOrderList|SMOOTH_OTC|smoothOtc|otc_rsv_date|receiptDate|browser_print_flg|setMaxResults|LIMIT 10|payment_total|Delivery::SMOOTH_OTC|DtbDelivery::SMOOTH_OTC|EC_CREDIT|EC_SPLINKS|EC_PAYMENT_NONE\" pf-api/src/Controller/Admin/OrderController.php pf-api/src/Repository ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php",
+      "nl -ba pf-api/src/Repository/DtbOrderRepository.php | sed -n '1,70p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php | sed -n '1493,1540p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php | sed -n '1550,1618p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php | sed -n '37,48p'"
+    ],
+    "notes": [
+      "既存の a05-01-smooth-otc-payment-total-label-missing は、選択済み受注の印字内容で payment_total を文言へ置換しない問題を扱う。",
+      "本項目は印字前の抽出条件の問題であり、支店向け getDirectPrintOrderList がスムーズ店頭受取の通常条件分岐を持たない点に限定する。",
+      "gpt-5.5 high の批判的レビューでも、印字内容差分とは失敗モードと修正対象が異なる別問題として VERIFIED 判定された。"
+    ]
+  }
+}

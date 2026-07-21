@@ -1,0 +1,46 @@
+{
+  "functionId": "f03-06_0303_sheet-8_sheet",
+  "featureNo": "F03-06",
+  "findings": [
+    {
+      "category": "未実装",
+      "dimension": "⑦要求網羅・未実装",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0303_基本設計仕様書(フロント_商品).html#sheet-8（表示メッセージ節『履歴無し=最近見た商品はありません。/No Recently Seen Items』, フロント挙動『履歴が無い場合は最近見た商品が無い旨のメッセージを表示する』, エッジケース『履歴Cookieが無い→履歴無しの表示を描画する』）",
+      "designExpectation": "履歴Cookie(history)が無い/空のとき、見出しに加えて履歴無しメッセージ『最近見た商品はありません。』（英語『No Recently Seen Items』, キー history.no_content 相当）を表示する。",
+      "implRef": "src/Eccube/Resource/template/default/Block/recently_viewed.twig:4,58 ; src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:50-68",
+      "implementationActual": "build が history Cookie 無し/空・有効IDなし時に ProductClasses=[] を返し（PayloadBuilder.php:50-53,63-68）、recently_viewed.twig はブロック全体を `{% if ProductClasses|length > 0 %}`（:4）で囲み else 分岐を持たない（:58 で if 閉じ）。履歴が無い場合は見出しも履歴無しメッセージも一切描画されない。",
+      "mismatchReason": "recently_viewed.twig / RecentlyViewedBlockPayloadBuilder.php / messages.ja.yaml / messages.en.yaml を確認。no_content 相当の翻訳キーは存在せず（recently_viewed 系は title のみ, ja.yaml:1199 / en.yaml:979）、履歴無し表示の描画分岐も無く未実装。",
+      "comparisonRows": [
+        {"item": "履歴無しメッセージの表示", "design": "『最近見た商品はありません。/No Recently Seen Items』を表示", "implementation": "ProductClasses空時はブロック全体を非表示（else分岐なし）", "mismatch": "履歴無しメッセージ未描画"},
+        {"item": "翻訳キー", "design": "history.no_content 相当（ja/en）", "implementation": "recently_viewed.title のみ存在、no_content 相当キー無し", "mismatch": "翻訳キー不在"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0303_基本設計仕様書(フロント_商品).html#sheet-8（機能仕様 処理概要『★…最大15件をスライダーなしで表示する、表示順は最近見た順（新しい順）とする』, 表示画面『1 本店ECTOP / 2 商品一覧 / 3 商品詳細』）",
+      "designExpectation": "最大15件を『スライダーなし』で表示する（表示対象画面: 本店ECTOP・商品一覧・商品詳細）。",
+      "implRef": "src/Eccube/Resource/template/default/Block/recently_viewed.twig:19-42 ; src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:87-94",
+      "implementationActual": "resolveLayout は route 'homepage'(本店ECTOP) に対し 'top' を返し（PayloadBuilder.php:87-94）、top 分岐(:19-42)は p-hareruya-product-carousel（data-js-target=\"product-carousel-slider\" と prev/next ナビボタン付き）＝スライダーで描画する。list/detail 分岐は grid 表示で適合。",
+      "mismatchReason": "recently_viewed.twig の3レイアウト分岐と resolveLayout を確認。本店ECTOP(homepage=top)のみカルーセル/スライダー実装で設計の『スライダーなし』要求に不一致。",
+      "comparisonRows": [
+        {"item": "本店ECTOPの表示形式", "design": "スライダーなしで表示", "implementation": "product-carousel スライダー（slider/nav prev-next）で表示", "mismatch": "ECTOPのみスライダーあり"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0303_基本設計仕様書(フロント_商品).html#sheet-8（フロント挙動 CSS・レイアウト『フォイル商品のサムネイルにはフォイル用の装飾を付す』, 業務ルール・計算 画像の出し分け『フォイル商品はフォイル用の装飾を付す』）",
+      "designExpectation": "フォイル商品のサムネイル（商品画像）にフォイル用の装飾を付す。",
+      "implRef": "src/Eccube/Resource/template/default/Block/_product_card_simple.twig:5-20 ; :28",
+      "implementationActual": "サムネイル画像section(:5-20)には foil 判定に基づくクラス/バッジ/枠等の装飾が無い。フォイル扱いは商品名テキスト先頭に『【Foil】』(front.product.foil_prefix)を付す(:28)のみ。",
+      "mismatchReason": "_product_card_simple.twig 全体を確認し foil 出現箇所は :28 の名称接頭辞のみ。画像 section・CSS フックにフォイル用装飾が無く設計の『サムネイルにフォイル装飾』と差異。",
+      "comparisonRows": [
+        {"item": "フォイル商品のサムネイル装飾", "design": "商品画像にフォイル用の装飾を付す", "implementation": "画像sectionに装飾なし。商品名に【Foil】接頭辞のみ", "mismatch": "サムネイル画像へのフォイル装飾なし"}
+      ]
+    }
+  ]
+}

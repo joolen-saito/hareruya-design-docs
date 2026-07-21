@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_05_admin_product_product_sale_price_csv_export_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は画面タイプ `csv_export`（POST一括フォームからのダウンロード）であり、**CSVの中身（列・値・行複製単位・タグ連結・セールフラグ0|1）は手動確認**、自動化はダウンロード発火・ファイル名・HTTP応答・UI部品・未選択/存在しないIDのエラー遷移に限る。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・ダウンロード発火・HTTP応答ヘッダ・ファイル名などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は画面タイプ `csv_export`（POST一括フォームからのダウンロード）であり、**CSVの中身（列・値・行複製単位・タグ連結・セールフラグ0|1）は手動確認**、自動化はダウンロード発火・ファイル名・HTTP応答・UI部品・未選択/存在しないIDのエラー遷移に限る。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 刷新先 ec-cube-enterprise に該当画面・ルート・ボタンが存在する（`screenExists=true`）: 商品一覧 `form#form_bulk`（index.twig:465）内に出力ボタン（index.twig:474-476、trans `admin.product.sale_price_csv_export`）、ルート `POST /<route>/product/product_price_csv_export`（ProductCsvController.php:164）。
 
@@ -26,35 +26,35 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-001	IT-25	UI部品	P2	検索結果ありで一覧に「セール用価格変更CSV出力」ボタンが表示される	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	—	"1. 商品一覧（/admin/product）を表示する"	一覧のボタン行に「セール用価格変更CSV出力」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-001	IT-25	UI部品	P2	検索結果ありで一覧に「セール用価格変更CSV出力」ボタンが表示される	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	—	1. 商品一覧（/admin/product）を表示する	一覧のボタン行に「セール用価格変更CSV出力」ボタンが表示されること。				
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-005	IT-25	UI部品	P3	各商品行にids[]チェックボックスがあり全選択チェックで一括ONできる	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	—	"1. 商品一覧を表示する
-2. 全選択チェックボックス（#trigger_check_all）をONにする"	各商品行の選択チェックボックスが一括でONになること。
+2. 全選択チェックボックス（#trigger_check_all）をONにする"	各商品行の選択チェックボックスが一括でONになること。				
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-004	IT-25	確認ダイアログ	P2	出力前に確認ダイアログ（モーダル/alert）を表示しない	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	先頭商品を1件選択	"1. 商品一覧を表示する
 2. 先頭商品をチェックする
-3. 「セール用価格変更CSV出力」を押下する"	出力前に確認ダイアログ（モーダル・alert）が表示されずダウンロードが発火すること。
+3. 「セール用価格変更CSV出力」を押下する"	出力前に確認ダイアログ（モーダル・alert）が表示されずダウンロードが発火すること。				
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-002	IT-25	URL	P1	商品を選択して出力するとCSVダウンロードが発火しファイル名がproduct_price_{YmdHis}.csv	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	先頭商品を1件選択	"1. 商品一覧を表示する
 2. 先頭商品をチェックする
-3. 「セール用価格変更CSV出力」を押下する"	ダウンロードが発火し、ファイル名が「product_price_」＋日時14桁＋「.csv」であること。
+3. 「セール用価格変更CSV出力」を押下する"	ダウンロードが発火し、ファイル名が「product_price_」＋日時14桁＋「.csv」であること。				
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-003	IT-03	画面遷移	P1	選択商品IDのPOST応答がtext/csvでattachment配信される	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	ids[]＝先頭商品の実在ID	"1. 一覧から実在商品IDを取得する
 2. 出力ルートへ当該IDでPOSTする
-3. 応答ヘッダを確認する"	HTTP200でContent-Typeがtext/csv、Content-Dispositionがattachment（filename product_price_）であること。
+3. 応答ヘッダを確認する"	HTTP200でContent-Typeがtext/csv、Content-Dispositionがattachment（filename product_price_）であること。				
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-010	IT-22	必須制御	P1	商品未選択で出力すると商品一覧へ戻り「1つ以上の商品を選択してください」が表示される	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	商品を1件もチェックしない	"1. 商品一覧を表示する
-2. 何もチェックせず「セール用価格変更CSV出力」を押下する"	商品一覧（admin_product_page）へリダイレクトし「1つ以上の商品を選択してください」が表示されること。
+2. 何もチェックせず「セール用価格変更CSV出力」を押下する"	商品一覧（admin_product_page）へリダイレクトし「1つ以上の商品を選択してください」が表示されること。				
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-011	IT-22	DBとの相関バリデーション	P2	存在しない商品IDのみで出力すると「存在しないカードIDが含まれています。」(仕様)が表示され一覧/Refererへ戻る	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	ids[]＝DBに存在しない巨大ID	"1. 商品一覧を表示する
-2. 存在しないIDのみで出力ルートへPOSTする"	商品一覧または直前画面（Referer）へリダイレクトし、エラーメッセージ「存在しないカードIDが含まれています。」が表示されること（仕様どおり。実装のフラッシュnamespace乖離なら失敗で検出＝不具合候補#1）。
+2. 存在しないIDのみで出力ルートへPOSTする"	商品一覧または直前画面（Referer）へリダイレクトし、エラーメッセージ「存在しないカードIDが含まれています。」が表示されること（仕様どおり。実装のフラッシュnamespace乖離なら失敗で検出＝不具合候補#1）。				
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-012	IT-03	画面遷移	P2	規格0件の商品のみ選択するとヘッダ行のみのCSVが返りエラーにしない	管理者でログイン済／規格0件商品が存在／SEED-M03-05-NOCLASS	規格0件商品を1件選択	"1. 商品一覧を表示する
 2. 規格0件の商品をチェックする
-3. 「セール用価格変更CSV出力」を押下する"	エラー遷移せずダウンロードが発火すること（ヘッダ行のみ・データ0行のCSV内容自体は手動確認）。
-m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-020	IT-03	画面遷移	P2	未ログインで商品一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	"1. /admin/product へ直接アクセスする"	管理ログイン画面へ誘導されること。
-m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-021	IT-13	URL直接アクセス	P2	未ログインで出力ルートへPOSTするとCSVを返さずログインへ誘導される	未ログイン	ids[]＝任意	"1. /admin/product/product_price_csv_export へ未ログインでPOSTする"	CSVストリームを返さず管理ログイン画面へ誘導されること。
-m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-006	IT-25	UI部品	P3	検索結果0件のとき「セール用価格変更CSV出力」ボタンとids[]が非表示	管理者でログイン済／検索結果が0件になる条件	—	"1. 商品一覧で0件になる検索を実行する"	出力ボタン行とids[]チェックボックスが描画されないこと（pagination件数が正のときのみ描画＝設計の対。0件検索フォームのセレクタは要実機確認）。
-m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-013	IT-22	数値バリデーション	P2	無効なidsのみ送信すると整数フィルタで全破棄され未選択扱いで一覧へ戻る	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	ids[]＝"abc",0,-1（整数化で全破棄）	"1. 商品一覧を表示する
-2. 無効なidsのみで出力ルートへPOSTする"	商品一覧（admin_product_page）へリダイレクトし「1つ以上の商品を選択してください」が表示されること（正の整数化で有効0件＝未選択扱い・設計処理フロー#2-3）。
+3. 「セール用価格変更CSV出力」を押下する"	エラー遷移せずダウンロードが発火すること（ヘッダ行のみ・データ0行のCSV内容自体は手動確認）。				
+m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-020	IT-03	画面遷移	P2	未ログインで商品一覧URLへ直接アクセスすると管理ログイン画面へ誘導される	未ログイン	—	1. /admin/product へ直接アクセスする	管理ログイン画面へ誘導されること。				
+m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-021	IT-13	URL直接アクセス	P2	未ログインで出力ルートへPOSTするとCSVを返さずログインへ誘導される	未ログイン	ids[]＝任意	1. /admin/product/product_price_csv_export へ未ログインでPOSTする	CSVストリームを返さず管理ログイン画面へ誘導されること。				
+m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-006	IT-25	UI部品	P3	検索結果0件のとき「セール用価格変更CSV出力」ボタンとids[]が非表示	管理者でログイン済／検索結果が0件になる条件	—	1. 商品一覧で0件になる検索を実行する	出力ボタン行とids[]チェックボックスが描画されないこと（pagination件数が正のときのみ描画＝設計の対。0件検索フォームのセレクタは要実機確認）。				
+m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-013	IT-22	数値バリデーション	P2	無効なidsのみ送信すると整数フィルタで全破棄され未選択扱いで一覧へ戻る	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	"ids[]＝""abc"",0,-1（整数化で全破棄）"	"1. 商品一覧を表示する
+2. 無効なidsのみで出力ルートへPOSTする"	商品一覧（admin_product_page）へリダイレクトし「1つ以上の商品を選択してください」が表示されること（正の整数化で有効0件＝未選択扱い・設計処理フロー#2-3）。				
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-014	IT-22	DBとの相関バリデーション	P2	実在IDと存在しないIDの混在送信では取得できた商品のみ出力されエラーにしない	管理者でログイン済／検索結果1件以上／SEED-M03-05-PRODUCTS	ids[]＝先頭商品の実在ID＋存在しない巨大ID	"1. 商品一覧を表示する
-2. 先頭商品をチェックし存在しないIDを追加して出力する"	エラー遷移せずダウンロードが発火すること（取得できた実在商品のみ出力・存在しないIDは静かに無視＝設計業務ルール。CSV内容自体は手動確認）。
+2. 先頭商品をチェックし存在しないIDを追加して出力する"	エラー遷移せずダウンロードが発火すること（取得できた実在商品のみ出力・存在しないIDは静かに無視＝設計業務ルール。CSV内容自体は手動確認）。				
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	E2E-M03-05-015	IT-03	画面遷移	P2	未選択出力時はセッションの検索ページ番号を反映した一覧ページへ戻る	管理者でログイン済／検索結果が複数ページ分／SEED-M03-05-PRODUCTS（ページング可能）	セッション eccube.admin.product.search.page_no＝2 相当	"1. 一覧の2ページ目を表示する
-2. 何も選択せず出力する"	商品一覧の当該ページ（admin_product_page/2 相当）へリダイレクトすること（page_no反映・設計処理フロー#3/セッション。要ページングシードでtest.fixme）。
+2. 何も選択せず出力する"	商品一覧の当該ページ（admin_product_page/2 相当）へリダイレクトすること（page_no反映・設計処理フロー#3/セッション。要ページングシードでtest.fixme）。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

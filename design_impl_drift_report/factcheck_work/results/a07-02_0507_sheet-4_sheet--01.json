@@ -1,0 +1,70 @@
+{
+  "chunkId": "a07-02_0507_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-02_0507_sheet-4_sheet.json#a07-02_0507_sheet-4_sheet-conformance-1ab3e04d3312",
+      "functionId": "a07-02_0507_sheet-4_sheet",
+      "featureNo": "A07-02",
+      "title": "A07-02 ネット買取受注一覧取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "GET /admin/buyOrders.json の成功レスポンスが設計スキーマと不一致（ID文字列化・日時非ISO8601・null空文字化）。",
+      "reason": "設計(1142,1165行)は netBuyOrderId/netOrderStatusId を integer、applyDate を ISO8601、freeComment/memberName を未設定時 null、serialize_null 有効と定義。実装 BuyOrderController::getProductArrivalBuyOrders は array_map で手組みの配列を new JsonResponse($response) でそのまま返しており、(1) netBuyOrderId=(string)$buyOrder['id']、(2) netOrderStatusId=(string)$buyOrder['buyOrderStatusId'] と文字列化、(3) applyDate=->format('Y/m/d H:i:s') と非ISO8601形式、(4) freeComment=$buyOrder['memo'] ?? ''、memberName=$buyOrder['memberName'] ?? '' と null を空文字へ置換している。camelCase/ISO8601/serialize_null を適用する応答整形サービスを経由していない。findToAssessBuyOrders リポジトリや別ルートに正規化処理が無いか確認したが、当該GETレスポンスの整形はこのコントローラ内で完結しており別経路での契約一致は無い。",
+      "designEvidence": {
+        "label": "設計要求（成功レスポンス仕様・応答整形）",
+        "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html",
+        "start": 1142,
+        "end": 1165,
+        "contains": ["netBuyOrderId", "integer", "ISO8601形式", "serialize_null"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装（レスポンス手組み）",
+          "note": "整形サービスを経由せず配列を直接JsonResponse化",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php",
+          "start": 71,
+          "end": 87,
+          "contains": ["(string) $buyOrder['id']", "format('Y/m/d H:i:s')", "$buyOrder['memo'] ?? ''", "return new JsonResponse($response)"]
+        }
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-02_0507_sheet-4_sheet.json#a07-02_0507_sheet-4_sheet-conformance-706cca86312a",
+      "functionId": "a07-02_0507_sheet-4_sheet",
+      "featureNo": "A07-02",
+      "title": "A07-02 ネット買取受注一覧取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は401を本文なしと定義するが、App API共通例外処理は401でもJSON本文 {code, errors} を返す。",
+      "reason": "設計(1144行)は認証失敗時のHTTP 401を『認証拒否（本文を持たない）』と定義。実装では当該ルートは Eccube\\Controller\\App\\MTGBuyer\\V1\\Admin 名前空間かつ /api/v1/ 配下で、Context::isAppApi() が true になる。ExceptionListener::onKernelException の isAppApi 分岐（72行〜）は『APIの場合は…JSON形式で必ず(code, errors)を返す』とし、HttpException の 401 を match で Response::HTTP_UNAUTHORIZED => ['認証エラー'] に写像し、136-139行で new JsonResponse(['code'=>$statusCode,'errors'=>$errors], $statusCode) を返す。security.yaml の app ファイアウォールは access_token 認証で独自 entry_point/failure_handler を持たず、認証失敗は最終的に 401 HttpException として本リスナに到達しJSON本文が付与される。本文なし401を返す実装は確認できなかった。ただし Symfony セキュリティ層の例外変換の正確な経路は実機確認が望ましいため confidence=medium。",
+      "designEvidence": {
+        "label": "設計要求（失敗レスポンス401本文）",
+        "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html",
+        "start": 1144,
+        "end": 1144,
+        "contains": ["401", "本文を持たない"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装（App API共通例外処理: 401をJSON本文で返却）",
+          "note": "isAppApi分岐で必ずJSON本文を生成",
+          "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php",
+          "start": 136,
+          "end": 139,
+          "contains": ["'code' => $statusCode", "'errors' => $errors", "new JsonResponse"]
+        },
+        {
+          "label": "実装（401→認証エラー文言のマッピング）",
+          "path": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php",
+          "start": 98,
+          "end": 98,
+          "contains": ["Response::HTTP_UNAUTHORIZED => ['認証エラー']"]
+        }
+      ]
+    }
+  ]
+}

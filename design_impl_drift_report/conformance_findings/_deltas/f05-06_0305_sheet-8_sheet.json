@@ -1,0 +1,42 @@
+{
+  "functionId": "f05-06_0305_sheet-8_sheet",
+  "featureNo": "F05-06",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-8（req-b45595e31d『★共通の利用規約を表示』, req-c95f4e8c53/req-422378c000『冒頭からではなく買取に該当する箇所を表示』, 画面部品#23、HTML L2811-2818/L2881）",
+      "designExpectation": "★カスタマイズ要件：現行は買取依頼内容の確認画面で『買取利用規約』を表示しているが、リニューアル後はサイト全体で共通の利用規約にまとめるため共通の利用規約を表示し、かつ『冒頭からではなく買取に該当する箇所を表示する』（画面部品#23 ネット買取利用規約テキストエリア：共通の利用規約を表示／買取に該当する箇所を表示）",
+      "implRef": "src/Eccube/Resource/template/default/Purchase/fill.twig:362-367 / src/Eccube/Resource/template/default/Block/terms_modal.twig:1-166 / src/Eccube/Resource/template/default/Purchase/include/net_purchase_terms_text.twig:1-52 / src/Eccube/Resource/locale/messages.ja.yaml:526-585",
+      "implementationActual": "fill.twig が Block/terms_modal.twig を include し modal_body_template='Purchase/include/net_purchase_terms_text.twig'・modal_title を渡すが、terms_modal.twig は両パラメータを一切参照せず、共通利用規約 front.agreement.s1〜s11 とプライバシー front.privacy.* をタブでハードコード全文レンダリングする。共通利用規約は第1条「1. 適用範囲」＝冒頭から全11条を表示し、買取箇所へのアンカー/絞り込み/スクロールJSは無い。front.agreement.* は汎用条項のみで買取に該当する条項を含まず（買取ヒット0件）、旧・買取専用規約テンプレ net_purchase_terms_text.twig は渡されるが描画されない（デッドコード）。",
+      "mismatchReason": "fill.twig→Block/terms_modal.twig→net_purchase_terms_text.twig および messages.ja.yaml(front.agreement.s1〜s11/front.purchase.fill.terms_heading) を確認。共通利用規約の表示自体は実装されているが、★カスタマイズで明記された『冒頭からではなく買取に該当する箇所を表示する』が満たされず、モーダルは共通規約を冒頭(第1条 適用範囲)から全文表示する。加えて共通規約側に買取該当条項が統合されておらず、旧・買取専用規約テンプレは渡されても描画されない。利用者が目にする規約表示が設計の要求位置・要求内容と差異があるため実装違い。",
+      "comparisonRows": [
+        {
+          "item": "表示する規約",
+          "design": "共通の利用規約を表示",
+          "implementation": "共通利用規約 front.agreement.*（＋プライバシー front.privacy.* タブ）を表示",
+          "mismatch": "共通規約表示自体は一致（差異なし）"
+        },
+        {
+          "item": "表示位置",
+          "design": "冒頭からではなく買取に該当する箇所を表示",
+          "implementation": "第1条「1. 適用範囲」＝冒頭から全11条を全文表示、買取箇所へのアンカー/絞り込み無し",
+          "mismatch": "冒頭から表示しており設計要求（買取該当箇所を表示）に不一致"
+        },
+        {
+          "item": "買取該当条項の統合",
+          "design": "共通利用規約内に買取に該当する箇所が存在する前提",
+          "implementation": "front.agreement.* は汎用11条のみで買取条項未統合（買取ヒット0件）",
+          "mismatch": "表示すべき買取該当箇所が共通規約に不在"
+        },
+        {
+          "item": "渡されるテンプレの扱い",
+          "design": "-",
+          "implementation": "fill.twig が modal_body_template=net_purchase_terms_text.twig を渡すが terms_modal.twig が未参照で描画されない（デッドコード）",
+          "mismatch": "旧・買取専用規約テンプレが実質未使用"
+        }
+      ]
+    }
+  ]
+}

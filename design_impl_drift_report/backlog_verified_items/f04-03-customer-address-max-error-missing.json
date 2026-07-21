@@ -1,0 +1,207 @@
+{
+  "id": "f04-03-customer-address-max-error-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f04-03_0304_sheet-5_sheet.json",
+  "sourceFindingId": "f04-03_0304_sheet-5_sheet-conformance-a91cc0e4d5d1",
+  "classification": "フロント注文",
+  "feature": "配送先の新規登録_変更",
+  "issueCategory": "実装漏れ",
+  "issue": "配送先登録上限到達時に上限超過エラーを表示せず404になる",
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "reproSteps": [
+    "会員のアドレス帳を登録上限の20件まで登録した状態でログインする",
+    "商品をカートに入れて http://localhost:8080/ja/shopping に進み、お届け先の追加導線から配送先の新規登録画面へ進む",
+    "ご注文方法指定画面のエラー領域に上限超過エラーが表示されて戻るか、404になるか確認する"
+  ],
+  "expected": [
+    "新規登録時、アドレス帳件数が登録上限（20）以上なら登録できない",
+    "上限超過時は「お届け先登録数の上限を超えています。」を `front.shopping.error.customer_address_max` として表示する",
+    "エラー表示位置はご注文方法指定画面のエラー領域とし、ご注文方法指定画面へ戻す",
+    "既存配送先の編集時は上限判定をスキップする"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `shippingEdit()` は、ログイン会員の配送先件数が `eccube_deliv_addr_max` 以上の場合に `throw new NotFoundHttpException();` を実行する。ご注文方法指定画面へ戻して `front.shopping.error.customer_address_max` を表示する処理はない。登録完了側の `shippingEditComplete()` も同じ上限判定で404を返す。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 配送先新規登録画面表示時は上限到達で404",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php",
+          "start": 812,
+          "end": 823,
+          "language": "php",
+          "contains": [
+            "$CustomerAddress = new CustomerAddress();",
+            "$addressCurrNum = count($Customer->getCustomerAddresses());",
+            "$addressMax = $this->eccubeConfig['eccube_deliv_addr_max'];",
+            "throw new NotFoundHttpException();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 配送先登録完了時も上限到達で404",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php",
+          "start": 948,
+          "end": 956,
+          "language": "php",
+          "contains": [
+            "$addressCurrNum = count($Customer->getCustomerAddresses());",
+            "$addressMax = $this->eccubeConfig['eccube_deliv_addr_max'];",
+            "if ($addressCurrNum >= $addressMax) {",
+            "throw new NotFoundHttpException();"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise ロケールは別キーのみで設計キーがない",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 104,
+          "end": 110,
+          "language": "yaml",
+          "contains": [
+            "common.customer_address_count_is_over: \"お届け先登録の上限の%count%件に達しています。お届け先を入力したい場合は、削除か変更を行ってください。\""
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 は `DeliveryService::canAddCustomerAddress()` で新規登録（IDなし）のみ上限判定を行い、上限到達時に `front.shopping.error.customer_address_max` を `addError()` して `false` を返す。呼び出し元の `deliveryEdit()` / `deliveryConfirm()` は `false` の場合に `shopping` へリダイレクトするため、ご注文方法指定画面のエラー領域で上限超過を表示できる。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 新規登録のみ上限判定してエラー追加",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/DeliveryService.php",
+          "start": 78,
+          "end": 94,
+          "language": "php",
+          "contains": [
+            "public function canAddCustomerAddress($id)",
+            "if (is_null($id)) {",
+            "$addressMax = $app['config']['deliv_addr_max'];",
+            "$app->addError('front.shopping.error.customer_address_max');",
+            "return false;"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 上限時はご注文方法指定へ戻す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ShoppingController.php",
+          "start": 947,
+          "end": 952,
+          "language": "php",
+          "contains": [
+            "public function deliveryEdit(Application $app, Request $request, $id = null)",
+            "if (!$app['hareruya_ec.service.delivery']->canAddCustomerAddress($id)) {",
+            "return $app->redirect($app->path('shopping'));"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 確認から登録時も上限時は戻す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/ShoppingController.php",
+          "start": 980,
+          "end": 985,
+          "language": "php",
+          "contains": [
+            "public function deliveryConfirm(Application $app, Request $request, $id = null)",
+            "if (!$app['hareruya_ec.service.delivery']->canAddCustomerAddress($id)) {",
+            "return $app->redirect($app->path('shopping'));"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 設計キーの日本語文言",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml",
+          "start": 1458,
+          "end": 1462,
+          "language": "yaml",
+          "contains": [
+            "error:",
+            "customer_address_max: お届け先登録数の上限を超えています。"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "登録上限超過時はご注文方法指定へ戻す",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2063,
+      "end": 2064,
+      "language": "html",
+      "contains": [
+        "登録上限内なら新規入力画面を表示する",
+        "登録上限超過時はご注文方法指定へ戻す"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "登録上限判定とエラー表示の詳細",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2071,
+      "end": 2084,
+      "language": "html",
+      "contains": [
+        "登録上限判定を行う。新規（IDなし）でアドレス帳が上限に達していれば、上限超過のエラーを出してご注文方法指定へ戻す。",
+        "お届け先登録数の上限を超えています。",
+        "front.shopping.error.customer_address_max",
+        "新規登録時、アドレス帳の件数が登録上限（確認値20）以上なら登録できない。既存編集（IDあり）は上限判定をスキップする。"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "登録上限20の確認値",
+      "path": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+      "start": 2087,
+      "end": 2087,
+      "language": "html",
+      "contains": [
+        "登録上限の確認値20は",
+        "deliv_addr_max"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "登録上限20の設定値",
+      "path": "ec-cube-enterprise/app/config/eccube/packages/eccube.yaml",
+      "start": 102,
+      "end": 106,
+      "language": "yaml",
+      "contains": [
+        "eccube_deliv_addr_max: 20"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "上限到達時に404を返す実装",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php",
+      "start": 812,
+      "end": 823,
+      "language": "php",
+      "contains": [
+        "$addressMax = $this->eccubeConfig['eccube_deliv_addr_max'];",
+        "throw new NotFoundHttpException();"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3では上限到達時に設計キーをaddErrorしてshoppingへ戻す",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/DeliveryService.php",
+      "start": 78,
+      "end": 94,
+      "language": "php",
+      "contains": [
+        "$app->addError('front.shopping.error.customer_address_max');",
+        "return false;"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f04-03_0304_sheet-5_sheet.json#f04-03_0304_sheet-5_sheet-conformance-a91cc0e4d5d1'",
+      "python3 - <<'PY' ... search excel_to_html/output/0304_基本設計仕様書(フロント_注文).html for customer_address_max and お届け先登録数の上限 ... PY",
+      "rg -n \"function canAddCustomerAddress|canAddCustomerAddress|customer_address_max|front\\.shopping\\.error\\.customer_address_max\" pf-eccube3/app/Plugin/HareruyaEc",
+      "rg -n \"customer_address_max|お届け先登録数の上限|The maximum number of addresses|deliv_addr_max|customer_address_count_is_over\" ec-cube-enterprise/src/Eccube/Resource/locale ec-cube-enterprise/app/config pf-eccube3/app/Plugin/HareruyaEc/Resource/locale",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php | sed -n '812,890p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php | sed -n '948,975p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Service/DeliveryService.php | sed -n '78,94p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/ShoppingController.php | sed -n '947,985p'"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。"
+  }
+}

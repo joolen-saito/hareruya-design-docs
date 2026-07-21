@@ -4,7 +4,7 @@
 
 テスト観点: `integration_test/integration-test-viewpoints.md` ／ 既存IT: `integration_test/m03_25_admin_product_product_duplicate_product_code_check_it_cases.md`（母集合 計90観点行）
 
-期待結果は画面表示・遷移・URL・HTTP応答・別タブ遷移などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は入力フォーム・バリデーション・DB更新を持たない GET 参照系である。TSV は既存IT casesと同一の 10 列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
+期待結果は画面表示・遷移・URL・HTTP応答・別タブ遷移などブラウザで観測できる結果で判定する。**期待結果は仕様（設計書・観点表・基本設計）由来**とし、実装/POM由来の表示文言をオラクル化しない。本機能は入力フォーム・バリデーション・DB更新を持たない GET 参照系である。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。E2E固有情報は TSV 後の付帯表に `テストID` で対応づける。Playwright は本リポジトリでは実行しない（構造参考のみ）。未検証セレクタは `要実機確認`。
 
 刷新先 ec-cube-enterprise に当該画面は存在する（route `admin_product_pre_doubling_check` / `admin_product_doubling_check`、`ProductController.php:1253-1290`、Twig `pre_doubling_check.twig` / `doubling_check.twig`）。セレクタはそれら Twig から根拠付きで導出した。
 
@@ -24,36 +24,36 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-001	IT-25	操作起点	P1	前ページにサブタイトルと「重複確認する」ボタンが表示される	管理者ログイン済／SEED-M03-25-ADMIN	—	"1. 前ページ（/admin/product/pre_doubling_check）を表示する"	サブタイトル「重複商品コード確認」と「重複確認する」ボタンが表示されること。
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-001	IT-25	操作起点	P1	前ページにサブタイトルと「重複確認する」ボタンが表示される	管理者ログイン済／SEED-M03-25-ADMIN	—	1. 前ページ（/admin/product/pre_doubling_check）を表示する	サブタイトル「重複商品コード確認」と「重複確認する」ボタンが表示されること。				
 m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-002	IT-03	画面遷移	P1	前ページの「重複確認する」押下で結果ページへ遷移する	管理者ログイン済／SEED-M03-25-ADMIN	—	"1. 前ページを表示する
-2. 「重複確認する」ボタンを押下"	結果ページ（GET /admin/product/doubling_check）へ遷移すること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-003	IT-23	実行結果	P1	重複ありのとき結果ページに一覧テーブルとコードリンクが表示される	管理者ログイン済／SEED-M03-25-DUP	—	"1. 結果ページを表示する"	table-striped の一覧テーブルが表示され、各セルにコード文字列のリンクが1件以上表示されること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-004	IT-13	URL直接アクセス	P1	重複なしのとき固定メッセージのみ表示しテーブルを出さない	管理者ログイン済／SEED-M03-25-NODUP	—	"1. 結果ページ（/admin/product/doubling_check）を直接表示する"	「重複している商品コードはありません。」が表示され、一覧テーブルが表示されないこと。
+2. 「重複確認する」ボタンを押下"	結果ページ（GET /admin/product/doubling_check）へ遷移すること。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-003	IT-23	実行結果	P1	重複ありのとき結果ページに一覧テーブルとコードリンクが表示される	管理者ログイン済／SEED-M03-25-DUP	—	1. 結果ページを表示する	table-striped の一覧テーブルが表示され、各セルにコード文字列のリンクが1件以上表示されること。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-004	IT-13	URL直接アクセス	P1	重複なしのとき固定メッセージのみ表示しテーブルを出さない	管理者ログイン済／SEED-M03-25-NODUP	—	1. 結果ページ（/admin/product/doubling_check）を直接表示する	「重複している商品コードはありません。」が表示され、一覧テーブルが表示されないこと。				
 m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-005	IT-03	外部画面	P2	コードリンクのhrefが規格編集ルートを指す	管理者ログイン済／SEED-M03-25-DUP	—	"1. 結果ページを表示する
-2. 先頭コードリンクのhref属性を確認する"	href が規格編集ルート（…/product/product/class/{id}/edit/{productClassId}）であること。
+2. 先頭コードリンクのhref属性を確認する"	href が規格編集ルート（…/product/product/class/{id}/edit/{productClassId}）であること。				
 m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-006	IT-03	外部画面	P2	コードリンクが別タブで規格編集画面を開く	管理者ログイン済／SEED-M03-25-DUP	—	"1. 結果ページを表示する
-2. コードリンクを押下する"	target=_blank・rel=noopener で別タブが開き、遷移先が規格編集画面であること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-007	IT-25	操作起点	P2	サイドナビ「重複コード確認」から前ページへ遷移する	管理者ログイン済／SEED-M03-25-ADMIN	—	"1. ログイン後、サイドナビ「商品管理」配下の「重複コード確認」を押下する"	前ページ（/admin/product/pre_doubling_check）へ遷移すること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-008	IT-03	画面遷移	P3	前ページが共通フレームを継承し共通要素が表示される	管理者ログイン済／SEED-M03-25-ADMIN	—	"1. 前ページを表示する"	共通フレーム（@admin/default_frame.twig）由来のサイドナビ等共通要素が表示されること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-009	IT-15	未認証	P2	未ログインで前ページURL直接アクセスするとログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/product/pre_doubling_check へ直接アクセス"	管理ログイン画面へ誘導されること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-010	IT-15	未認証	P2	未ログインで結果ページURL直接アクセスするとログイン画面へ誘導される	未ログイン	—	"1. 未ログインで /admin/product/doubling_check へ直接アクセス"	管理ログイン画面へ誘導されること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-011	IT-25	HTTPステータス	P2	前ページGETがHTTP 200を返す	管理者ログイン済／SEED-M03-25-ADMIN	—	"1. 前ページをGET表示する"	HTTP 200 が返ること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-012	IT-25	HTTPステータス	P2	結果ページGETがHTTP 200を返す	管理者ログイン済／SEED-M03-25-ADMIN	—	"1. 結果ページをGET表示する"	HTTP 200 が返ること。
+2. コードリンクを押下する"	target=_blank・rel=noopener で別タブが開き、遷移先が規格編集画面であること。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-007	IT-25	操作起点	P2	サイドナビ「重複コード確認」から前ページへ遷移する	管理者ログイン済／SEED-M03-25-ADMIN	—	1. ログイン後、サイドナビ「商品管理」配下の「重複コード確認」を押下する	前ページ（/admin/product/pre_doubling_check）へ遷移すること。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-008	IT-03	画面遷移	P3	前ページが共通フレームを継承し共通要素が表示される	管理者ログイン済／SEED-M03-25-ADMIN	—	1. 前ページを表示する	共通フレーム（@admin/default_frame.twig）由来のサイドナビ等共通要素が表示されること。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-009	IT-15	未認証	P2	未ログインで前ページURL直接アクセスするとログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/product/pre_doubling_check へ直接アクセス	管理ログイン画面へ誘導されること。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-010	IT-15	未認証	P2	未ログインで結果ページURL直接アクセスするとログイン画面へ誘導される	未ログイン	—	1. 未ログインで /admin/product/doubling_check へ直接アクセス	管理ログイン画面へ誘導されること。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-011	IT-25	HTTPステータス	P2	前ページGETがHTTP 200を返す	管理者ログイン済／SEED-M03-25-ADMIN	—	1. 前ページをGET表示する	HTTP 200 が返ること。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-012	IT-25	HTTPステータス	P2	結果ページGETがHTTP 200を返す	管理者ログイン済／SEED-M03-25-ADMIN	—	1. 結果ページをGET表示する	HTTP 200 が返ること。				
 m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-013	IT-23	検索条件	P2	同一コードがN件あるとき一覧にN行表示される	管理者ログイン済／SEED-M03-25-DUP	—	"1. 結果ページを表示する
-2. 行数とコードリンク数を確認する"	重複該当の全規格行が表示され、表示行数とコードリンク数が一致すること。
+2. 行数とコードリンク数を確認する"	重複該当の全規格行が表示され、表示行数とコードリンク数が一致すること。				
 m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-014	IT-23	実行結果	P3	重複コードがproduct_code昇順で並ぶ	管理者ログイン済／SEED-M03-25-DUP（複数コードの重複）	—	"1. 結果ページを表示する
-2. コードリンクの表示順を確認する"	コード文字列が昇順（product_code昇順）で並ぶこと。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-015	IT-23	検索条件	P2	NULL/空文字のproduct_codeは重複一覧に出ない	管理者ログイン済／SEED-M03-25-NULLCODE	—	"1. NULL/空コードのみの状態で結果ページを表示する"	NULL・空文字コードは母集団から除外され、重複一覧に出ない（重複なしメッセージとなる）こと。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-018	IT-25	操作起点	P2	結果ページにサブタイトル「重複商品コード」が表示される	管理者ログイン済／SEED-M03-25-ADMIN	—	"1. 結果ページ（/admin/product/doubling_check）を表示する"	結果ページのサブタイトルとして「重複商品コード」が表示されること。
+2. コードリンクの表示順を確認する"	コード文字列が昇順（product_code昇順）で並ぶこと。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-015	IT-23	検索条件	P2	NULL/空文字のproduct_codeは重複一覧に出ない	管理者ログイン済／SEED-M03-25-NULLCODE	—	1. NULL/空コードのみの状態で結果ページを表示する	NULL・空文字コードは母集団から除外され、重複一覧に出ない（重複なしメッセージとなる）こと。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-018	IT-25	操作起点	P2	結果ページにサブタイトル「重複商品コード」が表示される	管理者ログイン済／SEED-M03-25-ADMIN	—	1. 結果ページ（/admin/product/doubling_check）を表示する	結果ページのサブタイトルとして「重複商品コード」が表示されること。				
 m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-019	IT-23	検索条件	P2	重複一覧に出る各コードはいずれも2件以上で単独コードは出ない	管理者ログイン済／SEED-M03-25-DUP	—	"1. 重複あり状態で結果ページを表示する
-2. 各コード文字列の出現件数を数える"	一覧に表示される各コード文字列がいずれも2件以上であり、1件のみ（単独）のコードは一覧に出ないこと。
+2. 各コード文字列の出現件数を数える"	一覧に表示される各コード文字列がいずれも2件以上であり、1件のみ（単独）のコードは一覧に出ないこと。				
 m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-020	IT-23	実行結果	P3	同一コード内の規格行が商品ID昇順→規格ID昇順で並ぶ	管理者ログイン済／SEED-M03-25-DUP（同一コードが複数商品/規格）	—	"1. 結果ページを表示する
-2. 各コードリンクのhrefから商品ID・規格IDを取得し並び順を確認する"	同一コード内で (商品ID, 規格ID) が非減少順（商品ID昇順→規格ID昇順）に並ぶこと。
+2. 各コードリンクのhrefから商品ID・規格IDを取得し並び順を確認する"	同一コード内で (商品ID, 規格ID) が非減少順（商品ID昇順→規格ID昇順）に並ぶこと。				
 m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-021	IT-15	状態変化	P2	ログアウト/セッション破棄後に保護URLへアクセスするとログイン画面へ誘導される	管理者ログイン済→ログアウト（セッション破棄）	—	"1. ログイン後にセッションを破棄（ログアウト）する
-2. 結果ページURL（/admin/product/doubling_check）へアクセスする"	認証状態が失われた後は画面本文に到達せず、管理ログイン画面へ誘導されること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-022	IT-03	画面遷移	P3	DBアクセス失敗時は本機能固有のエラー画面を出さず共通エラーハンドリングに委ねる	管理者ログイン済／DB障害注入	—	"1. DBアクセス失敗を注入した状態で結果ページを表示する"	本機能固有のエラー文言/画面を出さず、アプリケーション共通のエラーハンドリングに委ねられること（正常時HTTP 200との対）。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-023	IT-25	操作起点	P3	ウィンドウタイトルに「商品管理」が含まれる	管理者ログイン済／SEED-M03-25-ADMIN	—	"1. 前ページ（/admin/product/pre_doubling_check）を表示する"	ウィンドウタイトル（titleブロック）に「商品管理」のロケール文言が含まれること。
+2. 結果ページURL（/admin/product/doubling_check）へアクセスする"	認証状態が失われた後は画面本文に到達せず、管理ログイン画面へ誘導されること。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-022	IT-03	画面遷移	P3	DBアクセス失敗時は本機能固有のエラー画面を出さず共通エラーハンドリングに委ねる	管理者ログイン済／DB障害注入	—	1. DBアクセス失敗を注入した状態で結果ページを表示する	本機能固有のエラー文言/画面を出さず、アプリケーション共通のエラーハンドリングに委ねられること（正常時HTTP 200との対）。				
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	E2E-M03-25-023	IT-25	操作起点	P3	ウィンドウタイトルに「商品管理」が含まれる	管理者ログイン済／SEED-M03-25-ADMIN	—	1. 前ページ（/admin/product/pre_doubling_check）を表示する	ウィンドウタイトル（titleブロック）に「商品管理」のロケール文言が含まれること。				
 ```
 
 ## 付帯表1：E2E自動化区分・セレクタ・仕様根拠・元ITケースID（TSV外）

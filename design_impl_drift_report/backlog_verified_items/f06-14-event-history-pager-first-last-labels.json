@@ -1,0 +1,191 @@
+{
+  "id": "f06-14-event-history-pager-first-last-labels",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-14_0306_sheet-12_sheet.json",
+  "sourceFindingId": "f06-14_0306_sheet-12_sheet-conformance-75c8cce1728d",
+  "classification": "フロント会員",
+  "feature": "マイイベント・デッキ登録",
+  "issueCategory": "実装違い",
+  "issue": "ページネーションの先頭・末尾リンクが「＜最初」「最後＞」ではなくページ番号と省略記号で表示される",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "予約済みイベントまたはデッキ登録済みイベントがページ分割される件数の会員で `http://localhost:8080/ja/mypage/event_history` を表示する",
+    "現在ページの前後4ページ範囲に収まらない先頭方向・末尾方向のページがある状態にする",
+    "ページネーションの端に「＜最初」「最後＞」の文言リンクが表示されるか、先頭/末尾のページ番号と「…」が表示されるか確認する"
+  ],
+  "expected": [
+    "表示しきれないページが存在する場合、先頭方向には「＜最初」のリンクを表示する",
+    "表示しきれないページが存在する場合、末尾方向には「最後＞」のリンクを表示する",
+    "ページネーションはマイイベント・デッキ登録画面の(9)(10)(11)として表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `EventHistoryController` は `paginate()` した結果を `event_history.twig` に渡し、画面上下で共有 `pager.twig` を include している。共有 `pager.twig` は先頭方向で `pages.first` の数字リンクを出し、範囲外は「…」を表示する。末尾方向も `pages.last` の数字リンクと「…」であり、「＜最初」「最後＞」という文言リンクは出力しない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise F06-14はpaginationを生成",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/EventHistoryController.php",
+          "start": 92,
+          "end": 103,
+          "language": "php",
+          "contains": [
+            "$pagination = $paginator->paginate($EventDetails, $pageNo, $dispNumber);",
+            "'pagination' => $pagination"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise F06-14画面は共有pagerを上下にinclude",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig",
+          "start": 55,
+          "end": 61,
+          "language": "twig",
+          "contains": [
+            "{% include 'pager.twig' with { pages: pagination.paginationData } %}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 下部も共有pagerをinclude",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig",
+          "start": 155,
+          "end": 158,
+          "language": "twig",
+          "contains": [
+            "{% include 'pager.twig' with { pages: pagination.paginationData } %}"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise pagerは先頭/末尾を数字リンクと省略記号で表示",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/pager.twig",
+          "start": 21,
+          "end": 60,
+          "language": "twig",
+          "contains": [
+            "{% if pages.firstPageInRange != 1 %}",
+            "<span class=\"p-hareruya-pagination__number\">{{ pages.first }}</span>",
+            "<span class=\"p-hareruya-pagination__ellipsis\">…</span>",
+            "{% if pages.last != pages.lastPageInRange %}",
+            "<span class=\"p-hareruya-pagination__number\">{{ pages.last }}</span>"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の F06-14 `event_history.twig` は `entries` を全件ループするだけでページャを呼び出していない。一方、旧共通 `pagination.twig` には先頭・末尾ジャンプとして「最初へ」「最後へ」の文言リンクが存在する。設計の「＜最初」「最後＞」は旧共通部品の文言リンク系統に近いが、enterprise の F06-14 では数字リンク＋省略記号の共有pagerになっている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 F06-14はentries全件を渡す",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/MypageController.php",
+          "start": 22,
+          "end": 30,
+          "language": "php",
+          "contains": [
+            "$entries = $app['hareruya_ec.repository.event_entry']->getEntriesByPlayerId($player['playerid']);",
+            "'entries' => $entries"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 F06-14画面はentriesをループしpagerを呼ばない",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/event_history.twig",
+          "start": 12,
+          "end": 20,
+          "language": "twig",
+          "contains": [
+            "{% if entries %}",
+            "{% for entry in entries %}"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 共通paginationは最初へ/最後へ文言リンクを持つ",
+          "path": "pf-eccube3/src/Eccube/Resource/template/default/pagination.twig",
+          "start": 32,
+          "end": 78,
+          "language": "twig",
+          "contains": [
+            "{# 最初へリンクを表示 #}",
+            "<span aria-hidden=\"true\">最初へ</span>",
+            "{# 最後へリンクを表示 #}",
+            "<span aria-hidden=\"true\">最後へ</span>"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "ページネーション表示と先頭/末尾文言を指定",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 4016,
+      "end": 4034,
+      "language": "html",
+      "contains": [
+        "(9)(10)(11)ページネーションを表示する",
+        "表示しきれないページが存在する場合、先頭方向には「＜最初」、末尾方向には「最後＞」のリンクを表示する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "F06-14で共有pagerをinclude",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig",
+      "start": 55,
+      "end": 61,
+      "language": "twig",
+      "contains": [
+        "{% include 'pager.twig' with { pages: pagination.paginationData } %}"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "共有pagerは数字リンクと省略記号を出す",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/pager.twig",
+      "start": 21,
+      "end": 60,
+      "language": "twig",
+      "contains": [
+        "pages.first",
+        "p-hareruya-pagination__ellipsis",
+        "pages.last"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3のF06-14はページャ未使用でentries全件表示",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/event_history.twig",
+      "start": 12,
+      "end": 20,
+      "language": "twig",
+      "contains": [
+        "{% if entries %}",
+        "{% for entry in entries %}"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3共通paginationは最初へ/最後へ文言リンクを持つ",
+      "path": "pf-eccube3/src/Eccube/Resource/template/default/pagination.twig",
+      "start": 32,
+      "end": 78,
+      "language": "twig",
+      "contains": [
+        "最初へ",
+        "最後へ"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-14_0306_sheet-12_sheet.json#f06-14_0306_sheet-12_sheet-conformance-75c8cce1728d'",
+      "rg -n \"＜最初|最後＞|最初へ|最後へ|firstPageInRange|lastPageInRange|pages\\.first|pages\\.last|include 'pager\\.twig'|paginationData|paginate\\(\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/EventHistoryController.php ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig ec-cube-enterprise/src/Eccube/Resource/template/default/pager.twig pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/MypageController.php pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/event_history.twig pf-eccube3/src/Eccube/Resource/template/default/pagination.twig",
+      "rg --files pf-eccube3 | rg 'pager|pagination|event_history\\.twig$'",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '4016,4034p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/Mypage/EventHistoryController.php | sed -n '85,104p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig | sed -n '55,61p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/event_history.twig | sed -n '155,158p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/pager.twig | sed -n '1,70p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/Mypage/MypageController.php | sed -n '20,31p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/event_history.twig | sed -n '1,75p'",
+      "nl -ba pf-eccube3/src/Eccube/Resource/template/default/pagination.twig | sed -n '1,120p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLの画面部品(10)、ec-cube-enterprise の EventHistoryController/event_history.twig/pager.twig、pf-eccube3 の MypageController/event_history.twig/共通pagination.twig を再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

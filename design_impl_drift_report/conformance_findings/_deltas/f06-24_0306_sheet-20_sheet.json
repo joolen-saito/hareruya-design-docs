@@ -1,0 +1,32 @@
+{
+  "functionId": "f06-24_0306_sheet-20_sheet",
+  "featureNo": "F06-24",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-20 約line6912・6960",
+      "designExpectation": "詳細の「戻る」リンクは、ブラウザ履歴を1つ戻す（history.go(-1)）リンクのみで、サーバへのリクエストは発生しない。",
+      "implRef": "src/Eccube/Resource/template/default/Contact/history_detail.twig:48",
+      "implementationActual": "戻るボタンは通常アンカー <a href=\"{{ url('contact_history') }}\"> で、押下すると GET /contact/history へサーバ遷移する。history_detail.twig・breadcrumb_nav.twig・ContactController・hareruya JS資産に history.go(-1) 相当の実装は不在。",
+      "mismatchReason": "設計はクライアント側の履歴戻し（サーバリクエスト無し）を規定するが、実装は contact_history ルートへのサーバGETリンクで機構が異なる。なお同シート画面部品表No.6は『お問い合わせ履歴画面へ遷移する』とあり結果面では合致（設計内に機構の内部矛盾あり）。明示された無サーバ挙動要求に対しては実装違い。",
+      "comparisonRows": [
+        {"item": "戻る操作の機構", "design": "history.go(-1)（ブラウザ履歴を1つ戻す・サーバリクエスト無し）", "implementation": "url('contact_history') への通常アンカーで GET /contact/history サーバ遷移", "mismatch": "クライアント履歴戻し vs サーバGET遷移で機構が相違"}
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0306_基本設計仕様書(フロント_会員).html#sheet-20 約line6944・6963",
+      "designExpectation": "存在しないID／他会員IDを詳細URLに指定した場合、取得結果が無いため当該お問い合わせの内容を表示しないだけで、閲覧専用のため画面上の明示エラーは出さない。",
+      "implRef": "src/Eccube/Controller/Front/ContactController.php:224,229,231-233",
+      "implementationActual": "detail() は findOneBy(id, Customer) が null のとき createNotFoundException() を送出し HTTP 404 エラーページを返す。存在しないIDは型付き引数 DtbContact $Contact のリゾルバ解決時点で404。null時に空表示するフォールバックは無い。",
+      "mismatchReason": "設計オラクルは『明示エラーを出さず内容を表示しないだけ』を要求するが、実装は常に例外→404エラーページを明示表示する。ContactController::detail・history_detail.twig を精査し、静的な非表示フォールバックが無いことを確認。",
+      "comparisonRows": [
+        {"item": "存在しないID/他会員IDの扱い", "design": "取得結果が無く当該内容を非表示（明示エラー無し・閲覧専用）", "implementation": "createNotFoundException()→HTTP 404 エラーページを明示表示", "mismatch": "静的非表示 vs 明示404で挙動が相違"}
+      ]
+    }
+  ]
+}

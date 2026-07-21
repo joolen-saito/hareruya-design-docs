@@ -1,0 +1,168 @@
+{
+  "id": "b02-03-stock-up-aggregate-console-start-complete-datetime-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json",
+  "sourceFindingId": "b02-03_0402_sheet-5_sheet-conformance-148db44172f1",
+  "classification": "バッチ在庫管理",
+  "feature": "期間別入庫数集計バッチ",
+  "issueCategory": "実装違い",
+  "issue": "期間別入庫数集計バッチの開始・完了コンソール出力が設計と異なる",
+  "designBook": "0402_基本設計仕様書(バッチ_在庫管理).xlsx",
+  "reproSteps": [
+    "ec-cube-enterprise のローカル環境で `bin/console eccube:aggregate-stock-up` を実行する",
+    "処理開始前に日時付きの開始メッセージがコンソール出力されるか確認する",
+    "処理完了時に日時付きの完了メッセージがコンソール出力されるか確認する",
+    "0402 の B02-03 設計「開始・完了のコンソール出力（日時付き）」と、ec-cube-enterprise の `AggregateStockUpCommand` を照合する"
+  ],
+  "expected": [
+    "開始時に日時付きのコンソール出力を行う",
+    "完了時に日時付きのコンソール出力を行う",
+    "ベース実装と同様に、バッチ名を含む開始・完了メッセージを日時プレフィックス付きで出力する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `AggregateStockUpCommand::execute()` は、`SymfonyStyle` 生成後すぐに `BatchAggregateStockUpAction::handle()` を実行しており、処理前の開始出力がない。成功時の出力は `期間別入庫数集計が完了しました。` のみで、日時も出力されない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise AggregateStockUpCommand は開始出力なしで action を実行し、日時なしの完了メッセージを出す",
+          "path": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php",
+          "start": 43,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "protected function execute(InputInterface $input, OutputInterface $output): int",
+            "$this->batchAggregateStockUpAction->handle();",
+            "$io->success('期間別入庫数集計が完了しました。');",
+            "return Command::SUCCESS;"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では、`ProductBatch` が `updateProductSummaryForStockUp` を `UpdateProductSummaryForStockUp` に対応させ、`date('Y/m/d H:i')` で作成した日時プレフィックス付きで `updateProductSummaryForStockUp: Command start.` と `updateProductSummaryForStockUp: Command complete.` を出力する。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は updateProductSummaryForStockUp を対象サービスに対応させる",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 12,
+          "end": 20,
+          "language": "php",
+          "contains": [
+            "const BATCH_NAMES = [",
+            "'updateProductSummaryForStockUp' => 'Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummaryForStockUp'"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 ProductBatch は日時付きで開始・完了を出力する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+          "start": 43,
+          "end": 58,
+          "language": "php",
+          "contains": [
+            "$resultMessage = '[' . date('Y/m/d H:i') . '] ';",
+            "echo $resultMessage . \"{$name}: Command start.\\n\";",
+            "$product->execute();",
+            "echo $product->getErrorMassage() ?? $resultMessage . \"{$name}: Command complete.\\n\";"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 UpdateProductSummaryForStockUp は B02-03 の処理本体である",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php",
+          "start": 8,
+          "end": 41,
+          "language": "php",
+          "contains": [
+            "class UpdateProductSummaryForStockUp extends ProductBatchService",
+            "protected $commandName = 'updateProductSummaryForStockUp';",
+            "public function execute()",
+            "updateProductSummaryColumnsForStockUp"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "0402 の B02-03 はログ・監査として開始・完了のコンソール出力を日時付きで行うとしている",
+      "path": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html",
+      "start": 1205,
+      "end": 1238,
+      "language": "html",
+      "contains": [
+        "product:batch updateProductSummaryForStockUp",
+        "期間別入庫数集計を実行する",
+        "開始・完了のコンソール出力（日時付き）"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "0404 の B02-03 にも同じ開始・完了の日時付きコンソール出力要求があるため、同一修正対象の重複候補として扱う",
+      "path": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html",
+      "start": 1163,
+      "end": 1196,
+      "language": "html",
+      "contains": [
+        "product:batch updateProductSummaryForStockUp",
+        "期間別入庫数集計を実行する",
+        "開始・完了のコンソール出力（日時付き）"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise は開始出力を持たず、完了出力にも日時を含めない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php",
+      "start": 43,
+      "end": 58,
+      "language": "php",
+      "contains": [
+        "$this->batchAggregateStockUpAction->handle();",
+        "$io->success('期間別入庫数集計が完了しました。');",
+        "return Command::SUCCESS;"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は ProductBatch で日時プレフィックスを作り、開始・完了を出力する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php",
+      "start": 12,
+      "end": 58,
+      "language": "php",
+      "contains": [
+        "'updateProductSummaryForStockUp' => 'Plugin\\HareruyaEc\\Service\\Product\\UpdateProductSummaryForStockUp'",
+        "$resultMessage = '[' . date('Y/m/d H:i') . '] ';",
+        "{$name}: Command start.",
+        "{$name}: Command complete."
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の updateProductSummaryForStockUp は ProductBatch 経由で実行される処理本体である",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php",
+      "start": 8,
+      "end": 41,
+      "language": "php",
+      "contains": [
+        "protected $commandName = 'updateProductSummaryForStockUp';",
+        "public function execute()",
+        "getStockUpForUpdateSummary",
+        "updateProductSummaryColumnsForStockUp"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"開始・完了|日時付き|コンソール出力|Command start|Command complete|期間別入庫数集計が完了|開始|完了\" excel_to_html/output/0402_基本設計仕様書\\(バッチ_在庫管理\\).html excel_to_html/output/0404_基本設計仕様書\\(バッチ_商品管理\\).html design_impl_drift_report/findings/b02-03_0402_sheet-5_sheet.json design_impl_drift_report/findings/b02-03_0404_sheet-5_sheet.json",
+      "rg -n \"開始|完了|日時|date\\(|DateTime|Command start|Command complete|期間別入庫数集計が完了|success\\(|writeln|aggregate-stock-up|updateProductSummaryForStockUp\" ../ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php ../ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php ../pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php ../pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php",
+      "rg -n \"AggregateStockUpCommand|BatchAggregateStockUpAction|aggregate-stock-up|期間別入庫数集計.*開始|開始.*期間別入庫数集計|Command start|Command complete|DateTime|date\\(|success\\(\" ../ec-cube-enterprise/src/Eccube/Command ../ec-cube-enterprise/src/Eccube/Service/Product ../ec-cube-enterprise/app",
+      "rg -n \"updateProductSummaryForStockUp|product:batch|ProductBatch|Command start|Command complete|date\\(\" ../pf-eccube3/app/Plugin/HareruyaEc/Command ../pf-eccube3/app/Plugin/HareruyaEc/Service/Product"
+    ],
+    "review": [
+      "codex gpt-5.5 high reviewer Dirac: VERIFIED。0402/0404 は同一 B02-03・同一要求・同一実装差分なので1チケットに統合してよい。カテゴリは、バッチ実装と完了出力自体は存在し、設計の出力契約と部分不一致であるため Backlog では実装違いが適切。設計、enterprise、ベースのコード根拠も十分。"
+    ],
+    "notes": [
+      "0402 と 0404 の B02-03 に同じ開始・完了日時付きコンソール出力要求があるため、本件では 0402 の finding を代表にし、0404 側の同一要求は重複候補として統合する。",
+      "同じ B02-03 にはコマンド名や100件単位反映など別差分もあるが、本件は開始・完了日時付き出力だけを対象とする。"
+    ]
+  }
+}

@@ -1,0 +1,190 @@
+{
+  "id": "f06-11-purchase-history-status-image-not-used",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-11_0305_sheet-10_sheet.json",
+  "sourceFindingId": "f06-11_0305_sheet-10_sheet-conformance-0731b504f876",
+  "classification": "フロント買取",
+  "feature": "買取履歴一覧",
+  "issueCategory": "実装違い",
+  "issue": "買取履歴一覧の処理状態が状態別画像ではなくテキストラベルで表示される",
+  "designBook": "0305_基本設計仕様書(フロント_ネット買取).xlsx",
+  "reproSteps": [
+    "買取履歴を持つ会員で `http://localhost:8080/ja/mypage/purchase_history` を表示する",
+    "各買取履歴行の「処理状態」欄を確認する",
+    "状態別の画像が表示されるか、状態名のテキストラベルが表示されるか確認する"
+  ],
+  "expected": [
+    "買取履歴一覧の要素10「処理状態」は画像として表示する",
+    "処理状態の画像表示は「買取ステータスと処理状態の紐付け」シートに従う",
+    "受付完了、査定中、査定完了、振込待ち、買取完了、キャンセルなどの状態別画像を一覧行に表示する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の買取履歴一覧 `purchase_history.twig` は、`row.mappedStatus` を `completed` / `cancelled` / `pending` の3種CSS修飾子に変換し、`<span class=\"c-hareruya-label--status ...\">{{ row.statusIconAlt }}</span>` としてテキストラベルを描画している。`PurchaseHistoryStatusMapper` は6状態分の `statusIconPath` と `alt` を返し、`PurchaseHistoryRowBuilder` もDTOへ `statusIconPath` を詰めているが、一覧テンプレートでは `statusIconPath` を参照していない。詳細テンプレートでは `d.statusIconPath` を `<img>` で描画しているため、一覧だけが画像表示になっていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 一覧の処理状態はテキストラベル",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/purchase_history.twig",
+          "start": 133,
+          "end": 147,
+          "language": "twig",
+          "contains": [
+            "{{ 'front.mypage.purchase_history.col.status'|trans }}",
+            "{% set statusCssModifier = 'completed' %}",
+            "{% set statusCssModifier = 'cancelled' %}",
+            "{% set statusCssModifier = 'pending' %}",
+            "<span class=\"c-hareruya-label--status c-hareruya-label--status-{{ statusCssModifier }}\">{{ row.statusIconAlt }}</span>"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 6状態の画像パスは算出されている",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryStatusMapper.php",
+          "start": 95,
+          "end": 127,
+          "language": "php",
+          "contains": [
+            "'iconPath' => 'assets/img/mypage/reception_completed.svg'",
+            "'alt' => '受付完了'",
+            "'iconPath' => 'assets/img/mypage/assessing.svg'",
+            "'iconPath' => 'assets/img/mypage/purchase_completed.svg'",
+            "'alt' => 'キャンセル'"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 一覧DTOに画像パスを保持",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryRowBuilder.php",
+          "start": 88,
+          "end": 108,
+          "language": "php",
+          "contains": [
+            "$icon = $this->purchaseHistoryStatusMapper->resolveStatusIcon($mappedStatus);",
+            "statusIconPath: $icon['iconPath']",
+            "statusIconAlt: $icon['alt']"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 詳細画面は画像を描画",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/purchase_history_detail_net.twig",
+          "start": 43,
+          "end": 49,
+          "language": "twig",
+          "contains": [
+            "{% if d.statusIconPath %}",
+            "<img src=\"{{ asset(d.statusIconPath) }}\" alt=\"{{ d.statusIconAlt|e }}\""
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 の買取履歴一覧は、処理状態欄で `img/buy_order_status_{{ buyOrder.buyOrderStatusId }}.png` を `<img>` として表示している。設計の「処理状態=画像」はこのベース実装の画像表示を踏襲する要求として確認できる。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 買取履歴一覧の処理状態見出し",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig",
+          "start": 72,
+          "end": 86,
+          "language": "twig",
+          "contains": [
+            "オーダーID",
+            "申込時買取金額合計",
+            "処理状態"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 処理状態画像",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig",
+          "start": 150,
+          "end": 155,
+          "language": "twig",
+          "contains": [
+            "aria-label=\"処理状態\"",
+            "<img src=\"{{ path('assets', {path: 'img/buy_order_status_' ~ buyOrder.buyOrderStatusId ~ '.png'}) }}\">"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "カスタマイズ説明でステータス画像変更と紐付けシート参照を定義",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 3314,
+      "end": 3338,
+      "language": "html",
+      "contains": [
+        "ステータス表示の画像を変更する",
+        "受付完了",
+        "査定中",
+        "査定完了",
+        "振込待ち",
+        "処理状態の画像を変更する",
+        "「買取ステータスと処理状態の紐付け」シートを参照"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "要素表で処理状態の書式を画像と定義",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 3364,
+      "end": 3366,
+      "language": "html",
+      "contains": [
+        "id=\"item-sheet-10-10\"",
+        "<td>処理状態</td><td>画像</td>",
+        "処理状態の画像表示については「買取ステータスと処理状態の紐付け」シートを参照"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "リバース詳細でも各行の処理状態を状態画像と説明",
+      "path": "hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html",
+      "start": 3408,
+      "end": 3408,
+      "language": "html",
+      "contains": [
+        "処理状態（状態画像）"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "一覧は画像ではなくspanテキストラベルを描画",
+      "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/purchase_history.twig",
+      "start": 133,
+      "end": 147,
+      "language": "twig",
+      "contains": [
+        "c-hareruya-label--status",
+        "row.statusIconAlt"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は買取ステータスID別png画像を表示",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig",
+      "start": 150,
+      "end": 155,
+      "language": "twig",
+      "contains": [
+        "img/buy_order_status_",
+        "buyOrder.buyOrderStatusId",
+        ".png"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-11_0305_sheet-10_sheet.json#f06-11_0305_sheet-10_sheet-conformance-0731b504f876'",
+      "rg -n \"買取履歴一覧|処理状態|状態画像|受付完了|査定中|査定完了|振込待ち|買取完了|キャンセル|statusIcon|c-hareruya-label--status|purchase_history\" hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書\\(フロント_ネット買取\\).html ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage ec-cube-enterprise/src/Eccube/Service ec-cube-enterprise/src/Eccube/Controller/Front/Mypage pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage",
+      "rg -n \"statusIcon|statusIconAlt|resolveStatusIcon|purchase_history|処理状態|img/sys|status_\" ec-cube-enterprise/src/Eccube pf-eccube3/app/Plugin/HareruyaEc",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0305_基本設計仕様書\\(フロント_ネット買取\\).html | sed -n '3314,3408p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/purchase_history.twig | sed -n '120,150p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryStatusMapper.php | sed -n '91,127p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryRowBuilder.php | sed -n '84,108p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Mypage/purchase_history_detail_net.twig | sed -n '39,50p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig | sed -n '72,86p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/Mypage/purchase_history.twig | sed -n '146,160p'"
+    ],
+    "review": "review-pack を生成し、設計HTMLの要素表/カスタマイズ/リバース詳細、ec-cube-enterprise の一覧テンプレート/StatusMapper/RowBuilder/詳細テンプレート、pf-eccube3 の買取履歴一覧テンプレートを再照合した。codex gpt-5.5 high の外部レビュー環境はこの実行環境では利用できないため、レビュー用パケット作成と手元での批判的再確認で代替した。"
+  }
+}

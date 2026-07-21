@@ -1,0 +1,36 @@
+{
+  "functionId": "b02-08_0404_sheet-9_sheet",
+  "featureNo": "B02-08",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1643, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1644, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1659, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1666, excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html#sheet-9:1667",
+      "designExpectation": "定時実行の他、管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能。管理画面ユニサーチフィードメニューからのフィードファイル更新ボタン押下時はフィードファイル作成を行う。",
+      "implRef": "src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19, src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21, src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:46, src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:47, src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:27, src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29, src/Eccube/Service/UniSearch/UniSearchExportService.php:96, src/Eccube/Service/UniSearch/UniSearchExportService.php:100, src/Eccube/Service/UniSearch/UniSearchExportService.php:103, src/Eccube/Service/UniSearch/UniSearchExportService.php:107",
+      "implementationActual": "管理画面の「フィードファイルを更新する」POSTは UniSearchFeedCreateAction::handle() に入り、exportAndUpload(false) を呼ぶ。UniSearchExportService は false の場合に SFTP アップロードをスキップせず、既存リモート削除後に gz と done ファイルをアップロードする。",
+      "mismatchReason": "設計のB02-08は管理画面からフィードファイル作成可能、実行結果はTSV.gzとdoneファイルを指定ディレクトリに置くという作成処理の要求である。一方、実装は管理画面押下時に exportAndUpload(false) を渡しており、false は手動実行スキップではなくSFTP送信を実行する分岐になっている。別機能として設計されている送信処理まで管理画面の作成操作で実行されるため、設計の外部契約と異なる。反証として admin_product_unisearch_feed、UniSearchFeedCreateAction、exportAndUpload、--manual、deleteRemoteByPrefixes、upload、unisearch_feed メニューを再検索したが、管理画面経由で SFTP をスキップする実装は見つからなかった。",
+      "comparisonRows": [
+        {
+          "item": "管理画面ボタン押下時の処理範囲",
+          "design": "フィードファイル作成メニューでフィードファイル作成可能。実行結果はTSV.gzとMD5 doneファイルを指定ディレクトリに置く。",
+          "implementation": "POSTで UniSearchFeedCreateAction::handle() を呼び、exportAndUpload(false) を実行する。",
+          "mismatch": "管理画面の作成操作がファイル作成だけで閉じず、送信処理込みのメソッドを通常送信モードで呼んでいる。"
+        },
+        {
+          "item": "SFTP送信の扱い",
+          "design": "B02-08シートでは出力先はTSVファイルをgzに圧縮、指定ディレクトリへの配置。",
+          "implementation": "isManualExecution=false のため deleteRemoteByPrefixes、upload(gzip)、upload(done) を実行する。",
+          "mismatch": "設計上の作成処理にないリモート削除/SFTPアップロードが管理画面作成で発火する。"
+        },
+        {
+          "item": "手動実行スキップ指定",
+          "design": "管理画面からフィードファイル作成可能。",
+          "implementation": "CLIには --manual があり true の場合だけSFTPアップロードをスキップするが、管理画面は false 固定。",
+          "mismatch": "管理画面起動が手動作成扱いになっておらず、SFTPスキップ経路を使っていない。"
+        }
+      ]
+    }
+  ]
+}

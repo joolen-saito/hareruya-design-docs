@@ -1,0 +1,282 @@
+{
+  "id": "b05-04-resend-smaregi-product-flow-mismatch",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b05-04_0405_sheet-6_sheet.json",
+  "sourceFindingId": "b05-04_0405_sheet-6_sheet-conformance-49eca82ef18e",
+  "classification": "バッチ受注管理",
+  "feature": "スマレジ商品再連携",
+  "issueCategory": "実装違い",
+  "issue": "スマレジ商品再連携バッチの入口・対象抽出・未連携区分別再連携が設計と不一致",
+  "designBook": "0405_基本設計仕様書(バッチ_受注管理).xlsx",
+  "reproSteps": [
+    "設計書 B05-04 の実行方法が `order:batch resendSmaregiProduct` で、スマレジ商品コード登録済み・削除フラグなし・商品または在庫が未連携の注文を対象にすることを確認する",
+    "ベース実装 pf-eccube3 の `OrderBatch` と `ResendSmaregiProduct` が、商品未連携なら `product`、在庫未連携なら `stock` だけを `postSmaregiProcess()` に渡すことを確認する",
+    "ec-cube-enterprise のコマンド・サービス・Repositoryを検索し、`order:batch resendSmaregiProduct` または同等のB05-04専用入口があるか確認する",
+    "ec-cube-enterprise で設計条件に近い `OrderRepository::getResendSmaregiProduct()` が存在するものの呼び出し元がなく、実行可能な近接経路は `eccube:order:otc-smaregi-post` から `findTargetOrdersForSmaregiPost()` を呼ぶ別条件の処理であることを確認する"
+  ],
+  "expected": [
+    "スマレジ商品再連携は `order:batch resendSmaregiProduct` 相当のバッチ入口から実行できる",
+    "再連携対象は、スマレジ商品コードが登録済み、スマレジ削除フラグが未設定、かつスマレジ商品連携またはスマレジ在庫連携のどちらかが未連携の注文とする",
+    "商品連携が未完了の場合だけ商品連携を、在庫連携が未完了の場合だけ在庫連携を再実行する",
+    "商品または在庫の再連携に失敗した場合は、発生したスマレジ連携ごとに管理者へ通知する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise にはB05-04条件に近い `OrderRepository::getResendSmaregiProduct()` があるが、検索上このメソッドを呼ぶコマンド/サービスがない。実行可能な近接経路は `eccube:order:otc-smaregi-post` で、`SmaregiOtcOrderPostAction` は `findTargetOrdersForSmaregiPost()` を呼ぶため、設計の `order:batch resendSmaregiProduct` 入口と未連携区分別再連携フローになっていない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の実行可能な近接コマンドは別名の店頭受取スマレジ連携バッチ",
+          "path": "ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php",
+          "start": 25,
+          "end": 63,
+          "language": "php",
+          "contains": [
+            "#[AsCommand(name: 'eccube:order:otc-smaregi-post', description: '店頭受取注文のスマレジ連携バッチ')]",
+            "$this->smaregiOtcOrderPostAction->handle($thirtyMinutesAgo);",
+            "$io->success('店頭受取注文スマレジ連携処理が完了しました。');"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の近接経路は findTargetOrdersForSmaregiPost を呼ぶ",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php",
+          "start": 39,
+          "end": 82,
+          "language": "php",
+          "contains": [
+            "public function handle(\\DateTime $targetDateTime): void",
+            "$Orders = $this->orderRepository->findTargetOrdersForSmaregiPost($targetDateTime);",
+            "$Job = $this->dispatcher->dispatch($Order);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise のB05-04形の対象抽出メソッドは存在するが呼び出し元がない",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+          "start": 753,
+          "end": 768,
+          "language": "php",
+          "contains": [
+            "public function getResendSmaregiProduct(): mixed",
+            "os.smaregi_code is not null",
+            "os.smaregi_del_flg = :delFlg",
+            "$qb->expr()->orX(",
+            "os.smaregi_product_flg",
+            "os.smaregi_stock_flg"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise の実行経路側の抽出はB05-04のOR条件ではなく別条件",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+          "start": 1814,
+          "end": 1832,
+          "language": "php",
+          "contains": [
+            "public function findTargetOrdersForSmaregiPost(\\DateTime $targetDateTime): array",
+            "o.order_date < :targetDateTime",
+            "bi.smaregi_shop_id IS NOT NULL",
+            "o.smaregi_product_flg = false",
+            "o.smaregi_stock_flg = false",
+            "o.order_number IS NOT NULL"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では `order:batch resendSmaregiProduct` が `ResendSmaregiProduct` に対応し、対象抽出後に商品未連携なら `product`、在庫未連携なら `stock` を個別に `postSmaregiProcess()` へ渡す。設計の「未連携区分のみ再連携」と一致している。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 は order:batch resendSmaregiProduct を登録する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php",
+          "start": 12,
+          "end": 30,
+          "language": "php",
+          "contains": [
+            "'resendSmaregiProduct' => 'Plugin\\HareruyaEc\\Service\\Order\\ResendSmaregiProduct'",
+            "$this->setName('order:batch')",
+            "->addArgument('batch_name', InputArgument::OPTIONAL);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は未連携区分だけを再連携対象にする",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Order/ResendSmaregiProduct.php",
+          "start": 27,
+          "end": 43,
+          "language": "php",
+          "contains": [
+            "$this->app['hareruya_ec.repository.order_sub']->getResendSmaregiProduct()",
+            "if (!$orderSub->getSmaregiProductFlg())",
+            "$processes[] = 'product';",
+            "if (!$orderSub->getSmaregiStockFlg())",
+            "$processes[] = 'stock';",
+            "$this->app['hareruya_ec.service.smaregi']->postSmaregiProcess($orderSub, $processes);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 はB05-04条件で再連携対象を抽出する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOrderSubRepository.php",
+          "start": 137,
+          "end": 154,
+          "language": "php",
+          "contains": [
+            "public function getResendSmaregiProduct()",
+            "os.smaregiCode is not null",
+            "os.smaregiDelFlg = :delFlg",
+            "$qb->expr()->orX(",
+            "os.smaregiProductFlg",
+            "os.smaregiStockFlg"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 は商品/在庫連携失敗時にスマレジ通信エラーメールを送る",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php",
+          "start": 61,
+          "end": 84,
+          "language": "php",
+          "contains": [
+            "if (in_array('product', $processes))",
+            "$app['hareruya_ec.service.mail']->sendSmaregiErrorMail($result, 'product_upd', $orderSub->getOrderNumber());",
+            "if (in_array('stock', $processes))",
+            "$app['hareruya_ec.service.mail']->sendSmaregiErrorMail($result, 'stock_upd', $orderSub->getOrderNumber());"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B05-04 はスマレジ商品コード登録済み・削除フラグなし・商品または在庫が未連携の注文を取得し、未連携区分を再連携することを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1376,
+      "end": 1431,
+      "language": "html",
+      "contains": [
+        "B05-04",
+        "スマレジ商品再連携",
+        "スマレジ商品コードが登録されている",
+        "スマレジ商品未連携もしくは、スマレジ在庫連携未連携",
+        "スマレジ商品情報未連携の場合は、商品情報の更新をする",
+        "スマレジ在庫情報未連携の場合は、在庫情報の更新をする",
+        "エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B05-04 のリバース詳細は pf-eccube3 を挙動参照元とし、入口を `order:batch resendSmaregiProduct` と定義している",
+      "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+      "start": 1453,
+      "end": 1488,
+      "language": "html",
+      "contains": [
+        "確認値はpf-eccube3",
+        "<code>order:batch resendSmaregiProduct</code>",
+        "商品連携が未完了なら商品",
+        "在庫連携が未完了なら在庫",
+        "未連携区分をスマレジへ再連携する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise で実行可能な近接コマンドは `eccube:order:otc-smaregi-post` で、B05-04の設計入口ではない",
+      "path": "ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php",
+      "start": 25,
+      "end": 63,
+      "language": "php",
+      "contains": [
+        "#[AsCommand(name: 'eccube:order:otc-smaregi-post'",
+        "$this->smaregiOtcOrderPostAction->handle($thirtyMinutesAgo);"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の近接経路は `findTargetOrdersForSmaregiPost()` を呼び、B05-04の再連携対象抽出を呼ばない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php",
+      "start": 39,
+      "end": 82,
+      "language": "php",
+      "contains": [
+        "$Orders = $this->orderRepository->findTargetOrdersForSmaregiPost($targetDateTime);",
+        "$Job = $this->dispatcher->dispatch($Order);"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise にB05-04条件の抽出メソッドは存在するが、検索上呼び出し元がなくバッチとして未配線",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+      "start": 753,
+      "end": 768,
+      "language": "php",
+      "contains": [
+        "public function getResendSmaregiProduct(): mixed",
+        "os.smaregi_code is not null",
+        "os.smaregi_del_flg = :delFlg",
+        "$qb->expr()->orX("
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の実行経路側の抽出は商品・在庫両方の未連携をAND条件で要求し、B05-04のOR条件・未連携区分のみ再連携とは異なる",
+      "path": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php",
+      "start": 1814,
+      "end": 1832,
+      "language": "php",
+      "contains": [
+        "o.smaregi_product_flg = false",
+        "o.smaregi_stock_flg = false",
+        "o.order_number IS NOT NULL"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は `order:batch resendSmaregiProduct` を登録し、B05-04の入口を提供している",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php",
+      "start": 12,
+      "end": 30,
+      "language": "php",
+      "contains": [
+        "'resendSmaregiProduct' => 'Plugin\\HareruyaEc\\Service\\Order\\ResendSmaregiProduct'",
+        "$this->setName('order:batch')"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 はB05-04条件で抽出し、商品/在庫の未連携区分だけを `postSmaregiProcess()` へ渡す",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Order/ResendSmaregiProduct.php",
+      "start": 27,
+      "end": 43,
+      "language": "php",
+      "contains": [
+        "$this->app['hareruya_ec.repository.order_sub']->getResendSmaregiProduct()",
+        "$processes[] = 'product';",
+        "$processes[] = 'stock';",
+        "postSmaregiProcess($orderSub, $processes)"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 の対象抽出はスマレジコードあり・削除なし・商品または在庫未連携のOR条件",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOrderSubRepository.php",
+      "start": 137,
+      "end": 154,
+      "language": "php",
+      "contains": [
+        "os.smaregiCode is not null",
+        "os.smaregiDelFlg = :delFlg",
+        "$qb->expr()->orX("
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"B05-04|スマレジ商品再連携|resendSmaregiProduct|再連携|スマレジ通信エラー|管理者に通知|エラーメール\" excel_to_html/output/0405_基本設計仕様書\\(バッチ_受注管理\\).html",
+      "rg -n \"order:batch|resendSmaregiProduct|eccube:order:otc-smaregi-post|findOtcOrdersAwaitingSmaregiSync|getResendSmaregiProduct|SmaregiOtcOrderPostAction\" ../ec-cube-enterprise/src/Eccube ../ec-cube-enterprise/app/config 2>/dev/null",
+      "rg -n \"resendSmaregiProduct|ResendSmaregiProduct|sendSmaregiErrorMail|スマレジ通信エラー|postSmaregiProcess|smaregiErrorFlg|product_upd|stock_upd\" ../pf-eccube3/app/Plugin/HareruyaEc"
+    ],
+    "review": [
+      "codex gpt-5.5 high reviewer Cicero: NEEDS_REVIEW for the separate mail-only candidate f001105d0d35 because it duplicates the shared B05-01 mail-gap path unless B05-04 is wired separately.",
+      "codex gpt-5.5 high reviewer Anscombe: VERIFIED。B05-04は `order:batch resendSmaregiProduct`、smaregi_codeあり・削除なし・商品または在庫未連携のOR条件、未連携区分のみ再連携を要求する。enterpriseにはB05-04形の `getResendSmaregiProduct()` があるが未使用で、実行可能な近接経路 `eccube:order:otc-smaregi-post` は `findTargetOrdersForSmaregiPost()` を使う別条件である。"
+    ],
+    "notes": [
+      "B05-04の失敗時メール送信要求は本件の期待挙動に含めるが、メール送信単独候補 f001105d0d35 はB05-01の共通OTC同期メール漏れと重複しやすいため needs_review にした。"
+    ]
+  }
+}

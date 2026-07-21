@@ -1,0 +1,124 @@
+{
+  "id": "b08-02-lost-point-member-interval-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/b08-02_0408_sheet-4_sheet.json",
+  "sourceFindingId": "b08-02_0408_sheet-4_sheet-conformance-de268ec7f533",
+  "classification": "バッチ会員",
+  "feature": "ポイント失効",
+  "issueCategory": "実装漏れ",
+  "issue": "ポイント失効バッチで会員ごとの短いインターバルを挟んでいない",
+  "designBook": "0408_基本設計仕様書(バッチ_会員).xlsx",
+  "reproSteps": [
+    "設計書 B08-02 の処理フロー・業務ルールで、リクエスト上限に配慮して会員ごとに短いインターバルを挟む要求を確認する",
+    "ベース実装 pf-eccube3 の `LostPoints::execute()` が失効対象会員ループ内で `usleep(100000)` を実行していることを確認する",
+    "ec-cube-enterprise の `LostPointsAction::handle()` を確認し、失効対象会員の `foreach` 内に `sleep()` / `usleep()` などの待機処理がないことを確認する"
+  ],
+  "expected": [
+    "ポイント失効バッチは、失効対象会員ごとの処理間に短いインターバルを挟む",
+    "スマレジ連携など外部リクエストの流量制御に配慮する"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `LostPointsAction::handle()` は失効対象会員を `foreach` で処理するが、ループ内に `sleep()`、`usleep()`、インターバル用サービス呼び出しなどの待機処理がない。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise の LostPointsAction は会員ごとの待機なしで処理する",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php",
+          "start": 41,
+          "end": 116,
+          "language": "php",
+          "contains": [
+            "public function handle(): void",
+            "$lostPointPlayers = $this->pointHistoryRepository->getPlayersForLostPoint();",
+            "foreach ($lostPointPlayers as $lostPointPlayer) {",
+            "$Player->setPoint($remainingPoint);",
+            "$this->entityManager->flush();",
+            "$this->smaregiCustomerPointEventService->dispatchPointAddMessage($job, $LostPointHistory);"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装(pf-eccube3)では失効対象会員の `foreach` 直後に `usleep(100000)` を実行し、会員ごとに短いインターバルを挟んでからスマレジ連携・保有ポイント更新・履歴作成へ進む。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 の LostPoints は会員ごとに usleep する",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/LostPoints.php",
+          "start": 33,
+          "end": 63,
+          "language": "php",
+          "contains": [
+            "foreach ($lostPointPlayers as $lostPointPlayer) {",
+            "usleep(100000);",
+            "$response = $app['hareruya_ec.service.smaregi_customer']->postSmaregiPoint($player->getSmaregiId(), $losePoint, false);",
+            "$player->setPoint($lostPointPlayer['remainingPoint']);",
+            "$app['orm.em']->flush();"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "B08-02 はリクエスト上限への配慮として会員ごとの短いインターバルを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+      "start": 1160,
+      "end": 1188,
+      "language": "html",
+      "contains": [
+        "確認値はpf-eccube3",
+        "リクエスト上限への配慮（インターバル）",
+        "リクエスト上限に配慮し、会員ごとに短いインターバルを挟む。",
+        "流量制御</td><td>会員ごとに短いインターバルを挟む。"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "B08-02 の排他制御・トランザクション節も流量制御のためのインターバルを要求している",
+      "path": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html",
+      "start": 1215,
+      "end": 1215,
+      "language": "html",
+      "contains": [
+        "流量制御のため会員ごとにインターバルを挟む。"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "enterprise の会員ループには sleep/usleep 等の待機処理がない",
+      "path": "ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php",
+      "start": 41,
+      "end": 116,
+      "language": "php",
+      "contains": [
+        "foreach ($lostPointPlayers as $lostPointPlayer) {",
+        "$Player->setPoint($remainingPoint);",
+        "$this->smaregiCustomerPointEventService->dispatchPointAddMessage($job, $LostPointHistory);"
+      ]
+    },
+    {
+      "label": "ベース実装 pf-eccube3",
+      "note": "pf-eccube3 は失効対象会員ごとに `usleep(100000)` を実行する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/LostPoints.php",
+      "start": 33,
+      "end": 63,
+      "language": "php",
+      "contains": [
+        "foreach ($lostPointPlayers as $lostPointPlayer) {",
+        "usleep(100000);",
+        "postSmaregiPoint($player->getSmaregiId(), $losePoint, false)"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "rg -n \"usleep|sleep|interval|インターバル|流量制御|foreach \\\\(\\\\$lostPointPlayers|LostPointsAction|LostPoints.php\" ../ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php ../ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php ../pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/LostPoints.php excel_to_html/output/0408_基本設計仕様書\\(バッチ_会員\\).html design_impl_drift_report/findings/b08-02_0408_sheet-4_sheet.json",
+      "rg -n \"sleep|usleep|インターバル|流量制御\" ../ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php ../ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php"
+    ]
+  },
+  "notes": [
+    "本件は会員ごとの短いインターバル欠落に限定する。コマンド名、日時付き出力、スマレジ連携方式の差分は別候補として扱う。",
+    "gpt-5.5 high の批判的レビューはクレジット不足で実行できなかったため、ローカルの設計HTML・ベース実装・enterprise実装照合で確認した。"
+  ]
+}

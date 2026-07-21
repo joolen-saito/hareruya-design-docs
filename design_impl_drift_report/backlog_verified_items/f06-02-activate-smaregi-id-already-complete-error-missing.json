@@ -1,0 +1,227 @@
+{
+  "id": "f06-02-activate-smaregi-id-already-complete-error-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-02_0306_sheet-4_sheet.json",
+  "sourceFindingId": "f06-02_0306_sheet-4_sheet-conformance-d52de6028d9c",
+  "classification": "フロント会員",
+  "feature": "本会員登録",
+  "issueCategory": "実装漏れ",
+  "issue": "スマレジID保有済みの仮会員を本会員登録すると完了済みエラーではなく正常完了扱いになる",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "仮会員の `dtb_player.smaregi_id` に値が入っている状態を用意する",
+    "対象会員の本会員化URL `http://localhost:8080/ja/entry/activate/<secret_key>` にアクセスする",
+    "表示される画面と、完了メール送信・自動ログイン・本登録完了画面への遷移有無を確認する"
+  ],
+  "expected": [
+    "秘密キーから取得した会員の選手情報にスマレジIDが既にある場合は、一度本登録済みと判断する",
+    "スマレジID保有済みの場合は再登録せず、共通エラー画面に「完了済みです。」「既に会員登録が完了されております。」を表示して終了する",
+    "スマレジID保有済みの場合は、本会員登録完了メール送信・自動ログイン・本登録完了画面表示へ進まない"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise の `entryActivate()` は、秘密キーで未本会員を取得できない場合だけ `already_activated` エラーを返す。スマレジID保有済みの判定は `linkSmaregiCustomer()` 内にあり、`Player->getSmaregiId()` が非空の場合は「既に連携済みなら何もしない (冪等).」として `$Customer` を返すだけで、`already_activated` エラーにはしない。そのため呼び出し元は完了メール送信、自動ログイン、完了画面または商品検索画面への遷移へ進む。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 本会員化のエラー分岐と後続処理",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php",
+          "start": 250,
+          "end": 256,
+          "language": "php",
+          "contains": [
+            "return $this->render('Entry/activate_error.twig', ['error_type' => 'already_activated']);",
+            "return $this->render('Entry/activate_error.twig', ['error_type' => 'forbidden']);",
+            "return $this->render('Entry/activate_error.twig', ['error_type' => 'activate_failed']);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise スマレジID既存時の冪等スキップ",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php",
+          "start": 343,
+          "end": 352,
+          "language": "php",
+          "contains": [
+            "// 既に連携済みなら何もしない (冪等).",
+            "$smaregiId = $Player->getSmaregiId();",
+            "if ($smaregiId !== null && $smaregiId !== '') {",
+            "return $Customer;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise スマレジ連携後に完了メール・自動ログインへ進む処理",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php",
+          "start": 301,
+          "end": 322,
+          "language": "php",
+          "contains": [
+            "$ActivatedCustomer = $this->linkSmaregiCustomer($secret_key);",
+            "$this->mailService->sendCustomerCompleteMail($Customer);",
+            "$this->security->login($ActivatedCustomer, 'form_login', 'customer');",
+            "return $qtyInCart;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 完了済みエラー文言の表示テンプレート",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/activate_error.twig",
+          "start": 21,
+          "end": 24,
+          "language": "twig",
+          "contains": [
+            "front.entry.activate_error.",
+            "error_type",
+            ".message"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 完了済みエラー文言",
+          "path": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml",
+          "start": 451,
+          "end": 456,
+          "language": "yaml",
+          "contains": [
+            "front.entry.activate_error.already_activated.title: 完了済みです。",
+            "front.entry.activate_error.already_activated.message: 既に会員登録が完了されております。"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 では、本会員化処理中に `findOneByCustomer()` で選手情報を取得し、`getSmaregiId()` が空でない場合は「スマレジIDがある=一度本登録を行った会員」として `error.twig` を返す。返却する `error_title` / `error_message` は `error_messages.already_activated` で、文言は「完了済みです。」「既に会員登録が完了されております。」である。この分岐ではスマレジ再登録、完了メール、自動ログインへ進まない。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 スマレジID既存時の完了済みエラー",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php",
+          "start": 217,
+          "end": 233,
+          "language": "php",
+          "contains": [
+            "$player = $app['hareruya_ec.repository.player']->findOneByCustomer($Customer);",
+            "// スマレジIDがある=一度本登録を行った会員と判断して再登録は行わない。",
+            "if (!empty($player->getSmaregiId())) {",
+            "'error_title' => $app->trans('error_messages.already_activated.title')",
+            "'error_message' => $app->trans('error_messages.already_activated.message')"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 完了済みエラー文言",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml",
+          "start": 257,
+          "end": 259,
+          "language": "yaml",
+          "contains": [
+            "already_activated:",
+            "title: 完了済みです。",
+            "message: 既に会員登録が完了されております。"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 共通エラー表示",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/default/error.twig",
+          "start": 127,
+          "end": 130,
+          "language": "twig",
+          "contains": [
+            "{% if is404 or (error_title and error_message) %}",
+            "<h1>{{ error_title }}</h1>",
+            "<p>{{ error_message }}</p>"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "スマレジID保有済みの場合は完了済みエラーで終了",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 1816,
+      "end": 1827,
+      "language": "html",
+      "contains": [
+        "当該会員の選手情報にスマレジIDが既にある場合は",
+        "共通エラー画面（完了済みです）を表示して終了する",
+        "選手情報にスマレジIDが既にあるか",
+        "既にあるなら「完了済みです。」エラー画面（再登録しない）",
+        "既にスマレジID保有のとき"
+      ]
+    },
+    {
+      "label": "設計",
+      "note": "二重本登録防止とエッジケース",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 1830,
+      "end": 1834,
+      "language": "html",
+      "contains": [
+        "選手情報にスマレジIDがある会員は本登録済みとみなし",
+        "再度の本会員化・スマレジ再登録を行わない",
+        "スマレジID保有のため「完了済みです。」を表示する"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "スマレジID保有済みはエラーではなく return $Customer",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php",
+      "start": 343,
+      "end": 352,
+      "language": "php",
+      "contains": [
+        "既に連携済みなら何もしない (冪等)",
+        "return $Customer;"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "呼び出し元は完了メール・自動ログインへ進む",
+      "path": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php",
+      "start": 301,
+      "end": 322,
+      "language": "php",
+      "contains": [
+        "linkSmaregiCustomer",
+        "sendCustomerCompleteMail",
+        "security->login"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3はスマレジID保有済みを完了済みエラーで終了する",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php",
+      "start": 226,
+      "end": 233,
+      "language": "php",
+      "contains": [
+        "スマレジIDがある=一度本登録を行った会員",
+        "error_messages.already_activated.title",
+        "error_messages.already_activated.message"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "完了済みエラー文言",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml",
+      "start": 257,
+      "end": 259,
+      "language": "yaml",
+      "contains": [
+        "完了済みです。",
+        "既に会員登録が完了されております。"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-02_0306_sheet-4_sheet.json#f06-02_0306_sheet-4_sheet-conformance-d52de6028d9c'",
+      "rg -n \"スマレジID|完了済みです|既に会員登録が完了|linkSmaregiCustomer|Smaregi|smaregiId|smaregi_id|activate_error|customer_status|本会員登録\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html ec-cube-enterprise/src/Eccube pf-eccube3/app/Plugin/HareruyaEc",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '1816,1835p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php | sed -n '250,323p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php | sed -n '340,356p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/template/default/Entry/activate_error.twig | sed -n '1,38p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml | sed -n '445,456p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php | sed -n '210,270p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml | sed -n '253,261p'",
+      "rg -n \"error_title|error_message\" pf-eccube3/app/template pf-eccube3/app/Plugin/HareruyaEc/Resource/template -g 'error.twig' -g '*.twig'"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。"
+  }
+}

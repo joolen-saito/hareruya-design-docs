@@ -1,0 +1,87 @@
+{
+  "chunkId": "b05-01_0405_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-01_0405_sheet-3_sheet.json#b05-01_0405_sheet-3_sheet-conformance-56c9ca3f713b",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "featureNo": "B05-01",
+      "title": "B05-01 注文番号登録",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "スマレジ連携対象の注文日時条件が設計と逆方向で、30分前以降ではなく30分前より古い注文を抽出している。",
+      "reason": "設計はスマレジ連携対象を『バッチ起動から30分前以降の注文』（注文日時 = バッチ駆動時間から30分前まで、すなわち直近30分の注文 order_date >= now-30min）と定めている（design line 945, 984, 991）。実装では OtcOrderSmaregiPostCommand が now->modify('-30 minutes') を targetDateTime として渡し（Command line 48-51）、OrderRepository::findTargetOrdersForSmaregiPost が `o.order_date < :targetDateTime` で抽出する（Repository line 1862）。これは『30分前より古い注文』を選ぶ条件であり、設計の『30分前以降』とは対象期間が逆。下限も無いため直近30分の窓ではなく古い未連携注文全体が対象になる。設計意図（line 942-944: 再連携バッチ不要化のため直近注文を対象化）とも矛盾する。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html","start":984,"end":991,"contains":["バッチ起動から30分前以降の注文","バッチ駆動時間からバッチ駆動時間より30分前"]},
+      "implEvidence": [
+        {"label":"実装(コマンド)","note":"now-30分をtargetDateTimeとして渡す","path":"ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php","start":47,"end":51,"contains":["-30 minutes","thirtyMinutesAgo"]},
+        {"label":"実装(抽出クエリ)","note":"order_dateが30分前より古い注文を抽出","path":"ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php","start":1858,"end":1862,"contains":["findTargetOrdersForSmaregiPost","o.order_date < :targetDateTime"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-01_0405_sheet-3_sheet.json#b05-01_0405_sheet-3_sheet-conformance-284420b0093c",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "featureNo": "B05-01",
+      "title": "B05-01 注文番号登録",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "親バッチのスマレジ用商品コード採番が注文番号を8桁0埋めせず末尾6桁を切り出すため、短い注文番号で設計例と異なるコードになる。",
+      "reason": "設計は採番ルールを『20 + 1 + スマレジ店舗ID3桁0埋め + 注文番号(8桁0埋め後、末尾から6桁取得)』とし、例では注文番号12345→部分『012345』→コード2010010123451（design line 952, 956-957）。専用の SmaregiOtcProductCodeGenerator::normalizeOrderNumber は str_pad(orderNumber,8,'0',LEFT) 後に末尾6桁を取り正しく0埋めする（SyncService経由 line 81 で使用可能, Generator line 76-78）。しかし親バッチ SmaregiOtcOrderPostAction::handle は getProductBarcode() を呼び（line 58）、その内部は `substr($orderNumber, -6)` で0埋めなしに末尾6桁を切り出す（line 97）。生成値は Order->setSmaregiCode で保存され（line 60）、同期サービス SmaregiOtcOrderSyncService::sync は既存 smaregi_code があればそれを再利用し正しい Generator を使わない（line 79-82）。よって6桁未満の注文番号（例12345）では設計例の『012345』ではなく『12345』となり13桁コードにならず、設計と実装が一致しない。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html","start":950,"end":957,"contains":["8桁0埋め後、末尾から6桁取得","2010010123451"]},
+      "implEvidence": [
+        {"label":"実装(親バッチ採番呼び出し)","note":"getProductBarcodeで採番しsmaregi_codeへ保存","path":"ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php","start":57,"end":60,"contains":["getProductBarcode","setSmaregiCode"]},
+        {"label":"実装(0埋め欠落)","note":"8桁0埋めせず末尾6桁を切り出す","path":"ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php","start":94,"end":97,"contains":["substr($orderNumber, -6)"]},
+        {"label":"実装(同期は既存コードを再利用)","note":"smaregi_codeがあれば正しいGeneratorを使わない","path":"ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php","start":78,"end":82,"contains":["$productCode = $Order->getSmaregiCode();","productCodeGenerator->generate"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-01_0405_sheet-3_sheet.json#b05-01_0405_sheet-3_sheet-conformance-ea6adcd624a9",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "featureNo": "B05-01",
+      "title": "B05-01 注文番号登録",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "スマレジ商品登録に送る部門ID(categoryId)を設計は6固定とするが、実装は追加設定 smaregi_category_id から取得しており固定でない。",
+      "reason": "設計は送信する部門IDを『6: 店頭受取（固定）』としている（design line 964-965）。実装では SmaregiOtcSyncMessageHandler が resolveSmaregiCategoryId() で追加システム設定 MtbOption::SMAREGI_CATEGORY_ID の option_value を取得し（line 96, 153-161）、それを sync に渡して buildProductBody で `'categoryId' => $categoryId` として商品登録リクエストに設定している（SmaregiOtcOrderSyncService line 284）。Smaregiのproduct API では categoryId が部門IDに相当する。実装は6ハードコードではなく設定値依存であり、設計の『6固定』を保証していないため設計と異なる（設定次第で6以外になりうる）。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html","start":964,"end":965,"contains":["部門ID","6: 店頭受取（固定）"]},
+      "implEvidence": [
+        {"label":"実装(categoryIdを設定から解決)","note":"smaregi_category_id 設定値を使用","path":"ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php","start":153,"end":161,"contains":["resolveSmaregiCategoryId","MtbOption::SMAREGI_CATEGORY_ID"]},
+        {"label":"実装(リクエストへ設定)","note":"固定6ではなく渡されたcategoryIdを送信","path":"ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php","start":275,"end":285,"contains":["'categoryId' => $categoryId"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-01_0405_sheet-3_sheet.json#b05-01_0405_sheet-3_sheet-conformance-7814f4ac1df3",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "featureNo": "B05-01",
+      "title": "B05-01 注文番号登録",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "high",
+      "reason": "指摘は『商品名は常に sprintf(\"店頭受取 %s\", Order.orderNumber) で生成し、店頭PCアカウント/通常会員の分岐や注文者カナの利用はない』とするが、これは現行実装と一致しない。現在の SmaregiOtcOrderSyncService::buildProductBody は isShopFrontOrder() で分岐しており（line 254, 308-321）、店頭PCアカウント（shopFrontFlg）の場合は『店頭注文: {waitingNumber} のご注文』、通常会員の場合は『{kana01} {kana02} 様のご注文』を生成し注文者カナ(getKana01/getKana02)を使用している（line 257-267）。設計の分岐条件・文言・カナ利用は実装に存在する。`rg -n '店頭受取 %s' src/` でも該当生成は見つからず（無関係のエラーメッセージのみ）、指摘の implementationActual が誤りのため REFUTED。なお実装は注文番号を先頭に prepend する差分はあるが、指摘（分岐・カナ皆無）の主張自体が事実に反する。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html","start":966,"end":968,"contains":["店頭注文: 店頭注文番号 のご注文","注文者姓カナ 注文者名カナ 様のご注文"]},
+      "implEvidence": [
+        {"label":"実装(商品名の分岐生成)","note":"店頭PC/通常会員で分岐しカナを使用","path":"ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php","start":254,"end":267,"contains":["店頭注文: {$waitingNumber} のご注文","{$Order->getKana01()} {$Order->getKana02()} 様のご注文"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-01_0405_sheet-3_sheet.json#b05-01_0405_sheet-3_sheet-conformance-b701cd53d4a0",
+      "functionId": "b05-01_0405_sheet-3_sheet",
+      "featureNo": "B05-01",
+      "title": "B05-01 注文番号登録",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "バッチ開始・完了のコンソール出力を設計は日時付きで要求するが、実装の出力文字列に日時が含まれない。",
+      "reason": "設計（詳細設計 ログ・監査）は開始・完了について『開始・完了のコンソール出力（日時付き）』を要求している（design line 1095-1096）。実装 OtcOrderSmaregiPostCommand は開始時に $io->text('店頭受取注文スマレジ連携バッチ開始')（line 44）、完了時に $io->success('店頭受取注文スマレジ連携処理が完了しました。')（line 61）を出力するのみで、SymfonyStyle の text/success は日時を付与せず、出力文字列にも日時が含まれない。開始・完了出力は存在するが日時付与という要求を満たしていないため実装違い。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html","start":1095,"end":1096,"contains":["ログ・監査","開始・完了のコンソール出力（日時付き）"]},
+      "implEvidence": [
+        {"label":"実装(開始・完了出力に日時なし)","note":"text/successに日時付与なし","path":"ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php","start":44,"end":61,"contains":["店頭受取注文スマレジ連携バッチ開始","店頭受取注文スマレジ連携処理が完了しました。"]}
+      ]
+    }
+  ]
+}

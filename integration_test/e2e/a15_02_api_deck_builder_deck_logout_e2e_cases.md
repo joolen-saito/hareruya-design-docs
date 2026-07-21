@@ -7,7 +7,7 @@
 
 本機能は画面を伴わない機能仕様（デッキビルダーアプリ向けの会員ログアウト JSON API。`POST`）であり、**両レイヤで網羅**する。本APIの観測可能な結果はJSONレスポンス（成功＝HTTP200・`{code, message}` の `message` が `Logout success`／失敗＝HTTP401・`{code, message}`）とログアウト成功時のトークンCookie空設定（副作用）であり、結果はEC-CUBE管理画面に現れずデッキビルダーアプリ側に返るため、主レイヤは **API/統合**（Playwright `request` でエンドポイントへPOST送信し、HTTPステータス・レスポンス本文の `code`／`message` 値・型契約・トークンCookie空設定（Set-Cookie）・冪等性で判定）。UIレイヤは0件（本APIの結果が管理画面に現れず、アクセストークンの発行はA15-01ログイン、各デッキビルダーAPIの認可は各APIの設計へ正本md「本書で扱わないこと」で委譲のため）。
 
-**期待結果は仕様（正本md＝pf-api挙動／観点表）由来**とし、実装のレスポンス形・フレームワーク既定値・トークンライブラリ既定値を期待値に流用しない（オラクル独立性）。正本mdはリバース設計のため、基本設計・観点表を上位オラクルとし、移行先 ec-cube-enterprise 実装からは位置情報（APIパス・メソッド・認証方式・応答組み立て元）のみを `file:line` 根拠で取得し、取れないもの・刷新先の独自挙動・正本md未定義の挙動は `要実機確認` とする。設計（pf-api `POST /user/logout`・`aud` クレーム・トークンCookie空設定）と実装（ec-cube-enterprise `POST /api/user/logout`・`sub` クレーム・Cookie操作なし）の食い違いは付帯表4に出す。型契約（`code`＝integer、`message`＝string）は正本mdの仕様型で期待値化し、実装のキャスト差異があれば付帯表4へ出す。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。送信先パスは実装の実効パスに統一し、設計パスとの差異は付帯表4でのみ管理する（本体期待値に設計パスを混在させない）。
+**期待結果は仕様（正本md＝pf-api挙動／観点表）由来**とし、実装のレスポンス形・フレームワーク既定値・トークンライブラリ既定値を期待値に流用しない（オラクル独立性）。正本mdはリバース設計のため、基本設計・観点表を上位オラクルとし、移行先 ec-cube-enterprise 実装からは位置情報（APIパス・メソッド・認証方式・応答組み立て元）のみを `file:line` 根拠で取得し、取れないもの・刷新先の独自挙動・正本md未定義の挙動は `要実機確認` とする。設計（pf-api `POST /user/logout`・`aud` クレーム・トークンCookie空設定）と実装（ec-cube-enterprise `POST /api/user/logout`・`sub` クレーム・Cookie操作なし）の食い違いは付帯表4に出す。型契約（`code`＝integer、`message`＝string）は正本mdの仕様型で期待値化し、実装のキャスト差異があれば付帯表4へ出す。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。送信先パスは実装の実効パスに統一し、設計パスとの差異は付帯表4でのみ管理する（本体期待値に設計パスを混在させない）。
 
 ## 関連ID対応概要
 
@@ -22,49 +22,49 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-001	IT-32	資格情報	P1	有効なトークンを持つ会員でログアウトが成立する	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-tokenヘッダ（既知プレイヤーの会員IDを持つ）	"1. jwt-tokenヘッダに有効トークンを付与してログアウトAPIへPOST送信する
-2. HTTPステータスを確認する"	有効なトークンを持つ会員のみログアウトが成立し、HTTP200が返ること。
+2. HTTPステータスを確認する"	有効なトークンを持つ会員のみログアウトが成立し、HTTP200が返ること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-002	IT-09	実行結果	P1	成功時に本文のcode=200・message=Logout successが返る	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-token	"1. ログアウトAPIへPOST送信する
-2. レスポンス本文のcode・messageを確認する"	応答本文のcodeが200、messageが「Logout success」であること。
+2. レスポンス本文のcode・messageを確認する"	応答本文のcodeが200、messageが「Logout success」であること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-003	IT-09	HTTPステータス	P1	ログアウト成功時のHTTPステータスが200である	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-token	"1. ログアウトAPIへPOST送信する
-2. HTTPステータスを確認する"	ログアウト成功時のHTTPステータスが200であること。
+2. HTTPステータスを確認する"	ログアウト成功時のHTTPステータスが200であること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-004	IT-09	リクエスト	P2	リクエストボディを持たずヘッダのみで正常実行される	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-token（リクエストボディなし）	"1. リクエストボディを付けずjwt-tokenヘッダのみでログアウトAPIへPOST送信する
-2. HTTPステータスを確認する"	リクエストボディを持たずjwt-tokenヘッダのみで正常実行され、HTTP200が返ること。
+2. HTTPステータスを確認する"	リクエストボディを持たずjwt-tokenヘッダのみで正常実行され、HTTP200が返ること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-005	IT-32	リクエスト	P1	jwt-tokenヘッダ欠落で認証拒否となる	SEED-A15-02-PLAYER	jwt-tokenヘッダなし	"1. jwt-tokenヘッダを付与せずログアウトAPIへPOST送信する
-2. HTTPステータスを確認する"	jwt-tokenヘッダが欠落した場合、認証拒否（HTTP401）となること。
+2. HTTPステータスを確認する"	jwt-tokenヘッダが欠落した場合、認証拒否（HTTP401）となること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-006	IT-32	リクエスト	P3	想定外項目を加えても無視され認証成功する	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-token＋ボディに想定外の項目（項目名と値のセット）	"1. ボディに想定外項目を含めてログアウトAPIへPOST送信する
-2. HTTPステータスを確認する"	ボディに想定外項目を加えても無視され、有効なトークンで認証成功（HTTP200）すること。
+2. HTTPステータスを確認する"	ボディに想定外項目を加えても無視され、有効なトークンで認証成功（HTTP200）すること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-008	IT-10	エラー	P2	署名不正トークンで401・Access Token is incorrectが返る	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	署名が不正なjwt-token	"1. 署名を改ざんしたトークンでログアウトAPIへPOST送信する
-2. HTTPステータスとレスポンス本文を確認する"	署名が不正なトークンで認証拒否（HTTP401）となり、messageが「Access Token is incorrect」であること。
+2. HTTPステータスとレスポンス本文を確認する"	署名が不正なトークンで認証拒否（HTTP401）となり、messageが「Access Token is incorrect」であること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-015	IT-10	エラー	P3	タイムアウト時の応答を確認する	SEED-A15-02-PLAYER	タイムアウトを誘発する状態	"1. タイムアウトを誘発してログアウトAPIへPOST送信する
-2. 応答を確認する"	処理中の例外・タイムアウト時は正本mdが共通例外処理（HTTP500）と定めるが、タイムアウト固有の応答は正本md未定義かつ再現が外部依存のため、観測された応答を要実機確認で記録すること（合否は実機確認の結果による）。
+2. 応答を確認する"	処理中の例外・タイムアウト時は正本mdが共通例外処理（HTTP500）と定めるが、タイムアウト固有の応答は正本md未定義かつ再現が外部依存のため、観測された応答を要実機確認で記録すること（合否は実機確認の結果による）。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-024	IT-09	外部取得	P1	audの会員IDで既知プレイヤーが照合されログアウト成功する	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	既知プレイヤーの会員IDをaudに持つ有効jwt-token	"1. ログアウトAPIへPOST送信する
-2. HTTPステータスを確認する"	トークンのaud（会員ID）に対応するプレイヤーがSEEDの既知会員で引け、ログアウトが成功（HTTP200）すること。
+2. HTTPステータスを確認する"	トークンのaud（会員ID）に対応するプレイヤーがSEEDの既知会員で引け、ログアウトが成功（HTTP200）すること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-025	IT-10	HTTPステータス	P1	認証失敗時のHTTPステータスが401である	SEED-A15-02-PLAYER	不正なjwt-token	"1. 不正なトークンでログアウトAPIへPOST送信する
-2. HTTPステータスを確認する"	認証失敗時のHTTPステータスが401であること。
+2. HTTPステータスを確認する"	認証失敗時のHTTPステータスが401であること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-026	IT-10	通信	P1	POST通信が成立し認証結果に応じた応答が返る	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-token	"1. ログアウトAPIへPOST送信する
-2. 通信成立とHTTPステータスを確認する"	POST通信が成立し、認証結果に応じたHTTPステータス（成功＝200）が返ること。
+2. 通信成立とHTTPステータスを確認する"	POST通信が成立し、認証結果に応じたHTTPステータス（成功＝200）が返ること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-027	IT-10	正常	P2	有効トークンで200と成功メッセージが返る	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-token	"1. ログアウトAPIへPOST送信する
-2. HTTPステータスとレスポンス本文を確認する"	有効なトークンでHTTP200と成功メッセージ（Logout success）が返ること。
+2. HTTPステータスとレスポンス本文を確認する"	有効なトークンでHTTP200と成功メッセージ（Logout success）が返ること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-030	IT-10	異常系	P2	不正トークンで401となり成功応答が返らない	SEED-A15-02-PLAYER	不正なjwt-token	"1. 不正なトークンでログアウトAPIへPOST送信する
-2. HTTPステータスとレスポンス本文を確認する"	トークンが不正のとき認証拒否（HTTP401）となり、成功応答（code=200）が返らないこと。
+2. HTTPステータスとレスポンス本文を確認する"	トークンが不正のとき認証拒否（HTTP401）となり、成功応答（code=200）が返らないこと。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-031	IT-32	必須条件	P3	必須のjwt-tokenヘッダ欠落時に認証拒否となる	SEED-A15-02-PLAYER	jwt-tokenヘッダなし	"1. jwt-tokenヘッダを付与せずログアウトAPIへPOST送信する
-2. HTTPステータスを確認する"	必須のjwt-tokenヘッダが欠落した場合、認証拒否（HTTP401）となること。
+2. HTTPステータスを確認する"	必須のjwt-tokenヘッダが欠落した場合、認証拒否（HTTP401）となること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-032	IT-32	レスポンス	P3	成功レスポンスの型契約（code=integer・message=string）を満たす	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-token	"1. ログアウトAPIへPOST送信する
-2. レスポンス各フィールドの型を確認する"	成功応答のcodeがinteger型、messageがstring型で返ること。
+2. レスポンス各フィールドの型を確認する"	成功応答のcodeがinteger型、messageがstring型で返ること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-033	IT-32	データなし	P2	aud対応プレイヤーなしで401・Authentication failedが返る	SEED-A15-02-NOPLAYER／SEED-A15-02-JWT-SECRET	会員IDに対応するプレイヤーが存在しない有効署名のjwt-token	"1. プレイヤー未登録の会員IDをaudに持つトークンでログアウトAPIへPOST送信する
-2. HTTPステータスとレスポンス本文を確認する"	トークンのaudに対応するプレイヤーが存在しない場合、認証拒否（HTTP401）となり、messageが「Authentication failed」であること。
+2. HTTPステータスとレスポンス本文を確認する"	トークンのaudに対応するプレイヤーが存在しない場合、認証拒否（HTTP401）となり、messageが「Authentication failed」であること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-036	IT-32	受信検証	P1	jwt-tokenの検証が成立し認証成功で200が返る	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-token	"1. ログアウトAPIへPOST送信する
-2. HTTPステータスを確認する"	jwt-tokenの署名検証とプレイヤー照合が成立し、認証成功でHTTP200が返ること。
+2. HTTPステータスを確認する"	jwt-tokenの署名検証とプレイヤー照合が成立し、認証成功でHTTP200が返ること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-037	IT-10	重複・順序	P1	不正トークンのクライアントは再送しても毎回認証拒否となる	SEED-A15-02-PLAYER	不正なjwt-token（複数回送信）	"1. 不正なトークンでログアウトAPIへ複数回POST送信する
-2. 各応答のHTTPステータスを確認する"	トークンが不正のクライアントは再送しても毎回認証拒否（HTTP401）となること。
+2. 各応答のHTTPステータスを確認する"	トークンが不正のクライアントは再送しても毎回認証拒否（HTTP401）となること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-050	IT-09	実行結果	P2	ログアウト成功時にトークンCookieが空値に設定される	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-token	"1. ログアウトAPIへPOST送信する
-2. レスポンスのSet-Cookie（トークンCookie）を確認する"	ログアウト成功時、副作用としてトークンCookieを空値に設定するSet-Cookieが応答に含まれること（実装にCookie操作が無い場合は付帯表4#2で落ちて検出）。
+2. レスポンスのSet-Cookie（トークンCookie）を確認する"	ログアウト成功時、副作用としてトークンCookieを空値に設定するSet-Cookieが応答に含まれること（実装にCookie操作が無い場合は付帯表4#2で落ちて検出）。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-051	IT-09	リクエスト	P3	サーバ側でトークン失効せず同一トークンの再ログアウトが成功する	SEED-A15-02-PLAYER／SEED-A15-02-JWT-SECRET	有効なjwt-token（ログアウト後に同一トークンを再送）	"1. 有効トークンでログアウトAPIへPOST送信する
-2. 同一トークンで再度ログアウトAPIへPOST送信し応答を確認する"	サーバ側でトークンを失効しないため、ログアウト成功後に同一トークンで再度ログアウトしてもHTTP200が返ること。
+2. 同一トークンで再度ログアウトAPIへPOST送信し応答を確認する"	サーバ側でトークンを失効しないため、ログアウト成功後に同一トークンで再度ログアウトしてもHTTP200が返ること。				
 a15-02_api_deck_builder_deck_logout（API_デッキビルダー_ログアウト）	E2E-A15-02-052	IT-32	受信検証	P3	会員IDクレームを欠くトークンで認証拒否となる	SEED-A15-02-JWT-SECRET	有効署名だが会員ID（aud）クレームを持たないjwt-token	"1. 会員IDクレームを持たない有効署名トークンでログアウトAPIへPOST送信する
-2. HTTPステータスを確認する"	トークンに会員ID（aud）クレームが無い場合、認証拒否（HTTP401）となること（クレーム名はaud／subで設計と実装が異なり、判定の所在は要実機確認）。
+2. HTTPステータスを確認する"	トークンに会員ID（aud）クレームが無い場合、認証拒否（HTTP401）となること（クレーム名はaud／subで設計と実装が異なり、判定の所在は要実機確認）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

@@ -1,0 +1,150 @@
+{
+  "functionId": "m04-01_0202_sheet-5_sheet",
+  "featureNo": "M04-01",
+  "findings": [
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:1898",
+      "designExpectation": "メンバー管理で設定されているデフォルト検索表示店舗の在庫一覧を初期表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:180",
+      "implementationActual": "SearchStockListType は base_info の初期値にログインメンバーの DefaultSearchBaseInfo を設定しているが、StockListController の初回GETは検索条件セッションを破棄し pagination=[] を返すため、初期表示で在庫一覧は表示されない。",
+      "mismatchReason": "設計はデフォルト検索表示店舗で絞り込んだ在庫一覧の表示を要求している。実装はフォーム初期値だけ設定し、一覧本体は検索前空状態として返すため、利用者が初期表示で在庫一覧を見られない。確認範囲: StockListController, SearchStockListType, ProductStockRepository, stock_list_index.twig。",
+      "comparisonRows": [
+        {
+          "item": "初期表示",
+          "design": "デフォルト検索表示店舗の在庫一覧を表示する",
+          "implementation": "初回GETは pagination=[] で空一覧を返す",
+          "mismatch": "一覧表示が未実行"
+        },
+        {
+          "item": "店舗条件",
+          "design": "メンバー管理のデフォルト検索表示店舗で絞り込む",
+          "implementation": "SearchStockListType.php:130 で base_info 初期値は設定する",
+          "mismatch": "条件はフォームに入るが検索・一覧表示へ進まない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:1903,1940",
+      "designExpectation": "一覧の表示順はID降順で表示する。ID列は商品IDを表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductStockRepository.php:314",
+      "implementationActual": "一覧列のIDは Item.ProductClass.Product.id を表示している一方、検索QueryBuilderのORDER BYは pc.id DESC（商品規格ID降順）で、商品ID降順ではない。",
+      "mismatchReason": "設計のID列は商品IDと定義されているため、表示順のID降順も商品ID降順として実装される必要がある。実装は ProductClass.id を降順にしており、表示IDとソートキーが一致しない。確認範囲: ProductStockRepository, stock_list_index.twig。",
+      "comparisonRows": [
+        {
+          "item": "ID列",
+          "design": "商品ID",
+          "implementation": "stock_list_index.twig:580 で Item.ProductClass.Product.id を表示",
+          "mismatch": "表示IDは商品ID"
+        },
+        {
+          "item": "表示順",
+          "design": "ID降順",
+          "implementation": "ProductStockRepository.php:314 で pc.id DESC",
+          "mismatch": "商品IDではなく商品規格IDで降順"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:1910,1912",
+      "designExpectation": "在庫移動・振替登録選択時、複数の在庫区分の在庫が選択されている場合はエラー文言/アラートを表示し、在庫移動・振替登録画面へ遷移させない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:815",
+      "implementationActual": "在庫移動・振替ボタンのクリック処理は未編集権限、複数店舗、在庫0のみを判定し、data-zone は行チェックボックスに出力されているが複数在庫区分判定に使われていない。",
+      "mismatchReason": "反証検索で stock_list_index.twig、StockListController、StockMoveController、StockTransferController、FormType/Service を isSameZone/複数の在庫区分/data-zone/stockLocationId で確認したが、遷移前に選択在庫区分の一意性を検査する実装は見つからない。StockMoveController/StockTransferController も productStockIds を受け取り先頭在庫の在庫区分を使うだけで、複数在庫区分を一覧へ戻す判定はない。",
+      "comparisonRows": [
+        {
+          "item": "複数在庫区分チェック",
+          "design": "複数の在庫区分の在庫が選択されている場合は遷移させない",
+          "implementation": "stock_list_index.twig:815-836 は hasUnauthorizedShop/isSameShop/hasZeroStock のみ判定",
+          "mismatch": "在庫区分の重複・混在判定がない"
+        },
+        {
+          "item": "行データ",
+          "design": "在庫区分を遷移可否条件に使う",
+          "implementation": "stock_list_index.twig:575 で data-zone を出力",
+          "mismatch": "data-zone が判定ロジックに未使用"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:1919,1935",
+      "designExpectation": "在庫情報カスタムCSV出力はリンクで、押下時に「カスタムCSVで作成した各種出力フォーマット」「出力項目設定」のリンクを表示する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:449",
+      "implementationActual": "在庫情報カスタムCSV出力はリンクではなく select 要素として実装され、フォーマット名と出力項目設定は option に入っている。選択変更時に option value のURLへ遷移する。",
+      "mismatchReason": "設計はリンク押下でリンク群を表示するUIを要求しているが、実装はプルダウン選択UIであり、各フォーマットや出力項目設定がリンクとして表示されない。確認範囲: stock_list_index.twig, StockListController, DtbCsvExtensionRepository, StockCustomCsvExportService。",
+      "comparisonRows": [
+        {
+          "item": "部品種別",
+          "design": "リンク",
+          "implementation": "select#stock_csv_pulldown",
+          "mismatch": "リンクではなく単一選択プルダウン"
+        },
+        {
+          "item": "押下時表示",
+          "design": "各種出力フォーマットと出力項目設定のリンクを表示",
+          "implementation": "option として表示し onchange でURL遷移",
+          "mismatch": "リンク群表示ではない"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:2147",
+      "designExpectation": "検索パターン名を入力することで検索条件保存ボタンが活性化する。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369",
+      "implementationActual": "検索条件保存ボタンは disabled 属性なしで常に押下可能。pattern_name 入力イベントで活性/非活性を切り替えるJSもなく、空の場合はController側で name_empty エラーにして戻す。",
+      "mismatchReason": "設計は入力に応じたボタン活性制御を求めているが、実装は常時活性のままサーバーバリデーションで拒否している。反証検索範囲: stock_list_index.twig, StockListController, SearchStockListType の pattern_name/savePatternBtn/disabled/input。",
+      "comparisonRows": [
+        {
+          "item": "保存ボタン初期状態",
+          "design": "検索パターン名未入力時は非活性",
+          "implementation": "button#savePatternBtn に disabled なし",
+          "mismatch": "未入力でも押下可能"
+        },
+        {
+          "item": "活性化条件",
+          "design": "検索パターン名を入力すると活性化",
+          "implementation": "入力監視JSなし。click時に即submit",
+          "mismatch": "活性制御が未実装"
+        }
+      ]
+    },
+    {
+      "category": "実装違い",
+      "dimension": "⑦要求網羅・実装違い",
+      "severity": "med",
+      "designRef": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-5:2034",
+      "designExpectation": "店舗は検索条件の保存に含めない。",
+      "implRef": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockListController.php:337",
+      "implementationActual": "savePattern は FormUtil::getViewData($searchForm) の全体を $dataToStore に入れ、_token だけを unset して serialize($dataToStore) で保存する。SearchStockListType には base_info フィールドが含まれる。",
+      "mismatchReason": "設計は店舗を検索条件保存から除外する要求だが、実装は base_info を除外していない。反証検索で StockListController, SearchStockListType, Repository/Service を確認したが unset($dataToStore['base_info']) 相当の処理は見つからない。",
+      "comparisonRows": [
+        {
+          "item": "保存対象",
+          "design": "店舗は保存対象に含めない",
+          "implementation": "$dataToStore=$viewData の後、_token のみ除外",
+          "mismatch": "base_info が保存データに残る"
+        },
+        {
+          "item": "店舗フォーム",
+          "design": "保存対象外",
+          "implementation": "SearchStockListType.php:123 で base_info を検索フォームに持つ",
+          "mismatch": "フォーム値から保存時に除外されていない"
+        }
+      ]
+    }
+  ]
+}

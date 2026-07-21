@@ -1,0 +1,38 @@
+{
+  "chunkId": "b05-08_0405_sheet-10_ec--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-08_0405_sheet-10_ec.json#b05-08_0405_sheet-10_ec-conformance-ec4a476530ae",
+      "functionId": "b05-08_0405_sheet-10_ec",
+      "featureNo": "B05-08",
+      "title": "B05-08 スマレジEC受注連携エラー再連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "high",
+      "summary": "連携成功時のエラーフラグ解除は別経路(使用ポイント連携ハンドラ)で実装されており、指摘の「解除実装が存在しない」は誤り。",
+      "reason": "設計要求（1921/1962: リトライ成功時にスマレジ連携エラーフラグをオフにする）は実装済みである。指摘は SmaregiUpdatePointAction.php:71-72 が成功時に return するだけで setSmaregiErrorFlg(false) が全実装に無いと主張するが、`rg -n 'setSmaregiErrorFlg' src/Eccube` で SmaregiOrderUsePointMessageHandler.php:129 に `$Order->setSmaregiErrorFlg(false)->setPointErrorMessage(null)` が存在し、直前コメント128行『連携成功時は過去の連携エラー状態をクリアする』の通り、スマレジ会員ポイント連携が成功した際にエラーフラグを解除している。この使用ポイント連携ハンドラは MessengerJob の PENDING/FAILED を再処理(リトライ)する経路(67行 tryBeginProcessingJob, 34-36行のドキュメント参照)であり、設計の『リトライ成功でフラグ解除』を満たす。よって指摘の中核根拠(検索反証『該当なし』)は事実に反し、REFUTED。SmaregiUpdatePointAction は単一 orderId を受ける副次コマンド(SmaregiUpdatePointCommand: eccube:smaregi:update-point)経路で、成功時 return は事実だが、これをもって『解除実装の不在』とは言えない。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-08_0405_sheet-10_ec.json#b05-08_0405_sheet-10_ec-conformance-a0976c946cfa",
+      "functionId": "b05-08_0405_sheet-10_ec",
+      "featureNo": "B05-08",
+      "title": "B05-08 スマレジEC受注連携エラー再連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "UNCERTAIN",
+      "confidence": "medium",
+      "summary": "基本設計は『ポイントを絶対値で更新』と記すが、詳細設計はポイント連携の内部/API仕様を非確定(pf-eccube3準拠)とし、絶対値要求の確定性が取れない。",
+      "reason": "実装が差分(相対加算)であること自体は事実。SmaregiUpdatePointAction.php:39 で `$order->getSpendedPoints()` を取得、54行で `postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false)` と負数で送信し、SmaregiCustomerService.php:404 の `customerApiClient->addPoint($delta)` は相対加算である(SmaregiOrderUsePointMessageHandler.php:94 も同様に -$spendedPoints)。dtb_player.point 残高を絶対値として送る実装は存在しない。しかし設計内に矛盾がある: 基本設計 1918-1920『ユーザーのスマレジIDとポイント残高を取得』『ユーザーのポイント数は絶対値で更新を行う』に対し、同シート埋め込みの詳細設計は 1947『本書で扱わないこと: スマレジポイント連携サービスの内部仕様・API仕様』、1937-1938『確認値は pf-eccube3 のスマレジポイント連携処理を正とする』『挙動は pf-eccube3 を参照』、1962『会員のスマレジIDとポイントで…リトライする』(絶対値の明記なし)としてポイント連携の内部/API仕様を実装・現行(pf-eccube3)側に委ねている。『絶対値で更新』が確定要求として実装差分を否定できるか、また pf-eccube3 の連携がそもそも相対加算か絶対更新かを本環境では確認できないため、実装違いと断定できない。要 pf-eccube3 挙動確認。"
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-08_0405_sheet-10_ec.json#b05-08_0405_sheet-10_ec-conformance-4e086ef1c815",
+      "functionId": "b05-08_0405_sheet-10_ec",
+      "featureNo": "B05-08",
+      "title": "B05-08 スマレジEC受注連携エラー再連携",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "high",
+      "summary": "ポイント連携に使う postSmaregiPoint は実装済みでプラットフォームAPI(SmaregiCustomerApiClient)を呼ぶ。指摘の『TODO仮実装で固定成功を返す』は別クラス(SmaregiApiService)の誤認。",
+      "reason": "設計要求(1906: 廃止予定APIからプラットフォームAPIへ変更/1919: 取得データでスマレジ連携)は満たされている。指摘は SmaregiCustomerService.php:31,33-35 に『TODO: スマレジAPIを実行する実装を追加』があり postSmaregiPoint が固定成功を返すと主張するが誤り。SmaregiCustomerService.php:31 は `private const MAX_ID_GENERATION_ATTEMPTS = 10;` で TODO ではない。postSmaregiPoint (同ファイル 375-444行) は 404行で `$this->customerApiClient->addPoint($this->smaregiApiUrl, $this->smaregiApiContractId, $accessToken, $smaregiCustomerId, $delta)` と実 API を呼び、SmaregiCustomerApiClient(src/Eccube/Service/Smaregi/Api/SmaregiCustomerApiClient.php:25 クラス, 208行 addPoint)がプラットフォームAPIクライアントである。指摘が指す『TODO: スマレジAPIを実行する実装を追加』は別クラス SmaregiApiService.php:41,59(postRegisterTransaction / postSmaregiProcess)にあり、これは EditController / PointGranterController が使う受注更新経路であってポイント再連携(postSmaregiPoint)経路ではない。よって引用・クラスの取り違えであり REFUTED。"
+    }
+  ]
+}

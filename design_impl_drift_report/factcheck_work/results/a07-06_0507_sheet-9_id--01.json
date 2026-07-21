@@ -1,0 +1,49 @@
+{
+  "chunkId": "a07-06_0507_sheet-9_id--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-06_0507_sheet-9_id.json#a07-06_0507_sheet-9_id-conformance-ec3364efd43b",
+      "functionId": "a07-06_0507_sheet-9_id",
+      "featureNo": "A07-06",
+      "title": "A07-06 複数ネット買取IDから個別入力商品の一覧を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計はエンドポイントを /api/admin/buyOrderIndivisualInputProduct.json とするが、実装は api/v1 プレフィックス付きの /api/v1/admin/buyOrderIndivisualInputProduct.json で公開している。",
+      "reason": "設計HTMLのエンドポイントURL欄(line 1980)は /api/admin/buyOrderIndivisualInputProduct.json。一方 BuyOrderIndivisualInputProductController.php:37 の #[Route] は path を '/%eccube_api_v1_route%/admin/buyOrderIndivisualInputProduct.json' としており、パラメータ eccube_api_v1_route は app/config/eccube/packages/eccube.yaml:6 で env(ECCUBE_API_V1_ROUTE): 'api/v1' が既定値、同 72 行で eccube_api_v1_route に束縛される。したがって実際の入口は /api/v1/admin/... となり、設計の /api/admin/... と api/v1 プレフィックスの有無が食い違う。",
+      "designEvidence": {"label": "設計要求(エンドポイントURL)", "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html", "start": 1979, "end": 1980, "contains": ["エンドポイントURL", "/api/admin/buyOrderIndivisualInputProduct.json"]},
+      "implEvidence": [
+        {"label": "実装ルート定義", "note": "Route path に api/v1 プレフィックス", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php", "start": 37, "end": 38, "contains": ["%eccube_api_v1_route%/admin/buyOrderIndivisualInputProduct.json", "methods: ['POST']"]},
+        {"label": "プレフィックス既定値", "note": "eccube_api_v1_route = api/v1", "path": "ec-cube-enterprise/app/config/eccube/packages/eccube.yaml", "start": 6, "end": 6, "contains": ["env(ECCUBE_API_V1_ROUTE): 'api/v1'"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-06_0507_sheet-9_id.json#a07-06_0507_sheet-9_id-conformance-737b2de80d45",
+      "functionId": "a07-06_0507_sheet-9_id",
+      "featureNo": "A07-06",
+      "title": "A07-06 複数ネット買取IDから個別入力商品の一覧を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計では ids は必須(〇)だが、実装は ids 未指定・空文字を許容して空配列を返し、さらに非数値要素を黙って除外する。",
+      "reason": "設計HTMLのリクエストパラメータ表(line 2003)で ids は型=文字列・必須=〇。実装 BuyOrderIndivisualInputProductController.php では ids を request から取得後、null または '' なら 400 ではなく new JsonResponse([]) を返し(line 43-45、コメントに旧システム互換目的と明記)、カンマ分解後 preg_match('/^\\d+$/') に一致する要素だけを array_filter で採用し(line 48-51)、有効IDが空でも空配列を返す(line 55-56)。すなわち ids を必須パラメータとして扱わず、非数値要素はエラーではなく黙って除外している。",
+      "designEvidence": {"label": "設計要求(ids 必須)", "path": "hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html", "start": 2003, "end": 2003, "contains": ["ids", "ネット買取IDをカンマ区切りで指定する"]},
+      "implEvidence": [
+        {"label": "実装(空許容・数値フィルタ)", "note": "必須扱いせず空配列を返す", "path": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php", "start": 43, "end": 56, "contains": ["if ($ids === null || $ids === '')", "return new JsonResponse([]);", "preg_match('/^\\d+$/', trim($id))"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a07-06_0507_sheet-9_id.json#a07-06_0507_sheet-9_id-conformance-e27308e96d70",
+      "functionId": "a07-06_0507_sheet-9_id",
+      "featureNo": "A07-06",
+      "title": "A07-06 複数ネット買取IDから個別入力商品の一覧を取得",
+      "dimension": "⑦要求網羅・未実装",
+      "verdict": "REFUTED",
+      "confidence": "high",
+      "summary": "IP制限は IpAddrListener によりグローバルに実装済みで、当該APIを含む全メインリクエストに適用される。",
+      "reason": "元指摘は『IP制限, ip制限, client_ip, REMOTE_ADDR, access_control, allowlist, trusted_proxies』で検索し不在としたが、実装は別名で存在する。src/Eccube/EventListener/IpAddrListener.php は EventSubscriberInterface を実装し getSubscribedEvents() で kernel.request(優先度512)に登録され(line 88-94)、isMainRequest の全リクエストに対して getClientIp() を取得(line 38)、eccube_front_allow_hosts / eccube_front_deny_hosts / eccube_admin_allow_hosts / eccube_admin_deny_hosts と IpUtils::checkIp で許可/拒否判定し、範囲外なら AccessDeniedHttpException を投げる(line 41-67)。これらのホストリストは app/config/eccube/packages/eccube.yaml:74,76 で eccube_front_allow_hosts / eccube_admin_allow_hosts として束縛される。このリスナーはパスフィルタを持たず全メインリクエストに適用されるため、/api/v1/admin/buyOrderIndivisualInputProduct.json への POST もフロント/管理いずれかの IP 許可・拒否リスト判定を受ける。したがって IP 制限機構は実装されており、『IP制限が実装されていない』という不在主張は成立しない(適用可否は allow_hosts 設定値の運用問題であり実装漏れではない)。トークン認証(JWTヘッダ抽出/access_token)も security.yaml:36-39 で実装済み。"
+    }
+  ]
+}

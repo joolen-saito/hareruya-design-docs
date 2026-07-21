@@ -1,0 +1,220 @@
+{
+  "id": "f06-01-entry-deck-user-id-unique-constraint-missing",
+  "status": "verified",
+  "sourceFinding": "hareruya-design-docs/design_impl_drift_report/findings/f06-01_0306_sheet-3_sheet.json",
+  "sourceFindingId": "f06-01_0306_sheet-3_sheet-conformance-7b0d713f7402",
+  "classification": "フロント会員",
+  "feature": "新規会員登録",
+  "issueCategory": "実装漏れ",
+  "issue": "デッキ登録用ユーザーIDの一意性がDB制約で担保されていない",
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "reproSteps": [
+    "http://localhost:8080/ja/entry から新規会員登録を仮会員設定有効の状態で完了する",
+    "登録された選手情報 `dtb_player.deck_user_id` を確認する",
+    "`dtb_player.deck_user_id` のカラム定義とマイグレーションにユニーク制約またはユニークインデックスがあるか確認する"
+  ],
+  "expected": [
+    "仮会員登録完了時にデッキ登録用ユーザーIDを登録する",
+    "デッキ登録用ユーザーIDは英数字8文字のランダム文字列である",
+    "デッキ登録用ユーザーIDは一意であり、並行登録時も重複しないようDB制約等で担保される"
+  ],
+  "current": [
+    {
+      "text": "ec-cube-enterprise は `CustomerRepository::newCustomer()` で `PlayerService::setNewDeckUserId()` を呼び、8桁のランダム値を既存検索で重複チェックしてから `deckUserId` にセットしている。ただし `PlayerService` 自身が `deck_user_id` カラムにユニーク制約がなく、insert が後続 Controller の flush で行われるため厳密には重複可能性があるとコメントしている。",
+      "snippets": [
+        {
+          "label": "ec-cube-enterprise 新規会員作成時の deck_user_id 採番呼び出し",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/CustomerRepository.php",
+          "start": 80,
+          "end": 92,
+          "language": "php",
+          "contains": [
+            "$Player = new DtbPlayer();",
+            "$Player = $this->playerService->setNewDeckUserId($Player, $this->eccubeConfig['eccube_deck_user_id_len']);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise deck_user_id 生成処理",
+          "path": "ec-cube-enterprise/src/Eccube/Service/PlayerService.php",
+          "start": 28,
+          "end": 49,
+          "language": "php",
+          "contains": [
+            "カラム自体にユニーク制約はついていない",
+            "厳密には重複が発生する可能性がゼロではない",
+            "$deckUserId = StringUtil::random($deckUserIdLength);",
+            "$existingPlayer = $this->playerRepository->findOneBy(['deckUserId' => $deckUserId]);"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise deck_user_id カラム定義",
+          "path": "ec-cube-enterprise/src/Eccube/Entity/DtbPlayer.php",
+          "start": 111,
+          "end": 117,
+          "language": "php",
+          "contains": [
+            "#[ORM\\Column(name: 'deck_user_id', type: Types::STRING, length: 8, nullable: true",
+            "private ?string $deckUserId = null;"
+          ]
+        },
+        {
+          "label": "ec-cube-enterprise 仮登録時の persist/flush",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php",
+          "start": 150,
+          "end": 155,
+          "language": "php",
+          "contains": [
+            "$this->entityManager->persist($Player);",
+            "$this->entityManager->persist($Customer);",
+            "$this->entityManager->flush();"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "ベース実装 pf-eccube3 も、会員登録時に `DtbPlayer::setNewDeckUserId()` を呼び、設定値 `deck_user_id.length: 8` を使って英数字ランダム文字列を生成し、既存検索で重複チェックしている。一方、Doctrine マッピングと `deck_user_id` 追加マイグレーションにはユニーク制約がなく、ベース実装もDB制約ではなくアプリ側チェックに留まっている。",
+      "snippets": [
+        {
+          "label": "ベース実装 pf-eccube3 会員登録時の deck_user_id 採番呼び出し",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php",
+          "start": 132,
+          "end": 141,
+          "language": "php",
+          "contains": [
+            "->setNewDeckUserId()",
+            "->setCustomer($Customer);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 deck_user_id 生成処理",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbPlayer.php",
+          "start": 948,
+          "end": 962,
+          "language": "php",
+          "contains": [
+            "$length = intval($app['config']['HareruyaEc']['const']['deck_user_id']['length']);",
+            "$deckUserId = StringUtil::alphanumericRandomString($length);",
+            "$player = $app['hareruya_ec.repository.player']->findOneByDeckUserId($deckUserId);"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 deck_user_id 長設定",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/config.yml",
+          "start": 344,
+          "end": 345,
+          "language": "yaml",
+          "contains": [
+            "deck_user_id:",
+            "length: 8"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 deck_user_id マッピング",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbPlayer.dcm.yml",
+          "start": 199,
+          "end": 206,
+          "language": "yaml",
+          "contains": [
+            "deckUserId:",
+            "length: 8",
+            "column: deck_user_id"
+          ]
+        },
+        {
+          "label": "ベース実装 pf-eccube3 deck_user_id 追加マイグレーション",
+          "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/migration/Version20220124175000.php",
+          "start": 17,
+          "end": 25,
+          "language": "php",
+          "contains": [
+            "$playerTable->addColumn('deck_user_id', 'string'",
+            "'length' => 8",
+            "'fixed' => true"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "label": "設計",
+      "note": "デッキ登録用ユーザーIDは英数字8文字ランダムで一意",
+      "path": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+      "start": 1215,
+      "end": 1222,
+      "language": "html",
+      "contains": [
+        "以下の情報を登録する",
+        "デッキ登録用ユーザーID（英数字の8文字のランダム文字列で一意）"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "実装コメントでユニーク制約なし・厳密には重複可能と明記",
+      "path": "ec-cube-enterprise/src/Eccube/Service/PlayerService.php",
+      "start": 28,
+      "end": 43,
+      "language": "php",
+      "contains": [
+        "カラム自体にユニーク制約はついていない",
+        "厳密には重複が発生する可能性がゼロではない"
+      ]
+    },
+    {
+      "label": "ec-cube-enterprise",
+      "note": "カラム定義は length=8/nullable で unique=true がない",
+      "path": "ec-cube-enterprise/src/Eccube/Entity/DtbPlayer.php",
+      "start": 111,
+      "end": 117,
+      "language": "php",
+      "contains": [
+        "deck_user_id",
+        "length: 8",
+        "nullable: true"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3は8文字英数字ランダムを既存検索で重複回避していた",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbPlayer.php",
+      "start": 952,
+      "end": 961,
+      "language": "php",
+      "contains": [
+        "StringUtil::alphanumericRandomString($length)",
+        "findOneByDeckUserId($deckUserId)"
+      ]
+    },
+    {
+      "label": "ベース実装",
+      "note": "pf-eccube3のマッピングもユニーク制約は持たない",
+      "path": "pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbPlayer.dcm.yml",
+      "start": 199,
+      "end": 206,
+      "language": "yaml",
+      "contains": [
+        "deckUserId:",
+        "column: deck_user_id"
+      ]
+    }
+  ],
+  "verification": {
+    "commands": [
+      "python3 design_impl_drift_report/backlog_factcheck_workflow.py review-pack --key 'hareruya-design-docs/design_impl_drift_report/findings/f06-01_0306_sheet-3_sheet.json#f06-01_0306_sheet-3_sheet-conformance-7b0d713f7402'",
+      "rg -n \"デッキ登録用ユーザーID|deck_user_id|deckUserId|DeckUserId|一意|英数字|仮会員\" hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html ec-cube-enterprise/src/Eccube pf-eccube3/app/Plugin/HareruyaEc ec-cube/app",
+      "rg -n \"deck_user_id|DeckUserId|deckUserId|UNIQUE|unique|dtb_player\" ec-cube-enterprise/app/DoctrineMigrations ec-cube-enterprise/src/Eccube/Entity/DtbPlayer.php ec-cube-enterprise/src/Eccube/Service/PlayerService.php",
+      "rg -n \"setNewDeckUserId|deck_user_id|deckUserId|UNIQUE|unique|dtb_player\" pf-eccube3/app/Plugin/HareruyaEc pf-eccube3/src",
+      "nl -ba hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書\\(フロント_会員\\).html | sed -n '1215,1222p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Repository/CustomerRepository.php | sed -n '80,92p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Service/PlayerService.php | sed -n '24,50p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Entity/DtbPlayer.php | sed -n '90,125p'",
+      "nl -ba ec-cube-enterprise/src/Eccube/Controller/Front/EntryController.php | sed -n '150,155p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Controller/EntryController.php | sed -n '132,142p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbPlayer.php | sed -n '948,963p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbPlayer.dcm.yml | sed -n '190,210p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/migration/Version20220124175000.php | sed -n '13,26p'",
+      "nl -ba pf-eccube3/app/Plugin/HareruyaEc/config.yml | sed -n '340,348p'"
+    ],
+    "notes": "codex gpt-5.5 high による外部批判的レビューは、この実行環境では利用できないため未実施。代替として review-pack を生成し、設計HTML・ec-cube-enterprise・pf-eccube3 の該当コードを手動で再照合した。ベース実装もDBユニーク制約ではなくアプリ側重複検索であるため、起票差分は設計要求に対する厳密な一意性担保不足として整理した。"
+  }
+}

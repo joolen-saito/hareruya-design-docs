@@ -1,0 +1,97 @@
+{
+  "chunkId": "b02-01_0404_sheet-3_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json#b02-01_0404_sheet-3_sheet-conformance-8ce43a549ced",
+      "functionId": "b02-01_0404_sheet-3_sheet",
+      "featureNo": "B02-01",
+      "title": "B02-01 期間別販売数集計",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は本店の支店IDを0として処理するが、実装は集計SQLが dtb_shipping.base_info_id をそのまま出力し、本店(通販+TC東京)は base_info_id=1、0 は人気商品リコメンド用に予約されている。",
+      "reason": "設計(★カスタマイズ項目)は本店の支店IDを0と定める(line 875)。実装 getSalesForAggregate() は集計キーに `s.base_info_id`(dtb_shipping.base_info_id) をそのまま用い(DtbSalesQuantityRepository.php:438)、本店を0へ写像する処理がない。BaseInfo::TC_TOKYO_ID = 1(本店/通販+TC東京)で getMainSalesQuantitiesByProductClassIds はこれを本店集計に使用。さらに base_info_id=0 は POPULAR_PRODUCT_RECOMMEND_SHOP_ID = 0(人気商品リコメンド用)として予約され、clearSalesQuantityForAggregate() でも削除対象から除外される。よって本店の識別値が設計の0と一致しない実装違い。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html","start":875,"end":875,"contains":["本店の支店IDは0として処理"]},
+      "implEvidence": [
+        {"label":"集計SQLの店舗ID出力","note":"dtb_shipping.base_info_id をそのまま集計キーに使用","path":"ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php","start":437,"end":438,"contains":["s.base_info_id"]},
+        {"label":"本店定数","note":"本店(通販+TC東京)は 1","path":"ec-cube-enterprise/src/Eccube/Entity/BaseInfo.php","start":45,"end":45,"contains":["TC_TOKYO_ID = 1"]},
+        {"label":"0 は別用途に予約","note":"人気商品リコメンド用店舗ID","path":"ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php","start":39,"end":39,"contains":["POPULAR_PRODUCT_RECOMMEND_SHOP_ID = 0"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json#b02-01_0404_sheet-3_sheet-conformance-ed048467d744",
+      "functionId": "b02-01_0404_sheet-3_sheet",
+      "featureNo": "B02-01",
+      "title": "B02-01 期間別販売数集計",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計はキャンセル・処理中の受注を各期間合計から除外する要求だが、集計SQLは `o.order_status_id != :cancel_status`(CANCEL のみ)で除外し、処理中(PROCESSING)を除外していない。",
+      "reason": "詳細設計の業務ルール(line 930)と集計条件(line 933)は除外条件をキャンセル・処理中と明記し、用語表(line 919)も受注ステータス除外をキャンセル・処理中と定義する。実装 getSalesForAggregate() の WHERE は `o.order_status_id != :cancel_status` のみで、cancel_status=OrderStatus::CANCEL(=3) だけを除外(DtbSalesQuantityRepository.php:451, 429)。OrderStatus には PENDING=7・PROCESSING=8 が別途存在するが集計SQLでは除外していない。NOT IN 等の複数ステータス除外は無い。よって処理中受注が集計に残る実装違い。なお基本設計の入力検索条件(line 885)は『キャンセルを除外』とのみ記し設計内に不整合があるため confidence=medium とするが、指摘が依拠する詳細設計 line 930 の要求とは不一致。",
+      "designEvidence": {"label":"設計要求(除外条件)","path":"hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html","start":930,"end":930,"contains":["キャンセル・処理中","除外する"]},
+      "implEvidence": [
+        {"label":"集計SQLの除外条件","note":"CANCEL のみ除外","path":"ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php","start":451,"end":451,"contains":["o.order_status_id != :cancel_status"]},
+        {"label":"cancel_status の定義","note":"OrderStatus::CANCEL のみ","path":"ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php","start":429,"end":429,"contains":["OrderStatus::CANCEL"]},
+        {"label":"処理中ステータスは別途存在","note":"PROCESSING は除外されない","path":"ec-cube-enterprise/src/Eccube/Entity/Master/OrderStatus.php","start":45,"end":45,"contains":["PROCESSING = 8"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json#b02-01_0404_sheet-3_sheet-conformance-64432e4e3bb8",
+      "functionId": "b02-01_0404_sheet-3_sheet",
+      "featureNo": "B02-01",
+      "title": "B02-01 期間別販売数集計",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は対象が無い場合は更新を行わずに終了するが、実装は集計対象取得の前に clearSalesQuantityForAggregate() を必ず呼び、既存集計行を DELETE してから対象を取得する。",
+      "reason": "設計の処理フロー(line 927)とエラー処理表(line 952)は『対象が無い場合は更新を行わず完了する』を要求。実装 handle() は clearSalesQuantityForAggregate() を getSalesForAggregate() より前に無条件で実行(BatchAggregateSalesAction.php:46-47)。同メソッドは `DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id` を発行(DtbSalesQuantityRepository.php:96)。getSalesForAggregate() が空でも foreach が回らないだけで先行 DELETE は実行済みとなり、対象なしでも既存集計行(人気リコメンド以外)が消える。設計の『対象なしなら変更しない』より破壊的な実装違い。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html","start":927,"end":927,"contains":["対象が無い場合は更新を行わずに終了"]},
+      "implEvidence": [
+        {"label":"対象取得前に無条件で削除","note":"clear→取得の順序","path":"ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php","start":45,"end":47,"contains":["clearSalesQuantityForAggregate()","getSalesForAggregate()"]},
+        {"label":"削除処理の実体","note":"人気リコメンド以外を全削除","path":"ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php","start":95,"end":98,"contains":["DELETE FROM dtb_sales_quantity"]}
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json#b02-01_0404_sheet-3_sheet-conformance-daa1bb0772cd",
+      "functionId": "b02-01_0404_sheet-3_sheet",
+      "featureNo": "B02-01",
+      "title": "B02-01 期間別販売数集計",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計は開始・完了のコンソール出力を日時付きで行う要求だが、実装は完了時に日時なしの成功メッセージを出力するのみで、開始出力が存在しない。",
+      "reason": "設計のログ・監査表(line 955)は開始・完了のコンソール出力(日時付き)を要求。実装 AggregateSalesCommand::execute() は成功時に `$io->success('期間別販売数集計が完了しました。')` を出すのみ(AggregateSalesCommand.php:56)で、日時は含まれず、開始出力も無い。呼び出し先 handle()(BatchAggregateSalesAction) にも echo/date による開始・完了ログは無い。この集計経路には date( や『実行開始/実行終了』相当の出力が存在しないことを確認。よって日時付き開始・完了出力が欠落した実装違い。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html","start":955,"end":955,"contains":["開始・完了のコンソール出力","日時付き"]},
+      "implEvidence": [
+        {"label":"完了出力(日時なし・開始なし)","note":"success メッセージのみ","path":"ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php","start":56,"end":56,"contains":["期間別販売数集計が完了しました"]}
+      ],
+      "absenceCommands": [
+        "rg -n 'date\\(|実行開始|実行終了|開始|完了' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b02-01_0404_sheet-3_sheet.json#b02-01_0404_sheet-3_sheet-conformance-f6f05b013074",
+      "functionId": "b02-01_0404_sheet-3_sheet",
+      "featureNo": "B02-01",
+      "title": "B02-01 期間別販売数集計",
+      "dimension": "⑦要求網羅・未実装",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "high",
+      "summary": "設計はスマレジの取引データも集計対象とし店舗ごとにECCUBEとスマレジで分けて集計する要求だが、実装は EC 受注のみを集計対象とし、スマレジ実店舗販売は未実装として除外している。",
+      "reason": "設計(line 869・876)は本店・支店に加えスマレジ販売情報を集計対象とし、店舗ごとにECCUBEとスマレジで分けて販売数を集計することを要求。実装は AggregateSalesCommand の docコメントで『現在は EC 受注のみ対象。スマレジ実店舗販売は未実装のため除外される』と明記(AggregateSalesCommand.php:29)。getSalesForAggregate() の SQL は dtb_order_item/dtb_order/dtb_shipping のみを対象とし、スマレジ用テーブルや UNION は無く、『スマレジ受注が別テーブル管理の場合は UNION 等で本クエリを拡張すること』という TODO が残る(DtbSalesQuantityRepository.php:432-434)。BatchAggregateSalesAction にも同旨の TODO(line 39-41)。ECCUBE/スマレジ種別を分離する列・キーも集計に存在しない。よってスマレジ集計は実装漏れ。",
+      "designEvidence": {"label":"設計要求","path":"hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html","start":869,"end":876,"contains":["支店やスマレジの販売情報も集計対象","ECCUBEとスマレジで分けて販売数を集計"]},
+      "implEvidence": [
+        {"label":"EC受注のみ・スマレジ未実装の明記","note":"コマンド docコメント","path":"ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php","start":28,"end":29,"contains":["スマレジ実店舗販売は未実装"]},
+        {"label":"集計SQLはEC受注のみ・拡張はTODO","note":"UNION未実装","path":"ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php","start":432,"end":434,"contains":["別テーブル管理の場合は UNION"]}
+      ],
+      "absenceCommands": [
+        "rg -ni 'smaregi|スマレジ|union' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php"
+      ]
+    }
+  ]
+}

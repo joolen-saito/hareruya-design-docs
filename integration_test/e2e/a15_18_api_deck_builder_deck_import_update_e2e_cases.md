@@ -7,7 +7,7 @@
 
 本機能は**ブラウザ向けの画面を持たない**機能仕様（JWT認証つきPUT API＝デッキビルダー利用者がカードリストテキストで自所有の既存デッキを上書き更新する。正本md「対象はJSON APIエンドポイントであり、ブラウザ向けの画面を持たない」）であり、**API/統合レイヤ単独で網羅**する。Playwright `request` で `PUT /api/deck/import/{id}` へ送信し、HTTPステータス・レスポンス本文（成功 `{code, message, deck_id}`／限定公開時 `display_token` 付加／解読不能行あり時 `errors` 付加・失敗 `{code, message}`）で判定する。更新副作用（デッキ本体の上書き・採用カード／メイビー／アトラクション／ステッカーの初期化と作り直し・更新対象外データの不変）は、永続化先テーブル（`dtb_deck`・`dtb_deck_card`・`dtb_maybe_card`・`dtb_attraction_card`・`dtb_sticker_card`）を直接DB照合（DB副作用観測）して判定する。当該デッキのRedis上の下書き削除はec-cube-enterpriseのDBスキーマ対象外で、観測手段が本リポジトリから取れないため要実機確認とする。本機能は画面を持たないため、別機能（デッキビルダーアプリ画面・管理画面）の表示は合否条件にしない。
 
-**期待結果は仕様（正本md・観点表・基本設計）由来**とし、実装のレスポンス形・バリデーション機構・HTTPライブラリ既定値・JWTクレーム名・trans文言を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdを上位オラクル、観点表（基本設計）と食い違う箇所も上位オラクルとして扱い、乖離は付帯表4に出す。実装からは位置情報（APIパス・メソッド・認証方式・例外→ステータスの対応）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。仕様に定義の無いステータス／挙動は固定せず `要実機確認` とする。TSV は既存IT casesと同一の 10 列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
+**期待結果は仕様（正本md・観点表・基本設計）由来**とし、実装のレスポンス形・バリデーション機構・HTTPライブラリ既定値・JWTクレーム名・trans文言を期待値に流用しない（オラクル独立性）。pf-apiリバースの正本mdを上位オラクル、観点表（基本設計）と食い違う箇所も上位オラクルとして扱い、乖離は付帯表4に出す。実装からは位置情報（APIパス・メソッド・認証方式・例外→ステータスの対応）のみを `file:line` 根拠で取得し、取れないものは `要実機確認`。仕様に定義の無いステータス／挙動は固定せず `要実機確認` とする。TSV は既存IT casesの10列に実施管理欄（実施者・実施日・結果・失敗理由）を加えた14列固定。Playwright は本リポジトリでは実行しない（構造参考のみ）。
 
 本機能は**更新（DB上書き）系**のため、DB更新観点（IT-26/IT-05）と入力検証観点（IT-22）を網羅に含める。正本md・実装には入力検証（バリデーション節＝採用カード・デッキ本体の整合性検証）とDB更新副作用（副作用節・DBカラム節＝既存カードの初期化と上書き保存）とトランザクション・ロールバック（排他制御節）が存在するが、既存IT casesの対象外観点表は「本機能に入力検証対象がないため」「該当する処理・I/Fがないため」と誤って除外している。これを上位オラクル（正本md・基本設計）に照らして補正し、入力検証（IT-22）・保存例外ロールバック（IT-05）を設計書補完ケースとして追加し、DB更新副作用は母集合のIT-27/IT-33（デッキ本体・採用カード・区分整合）経由で網羅した。当該誤分類は付帯表4#9に記録する。
 
@@ -32,88 +32,88 @@
 ## テストケースTSV
 
 ```tsv
-機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
+機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス	実施者	実施日	結果	失敗理由
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-001	IT-09	リクエスト	P1	正常パラメータでPUTし200が返る	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	"有効なjwt-tokenヘッダ
 所有デッキIDのパス・format_id・全行解読できるcard_list・正常な更新リクエスト"	"1. 所有デッキIDへ PUT /api/deck/import/{id} でリクエストを送信する
-2. HTTPステータスを確認する"	インポート更新成功としてHTTPステータス200が返ること。
+2. HTTPステータスを確認する"	インポート更新成功としてHTTPステータス200が返ること。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-002	IT-09	実行結果	P3	更新実行後の処理結果が一致する	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・正常な更新リクエスト	"1. 所有デッキIDへPUTでリクエストを送信する
-2. レスポンスと後続状態を確認する"	インポート更新処理が実行され、処理結果（成功）がレスポンスと一致すること。
+2. レスポンスと後続状態を確認する"	インポート更新処理が実行され、処理結果（成功）がレスポンスと一致すること。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-003	IT-09	HTTPステータス	P1	成功時のHTTPステータスが200で本文がcode=200を含む	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・正常な更新リクエスト	"1. 所有デッキIDへPUTでリクエストを送信する
-2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200が返り、成功レスポンス本文が `code:200` を含むこと。
+2. HTTPステータスとレスポンス本文を確認する"	HTTPステータス200が返り、成功レスポンス本文が `code:200` を含むこと。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-004	IT-32	レスポンス	P2	成功レスポンス書式がcode・message・deck_idを持つ	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・全行解読できる正常リクエスト（scope_id=公開）	"1. 所有デッキIDへPUTでリクエストを送信する
-2. レスポンス本文の書式を確認する"	成功時のレスポンス書式が仕様の `{code, message, deck_id}`（snake_caseキー）であること（messageの文言は付帯表4#4の乖離記録に従い要確認）。
+2. レスポンス本文の書式を確認する"	成功時のレスポンス書式が仕様の `{code, message, deck_id}`（snake_caseキー）であること（messageの文言は付帯表4#4の乖離記録に従い要確認）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-005	IT-32	資格情報	P1	有効なJWTで更新が成功する	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token（該当プレイヤーあり・対象デッキの所有者）・正常リクエスト	"1. 有効なjwt-tokenを付与してPUTで送信する
-2. HTTPステータスを確認する"	資格情報が有効な場合、HTTPステータス200で更新が成功すること。
+2. HTTPステータスを確認する"	資格情報が有効な場合、HTTPステータス200で更新が成功すること。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-006	IT-32	受信検証	P1	整合性検証を満たすリクエストで更新成功200となる	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	採用カード・デッキ本体の整合性検証を満たすリクエスト	"1. 所有デッキIDへPUTで送信する
-2. HTTPステータスを確認する"	採用カード・デッキ本体の整合性検証を満たし、HTTPステータス200で更新が成功すること。
+2. HTTPステータスを確認する"	採用カード・デッキ本体の整合性検証を満たし、HTTPステータス200で更新が成功すること。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-007	IT-16	実行結果	P2	デッキ更新インポートの取り込み結果が対象データと一致する	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・card_listを指定した正常リクエスト	"1. 所有デッキIDへPUTで送信する
-2. レスポンスとDB副作用（更新後のデッキ内容）を照合する"	card_listを解読した取り込み結果が対象データ（更新後のデッキ内容）と一致すること（DB副作用で判定）。
+2. レスポンスとDB副作用（更新後のデッキ内容）を照合する"	card_listを解読した取り込み結果が対象データ（更新後のデッキ内容）と一致すること（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-008	IT-24	出力内容	P2	更新成功時のmessageが更新メッセージである	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・パスにデッキ識別子を持つPUT（更新）リクエスト	"1. 所有デッキIDへPUTで送信する
-2. レスポンス本文のmessageを確認する"	パスにデッキ識別子を持つPUT（更新）として処理され、成功本文のmessageが更新を示す「Deck update success by import」であること（実装はローカライズ文言＝付帯表4#4の乖離記録に従い、文言一致は要確認）。
+2. レスポンス本文のmessageを確認する"	パスにデッキ識別子を持つPUT（更新）として処理され、成功本文のmessageが更新を示す「Deck update success by import」であること（実装はローカライズ文言＝付帯表4#4の乖離記録に従い、文言一致は要確認）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-009	IT-16	エラー	P2	成功本文に更新したデッキのdeck_idが返る	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・所有デッキID（既知）への正常リクエスト	"1. 所有デッキIDへPUTで送信する
-2. レスポンス本文のdeck_idを確認する"	成功本文の `deck_id` が更新対象デッキの識別子（パスの既知ID）と一致すること。
+2. レスポンス本文のdeck_idを確認する"	成功本文の `deck_id` が更新対象デッキの識別子（パスの既知ID）と一致すること。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-020	IT-32	資格情報	P1	jwt-tokenヘッダ欠落で401となり更新されない	SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	jwt-tokenヘッダを付与しないリクエスト	"1. jwt-tokenヘッダ無しでPUTで送信する
-2. HTTPステータスとデッキ状態を確認する"	認証拒否を示すHTTPステータス401が返り、対象デッキが更新されないこと。
+2. HTTPステータスとデッキ状態を確認する"	認証拒否を示すHTTPステータス401が返り、対象デッキが更新されないこと。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-021	IT-10	エラー	P1	署名不正のJWTで401となり更新されない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	署名検証に失敗するjwt-token（署名シークレット不正）	"1. 署名不正のjwt-tokenでPUTで送信する
-2. HTTPステータスとデッキ状態を確認する"	署名検証に失敗し、認証拒否を示すHTTPステータス401が返り、対象デッキが更新されないこと。
+2. HTTPステータスとデッキ状態を確認する"	署名検証に失敗し、認証拒否を示すHTTPステータス401が返り、対象デッキが更新されないこと。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-022	IT-10	エラー	P1	該当するプレイヤーが無いJWTで401となり更新されない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	顧客IDに該当するプレイヤーが存在しないjwt-token	"1. 該当プレイヤーなしのjwt-tokenでPUTで送信する
-2. HTTPステータスとデッキ状態を確認する"	JWTの顧客IDからプレイヤーを特定できず、HTTPステータス401が返り更新されないこと。
+2. HTTPステータスとデッキ状態を確認する"	JWTの顧客IDからプレイヤーを特定できず、HTTPステータス401が返り更新されないこと。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-023	IT-33	対象機能	P1	他人のデッキを更新しようとすると401となり更新されない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK（別プレイヤー所有デッキ）／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token（認証プレイヤー）・認証プレイヤーが所有しないデッキIDを指定	"1. 他人所有のデッキIDへPUTで送信する
-2. HTTPステータスとDB副作用（対象デッキ）を照合する"	所有者でないため認証拒否を示すHTTPステータス401（「Authentication failed」）が返り、対象デッキが更新されないこと（DB副作用で判定）。
+2. HTTPステータスとDB副作用（対象デッキ）を照合する"	所有者でないため認証拒否を示すHTTPステータス401（「Authentication failed」）が返り、対象デッキが更新されないこと（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-024	IT-33	対象機能	P1	未認証・トークン不正時に対象レコードの値が変更されない	SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	jwt-token欠落または不正なトークン・対象デッキID	"1. 未認証（または不正トークン）でPUTで送信し401を確認する
-2. DB副作用（対象デッキのデッキ本体・採用カード）を受信前と照合する"	未認証・トークン不正時は対象デッキのデッキ本体・採用カードの値が受信前から変更されないこと（DB副作用で判定）。
+2. DB副作用（対象デッキのデッキ本体・採用カード）を受信前と照合する"	未認証・トークン不正時は対象デッキのデッキ本体・採用カードの値が受信前から変更されないこと（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-030	IT-24	フォーマット定義	P1	存在しないデッキIDで404となり更新されない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・該当しないデッキID	"1. 存在しないデッキIDへPUTで送信する
-2. HTTPステータスと後続状態を確認する"	該当なしを示すHTTPステータス404（「The deck does not exist」）が返り、更新が行われないこと。
+2. HTTPステータスと後続状態を確認する"	該当なしを示すHTTPステータス404（「The deck does not exist」）が返り、更新が行われないこと。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-040	IT-17	フォーマット定義	P2	format_id未指定で400となり更新されない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・format_idを含まない（または不正な）リクエスト	"1. format_id未指定のリクエストをPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	format_idは必須のため、入力不正を示すHTTPステータス400・本文 `{code, message}` が返り更新されないこと（messageの文言は付帯表4#4の要確認に従う）。
+2. HTTPステータスとレスポンス本文を確認する"	format_idは必須のため、入力不正を示すHTTPステータス400・本文 `{code, message}` が返り更新されないこと（messageの文言は付帯表4#4の要確認に従う）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-041	IT-16	実行結果	P1	card_listが501行（上限超過）で400となる	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・501行（上限500行＋1）のcard_list	"1. 501行のcard_listを含むリクエストをPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	カードリストが上限行数（500行）を超えるため、入力不正を示すHTTPステータス400・本文 `{code, message}` が返ること（正本md 入出力・バリデーション・エラー処理節どおり期待値を固定する。実装が上限超過時にSymfony既定応答形となり `{code, message}` 形にならない差異は付帯表4#7の不具合候補で記録し、期待は仕様どおり落として検出する）。
+2. HTTPステータスとレスポンス本文を確認する"	カードリストが上限行数（500行）を超えるため、入力不正を示すHTTPステータス400・本文 `{code, message}` が返ること（正本md 入出力・バリデーション・エラー処理節どおり期待値を固定する。実装が上限超過時にSymfony既定応答形となり `{code, message}` 形にならない差異は付帯表4#7の不具合候補で記録し、期待は仕様どおり落として検出する）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-042	IT-16	実行結果	P2	card_listが500行ちょうど（上限）で更新が成功する	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・全行解読できる500行（上限ちょうど）のcard_list	"1. 500行のcard_listを含むリクエストをPUTで送信する
-2. HTTPステータスを確認する"	カードリストが上限行数（500行）以内のため、エラーとならずHTTPステータス200で更新が成功すること。
+2. HTTPステータスを確認する"	カードリストが上限行数（500行）以内のため、エラーとならずHTTPステータス200で更新が成功すること。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-043	IT-17	フォーマット定義	P1	デッキ内容の整合性検証失敗で400となり更新されない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・採用カードまたはデッキ本体の整合性検証に失敗するリクエスト	"1. 整合性検証に失敗するリクエストをPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400・本文 `{code, message}`（messageは検証エラー内容）が返り、更新されないこと（messageの文言は付帯表4#4の要確認に従う）。
+2. HTTPステータスとレスポンス本文を確認する"	入力不正を示すHTTPステータス400・本文 `{code, message}`（messageは検証エラー内容）が返り、更新されないこと（messageの文言は付帯表4#4の要確認に従う）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-044	IT-10	エラー	P2	複数の整合性違反を同時に含むリクエストで400となる	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・採用カードとデッキ本体に複数の整合性違反を同時に含むリクエスト	"1. 複数の整合性違反を含むリクエストをPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	複数の整合性違反を同時に含む場合もHTTPステータス400・本文 `{code, message}` が返ること（複数違反を個別に全件列挙する返却構造・ソート順は正典に定義が無く付帯表4#5の要確認に従い固定しない）。
+2. HTTPステータスとレスポンス本文を確認する"	複数の整合性違反を同時に含む場合もHTTPステータス400・本文 `{code, message}` が返ること（複数違反を個別に全件列挙する返却構造・ソート順は正典に定義が無く付帯表4#5の要確認に従い固定しない）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-045	IT-32	リクエスト	P2	異常なパラメータ値で400となる	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・整合性検証に失敗する異常なパラメータ値を設定	"1. 異常なパラメータ値でPUTで送信する
-2. HTTPステータスを確認する"	異常なパラメータ値の実行結果としてHTTPステータス400が返ること。
+2. HTTPステータスを確認する"	異常なパラメータ値の実行結果としてHTTPステータス400が返ること。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-050	IT-24	出力内容	P1	解読できない行があるとcode206でerrorsに行番号が返る	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・一部の行がカード名未一致（解読不能）で、形式自体は妥当なcard_list	"1. 解読できない行を含むcard_listでPUTで送信する
-2. HTTPステータスとレスポンス本文のcodeとerrorsを確認する"	解読できない行がある場合、HTTPステータスが206に切り替わり、レスポンス本文の `code` も206となって `errors` に該当行の行番号（0始まりインデックス）配列が返ること（正本md レスポンス節「HTTP 200（解読できない行がある場合はHTTP 206）」どおりHTTPステータス206を期待値に固定する。実装はHTTPステータス・本文codeとも200のままerrors配列のみ付加＝付帯表4#2の乖離。テストは正本md仕様の206で判定し落とす）。
+2. HTTPステータスとレスポンス本文のcodeとerrorsを確認する"	解読できない行がある場合、HTTPステータスが206に切り替わり、レスポンス本文の `code` も206となって `errors` に該当行の行番号（0始まりインデックス）配列が返ること（正本md レスポンス節「HTTP 200（解読できない行がある場合はHTTP 206）」どおりHTTPステータス206を期待値に固定する。実装はHTTPステータス・本文codeとも200のままerrors配列のみ付加＝付帯表4#2の乖離。テストは正本md仕様の206で判定し落とす）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-051	IT-24	出力内容	P1	解読できない行があっても更新自体は完了する	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・一部の行が解読不能なcard_list	"1. 解読できない行を含むcard_listでPUTで送信する
-2. DB副作用（更新後のデッキ内容）を照合する"	解読できない行があっても更新は中断せず完了し、解読できた行の内容でデッキが更新されること（DB副作用で判定）。
+2. DB副作用（更新後のデッキ内容）を照合する"	解読できない行があっても更新は中断せず完了し、解読できた行の内容でデッキが更新されること（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-052	IT-24	出力内容	P2	全行解読できた場合はcode200でerrorsを含まない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・全行解読できるcard_list	"1. 全行解読できるcard_listでPUTで送信する
-2. レスポンス本文のcodeとerrorsの有無を確認する"	全行を解読できた場合、レスポンス本文の `code` が200で、`errors` フィールドを含まないこと。
+2. レスポンス本文のcodeとerrorsの有無を確認する"	全行を解読できた場合、レスポンス本文の `code` が200で、`errors` フィールドを含まないこと。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-060	IT-24	出力内容	P1	公開区分が限定公開のとき応答にdisplay_tokenを含む	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・scope_id=限定公開・正常リクエスト	"1. scope_id=限定公開でPUTで送信する
-2. レスポンス本文を確認する"	公開区分が限定公開の場合、成功本文に表示用トークン `display_token` が含まれること。
+2. レスポンス本文を確認する"	公開区分が限定公開の場合、成功本文に表示用トークン `display_token` が含まれること。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-061	IT-24	出力内容	P2	公開区分が公開・非公開のとき応答にdisplay_tokenを含まない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・scope_id=公開または非公開	"1. scope_id=公開／非公開でPUTで送信する
-2. レスポンス本文を確認する"	公開区分が限定公開以外の場合、成功本文に `display_token` が含まれないこと。
+2. レスポンス本文を確認する"	公開区分が限定公開以外の場合、成功本文に `display_token` が含まれないこと。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-062	IT-16	実行結果	P2	card_list未指定・空のとき空のカード配列として200で更新される	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・card_listを未指定または空文字で指定	"1. card_list未指定（空）でPUTで送信する
-2. HTTPステータスとDB副作用（採用カード）を照合する"	card_list未指定・空のときは空のカード配列として扱われ、HTTPステータス200で更新が成功し採用カードが空になること（DB副作用で判定）。
+2. HTTPステータスとDB副作用（採用カード）を照合する"	card_list未指定・空のときは空のカード配列として扱われ、HTTPステータス200で更新が成功し採用カードが空になること（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-070	IT-27	実行結果	P1	既存デッキ本体が指定値へ上書き更新される	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・deck_name/format_id/archetype_id/scope_id/image_card_idを指定	"1. 所有デッキIDへPUTで送信する
-2. DB副作用（dtb_deckのデッキ名・フォーマット・アーキタイプ・非公開フラグ・本文）を照合する"	既存デッキ本体（デッキ名・フォーマット・アーキタイプ・非公開フラグ・本文）が指定値へ上書き更新されること（DB副作用で判定）。
+2. DB副作用（dtb_deckのデッキ名・フォーマット・アーキタイプ・非公開フラグ・本文）を照合する"	既存デッキ本体（デッキ名・フォーマット・アーキタイプ・非公開フラグ・本文）が指定値へ上書き更新されること（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-071	IT-27	実行結果	P1	採用カードが初期化されカードリスト解読結果で作り直される	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK（既存採用カードあり）／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・既存と異なる内容のcard_list	"1. 所有デッキIDへPUTで送信する
-2. DB副作用（dtb_deck_card）を照合する"	既存の採用カード（dtb_deck_card）が初期化され、card_list解読結果で作り直され、旧採用カードが残らないこと（DB副作用で判定）。
+2. DB副作用（dtb_deck_card）を照合する"	既存の採用カード（dtb_deck_card）が初期化され、card_list解読結果で作り直され、旧採用カードが残らないこと（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-072	IT-27	削除	P1	メイビー・アトラクション・ステッカーが初期化され作り直される	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK（既存ボード外カードあり）／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・ボード外区分を含むcard_list	"1. 所有デッキIDへPUTで送信する
-2. DB副作用（dtb_maybe_card・dtb_attraction_card・dtb_sticker_card）を照合する"	既存のメイビー・アトラクション・ステッカーが初期化され作り直され、旧レコードが取得結果に含まれないこと（DB副作用で判定）。
+2. DB副作用（dtb_maybe_card・dtb_attraction_card・dtb_sticker_card）を照合する"	既存のメイビー・アトラクション・ステッカーが初期化され作り直され、旧レコードが取得結果に含まれないこと（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-073	IT-33	区分整合	P1	更新後に更新対象外の別デッキ・他プレイヤーデッキが不変	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK（対象デッキ＋別デッキ）／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・対象デッキのみを更新する正常リクエスト	"1. 対象デッキIDへPUTで送信し200を確認する
-2. DB副作用（更新対象外の別デッキ・他プレイヤーデッキのデッキ本体・採用カード）を照合する"	更新対象外の別デッキ・他プレイヤーデッキのデッキ本体と採用カードが更新前と一致し変動しないこと（DB副作用で判定）。
+2. DB副作用（更新対象外の別デッキ・他プレイヤーデッキのデッキ本体・採用カード）を照合する"	更新対象外の別デッキ・他プレイヤーデッキのデッキ本体と採用カードが更新前と一致し変動しないこと（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-074	IT-33	エラー	P1	検証エラー時にデッキ本体・採用カードが部分更新されない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・整合性検証に失敗するリクエスト	"1. 検証エラーとなるリクエストをPUTで送信し400を確認する
-2. DB副作用（対象デッキのデッキ本体・初期化対象の採用カード）を受信前と照合する"	検証エラー時はトランザクションがロールバックされ、デッキ本体・採用カード（初期化対象を含む）がDB副作用上で受信前と一致し部分更新が残らないこと（DB副作用で判定）。
+2. DB副作用（対象デッキのデッキ本体・初期化対象の採用カード）を受信前と照合する"	検証エラー時はトランザクションがロールバックされ、デッキ本体・採用カード（初期化対象を含む）がDB副作用上で受信前と一致し部分更新が残らないこと（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-075	IT-27	配置先	P2	更新後もデッキ識別子は同一のまま内容が上書きされる	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・所有デッキID（既知）への正常リクエスト	"1. 所有デッキIDへPUTで送信する
-2. レスポンスのdeck_idとDB副作用（dtb_deckの識別子）を照合する"	デッキ本体は同一識別子のまま内容が上書きされ、応答 `deck_id` とDB上の識別子がパスのIDと一致すること（DB副作用で判定）。
+2. レスポンスのdeck_idとDB副作用（dtb_deckの識別子）を照合する"	デッキ本体は同一識別子のまま内容が上書きされ、応答 `deck_id` とDB上の識別子がパスのIDと一致すること（DB副作用で判定）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-081	IT-27	実行結果	P3	更新確定後に当該デッキのRedis下書きが削除される	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK（Redis下書きあり）／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・当該デッキのRedis下書きが存在する状態・正常リクエスト	"1. 当該デッキのRedis下書きがある状態でPUTを送信する
-2. Redis下書きの有無を確認する"	更新の保存後に当該デッキのRedis上の下書きが削除され、保存済みデータと下書きの不整合が解消されること（Redis観測手段が本リポジトリから取れないため要実機確認。実装に下書き削除処理が見当たらない点は付帯表4#8の要確認）。
+2. Redis下書きの有無を確認する"	更新の保存後に当該デッキのRedis上の下書きが削除され、保存済みデータと下書きの不整合が解消されること（Redis観測手段が本リポジトリから取れないため要実機確認。実装に下書き削除処理が見当たらない点は付帯表4#8の要確認）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-090	IT-19	同時実行数の制限	P3	同一デッキの同時更新で片側更新の不整合が残らない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・同一デッキへの並行する2リクエスト	"1. 同一デッキへ2リクエストを並行してPUTで送信する
-2. 最終状態を確認する"	本APIは排他制御を持たず同時更新は後勝ちとなり、いずれか一方の更新が一貫して反映され、デッキ本体・採用カードが片側だけ更新された不整合が残らないこと（並行送信の実再現は要実機確認）。
+2. 最終状態を確認する"	本APIは排他制御を持たず同時更新は後勝ちとなり、いずれか一方の更新が一貫して反映され、デッキ本体・採用カードが片側だけ更新された不整合が残らないこと（並行送信の実再現は要実機確認）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-091	IT-32	リクエスト	P3	想定外項目追加時の挙動が要実機確認・仕様化待ちである	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	正常リクエストに仕様未定義の想定外項目（項目名と値のセット）を追加	"1. 想定外項目を含むリクエストをPUTで送信する
-2. HTTPステータスを確認する"	正本mdに未定義項目の許容/無視/エラーの仕様が無いため、想定外項目追加時の更新成否を固定期待にできず、許容・無視・エラーいずれの挙動とするかは要実機確認・仕様化待ちであること。
+2. HTTPステータスを確認する"	正本mdに未定義項目の許容/無視/エラーの仕様が無いため、想定外項目追加時の更新成否を固定期待にできず、許容・無視・エラーいずれの挙動とするかは要実機確認・仕様化待ちであること。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-092	IT-10	エラー	P3	処理タイムアウト時に仕様どおりの応答となる	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・タイムアウトを誘発するシナリオ	"1. タイムアウトを誘発してPUTで送信する
-2. 応答とデッキ状態を確認する"	サーバ無応答・未定義例外で停止せず、エラー応答が返り、対象デッキが部分更新されず一致すること（タイムアウト実再現は要実機確認）。
+2. 応答とデッキ状態を確認する"	サーバ無応答・未定義例外で停止せず、エラー応答が返り、対象デッキが部分更新されず一致すること（タイムアウト実再現は要実機確認）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-110	IT-22	バリデーション	P2	採用カードの制約を満たさないと400となり更新されない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・解読結果の採用カード（メイビー・アトラクション・ステッカーを含む）がボード区分ごとの制約を満たさないcard_list	"1. 採用カードの制約に違反するリクエストをPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	ボード区分ごとに組み立てた採用カードの制約が未充足の場合、入力不正としてHTTPステータス400・本文 `{code, message}` が返り更新されないこと（messageの文言は付帯表4#4の要確認に従う）。
+2. HTTPステータスとレスポンス本文を確認する"	ボード区分ごとに組み立てた採用カードの制約が未充足の場合、入力不正としてHTTPステータス400・本文 `{code, message}` が返り更新されないこと（messageの文言は付帯表4#4の要確認に従う）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-111	IT-22	バリデーション	P2	デッキ本体の制約を満たさないと400となり更新されない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・フォーマット・公開区分・採用カードを設定したうえでデッキ本体の制約を満たさないリクエスト	"1. デッキ本体の制約に違反するリクエストをPUTで送信する
-2. HTTPステータスとレスポンス本文を確認する"	デッキ本体の制約が未充足の場合、入力不正としてHTTPステータス400・本文 `{code, message}`（messageは検証エラー内容）が返り更新されないこと（messageの文言は付帯表4#4の要確認に従う）。
+2. HTTPステータスとレスポンス本文を確認する"	デッキ本体の制約が未充足の場合、入力不正としてHTTPステータス400・本文 `{code, message}`（messageは検証エラー内容）が返り更新されないこと（messageの文言は付帯表4#4の要確認に従う）。				
 a15-18_api_deck_builder_deck_import_update（API_デッキビルダー_デッキインポート更新）	E2E-A15-18-150	IT-05	実行結果	P3	保存処理中の例外時にロールバックし部分更新が残らない	SEED-A15-18-JWT-PLAYER／SEED-A15-18-DECK／SEED-A15-18-MASTER／SEED-A15-18-PAYLOAD	有効なjwt-token・保存処理中の例外を誘発するシナリオ	"1. 保存例外を誘発してPUTで送信する
-2. 応答とDB副作用（デッキ本体・採用カード）を照合する"	保存処理中に例外が発生した場合はトランザクションをロールバックし処理失敗（HTTP 500）として応答し、デッキ本体・採用カードが受信前と一致し部分更新が残らないこと（例外の実再現は要実機確認）。
+2. 応答とDB副作用（デッキ本体・採用カード）を照合する"	保存処理中に例外が発生した場合はトランザクションをロールバックし処理失敗（HTTP 500）として応答し、デッキ本体・採用カードが受信前と一致し部分更新が残らないこと（例外の実再現は要実機確認）。				
 ```
 
 ## 付帯表1：E2E自動化区分・対象/根拠・仕様根拠・元ITケースID（TSV外）

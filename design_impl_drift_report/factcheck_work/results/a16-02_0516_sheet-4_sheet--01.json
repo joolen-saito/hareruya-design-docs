@@ -1,0 +1,98 @@
+{
+  "chunkId": "a16-02_0516_sheet-4_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a16-02_0516_sheet-4_sheet.json#a16-02_0516_sheet-4_sheet-conformance-f4b84a78dac3",
+      "functionId": "a16-02_0516_sheet-4_sheet",
+      "featureNo": "A16-02",
+      "title": "A16-02 言語コードに紐づいたトップバナーの情報一覧を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "medium",
+      "summary": "設計は設定状態(disp_type)・言語の2軸で絞り込む「設定済みトップバナー」取得を求めるが、実装は言語のみで絞り込み(getTopBanners)、disp_type=0の非表示バナーも返却し得る。",
+      "reason": "設計はエンドポイントの取得対象を一貫して「設定済みトップバナー」と定義し(1023,1160,1169,1185,1188行)、移行元/移行先対照表(1177行)で mtb_top_banner を『設定状態・言語で絞り込む』と明記、業務ルール(1216行)でも『既存リポジトリの絞り込み順序を正とする』『非公開のデータは空結果…で返す』としている。実装(ContentController::getTopBannersByLanguageCode)は languageRepository->findOneBy でコード一致の言語を取得後、$Language->getTopBanners() の多対多Collectionをそのまま TopBannersResponseBuilder に渡すのみで(102,110行)、disp_type による絞り込みを一切行わない。disp_type 条件を持つのは MtbTopBannerRepository::findWhereUrlIsNotEmpty()(38,46行 tb.dispType in :dispTypes)だが、このAPI経路からは呼ばれていない。よって設計の『設定状態で絞り込む』要求に対し実装は言語軸のみで、絞り込み条件が設計と異なる実装違い。confidenceは、本設計が現行踏襲のリバース設計で『設定済み』の語がやや曖昧なため medium とした。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html",
+        "start": 1176,
+        "end": 1188,
+        "contains": ["設定状態・言語で絞り込む", "絞り込み条件", "設定済みトップバナー"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(絞り込み欠落)",
+          "note": "言語のみで絞り込み、disp_type条件なしでCollectionをそのまま返す",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php",
+          "start": 102,
+          "end": 110,
+          "contains": ["$Language->getTopBanners()", "topBannersResponseBuilder->build"]
+        },
+        {
+          "label": "設計に合致するが未使用の絞り込み実装",
+          "note": "dispType条件を持つが本API経路から呼ばれない",
+          "path": "ec-cube-enterprise/src/Eccube/Repository/Master/MtbTopBannerRepository.php",
+          "start": 38,
+          "end": 49,
+          "contains": ["findWhereUrlIsNotEmpty", "tb.dispType", "dispTypes"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -n \"dispType|disp_type\" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php"
+      ]
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a16-02_0516_sheet-4_sheet.json#a16-02_0516_sheet-4_sheet-conformance-71ee4f89e8ef",
+      "functionId": "a16-02_0516_sheet-4_sheet",
+      "featureNo": "A16-02",
+      "title": "A16-02 言語コードに紐づいたトップバナーの情報一覧を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "REFUTED",
+      "confidence": "high",
+      "reason": "指摘は『sort_no ASC の並び替えと件数上限が実装されていない』が設計違反だと主張するが、設計はそれを要求していない。設計(1176行)は『移行先ではトップバナーマスタと言語マスタに表示用の追加列があるが、本APIの絞り込み条件・応答項目には影響しない』と明記し、sort_no は表示用追加列として本APIに影響しないと述べる。DBカラム表(1222行)でも本APIが用いる mtb_top_banner の列を『id・image_url・link・disp_type』に限定し、sort_no を含めていない。業務ルール(1216行)は『表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない』とし、既存実装の既定順に委ねる。実装は $Language->getTopBanners() のCollection順で返しており、これは『既存実装のデフォルト』そのもの。findWhereUrlIsNotEmpty() の orderBy('tb.sortNo','ASC') / setMaxResults は本APIが使う必要のある実装ではない。よって設計に sort_no 明示ソート・件数上限の要求はなく、実装は設計に整合するため反証。",
+      "designEvidence": {
+        "label": "設計(sort_noは本APIに影響しない)",
+        "path": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html",
+        "start": 1176,
+        "end": 1222,
+        "contains": ["本APIの絞り込み条件・応答項目には影響しない", "表示順は既存実装のデフォルトと上限に従い", "id・image_url・link・disp_type"]
+      }
+    },
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/a16-02_0516_sheet-4_sheet.json#a16-02_0516_sheet-4_sheet-conformance-d53a80b13440",
+      "functionId": "a16-02_0516_sheet-4_sheet",
+      "featureNo": "A16-02",
+      "title": "A16-02 言語コードに紐づいたトップバナーの情報一覧を取得",
+      "dimension": "⑦要求網羅・実装違い",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装違い",
+      "confidence": "high",
+      "summary": "設計の404失敗レスポンス本文は {code, message} で message は\"Language code is not found\"だが、実装は {code, errors:['Not Found']} を返し、キー(message→errors配列)・文言(Language code is not found→Not Found)が共に異なる。",
+      "reason": "設計(1197行 失敗レスポンス表)は404本文の形を『{code, message}（\"Language code is not found\"）』と定義。実装 ContentController::getTopBannersByLanguageCode は言語未存在・トップバナー空のとき NotFoundException('Not Found') を投げ(99,107行)、catch で ['code'=>$e->getStatusCode(), 'errors'=>$e->getErrors()] を返す(115,116行)。NotFoundException は errors:[$message] に格納し(NotFoundException.php:30)、getErrors() が配列を返す(BaseApiException.php:48-50)ため、本文は {code:404, errors:['Not Found']}。設計指定のキー message ではなく errors 配列で、文言も 'Language code is not found' ではなく 'Not Found'。ソース全体を rg で検索したが 'Language code is not found' はどこにも存在せず、topBanners応答経路に message キーもない。よって設計の本文キー・文言に対する実装違いを確認。",
+      "designEvidence": {
+        "label": "設計要求(404本文形)",
+        "path": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html",
+        "start": 1197,
+        "end": 1197,
+        "contains": ["Language code is not found", "{code, message}"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装(404本文構築)",
+          "note": "errorsキー(配列)で返し、messageキーを持たない",
+          "path": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php",
+          "start": 99,
+          "end": 116,
+          "contains": ["throw new NotFoundException('Not Found')", "'errors' => $e->getErrors()", "'code' => $e->getStatusCode()"]
+        },
+        {
+          "label": "NotFoundException(errors配列格納)",
+          "path": "ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php",
+          "start": 27,
+          "end": 30,
+          "contains": ["errors: [$message]"]
+        }
+      ]
+    }
+  ]
+}

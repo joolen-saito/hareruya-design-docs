@@ -1,0 +1,55 @@
+{
+  "chunkId": "b05-04_0405_sheet-6_sheet--01",
+  "results": [
+    {
+      "key": "hareruya-design-docs/design_impl_drift_report/findings/b05-04_0405_sheet-6_sheet.json#b05-04_0405_sheet-6_sheet-conformance-f001105d0d35",
+      "functionId": "b05-04_0405_sheet-6_sheet",
+      "featureNo": "B05-04",
+      "title": "B05-04 スマレジ商品再連携",
+      "dimension": "⑦要求網羅・未実装",
+      "verdict": "CONFIRMED",
+      "issueCategory": "実装漏れ",
+      "confidence": "high",
+      "summary": "スマレジ再連携の失敗時に管理者へ通信エラーメールを送信する要求が、ec-cube-enterprise の OTC 連携実装では実装されていない。",
+      "reason": "設計（基本設計）は商品連携・在庫連携それぞれの失敗時に『スマレジ通信エラーメール送信』し、エラー発生時は『発生したスマレジ連携ごとにメールで管理者に通知』すると明記（HTML 1406/1409/1431 行）。ec-cube-enterprise の該当実装 SmaregiOtcOrderSyncService::markError は logger->error と Order.setSmaregiErrorFlg(true) のみ（323-332行）、SmaregiOtcSyncMessageHandler::failJob は MessengerJob を STATUS_FAILED にして errorMessage を設定するのみ（163-171行）で、いずれもメール送信しない。Smaregi 配下のサービス／ハンドラに MailService 注入・mailer->send・Email 生成は無い（rg で 0 件）。MtbOption に SMAREGI_ERROR_MAIL_ADDRESS 定数は存在するが、これを参照する MailService の唯一のメソッドは sendOrderDuplicateNotificationMail（ポイント重複登録通知メール、MailService.php:2235-2276）で、呼び出し元は CheckDuplicatePointAction のみ。スマレジ連携失敗をトリガに管理者へ通信エラーメールを送る経路は存在しない。別ルート・別名（MailService/mailer/Email/SMAREGI_ERROR_MAIL_ADDRESS）も探索したが該当なし。よって実装漏れと確認。",
+      "designEvidence": {
+        "label": "設計要求",
+        "path": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html",
+        "start": 1406,
+        "end": 1431,
+        "contains": ["連携に失敗した場合はスマレジ通信エラーメール送信", "メールで管理者に通知"]
+      },
+      "implEvidence": [
+        {
+          "label": "実装（連携失敗処理・メール無し）",
+          "note": "API失敗時はログ出力とsmaregi_error_flg設定のみ。メール送信なし。",
+          "path": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php",
+          "start": 323,
+          "end": 332,
+          "contains": ["private function markError", "setSmaregiErrorFlg(true)"]
+        },
+        {
+          "label": "実装（ジョブ失敗化・メール無し）",
+          "note": "MessengerJobをFAILEDにしてerrorMessageを設定するのみ。管理者メール送信なし。",
+          "path": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php",
+          "start": 163,
+          "end": 171,
+          "contains": ["private function failJob", "STATUS_FAILED"]
+        },
+        {
+          "label": "SMAREGI_ERROR_MAIL_ADDRESSの唯一の利用先（別用途）",
+          "note": "この定数を参照する送信メソッドはポイント重複登録通知用であり、スマレジ連携失敗通知ではない。",
+          "path": "ec-cube-enterprise/src/Eccube/Service/MailService.php",
+          "start": 2235,
+          "end": 2247,
+          "contains": ["sendOrderDuplicateNotificationMail", "SMAREGI_ERROR_MAIL_ADDRESS"]
+        }
+      ],
+      "absenceCommands": [
+        "rg -n 'MailService|mailer|->send\\(|Swift_|Email\\b' /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php",
+        "rg -rn 'sendOrderDuplicateNotificationMail' /home/y-saito/Developments/ec-cube-enterprise/src",
+        "rg -n 'SMAREGI_ERROR_MAIL_ADDRESS|SMAREGI_ERROR_SEND_MAILADDRESS|smaregi_error_mail_address' /home/y-saito/Developments/ec-cube-enterprise/src"
+      ]
+    }
+  ]
+}
