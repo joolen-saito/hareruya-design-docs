@@ -495,58 +495,72 @@ def context_flags(doc: HtmlDoc) -> dict[str, bool]:
     }
 
 
-def viewpoint_matches(vp: Viewpoint, flags: dict[str, bool]) -> bool:
+def match_rule(vp: Viewpoint, flags: dict[str, bool]) -> str | None:
+    """観点を本機能へ紐付けた「適用ルールID」を返す。非該当なら None。
+
+    viewpoint_matches の真偽だけでは、なぜ紐付いた/紐付かなかったかが成果物に残らず、
+    過剰捺印(No.109/111が無関係画面へ)やゼロ生成(RISK観点8件)の原因追跡ができない。
+    ルールIDをトレーサビリティ台帳へ出力し、適用根拠を監査可能にする。
+
+    分岐の順序・条件は従来の viewpoint_matches と完全に同一(挙動不変)。
+    """
     s = vp.search_text
     # 通知(WebSocket等)はリアルタイム通知機能のみ対象。通常の画面・認証機能では選択しない。
     if vp.category == "ウェブアプリケーション" and vp.large == "通知":
-        return flags.get("realtime", False)
+        return "R01-REALTIME-NOTIFY" if flags.get("realtime", False) else None
     if flags["validation"] and vp.category == "バリデーション":
-        return True
+        return "R02-VALIDATION"
     if flags["screen"] and vp.category == "ウェブアプリケーション":
         if vp.large in {"画面表示", "画面操作", "認証・認可", "エラー表示", "フロント", "管理画面", "管理画面-公開側"}:
-            return True
+            return "R03-SCREEN-WEBAPP-LARGE"
         if flags["security"] and any(k in s for k in ["認証", "権限", "CSRF", "XSS", "Cookie", "セッション"]):
-            return True
-        return False
+            return "R04-SCREEN-WEBAPP-SECURITY"
+        # ここで打ち切るため、許可リストに無い大項目(在庫引当/状態遷移/販売価格等)は
+        # 一切紐付かない。RISK観点8件がゼロ生成した箇所。是正はP0bで行う。
+        return None
     if flags["screen"] and vp.category == "ログ出力" and flags["security"]:
-        return True
+        return "R06-SCREEN-LOG-SECURITY"
     if (
         flags["operation"]
         and vp.category == "ウェブアプリケーション"
         and vp.large == "画面操作"
         and any(k in s for k in ["操作起点", "ボタン", "押下", "遷移", "ポップアップ", "ダイアログ"])
     ):
-        return True
+        return "R07-OPERATION-SCREEN"
     if flags["db"] and vp.category == "データベースアクセス" and vp.large == "DB操作":
         if "検索" in s:
-            return flags["search"]
+            return "R08-DB-SEARCH" if flags["search"] else None
         if "登録" in s:
-            return flags["create"]
+            return "R08-DB-CREATE" if flags["create"] else None
         if "更新" in s:
-            return flags["update"]
+            return "R08-DB-UPDATE" if flags["update"] else None
         if "削除" in s:
-            return flags["delete"]
-        return True
+            return "R08-DB-DELETE" if flags["delete"] else None
+        return "R08-DB-OTHER"
     if flags["db"] and vp.category == "データベースアクセス" and vp.large == "DB制御" and (flags["create"] or flags["update"] or flags["delete"]):
-        return True
+        return "R09-DB-CONTROL"
     if flags["api"] and vp.category == "ウェブサービス":
-        return True
+        return "R10-API-WEBSERVICE"
     if flags["telegram"] and vp.category == "電文処理":
-        return True
+        return "R11-TELEGRAM"
     if flags["batch"] and vp.category == "バッチアプリケーション":
-        return True
+        return "R12-BATCH"
     if flags["file"] and vp.category == "ファイル処理":
         report_only = vp.it_id == "IT-18" or any(k in s for k in ["帳票", "PDF", "フォント", "余白", "見切れ", "印刷"])
         if report_only and not flags["report"]:
-            return False
-        return True
+            return None
+        return "R13-FILE"
     if flags["mail"] and vp.category == "メール処理":
-        return True
+        return "R14-MAIL"
     if flags["messaging"] and vp.category == "メッセージング":
-        return True
+        return "R15-MESSAGING"
     if flags["external"] and vp.category == "ウェブサービス" and "外部連携" in s:
-        return True
-    return False
+        return "R16-EXTERNAL-WEBSERVICE"
+    return None
+
+
+def viewpoint_matches(vp: Viewpoint, flags: dict[str, bool]) -> bool:
+    return match_rule(vp, flags) is not None
 
 
 def limit_viewpoints(selected: list[Viewpoint], flags: dict[str, bool], max_cases: int) -> list[Viewpoint]:
@@ -840,11 +854,22 @@ def render_markdown(
     viewpoints: list[Viewpoint],
     max_cases: int,
     allowed_layers: set[str] | None = None,
+    trace: list[list[str]] | None = None,
 ) -> tuple[str, list[list[str]]]:
     allowed = allowed_layers or DEFAULT_XPROD_LAYERS
     # make_rows がテスト層フィルタのチョークポイント。ここでも xprod_vps を作るのは out_of_scope 報告用。
     rows, selected, flags = make_rows(doc, viewpoints, max_cases, allowed)
     xprod_vps = filter_viewpoints(viewpoints, allowed)
+    if trace is not None:
+        # rows と selected は make_rows 内で対に append される(1ケース=1由来観点)。
+        # 逆引き(IT-ID+小項目)は一意でないため、由来はここで確定させて台帳に残す。
+        stem = output_stem(doc.path)
+        for row, vp in zip(rows, selected):
+            trace.append([
+                row[1], stem, doc.title, vp.no, vp.it_id, vp.layer,
+                vp.large, vp.middle, vp.small,
+                match_rule(vp, flags) or "", doc.path.as_posix(),
+            ])
     layer_label = "結合層" if allowed == {"結合"} else "／".join(sorted(allowed)) + "層"
     rel_doc = doc.path.relative_to(repo).as_posix()
     tsv = write_tsv(rows)
@@ -942,6 +967,26 @@ def discover_todo_html(repo: Path, todo: Path) -> list[Path]:
     return files
 
 
+TRACE_HEADER = [
+    "テストID", "機能stem", "機能名", "観点No", "IT-ID", "テスト層",
+    "大項目", "中項目", "小項目", "適用ルールID", "根拠HTML",
+]
+
+
+def write_trace(output_dir: Path, trace: list[list[str]]) -> int:
+    """ケースID×観点No×適用ルールID×根拠HTML のトレーサビリティ台帳。
+
+    実行計画(実行区分・聖域の付与)はこの台帳を唯一の入力とすること。
+    ケース側の (IT-ID, 小項目) からの逆引きは一意でなく(187キー中55キーが衝突・
+    ケースの67%が該当)、行順依存の誤付与を生むため使用してはならない。
+    """
+    path = output_dir / "case_viewpoint_trace.tsv"
+    buf = [TRACE_HEADER] + trace
+    with path.open("w", encoding="utf-8", newline="") as f:
+        csv.writer(f, delimiter="\t", lineterminator="\n").writerows(buf)
+    return len(trace)
+
+
 def write_aggregate(output_dir: Path, all_rows: list[list[str]]) -> int:
     path = output_dir / "all_it_cases.tsv"
     rows = single_line_rows(dedupe_execution_rows(all_rows))
@@ -980,6 +1025,7 @@ def main() -> int:
 
     output_dir.mkdir(parents=True, exist_ok=True)
     all_rows: list[list[str]] = []
+    trace: list[list[str]] = []
     generated = 0
     for html_path in html_files:
         doc = read_html(html_path)
@@ -987,17 +1033,21 @@ def main() -> int:
         out_path = output_dir / f"{stem}_it_cases.md"
         if out_path.exists() and not args.overwrite:
             continue
-        body, rows = render_markdown(repo, doc, viewpoints, args.max_cases_per_file, allowed_layers)
+        body, rows = render_markdown(
+            repo, doc, viewpoints, args.max_cases_per_file, allowed_layers, trace
+        )
         out_path.write_text(body, encoding="utf-8")
         all_rows.extend(rows)
         generated += 1
 
-    # 部分実行（--only / --limit）では集約TSVを上書きしない（全件集約を壊さないため）。
+    # 部分実行（--only / --limit）では集約TSV・トレース台帳を上書きしない（全件集約を壊さないため）。
     if not args.only and not args.limit:
         aggregate_rows = write_aggregate(output_dir, all_rows)
+        trace_rows = write_trace(output_dir, trace)
     else:
         aggregate_rows = len(all_rows)
-    print(f"generated={generated} rows={aggregate_rows} output={output_dir}")
+        trace_rows = len(trace)
+    print(f"generated={generated} rows={aggregate_rows} trace={trace_rows} output={output_dir}")
     return 0
 
 
