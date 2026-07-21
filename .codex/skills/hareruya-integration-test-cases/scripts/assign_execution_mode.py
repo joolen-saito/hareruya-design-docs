@@ -64,18 +64,40 @@ def channel_of(test_id: str) -> str:
     return "不明"
 
 
-def load_viewpoints(path: Path) -> dict[tuple[str, str], list[str]]:
-    """(IT-ID, 小項目|中項目) -> 観点行。ケース側の I/FID + テスト観点 で逆引きできる。"""
+def load_viewpoints(path: Path) -> dict[tuple[str, str], list[list[str]]]:
+    """(IT-ID, 小項目|中項目) -> 該当観点行の**全候補**。
+
+    このキーは一意ではない(実測: 187キー中55キーが衝突し、ケースの67%が衝突キー上)。
+    旧実装は setdefault の先勝ちで1行だけ採用しており、**観点マスタの行順が変わると
+    結果が反転する非決定性**があった。実害として (IT-10,異常系) で観点496(外部取得
+    フォールバック)が観点509(外部決済異常=二重課金・二重返金)を隠蔽し、130件が
+    automated-API/聖域0 に誤付与されていた。
+
+    そのため候補を潰さずに全件返し、呼び出し側で悲観側へ倒す。
+    ケースは結合層からしか生成されないため、索引は結合層に限定する。
+    """
     rows = list(csv.reader(path.open(encoding="utf-8"), delimiter="\t"))[1:]
-    index: dict[tuple[str, str], list[str]] = {}
+    index: dict[tuple[str, str], list[list[str]]] = {}
     for r in rows:
-        if len(r) < 9:
+        if len(r) < 9 or r[7].strip() != "結合":
             continue
         small = (r[5] or "").strip()
         mid = (r[4] or "").strip()
         label = small if small and small != "-" else mid
-        index.setdefault((r[1].strip(), label), r)
+        index.setdefault((r[1].strip(), label), []).append(r)
     return index
+
+
+# 悲観側の強さ。衝突時はこの値が最大の区分を採る(過小見積を防ぐ)。
+# manual=人手必須が最も高コスト、contract=スタブ/障害注入が要る、
+# automated-DB=DB副作用まで観測、automated-API、automated-UI=画面のみ観測。
+MODE_SEVERITY = {
+    "automated-UI": 1,
+    "automated-API": 2,
+    "automated-DB": 3,
+    "contract": 4,
+    "manual": 5,
+}
 
 
 def classify(vp: list[str] | None, channel: str) -> str:
