@@ -1240,6 +1240,10 @@ def screen_from_flow(row: str, pattern: Pattern) -> str:
 
 
 def infer_actor(text: str, default_actor: str) -> str:
+    # 「お客様対応」「顧客対応」は、社内チームが顧客からの問い合わせに対応する業務であり、
+    # 実行主体はお客様ではない。この語で主アクターをお客様へ倒すと、社内のバックオフィス
+    # 作業（キャンセル・返金・メール対応）を顧客向けフロント画面で実施する手順が生まれる。
+    text = text.replace("お客様対応", " ").replace("顧客対応", " ")
     actor_map = {
         "お客様": "お客様",
         "支店": "支店担当者",
@@ -1937,7 +1941,7 @@ def doc_title_terms(title: str) -> list[str]:
     return [p for p in (t.strip() for t in parts) if len(p) >= 3]
 
 
-def edge_case_screen(case: "EdgeCase", docs: list[DesignDoc]) -> str:
+def edge_case_screen(case: "EdgeCase", docs: list[DesignDoc], actor: str = "") -> str:
     """代替/異常分岐の実施画面を、条件文と設計書名の語が実際に一致する場合だけ決める。
 
     位置ベースの割当（`docs[idx-1]`）は、条件と無関係な画面を実施画面にしてしまう。
@@ -1947,11 +1951,25 @@ def edge_case_screen(case: "EdgeCase", docs: list[DesignDoc]) -> str:
     その画面では観測できない期待結果を生む。根拠が無いなら画面を書かない（要確認として出す）。
     """
     haystack = f"{case.condition} {case.expected} {case.observation}"
+    case_words = {w for w in BUSINESS_VOCAB if w in haystack}
+    if not case_words:
+        return ""
+    candidates = docs
+    # 顧客以外（社内チーム）が担当する分岐は、顧客向けフロント画面(F**)では実施できない。
+    # 「本人確認書類の不備対応」を `F05-01（ネット買取トップページ）` で実行する等の
+    # 観測不能な手順を防ぐ。フロントは業務語が広く一致しやすく、誤マップの主因になる。
+    if actor and "お客様" not in actor:
+        internal = [d for d in docs if not d.feature_no.startswith("F")]
+        if internal:
+            candidates = internal
     best, best_score = "", 0
-    for doc in docs:
-        score = sum(1 for term in doc_title_terms(doc.title) if term in haystack)
+    for doc in candidates:
+        title = doc.title
+        # 設計書名側は実体語（機能No・記号を除く）で見る。
+        doc_text = " ".join(doc_title_terms(title)) or title
+        score = len(case_words & {w for w in BUSINESS_VOCAB if w in doc_text})
         if score > best_score:
-            best, best_score = doc.title, score
+            best, best_score = title, score
     return best
 
 
@@ -1963,7 +1981,7 @@ def render_alternative_execution_steps(s: Scenario, seed: dict[str, str]) -> str
         source = case.source_row or case.condition
         if case.source_row:
             actor = infer_actor(source, actor)
-        screen = edge_case_screen(case, docs)
+        screen = edge_case_screen(case, docs, actor)
         base = primary_target(seed)
         edge_in = edge_input_data(case)
         if screen:
@@ -2368,28 +2386,36 @@ PATTERN_EDGE_CASES.update({
 })
 
 
+# 業務語彙（アンカー -> 同義・関連語）。エッジケースの発火判定と、代替/異常分岐の
+# 実施画面の根拠判定（`edge_case_screen`）で共用する。語彙を二重管理しない。
+BUSINESS_KEYWORD_GROUPS: dict[str, tuple[str, ...]] = {
+    "権限": ("権限",),
+    "検索": ("検索",),
+    "重複": ("重複", "二重"),
+    "入力": ("必須", "形式不正", "入力エラー"),
+    "在庫": ("在庫", "入庫", "出庫", "棚卸", "移動", "欠品", "ピック"),
+    "決済": ("決済", "入金", "支払", "SPLINKS", "返金"),
+    "返金": ("返金", "キャンセル", "取消"),
+    "CSV": ("CSV", "インポート", "取込", "出力"),
+    "本人確認": ("本人確認", "書留", "買取"),
+    "配送": ("発送", "配送", "送り状", "海外"),
+    "公開": ("公開", "非公開", "発売", "商品"),
+    "価格": ("価格", "セール", "金額"),
+    "定員": ("イベント", "受付", "定員", "申込"),
+    "デッキ": ("デッキ", "大会", "カード"),
+}
+BUSINESS_VOCAB: tuple[str, ...] = tuple(
+    sorted({word for words in BUSINESS_KEYWORD_GROUPS.values() for word in words})
+)
+
+
 def edge_case_matches(case: EdgeCase, text: str, systems: str) -> bool:
     haystack = text + " " + systems
     # 機構系アンカー（権限/検索/重複/入力）は結合テスト層と重複しやすい。
     # `対象`『確認』『登録』『更新』のような汎用語を一致語にすると、業務フロー本文にその語が
     # 1つあるだけで発火し、ほぼ全シナリオへ結合テスト相当のケースが混入する。業務フローが
     # その機構を明示している場合だけ発火させる。
-    keyword_groups = {
-        "権限": ("権限",),
-        "検索": ("検索",),
-        "重複": ("重複", "二重"),
-        "入力": ("必須", "形式不正", "入力エラー"),
-        "在庫": ("在庫", "入庫", "出庫", "棚卸", "移動", "欠品", "ピック"),
-        "決済": ("決済", "入金", "支払", "SPLINKS", "返金"),
-        "返金": ("返金", "キャンセル", "取消"),
-        "CSV": ("CSV", "インポート", "取込", "出力"),
-        "本人確認": ("本人確認", "書留", "買取"),
-        "配送": ("発送", "配送", "送り状", "海外"),
-        "公開": ("公開", "非公開", "発売", "商品"),
-        "価格": ("価格", "セール", "金額"),
-        "定員": ("イベント", "受付", "定員", "申込"),
-        "デッキ": ("デッキ", "大会", "カード"),
-    }
+    keyword_groups = BUSINESS_KEYWORD_GROUPS
     for anchor, words in keyword_groups.items():
         if anchor in case.condition and any(word in haystack for word in words):
             return True
