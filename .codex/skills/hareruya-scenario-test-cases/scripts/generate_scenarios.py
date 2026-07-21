@@ -1929,6 +1929,32 @@ def render_execution_steps(s: Scenario, seed: dict[str, str]) -> str:
     return "\n".join(rows)
 
 
+def doc_title_terms(title: str) -> list[str]:
+    """設計書タイトルから照合用の語を取り出す（機能No・記号を除いた実体語のみ）。"""
+    text = re.sub(r"^[A-Za-z]\d{2}[-–]\d{2}", " ", title)
+    text = text.replace("管理画面_", " ").replace("_", " ")
+    parts = re.split(r"[—–\-・/／()（）、,。\s]+", text)
+    return [p for p in (t.strip() for t in parts) if len(p) >= 3]
+
+
+def edge_case_screen(case: "EdgeCase", docs: list[DesignDoc]) -> str:
+    """代替/異常分岐の実施画面を、条件文と設計書名の語が実際に一致する場合だけ決める。
+
+    位置ベースの割当（`docs[idx-1]`）は、条件と無関係な画面を実施画面にしてしまう。
+    実例: 別部署からの発注依頼（原典はGoogleフォーム/ラベル印字/台帳/メール起点）の
+    「在庫不足」分岐に、フロントの `F04-01（買い物かご）` が割り当たっていた。
+    本流ステップで `assign_step_docs` が禁じている「余っている設計書を埋める」挙動と同じ誤りで、
+    その画面では観測できない期待結果を生む。根拠が無いなら画面を書かない（要確認として出す）。
+    """
+    haystack = f"{case.condition} {case.expected} {case.observation}"
+    best, best_score = "", 0
+    for doc in docs:
+        score = sum(1 for term in doc_title_terms(doc.title) if term in haystack)
+        if score > best_score:
+            best, best_score = doc.title, score
+    return best
+
+
 def render_alternative_execution_steps(s: Scenario, seed: dict[str, str]) -> str:
     rows: list[str] = []
     docs = s.docs or []
@@ -1937,11 +1963,16 @@ def render_alternative_execution_steps(s: Scenario, seed: dict[str, str]) -> str
         source = case.source_row or case.condition
         if case.source_row:
             actor = infer_actor(source, actor)
-        screen = docs[min(idx - 1, len(docs) - 1)].title if docs else ""
+        screen = edge_case_screen(case, docs)
         base = primary_target(seed)
         edge_in = edge_input_data(case)
-        lead = f"{screen}で " if screen else ""
-        operation = f"{lead}条件「{case.condition}」となるデータ/操作を実行する"
+        if screen:
+            operation = f"{screen}で 条件「{case.condition}」となるデータ/操作を実行する"
+        else:
+            operation = (
+                f"条件「{case.condition}」となるデータ/操作を実行する"
+                "（実施画面は要確認。機能Noを特定できていない）"
+            )
         expected = koto_form(case.expected.rstrip("。")) + "。"
         rows.append(f"| {idx} | {branch_id} | {actor} | {operation} | {edge_in}（基準: {base}） | {expected} | {case.observation} |")
     if not rows:
