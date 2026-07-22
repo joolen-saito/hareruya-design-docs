@@ -160,6 +160,7 @@ DB関連は ec-cube-enterprise を正とする。査定申込みの登録先`dtb
 | メールアドレスとパスワードは異なる文字列を使用してください。 | Please use different character string for E-mail and Password. | メールとパスワードが同一のとき | パスワード欄 | 会員登録フォーム画面を再表示する |
 | 登録番号を入力してください | Please enter your registration number | 適格請求書発行事業者ありで登録番号が未入力のとき | 登録番号欄 | キー `front.otcbuy.error.not_qualified_invoice_issuer_code_input` |
 | 登録番号に全角を含むことは出来ません | Registration number cannot include full-width characters | 登録番号に全角が含まれるとき | 登録番号欄 | キー `front.otcbuy.error.not_fullwidth_qualified_invoice_issuer_code_input` |
+| F08-03-MSG-001 | 入力項目直下 | 要ソース確認（other: "front.error.{$name}.message"） | 各対象値が正規表現 /^[^\s ]+$/u に一致しないとき | confirm() がフォーム不正として OtcBuy/index.twig を再表示する。 |
 
 表示文言はテンプレートとロケールメッセージを正とする。
 

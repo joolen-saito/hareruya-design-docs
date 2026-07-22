@@ -246,6 +246,11 @@ HareruyaEc プラグインが管理画面「データ管理」配下に提供す
 | M16-01-MSG-016 | 確認ダイアログ（window.confirm） | 一度削除したデータは元に戻せません。削除してもよろしいですか？ | 削除リンククリック時（`data-message`。OKで `_token`/`_method=delete` を持つ隠しフォームを生成し POST 送信、キャンセルで中断） |
 | M16-01-MSG-017 | バナー設定フォーム上部（text-danger errormsg） | 要ソース確認 | 設定フォームが妥当だが storeTopBanners 内で RuntimeException が送出されたとき（`bannerError.message` を trans して同一画面に表示）。例外由来の可変文言で、TopBannerStoreAction/TopBannerEntityManager 経路に RuntimeException の送出箇所は未特定 |
 | M16-01-MSG-018 | 確認ダイアログ | 一度削除したデータは元に戻せません。削除してもよろしいですか？ | 削除リンクをクリックしたとき（data-confirm 未指定のため共通JSが常に確認ダイアログを表示し、data-message の文言を用いる） |
+| M16-01-MSG-019 | 入力項目直下 | 「admin.hareruyamtg.com」は指定できません。 | POST送信時、画像URLに admin.hareruyamtg.com を含む |
+| M16-01-MSG-020 | 入力項目直下/フォーム上部 | 並び順が空の項目があります。 | POST_SUBMIT時、いずれかのsort_no_{id}がnullまたは空文字 |
+| M16-01-MSG-021 | 入力項目直下/フォーム上部 | 並び順が重複しています。 | POST_SUBMIT時、同一の整数化された並び順値を持つ項目が複数ある |
+| M16-01-MSG-022 | 入力項目直下 | 店舗が選択されていません。 | アップロードフォーム送信時、base_infoが空でNotBlank制約違反 |
+| M16-01-MSG-023 | 入力項目直下 | 画像ファイルを選択してください。 | ファイル未選択でアップロードフォームを送信した場合（直接POST等。通常画面ではJSも送信を中断する） |
 
 ---
 

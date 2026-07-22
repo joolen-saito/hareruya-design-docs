@@ -236,6 +236,19 @@ ee実装（`src/Eccube/Controller/Admin/Event/EventController.php`）が実際�
 | M13-02-MSG-005 | エラー | 不正なリクエストです。 | 削除要求時、ログイン者が対象イベントの店舗を編集不可（`isEditableShop=false`）のとき。編集画面（`admin_event_edit`）へリダイレクト。ロケール`admin.common.error_invalid_request`（messages.ja.yaml:1608）。UIでは編集不可（`isEditableBaseInfo=false`）のとき削除モーダル起動ボタンは非出力（edit.twig:483-487）。(EventController.php:307-311) |
 | M13-02-MSG-006 | エラー | 要ソース確認 | 削除要求時、イベントの日程件数（`getDetails().count()`）が1件以上のとき。編集画面へリダイレクト。※`addError('admin.event.delete.schedule_exists', 'admin')`（EventController.php:314）で使用されるキーが locale 未定義（定義済みは別キー `admin.event.delete.not.schedule_exists` のみ）。逐語文言をソースから取得できないため実機確認が必要。UIでは日程ありのときモーダルの削除ボタンが disabled（edit.twig:521-525）。 |
 | M13-02-MSG-007 | インフォ(成功) | 削除しました | 削除要求時、編集可能かつ日程件数0件で remove・flush 実行時。検索結果ページ（`admin_event_index_page`、セッションのページ番号を `max(1, pageNo)` に補正・`resume=1`）へリダイレクト。ロケール`admin.common.delete_complete`（messages.ja.yaml:1593）。(EventController.php:319-327) |
+| M13-02-MSG-008 | 管理画面上部 | 不正なリクエストです。 | ログイン管理者が対象イベントの店舗を編集できないとき |
+| M13-02-MSG-009 | 管理画面上部 | 不正なリクエストです。 | URLのeventDetailIdが指す日程のevent_idと、URLのeventIdが一致しないとき |
+| M13-02-MSG-010 | 管理画面上部 | 要ソース確認（key_unknown: admin.event.delete.deckerror） | 対象日程にデッキ登録が1件以上あるとき |
+| M13-02-MSG-011 | 管理画面上部 | 要ソース確認（key_unknown: admin.event.delete.entryerror） | 対象日程に申込が1件以上あるとき |
+| M13-02-MSG-012 | 管理画面上部 | 削除しました | 編集権限があり、日程が対象イベントに属し、デッキ登録・申込が共に0件のとき |
+| M13-02-MSG-013 | 管理画面上部 | 不正なリクエストです。 | ログイン管理者が対象イベントの店舗を編集できないとき |
+| M13-02-MSG-014 | 管理画面上部 | 削除する日程を選択してください | POSTされたevent_detail_idsが空配列のとき |
+| M13-02-MSG-015 | 管理画面上部 | デッキ登録または申込がある日程が含まれていたため、一括削除できませんでした。 | 選択日程のいずれかにデッキ登録または申込が1件以上あるとき |
+| M13-02-MSG-016 | 管理画面上部 | %count%件の日程を削除しました | 1件以上の日程を削除対象としてremoveし、flushしたとき |
+| M13-02-MSG-017 | 入力項目直下 | 要ソース確認（key_unknown: admin.banner.regex_error） | POST送信時、値が admin.hareruyamtg.com に一致する |
+| M13-02-MSG-018 | 入力項目直下 | 要ソース確認（key_unknown: admin.banner.regex_error） | POST送信時、値が admin.hareruyamtg.com に一致する |
+| M13-02-MSG-019 | 入力項目直下/フォーム上部 | 参加費が有料かつオンライン受付ありの日程が存在するため、支払方法をオフにできません。 | 送信済みで支払方法が空、かつイベントに参加費>0・オンライン受付開始日時ありの日程が1件以上ある |
+| M13-02-MSG-020 | 入力項目直下/フォーム上部 | ユーザーの編集可能店舗を選択してください。 | baseInfoがnullでなく、ログイン管理者がその店舗を編集できない |
 
 ---
 

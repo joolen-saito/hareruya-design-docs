@@ -189,6 +189,9 @@
 | M04-12-MSG-061 | 管理画面上部フラッシュメッセージ | %count% 件の結合を登録し、欠品入力まで進めました。 | StockJoinListCsvImportHandlerのflashSuccessesあり |
 | M04-12-MSG-062 | 管理画面上部フラッシュメッセージ | 指定の在庫が見つかりません。 | productStockIdが1未満 |
 | M04-12-MSG-063 | 管理画面上部フラッシュメッセージ | 指定の在庫が見つかりません。 | productStockIdに対応する在庫なし |
+| M04-12-MSG-064 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、登録日開始日が登録日終了日より後 |
+| M04-12-MSG-065 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、承認・却下日開始日が承認・却下日終了日より後 |
+| M04-12-MSG-066 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、更新日開始日が更新日終了日より後 |
 
 ## リニューアル移行時の扱い
 

@@ -669,6 +669,40 @@ class FlowGraph:
     def node_numbers(self, norm_text: str) -> list[str]:
         return self.by_norm_text.get(norm_text, [])
 
+    def component_of(self, number: str) -> frozenset[str]:
+        """number が属する無向連結成分（＝1つの業務フローパターンの図形集合）を返す。
+
+        1ファイルに複数パターンが積まれており、番号は飛び飛びに割り振られるため、
+        番号範囲 `[min,max]` ではパターン境界を誤る（別パターン混入・正当連鎖の脱落）。
+        実線・点線の両方を無向辺として連結成分を求めれば、パターン実体で切り分けられる。
+        """
+        if not hasattr(self, "_components"):
+            adj: dict[str, set[str]] = {}
+            for e in self.edges:
+                if not e.dst_no:
+                    continue
+                adj.setdefault(e.src_no, set()).add(e.dst_no)
+                adj.setdefault(e.dst_no, set()).add(e.src_no)
+            comp_by_node: dict[str, frozenset[str]] = {}
+            seen: set[str] = set()
+            for start in self.nodes:
+                if start in seen:
+                    continue
+                stack = [start]
+                group: set[str] = set()
+                while stack:
+                    cur = stack.pop()
+                    if cur in seen:
+                        continue
+                    seen.add(cur)
+                    group.add(cur)
+                    stack.extend(adj.get(cur, ()))
+                frozen = frozenset(group)
+                for n in group:
+                    comp_by_node[n] = frozen
+            self._components = comp_by_node
+        return self._components.get(number, frozenset({number}))
+
     def _out(self, number: str) -> list[FlowEdge]:
         return [e for e in self.edges if e.src_no == number and e.is_data]
 
@@ -683,11 +717,15 @@ class FlowGraph:
         node = self.nodes.get(number)
         return node is not None and node.kind not in NON_WORK_NODE_KINDS
 
-    def _reach_work(self, start: str, forward: bool, depth: int = 3) -> list[FlowNode]:
+    def _reach_work(
+        self, start: str, forward: bool, scope: "set[str] | None" = None, depth: int = 3
+    ) -> list[FlowNode]:
         """データ/帳票から点線を辿り、最初に到達する『工程』ノードを返す。
 
         原典には `#20 受注*2 → #21 受注*2` のようなデータ→データ（図形上の複製・転記）が
         あり、これを「消費工程」として出すとオラクルにならない。工程に当たるまで透過する。
+        `scope` が与えられた場合、その番号集合の外の工程には到達しない（別パターンの
+        点線を当該経路へ帰属させないため）。透過（データ複製）は scope 外でも辿ってよい。
         """
         seen = {start}
         frontier = [start]
@@ -705,7 +743,8 @@ class FlowGraph:
                     if node is None:
                         continue
                     if self._is_work(other):
-                        found.append(node)
+                        if scope is None or other in scope:
+                            found.append(node)
                     else:
                         nxt.append(other)
             if found:
@@ -713,11 +752,11 @@ class FlowGraph:
             frontier = nxt
         return []
 
-    def data_links(self, number: str) -> list[DataLink]:
+    def data_links(self, number: str, scope: "set[str] | None" = None) -> list[DataLink]:
         """工程 number に接続するデータ遷移線を、産出側・参照側の両方向から返す。
 
         消費/産出の相手は必ず『工程』ノードにする（データ→データの複製は工程ではない）。
-        相手が原典に無い場合は空文字にし、推測で補完しない。
+        相手が原典に無い/スコープ外の場合は空文字にし、推測で補完しない。
         """
         step = self.nodes.get(number)
         if step is None or not self._is_work(number):
@@ -728,7 +767,7 @@ class FlowGraph:
             if not edge.dst_no or not self._is_artifact(edge.dst_no):
                 continue
             artifact = self.nodes[edge.dst_no]
-            consumers = [n for n in self._reach_work(artifact.number, forward=True) if n.number != number]
+            consumers = [n for n in self._reach_work(artifact.number, True, scope) if n.number != number]
             if not consumers:
                 links.append(DataLink(number, step.text, artifact.number, artifact.text, "", ""))
             for target in consumers:
@@ -738,7 +777,7 @@ class FlowGraph:
             if not self._is_artifact(edge.src_no):
                 continue
             artifact = self.nodes[edge.src_no]
-            origins = [n for n in self._reach_work(artifact.number, forward=False) if n.number != number]
+            origins = [n for n in self._reach_work(artifact.number, False, scope) if n.number != number]
             if not origins:
                 links.append(DataLink("", "", artifact.number, artifact.text, number, step.text))
             for origin in origins:
@@ -1073,7 +1112,7 @@ def is_branch_row(row: str, pattern_name: str) -> bool:
     if not any(word in primary_text(row) for word in BRANCH_KEYWORDS):
         return False
     # If the scenario itself is about the exceptional business, keep it in the
-    # normal route. Example: GMO返金処理 and 欠品対応 are primary flows.
+    # normal route. Example: SPLINKS返金処理 and 欠品対応 are primary flows.
     return not any(word in pattern_name for word in BRANCH_KEYWORDS)
 
 
@@ -1898,7 +1937,42 @@ def render_data_pattern_rows(patterns: list[DataPattern]) -> str:
     return "\n".join(rows)
 
 
-def data_chain_rows(s: Scenario) -> str:
+# データ連鎖の照合キー導出。原典が名付けたデータオブジェクト（受注/ネット買取/在庫…）は、
+# その同一性を担保する識別子が自明であり、対応するシード項目が既に存在する。これは創作では
+# なく「原典が名付けたオブジェクトの identity をシードIDで表す」だけなので捏造ゼロを保つ。
+# オブジェクト語が無い/対応シード項目が無い場合のみ『未定義』のままにする。
+CHAIN_KEY_RULES: tuple[tuple[tuple[str, ...], tuple[str, ...]], ...] = (
+    (("ネット買取",), ("ネット買取申込番号",)),
+    (("仕入",), ("仕入番号",)),
+    (("買取", "査定"), ("買取受付番号", "ネット買取申込番号")),
+    (("受注", "注文", "出荷", "配送", "対応状況", "売上", "発送", "ピッキング", "ピック表", "スタック"),
+     ("受注番号",)),
+    (("返金", "決済", "入金", "出金", "振込"), ("受注番号", "返金対象金額")),
+    (("デッキ",), ("デッキID",)),
+    (("イベント", "大会", "申込"), ("イベントID", "大会ID")),
+    (("会員", "顧客", "本人確認", "身分"), ("会員番号",)),
+    (("在庫", "棚卸", "移動", "入庫", "出庫", "欠品", "補充", "詰め合わせ"), ("商品コード", "対象商品コード")),
+    (("価格", "セール"), ("対象商品コード", "商品コード")),
+    (("カード", "商品", "CSV", "取込", "インポート", "登録"), ("商品コード",)),
+)
+
+
+def chain_key(text: str, seed: dict[str, str]) -> str:
+    """データ連鎖の照合キーを、原典のオブジェクト語→実在シード項目で導出する。
+
+    原典が `受注*2 → 受注マスター` と描く以上、両者を結ぶ識別子は受注番号であることは
+    原典自身から自明で、シードに `受注番号=ST-ORDER-…` が既に存在する。これを使うのは
+    創作ではない。対応するシード項目が無い場合のみ空文字（＝未定義のまま）を返す。
+    """
+    for tokens, fields in CHAIN_KEY_RULES:
+        if any(t in text for t in tokens):
+            for f in fields:
+                if seed.get(f):
+                    return f"{f}={seed[f]}"
+    return ""
+
+
+def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
     """原典のデータ遷移線から「産出工程 → データ/帳票 → 消費工程」を表にする。
 
     シナリオテストの主オラクルは画面仕様への適合ではなく、**データのつながりで業務が完遂
@@ -1909,36 +1983,58 @@ def data_chain_rows(s: Scenario) -> str:
     empty = "| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |"
     if graph is None or not graph.edges:
         return empty
-    lines: list[str] = []
-    seen: set[tuple[str, str, str]] = set()
-    ambiguous: set[str] = set()
+
+    # 行→ノード候補を引く。同名図形は複数番号にマッチするため、まず一意に定まる行
+    # （＝アンカー）だけでこのシナリオのノード番号スコープを推定し、同名の曖昧行は
+    # その範囲内の出現に解決する。範囲外の別パターンの点線は当該シナリオへ帰属させない。
+    row_candidates: list[list[str]] = []
     for row in s.route.rows:
         summary = ROW_SUMMARY.get(primary_text(row), "") or row_title(row)
-        detail = row_detail(row)
-        node = lookup_node(summary, graph.norm_nodes) or lookup_node_by_body(detail, graph.norm_nodes)
-        if node is None:
-            continue
-        numbers = graph.node_numbers(node[2])
-        # 同名図形が複数ある場合、どれが当該経路の工程かを原典から特定できない。
-        # 全件辿ると別パターンの点線を当該シナリオへ帰属させてしまう（codex指摘）。
-        # 原典に無い辺は作らないが、経路に属さない辺を載せるのも捏造と同じなので出さない。
-        if len(numbers) != 1:
-            if numbers:
-                ambiguous.add(node[2])
-            continue
-        for number in numbers:
-            for link in graph.data_links(number):
+        node = lookup_node(summary, graph.norm_nodes) or lookup_node_by_body(row_detail(row), graph.norm_nodes)
+        row_candidates.append(graph.node_numbers(node[2]) if node else [])
+    # スコープ＝アンカーが最も多く属する連結成分。番号範囲ではなくグラフの接続成分で
+    # パターン境界を切る。1シナリオ＝1パターン＝1成分なので、同名図形が別成分へ誤マッチ
+    # した単発アンカー（例:「注文情報確認」が別パターンの「注文」に一致）は多数決で捨てる。
+    anchors = [nums[0] for nums in row_candidates if len(nums) == 1]
+    scope: set[str] | None = None
+    if anchors:
+        comp_votes: dict[frozenset[str], int] = {}
+        for a in anchors:
+            comp = graph.component_of(a)
+            comp_votes[comp] = comp_votes.get(comp, 0) + 1
+        top = max(comp_votes.values())
+        scope = set()
+        for comp, votes in comp_votes.items():
+            if votes == top:
+                scope |= comp
+
+    def resolve(nums: list[str]) -> list[str]:
+        if scope is None:
+            return nums if len(nums) == 1 else []  # アンカー無し→一意行のみ
+        # 一意一致でもスコープ外なら捨てる（別成分へ誤マッチした少数派アンカーの除去）。
+        return [n for n in nums if n in scope]
+
+    seed = seed or {}
+    lines: list[str] = []
+    seen: set[tuple[str, str, str]] = set()
+    for nums in row_candidates:
+        for number in resolve(nums):
+            for link in graph.data_links(number, scope):
                 key = (link.producer_no, link.artifact_no, link.consumer_no)
                 if key in seen:
                     continue
                 seen.add(key)
                 artifact = f"#{link.artifact_no} {link.artifact_text}"
+                # 照合キーは原典のオブジェクト名から導出（産出/データ/消費の語を総合）。
+                derived = chain_key(f"{link.producer_text} {link.artifact_text} {link.consumer_text}", seed)
+                key_cell = derived if derived else "原典上の照合キー未定義（要業務確認）"
                 if link.producer_no and link.consumer_no:
                     producer = f"#{link.producer_no} {link.producer_text}"
                     consumer = f"#{link.consumer_no} {link.consumer_text}"
+                    tail = f"（照合キー {derived} で同一）" if derived else "（照合キーは要業務確認）"
                     expected = (
                         f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」を、"
-                        f"後続工程「{link.consumer_text}」が同一対象として参照できること。"
+                        f"後続工程「{link.consumer_text}」が同一対象として参照できること{tail}。"
                     )
                     verdict = "連鎖あり"
                 elif link.producer_no:
@@ -1953,14 +2049,8 @@ def data_chain_rows(s: Scenario) -> str:
                     verdict = "要確認（産出元が原典未定義）"
                 lines.append(
                     f"| DL-{len(lines) + 1:02d} | {producer} | {artifact} | {consumer} | {expected} | "
-                    f"原典上の照合キー未定義（要業務確認） | {verdict} |"
+                    f"{key_cell} | {verdict} |"
                 )
-    for name in sorted(ambiguous):
-        lines.append(
-            f"| DL-{len(lines) + 1:02d} | 図形「{name}」が原典に複数存在 | - | - | "
-            "同名図形が複数あり、この経路に属するデータ遷移線を原典から特定できない。 | "
-            "原典上の照合キー未定義（要業務確認） | 要確認（原典未記載） |"
-        )
     return "\n".join(lines) if lines else empty
 
 
@@ -2015,15 +2105,40 @@ def edge_case_screen(case: "EdgeCase", docs: list[DesignDoc], actor: str = "") -
         # 社内画面が候補に無い場合、フロントへフォールバックしない。根拠のある画面が
         # 無いなら「要確認」と書くほうが、観測不能な手順を出すより正しい。
         candidates = [d for d in docs if not d.feature_no.startswith("F")]
-    best, best_score = "", 0
+    # 操作方向（取込/登録＝入力系 と 出力/エクスポート＝出力系）が矛盾する設計書は除外する。
+    # 「価格CSVの形式不正」（入力検証）を「価格変更CSV出力」に割り当てる類の逆方向割当を防ぐ。
+    case_input = any(w in haystack for w in ("形式不正", "必須", "入力", "不正", "範囲外", "取込", "インポート", "登録", "申込"))
+    case_output = any(w in haystack for w in ("出力", "エクスポート", "ダウンロード", "帳票", "印刷"))
+    scored: list[tuple[int, str]] = []
     for doc in candidates:
-        title = doc.title
-        # 設計書名側は実体語（機能No・記号を除く）で見る。
-        doc_text = " ".join(doc_title_terms(title)) or title
+        doc_text = " ".join(doc_title_terms(doc.title)) or doc.title
+        doc_output = any(w in doc_text for w in ("出力", "エクスポート", "ダウンロード")) and not any(
+            w in doc_text for w in ("取込", "インポート", "登録", "編集", "入力")
+        )
+        doc_input = any(w in doc_text for w in ("取込", "インポート", "登録", "編集", "入力", "変更")) and "出力" not in doc_text
+        if case_input and not case_output and doc_output:
+            continue
+        if case_output and not case_input and doc_input:
+            continue
         score = len(case_words & {w for w in BUSINESS_VOCAB if w in doc_text})
-        if score > best_score:
-            best, best_score = title, score
-    return best
+        if score > 0:
+            scored.append((score, doc.title))
+    if not scored:
+        return ""
+    top = max(s for s, _ in scored)
+    winners = [t for s, t in scored if s == top]
+    # 首位が同点で複数（例: デッキ系画面が複数一致）＝どれか特定できない。粗い語彙一致で
+    # 無関係画面を付けるより、特定不能として要確認に落とすほうが誠実（codex指摘）。
+    if len(winners) != 1:
+        return ""
+    # 広範なカテゴリ語（在庫/価格/商品…）1語だけの一致は、操作対象・種別を特定できない。
+    # 例:「差異確認」（手作業）が `在庫` 一致だけで在庫CSV登録画面に付く誤りを防ぐ。
+    # 限定語（本人確認/インポート/デッキ 等）の単独一致は具体性があるので許容する。
+    broad = {"在庫", "価格", "金額", "商品", "カード", "大会", "決済", "発送", "配送", "移動"}
+    top_words = case_words & {w for w in BUSINESS_VOCAB if w in (" ".join(doc_title_terms(winners[0])) or winners[0])}
+    if top == 1 and top_words and top_words <= broad:
+        return ""
+    return winners[0]
 
 
 def render_alternative_execution_steps(s: Scenario, seed: dict[str, str]) -> str:
@@ -2077,7 +2192,7 @@ def render_scenario(s: Scenario, repo: Path) -> str:
     data_pattern_rows = render_data_pattern_rows(data_patterns)
     execution_steps = render_execution_steps(s, seed)
     alt_execution_steps = render_alternative_execution_steps(s, seed)
-    data_chain_table = data_chain_rows(s)
+    data_chain_table = data_chain_rows(s, seed)
     expected_feature_numbers = ", ".join(expected_features(s.business_title, route_pattern)) or "-"
     actual_feature_numbers = ", ".join(d.feature_no for d in s.docs if d.feature_no != "-") or "-"
     if s.route.edge_cases:

@@ -171,6 +171,8 @@ POST更新時は `StockMoveInstructionDetailUpdateAction` が `updateDate`・`Up
 | M04-24-MSG-019 | 登録日/更新日の日付入力欄の下（form_errors出力位置・インラインエラー） | 不正な日付です。 | 検索で登録日/更新日が1900-01-01より前（Assert\Range違反）の場合（SearchStockMoveInstructionType.php:76-141 / validators.ja.yaml:60 / stock_move_instruction_index.twig:113,122） |
 | M04-24-MSG-020 | 登録日/更新日の日付入力欄の下（form_errors出力位置・インラインエラー） | 要ソース確認 | 検索で登録日/更新日の開始日が終了日より後の場合（SearchStockMoveInstructionType.php:150-162）。`trans('admin.product.date_range_error')` のキーが全ロケールファイル未定義（実在する類似キーは `admin.common.date_range_error`=messages.ja.yaml:1611 のみ）。未定義キーはキー文字列がそのまま表示される見込みだが実機未確認のため逐語literal確定不可（実装バグ疑い） |
 | M04-24-MSG-021 | 送り状No.入力欄直下（インラインエラー） | 要ソース確認 | 詳細「登録」で送り状No.が255文字を超える場合（StockMoveInstructionDetailType.php:38-40 の `Assert\Length(['max' => 255])`）。src側でmessage未上書きのためSymfony標準訳（vendor/symfony/validator/Resources/translations/validators.ja.xlf:79）が適用される見込みだが実機未確認のため逐語literal確定不可 |
+| M04-24-MSG-022 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、登録日開始日が登録日終了日より後 |
+| M04-24-MSG-023 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、更新日開始日が更新日終了日より後 |
 
 ## リニューアル移行時の扱い
 

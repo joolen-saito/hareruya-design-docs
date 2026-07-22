@@ -49,10 +49,11 @@ def main() -> None:
     # build_inventory のヒューリスティック候補（トークン一致のヒント）は未検証なので
     # 絶対に再採番しない。検証済み＝レビュー済みスライスに存在するID。
     verified: set[str] = set()
-    for sl in (L.DOC_ROOT / "message_inventory" / "slices" / "js").glob("*.resolved.tsv"):
-        for line in sl.read_text(encoding="utf-8").splitlines()[1:]:
-            if line.strip():
-                verified.add(line.split("\t")[0])
+    for sub in ("js", "ee"):
+        for sl in (L.DOC_ROOT / "message_inventory" / "slices" / sub).glob("*.resolved.tsv"):
+            for line in sl.read_text(encoding="utf-8").splitlines()[1:]:
+                if line.strip():
+                    verified.add(line.split("\t")[0])
     print(f"レビュー済み(再採番の候補母集合): {len(verified)} 行")
 
     mapping: dict[str, str] = {}

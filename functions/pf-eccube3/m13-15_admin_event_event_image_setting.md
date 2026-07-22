@@ -216,6 +216,10 @@
 | 一度削除したデータは元に戻せません。削除してもよろしいですか？ | 削除リンク押下時の確認 | 削除アンカーの確認 | 削除前の確認文言。 |
 | M13-15-MSG-001 | 画面中央(ダイアログ) | この画像を削除します。よろしいですか？ | 全店舗表示（htmlClass が null）で、画像キー3階層目の店舗HTMLクラスが空でなく bannerDeletableHtmlClasses（ログイン管理者が編集可能な店舗）に含まれる行の「削除」を押下したとき |
 | M13-15-MSG-002 | 画面中央(ダイアログ) | この画像を削除します。よろしいですか？ | 店舗絞り込み表示（htmlClass 指定）で selectedBaseInfo が存在し、ログイン管理者がその店舗を編集可能（app.user.isEditableShop）なときに「削除」を押下したとき |
+| M13-15-MSG-003 | 管理画面上部 | アップロードしました | 画像アップロードフォームをPOST(admin_event_banner_image_upload / admin_event_banner_image_upload_narrow)し、isSubmitted かつ isValid で EventBannerStorageService->processUpload() が null（エラーなし）を返したとき |
+| M13-15-MSG-004 | 管理画面上部 | 編集権限のない店舗の画像は削除できません。 | 店舗絞り込み(htmlClass指定)状態で画像削除をDELETE送信し、CSRF検証後に htmlClass から特定した BaseInfo に対しログイン中の Member が isEditableShop() を満たさないとき |
+| M13-15-MSG-005 | 管理画面上部 | 編集権限のない店舗の画像は削除できません。 | 画像削除のDELETE送信で、削除対象オブジェクトキーの正規化・店舗配下チェックを通過した後、EventBannerStorageService->canMemberDeleteObject() が false（そのオブジェクトの属する店舗にログインMemberの編集権限が無い）を返したとき |
+| M13-15-MSG-006 | 管理画面上部 | 削除しました | 画像削除のDELETE送信で、CSRF検証・店舗編集権限・オブジェクトキー検証をすべて通過し EventBannerStorageService->deleteObjectIfExists() を実行したとき |
 
 ロケールキーは調査補助に留め、本文の主語にしない。
 

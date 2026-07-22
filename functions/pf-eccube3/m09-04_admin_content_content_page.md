@@ -177,6 +177,9 @@
 | M09-04-MSG-009 | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | 名称・URL・ファイル名・author・description・keyword・robots が `eccube_stext_len`、追加metaタグが `eccube_ltext_len` の最大長を超過したとき | 各入力項目直下 | ee実装（`MainEditType.php:60-62,70,79,96-98,105-107,114-116,123-125,130-132` Length、Symfonyデフォルト訳 `validators.ja.xlf:79`。`{{ limit }}` は実行時置換）（codexレビュー是正: 旧記載「255文字」は設定値の実行時値差し替えのため設定キー名へ戻す） |
 | M09-04-MSG-010 | 有効な値ではありません。 | 利用者作成ページで URL・ファイル名が許可パターン（半角英数字と `_ - /`）に一致しないとき | URL・ファイル名欄直下 | ee実装（`MainEditType.php:71,80` Regex、Symfonyデフォルト訳 `validators.ja.xlf:102-103`）（fable5レビュー追加） |
 | M09-04-MSG-011 | Twigのフォーマットが正しくありません。{{ error }} | ページ内容（tpl_data）が Twig として構文エラーのとき | ページ内容欄直下 | ee実装（`MainEditType.php:89` TwigLint → `TwigLint.php:21` の英語メッセージキーを validators ドメインで翻訳、`validators.ja.yaml:36`。`{{ error }}` は Twig エラーメッセージで実行時置換）（codexレビュー是正: 旧記載の英語キーは表示文言ではないため差し替え） |
+| M09-04-MSG-012 | 入力項目直下/フォーム上部 | 既にURLが存在しています。 | ページ登録・編集POST時、確認用ページの親ページを除く別Pageに同じURLが存在するとき | url 項目へ FormError を付与し、フォームを無効にする。 |
+| M09-04-MSG-013 | 入力項目直下/フォーム上部 | 同じファイル名のデータが存在しています。別のファイル名を入力してください。 | ページ登録・編集POST時、別のユーザー編集ページ（EDIT_TYPE_USER）に同じファイル名が存在するとき | file_name 項目へ FormError を付与し、フォームを無効にする。 |
+| M09-04-MSG-014 | 入力項目直下/フォーム上部 | 同じファイル名のデータが存在しています。別のファイル名を入力してください。 | ユーザー編集ページの登録・編集POST時、別の標準ページ（EDIT_TYPE_DEFAULT以上）に同じファイル名が存在するとき | file_name 項目へ FormError を付与し、フォームを無効にする。 |
 
 ---
 

@@ -250,6 +250,18 @@ DB関連の記述は ec-cube-enterprise を正とする。検索パターンの�
 | M05-01-MSG-020 | 画面中央ダイアログ（スタック印刷ウィンドウのJS alert） | 注文番号が未採番の注文があります。 | 印刷対象の受注に注文番号未採番が含まれるとき（JSON400 / OrderController.php:896-902、print_stack_window.twig:40-47） |
 | M05-01-MSG-021 | 画面中央ダイアログ（スタック印刷ウィンドウのJS alert） | 印刷予約を受け付けました。 | スタック用紙印刷の予約処理が正常完了したとき（JSON200 / OrderController.php:930-932、print_stack_window.twig:33-39 `alert(data.message)` 後 `window.close()`） |
 | M05-01-MSG-022 | 画面中央ダイアログ（スタック印刷ウィンドウのJS alert） | システムエラーが発生いたしました。\nサイト管理者へお問い合わせください。 | スタック用紙印刷のajaxがfailし `responseJSON` が取得できないとき（タイムアウト・ネットワークエラー等 / print_stack_window.twig:40-47。`\n` はソース逐語のJS改行エスケープ） |
+| M05-01-MSG-023 | 入力項目直下 | カタカナで入力してください。 | POST検索時、入力値が正規表現 /^[ァ-ヶｦ-ﾟー]+$/u に一致しない場合 |
+| M05-01-MSG-024 | 入力項目直下 | カタカナで入力してください。 | POST検索時、入力値が正規表現 /^[ァ-ヶｦ-ﾟー]+$/u に一致しない場合 |
+| M05-01-MSG-025 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 注文日時の開始・終了がともに空でなく、開始が終了より後の場合 |
+| M05-01-MSG-026 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 入金日時の開始・終了がともに空でなく、開始が終了より後の場合 |
+| M05-01-MSG-027 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 更新日時の開始・終了がともに空でなく、開始が終了より後の場合 |
+| M05-01-MSG-028 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POSTデータ内のお届け日時の開始・終了がともに空でなく、開始が終了より後の場合 |
+| M05-01-MSG-029 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | ピック日時の開始・終了がともに空でなく、開始が終了より後の場合 |
+| M05-01-MSG-030 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 出荷指示日時の開始・終了がともに空でなく、開始が終了より後の場合 |
+| M05-01-MSG-031 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 出荷日時の開始・終了がともに空でなく、開始が終了より後の場合 |
+| M05-01-MSG-032 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | キャンセル日時の開始・終了がともに空でなく、開始が終了より後の場合 |
+| M05-01-MSG-033 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 売上確定日時の開始・終了がともに空でなく、開始が終了より後の場合 |
+| M05-01-MSG-034 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 店頭予約日時の開始・終了がともに空でなく、開始が終了より後の場合 |
 
 ---
 

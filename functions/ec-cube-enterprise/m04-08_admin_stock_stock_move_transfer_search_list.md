@@ -163,6 +163,7 @@
 | M04-08-MSG-027 | 画面中央(ダイアログ) | ポップアップがブロックされているため、戻しリストPDFを開けませんでした。ブラウザの設定を確認してください。 | 対象選択済みで押下し window.open による別ウィンドウ生成が失敗（ポップアップブロック）して popupWindow が偽値のとき |
 | M04-08-MSG-028 | 画面中央(ダイアログ) | 戻しリストPDF用データの取得に失敗しました。 | Ajax POST(admin_stock_move_transfer_return_list_pdf_export) が成功応答したが response.success が true でない、または html が無く、かつ response.redirectUrl も無いとき |
 | M04-08-MSG-029 | 画面中央(ダイアログ) | 戻しリストPDF用データの取得に失敗しました。 | Ajax POST(admin_stock_move_transfer_return_list_pdf_export) が通信エラー等で失敗し .fail コールバックに入ったとき |
+| M04-08-MSG-030 | 入力項目直下/フォーム上部 | 終了日は、開始日より大きく設定してください | POST_SUBMIT時、登録日・出庫日・入庫日の各開始日が対応する終了日より後 |
 
 ## リニューアル移行時の扱い
 

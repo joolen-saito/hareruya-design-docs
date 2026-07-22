@@ -264,6 +264,7 @@ HareruyaEcプラグインが管理画面に追加する「追加システム設�
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
 |--------------|----------|--------------|----------|
 | M10-16-MSG-001 | 画面上部フラッシュ（成功） | 保存しました | 「登録」ボタン押下（POST）でフォームが送信済みかつ検証成功し、オプション値を保存・flush した後。`admin_setting_shop_additional_system` へリダイレクトし、管理画面上部の成功フラッシュとして表示。翻訳キー `admin.common.save_complete`。 |
+| M10-16-MSG-002 | 入力項目直下 | 数字で入力してください。 | POST /{admin_route}/setting/shop/additional_system/update で smaregi_category_id が正規表現 ^\d+$ に一致しない場合 |
 
 ---
 
