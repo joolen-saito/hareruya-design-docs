@@ -1,7 +1,29 @@
 # M0設計スパイク→L1/L2パイプライン 実行計画
 
-> 2026-07-22 ／ 立案: fable5 ／ 次: codex 敵対レビュー → M0着手（実装可否はM0完了後に再codex）
+> 2026-07-22 ／ 立案: fable5 ／ codex敵対レビュー反映（要修正7点）／ M0着手可（実装可否はM0完了後に再codex）
 > 前提: `ORACLE_STRATEGY.md`（ハイブリッド源・台帳凍結・L3機械レンダリングのみ・codex単独レビュー）
+
+## ★codex M0レビュー反映（絶対遵守・以下が本文に優先）
+1. **カナリアのゲート対応を正す**: C2(実装値混入・引用は実在)は**O5**が落とす(O2でない)。C4(極性反転)は
+   正規表現極性照合で一般には**機械検出不能**→`C4-manual`とし対象構文・レビュー記録・未検出を DoD に明記。
+   **CI成功を機械検出成功と偽装しない**。カナリアは「期待ゲート or 手動レビュー」を固定。「5/5機械検出」は撤回。
+2. **allowlistはパス分類にすぎない→強化**: realpath/symlink解決後の完全一致・許可リポ/コミットSHA・許可ファイルSHA、
+   `standard-src`はupstream固定・`外部契約`は版/hash/承認ID固定。**`ec-cube-enterprise/・実ソース`の広域指定は不可**。
+   **`SEED`は入力値の出所であって、仕様値・DB列・変換規則の根拠に使えない**(型ごとに禁止=ロンダリング遮断)。
+3. **seed_equivalenceの循環遮断を強化**: `passthrough_basis`を有向グラフ検証(自己/相互/別subject/「保存」→「表示」流用を禁止)。
+   basisは非SEEDかつ許可source_class。入力field・観測field・操作・条件域・**恒等写像**を明示一致。変換/導出/状態値/DB列名が沈黙なら必ずTBD。
+4. **O6を2指標に分離**: 「全ID会計(bound / approved-TBD / excluded)」と「実行可能assertion被覆」は別。
+   TBDのみのIDは被覆の**分子に入れない**。検査は test_id でなく **assertion_ordinal ごと**に観点・前提・操作・観測対象の適合を見る
+   (同じ無関係1claimを全IDに結んでO6を偽装できないように)。
+5. **A02 PoCはSEED契約成立後のみ**: manifestにA02-01も900001も無い(帯900000000..999)。`legacyIds`追加だけ不十分。
+   各値に fixtureファイル/apply-reapply/teardown/テーブル依存/衝突検査/前後スナップショット/manifest hash を契約化して
+   初めてPoC比較対象。**契約成立前の「意味差0」はDoDに使えない**。
+6. **区分数値を実router値に訂正**: 新規実装=**35**(45は誤り)/`kubun_unknown`=**23**/`new_without_excel`=**9**。
+   32を単一集合にしない→3列・別DoD・別エスカレーションに分離。(前版「新規実装45」「不明32」は撤回)
+7. **Excel全出現を個別永続化**: 単一`<FID>.txt`混在は同名FIDの誤結合を生む。`document_sha1 + start/end + occurrence_id`で
+   別々に保存しL1が採用occurrenceを持つ。複数出現FIDの回帰テスト+索引キャッシュ失効テストをDoDに追加。
+- **O2偽陽性率10%**は母集団・正解ラベル・層化・盲検サンプル・分母・信頼区間を定義して初めて測定可(未定義なら指標から外す)。
+- **`gate_check.py`(G1-G7)はO1-O5の実証済み基盤と見なさない**(行実在・否定文の限定検査のみ)。移植は参考実装に留める。
 
 ## 0. 実地確認（既存資産の実態）
 - 凍結台帳3本（`all_it_cases.tsv` 25,561・`case_viewpoint_trace.tsv`・`execution_assignment.tsv`）。L2分母は `cut -f2 all_it_cases.tsv`。
