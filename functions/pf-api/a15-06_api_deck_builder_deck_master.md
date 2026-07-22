@@ -235,9 +235,6 @@ HTTP 200。応答はラッパオブジェクトを持つ。
 
 | 暫定ID | 実際の帰属（実ソース） | 逐語文言 | 備考 |
 |--------|------------------------|----------|------|
-| A15-06-MSG-001 | Admin「MTGマスターデータ管理」 `MtgMasterDataController.php:379`（文言 `messages.ja.yaml:1591` admin.common.save_complete） | 保存しました | 登録成功フラッシュ |
-| A15-06-MSG-002 | Admin「MTGマスターデータ管理」 `MtgMasterDataController.php:381` | 要ソース確認 | RuntimeException捕捉時。`addError($e->getMessage())` 例外由来可変値・逐語literal確定不能 |
-| A15-06-MSG-003 | Adminカード管理 検索フォーム `SearchCardType.php:76`（文言 `validators.ja.yaml:37` form_error.numeric_only） | 数字で入力してください。 | CMC項目バリデーション |
 
 ---
 

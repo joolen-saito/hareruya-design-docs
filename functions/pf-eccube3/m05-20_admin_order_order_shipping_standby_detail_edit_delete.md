@@ -93,6 +93,7 @@
 | M05-20-MSG-003 | 管理画面上部 | 保存しました | フォームが有効で、UpdateCommentActionが正常終了したとき |
 | M05-20-MSG-004 | 管理画面上部 | 要ソース確認 | CSRF検証・対象取得後、DeleteListAction実行中にInvalidArgumentExceptionが送出されたとき |
 | M05-20-MSG-005 | 管理画面上部 | 削除しました | CSRF検証・対象取得後、DeleteListActionが正常終了したとき |
+| M05-20-MSG-006 | ブラウザ確認ダイアログ（window.confirm） | 削除してもよろしいですか? | リンククリック時（data-confirm/data-message未指定のため常にJS confirmのデフォルト文言が表示される） |
 
 ## 業務ルール・計算
 

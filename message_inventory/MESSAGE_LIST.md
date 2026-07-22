@@ -2,8 +2,8 @@
 
 ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書『表示メッセージ』表へ埋め込んだ確定メッセージの一覧。**捏造ゼロ**。
 
-- 総確定メッセージ: **1139件** / 機能数: **133**
-- codex批判レビュー済み（捏造0確認・誤割当28件是正）。詳細は `CODEX_REVIEW_REPORT.md`
+- 総確定メッセージ: **1139件** / 機能数: **149**
+- codex + fable5 の二重批判レビュー済み（捏造0を両者独立に確認・誤割当212件是正）。詳細は `CODEX_REVIEW_REPORT.md`
 - 正本: `message_inventory/message_inventory.tsv`（HTML: `function_spec_html_preview/`）
 
 ---
@@ -13,38 +13,8 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| A02-05-MSG-001 | エラー | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のcategory_del_flgが1で、カテゴリ削除時にForeignKeyConstraintViolationExceptionが発生したとき |
 | A02-05-MSG-002 | エラー | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のclass_name_del_flgが1で、規格削除時にForeignKeyConstraintViolationExceptionが発生したとき |
 | A02-05-MSG-003 | エラー | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のclass_category_del_flgが1で、規格分類削除時にForeignKeyConstraintViolationExceptionが発生したとき |
-| A02-05-MSG-004 | エラー | 管理画面上部 | 保存に失敗しました | POST時、対象ProductにIDがないとき |
-| A02-05-MSG-005 | インフォ(成功) | 管理画面上部 | 保存しました | POSTフォームが有効で、保存処理およびADMIN_PRODUCT_EDIT_COMPLETEイベント完了後 |
-| A02-05-MSG-006 | インフォ(成功) | 管理画面上部 | 削除しました | 非XHRのDELETEで商品削除が成功したとき |
-| A02-05-MSG-007 | エラー | 管理画面上部 | 要ソース確認 | 外部キー制約例外時（ForeignKeyConstraintViolationException）。id=null分岐はルート要件id=\d+のため通常到達不可 |
-| A02-05-MSG-008 | インフォ(成功) | 管理画面上部 | 商品を複製しました | POST先idの商品が存在し、複製・flush・ADMIN_PRODUCT_COPY_COMPLETEイベントが完了したとき |
-| A02-05-MSG-009 | エラー | 管理画面上部 | 商品の複製に失敗しました | POST先idに対応する商品が存在しないとき |
-| A02-05-MSG-010 | エラー | 管理画面上部 | 商品の複製に失敗しました | copyアクションのidがnullのとき（ルート要件id=\d+のため通常到達不可） |
-| A02-05-MSG-011 | エラー | 管理画面上部 | 要ソース確認 | 個別商品の状態保存中に例外が発生したとき |
-| A02-05-MSG-012 | インフォ(成功) | 管理画面上部 | %status%: %count%件が正常に適用されました | 少なくとも1件の商品の状態保存に成功したとき |
-| A02-05-MSG-013 | エラー | 管理画面上部 | 要ソース確認 | 一括状態変更処理のtryブロックで例外が発生したとき |
-| A02-05-MSG-014 | 警告 | 管理画面上部 | 既に削除されています | 非XHRのDELETE要求でidに対応する商品が存在しない（削除済み）とき |
-
-## A07-06 API ネット買取管理 — 複数ネット買取IDからネット買取受注の商品一覧を取得
-`functions/pf-api/a07-06_api_online_purchase_buy_main_card.md`
-
-| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
-|---|---|---|---|---|
-| A07-06-MSG-001 | エラー(バリデーション) | 入力項目直下 | 数字で入力してください。 | 査定価格に数字以外を入力して保存し正規表現 /^\d+$/u に不一致となる場合 |
-| A07-06-MSG-002 | エラー(バリデーション) | 入力項目直下 | 数字で入力してください。 | 査定編集状態でサプライ品行の price に数字以外を入力して保存し正規表現 /^\d+$/u に不一致となる場合（サプライ品以外の行は査定編集中も readonly のため通常操作では入力不可） |
-| A07-06-MSG-003 | エラー(バリデーション) | 入力項目直下 | 数字で入力してください。 | 査定編集状態でサプライ品行の count に数字以外を入力して保存し正規表現 /^\d+$/u に不一致となる場合（サプライ品以外の行は査定編集中も readonly のため通常操作では入力不可） |
-
-## A15-06 API デッキビルダー — マスタ検索
-`functions/pf-api/a15-06_api_deck_builder_deck_master.md`
-
-| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
-|---|---|---|---|---|
-| A15-06-MSG-001 | インフォ(成功) | 管理画面上部 | 保存しました | POSTでeditFormが送信済みかつ有効で、postedEntityKeyの設定が存在し storeAction->handle が正常終了したとき |
-| A15-06-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | POSTでeditFormが送信済みかつ有効で、storeAction->handle 中に \RuntimeException を捕捉したとき（catch節） |
-| A15-06-MSG-003 | エラー(バリデーション) | 入力項目直下 | 数字で入力してください。 | POST送信時にCMCが正規表現 /^\d+(\.\d+)?$/ に一致せずフォームが無効のとき |
 
 ## F04-02 F04-02（ご注文方法指定 — 注文情報の入力・確認・注文）
 `functions/pf-eccube3/f04-02_front_cart_shopping_order_method.md`
@@ -84,7 +54,6 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| F06-14-MSG-001 | インフォ(成功) | 管理画面上部 | 保存しました | フォーム送信済みかつ有効で、イベント申込登録処理が正常終了したとき |
 | F06-14-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | フォーム送信済みかつ有効で、登録処理が InvalidArgumentException を送出したとき |
 | F06-14-MSG-003 | エラー | 管理画面上部 | 保存に失敗しました | フォーム送信済みかつ有効で、登録処理が InvalidArgumentException 以外の Exception を送出したとき |
 
@@ -157,6 +126,12 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M03-01-MSG-002 | 警告 | 画面中央(ダイアログ) | Failed | 規格データ取得Ajax（GET btnClass.data('class-load')）が fail したとき |
 | M03-01-MSG-003 | インフォ | 画面中央(モーダル) | 削除中... | #bulkDelete 押下直後（チェック済み行への削除Ajax開始時にモーダル本文を差し替える） |
 | M03-01-MSG-004 | インフォ | 画面中央(モーダル) | 商品の削除処理が完了しました | 一括削除の全DELETE Ajaxが完了したとき（$.when(...).always、成功・失敗を問わない） |
+| M03-01-MSG-005 | インフォ(成功) | 管理画面上部 | 削除しました | 非XHRのDELETEで商品削除が成功したとき |
+| M03-01-MSG-006 | エラー | 管理画面上部 | 要ソース確認 | 外部キー制約例外時（ForeignKeyConstraintViolationException）。id=null分岐はルート要件id=\d+のため通常到達不可 |
+| M03-01-MSG-007 | エラー | 管理画面上部 | 要ソース確認 | 個別商品の状態保存中に例外が発生したとき |
+| M03-01-MSG-008 | インフォ(成功) | 管理画面上部 | %status%: %count%件が正常に適用されました | 少なくとも1件の商品の状態保存に成功したとき |
+| M03-01-MSG-009 | エラー | 管理画面上部 | 要ソース確認 | 一括状態変更処理のtryブロックで例外が発生したとき |
+| M03-01-MSG-010 | 警告 | 管理画面上部 | 既に削除されています | 非XHRのDELETE要求でidに対応する商品が存在しない（削除済み）とき |
 
 ## M03-02 M03-02（商品編集機能）
 `functions/pf-eccube3/m03-02_admin_product_product_edit.md`
@@ -166,6 +141,11 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M03-02-MSG-001 | インフォ | 画面中央(モーダル) | 削除中... | 既存商品（Product.idあり）の商品編集画面で完全削除確認モーダルを開き、削除ボタン(#delete)を押下したとき |
 | M03-02-MSG-002 | インフォ | 画面中央(モーダル) | 商品の削除処理が完了しました | #delete 起点のDELETE Ajax群が完了したとき（$.when(...).always。成功・失敗を問わず実行） |
 | M03-02-MSG-003 | エラー(バリデーション) | 入力項目直下/フォーム上部 | 画像のパスが不正です。 | POST_SUBMIT時、add_imagesの各ファイル名について、既存画像のファイルが存在しない、または一時商品画像パスにファイルが存在しない場合 |
+| M03-02-MSG-004 | エラー | 管理画面上部 | 保存に失敗しました | POST時、対象ProductにIDがないとき |
+| M03-02-MSG-005 | インフォ(成功) | 管理画面上部 | 保存しました | POSTフォームが有効で、保存処理およびADMIN_PRODUCT_EDIT_COMPLETEイベント完了後 |
+| M03-02-MSG-006 | インフォ(成功) | 管理画面上部 | 商品を複製しました | POST先idの商品が存在し、複製・flush・ADMIN_PRODUCT_COPY_COMPLETEイベントが完了したとき |
+| M03-02-MSG-007 | エラー | 管理画面上部 | 商品の複製に失敗しました | POST先idに対応する商品が存在しないとき |
+| M03-02-MSG-008 | エラー | 管理画面上部 | 商品の複製に失敗しました | copyアクションのidがnullのとき（ルート要件id=\d+のため通常到達不可） |
 
 ## M03-03 m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）
 `functions/pf-eccube3/m03-03_admin_product_product_card_csv_export.md`
@@ -251,8 +231,6 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M03-11-MSG-002 | インフォ(成功) | 管理画面上部 | 削除しました | 対象カテゴリが存在しdelete処理・完了イベントが例外なく正常終了したとき |
 | M03-11-MSG-003 | エラー | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | カテゴリ削除処理のtry節で例外(\Exception)を捕捉したとき |
 | M03-11-MSG-004 | 警告 | 管理画面上部 | 既に削除されています | DELETE時に対象カテゴリがDB上に存在しないとき（categoryRepository->find($id) が空） |
-| M03-11-MSG-005 | 確認(モーダル) | 削除確認モーダル内 | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 削除ボタン押下で削除確認モーダルを表示するとき（data-messageをJSでモーダル本文へ挿入 category.twig:120-127） |
-| M03-11-MSG-006 | 確認(confirm) | ブラウザ確認ダイアログ | 本当に並べ替えを実行してよろしいですか? | ドラッグで順序を変更した直後、または上下矢印クリック時のwindow.confirm |
 | M03-11-MSG-007 | エラー(バリデーション) | 入力項目直下 | JPEG / PNG / GIF の画像ファイルのみアップロードできます。 | フォーム経由で送信されたファイルのMIMEがimage/jpeg・image/png・image/gif以外のとき（Assert\Image mimeTypes違反。通常操作はFilePondのAjax process経由のためフォーム経由での発火経路は要ソース確認） |
 | M03-11-MSG-008 | エラー(バリデーション) | 入力項目直下 | 画像ファイルのサイズが大きすぎます（最大 {{ limit }} {{ suffix }}）。 | フォーム経由で送信されたファイルが10Mを超えるとき（Assert\Image maxSize違反。通常操作はFilePondのAjax process経由のためフォーム経由での発火経路は要ソース確認） |
 | M03-11-MSG-009 | エラー(バリデーション) | 入力項目直下 | 画像として読み取れない、または破損したファイルです。 | フォーム経由で送信されたファイルが画像として読み取れない/破損しているとき（Assert\Image detectCorrupted違反。通常操作はFilePondのAjax process経由のためフォーム経由での発火経路は要ソース確認） |
@@ -423,12 +401,6 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M03-30-MSG-003 | エラー | 管理画面上部 | %maxRecord% 行を超えるCSVファイルは登録できません。 | countCsvRows($formFile) が ADMIN_CSV_IMPORT_MAX_ROWS 以上のとき |
 | M03-30-MSG-004 | エラー | 管理画面上部 | 要ソース確認 | CsvImporter の取込結果が hasError() のとき |
 | M03-30-MSG-005 | インフォ(成功) | 管理画面上部 | 登録が完了しました。 | CsvImporter の取込結果にエラーがないとき（登録正常終了） |
-| M03-30-MSG-006 | エラー | 管理画面上部 | 要ソース確認（variable: $error->getMessage()） | POST後、CsvImportTypeのフォームが不正で、ルートフォーム直下のエラーを取得したとき |
-| M03-30-MSG-007 | エラー | 管理画面上部 | CSVのフォーマットが一致しません | フォームのimport_file取得結果がnullのとき |
-| M03-30-MSG-008 | エラー | 管理画面上部 | %maxRecord% 行を超えるCSVファイルは登録できません。 | CSV行数がADMIN_CSV_IMPORT_MAX_ROWS以上のとき |
-| M03-30-MSG-009 | エラー | 管理画面上部 | 要ソース確認（variable: $error['message']） | CsvImporterの取込結果がhasError()のとき |
-| M03-30-MSG-010 | インフォ(成功) | 管理画面上部 | 登録が完了しました。 | CsvImporterの取込結果にエラーがないとき |
-| M03-30-MSG-011 | 警告 | 管理画面上部 | %d行目: セール中商品のため、販売価格は変更されません。（基準価格・買取価格は更新しました） | 取込成功時、対象行にセール中の商品規格があり、ハンドラが情報メッセージを追加したとき |
 
 ## M03-32 m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）
 `functions/pf-eccube3/m03-32_admin_product_product_simple_high_price_csv_import.md`
@@ -506,6 +478,19 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M03-41-MSG-009 | エラー | 画面内（アップロードフォーム下のエラー一覧） | 要ソース確認 | カテゴリ階層が eccube_category_nest_level（最大レベル）を超えたとき |
 | M03-41-MSG-010 | インフォ(成功) | 管理画面上部 | CSVファイルをアップロードしました | 全行の取込がエラーなく完了しコミットされたとき |
 | M03-41-MSG-011 | エラー(バリデーション) | 入力項目直下（form_errors） | 要ソース確認 | CsvImportType のフォーム検証に失敗したとき（NotBlank=未選択／File maxSize=サイズ上限超過。ファイル種別のサーバ側制約は存在しない: CsvImportType.php:52-57） |
+| M03-41-MSG-012 | エラー | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のcategory_del_flgが1で、カテゴリ削除時にForeignKeyConstraintViolationExceptionが発生したとき |
+
+## M03-44 M03-44（低価格帯カード価格変更CSV登録）
+`functions/ec-cube-enterprise/m03-44_admin_product_product_simple_low_price_csv_import.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M03-44-MSG-001 | エラー | 管理画面上部 | 要ソース確認（variable: $error->getMessage()） | POST後、CsvImportTypeのフォームが不正で、ルートフォーム直下のエラーを取得したとき |
+| M03-44-MSG-002 | エラー | 管理画面上部 | CSVのフォーマットが一致しません | フォームのimport_file取得結果がnullのとき |
+| M03-44-MSG-003 | エラー | 管理画面上部 | %maxRecord% 行を超えるCSVファイルは登録できません。 | CSV行数がADMIN_CSV_IMPORT_MAX_ROWS以上のとき |
+| M03-44-MSG-004 | エラー | 管理画面上部 | 要ソース確認（variable: $error['message']） | CsvImporterの取込結果がhasError()のとき |
+| M03-44-MSG-005 | インフォ(成功) | 管理画面上部 | 登録が完了しました。 | CsvImporterの取込結果にエラーがないとき |
+| M03-44-MSG-006 | 警告 | 管理画面上部 | %d行目: セール中商品のため、販売価格は変更されません。（基準価格・買取価格は更新しました） | 取込成功時、対象行にセール中の商品規格があり、ハンドラが情報メッセージを追加したとき |
 
 ## M03-45 m03-45_admin_product_product_category_list（管理画面_商品管理_カテゴリ一覧）
 `functions/pf-eccube3/m03-45_admin_product_product_category_list.md`
@@ -513,18 +498,16 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
 | M03-45-MSG-001 | 確認 | 画面中央(ダイアログ/モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 子カテゴリ・商品カテゴリ紐付けが無いカテゴリ行の削除アイコンを押下し、DeleteModal が表示されたとき（shown.bs.modal で当該行の data-message を本文へ差し込む） |
+| M03-45-MSG-002 | 確認(モーダル) | 削除確認モーダル内 | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 削除ボタン押下で削除確認モーダルを表示するとき（data-messageをJSでモーダル本文へ挿入 category.twig:120-127） |
+| M03-45-MSG-003 | 確認(confirm) | ブラウザ確認ダイアログ | 本当に並べ替えを実行してよろしいですか? | ドラッグで順序を変更した直後、または上下矢印クリック時のwindow.confirm |
 
 ## M04-01 M04-01（在庫検索/一覧）
 `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md`
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M04-01-MSG-001 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | セッション検索条件が空（$viewData === []） |
-| M04-01-MSG-002 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | セッション検索条件が空（$viewData === []） |
 | M04-01-MSG-003 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | セッション検索条件が空（$viewData === []） |
 | M04-01-MSG-004 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | セッション検索条件のフォーム復元で例外を捕捉したとき |
-| M04-01-MSG-005 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | セッション検索条件のフォーム復元で例外を捕捉したとき |
-| M04-01-MSG-006 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | セッション検索条件のフォーム復元で例外を捕捉したとき |
 | M04-01-MSG-007 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | 保存POSTの検索フォームが未送信または無効のとき（CSRF含む） |
 | M04-01-MSG-008 | エラー | 管理画面上部 | 検索パターン名を入力して下さい。 | pattern_nameが空のとき |
 | M04-01-MSG-009 | インフォ(成功) | 管理画面上部 | 検索パターン名を登録しました。 | 検索パターンをpersistしてflushした後 |
@@ -594,6 +577,14 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M04-03-MSG-019 | エラー(バリデーション) | 入力項目直下 | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | 登録送信時、在庫変動理由が16384文字を超えるとき（Length max違反。eccube_product_stock_change_reason_max_len） |
 | M04-03-MSG-020 | エラー(バリデーション) | 入力項目直下 | この値は{{ min }}以上{{ max }}以下でなければなりません。 | 登録送信時、在庫増減数が-99999999〜99999999、仕入単価が0〜999999999の範囲外のとき（Range違反） |
 | M04-03-MSG-021 | エラー(バリデーション) | 入力項目直下 | 数値で入力してください。 | 登録送信時、数値として解釈できない入力のとき（NumberType変換失敗。invalid_messageデフォルト） |
+
+## M04-04 M04-04（在庫情報CSV出力）
+`functions/ec-cube-enterprise/m04-04_admin_stock_stock_csv_export.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M04-04-MSG-001 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | セッション検索条件が空（$viewData === []） |
+| M04-04-MSG-002 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | セッション検索条件のフォーム復元で例外を捕捉したとき |
 
 ## M04-08 M04-08（在庫移動・振替検索/一覧）
 `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md`
@@ -738,67 +729,6 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M04-12-MSG-001 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
-| M04-12-MSG-002 | エラー | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 対象店舗を編集不可 |
-| M04-12-MSG-003 | エラー | 管理画面上部 | 要ソース確認 | StockJoinNewTypeのフォーム検証失敗 |
-| M04-12-MSG-004 | エラー | 管理画面上部 | 要ソース確認 | registerActionがLogicExceptionを送出 |
-| M04-12-MSG-005 | インフォ(成功) | 管理画面上部 | 在庫結合を開始しました。 | registerAction成功 |
-| M04-12-MSG-006 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | POSTのCSRFトークン不正 |
-| M04-12-MSG-007 | エラー | 管理画面上部 | 承認権限がありません。 | ログインメンバーなし、または承認権限なし |
-| M04-12-MSG-008 | エラー | 管理画面上部 | 要ソース確認 | StockSplitJoinTypeのフォーム検証失敗 |
-| M04-12-MSG-009 | インフォ(成功) | 管理画面上部 | 保存しました | フォーム送信・保存成功 |
-| M04-12-MSG-010 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
-| M04-12-MSG-011 | エラー | 管理画面上部 | 保存に失敗しました | stock_split_join_idが0以下 |
-| M04-12-MSG-012 | エラー | 管理画面上部 | 保存に失敗しました | 結合データなし、または対象在庫不一致 |
-| M04-12-MSG-013 | エラー | 管理画面上部 | 保存に失敗しました | 結合ステータスがNEW以外 |
-| M04-12-MSG-014 | エラー | 管理画面上部 | 指定の在庫が見つかりません。 | 結合元在庫IDが不正、または結合先と同一 |
-| M04-12-MSG-015 | エラー | 管理画面上部 | 要ソース確認 | 同じ結合元在庫が既にSessionに存在 |
-| M04-12-MSG-016 | インフォ(成功) | 管理画面上部 | 結合元を追加しました。 | 結合元をSessionへ追加成功 |
-| M04-12-MSG-017 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
-| M04-12-MSG-018 | エラー | 管理画面上部 | 保存に失敗しました | stock_split_join_idが0以下 |
-| M04-12-MSG-019 | エラー | 管理画面上部 | 保存に失敗しました | 結合データなし、または対象在庫不一致 |
-| M04-12-MSG-020 | エラー | 管理画面上部 | 保存に失敗しました | 結合ステータスがNEW以外 |
-| M04-12-MSG-021 | インフォ(成功) | 管理画面上部 | 結合元を削除しました。 | 結合元をSessionから削除成功 |
-| M04-12-MSG-022 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
-| M04-12-MSG-023 | エラー | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | ログインメンバーなし、または対象店舗を編集不可 |
-| M04-12-MSG-024 | エラー | 管理画面上部 | 要ソース確認 | moveToShortageEntryActionがStockJoinMoveToShortageValidationExceptionを送出 |
-| M04-12-MSG-025 | インフォ(成功) | 管理画面上部 | 欠品入力画面に移動しました。 | 欠品入力遷移成功 |
-| M04-12-MSG-026 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
-| M04-12-MSG-027 | エラー | 管理画面上部 | 保存に失敗しました | stockJoinUpdateMemoActionがLogicExceptionを送出 |
-| M04-12-MSG-028 | インフォ(成功) | 管理画面上部 | 保存しました | メモ保存成功 |
-| M04-12-MSG-029 | エラー | 管理画面上部 | 欠品入力可能なステータスではありません。 | 結合ステータスがJOIN_SOURCE_REGISTERED以外 |
-| M04-12-MSG-030 | エラー | 管理画面上部 | 要ソース確認 | StockSplitJoinTypeが送信済みかつ不正 |
-| M04-12-MSG-031 | インフォ(成功) | 管理画面上部 | 保存しました | 送信済みフォームをshortageEntryActionが保存 |
-| M04-12-MSG-032 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
-| M04-12-MSG-033 | エラー | 管理画面上部 | 指定の在庫が見つかりません。 | 結合データなし・対象在庫不一致・結合種別でない |
-| M04-12-MSG-034 | エラー | 管理画面上部 | 承認通知先のメンバーを1人以上選択してください。 | 承認通知先メンバー未選択 |
-| M04-12-MSG-035 | エラー | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 対象店舗を編集不可 |
-| M04-12-MSG-036 | エラー | 管理画面上部 | 保存に失敗しました | applyApprovalAction呼出し中のThrowable |
-| M04-12-MSG-037 | エラー | 管理画面上部 | 要ソース確認 | applyApprovalActionがerrorMessageを返す |
-| M04-12-MSG-038 | インフォ(成功) | 管理画面上部 | 承認申請しました。 | applyApprovalAction成功 |
-| M04-12-MSG-039 | エラー | 管理画面上部 | 欠品入力可能なステータスではありません。 | 結合ステータスがJOIN_SOURCE_REGISTERED以外 |
-| M04-12-MSG-040 | エラー | 管理画面上部 | 要ソース確認 | approvalSubmitActionがerrorMessageを返す |
-| M04-12-MSG-041 | インフォ(成功) | 管理画面上部 | 要ソース確認 | approvalSubmitActionがsuccessMessageを返す |
-| M04-12-MSG-042 | エラー | 管理画面上部 | ピック表を出力できるステータスではありません。 | 結合ステータスがJOIN_SOURCE_REGISTERED以外 |
-| M04-12-MSG-043 | エラー | 管理画面上部 | ピック表を出力する権限がありません。 | 対象店舗が編集可能店舗に含まれない |
-| M04-12-MSG-044 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
-| M04-12-MSG-045 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | アップロードファイルなし、または無効 |
-| M04-12-MSG-046 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | 選択店舗が存在しない |
-| M04-12-MSG-047 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | 在庫区分が許可値以外 |
-| M04-12-MSG-048 | エラー | 管理画面上部 | ログインしてください。 | ログインユーザーがMemberでない |
-| M04-12-MSG-049 | エラー | 管理画面上部 | 要ソース確認 | CSVインポート中にThrowable |
-| M04-12-MSG-050 | エラー | 管理画面上部 | 要ソース確認 | CsvImporterの行エラーあり |
-| M04-12-MSG-051 | エラー | 管理画面上部 | 要ソース確認 | StockSplitListCsvImportHandlerのflashErrorsあり |
-| M04-12-MSG-052 | インフォ(成功) | 管理画面上部 | %count% 件の分割を登録し、承認申請まで進めました。 | StockSplitListCsvImportHandlerのflashSuccessesあり |
-| M04-12-MSG-053 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
-| M04-12-MSG-054 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | アップロードファイルなし、または無効 |
-| M04-12-MSG-055 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | 選択店舗が存在しない |
-| M04-12-MSG-056 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | 結合先在庫区分が未指定 |
-| M04-12-MSG-057 | エラー | 管理画面上部 | ログインしてください。 | ログインユーザーがMemberでない |
-| M04-12-MSG-058 | エラー | 管理画面上部 | 要ソース確認 | CSVインポート中にThrowable |
-| M04-12-MSG-059 | エラー | 管理画面上部 | 要ソース確認 | CsvImporterの行エラーあり |
-| M04-12-MSG-060 | エラー | 管理画面上部 | 要ソース確認 | StockJoinListCsvImportHandlerのflashErrorsあり |
-| M04-12-MSG-061 | インフォ(成功) | 管理画面上部 | %count% 件の結合を登録し、欠品入力まで進めました。 | StockJoinListCsvImportHandlerのflashSuccessesあり |
 | M04-12-MSG-062 | エラー | 管理画面上部 | 指定の在庫が見つかりません。 | productStockIdが1未満 |
 | M04-12-MSG-063 | エラー | 管理画面上部 | 指定の在庫が見つかりません。 | productStockIdに対応する在庫なし |
 | M04-12-MSG-064 | エラー(バリデーション) | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、登録日開始日が登録日終了日より後 |
@@ -844,6 +774,49 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M04-13-MSG-032 | 警告 | 画面中央(ダイアログ) | ピック表用データの取得に失敗しました。 | ピック表PDF出力Ajax（admin_stock_join_pick_list_pdf_export）が fail コールバックに入ったとき（通信失敗のほか、CSRFトークン不正時のHTTP 403 JSON応答 StockJoinController.php:1206-1208 も含む） |
 | M04-13-MSG-033 | 警告 | 画面中央(ダイアログ) | 保存に失敗しました | 数量入力欄を変更（change）して data-update-url（admin_stock_split_update_destination_quantity）へ Ajax POST した際、fetch が通信例外で失敗（.catch）したとき |
 | M04-13-MSG-034 | 警告 | 画面中央(ダイアログ) | 保存に失敗しました | 在庫区分セレクトを変更（change）して data-update-dest-location-url（admin_stock_split_update_destination_stock_location、stock_split_edit.twig:179）へ Ajax POST した際、fetch が通信例外で失敗（.catch）したとき |
+| M04-13-MSG-035 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
+| M04-13-MSG-036 | エラー | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 対象店舗を編集不可 |
+| M04-13-MSG-037 | エラー | 管理画面上部 | 要ソース確認 | StockJoinNewTypeのフォーム検証失敗 |
+| M04-13-MSG-038 | エラー | 管理画面上部 | 要ソース確認 | registerActionがLogicExceptionを送出 |
+| M04-13-MSG-039 | インフォ(成功) | 管理画面上部 | 在庫結合を開始しました。 | registerAction成功 |
+| M04-13-MSG-040 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | POSTのCSRFトークン不正 |
+| M04-13-MSG-041 | エラー | 管理画面上部 | 承認権限がありません。 | ログインメンバーなし、または承認権限なし |
+| M04-13-MSG-042 | エラー | 管理画面上部 | 要ソース確認 | StockSplitJoinTypeのフォーム検証失敗 |
+| M04-13-MSG-043 | インフォ(成功) | 管理画面上部 | 保存しました | フォーム送信・保存成功 |
+| M04-13-MSG-044 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
+| M04-13-MSG-045 | エラー | 管理画面上部 | 保存に失敗しました | stock_split_join_idが0以下 |
+| M04-13-MSG-046 | エラー | 管理画面上部 | 保存に失敗しました | 結合データなし、または対象在庫不一致 |
+| M04-13-MSG-047 | エラー | 管理画面上部 | 保存に失敗しました | 結合ステータスがNEW以外 |
+| M04-13-MSG-048 | エラー | 管理画面上部 | 指定の在庫が見つかりません。 | 結合元在庫IDが不正、または結合先と同一 |
+| M04-13-MSG-049 | エラー | 管理画面上部 | 要ソース確認 | 同じ結合元在庫が既にSessionに存在 |
+| M04-13-MSG-050 | インフォ(成功) | 管理画面上部 | 結合元を追加しました。 | 結合元をSessionへ追加成功 |
+| M04-13-MSG-051 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
+| M04-13-MSG-052 | エラー | 管理画面上部 | 保存に失敗しました | stock_split_join_idが0以下 |
+| M04-13-MSG-053 | エラー | 管理画面上部 | 保存に失敗しました | 結合データなし、または対象在庫不一致 |
+| M04-13-MSG-054 | エラー | 管理画面上部 | 保存に失敗しました | 結合ステータスがNEW以外 |
+| M04-13-MSG-055 | インフォ(成功) | 管理画面上部 | 結合元を削除しました。 | 結合元をSessionから削除成功 |
+| M04-13-MSG-056 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
+| M04-13-MSG-057 | エラー | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | ログインメンバーなし、または対象店舗を編集不可 |
+| M04-13-MSG-058 | エラー | 管理画面上部 | 要ソース確認 | moveToShortageEntryActionがStockJoinMoveToShortageValidationExceptionを送出 |
+| M04-13-MSG-059 | インフォ(成功) | 管理画面上部 | 欠品入力画面に移動しました。 | 欠品入力遷移成功 |
+| M04-13-MSG-060 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
+| M04-13-MSG-061 | エラー | 管理画面上部 | 保存に失敗しました | stockJoinUpdateMemoActionがLogicExceptionを送出 |
+| M04-13-MSG-062 | インフォ(成功) | 管理画面上部 | 保存しました | メモ保存成功 |
+| M04-13-MSG-063 | エラー | 管理画面上部 | 欠品入力可能なステータスではありません。 | 結合ステータスがJOIN_SOURCE_REGISTERED以外 |
+| M04-13-MSG-064 | エラー | 管理画面上部 | 要ソース確認 | StockSplitJoinTypeが送信済みかつ不正 |
+| M04-13-MSG-065 | インフォ(成功) | 管理画面上部 | 保存しました | 送信済みフォームをshortageEntryActionが保存 |
+| M04-13-MSG-066 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
+| M04-13-MSG-067 | エラー | 管理画面上部 | 指定の在庫が見つかりません。 | 結合データなし・対象在庫不一致・結合種別でない |
+| M04-13-MSG-068 | エラー | 管理画面上部 | 承認通知先のメンバーを1人以上選択してください。 | 承認通知先メンバー未選択 |
+| M04-13-MSG-069 | エラー | 管理画面上部 | この店舗の在庫を編集する権限がありません。 | 対象店舗を編集不可 |
+| M04-13-MSG-070 | エラー | 管理画面上部 | 保存に失敗しました | applyApprovalAction呼出し中のThrowable |
+| M04-13-MSG-071 | エラー | 管理画面上部 | 要ソース確認 | applyApprovalActionがerrorMessageを返す |
+| M04-13-MSG-072 | インフォ(成功) | 管理画面上部 | 承認申請しました。 | applyApprovalAction成功 |
+| M04-13-MSG-073 | エラー | 管理画面上部 | 欠品入力可能なステータスではありません。 | 結合ステータスがJOIN_SOURCE_REGISTERED以外 |
+| M04-13-MSG-074 | エラー | 管理画面上部 | 要ソース確認 | approvalSubmitActionがerrorMessageを返す |
+| M04-13-MSG-075 | インフォ(成功) | 管理画面上部 | 要ソース確認 | approvalSubmitActionがsuccessMessageを返す |
+| M04-13-MSG-076 | エラー | 管理画面上部 | ピック表を出力できるステータスではありません。 | 結合ステータスがJOIN_SOURCE_REGISTERED以外 |
+| M04-13-MSG-077 | エラー | 管理画面上部 | ピック表を出力する権限がありません。 | 対象店舗が編集可能店舗に含まれない |
 
 ## M04-16 在庫管理 — 在庫リコメンドCSV出力
 `functions/pf-eccube3/m04-16_admin_stock_product_stock_recommend_csv_export.md`
@@ -855,18 +828,38 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M04-16-MSG-003 | エラー(バリデーション) | 入力項目直下 | 上限金額は、下限金額より大きく設定してください | POST検索で在庫数の下限(stock_from)と上限(stock_to)がともにnullでなく、下限>上限のとき |
 | M04-16-MSG-004 | エラー(バリデーション) | 要ソース確認 | 終了日時は、開始日時より大きく設定してください | POST検索で更新日時の開始(update_date_from)と終了(update_date_to)がともにnullでなく、開始>終了のとき |
 | M04-16-MSG-005 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | リコメンドCSV出力(GET admin_stock_list_recommend_csv)時、セッションに検索条件が無い、またはセッションの検索条件が不正で復元できないとき |
+| M04-16-MSG-006 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | セッション検索条件が空（$viewData === []） |
+| M04-16-MSG-007 | エラー | 管理画面上部 | 検索条件を指定してからCSV出力してください。 | セッション検索条件のフォーム復元で例外を捕捉したとき |
+
+## M04-17 M04-17（在庫履歴検索/一覧）
+`functions/pf-eccube3/m04-17_admin_stock_stock_history_search_list.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M04-17-MSG-001 | エラー | 一覧カード上部（#stockHistoryList .card-body 先頭に prepend） | 保存に失敗しました | 非同期更新 admin_stock_approval_history_reason_update が success=false 応答または通信エラーのとき |
+
+## M04-18 M04-18（在庫履歴CSV出力）
+`functions/pf-eccube3/m04-18_admin_stock_stock_history_csv_export.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M04-18-MSG-001 | エラー | 管理画面上部 | 要ソース確認 | StockHistoryCsv::exportCsv() が RuntimeException を送出したとき（対象ID未登録 or CSV行が空） |
+
+## M04-19 M04-19（欠品履歴検索/一覧）
+`functions/pf-eccube3/m04-19_admin_stock_stock_shortage_history_search_list.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M04-19-MSG-001 | エラー | 管理画面上部 | 保存に失敗しました | POST admin_stock_history_update で updateDisposalReason が Exception を送出したとき |
+| M04-19-MSG-002 | インフォ(成功) | 管理画面上部 | 保存しました | 欠品理由を正常に更新したとき（admin_stock_history_update） |
 
 ## M04-20 M04-20（欠品履歴CSV出力）
 `functions/ec-cube-enterprise/m04-20_admin_stock_stock_shortage_history_csv_export.md`
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M04-20-MSG-001 | エラー | 管理画面上部 | 保存に失敗しました | POST admin_stock_history_update で updateDisposalReason が Exception を送出したとき |
-| M04-20-MSG-002 | インフォ(成功) | 管理画面上部 | 保存しました | 欠品理由を正常に更新したとき（admin_stock_history_update） |
-| M04-20-MSG-003 | エラー | 管理画面上部 | 要ソース確認 | StockHistoryCsv::exportCsv() が RuntimeException を送出したとき（対象ID未登録 or CSV行が空） |
 | M04-20-MSG-004 | エラー | 管理画面上部 | 要ソース確認 | StockHistoryDisposalCsv::exportCsv() が RuntimeException を送出したとき（対象ID未登録 or CSV行が空） |
 | M04-20-MSG-005 | エラー | 要ソース確認 | eccube.admin.error | 送信 ids[] を intval・正数抽出した結果が空のとき（一覧フォームは検索結果全件分の hidden ids[] を自動送信するため、通常UI操作では到達しない。行のチェック選択UIは無い: history.twig:595-608） |
-| M04-20-MSG-006 | エラー | 一覧カード上部（#stockHistoryList .card-body 先頭に prepend） | 保存に失敗しました | 非同期更新 admin_stock_approval_history_reason_update が success=false 応答または通信エラーのとき |
 | M04-20-MSG-007 | エラー | 当該入力欄直下 | 不正な日付です。 | POST admin_stock_history の検索で日付が 1900-01-01 より前のとき（Assert\Range minMessage=form_error.out_of_range） |
 
 ## M04-21 M04-21（在庫変更CSV登録）
@@ -882,6 +875,24 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
 | M04-23-MSG-001 | エラー(バリデーション) | 入力項目直下 | 要ソース確認（key_unknown: admin.stock.split_csv_modal.inventory_category_required） | inventory_categoryが空のときのNotBlank制約 |
+| M04-23-MSG-002 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
+| M04-23-MSG-003 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | アップロードファイルなし、または無効 |
+| M04-23-MSG-004 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | 選択店舗が存在しない |
+| M04-23-MSG-005 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | 在庫区分が許可値以外 |
+| M04-23-MSG-006 | エラー | 管理画面上部 | ログインしてください。 | ログインユーザーがMemberでない |
+| M04-23-MSG-007 | エラー | 管理画面上部 | 要ソース確認 | CSVインポート中にThrowable |
+| M04-23-MSG-008 | エラー | 管理画面上部 | 要ソース確認 | CsvImporterの行エラーあり |
+| M04-23-MSG-009 | エラー | 管理画面上部 | 要ソース確認 | StockSplitListCsvImportHandlerのflashErrorsあり |
+| M04-23-MSG-010 | インフォ(成功) | 管理画面上部 | %count% 件の分割を登録し、承認申請まで進めました。 | StockSplitListCsvImportHandlerのflashSuccessesあり |
+| M04-23-MSG-011 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークン不正 |
+| M04-23-MSG-012 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | アップロードファイルなし、または無効 |
+| M04-23-MSG-013 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | 選択店舗が存在しない |
+| M04-23-MSG-014 | エラー | 管理画面上部 | CSVファイルのアップロードに失敗しました | 結合先在庫区分が未指定 |
+| M04-23-MSG-015 | エラー | 管理画面上部 | ログインしてください。 | ログインユーザーがMemberでない |
+| M04-23-MSG-016 | エラー | 管理画面上部 | 要ソース確認 | CSVインポート中にThrowable |
+| M04-23-MSG-017 | エラー | 管理画面上部 | 要ソース確認 | CsvImporterの行エラーあり |
+| M04-23-MSG-018 | エラー | 管理画面上部 | 要ソース確認 | StockJoinListCsvImportHandlerのflashErrorsあり |
+| M04-23-MSG-019 | インフォ(成功) | 管理画面上部 | %count% 件の結合を登録し、欠品入力まで進めました。 | StockJoinListCsvImportHandlerのflashSuccessesあり |
 
 ## M04-24 M04-24（在庫移動指示リスト作成/検索）
 `functions/ec-cube-enterprise/m04-24_admin_stock_stock_move_instruction_search_create.md`
@@ -985,24 +996,12 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M05-01-MSG-002 | エラー | 管理画面上部 | 削除に失敗しました | 論理削除のflushでForeignKeyConstraintViolationExceptionが発生 |
 | M05-01-MSG-003 | インフォ(成功) | 管理画面上部 | 削除しました | 受注の論理削除完了後 |
 | M05-01-MSG-004 | インフォ(成功) | 管理画面上部 | 削除しました | POSTされたidsを処理しflushが完了 |
-| M05-01-MSG-005 | エラー | 管理画面上部 | 出荷IDが指定されていません | admin_order_export_pdfのidsが0件 |
-| M05-01-MSG-006 | エラー | 管理画面上部 | 要ソース確認 | OrderPdfService::makePdfがfalse |
-| M05-01-MSG-007 | エラー | 管理画面上部 | 保存に失敗しました | フォーム未送信またはフォーム検証失敗 |
-| M05-01-MSG-008 | エラー | 管理画面上部 | 保存に失敗しました | 取得したOrderTypesが空 |
-| M05-01-MSG-009 | エラー | 管理画面上部 | 要ソース確認 | GenerateShippingStandbyListActionがInvalidArgumentExceptionを送出 |
-| M05-01-MSG-010 | インフォ(成功) | 管理画面上部 | 保存しました | 出荷指示リスト生成処理が完了 |
-| M05-01-MSG-011 | エラー | 画面中央(ダイアログ、スタック印刷ウィンドウ) | 不正なリクエストです。 | admin_order_print_stackでCSRFトークンが無効 |
-| M05-01-MSG-012 | エラー | 画面中央(ダイアログ、スタック印刷ウィンドウ) | 要ソース確認 | UpdateStackListAction呼出しでInvalidArgumentExceptionを捕捉 |
 | M05-01-MSG-013 | エラー | 管理画面上部 | 検索パターン名を入力して下さい | pattern_nameがnullまたは空文字 |
 | M05-01-MSG-014 | インフォ(成功) | 管理画面上部 | 検索条件を保存しました | 検索パターンの保存とflushが完了 |
 | M05-01-MSG-015 | エラー | 管理画面上部 | 検索条件を削除できませんでした | 指定pattern_idの検索パターンが存在しない |
 | M05-01-MSG-016 | インフォ(成功) | 管理画面上部 | 検索条件を削除しました | 指定検索パターンの削除とflushが完了 |
 | M05-01-MSG-017 | 警告 | 画面中央(ダイアログ) | チェックボックスが選択されていません | 受注一覧のチェックボックスが1件も選択されていない状態で一括操作ボタンを押下 |
 | M05-01-MSG-018 | エラー | 画面中央(ダイアログ) | Update failed. | admin_shipping_update_tracking_numberのJSON応答のstatusがOK以外（done側） |
-| M05-01-MSG-019 | エラー | 画面中央(ダイアログ、スタック印刷ウィンドウ) | 対象の注文が指定されていません。 | admin_order_print_stackでPOSTされたidsが空 |
-| M05-01-MSG-020 | エラー | 画面中央(ダイアログ、スタック印刷ウィンドウ) | 注文番号が未採番の注文があります。 | 印刷対象の受注に注文番号(order_number)が未採番のものが含まれる |
-| M05-01-MSG-021 | インフォ(成功) | 画面中央(ダイアログ、スタック印刷ウィンドウ) | 印刷予約を受け付けました。 | スタック用紙印刷の予約処理（UpdateStackListAction）が正常完了 |
-| M05-01-MSG-022 | エラー | 画面中央(ダイアログ、スタック印刷ウィンドウ) | システムエラーが発生いたしました。<br>サイト管理者へお問い合わせください。 | admin_order_print_stackへのajaxがfailし、responseJSONが取得できない（タイムアウト・ネットワークエラー等） |
 | M05-01-MSG-023 | エラー(バリデーション) | 入力項目直下 | カタカナで入力してください。 | POST検索時、入力値が正規表現 /^[ァ-ヶｦ-ﾟー]+$/u に一致しない場合 |
 | M05-01-MSG-024 | エラー(バリデーション) | 入力項目直下 | カタカナで入力してください。 | POST検索時、入力値が正規表現 /^[ァ-ヶｦ-ﾟー]+$/u に一致しない場合 |
 | M05-01-MSG-025 | エラー(バリデーション) | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 注文日時の開始・終了がともに空でなく、開始が終了より後の場合 |
@@ -1016,39 +1015,29 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M05-01-MSG-033 | エラー(バリデーション) | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 売上確定日時の開始・終了がともに空でなく、開始が終了より後の場合 |
 | M05-01-MSG-034 | エラー(バリデーション) | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 店頭予約日時の開始・終了がともに空でなく、開始が終了より後の場合 |
 
-## M05-02 m05-02_admin_order_order_csv_export（受注管理_受注情報CSV出力）
-`functions/pf-eccube3/m05-02_admin_order_order_csv_export.md`
-
-| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
-|---|---|---|---|---|
-| M05-02-MSG-001 | エラー | 管理画面上部 | 選択してください | POSTされたorder_idsが配列でない、または空のとき |
-| M05-02-MSG-002 | エラー | 管理画面上部 | 存在しないカードIDが含まれています。 | 選択注文のgenerateResultCsvが空でexportCsvがRuntimeExceptionを送出したとき |
-| M05-02-MSG-003 | エラー | 管理画面上部 | 既に %csvName% インポートが実行中です。 | orderRepository->isFree('registerShippingResult')がfalse(実行中)のとき |
-| M05-02-MSG-004 | エラー | 管理画面上部 | 要ソース確認 | 取込処理のtryブロックでThrowableを捕捉したとき |
-| M05-02-MSG-005 | インフォ(成功) | 管理画面上部 | 登録が完了しました。 | CSV取込・flush・commitが成功したとき |
-
 ## M05-06 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）
 `functions/pf-eccube3/m05-06_admin_order_order_bulk_manual_mail.md`
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M05-06-MSG-001 | インフォ(成功) | 管理画面上部 | メールを送信しました。 | POSTでmode=complete、フォームが送信済みかつ有効なとき |
-| M05-06-MSG-002 | エラー | 管理画面上部 | 選択されたテンプレートの本文が見つかりませんでした。同期が完了していない可能性があります。大変お手数ですが、1分ほど待ってから再度アクセスしてください。 | 選択変更でPOST mode=changeとなり、選択テンプレートのrenderViewでLoaderErrorが発生したとき |
 | M05-06-MSG-003 | インフォ(成功) | 管理画面上部 | メールを送信しました。 | POSTでmode=complete、フォームが送信済み・有効かつ$mailが存在するとき |
 | M05-06-MSG-004 | エラー | 管理画面上部 | 注文ID %s の注文情報を取得できませんでした。 | ids配列中にShippingRepositoryのfindBy結果に含まれない配送IDがあるとき |
 | M05-06-MSG-005 | インフォ(成功) | 管理画面上部 | メールを送信しました。 | POSTでmode=complete、フォームが送信済み・有効かつ$mailが存在するとき |
-| M05-06-MSG-006 | エラー(バリデーション) | 入力項目直下 | 入力されていません。 | 件名未入力でmode=confirm/completeを送信したとき（NotBlank違反でisValid()がfalse） |
-| M05-06-MSG-007 | エラー(バリデーション) | 入力項目直下 | Twigのフォーマットが正しくありません。{{ error }} | 本文のTwig構文が不正でtokenize/parse/compileがTwig\Errorを投げたとき（TwigLint制約違反） |
 | M05-06-MSG-008 | エラー(バリデーション) | 入力項目直下 | 入力されていません。 | いずれか未入力でmode=confirm/completeを送信したとき（NotBlank違反でisValid()がfalse） |
 | M05-06-MSG-009 | エラー(バリデーション) | 入力項目直下 | 入力されていません。 | 未入力でmode=confirm/completeを送信したとき（NotBlank違反でisValid()がfalse） |
 | M05-06-MSG-010 | 確認 | 画面中央(ダイアログ) | お客様にメールを送信します。よろしいですか？ | #send_mail のクリック時、mode=complete のPOST送信前にブラウザ標準confirmを表示 |
 
-## M05-10 m05-10_admin_order_order_print_delivery_slips_en（受注管理 — 納品書印刷・英語）
-`functions/pf-eccube3/m05-10_admin_order_order_print_delivery_slips_en.md`
+## M05-08 m05-08_admin_order_order_stack_paper_print（受注管理 — スタック用紙印刷）
+`functions/pf-eccube3/m05-08_admin_order_order_stack_paper_print.md`
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M05-10-MSG-006 | 確認 | ブラウザ確認ダイアログ（window.confirm） | 削除してもよろしいですか? | リンククリック時（data-confirm/data-message未指定のため常にJS confirmのデフォルト文言が表示される） |
+| M05-08-MSG-001 | エラー | 画面中央(ダイアログ、スタック印刷ウィンドウ) | 不正なリクエストです。 | admin_order_print_stackでCSRFトークンが無効 |
+| M05-08-MSG-002 | エラー | 画面中央(ダイアログ、スタック印刷ウィンドウ) | 要ソース確認 | UpdateStackListAction呼出しでInvalidArgumentExceptionを捕捉 |
+| M05-08-MSG-003 | エラー | 画面中央(ダイアログ、スタック印刷ウィンドウ) | 対象の注文が指定されていません。 | admin_order_print_stackでPOSTされたidsが空 |
+| M05-08-MSG-004 | エラー | 画面中央(ダイアログ、スタック印刷ウィンドウ) | 注文番号が未採番の注文があります。 | 印刷対象の受注に注文番号(order_number)が未採番のものが含まれる |
+| M05-08-MSG-005 | インフォ(成功) | 画面中央(ダイアログ、スタック印刷ウィンドウ) | 印刷予約を受け付けました。 | スタック用紙印刷の予約処理（UpdateStackListAction）が正常完了 |
+| M05-08-MSG-006 | エラー | 画面中央(ダイアログ、スタック印刷ウィンドウ) | システムエラーが発生いたしました。<br>サイト管理者へお問い合わせください。 | admin_order_print_stackへのajaxがfailし、responseJSONが取得できない（タイムアウト・ネットワークエラー等） |
 
 ## M05-11 m05-11_admin_order_order_edit（管理画面_受注管理_受注情報編集）
 `functions/pf-eccube3/m05-11_admin_order_order_edit.md`
@@ -1090,6 +1079,8 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M05-11-MSG-033 | エラー(バリデーション) | 入力項目直下/フォーム上部 | 入力されていません。 | 国が日本で、郵便番号後半postalCode02が空のフォーム送信時 |
 | M05-11-MSG-034 | エラー(バリデーション) | 入力項目直下/フォーム上部 | 郵便番号(海外)を入力してください。 | 国が日本以外で、abroad_postal_codeが空のフォーム送信時 |
 | M05-11-MSG-035 | エラー(バリデーション) | 入力項目直下/フォーム上部 | 商品が追加されていません | フォーム送信後、商品種別のOrderItemが1件もないとき |
+| M05-11-MSG-036 | エラー | 管理画面上部 | 出荷IDが指定されていません | admin_order_export_pdfのidsが0件 |
+| M05-11-MSG-037 | エラー | 管理画面上部 | 要ソース確認 | OrderPdfService::makePdfがfalse |
 
 ## M05-14 m05-14_admin_order_order_status_change（管理画面_受注対応状況の変更）
 `functions/ec-cube-enterprise/m05-14_admin_order_order_status_change.md`
@@ -1108,6 +1099,20 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 |---|---|---|---|---|
 | M05-15-MSG-001 | インフォ(成功) | 管理画面上部 | 保存しました | 要ソース確認 |
 | M05-15-MSG-002 | インフォ(成功) | 管理画面上部 | 削除しました | 要ソース確認 |
+| M05-15-MSG-003 | インフォ(成功) | 管理画面上部 | メールを送信しました。 | POSTでmode=complete、フォームが送信済みかつ有効なとき |
+| M05-15-MSG-004 | エラー | 管理画面上部 | 選択されたテンプレートの本文が見つかりませんでした。同期が完了していない可能性があります。大変お手数ですが、1分ほど待ってから再度アクセスしてください。 | 選択変更でPOST mode=changeとなり、選択テンプレートのrenderViewでLoaderErrorが発生したとき |
+| M05-15-MSG-005 | エラー(バリデーション) | 入力項目直下 | 入力されていません。 | 件名未入力でmode=confirm/completeを送信したとき（NotBlank違反でisValid()がfalse） |
+| M05-15-MSG-006 | エラー(バリデーション) | 入力項目直下 | Twigのフォーマットが正しくありません。{{ error }} | 本文のTwig構文が不正でtokenize/parse/compileがTwig\Errorを投げたとき（TwigLint制約違反） |
+
+## M05-18 m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）
+`functions/pf-eccube3/m05-18_admin_order_order_shipping_standby_list_create.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M05-18-MSG-001 | エラー | 管理画面上部 | 保存に失敗しました | フォーム未送信またはフォーム検証失敗 |
+| M05-18-MSG-002 | エラー | 管理画面上部 | 保存に失敗しました | 取得したOrderTypesが空 |
+| M05-18-MSG-003 | エラー | 管理画面上部 | 要ソース確認 | GenerateShippingStandbyListActionがInvalidArgumentExceptionを送出 |
+| M05-18-MSG-004 | インフォ(成功) | 管理画面上部 | 保存しました | 出荷指示リスト生成処理が完了 |
 
 ## M05-20 m05-20_admin_order_order_shipping_standby_detail_edit_delete（管理画面_受注管理_出荷指示リスト詳細_備考編集・リスト削除）
 `functions/pf-eccube3/m05-20_admin_order_order_shipping_standby_detail_edit_delete.md`
@@ -1119,6 +1124,15 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M05-20-MSG-003 | インフォ(成功) | 管理画面上部 | 保存しました | フォームが有効で、UpdateCommentActionが正常終了したとき |
 | M05-20-MSG-004 | エラー | 管理画面上部 | 要ソース確認 | CSRF検証・対象取得後、DeleteListAction実行中にInvalidArgumentExceptionが送出されたとき |
 | M05-20-MSG-005 | インフォ(成功) | 管理画面上部 | 削除しました | CSRF検証・対象取得後、DeleteListActionが正常終了したとき |
+| M05-20-MSG-006 | 確認 | ブラウザ確認ダイアログ（window.confirm） | 削除してもよろしいですか? | リンククリック時（data-confirm/data-message未指定のため常にJS confirmのデフォルト文言が表示される） |
+
+## M05-24 m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）
+`functions/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M05-24-MSG-001 | エラー | 管理画面上部 | 選択してください | POSTされたorder_idsが配列でない、または空のとき |
+| M05-24-MSG-002 | エラー | 管理画面上部 | 存在しないカードIDが含まれています。 | 選択注文のgenerateResultCsvが空でexportCsvがRuntimeExceptionを送出したとき |
 
 ## M05-26 m05-26_admin_order_order_shipping_result_csv_import（管理画面_受注管理_出荷実績インポート登録）
 `functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md`
@@ -1126,6 +1140,9 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
 | M05-26-MSG-001 | インフォ | 管理画面上部 | CSVファイルをアップロードしました | POSTでフォームが有効かつCSV処理後にエラーがなく、flushとトランザクションcommitが完了したとき |
+| M05-26-MSG-002 | エラー | 管理画面上部 | 既に %csvName% インポートが実行中です。 | orderRepository->isFree('registerShippingResult')がfalse(実行中)のとき |
+| M05-26-MSG-003 | エラー | 管理画面上部 | 要ソース確認 | 取込処理のtryブロックでThrowableを捕捉したとき |
+| M05-26-MSG-004 | インフォ(成功) | 管理画面上部 | 登録が完了しました。 | CSV取込・flush・commitが成功したとき |
 
 ## M05-27 m05-27_admin_order_order_waiting_tag（管理画面_受注管理_店頭注文番号札管理）
 `functions/pf-eccube3/m05-27_admin_order_order_waiting_tag.md`
@@ -1146,34 +1163,46 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 |---|---|---|---|---|
 | M06-01-MSG-001 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | 買取注文を1件も選択せずCSV出力を送信したとき |
 | M06-01-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | 選択注文の戻しリスト出力バリデーションがエラーを返したとき |
-| M06-01-MSG-003 | エラー | 管理画面上部 | この機能は管理者によって制限されています。 | ステータス変更画面(admin_otcbuyorder_status)へのアクセス権がないとき |
-| M06-01-MSG-004 | エラー | 管理画面上部 | この機能は管理者によって制限されています。 | ステータス更新(admin_otcbuyorder_status_update)へのアクセス権がないとき |
 | M06-01-MSG-005 | エラー | 管理画面上部 | 要ソース確認 | ステータス変更でUpdateStatusActionがInvalidArgumentExceptionを送出したとき |
-| M06-01-MSG-006 | インフォ(成功) | 管理画面上部 | 保存しました | ステータス変更が正常完了したとき |
-| M06-01-MSG-007 | エラー | 管理画面上部 | admin.common.csrf_token_error | CSRFトークン(account_team_paid)が不正なとき |
-| M06-01-MSG-008 | エラー | 管理画面上部 | この機能は管理者によって制限されています。 | 経理払出し済更新(admin_otcbuyorder_update_status_account_team_paid)へのアクセス権がないとき |
-| M06-01-MSG-009 | エラー | 管理画面上部 | 経理払出し待ちステータスの買取ではありません | 対象買取のステータスが経理払出し待ちではないとき |
-| M06-01-MSG-010 | インフォ(成功) | 管理画面上部 | 保存しました | 経理払出し待ちから買取完了への更新が正常完了したとき |
 | M06-01-MSG-011 | エラー | 管理画面上部 | 要ソース確認 | 経理払出し済のステータス更新処理が例外を送出したとき |
-| M06-01-MSG-012 | エラー | 管理画面上部 | admin.common.csrf_token_error | CSRFトークン(restocked)が不正なとき |
-| M06-01-MSG-013 | インフォ(成功) | 管理画面上部 | 保存しました | 入庫済みへのステータス更新が正常完了したとき |
 | M06-01-MSG-014 | エラー | 管理画面上部 | 要ソース確認 | 入庫済みへのステータス更新処理が例外を送出したとき |
-| M06-01-MSG-015 | インフォ(成功) | 管理画面上部 | 保存しました | 詳細フォームが有効で実在庫更新またはflushが正常完了したとき |
 | M06-01-MSG-016 | エラー | 管理画面上部 | 要ソース確認 | 有効な詳細フォーム送信後、実在庫更新処理が例外を送出したとき |
-| M06-01-MSG-017 | エラー | 管理画面上部 | admin.common.csrf_token_error | CSRFトークン(register_individual_stock)が不正なとき |
-| M06-01-MSG-018 | エラー | 管理画面上部 | 商品規格が見つかりません。 | POSTされたproduct_class_idのProductClassが存在しないとき |
-| M06-01-MSG-019 | インフォ(成功) | 管理画面上部 | 実在庫登録が完了しました。 | 個別入力商品への実在庫登録が正常完了したとき |
 | M06-01-MSG-020 | エラー | 管理画面上部 | 要ソース確認 | 個別入力商品の実在庫登録処理が例外を送出したとき |
 | M06-01-MSG-021 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | 選択注文IDが空のPDF出力リクエストを受けたとき |
 | M06-01-MSG-022 | エラー | 管理画面上部 | 要ソース確認 | 選択注文の戻しリストPDF出力バリデーションがエラーを返したとき |
 | M06-01-MSG-023 | 要ソース確認 | 画面中央の警告ダイアログ | PDF出力する買取情報をひとつ以上選択してください。 | 買取情報を1件も選択せずに戻しリストPDFを押下したとき（otc-buy-order.js:25、サーバへ送信せず中断） |
 | M06-01-MSG-024 | 要ソース確認 | 画面中央の警告ダイアログ | ポップアップがブロックされているため、PDFを開けませんでした。ブラウザの設定を確認してください。 | PDF表示用ポップアップがブラウザにブロックされたとき（otc-buy-order.js:39、サーバへ送信せず中断） |
 | M06-01-MSG-025 | 要ソース確認 | 画面中央の警告ダイアログ | PDF用データの取得に失敗しました。 | PDF用データ取得のAjaxが失敗、またはok以外の応答にredirectUrlが無いとき（otc-buy-order.js:71,75、ポップアップを閉じて一覧に留まる） |
-| M06-01-MSG-026 | 要ソース確認 | 画面中央の警告ダイアログ | 商品の検索に失敗しました。 | 買取詳細の商品検索モーダルで検索・ページングのAjaxが失敗したとき（detail.twig:628,648） |
-| M06-01-MSG-027 | 要ソース確認 | 画面中央の確認ダイアログ | 経理払出し済みに変更します。よろしいですか？ | 経理払出し済フォーム送信時の送信前確認（detail.twig:653、キャンセルで送信中止） |
-| M06-01-MSG-028 | 要ソース確認 | 画面中央の確認ダイアログ | 編集した内容は元に戻ります。解除しますか？ | 実在庫編集モード中に編集ボタンで解除しようとしたとき（detail.twig:667、OKで編集内容破棄） |
 | M06-01-MSG-029 | 要ソース確認 | 検索フォーム項目下インライン | 不正な日付です。 | 査定申込日時・買取日時の開始が0003-01-01より前のとき（OtcBuyOrderType.php:106,166 Assert\Range minMessage form_error.out_of_range=validators.ja.yaml:60。SearchControllerTraitはisValidを参照しないため検索処理自体は継続する） |
 | M06-01-MSG-030 | 要ソース確認 | 管理画面上部フラッシュ | admin.error.sort | orderパラメータがASC/DESC(大小無視)に合致しないとき（SearchControllerTrait.php:143。※admin.error.sort は messages.ja.yaml 未定義キーのため翻訳されずキー文字列がそのまま表示される＝実装バグ候補。画面上に並び順リンクは無くorderクエリ直接指定時のみ到達、初期表示処理を再実行） |
+
+## M06-03 店頭買取管理 — 買取詳細（買取情報の確認と保存）
+`functions/pf-eccube3/m06-03_admin_store_purchase_purchase_store_otc_buy_info_edit.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M06-03-MSG-001 | エラー | 管理画面上部 | admin.common.csrf_token_error | CSRFトークン(account_team_paid)が不正なとき |
+| M06-03-MSG-002 | エラー | 管理画面上部 | この機能は管理者によって制限されています。 | 経理払出し済更新(admin_otcbuyorder_update_status_account_team_paid)へのアクセス権がないとき |
+| M06-03-MSG-003 | エラー | 管理画面上部 | 経理払出し待ちステータスの買取ではありません | 対象買取のステータスが経理払出し待ちではないとき |
+| M06-03-MSG-004 | インフォ(成功) | 管理画面上部 | 保存しました | 経理払出し待ちから買取完了への更新が正常完了したとき |
+| M06-03-MSG-005 | エラー | 管理画面上部 | admin.common.csrf_token_error | CSRFトークン(restocked)が不正なとき |
+| M06-03-MSG-006 | インフォ(成功) | 管理画面上部 | 保存しました | 入庫済みへのステータス更新が正常完了したとき |
+| M06-03-MSG-007 | インフォ(成功) | 管理画面上部 | 保存しました | 詳細フォームが有効で実在庫更新またはflushが正常完了したとき |
+| M06-03-MSG-008 | エラー | 管理画面上部 | admin.common.csrf_token_error | CSRFトークン(register_individual_stock)が不正なとき |
+| M06-03-MSG-009 | エラー | 管理画面上部 | 商品規格が見つかりません。 | POSTされたproduct_class_idのProductClassが存在しないとき |
+| M06-03-MSG-010 | インフォ(成功) | 管理画面上部 | 実在庫登録が完了しました。 | 個別入力商品への実在庫登録が正常完了したとき |
+| M06-03-MSG-011 | 要ソース確認 | 画面中央の警告ダイアログ | 商品の検索に失敗しました。 | 買取詳細の商品検索モーダルで検索・ページングのAjaxが失敗したとき（detail.twig:628,648） |
+| M06-03-MSG-012 | 要ソース確認 | 画面中央の確認ダイアログ | 経理払出し済みに変更します。よろしいですか？ | 経理払出し済フォーム送信時の送信前確認（detail.twig:653、キャンセルで送信中止） |
+| M06-03-MSG-013 | 要ソース確認 | 画面中央の確認ダイアログ | 編集した内容は元に戻ります。解除しますか？ | 実在庫編集モード中に編集ボタンで解除しようとしたとき（detail.twig:667、OKで編集内容破棄） |
+
+## M06-04 店頭買取管理 — 買取ステータス変更
+`functions/pf-eccube3/m06-04_admin_store_purchase_purchase_store_status_change.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M06-04-MSG-001 | エラー | 管理画面上部 | この機能は管理者によって制限されています。 | ステータス変更画面(admin_otcbuyorder_status)へのアクセス権がないとき |
+| M06-04-MSG-002 | エラー | 管理画面上部 | この機能は管理者によって制限されています。 | ステータス更新(admin_otcbuyorder_status_update)へのアクセス権がないとき |
+| M06-04-MSG-003 | インフォ(成功) | 管理画面上部 | 保存しました | ステータス変更が正常完了したとき |
 
 ## M06-05 店頭買取管理 — 買取商品履歴（検索／一覧）
 `functions/pf-eccube3/m06-05_admin_store_purchase_purchase_store_history.md`
@@ -1195,37 +1224,24 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M06-13-MSG-001 | インフォ(成功) | 管理画面上部 | 削除しました | 買取情報を削除し正常終了したとき |
-| M06-13-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | フォーム送信済みかつ各フォームのいずれかがバリデーション不正のとき |
-| M06-13-MSG-003 | インフォ(成功) | 管理画面上部 | 登録が完了しました。 | 全フォームが有効で更新処理が成功したとき |
-| M06-13-MSG-004 | エラー | 管理画面上部 | サプライ品以外は削除できません | 対象BuyMainCardがサプライ品でないとき |
-| M06-13-MSG-005 | インフォ(成功) | 管理画面上部 | 削除しました | サプライ品明細の削除が成功したとき |
-| M06-13-MSG-006 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | buyOrderIdsが空のとき |
-| M06-13-MSG-007 | エラー | 管理画面上部 | 存在しない買取注文情報IDが含まれています。 | 選択IDに対応する買取注文が存在せずRuntimeExceptionを送出したとき |
-| M06-13-MSG-008 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | buyOrderIdsが空のとき |
-| M06-13-MSG-009 | エラー | 管理画面上部 | 存在しない買取注文情報IDが含まれています。 | 選択IDに対応する買取注文が存在せずRuntimeExceptionを送出したとき |
-| M06-13-MSG-010 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | buyOrderIdsが空のとき |
 | M06-13-MSG-011 | エラー | 管理画面上部 | 不正なCSV種別です | クエリtypeがsale/notSaleのいずれでもないとき |
-| M06-13-MSG-012 | エラー | 管理画面上部 | 存在しない買取注文情報IDが含まれています。 | 選択IDに対応する買取注文が存在せずRuntimeExceptionを送出したとき |
-| M06-13-MSG-013 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | buyOrderIdsが空のとき |
-| M06-13-MSG-014 | エラー | 管理画面上部 | 要ソース確認 | 戻しリスト要求検証(validateRestockListRequest)がエラーを返したとき |
-| M06-13-MSG-015 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | buyOrderIdsが空のとき |
-| M06-13-MSG-016 | エラー | 管理画面上部 | 要ソース確認 | 戻しリスト要求検証(validateRestockListRequest)がエラーを返したとき |
-| M06-13-MSG-017 | エラー | 管理画面上部 | admin.common.csrf_token_error | CSRFトークン(purchase_register_individual_stock)が不正のとき |
-| M06-13-MSG-018 | エラー | 管理画面上部 | 商品規格が見つかりません。 | POST product_class_idに対応するProductClassが存在しないとき |
-| M06-13-MSG-019 | インフォ(成功) | 管理画面上部 | 実在庫登録が完了しました。 | 実在庫登録アクションが成功したとき |
-| M06-13-MSG-020 | エラー | 管理画面上部 | 要ソース確認 | registerIndividualStockActionがExceptionを送出したとき |
 | M06-13-MSG-021 | 警告(JS) | ブラウザダイアログ | CSV出力する買取注文情報をひとつ以上選択してください。 | 検索結果のチェックボックス(.searched_buy_order_id)が未選択のままクリックしたとき |
-| M06-13-MSG-022 | 警告(JS) | ブラウザダイアログ | PDF出力する買取注文情報をひとつ以上選択してください。 | 検索結果のチェックボックス(.searched_buy_order_id)が未選択のままクリックしたとき |
-| M06-13-MSG-023 | 警告(JS) | ブラウザダイアログ | ポップアップがブロックされているため、PDFを開けませんでした。ブラウザの設定を確認してください。 | window.openがポップアップブロック等でnullを返したとき |
-| M06-13-MSG-024 | 警告(JS) | ブラウザダイアログ | PDF用データの取得に失敗しました。 | ajax応答がok:true/html以外でredirectUrlも無いとき、またはajaxが失敗したとき |
-| M06-13-MSG-025 | 確認 | 確認モーダル | 買取番号%id% を削除してもよろしいですか？ | 削除リンクをクリックしたとき |
-| M06-13-MSG-026 | 確認 | 確認モーダル | 要ソース確認 | 削除リンクをクリックしたとき |
-| M06-13-MSG-027 | 警告(JS) | ブラウザダイアログ | search product failed. | ajaxリクエストがエラーになったとき |
-| M06-13-MSG-028 | 確認 | ブラウザダイアログ | 編集した内容は元に戻ります。解除しますか？ | 編集中に編集解除をクリックしたとき |
-| M06-13-MSG-029 | 警告(JS) | ブラウザダイアログ | 商品の検索に失敗しました。 | ajaxリクエストがエラーになったとき |
-| M06-13-MSG-030 | 警告(JS) | ブラウザダイアログ | CSRFトークンが取得できません。 | CSRFトークン(purchase_register_individual_stock)がJS設定から取得できないとき |
-| M06-13-MSG-031 | 確認 | ブラウザダイアログ | すべての買取商品の売却ステータスを「売却する」に変更します。よろしいですか？ | ボタンをクリックしたとき |
+
+## M07-01 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）
+`functions/pf-eccube3/m07-01_admin_online_purchase_purchase_online_search_list.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M07-01-MSG-001 | インフォ(成功) | 管理画面上部 | 削除しました | 買取情報を削除し正常終了したとき |
+| M07-01-MSG-002 | 確認 | 確認モーダル | 買取番号%id% を削除してもよろしいですか？ | 削除リンクをクリックしたとき |
+
+## M07-02 m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）
+`functions/pf-eccube3/m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M07-02-MSG-001 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | buyOrderIdsが空のとき |
+| M07-02-MSG-002 | エラー | 管理画面上部 | 存在しない買取注文情報IDが含まれています。 | 選択IDに対応する買取注文が存在せずRuntimeExceptionを送出したとき |
 
 ## M07-03 ネット買取管理 — 買取情報編集（買取詳細）
 `functions/pf-eccube3/m07-03_admin_online_purchase_purchase_online_buy_order_edit.md`
@@ -1246,6 +1262,23 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M07-03-MSG-012 | 確認 | 画面中央(ダイアログ/モーダル) | {{ buyMainCard.vars.value.product.name }} を削除してもよろしいですか？ | isSupplyProduct が真かつ hasPersistedId が真の行に描画される「削除」リンクを押下したとき（confirm ダイアログ） |
 | M07-03-MSG-013 | エラー(バリデーション) | 入力項目直下 | 数字で入力してください。 | 買取詳細の保存時、口座番号が数字のみの正規表現に一致しない場合 |
 | M07-03-MSG-014 | エラー(バリデーション) | 入力項目直下 | 登録番号を入力してください。 | POST保存時、適格請求書発行事業者フラグがtrueで、登録番号が空の場合 |
+| M07-03-MSG-015 | エラー | 管理画面上部 | 要ソース確認 | フォーム送信済みかつ各フォームのいずれかがバリデーション不正のとき |
+| M07-03-MSG-016 | インフォ(成功) | 管理画面上部 | 登録が完了しました。 | 全フォームが有効で更新処理が成功したとき |
+| M07-03-MSG-017 | エラー | 管理画面上部 | サプライ品以外は削除できません | 対象BuyMainCardがサプライ品でないとき |
+| M07-03-MSG-018 | インフォ(成功) | 管理画面上部 | 削除しました | サプライ品明細の削除が成功したとき |
+| M07-03-MSG-019 | エラー | 管理画面上部 | admin.common.csrf_token_error | CSRFトークン(purchase_register_individual_stock)が不正のとき |
+| M07-03-MSG-020 | エラー | 管理画面上部 | 商品規格が見つかりません。 | POST product_class_idに対応するProductClassが存在しないとき |
+| M07-03-MSG-021 | インフォ(成功) | 管理画面上部 | 実在庫登録が完了しました。 | 実在庫登録アクションが成功したとき |
+| M07-03-MSG-022 | エラー | 管理画面上部 | 要ソース確認 | registerIndividualStockActionがExceptionを送出したとき |
+| M07-03-MSG-023 | 確認 | 確認モーダル | 要ソース確認 | 削除リンクをクリックしたとき |
+| M07-03-MSG-024 | 警告(JS) | ブラウザダイアログ | search product failed. | ajaxリクエストがエラーになったとき |
+| M07-03-MSG-025 | 確認 | ブラウザダイアログ | 編集した内容は元に戻ります。解除しますか？ | 編集中に編集解除をクリックしたとき |
+| M07-03-MSG-026 | 警告(JS) | ブラウザダイアログ | 商品の検索に失敗しました。 | ajaxリクエストがエラーになったとき |
+| M07-03-MSG-027 | 警告(JS) | ブラウザダイアログ | CSRFトークンが取得できません。 | CSRFトークン(purchase_register_individual_stock)がJS設定から取得できないとき |
+| M07-03-MSG-028 | 確認 | ブラウザダイアログ | すべての買取商品の売却ステータスを「売却する」に変更します。よろしいですか？ | ボタンをクリックしたとき |
+| M07-03-MSG-029 | エラー(バリデーション) | 入力項目直下 | 数字で入力してください。 | 査定価格に数字以外を入力して保存し正規表現 /^\d+$/u に不一致となる場合 |
+| M07-03-MSG-030 | エラー(バリデーション) | 入力項目直下 | 数字で入力してください。 | 査定編集状態でサプライ品行の price に数字以外を入力して保存し正規表現 /^\d+$/u に不一致となる場合（サプライ品以外の行は査定編集中も readonly のため通常操作では入力不可） |
+| M07-03-MSG-031 | エラー(バリデーション) | 入力項目直下 | 数字で入力してください。 | 査定編集状態でサプライ品行の count に数字以外を入力して保存し正規表現 /^\d+$/u に不一致となる場合（サプライ品以外の行は査定編集中も readonly のため通常操作では入力不可） |
 
 ## M07-04 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）
 `functions/pf-eccube3/m07-04_admin_online_purchase_purchase_manual_mail.md`
@@ -1253,6 +1286,41 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
 | M07-04-MSG-001 | インフォ(成功) | 管理画面上部 | メールを送信しました。 | POST mode=completeでフォームが送信済み・有効、かつtemplateがMailTemplateであるとき |
+
+## M07-05 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）
+`functions/pf-eccube3/m07-05_admin_online_purchase_purchase_csv_export_deposit.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M07-05-MSG-001 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | buyOrderIdsが空のとき |
+| M07-05-MSG-002 | エラー | 管理画面上部 | 存在しない買取注文情報IDが含まれています。 | 選択IDに対応する買取注文が存在せずRuntimeExceptionを送出したとき |
+
+## M07-07 M07-07（買取商品（キャンセル）CSV）
+`functions/ec-cube-enterprise/m07-07_admin_online_purchase_purchase_online_product_cancel_csv_export.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M07-07-MSG-001 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | buyOrderIdsが空のとき |
+| M07-07-MSG-002 | エラー | 管理画面上部 | 存在しない買取注文情報IDが含まれています。 | 選択IDに対応する買取注文が存在せずRuntimeExceptionを送出したとき |
+
+## M07-08 M07-08（戻しリストCSV）
+`functions/ec-cube-enterprise/m07-08_admin_online_purchase_purchase_online_return_list_csv_export.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M07-08-MSG-001 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | buyOrderIdsが空のとき |
+| M07-08-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | 戻しリスト要求検証(validateRestockListRequest)がエラーを返したとき |
+
+## M07-09 M07-09（戻しリストPDF）
+`functions/ec-cube-enterprise/m07-09_admin_online_purchase_purchase_online_return_list_pdf_export.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M07-09-MSG-001 | エラー | 管理画面上部 | 1つ以上の買取注文情報を選択してください。 | buyOrderIdsが空のとき |
+| M07-09-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | 戻しリスト要求検証(validateRestockListRequest)がエラーを返したとき |
+| M07-09-MSG-003 | 警告(JS) | ブラウザダイアログ | PDF出力する買取注文情報をひとつ以上選択してください。 | 検索結果のチェックボックス(.searched_buy_order_id)が未選択のままクリックしたとき |
+| M07-09-MSG-004 | 警告(JS) | ブラウザダイアログ | ポップアップがブロックされているため、PDFを開けませんでした。ブラウザの設定を確認してください。 | window.openがポップアップブロック等でnullを返したとき |
+| M07-09-MSG-005 | 警告(JS) | ブラウザダイアログ | PDF用データの取得に失敗しました。 | ajax応答がok:true/html以外でredirectUrlも無いとき、またはajaxが失敗したとき |
 
 ## M08-01 M08-01（会員検索/一覧）
 `functions/pf-eccube3/m08-01_admin_customer_customer_search_list.md`
@@ -1262,7 +1330,6 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M08-01-MSG-001 | インフォ(成功) | 管理画面上部 | メールを送信しました | CSRF検証後、対象会員が存在し、確認メール送信処理が完了したとき |
 | M08-01-MSG-002 | インフォ(成功) | 管理画面上部 | 削除しました | CSRF検証後、対象会員が存在し、論理削除（del_flg設定・flush）が成功したとき |
 | M08-01-MSG-003 | エラー | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | 対象会員の論理削除時に ForeignKeyConstraintViolationException が発生したとき（%name% は Customer.name01 + 半角空白 + Customer.name02） |
-| M08-01-MSG-004 | インフォ(成功) | 管理画面上部 | メール送信が完了しました。 | POSTされた手動メールフォームが有効で、mode=complete のとき |
 | M08-01-MSG-005 | インフォ(成功) | 管理画面上部 | 検索パターン名を登録しました。 | pattern_name が入力済みで、検索パターンの保存（persist・flush）が完了したとき |
 | M08-01-MSG-006 | エラー | 管理画面上部 | 検索パターン名を入力して下さい。 | pattern_name が null または空文字のとき |
 | M08-01-MSG-007 | インフォ(成功) | 管理画面上部 | 検索パターン名を削除しました。 | CSRFトークンが有効で、対象検索パターンが存在し、削除（remove・flush）が完了したとき |
@@ -1298,6 +1365,13 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M08-05-MSG-002 | インフォ(成功) | 管理画面上部 | 保存しました | POST送信済みかつフォームが有効で、ポイント履歴・会員ポイントを保存（flush）したとき |
 | M08-05-MSG-003 | エラー(バリデーション) | 入力項目直下/フォーム上部 | この会員は該当のオーダーIDを持っていません。 | ポイント付与POST時、orderNumber欄が有効で値があり、対象会員がその注文番号を持たないとき |
 | M08-05-MSG-004 | エラー(バリデーション) | 入力項目直下/フォーム上部 | ポイント残高を0未満にすることはできません。 | ポイント付与POST時、会員の現在ポイントとpointChangeの合計が0未満になるとき |
+
+## M08-08 M08-08（手動メール通知）
+`functions/pf-eccube3/m08-08_admin_customer_customer_manual_mail.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M08-08-MSG-001 | インフォ(成功) | 管理画面上部 | メール送信が完了しました。 | POSTされた手動メールフォームが有効で、mode=complete のとき |
 
 ## M08-09 会員管理 — 配送先一覧表示/編集
 `functions/pf-eccube3/m08-09_admin_customer_customer_delivery.md`
@@ -1403,12 +1477,18 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M09-08-MSG-001 | インフォ(成功) | 管理画面上部 | メンテナンスモードを有効にしました。 | POSTフォームが送信・妥当で、isMaintenanceがfalseかつmaintenance=onのとき |
-| M09-08-MSG-002 | インフォ(成功) | 管理画面上部 | メンテナンスモードを無効にしました。 | POSTフォームが送信・妥当で、isMaintenanceがtrueかつmaintenance=offのとき |
 | M09-08-MSG-003 | インフォ(成功) | 管理画面上部 | 削除しました | POSTフォームが送信・妥当で、cacheUtil->clearCache()実行後に成功通知として登録 |
 | M09-08-MSG-004 | 要ソース確認 | （表示文言なし・内部フラグ） | 要ソース確認 | POSTフォームが送信・妥当で、eccube_allow_maintenance_modeがtrueのとき、cacheUtil->clearCache()呼び出し後に登録 |
 | M09-08-MSG-005 | インフォ | 画面に表示しない（JS起動用フラグ） | 要ソース確認 | キャッシュ管理のPOSTが送信済みかつ検証成立で、設定 eccube_allow_maintenance_mode が true のとき |
 | M09-08-MSG-006 | インフォ(成功) | 管理画面上部 | 削除しました | キャッシュ管理のPOSTが送信済みかつ検証成立で、キャッシュ削除処理を予約した後 |
+
+## M09-09 m09-09_admin_content_content_maintenance（管理画面_コンテンツ管理_メンテナンス管理）
+`functions/ec-cube-enterprise/m09-09_admin_content_content_maintenance.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M09-09-MSG-001 | インフォ(成功) | 管理画面上部 | メンテナンスモードを有効にしました。 | POSTフォームが送信・妥当で、isMaintenanceがfalseかつmaintenance=onのとき |
+| M09-09-MSG-002 | インフォ(成功) | 管理画面上部 | メンテナンスモードを無効にしました。 | POSTフォームが送信・妥当で、isMaintenanceがtrueかつmaintenance=offのとき |
 
 ## M09-10 M09-10（支店トップページ管理）
 `functions/pf-eccube3/m09-10_admin_content_content_branch_top_page.md`
@@ -1443,12 +1523,6 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M10-04-MSG-001 | インフォ(成功) | 管理画面上部 | 保存しました | フォーム送信済みかつバリデーション成功 |
-| M10-04-MSG-002 | 警告 | 管理画面上部 | 税込%min% ~ %max%の購入で選択できる支払い方法がありません。支払方法の利用条件をご確認ください。 | 保存後、支払方法が存在し統合後の利用条件範囲が2件以上（count($mergedRules) > 1） |
-| M10-04-MSG-003 | エラー | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | 配送方法削除時にForeignKeyConstraintViolationExceptionが発生 |
-| M10-04-MSG-004 | インフォ(成功) | 管理画面上部 | 削除しました | 配送方法の削除・flush成功 |
-| M10-04-MSG-005 | インフォ(成功) | 管理画面上部 | 要ソース確認 | 対象配送方法の表示状態を反転 |
-| M10-04-MSG-006 | インフォ(成功) | 管理画面上部 | 地域別最短到着日設定を保存しました。 | POST(保存)リクエスト |
 | M10-04-MSG-007 | インフォ(成功) | 管理画面上部 | 保存しました | フォーム送信済みかつバリデーション成功 |
 | M10-04-MSG-008 | インフォ(成功) | 管理画面上部 | 削除しました | 支払方法の削除・flush成功 |
 | M10-04-MSG-009 | エラー | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | 支払方法削除時にForeignKeyConstraintViolationExceptionが発生 |
@@ -1470,6 +1544,12 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
 | M10-06-MSG-001 | 確認 | 画面中央(ダイアログ/モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 一覧の対象行の削除アイコンを押下し DeleteModal が表示されたとき（shown.bs.modal で data-message を p.modal-message へ設定。%name% は当該 Delivery.name） |
+| M10-06-MSG-002 | インフォ(成功) | 管理画面上部 | 保存しました | フォーム送信済みかつバリデーション成功 |
+| M10-06-MSG-003 | 警告 | 管理画面上部 | 税込%min% ~ %max%の購入で選択できる支払い方法がありません。支払方法の利用条件をご確認ください。 | 保存後、支払方法が存在し統合後の利用条件範囲が2件以上（count($mergedRules) > 1） |
+| M10-06-MSG-004 | エラー | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | 配送方法削除時にForeignKeyConstraintViolationExceptionが発生 |
+| M10-06-MSG-005 | インフォ(成功) | 管理画面上部 | 削除しました | 配送方法の削除・flush成功 |
+| M10-06-MSG-006 | インフォ(成功) | 管理画面上部 | 要ソース確認 | 対象配送方法の表示状態を反転 |
+| M10-06-MSG-007 | インフォ(成功) | 管理画面上部 | 地域別最短到着日設定を保存しました。 | POST(保存)リクエスト |
 
 ## M10-07 店舗設定 — 税率設定（共通税率・商品別税率オプション）
 `functions/pf-eccube3/m10-07_admin_base_setting_setting_shop_tax.md`
@@ -1699,6 +1779,7 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
 | M13-12-MSG-001 | エラー(バリデーション) | 入力項目直下/フォーム上部 | 終了日時は、開始日時より大きく設定してください | 開始日時From・Toの両方が入力され、開始日時Fromが開始日時Toより後の状態で検索フォームを送信したとき |
+| M13-12-MSG-002 | インフォ(成功) | 管理画面上部 | 保存しました | フォーム送信済みかつ有効で、イベント申込登録処理が正常終了したとき |
 
 ## M13-13 M13-13（イベント申込一括CSV登録）
 `functions/pf-eccube3/m13-13_admin_event_event_entry_csv_import.md`
@@ -1732,13 +1813,6 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M14-01-MSG-001 | エラー | 管理画面上部 | 削除に失敗しました | フォーム送信済み・有効で、削除不可のカード詳細IDが送信された詳細IDから欠落したとき |
-| M14-01-MSG-002 | インフォ(成功) | 管理画面上部 | 保存しました | フォーム送信済み・有効で、persist/flush/commitが成功したとき |
-| M14-01-MSG-003 | エラー | 管理画面上部 | 保存に失敗しました | 保存トランザクション中にExceptionが発生したとき |
-| M14-01-MSG-007 | エラー | 管理画面上部 | 削除に失敗しました | 送信された cardIds が空のとき |
-| M14-01-MSG-008 | エラー | 管理画面上部 | 削除に失敗しました | 選択カードの削除処理でExceptionが発生したとき |
-| M14-01-MSG-009 | インフォ(成功) | 管理画面上部 | 削除しました | 一括削除で1件以上の削除に成功し deleteCount>0 のとき |
-| M14-01-MSG-010 | エラー | 管理画面上部 | デッキまたは商品にカードが登録されているため、%card_name% カード情報を削除することができません。 | 選択カードが isDeletable=false、または削除中に ForeignKeyConstraintViolationException が発生したとき（%card_name%=スキップしたカード名） |
 | M14-01-MSG-011 | 警告 | 画面中央(ダイアログ) | 1つ以上のカードを選択してください。 | チェックボックス（cardIds）が1件も選択されていないとき |
 | M14-01-MSG-012 | 確認 | 画面中央(ダイアログ) | 選択されたカードを削除してもよろしいですか？ | カード選択済みで一括削除ボタンを押したとき（data-confirm がある場合のみ表示） |
 | M14-01-MSG-013 | 確認 | 画面中央(ダイアログ) | カード名リスト作成バッチを実行しますか？ | ボタン押下時（disabled でない場合） |
@@ -1754,6 +1828,17 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M14-01-MSG-023 | 警告 | 画面中央(ダイアログ) | エラーが発生しました | admin_card_generate_list への Ajax POST が失敗（.fail）したとき |
 | M14-01-MSG-024 | 確認 | 画面中央(ダイアログ) | 選択されたカードを削除してもよろしいですか？ | カードを1件以上選択して「一括削除」を押したとき（data-confirm がある場合のみ表示） |
 | M14-01-MSG-025 | 確認 | 画面中央(モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 対象行の削除アイコン押下で DeleteModal を開いたとき（data-message を p.modal-message へ挿入。%name%=対象カードの getNameJpWithEn()） |
+| M14-01-MSG-026 | エラー(バリデーション) | 入力項目直下 | 数字で入力してください。 | POST送信時にCMCが正規表現 /^\d+(\.\d+)?$/ に一致せずフォームが無効のとき |
+
+## M14-03 カード管理 — 一括削除
+`functions/pf-eccube3/m14-03_admin_card_card_bulk_delete.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M14-03-MSG-001 | エラー | 管理画面上部 | 削除に失敗しました | 送信された cardIds が空のとき |
+| M14-03-MSG-002 | エラー | 管理画面上部 | 削除に失敗しました | 選択カードの削除処理でExceptionが発生したとき |
+| M14-03-MSG-003 | インフォ(成功) | 管理画面上部 | 削除しました | 一括削除で1件以上の削除に成功し deleteCount>0 のとき |
+| M14-03-MSG-004 | エラー | 管理画面上部 | デッキまたは商品にカードが登録されているため、%card_name% カード情報を削除することができません。 | 選択カードが isDeletable=false、または削除中に ForeignKeyConstraintViolationException が発生したとき（%card_name%=スキップしたカード名） |
 
 ## M14-04 カード管理 — 新規登録・編集・削除（詳細フォーム）
 `functions/pf-eccube3/m14-04_admin_card_card_register_update_delete.md`
@@ -1764,6 +1849,9 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M14-04-MSG-002 | エラー | 管理画面上部 | デッキまたは商品にカードが登録されているため、%card_name% カード情報を削除することができません。 | 対象カードが isDeletable=false のとき（%card_name%=対象カードの getNameJpWithEn()） |
 | M14-04-MSG-003 | エラー | 管理画面上部 | 削除に失敗しました | 単体カード削除の remove/flush でExceptionが発生したとき |
 | M14-04-MSG-004 | インフォ(成功) | 管理画面上部 | 削除しました | 単体カードの remove/flush が成功したとき |
+| M14-04-MSG-005 | エラー | 管理画面上部 | 削除に失敗しました | フォーム送信済み・有効で、削除不可のカード詳細IDが送信された詳細IDから欠落したとき |
+| M14-04-MSG-006 | インフォ(成功) | 管理画面上部 | 保存しました | フォーム送信済み・有効で、persist/flush/commitが成功したとき |
+| M14-04-MSG-007 | エラー | 管理画面上部 | 保存に失敗しました | 保存トランザクション中にExceptionが発生したとき |
 
 ## M14-05 カード管理 — カード CSV 登録（取込）
 `functions/pf-eccube3/m14-05_admin_card_card_csv_import.md`
@@ -1777,11 +1865,7 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M14-06-MSG-001 | インフォ(成功) | 管理画面上部 | 保存しました | 新規登録フォームを送信しフォームが有効で保存処理が正常終了したとき |
-| M14-06-MSG-002 | インフォ(成功) | 管理画面上部 | 保存しました | 編集フォームを送信しフォームが有効で保存処理が正常終了したとき |
-| M14-06-MSG-007 | エラー | 管理画面上部 | 要ソース確認 | POST先admin_cardset_download_each_langのZIP生成処理(downloadEachLang)で例外が発生したとき |
 | M14-06-MSG-008 | 確認 | ブラウザ標準ダイアログ(window.confirm) | プロモカード一覧をダウンロードしますか? | カードセットのチェックボックスを1件も選択せずに画像ダウンロードボタンを押したとき |
-| M14-06-MSG-009 | エラー | 該当フォーム項目直下 | 半角文字のみ入力できます。 | 「登録」押下時のフォームバリデーションで略称に半角(ASCII)以外の文字が含まれるとき |
 
 ## M14-07 カードセット管理 — 収録カード画像 ZIP ダウンロード（セット別／言語別）
 `functions/pf-eccube3/m14-07_admin_card_cardset_image_download.md`
@@ -1789,6 +1873,7 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
 | M14-07-MSG-001 | エラー | 管理画面上部 | 要ソース確認 | POST先admin_cardset_downloadのZIP生成処理(download)で例外が発生したとき |
+| M14-07-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | POST先admin_cardset_download_each_langのZIP生成処理(downloadEachLang)で例外が発生したとき |
 
 ## M14-08 カード管理 — カードセット新規登録・編集・削除
 `functions/pf-eccube3/m14-08_admin_card_cardset_register_update_delete.md`
@@ -1799,6 +1884,9 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M14-08-MSG-002 | インフォ(成功) | 管理画面上部 | 削除しました | DELETE要求のCSRFトークンが有効でカードセット削除・flushが正常終了したとき |
 | M14-08-MSG-003 | エラー | 管理画面上部 | 既にカードセットにカードが登録されているため、%name% のカードセット情報は削除することができません。 | 削除時に外部キー制約違反(子カードが存在)が発生したとき |
 | M14-08-MSG-004 | エラー | 管理画面上部 | 削除に失敗しました | 削除時に外部キー制約違反以外の例外が発生したとき |
+| M14-08-MSG-005 | インフォ(成功) | 管理画面上部 | 保存しました | 新規登録フォームを送信しフォームが有効で保存処理が正常終了したとき |
+| M14-08-MSG-006 | インフォ(成功) | 管理画面上部 | 保存しました | 編集フォームを送信しフォームが有効で保存処理が正常終了したとき |
+| M14-08-MSG-007 | エラー | 該当フォーム項目直下 | 半角文字のみ入力できます。 | 「登録」押下時のフォームバリデーションで略称に半角(ASCII)以外の文字が含まれるとき |
 
 ## M14-09 カード管理 — フォーマット一覧
 `functions/pf-eccube3/m14-09_admin_card_format_list.md`
@@ -1938,10 +2026,18 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 | M16-03-MSG-012 | エラー(バリデーション) | 入力項目直下 | 期間を入力してください。 | POSTで一括読込フォームを送信し、開始日が未入力のとき |
 | M16-03-MSG-013 | エラー(バリデーション) | 入力項目直下 | 期間を入力してください。 | POSTで一括読込フォームを送信し、終了日が未入力のとき |
 
-## M16-06 データ管理 — 買取価格対応表（一覧）
-`functions/pf-eccube3/m16-06_admin_data_data_buy_price_list.md`
+## M16-04 データ管理 — MTGマスターデータ編集
+`functions/pf-eccube3/m16-04_admin_data_hareruya_mtg_masterdata.md`
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M16-06-MSG-001 | インフォ(成功) | 管理画面上部 | 登録が完了しました。 | POSTフォームが送信済みかつ有効で、買取価格更新処理の後に addSuccess を実行したとき |
+| M16-04-MSG-001 | インフォ(成功) | 管理画面上部 | 保存しました | POSTでeditFormが送信済みかつ有効で、postedEntityKeyの設定が存在し storeAction->handle が正常終了したとき |
+| M16-04-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | POSTでeditFormが送信済みかつ有効で、storeAction->handle 中に \RuntimeException を捕捉したとき（catch節） |
+
+## M16-07 データ管理 — 買取価格対応表（編集）
+`functions/pf-eccube3/m16-07_admin_data_data_buy_price_list_edit.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M16-07-MSG-001 | インフォ(成功) | 管理画面上部 | 登録が完了しました。 | POSTフォームが送信済みかつ有効で、買取価格更新処理の後に addSuccess を実行したとき |
 

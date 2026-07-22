@@ -170,8 +170,6 @@
 | M03-11-MSG-002 | 管理画面上部フラッシュ | 削除しました | 対象カテゴリが存在し `DELETE …/category/{id}/delete` の削除処理が正常終了したとき（成功後、親があれば親配下、なければ一覧へリダイレクト） |
 | M03-11-MSG-003 | 管理画面上部フラッシュ | 関連するデータがあるため「%name%」を削除できませんでした | カテゴリ削除処理の try 節で例外（`\Exception`）を捕捉したとき（`CategoryController.php:700` `admin.common.delete_error_foreign_key`）。`%name%` は対象カテゴリ名で実行時置換 |
 | M03-11-MSG-004 | 管理画面上部フラッシュ | 既に削除されています | DELETE 時に対象カテゴリが DB 上に存在しないとき（`CategoryController.php:669-674` `deleteMessage()` → `admin.common.delete_error_already_deleted`）。警告フラッシュ。親判定なしでカテゴリ一覧へリダイレクト（fable5レビュー追加） |
-| M03-11-MSG-005 | 削除確認モーダル本文 | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | カテゴリ一覧行の削除ボタン押下でモーダル表示時に `data-message` を JS で本文へ挿入（`category.twig:461,120-127` `admin.common.delete_modal__message`）。`%name%` は対象カテゴリ名で実行時置換（fable5レビュー追加） |
-| M03-11-MSG-006 | ブラウザ確認ダイアログ（window.confirm） | 本当に並べ替えを実行してよろしいですか? | ドラッグ並べ替え直後または上下矢印クリック時（`category.twig:66,79,99,112` `admin.product.category_sort_drag_confirm`）。OK で `admin_product_category_sort_no_move` へ Ajax POST。機能帰属は m03-45 カテゴリー一覧の可能性あり=要確認（fable5レビュー追加） |
 | M03-11-MSG-007 | 入力項目直下（form_errors） | JPEG / PNG / GIF の画像ファイルのみアップロードできます。 | バナー／アイコン画像がフォーム経由で MIME 不一致のとき（`CategoryType.php:81` `form_error.category_image_invalid_mime`）。通常操作は FilePond の Ajax 経由のためフォーム経由での発火経路は要ソース確認（fable5レビュー追加） |
 | M03-11-MSG-008 | 入力項目直下（form_errors） | 画像ファイルのサイズが大きすぎます（最大 {{ limit }} {{ suffix }}）。 | バナー／アイコン画像がフォーム経由で 10M 超過のとき（`CategoryType.php:82` `form_error.category_image_too_large`）。`{{ limit }} {{ suffix }}` は実行時置換。発火経路は要ソース確認（fable5レビュー追加） |
 | M03-11-MSG-009 | 入力項目直下（form_errors） | 画像として読み取れない、または破損したファイルです。 | バナー／アイコン画像がフォーム経由で破損検出されたとき（`CategoryType.php:84` `form_error.category_image_corrupted`）。発火経路は要ソース確認（fable5レビュー追加） |

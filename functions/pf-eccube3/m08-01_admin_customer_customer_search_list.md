@@ -339,7 +339,6 @@ DCIナンバー・MTG Companion登録本名・買取総額・買取件数等の�
 | M08-01-MSG-001 | メールを送信しました | 仮会員の操作メニュー「仮会員メール再送」→確認モーダルの「送信」で、CSRF検証後に確認メール再送が完了したとき。admin_customer（会員一覧）へリダイレクト |
 | M08-01-MSG-002 | 削除しました | 削除確認モーダルの「削除」で、CSRF検証後に会員の論理削除（del_flg設定・flush）が成功したとき。admin_customer_page（保持page_no）へ ?resume=1 付きでリダイレクト |
 | M08-01-MSG-003 | 関連するデータがあるため「%name%」を削除できませんでした | 会員削除時に ForeignKeyConstraintViolationException が発生したとき（%name% は name01+半角空白+name02）。admin_customer_page（保持page_no）へ ?resume=1 付きでリダイレクト |
-| M08-01-MSG-004 | メール送信が完了しました。 | 操作メニュー「メール通知」→確認画面の「メール送信」ボタンで、手動メールフォームが有効かつ mode=complete のとき。admin_customer_edit（会員編集）へリダイレクト |
 | M08-01-MSG-005 | 検索パターン名を登録しました。 | 「検索条件保存」ボタンで pattern_name 入力済みかつ保存（persist・flush）完了時。リダイレクトせず検索結果を再表示（admin.common.save_pattern.success=messages.ja.yaml:1799; SearchControllerTrait.php:265） |
 | M08-01-MSG-006 | 検索パターン名を入力して下さい。 | 「検索条件保存」ボタンで pattern_name が null または空文字のとき。リダイレクトせず検索結果を再表示（admin.common.save_pattern.error.name_empty=messages.ja.yaml:1800; SearchControllerTrait.php:247） |
 | M08-01-MSG-007 | 検索パターン名を削除しました。 | 「検索条件削除」ボタンで CSRF 有効・対象パターン存在・削除（remove・flush）完了時。admin_customer へリダイレクト（admin.common.delete_pattern.success=messages.ja.yaml:1802; SearchControllerTrait.php:301） |

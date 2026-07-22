@@ -249,12 +249,6 @@
 | M03-30-MSG-003 | 画面上部フラッシュ（エラー） | %maxRecord% 行を超えるCSVファイルは登録できません。 | CSV の行数が上限（`ADMIN_CSV_IMPORT_MAX_ROWS`）以上のとき。`%maxRecord%` は実行時に値が代入される |
 | M03-30-MSG-004 | 画面上部フラッシュ（エラー） | 要ソース確認 | CsvImporter の取込結果が `hasError()` のとき（可変：`$error['message']`。CsvImporter／ProductPriceImportHandler が設定するメッセージ配列で単一に確定不可。代入例「%d行目: セールフラグを無効にしたため、CSVに設定された販売価格は反映されていません。」「%d行目: 通常商品のため、販売価格は変更されませんでした。買取価格のみ更新しています。」） |
 | M03-30-MSG-005 | 画面上部フラッシュ（成功） | 登録が完了しました。 | CsvImporter の取込結果にエラーがなく、登録が正常終了したとき |
-| M03-30-MSG-006 | 管理画面上部 | 要ソース確認（variable: $error->getMessage()） | POST後、CsvImportTypeのフォームが不正で、ルートフォーム直下のエラーを取得したとき |
-| M03-30-MSG-007 | 管理画面上部 | CSVのフォーマットが一致しません | フォームのimport_file取得結果がnullのとき |
-| M03-30-MSG-008 | 管理画面上部 | %maxRecord% 行を超えるCSVファイルは登録できません。 | CSV行数がADMIN_CSV_IMPORT_MAX_ROWS以上のとき |
-| M03-30-MSG-009 | 管理画面上部 | 要ソース確認（variable: $error['message']） | CsvImporterの取込結果がhasError()のとき |
-| M03-30-MSG-010 | 管理画面上部 | 登録が完了しました。 | CsvImporterの取込結果にエラーがないとき |
-| M03-30-MSG-011 | 管理画面上部 | %d行目: セール中商品のため、販売価格は変更されません。（基準価格・買取価格は更新しました） | 取込成功時、対象行にセール中の商品規格があり、ハンドラが情報メッセージを追加したとき |
 
 ---
 

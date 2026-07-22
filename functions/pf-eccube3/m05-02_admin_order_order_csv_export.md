@@ -204,11 +204,6 @@ CSV出力リクエスト自体に対するフォーム検証はない。列定�
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
 |--------------|----------|--------------|----------|
-| M05-02-MSG-001 | 管理画面上部フラッシュ | 選択してください | 出荷実績インポート用CSV出力で `order_ids` が未指定（配列でない/空）のとき（OrderCsvController.php:204） |
-| M05-02-MSG-002 | 管理画面上部フラッシュ | 存在しないカードIDが含まれています。 | CSV生成で対象注文行が生成できない（generateResultCsvが空）とき（OrderCsvController.php:219 / OrderCsv.php:60 / admin.csv.error.export.not_registered） |
-| M05-02-MSG-003 | 管理画面上部フラッシュ | 既に %csvName% インポートが実行中です。 | 出荷実績CSV取込がすでに実行中（isFree=false）のとき（OrderCsvController.php:288-289 / messages.ja.yaml:1623 `admin.csv.error.data.already_executing`。`%csvName%` はOrderCsvController.php:288の固定リテラル `出荷実績CSV`） |
-| M05-02-MSG-004 | 管理画面上部フラッシュ | 要ソース確認 | 出荷実績CSV取込処理中に例外が発生したとき（OrderCsvController.php:323-329, `$e->getMessage()`。単一の逐語literalに確定不可。候補: `admin.csv.error.data.lock_failed`(alert.twig|transで「DBのロックに失敗しました。」1624)/`format.header`(2402)/`data.empty`(2404)/`format.body`(2403)/`data.require`(2406)/`data.not_registered`(2407)/`customer.not_member`(OrderCsv.php:122,2447)/`exception.datetime`(OrderCsv.php:127,2448)。実行時行番号・CSV値を含む文言があり要ソース確認） |
-| M05-02-MSG-005 | 管理画面上部フラッシュ | 登録が完了しました。 | 出荷実績CSV取込が正常完了しコミットしたとき（OrderCsvController.php:346） |
 
 ---
 
