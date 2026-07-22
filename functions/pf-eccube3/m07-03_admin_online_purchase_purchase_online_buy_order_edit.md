@@ -98,6 +98,25 @@
 
 ---
 
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M07-03-MSG-001 | 画面中央(ダイアログ) | search product failed. | 商品検索の POST Ajax（admin_purchase_search_product）が error コールバックに入ったとき |
+| M07-03-MSG-002 | 画面中央(ダイアログ) | search product failed. | ページング読込の GET Ajax（admin_purchase_search_product_page）が error コールバックに入ったとき |
+| M07-03-MSG-003 | 画面中央(ダイアログ) | 編集した内容は元に戻ります。解除しますか？ | 実在庫が編集表示（detail_stock_edit）の状態で切替ボタンを押したとき |
+| M07-03-MSG-004 | 画面中央(ダイアログ) | 商品の検索に失敗しました。 | 商品検索の POST Ajax（admin_search_product）が error コールバックに入ったとき |
+| M07-03-MSG-005 | 画面中央(ダイアログ) | 商品の検索に失敗しました。 | ページング読込の GET Ajax（admin_search_product_page）が error コールバックに入ったとき |
+| M07-03-MSG-006 | 画面中央(ダイアログ) | CSRFトークンが取得できません。 | モードが register で、config.registerIndividualStockToken（detail.twig:98 の csrf_token('purchase_register_individual_stock')）が空のとき |
+| M07-03-MSG-007 | 画面中央(ダイアログ) | すべての買取商品の売却ステータスを「売却する」に変更します。よろしいですか？ | 一括売却登録ボタン押下時（送信前確認） |
+| M07-03-MSG-008 | ボタン上(該当ボタン自身) | 査定編集 | ボタンが editable 状態（査定編集中）で押され、確定状態へ戻すとき |
+| M07-03-MSG-009 | ボタン上(該当ボタン自身) | 査定確定 | ボタンが editable でない状態（確定状態）で押され、査定編集を開始するとき |
+| M07-03-MSG-010 | ボタン上(該当ボタン自身) | 編集 | ボタンが editable 状態（編集中）で押され、確定状態へ戻すとき |
+| M07-03-MSG-011 | ボタン上(該当ボタン自身) | 確定 | ボタンが editable でない状態（確定状態）で押され、依頼者情報の編集を開始するとき |
+| M07-03-MSG-012 | 画面中央(ダイアログ/モーダル) | {{ buyMainCard.vars.value.product.name }} を削除してもよろしいですか？ | isSupplyProduct が真かつ hasPersistedId が真の行に描画される「削除」リンクを押下したとき（confirm ダイアログ） |
+| M07-03-MSG-013 | 入力項目直下 | 数字で入力してください。 | 買取詳細の保存時、口座番号が数字のみの正規表現に一致しない場合 |
+| M07-03-MSG-014 | 入力項目直下 | 登録番号を入力してください。 | POST保存時、適格請求書発行事業者フラグがtrueで、登録番号が空の場合 |
+
 ## 業務ルール・計算
 
 | 項目 | 内容 |

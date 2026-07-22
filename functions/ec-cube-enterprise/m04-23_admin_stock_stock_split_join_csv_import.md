@@ -334,3 +334,9 @@ C28(2-6)
 ```
 
 </details>
+
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M04-23-MSG-001 | 入力項目直下 | 要ソース確認（key_unknown: admin.stock.split_csv_modal.inventory_category_required） | inventory_categoryが空のときのNotBlank制約 |

@@ -90,6 +90,17 @@ DB一意制約の有無は実DBの索引（マイグレーション）を正と�
 
 ---
 
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M05-27-MSG-001 | 画面中央(ダイアログ/モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 自店（WaitingTag.BaseInfo.id == BaseInfo.id）の一覧行で「削除」を押し #DeleteModal が shown.bs.modal になったとき（data-message を p.modal-message へ挿入。%name% は対象行の WaitingTag.waiting_tag） |
+| M05-27-MSG-002 | 管理画面上部 | 登録できませんでした。 | POST登録フォームが未送信またはバリデーション不正のとき |
+| M05-27-MSG-003 | 管理画面上部 | 要ソース確認（variable: $e->getMessage()） | 登録処理中にWaitingTagStoreActionが例外を送出したとき |
+| M05-27-MSG-004 | 管理画面上部 | 登録が完了しました。 | POST登録フォームが有効で、WaitingTagStoreActionが例外なく完了したとき |
+| M05-27-MSG-005 | 管理画面上部 | 削除に失敗しました | DELETE削除処理中にWaitingTagDeleteActionが例外を送出したとき |
+| M05-27-MSG-006 | 入力項目直下 | 半角英字のみで入力してください | 登録POST時、waiting_tagが正規表現 /^[a-zA-Z]+$/ に一致しない |
+
 ## 業務ルール・計算
 
 | 項目 | 内容 |

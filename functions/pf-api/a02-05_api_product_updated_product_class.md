@@ -169,6 +169,25 @@ HTTP 200。
 
 ---
 
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| A02-05-MSG-001 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のcategory_del_flgが1で、カテゴリ削除時にForeignKeyConstraintViolationExceptionが発生したとき |
+| A02-05-MSG-002 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のclass_name_del_flgが1で、規格削除時にForeignKeyConstraintViolationExceptionが発生したとき |
+| A02-05-MSG-003 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のclass_category_del_flgが1で、規格分類削除時にForeignKeyConstraintViolationExceptionが発生したとき |
+| A02-05-MSG-004 | 管理画面上部 | 保存に失敗しました | POST時、対象ProductにIDがないとき |
+| A02-05-MSG-005 | 管理画面上部 | 保存しました | POSTフォームが有効で、保存処理およびADMIN_PRODUCT_EDIT_COMPLETEイベント完了後 |
+| A02-05-MSG-006 | 管理画面上部 | 削除しました | 非XHRのDELETEで商品削除が成功したとき |
+| A02-05-MSG-007 | 管理画面上部 | 要ソース確認 | 外部キー制約例外時（ForeignKeyConstraintViolationException）。id=null分岐はルート要件id=\d+のため通常到達不可 |
+| A02-05-MSG-008 | 管理画面上部 | 商品を複製しました | POST先idの商品が存在し、複製・flush・ADMIN_PRODUCT_COPY_COMPLETEイベントが完了したとき |
+| A02-05-MSG-009 | 管理画面上部 | 商品の複製に失敗しました | POST先idに対応する商品が存在しないとき |
+| A02-05-MSG-010 | 管理画面上部 | 商品の複製に失敗しました | copyアクションのidがnullのとき（ルート要件id=\d+のため通常到達不可） |
+| A02-05-MSG-011 | 管理画面上部 | 要ソース確認 | 個別商品の状態保存中に例外が発生したとき |
+| A02-05-MSG-012 | 管理画面上部 | %status%: %count%件が正常に適用されました | 少なくとも1件の商品の状態保存に成功したとき |
+| A02-05-MSG-013 | 管理画面上部 | 要ソース確認 | 一括状態変更処理のtryブロックで例外が発生したとき |
+| A02-05-MSG-014 | 管理画面上部 | 既に削除されています | 非XHRのDELETE要求でidに対応する商品が存在しない（削除済み）とき |
+
 ## 業務ルール・計算
 
 - 更新対象はリクエストで指定されたIDと認証・権限条件で特定できる既存レコードに限定する。

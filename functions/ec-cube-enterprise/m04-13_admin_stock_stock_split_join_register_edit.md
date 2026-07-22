@@ -558,3 +558,14 @@ NG
 ```
 
 </details>
+
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M04-13-MSG-029 | 画面中央(ダイアログ) | 保存に失敗しました | 結合元の在庫区分をchangeした際のfetch（admin_stock_join_update_source_stock_location）がcatchに入ったとき（通信失敗、または応答JSONの解析失敗。HTTPエラーでもJSONが返る場合はthen側の alert(msg) 分岐=同twig:826-827 でありcatchに入らない） |
+| M04-13-MSG-030 | 画面中央(ダイアログ) | ポップアップがブロックされているため、ピック表を開けませんでした。ブラウザの設定を確認してください。 | 欠品入力画面でピック表出力ボタンを押下し、window.open がnullを返した（ポップアップがブロックされた）とき |
+| M04-13-MSG-031 | 画面中央(ダイアログ) | ピック表用データの取得に失敗しました。 | ピック表PDF出力Ajax（admin_stock_join_pick_list_pdf_export）のdoneで success===true かつ html が得られず、かつ redirectUrl も返らなかったとき |
+| M04-13-MSG-032 | 画面中央(ダイアログ) | ピック表用データの取得に失敗しました。 | ピック表PDF出力Ajax（admin_stock_join_pick_list_pdf_export）が fail コールバックに入ったとき（通信失敗のほか、CSRFトークン不正時のHTTP 403 JSON応答 StockJoinController.php:1206-1208 も含む） |
+| M04-13-MSG-033 | 画面中央(ダイアログ) | 保存に失敗しました | 数量入力欄を変更（change）して data-update-url（admin_stock_split_update_destination_quantity）へ Ajax POST した際、fetch が通信例外で失敗（.catch）したとき |
+| M04-13-MSG-034 | 画面中央(ダイアログ) | 保存に失敗しました | 在庫区分セレクトを変更（change）して data-update-dest-location-url（admin_stock_split_update_destination_stock_location、stock_split_edit.twig:179）へ Ajax POST した際、fetch が通信例外で失敗（.catch）したとき |

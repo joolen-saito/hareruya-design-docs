@@ -83,6 +83,24 @@ HareruyaEc プラグインが管理画面「データ管理」配下に提供す
 
 ---
 
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|--------------|----------|--------------|----------|
+| M16-03-MSG-001 | 画面中央(ダイアログ/モーダル) | この祝日を削除してもよろしいですか？ | 削除リンクを押下したとき（data-confirm が未指定のため共通JSが data-message の文言で確認ダイアログを表示する） |
+| M16-03-MSG-002 | 管理画面上部 | 祝日の期間指定には、左側に開始日、右側に終了日を入力してください。 | 期間指定フォーム（HolidayLoadType）をPOST送信し、開始日>終了日で Callback 制約 admin.data.holiday.range_invalid の違反が発生したとき。 |
+| M16-03-MSG-003 | 管理画面上部 | 登録できませんでした。 | 一括読込フォームが検証エラーとなり、かつ range_invalid 以外のエラーだったとき（開始日/終了日の未入力 admin.data.holiday.range_required など）。 |
+| M16-03-MSG-004 | 管理画面上部 | %date%は、既に祝日が登録されているのでスキップします。 | 一括読込の結果 result['skippedDates'] に既登録の日付が含まれるとき。該当日付1件につき1メッセージを積む。 |
+| M16-03-MSG-005 | 管理画面上部 | %count%件の祝日が登録されました。 | 一括読込の結果 result['addedCount'] が 0 より大きいとき（1件以上の祝日が新規登録された）。 |
+| M16-03-MSG-006 | 管理画面上部 | 指定された期間に、登録可能な祝日がありませんでした。 | 一括読込は成功したが result['addedCount'] が 0 のとき（指定期間の祝日がすべて既登録またはそもそも該当なし）。 |
+| M16-03-MSG-007 | 管理画面上部 | 入力した日付が、登録済みの祝日と重複しています。 | 新規追加フォーム（HolidayAddType）をPOST送信し、入力日付が MtbHolidayRepository::existsByDate で既登録と判定され Callback 制約 admin.data.holiday.overlap の違反が発生したとき。 |
+| M16-03-MSG-008 | 管理画面上部 | 登録できませんでした。 | 新規追加フォームが検証エラーとなり、かつ overlap 以外のエラーだったとき（名称未入力 admin.data.holiday.name_required、64文字超 admin.data.holiday.name_max、日付未入力 admin.data.holiday.date_required など）。 |
+| M16-03-MSG-009 | 管理画面上部 | 登録が完了しました。 | 新規追加フォームの検証を通過し HolidayAddAction::handle で mtb_holiday への1件登録が完了したとき。 |
+| M16-03-MSG-010 | 管理画面上部 | 削除しました | 削除リンクの確認ダイアログを承認して DELETE /{admin_route}/data/holiday/{id}/delete を送信し、isTokenValid() を通過して HolidayDeleteAction::handle が例外なく完了したとき。 |
+| M16-03-MSG-011 | 管理画面上部 | 削除に失敗しました | 削除送信後、HolidayDeleteAction::handle が \Exception を投げて catch されたとき。 |
+| M16-03-MSG-012 | 入力項目直下 | 期間を入力してください。 | POSTで一括読込フォームを送信し、開始日が未入力のとき |
+| M16-03-MSG-013 | 入力項目直下 | 期間を入力してください。 | POSTで一括読込フォームを送信し、終了日が未入力のとき |
+
 ## 業務ルール・計算
 
 本機能では金額計算や複合スコアリングを行わない。
