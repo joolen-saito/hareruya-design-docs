@@ -66,8 +66,8 @@
 | F06-09 | お気に入り商品一覧 | `function_spec_html_preview/pf-eccube3/f06-09_front_member_mypage_favorite_product.html` | 「セール対象商品のみ表示する」切替 | `GET /{_locale}/mypage/favorite/list?sale=1` | ec-cube-enterpriseの抽出ルートに一致なし |
 | F06-09 | お気に入り商品一覧 | `function_spec_html_preview/pf-eccube3/f06-09_front_member_mypage_favorite_product.html` | 表示順の切替（登録順・価格高い順・価格安い順） | `GET /{_locale}/mypage/favorite/list?sort=default` | ec-cube-enterpriseの抽出ルートに一致なし |
 | F06-11 | 買取履歴一覧 | `function_spec_html_preview/pf-eccube3/f06-11_front_member_mypage_buy_history.html` | オーダーID・処理状態画像 | `GET /{_locale}/mypage/purchase_history/detail/{id}` | ec-cube-enterpriseの抽出ルートに一致なし |
-| F06-12 | 買取履歴詳細 | `function_spec_html_preview/pf-eccube3/f06-12_front_member_mypage_buy_history_detail.html` | 買取履歴一覧のオーダーID・処理状態画像 | `GET /{_locale}/mypage/purchase_history/detail/{id}` | ec-cube-enterpriseの抽出ルートに一致なし |
-| F06-12 | 買取履歴詳細 | `function_spec_html_preview/pf-eccube3/f06-12_front_member_mypage_buy_history_detail.html` | 詳細画面の「承諾確定」ボタン | `POST /{_locale}/mypage/purchase_history/update/{id}` | ec-cube-enterpriseの抽出ルートに一致なし |
+| F06-15 | 買取履歴詳細 | `function_spec_html_preview/pf-eccube3/f06-15_front_member_mypage_buy_history_detail.html` | 買取履歴一覧のオーダーID・処理状態画像 | `GET /{_locale}/mypage/purchase_history/detail/{id}` | ec-cube-enterpriseの抽出ルートに一致なし |
+| F06-15 | 買取履歴詳細 | `function_spec_html_preview/pf-eccube3/f06-15_front_member_mypage_buy_history_detail.html` | 詳細画面の「承諾確定」ボタン | `POST /{_locale}/mypage/purchase_history/update/{id}` | ec-cube-enterpriseの抽出ルートに一致なし |
 | F06-12 | まとめて買取査定結果 | `function_spec_html_preview/pf-eccube3/f06-12_front_member_mypage_bulk_purchase_result.html` | 買取履歴詳細の「こちら（すべての査定結果）」リンク | `GET /mypage/purchase_history/list/{id}` | ec-cube-enterpriseの抽出ルートに一致なし |
 | F06-14 | 予約済み大会一覧 | `function_spec_html_preview/pf-eccube3/f06-14_front_member_mypage_event_reserved_list.html` | マイページの「予約済み大会一覧」ブロック | `GET /{_locale}/mypage/events` | ec-cube-enterpriseの抽出ルートに一致なし |
 | F06-14 | 予約済み大会一覧 | `function_spec_html_preview/pf-eccube3/f06-14_front_member_mypage_event_reserved_list.html` | 一覧のイベント名リンク | `GET /{_locale}/events/{id}` | ec-cube-enterpriseの抽出ルートに一致なし |

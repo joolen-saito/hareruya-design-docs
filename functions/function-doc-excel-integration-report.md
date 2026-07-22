@@ -359,7 +359,7 @@
 - F05-06 ネット買取買取手続き～完了 -> `sheet-9` from `functions/pf-eccube3/f05-06_front_online_purchase_buy_shopping_complete.md`
 - F06-11 買取履歴一覧 -> `sheet-10` from `functions/pf-eccube3/f06-11_front_member_mypage_buy_history.md`
 - F06-12 まとめて買取査定結果 -> `sheet-12` from `functions/pf-eccube3/f06-12_front_member_mypage_bulk_purchase_result.md`
-- F06-12 買取履歴詳細 -> `sheet-11` from `functions/pf-eccube3/f06-12_front_member_mypage_buy_history_detail.md`
+- F06-15 買取履歴詳細 -> `sheet-11` from `functions/pf-eccube3/f06-15_front_member_mypage_buy_history_detail.md`
 
 ### `excel_to_html/output/0306_基本設計仕様書(フロント_会員).html`
 - F06-01 新規会員登録 -> `sheet-3` from `functions/pf-eccube3/f06-01_front_member_customer_entry.md`

@@ -378,7 +378,7 @@ Embedded sections: 9
 - `f05-05-f05-05_front_online_purchase_buy_cart` / ネット買取カート / `functions/pf-eccube3/f05-05_front_online_purchase_buy_cart.md`
 - `f05-06-f05-06_front_online_purchase_buy_shopping_complete` / ネット買取買取手続き～完了 / `functions/pf-eccube3/f05-06_front_online_purchase_buy_shopping_complete.md`
 - `f06-11-f06-11_front_member_mypage_buy_history` / 買取履歴一覧 / `functions/pf-eccube3/f06-11_front_member_mypage_buy_history.md`
-- `f06-12-f06-12_front_member_mypage_buy_history_detail` / 買取履歴詳細 / `functions/pf-eccube3/f06-12_front_member_mypage_buy_history_detail.md`
+- `f06-15-f06-15_front_member_mypage_buy_history_detail` / 買取履歴詳細 / `functions/pf-eccube3/f06-15_front_member_mypage_buy_history_detail.md`
 - `f06-12-f06-12_front_member_mypage_bulk_purchase_result` / まとめて買取査定結果 / `functions/pf-eccube3/f06-12_front_member_mypage_bulk_purchase_result.md`
 
 ### excel_to_html/output/0306_基本設計仕様書(フロント_会員).html

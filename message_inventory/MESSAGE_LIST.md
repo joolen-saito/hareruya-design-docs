@@ -3,7 +3,7 @@
 ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書『表示メッセージ』表へ埋め込んだ確定メッセージの一覧。**捏造ゼロ**。
 
 - 総確定メッセージ: **1139件** / 機能数: **149**
-- codex + fable5 の二重批判レビュー済み（捏造0を両者独立に確認・誤割当212件是正）。詳細は `CODEX_REVIEW_REPORT.md`
+- codex + fable5 の二重批判レビュー済み。詳細は `CODEX_REVIEW_REPORT.md`
 - 正本: `message_inventory/message_inventory.tsv`（HTML: `function_spec_html_preview/`）
 
 ---
@@ -35,13 +35,6 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 |---|---|---|---|---|
 | F05-06-MSG-001 | エラー(バリデーション) | 入力項目直下 | この項目は必ず入力してください。 | 買取依頼内容の確認・確定フォームをPOSTし、銀行名が空でNotBlank制約に違反したとき |
 
-## F06-12 F06-12（買取履歴詳細）
-`functions/pf-eccube3/f06-12_front_member_mypage_bulk_purchase_result.md`
-
-| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
-|---|---|---|---|---|
-| F06-12-MSG-001 | インフォ(成功) | 画面上部 | 査定内容を承諾しました。 | 買取注文が本人のもので処理状態が連絡済み、かつ承諾確定POSTの処理がBadRequestHttpExceptionを送出せず完了したとき |
-
 ## F06-13 会員 — オンライン本人確認
 `functions/pf-eccube3/f06-13_front_member_mypage_online_identification.md`
 
@@ -56,6 +49,13 @@ ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書�
 |---|---|---|---|---|
 | F06-14-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | フォーム送信済みかつ有効で、登録処理が InvalidArgumentException を送出したとき |
 | F06-14-MSG-003 | エラー | 管理画面上部 | 保存に失敗しました | フォーム送信済みかつ有効で、登録処理が InvalidArgumentException 以外の Exception を送出したとき |
+
+## F06-15 F06-15（買取履歴詳細）
+`functions/pf-eccube3/f06-15_front_member_mypage_buy_history_detail.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| F06-15-MSG-001 | インフォ(成功) | 画面上部 | 査定内容を承諾しました。 | 買取注文が本人のもので処理状態が連絡済み、かつ承諾確定POSTの処理がBadRequestHttpExceptionを送出せず完了したとき |
 
 ## F06-18 F06-18（会員情報変更）
 `functions/pf-eccube3/f06-18_front_member_mypage_customer_edit.md`

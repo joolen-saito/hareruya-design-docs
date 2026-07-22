@@ -1349,7 +1349,7 @@
 | 状態 | spec | E2E ID数 | 次アクション |
 |---|---:|---:|---|
 | 未許可 | `e2e/spec/front/f06/f06_12_front_member_mypage_bulk_purchase_result.spec.ts` | 14 | 実行前に許可確認 |
-| 未許可 | `e2e/spec/front/f06/f06_12_front_member_mypage_buy_history_detail.spec.ts` | 23 | 実行前に許可確認 |
+| 未許可 | `e2e/spec/front/f06/f06_15_front_member_mypage_buy_history_detail.spec.ts` | 23 | 実行前に許可確認 |
 
 ## F06-13
 

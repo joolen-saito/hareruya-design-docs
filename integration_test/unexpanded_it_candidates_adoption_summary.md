@@ -120,7 +120,7 @@
 | 0 | 71 | フロント | F06-09 | お気に入り商品一覧 | `f06_09_front_member_mypage_favorite_product_it_cases.md` |
 | 0 | 71 | フロント | F06-10 | ポイント履歴 | `f06_10_front_member_mypage_point_history_it_cases.md` |
 | 0 | 71 | フロント | F06-11 | 買取履歴一覧 | `f06_11_front_member_mypage_buy_history_it_cases.md` |
-| 0 | 69 | フロント | F06-12 | 買取履歴詳細 | `f06_12_front_member_mypage_buy_history_detail_it_cases.md` |
+| 0 | 69 | フロント | F06-15 | 買取履歴詳細 | `f06_15_front_member_mypage_buy_history_detail_it_cases.md` |
 | 0 | 71 | フロント | F06-12 | まとめて買取査定結果 | `f06_12_front_member_mypage_bulk_purchase_result_it_cases.md` |
 | 0 | 60 | フロント | F06-13 | オンライン本人確認 | `f06_13_front_member_mypage_online_identification_it_cases.md` |
 | 0 | 71 | フロント | F06-14 | 予約済み大会一覧 | `f06_14_front_member_mypage_event_reserved_list_it_cases.md` |

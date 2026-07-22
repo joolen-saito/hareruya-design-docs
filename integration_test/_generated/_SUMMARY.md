@@ -141,7 +141,7 @@
 | f06_10_front_member_mypage_point_history | 生成 | 56 | OK |
 | f06_11_front_member_mypage_buy_history | 生成 | 56 | OK |
 | f06_12_front_member_mypage_bulk_purchase_result | 生成 | 58 | OK |
-| f06_12_front_member_mypage_buy_history_detail | 生成 | 58 | OK |
+| f06_15_front_member_mypage_buy_history_detail | 生成 | 58 | OK |
 | f06_13_front_member_mypage_online_identification | 生成 | 66 | OK |
 | f06_14_front_member_mypage_event_reserved_list | 生成 | 56 | OK |
 | f06_16_front_member_mypage_event_deck_edit | 生成 | 66 | OK |
