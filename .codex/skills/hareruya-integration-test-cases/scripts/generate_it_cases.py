@@ -563,6 +563,60 @@ def viewpoint_matches(vp: Viewpoint, flags: dict[str, bool]) -> bool:
     return match_rule(vp, flags) is not None
 
 
+# --- 適用述語(applicability)オーバーライド ---------------------------------
+# 一部の観点は(分類,大項目)の粗いマッチでは過剰捺印/ゼロ生成になる。
+# 設計書証拠でのLLM3値判定(該当/非該当/適用未確定)を viewpoint_applicability.tsv に
+# 持ち、制御対象観点は「該当」の機能にのみ生成する(証拠駆動)。
+# - No.109/110/111(楽観/悲観ロック/ロールバック): 過剰捺印を是正(非該当を落とす)
+# - No.517-527のRISK観点: ゼロ生成を是正(該当を追加。粗いマッチはNoneでも生成)
+CONTROLLED_VIEWPOINTS: set[int] = set()
+_APPLICABILITY: dict[tuple[str, str], str] = {}
+
+
+def load_applicability(repo: Path) -> None:
+    global _APPLICABILITY, CONTROLLED_VIEWPOINTS
+    path = repo / "integration_test" / "viewpoint_applicability.tsv"
+    if not path.exists():
+        return
+    table: dict[tuple[str, str], str] = {}
+    controlled: set[int] = set()
+    with path.open(encoding="utf-8") as f:
+        reader = csv.reader(f, delimiter="\t")
+        next(reader, None)
+        for row in reader:
+            if len(row) < 3:
+                continue
+            no, fid, verdict = row[0].strip(), row[1].strip(), row[2].strip()
+            table[(no, fid)] = verdict
+            try:
+                controlled.add(int(no))
+            except ValueError:
+                pass
+    _APPLICABILITY = table
+    CONTROLLED_VIEWPOINTS = controlled
+
+
+def func_id(stem: str) -> str | None:
+    """output_stem(例 f01_01_front_...) → 機能ID(f01-01)。適用述語テーブルの結合キー。"""
+    m = re.match(r"([a-zA-Z])(\d{2})[-_](\d{2})", stem)
+    return f"{m.group(1).lower()}{m.group(2)}-{m.group(3)}" if m else None
+
+
+def applicability_decision(vp: Viewpoint, func: str | None) -> bool | None:
+    """True=生成する / False=生成しない / None=適用述語の管轄外(粗いマッチに委ねる)。
+
+    制御対象観点は「該当」のみ生成。非該当・適用未確定・判定なしは生成しない
+    (適用未確定は要判定=シナリオ/人手裁定へ委譲し、結合母集合には入れない)。
+    """
+    try:
+        no = int(vp.no)
+    except (TypeError, ValueError):
+        return None
+    if no not in CONTROLLED_VIEWPOINTS:
+        return None
+    return _APPLICABILITY.get((vp.no, func or "")) == "該当"
+
+
 def limit_viewpoints(selected: list[Viewpoint], flags: dict[str, bool], max_cases: int) -> list[Viewpoint]:
     def score(vp: Viewpoint) -> tuple[int, int]:
         s = vp.search_text
@@ -716,7 +770,16 @@ def make_rows(
     allowed = allowed_layers if allowed_layers is not None else DEFAULT_XPROD_LAYERS
     viewpoints = filter_viewpoints(viewpoints, allowed)
     flags = context_flags(doc)
-    matched = [vp for vp in viewpoints if viewpoint_matches(vp, flags)]
+    func = func_id(output_stem(doc.path))
+    matched = []
+    for vp in viewpoints:
+        decision = applicability_decision(vp, func)  # 制御対象観点は証拠駆動
+        if decision is True:
+            matched.append(vp)
+        elif decision is False:
+            continue  # 制御対象かつ非該当/適用未確定 → 生成しない
+        elif viewpoint_matches(vp, flags):  # 管轄外は粗いマッチ
+            matched.append(vp)
     ordered = limit_viewpoints(matched, flags, len(matched))
     prefix = test_prefix(output_stem(doc.path))
     rows: list[list[str]] = []
@@ -1014,6 +1077,7 @@ def main() -> int:
     viewpoints_path = repo / "integration_test" / "integration-test-viewpoints.md"
     output_dir = repo / "integration_test"
     viewpoints = read_viewpoints(viewpoints_path)
+    load_applicability(repo)
     if not filter_viewpoints(viewpoints, allowed_layers):
         parser.error(f"指定層 {sorted(allowed_layers)} に該当する観点が0件です。観点マスタのテスト層列を確認してください。")
     html_files = discover_html(repo)
