@@ -602,19 +602,54 @@ def func_id(stem: str) -> str | None:
     return f"{m.group(1).lower()}{m.group(2)}-{m.group(3)}" if m else None
 
 
-def applicability_decision(vp: Viewpoint, func: str | None) -> bool | None:
-    """True=生成する / False=生成しない / None=適用述語の管轄外(粗いマッチに委ねる)。
+# --- 観点ごとの制御モード(codexレビュー確定) --------------------------------
+# チャネル機械ゲート: LLM不要。指定チャネルの機能のみ生成(フロント専用観点等)。
+CHANNEL_GATE: dict[int, set[str]] = {
+    412: {"FRONT"}, 413: {"FRONT"}, 414: {"FRONT"}, 415: {"FRONT"},
+}
+# opt-out: 対象scope内では「非該当(不在の明示証拠あり)」だけ落とす。
+# 該当・適用未確定・判定なしは残す(過剰削除を防ぐ)。認証認可・CSRF・エラー表示等。
+OPT_OUT_VIEWPOINTS: set[int] = {500, 501, 506, 422, 507}
+# 上記以外の制御対象(RISK・ロック・決済機密510等)は opt-in(該当のみ生成)。
 
-    制御対象観点は「該当」のみ生成。非該当・適用未確定・判定なしは生成しない
-    (適用未確定は要判定=シナリオ/人手裁定へ委譲し、結合母集合には入れない)。
+
+def channel_of_stem(stem: str) -> str:
+    t = stem.lower()
+    for key, name in (("_front_", "FRONT"), ("_admin_", "ADMIN"), ("_api_", "API"),
+                      ("_batch_", "BATCH"), ("_other_", "OTHER")):
+        if key in t:
+            return name
+    # 先頭文字でフォールバック
+    return {"f": "FRONT", "m": "ADMIN", "a": "API", "b": "BATCH", "o": "OTHER"}.get(
+        stem[:1].lower(), "?")
+
+
+def applicability_decision(
+    vp: Viewpoint, func: str | None, channel: str, flags: dict[str, bool]
+) -> bool | None:
+    """True=生成する / False=生成しない / None=管轄外(粗いマッチに委ねる)。
+
+    3モード(codex確定):
+    - チャネルゲート: 指定チャネルのみ生成(LLM不要)。
+    - opt-out: **scope gate(粗いマッチで該当)を満たす機能内で**、非該当のみ落とす。
+      該当/適用未確定/判定なしは残す。scope外(粗いマッチしない)は生成しない。
+      これが無いと、元々500が付かないバッチ等にまで opt-out=残す が広がってしまう。
+    - opt-in: 該当のみ生成(既定。RISK・ロック・決済機密など)。
     """
     try:
         no = int(vp.no)
     except (TypeError, ValueError):
         return None
+    if no in CHANNEL_GATE:
+        return channel in CHANNEL_GATE[no]
     if no not in CONTROLLED_VIEWPOINTS:
         return None
-    return _APPLICABILITY.get((vp.no, func or "")) == "該当"
+    verdict = _APPLICABILITY.get((vp.no, func or ""))
+    if no in OPT_OUT_VIEWPOINTS:
+        if not viewpoint_matches(vp, flags):  # scope gate: 元々の適用範囲に限る
+            return False
+        return verdict != "非該当"  # scope内で非該当(明示証拠)だけ落とす
+    return verdict == "該当"  # opt-in
 
 
 def limit_viewpoints(selected: list[Viewpoint], flags: dict[str, bool], max_cases: int) -> list[Viewpoint]:
@@ -770,10 +805,12 @@ def make_rows(
     allowed = allowed_layers if allowed_layers is not None else DEFAULT_XPROD_LAYERS
     viewpoints = filter_viewpoints(viewpoints, allowed)
     flags = context_flags(doc)
-    func = func_id(output_stem(doc.path))
+    stem = output_stem(doc.path)
+    func = func_id(stem)
+    channel = channel_of_stem(stem)
     matched = []
     for vp in viewpoints:
-        decision = applicability_decision(vp, func)  # 制御対象観点は証拠駆動
+        decision = applicability_decision(vp, func, channel, flags)  # 制御対象観点は証拠駆動
         if decision is True:
             matched.append(vp)
         elif decision is False:
