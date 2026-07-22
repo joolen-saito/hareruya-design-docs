@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -237,57 +235,54 @@ m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管�
 m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-066	IT-15	機密情報	P1	機密情報の結合確認	ナビから開く（GET、ページクエリなし）を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でナビから開く（GET、ページクエリなし）の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	同一 URL の初期状態であること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-067	IT-07	排他制御	P1	排他制御の結合確認	検索送信成功を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で検索送信成功の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一 URL 上で結果描画であること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-068	IT-07	排他制御	P1	排他制御の結合確認	CSRF 等のフォームエラーを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でCSRF 等のフォームエラーの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フレームワークの通常処理（本書では網羅しない）であること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-069	IT-06	ロールバック	P3	ロールバックの結合確認	更新タイミングを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で更新タイミングの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索処理が成功したループ内で、search メソッドが各キーを書き込むであること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	「検索する」ボタンを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で「検索する」ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	検索送信成功を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で検索送信成功の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索送信成功
+3. 画面表示と後続状態を確認する"	同一 URL 上で結果描画であること。
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSRF 等のフォームエラーを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でCSRF 等のフォームエラーの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. CSRF 等のフォームエラーを確認する
+3. 画面表示と後続状態を確認する"	フレームワークの通常処理（本書では網羅しない）であること。
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	更新タイミングを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で更新タイミングの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 更新タイミングを確認する
+3. 画面表示と後続状態を確認する"	検索処理が成功したループ内で、search メソッドが各キーを書き込むであること。
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	「検索する」ボタンを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で「検索する」ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「検索する」ボタン
 3. 画面表示と後続状態を確認する"	送信内容を処理し、条件とソートで一覧を 1 ページ目から表示であること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ページネーションのリンクを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でページネーションのリンクの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ページネーションのリンクを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でページネーションのリンクの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ページネーションのリンクを確認する
 3. 画面表示と後続状態を確認する"	セッションの検索条件とソートを復元し、N ページ目を表示すること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	表示件数プルダウンを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で表示件数プルダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示件数プルダウンを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で表示件数プルダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示件数プルダウンを確認する
 3. 画面表示と後続状態を確認する"	他一覧画面では #page_count_pulldown の change で location.href を変える実装があるが、当 index.twig の javascript ブロックは空であり、同一パターンのハ…であること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-073	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	出荷指示番号のリンクまたは行メニューの編集を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で出荷指示番号のリンクまたは行メニューの編集の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出荷指示番号のリンクまたは行メニューの編集を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で出荷指示番号のリンクまたは行メニューの編集の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 出荷指示番号のリンクまたは行メニューの編集を確認する
 3. 画面表示と後続状態を確認する"	編集画面へ遷移（本書範囲外）であること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	パスパラメータ page_no（1 以上の数字）でページ指定を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でパスパラメータ page_no（1 以上の数字）でページ指定の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-074	IT-25	一覧	P2	一覧の結合確認	パスパラメータ page_no（1 以上の数字）でページ指定を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でパスパラメータ page_no（1 以上の数字）でページ指定の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. パスパラメータ page_no（1 以上の数字）でページ指定を確認する
 3. 画面表示と後続状態を確認する"	パスパラメータ page_no（1 以上の数字）でページ指定であること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-075	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	ページタイトルは「出荷指示」、サブタイトルは受注管理であること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-076	IT-12	画面表示データ	P2	画面表示データの結合確認	登録日（開始）を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で登録日（開始）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録日（開始）を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-077	IT-25	画面表示データ	P2	画面表示データの結合確認	登録日（終了）を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で登録日（終了）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-076	IT-12	画面表示データ	P2	画面表示データの結合確認	モーダル・ポップアップを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-077	IT-25	フォーム送信	P1	フォーム送信の結合確認	登録日（終了）を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で登録日（終了）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録日（終了）を確認する
 3. 画面表示と後続状態を確認する"	キー create_date_toであること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-078	IT-12	画面表示データ	P2	画面表示データの結合確認	最終更新日（開始）を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で最終更新日（開始）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-078	IT-16	ファイル選択	P2	ファイル選択の結合確認	最終更新日（開始）を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で最終更新日（開始）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 最終更新日（開始）を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	ソート方向パラメータが不正を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でソート方向パラメータが不正の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	キー update_date_fromであること。
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-079	IT-12	エラー継続	P3	エラー継続の結合確認	ソート方向パラメータが不正を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でソート方向パラメータが不正の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ソート方向パラメータが不正を確認する
 3. 画面表示と後続状態を確認する"	エラーフラッシュを積み index へであること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-080	IT-16	ファイル選択	P2	ファイル選択の結合確認	セッションに検索ビューが無くフォームデータも取れないを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でセッションに検索ビューが無くフォームデータも取れないの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-080	IT-25	件数上限	P2	件数上限の結合確認	セッションに検索ビューが無くフォームデータも取れないを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でセッションに検索ビューが無くフォームデータも取れないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. セッションに検索ビューが無くフォームデータも取れない
 3. 画面表示と後続状態を確認する"	index の初期表示へであること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-081	IT-12	非同期更新	P1	非同期更新の結合確認	表示件数プルダウンを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で表示件数プルダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-081	IT-25	欠損値	P2	欠損値の結合確認	表示件数プルダウンを試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で表示件数プルダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示件数プルダウンを確認する
 3. 画面表示と後続状態を確認する"	前述のとおり change ハンドラが無く、選択だけでは遷移しないこと。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-082	IT-25	欠損値	P2	欠損値の結合確認	失敗時出力を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-082	IT-23	データ正当性	P3	データ正当性の結合確認	失敗時出力を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	ソート不正時はエラーフラッシュと初期表示寄りのレスポンスであること。
-m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）	IT-M05-19-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-SEARCH-083	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ナビから開く（GET、ページクエリなし）を試験できる状態である	m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管理_出荷指示リスト検索）（m05_19_admin_order_order_shipping_standby_list_search）でナビから開く（GET、ページクエリなし）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ナビから開く（GET、ページクエリなし）
-3. 画面表示と後続状態を確認する"	同一 URL の初期状態であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -387,6 +382,6 @@ m05-19_admin_order_order_shipping_standby_list_search（管理画面_受注管�
 | データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
-| その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.338, No.346, No.359, No.387, No.412, No.414。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.109, No.110, No.111, No.357, No.359, No.385, No.414, No.416。上限緩和または個別ケース化で収載可能。

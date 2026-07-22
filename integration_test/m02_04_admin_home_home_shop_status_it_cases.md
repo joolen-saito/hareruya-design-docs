@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -237,64 +235,64 @@ m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）
 m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-066	IT-15	機密情報	P1	機密情報の結合確認	更新との整合性を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で更新との整合性の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	本ブロックは参照のみであり、商品、商品規格、会員の更新は行わないこと。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-067	IT-07	排他制御	P1	排他制御の結合確認	外部連携との整合性を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で外部連携との整合性の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫や会員情報を外部連携で更新する場合の反映タイミングは、外部連携機能もしくはバッチ機能の設計を正とすること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-068	IT-07	排他制御	P1	排他制御の結合確認	APIを試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）でAPIの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本ブロックは件数表示のために専用 API を呼び出さないこと。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-069	IT-06	ロールバック	P3	ロールバックの結合確認	バッチを試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）でバッチの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本ブロックはバッチを起動しないこと。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	外部連携との整合性を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で外部連携との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 外部連携との整合性を確認する
+3. 画面表示と後続状態を確認する"	在庫や会員情報を外部連携で更新する場合の反映タイミングは、外部連携機能もしくはバッチ機能の設計を正とすること。
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	APIを試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. APIを確認する
+3. 画面表示と後続状態を確認する"	本ブロックは件数表示のために専用 API を呼び出さないこと。
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	バッチを試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）でバッチの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. バッチを確認する
+3. 画面表示と後続状態を確認する"	本ブロックはバッチを起動しないこと。
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時を確認する
 3. 画面表示と後続状態を確認する"	API 呼び出しやバッチ実行の成否を本ブロック内で判定しないこと。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	入力を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力
 3. 画面表示と後続状態を確認する"	ホーム画面表示要求、および各リンクの GET 要求であること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功時出力を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	ホーム画面ではサーバ側が HTML を組み立て、その一部としてショップ状況カードに在庫切れ商品数・取扱商品数・本会員数の各件数を載せるであること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-073	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	データ取得失敗時はフレームワークの例外処理に委ねられ、ホーム画面全体の表示が成立しないことがあること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-074	IT-25	一覧	P2	一覧の結合確認	副作用を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	ホーム表示処理だけを見ると、商品・会員・受注等の台帳を更新しないこと。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_product_classを試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）でdtb_product_classの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-075	IT-12	画面表示データ	P2	画面表示データの結合確認	dtb_product_classを試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）でdtb_product_classの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_product_classを確認する
-3. 画面表示と後続状態を確認する"	在庫切れ商品数の条件（規格の表示対象）であること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録/更新を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-076	IT-25	画面表示データ	P2	画面表示データの結合確認	登録/更新を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-077	IT-25	一覧	P2	一覧の結合確認	利用者入力を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で利用者入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-077	IT-12	画面表示データ	P2	画面表示データの結合確認	利用者入力を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で利用者入力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 利用者入力
-3. 画面表示と後続状態を確認する"	本ブロックはフォームを持たないこと。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-078	IT-12	画面表示データ	P2	画面表示データの結合確認	集計と一覧の一致を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で集計と一覧の一致の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 集計と一覧の一致を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-079	IT-25	画面表示データ	P2	画面表示データの結合確認	未認証を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-078	IT-25	画面表示データ	P2	画面表示データの結合確認	集計と一覧の一致を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で集計と一覧の一致の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 集計と一覧の一致を確認する
+3. 画面表示と後続状態を確認する"	在庫切れ件数は「商品単位」の件数であり、一覧が在庫なしで絞ったときの行数（規格行や表示ルール）との一致を保証しないこと。
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	未認証を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未認証を確認する
 3. 画面表示と後続状態を確認する"	利用不可であること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-080	IT-12	画面表示データ	P2	画面表示データの結合確認	一覧・編集での操作権限を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で一覧・編集での操作権限の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-080	IT-16	ファイル選択	P2	ファイル選択の結合確認	一覧・編集での操作権限を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で一覧・編集での操作権限の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧・編集での操作権限を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-081	IT-25	画面表示データ	P2	画面表示データの結合確認	在庫切れ商品数を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で在庫切れ商品数の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	ホームの件数表示自体とは別レイヤであること。
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-081	IT-12	非同期更新	P1	非同期更新の結合確認	在庫切れ商品数を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で在庫切れ商品数の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 在庫切れ商品数を確認する
 3. 画面表示と後続状態を確認する"	表示可能な商品規格のうち、在庫無制限でなく在庫数量が 0 の規格を少なくとも一つ持つ商品の件数であること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-082	IT-25	フォーム送信	P1	フォーム送信の結合確認	本会員数を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で本会員数の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-082	IT-12	エラー継続	P3	エラー継続の結合確認	本会員数を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で本会員数の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 本会員数を確認する
 3. 画面表示と後続状態を確認する"	会員ステータスが本会員である会員の件数であること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-083	IT-16	ファイル選択	P2	ファイル選択の結合確認	検索条件セッションを試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-083	IT-25	件数上限	P2	件数上限の結合確認	検索条件セッションを試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索条件セッション
 3. 画面表示と後続状態を確認する"	商品一覧・会員一覧が初回表示や再表示で参照する検索条件を格納したセッション領域であること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-084	IT-12	非同期更新	P1	非同期更新の結合確認	ホーム画面を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）でホーム画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-084	IT-25	欠損値	P2	欠損値の結合確認	ホーム画面を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）でホーム画面の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ホーム画面を確認する
 3. 画面表示と後続状態を確認する"	管理者認証後に表示されるダッシュボードであること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-085	IT-12	エラー継続	P3	エラー継続の結合確認	ホーム画面を開くを試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）でホーム画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-085	IT-25	データなし	P2	データなしの結合確認	ホーム画面を開くを試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）でホーム画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ホーム画面を開く
 3. 画面表示と後続状態を確認する"	ショップ状況カードに、在庫切れ商品数・取扱商品数・本会員数が数値で表示されるであること。
-m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-086	IT-25	件数上限	P2	件数上限の結合確認	在庫切れ商品数の行を押下を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で在庫切れ商品数の行を押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）	IT-M02-04-ADMIN-HOME-HOME-SHOP-STATUS-086	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	在庫切れ商品数の行を押下を試験できる状態である	m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）（m02_04_admin_home_home_shop_status）で在庫切れ商品数の行を押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 在庫切れ商品数の行を押下
 3. 画面表示と後続状態を確認する"	在庫なし条件を商品一覧向け検索条件として保存し、商品一覧へ遷移すること。
 ```
@@ -398,4 +396,4 @@ m02-04_admin_home_home_shop_status（管理画面_トップショップ状況）
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

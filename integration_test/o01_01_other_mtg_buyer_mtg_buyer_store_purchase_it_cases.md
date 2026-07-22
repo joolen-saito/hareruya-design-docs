@@ -15,7 +15,10 @@
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
+| IT-33 | カート整合、販売可能数 |
+| IT-08 | 同時購入 |
 
 ## テストケースTSV
 
@@ -66,19 +69,19 @@ o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店�
 o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-011	IT-15	機密情報	P1	機密情報の結合確認	表示要素を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で表示要素の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	MTGバイヤー本体の表示要素はリポジトリ外のため本書では仕様確定しないこと。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-012	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	モーダル・ポップアップを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	MTGバイヤー本体のモーダルは扱わないこと。
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-012	IT-06	ロールバック	P3	ロールバックの結合確認	モーダル・ポップアップを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）でモーダル・ポップアップの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	MTGバイヤー本体のモーダルは扱わないこと。
 o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-013	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	査定対象の抽出を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で査定対象の抽出の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 査定対象の抽出を確認する
 3. 画面表示と後続状態を確認する"	店頭買取受注一覧取得APIは、商品到着、査定中、振込前、保留、査定再開の状態にある受注を対象にすること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-014	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	店舗絞り込みを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で店舗絞り込みの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-014	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	店舗絞り込みを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で店舗絞り込みの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 店舗絞り込みを確認する
 3. 画面表示と後続状態を確認する"	認証した管理者に所属店舗がある場合は、その店舗に一致する店頭買取受注だけを返すこと。
 o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-015	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	明細の全置換を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で明細の全置換の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 明細の全置換を確認する
 3. 画面表示と後続状態を確認する"	査定結果確定APIは、既存の明細・個別入力商品・在庫・在庫履歴を削除して、送信された明細で作り直すであること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-016	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	個別入力商品の扱いを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で個別入力商品の扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-016	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	個別入力商品の扱いを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で個別入力商品の扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 個別入力商品の扱い
 3. 画面表示と後続状態を確認する"	商品規格IDが空の明細は個別入力商品として登録すること。
 o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-017	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	買取合計金額を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で買取合計金額の確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -87,54 +90,66 @@ o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店�
 o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-018	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ステータス変更履歴を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）でステータス変更履歴の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ステータス変更履歴を確認する
 3. 画面表示と後続状態を確認する"	更新前後でステータスが異なる場合に履歴を登録すること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-019	IT-25	一覧	P2	一覧の結合確認	外部運用を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で外部運用の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-019	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	外部運用を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で外部運用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 外部運用を確認する
 3. 画面表示と後続状態を確認する"	査定表印刷、本人確認の実作業、出金、バーコード印刷、Backlog、スマレジ、仕入れ統合作業はEC-CUBE側で確認できる範囲外の運用を正とすること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-020	IT-12	画面表示データ	P2	画面表示データの結合確認	フリーコメントを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）でフリーコメントの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-020	IT-25	一覧	P2	一覧の結合確認	フリーコメントを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）でフリーコメントの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フリーコメントを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-021	IT-25	画面表示データ	P2	画面表示データの結合確認	本人確認情報を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で本人確認情報の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	店頭買取受注のフリーコメントへ保存すること。
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-021	IT-12	画面表示データ	P2	画面表示データの結合確認	本人確認情報を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で本人確認情報の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 本人確認情報を確認する
-3. 画面表示と後続状態を確認する"	店頭買取受注に紐づく本人確認状態を更新すること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-022	IT-12	画面表示データ	P2	画面表示データの結合確認	認証不可を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で認証不可の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 認証不可を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-023	IT-25	画面表示データ	P2	画面表示データの結合確認	査定対象が0件を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で査定対象が0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-022	IT-25	画面表示データ	P2	画面表示データの結合確認	認証不可を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で認証不可の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 認証不可を確認する
+3. 画面表示と後続状態を確認する"	APIは認証拒否とし、店頭買取データを返さず更新しないこと。
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-023	IT-12	画面表示データ	P2	画面表示データの結合確認	査定対象が0件を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で査定対象が0件の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 査定対象が0件を確認する
-3. 画面表示と後続状態を確認する"	店頭買取受注一覧取得APIは空配列を返すこと。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-024	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	受注IDが存在しないを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で受注IDが存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-024	IT-25	画面表示データ	P2	画面表示データの結合確認	受注IDが存在しないを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で受注IDが存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注IDが存在しないを確認する
 3. 画面表示と後続状態を確認する"	詳細更新、ステータス更新、コメント更新、本人確認更新は該当なしとして扱うこと。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-025	IT-25	フォーム送信	P1	フォーム送信の結合確認	明細が空を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で明細が空の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-025	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	明細が空を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で明細が空の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 明細が空を確認する
 3. 画面表示と後続状態を確認する"	詳細更新APIは入力不正とし、既存明細・在庫を削除しないこと。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-026	IT-16	ファイル選択	P2	ファイル選択の結合確認	同じステータスで詳細更新を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で同じステータスで詳細更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-026	IT-25	フォーム送信	P1	フォーム送信の結合確認	同じステータスで詳細更新を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で同じステータスで詳細更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同じステータスで詳細更新を確認する
 3. 画面表示と後続状態を確認する"	明細・個別入力商品・在庫・在庫履歴は送信内容で作り直すであること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-027	IT-12	非同期更新	P1	非同期更新の結合確認	同時更新を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-027	IT-16	ファイル選択	P2	ファイル選択の結合確認	同時更新を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同時更新を確認する
 3. 画面表示と後続状態を確認する"	専用の楽観ロック・悲観ロックは持たないこと。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-028	IT-12	エラー継続	P3	エラー継続の結合確認	参照時点を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-028	IT-12	非同期更新	P1	非同期更新の結合確認	参照時点を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 参照時点を確認する
 3. 画面表示と後続状態を確認する"	MTGバイヤーの一覧取得、商品情報取得、管理画面の一覧・詳細・CSVは、それぞれ実行時点で永続化済みのデータを参照すること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-029	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	査定結果と管理画面を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で査定結果と管理画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-029	IT-12	エラー継続	P3	エラー継続の結合確認	査定結果と管理画面を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で査定結果と管理画面の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 査定結果と管理画面を確認する
 3. 画面表示と後続状態を確認する"	MTGバイヤーで確定した受注明細、個別入力商品、在庫、在庫履歴、ステータス、査定担当者、更新日時は、保存成功後に管理画面の店頭買取詳細・履歴・CSVの参照元になること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-030	IT-25	件数上限	P2	件数上限の結合確認	在庫と履歴を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で在庫と履歴の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-030	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	在庫と履歴を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で在庫と履歴の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 在庫と履歴を確認する
 3. 画面表示と後続状態を確認する"	詳細更新時に商品規格ごとの数量で店頭買取受注在庫を作り直し、対応する在庫履歴を登録すること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-031	IT-25	欠損値	P2	欠損値の結合確認	ステータスと集計を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）でステータスと集計の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-031	IT-25	件数上限	P2	件数上限の結合確認	ステータスと集計を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）でステータスと集計の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ステータスと集計を確認する
 3. 画面表示と後続状態を確認する"	買取成立、ダブルチェック済、データ出力済など集計対象のステータスへ変わると、店頭買取集計やCSV出力の対象になること。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-032	IT-25	データなし	P2	データなしの結合確認	外部運用との整合を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で外部運用との整合の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-032	IT-25	欠損値	P2	欠損値の結合確認	外部運用との整合を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で外部運用との整合の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 外部運用との整合を確認する
 3. 画面表示と後続状態を確認する"	Backlog、スマレジ、Excelマクロ、バーコード印刷は本リポジトリ内で直接整合を保証しないこと。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-033	IT-25	URL	P2	URLの操作結果確認	同時更新を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-033	IT-25	データなし	P2	データなしの結合確認	同時更新を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同時更新を確認する
 3. 画面表示と後続状態を確認する"	DB行ロックを使った査定占有は確認できないこと。
-o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-034	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	APIを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-034	IT-25	URL	P2	URLの操作結果確認	APIを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. APIを確認する
 3. 画面表示と後続状態を確認する"	MTGバイヤーはpf-apiのA06系APIを利用すること。
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-035	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	成功結果を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で成功結果の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功結果を確認する
+3. 画面表示と後続状態を確認する"	参照APIはJSONで対象データを返すこと。
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-036	IT-33	販売可能数	P1	販売可能数の操作結果確認	失敗結果を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で失敗結果の確認に必要な条件を指定する	"1. 販売可能数の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	認証不可、対象なし、入力不正、保存例外は各API設計のHTTPステータスと本文形式に従うであること。
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-037	IT-08	同時購入	P1	同時購入の結合確認	バッチを試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）でバッチの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. バッチを確認する
+3. 画面表示と後続状態を確認する"	店頭買取集計はotcBuyOrder:batch updateSummaryで実行されるであること。
+o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）	IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-038	IT-33	カート整合	P1	カート整合の結合確認	再実行時を試験できる状態である	o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店頭買取）（o01_01_other_mtg_buyer_mtg_buyer_store_purchase）で再実行時の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 再実行時
+3. 画面表示と後続状態を確認する"	参照APIは実行時点の最新データを返すこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -162,7 +177,6 @@ o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店�
 | データベースアクセス / DB操作 / 更新（IT-05, IT-26） | 本機能に更新処理がないため |
 | データベースアクセス / DB操作 / 削除（IT-05） | 本機能に削除処理がないため |
 | データベースアクセス / DB制御 / 排他制御（IT-07） | 元設計HTMLに該当する処理・I/Fがないため |
-| データベースアクセス / DB制御 / ロールバック（IT-06） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 数量 / 更新結果（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 増加処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額・単価 / 減少処理（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
@@ -234,4 +248,5 @@ o01-01_other_mtg_buyer_mtg_buyer_store_purchase（その他_MTGバイヤー_店�
 | データベースアクセス / 決済連携 / 金額整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 外部連携 / Webhook・外部通知（IT-10, IT-32） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブサービス / 外部連携 / 下流転送（IT-10） | 本機能は対象の外部I/Fを扱わないため |
-| その他 | 同種の対象外観点 12 件は上記分類と同じ理由で対象外 |
+| ウェブアプリケーション / 注文・決済・在庫 / 原子性（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
+| その他 | 同種の対象外観点 8 件は上記分類と同じ理由で対象外 |

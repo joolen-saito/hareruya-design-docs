@@ -13,16 +13,16 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
-| IT-23 | 実行結果 |
+| IT-23 | データ正当性、実行結果 |
 | IT-05 | 実行結果 |
 | IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
-| IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
+| IT-33 | カート整合、ファイル出力、ファイル登録 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-07 | 排他制御 |
 | IT-06 | ロールバック |
@@ -229,22 +229,22 @@ M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SA
 M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-070	IT-07	排他制御	P1	排他制御の結合確認	登録/更新を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-071	IT-07	排他制御	P1	排他制御の結合確認	アップロードファイルを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-071	IT-06	ロールバック	P3	ロールバックの結合確認	アップロードファイルを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	必須（NotBlank）であること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-072	IT-06	ロールバック	P3	ロールバックの結合確認	行数を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	5010行以上は取込しない（上限超過エラー）であること。
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-072	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	行数を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 行数を確認する
+3. 画面表示と後続状態を確認する"	5010行以上は取込しない（上限超過エラー）であること。
 M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-073	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSVヘッダ・データを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSVヘッダ・データを確認する
 3. 画面表示と後続状態を確認する"	ヘッダ行が無い場合はフォーマットエラー、データ行が無い場合はデータなしエラーであること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	販売価格・買取価格を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-074	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	販売価格・買取価格を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 販売価格・買取価格を確認する
 3. 画面表示と後続状態を確認する"	必須であること。
 M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-075	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	未ログインを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 未ログインを確認する
 3. 画面表示と後続状態を確認する"	管理画面共通のログイン誘導に従うであること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	アップロード画面を開くを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	アップロード画面を開くを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. アップロード画面を開く
 3. 画面表示と後続状態を確認する"	同一画面にフォーム・フォーマット表・取込履歴を表示であること。
 M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	取込成功を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
@@ -253,41 +253,50 @@ M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SA
 M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	フォーム検証失敗を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. フォーム検証失敗を確認する
 3. 画面表示と後続状態を確認する"	同一画面を再表示し、検証エラーを表示であること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	行数上限超過を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-079	IT-25	一覧	P2	一覧の結合確認	行数上限超過を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 行数上限超過を確認する
 3. 画面表示と後続状態を確認する"	同一画面を再表示し、上限超過エラーを表示であること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-080	IT-25	一覧	P2	一覧の結合確認	行検証エラーを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-080	IT-12	画面表示データ	P2	画面表示データの結合確認	行検証エラーを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 行検証エラーを確認する
-3. 画面表示と後続状態を確認する"	同一画面を再表示し、エラー一覧を表示であること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-081	IT-12	画面表示データ	P2	画面表示データの結合確認	セール用価格変更CSVを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-081	IT-25	画面表示データ	P2	画面表示データの結合確認	セール用価格変更CSVを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. セール用価格変更CSVを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-082	IT-25	画面表示データ	P2	画面表示データの結合確認	取込履歴を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	商品IDと言語ごとに販売価格・買取価格・セールフラグ・帯URL・タグを指定するCSVであること。
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-082	IT-12	画面表示データ	P2	画面表示データの結合確認	取込履歴を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 取込履歴を確認する
-3. 画面表示と後続状態を確認する"	アップロードしたファイル名・日時・作業者を記録した履歴であること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-083	IT-12	画面表示データ	P2	画面表示データの結合確認	高額商品を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 高額商品を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-084	IT-25	画面表示データ	P2	画面表示データの結合確認	アップロード画面を開くを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-083	IT-25	画面表示データ	P2	画面表示データの結合確認	高額商品を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 高額商品を確認する
+3. 画面表示と後続状態を確認する"	価格変更CSVの対象外とする規格であること。
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-084	IT-25	フォーム送信	P1	フォーム送信の結合確認	アップロード画面を開くを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. アップロード画面を開く
 3. 画面表示と後続状態を確認する"	ファイル選択フォーム、CSVフォーマット表、雛形ダウンロードリンク、取込履歴を表示すること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-085	IT-25	フォーム送信	P1	フォーム送信の結合確認	CSVをアップロードを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSVをアップロード
-3. 画面表示と後続状態を確認する"	ファイルを検証し、合格時に1行ずつ取込して規格の価格などを更新すること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-086	IT-16	ファイル選択	P2	ファイル選択の結合確認	CSVエクスポートを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-085	IT-16	ファイル選択	P2	ファイル選択の結合確認	CSVをアップロードを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-087	IT-12	非同期更新	P1	非同期更新の結合確認	表示要素を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-086	IT-12	非同期更新	P1	非同期更新の結合確認	CSVエクスポートを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSVエクスポートを確認する
+3. 画面表示と後続状態を確認する"	セール用価格変更CSVを出力する（本書では正としない）であること。
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-087	IT-12	エラー継続	P3	エラー継続の結合確認	表示要素を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	見出し「セール用価格変更CSV」、ファイル選択欄（受理MIMEヒントtext/csv,text/tsv）、アップロードボタン、フォーマット表（列名と各列の説明・必須有無）、雛形ダウンロードリンク、CSVインポート履歴（…であること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-088	IT-12	エラー継続	P3	エラー継続の結合確認	JS 挙動を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-088	IT-25	件数上限	P2	件数上限の結合確認	JS 挙動を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. JS 挙動を確認する
 3. 画面表示と後続状態を確認する"	アップロード送信時にスピナーを表示する補助スクリプトを読み込むであること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-089	IT-25	件数上限	P2	件数上限の結合確認	CSV・レイアウトを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-089	IT-25	欠損値	P2	欠損値の結合確認	CSV・レイアウトを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSV・レイアウトを確認する
 3. 画面表示と後続状態を確認する"	横型Bootstrapフォームテーマであること。
-M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-090	IT-25	欠損値	P2	欠損値の結合確認	モーダル・ポップアップを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-090	IT-25	データなし	P2	データなしの結合確認	モーダル・ポップアップを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	本機能ではモーダル・確認ダイアログを表示しないこと。
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	エラー表示を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. エラー表示を確認する
+3. 画面表示と後続状態を確認する"	フォーム検証エラーはファイル選択欄付近に表示すること。
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-092	IT-33	カート整合	P1	カート整合の結合確認	商品IDを試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でカート整合の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 商品IDを確認する
+3. 画面表示と後続状態を確認する"	更新対象の商品であること。
+M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-IMPORT-093	IT-23	データ正当性	P3	データ正当性の結合確認	取込単位を試験できる状態である	M03-31（セール用価格変更CSV登録）（m03_31_admin_product_product_sale_price_csv_import）でデータ正当性の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 取込単位を確認する
+3. 画面表示と後続状態を確認する"	商品IDと言語の組み合わせで対象規格を抽出し、各規格の価格を更新すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -376,8 +385,6 @@ M03-31（セール用価格変更CSV登録）	IT-M03-31-ADMIN-PRODUCT-PRODUCT-SA
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 1件 — No.109。上限緩和または個別ケース化で収載可能。

@@ -12,15 +12,14 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、一覧、更新抑止、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 更新内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 初期行数 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -197,46 +196,34 @@ m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品�
 m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-053	IT-15	機密情報	P1	機密情報の結合確認	一覧と DBを試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で一覧と DBの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧はリクエスト処理中の読み取り時点のコミット済みデータを反映すること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-054	IT-07	排他制御	P1	排他制御の結合確認	一覧と規格編集を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で一覧と規格編集の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	リンク先は編集画面の初期表示であり、別タブで開いたあとの同時更新との整合は保証しないこと。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-055	IT-07	排他制御	P1	排他制御の結合確認	成功時出力を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で成功時出力の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	HTTP 200 と HTMLであること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-056	IT-06	ロールバック	P3	ロールバックの結合確認	失敗時出力を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で失敗時出力の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理画面共通のエラー扱い（認証失敗時のログイン誘導など）であること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-057	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-054	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	DB の書き込み・セッションキー更新・フラッシュメッセージ追加は行わないこと。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	管理画面にログインしており、ファイアウォール上パス /{admin_route…を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で管理画面にログインしており、ファイアウォール上パス /{admin_route…の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-055	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	管理画面にログインしており、ファイアウォール上パス /{admin_route…を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で管理画面にログインしており、ファイアウォール上パス /{admin_route…の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 管理画面にログインしており、ファイアウォール上パス /{admin_route…を確認する
 3. 画面表示と後続状態を確認する"	画面を表示できること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	前ページで「重複確認する」を押下を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で前ページで「重複確認する」を押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-056	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	前ページで「重複確認する」を押下を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で前ページで「重複確認する」を押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 前ページで「重複確認する」を押下
 3. 画面表示と後続状態を確認する"	GET …/product/doubling_checkであること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-060	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	結果ページの表のリンクを押下（別タブ）を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で結果ページの表のリンクを押下（別タブ）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-057	IT-25	一覧	P2	一覧の結合確認	結果ページの表のリンクを押下（別タブ）を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で結果ページの表のリンクを押下（別タブ）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 結果ページの表のリンクを押下（別タブ）
 3. 画面表示と後続状態を確認する"	規格編集画面であること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	DB アクセス失敗を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）でDB アクセス失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-058	IT-12	画面表示データ	P2	画面表示データの結合確認	DB アクセス失敗を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）でDB アクセス失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. DB アクセス失敗を確認する
-3. 画面表示と後続状態を確認する"	アプリケーション共通のエラーハンドリングに委ねるであること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	前ページ・結果ページの表示を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で前ページ・結果ページの表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-059	IT-25	画面表示データ	P2	画面表示データの結合確認	前ページ・結果ページの表示を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で前ページ・結果ページの表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 前ページ・結果ページの表示を確認する
 3. 画面表示と後続状態を確認する"	当機能の処理経路ではセッションへの読み書きを行わない（確認値）であること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-063	IT-25	一覧	P2	一覧の結合確認	サイドナビ「商品管理」配下の「重複コード確認」（ロケール依存）を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）でサイドナビ「商品管理」配下の「重複コード確認」（ロケール依存）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-060	IT-12	画面表示データ	P2	画面表示データの結合確認	サイドナビ「商品管理」配下の「重複コード確認」（ロケール依存）を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）でサイドナビ「商品管理」配下の「重複コード確認」（ロケール依存）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. サイドナビ「商品管理」配下の「重複コード確認」（ロケール依存）を確認する
-3. 画面表示と後続状態を確認する"	前ページが開き、大きなボタンから結果ページへ進めるであること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-064	IT-12	画面表示データ	P2	画面表示データの結合確認	前ページの「重複確認する」ボタンを試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で前ページの「重複確認する」ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 前ページの「重複確認する」ボタンを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-065	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-061	IT-16	ファイル選択	P2	ファイル選択の結合確認	表示要素を試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-066	IT-25	画面表示データ	P2	画面表示データの結合確認	重複が 1 件も無いを試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で重複が 1 件も無いの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	共通フレーム @admin/default_frame.twig を継承であること。
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-062	IT-12	非同期更新	P1	非同期更新の結合確認	重複が 1 件も無いを試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で重複が 1 件も無いの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 重複が 1 件も無いを確認する
 3. 画面表示と後続状態を確認する"	結果ページはテーブルを出さず、固定メッセージのみ表示すること。
-m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-067	IT-25	フォーム送信	P1	フォーム送信の結合確認	一覧と DBを試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で一覧と DBの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）	IT-M03-25-ADMIN-PRODUCT-PRODUCT-DUPLICATE-PRODUCT-CODE-CHECK-063	IT-12	エラー継続	P3	エラー継続の結合確認	一覧と DBを試験できる状態である	m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品管理_重複商品コード確認）（m03_25_admin_product_product_duplicate_product_code_check）で一覧と DBの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧と DBを確認する
 3. 画面表示と後続状態を確認する"	一覧はリクエスト処理中の読み取り時点のコミット済みデータを反映すること。
 ```
@@ -340,4 +327,4 @@ m03-25_admin_product_product_duplicate_product_code_check（管理画面_商品�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 10件 — No.332, No.357, No.382, No.385, No.387, No.412, No.413, No.414, No.416, No.421。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 14件 — No.109, No.110, No.111, No.329, No.330, No.332, No.336, No.359, No.381, No.412, No.413, No.414, No.416, No.421。上限緩和または個別ケース化で収載可能。

@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -180,69 +178,60 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-047	IT-15	機密情報	P1	機密情報の結合確認	「登録」ボタンを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で「登録」ボタンの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	"type=""submit"" の単一ボタンで、aside_column 側に配置されるであること。"
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-048	IT-07	排他制御	P1	排他制御の結合確認	住所マークアップを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で住所マークアップの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	h-adr と p-country-name（非表示で Japan）、郵便番号・住所ウィジェットにマイクロフォーマット用クラスが付くであること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-049	IT-07	排他制御	P1	排他制御の結合確認	追加フォーム欄を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で追加フォーム欄の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォーム直下の子を走査し、名前が Twig の matches '[^plg*]' に合致するフィールドを extra-form 内で form_row すること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-050	IT-06	ロールバック	P3	ロールバックの結合確認	エラー表示の見た目を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でエラー表示の見た目の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	住所1行ブロックの has-error 判定が Twig 上では addr02 のエラー有無のみを参照しており、addr01 のエラーと視覚状態が一致しない場合がある（実装確認値）であること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-051	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	送信元メールアドレス(From)を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で送信元メールアドレス(From)の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-048	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	追加フォーム欄を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で追加フォーム欄の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 追加フォーム欄を確認する
+3. 画面表示と後続状態を確認する"	フォーム直下の子を走査し、名前が Twig の matches '[^plg*]' に合致するフィールドを extra-form 内で form_row すること。
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-049	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	エラー表示の見た目を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でエラー表示の見た目の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. エラー表示の見た目を確認する
+3. 画面表示と後続状態を確認する"	住所1行ブロックの has-error 判定が Twig 上では addr02 のエラー有無のみを参照しており、addr01 のエラーと視覚状態が一致しない場合がある（実装確認値）であること。
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-050	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	送信元メールアドレス(From)を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で送信元メールアドレス(From)の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 送信元メールアドレス(From)
 3. 画面表示と後続状態を確認する"	NotBlank・Email strictであること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-052	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	マイページに注文状況を表示するを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でマイページに注文状況を表示するの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-051	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	マイページに注文状況を表示するを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でマイページに注文状況を表示するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. マイページに注文状況を表示するを確認する
 3. 画面表示と後続状態を確認する"	無効 0／有効 1であること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-053	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	お気に入り商品機能を利用するを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でお気に入り商品機能を利用するの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	お気に入り商品機能を利用するを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でお気に入り商品機能を利用するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. お気に入り商品機能を利用するを確認する
 3. 画面表示と後続状態を確認する"	無効 0／有効 1であること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-054	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	在庫切れ商品を非表示にするを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で在庫切れ商品を非表示にするの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-053	IT-25	一覧	P2	一覧の結合確認	在庫切れ商品を非表示にするを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で在庫切れ商品を非表示にするの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 在庫切れ商品を非表示にするを確認する
 3. 画面表示と後続状態を確認する"	無効 0／有効 1であること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-055	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	（自動）更新日時を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で（自動）更新日時の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-054	IT-12	画面表示データ	P2	画面表示データの結合確認	（自動）更新日時を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で（自動）更新日時の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. （自動）更新日時を確認する
-3. 画面表示と後続状態を確認する"	入力欄なしであること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-056	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	メール4項目のいずれかが空を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でメール4項目のいずれかが空の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-055	IT-25	画面表示データ	P2	画面表示データの結合確認	メール4項目のいずれかが空を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でメール4項目のいずれかが空の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メール4項目のいずれかが空を確認する
 3. 画面表示と後続状態を確認する"	NotBlank でエラーであること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-057	IT-12	画面表示データ	P2	画面表示データの結合確認	郵便番号の片方だけ入力を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で郵便番号の片方だけ入力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 郵便番号の片方だけ入力
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-056	IT-12	画面表示データ	P2	画面表示データの結合確認	電話の一部欄だけ入力を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で電話の一部欄だけ入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 電話の一部欄だけ入力
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-058	IT-25	画面表示データ	P2	画面表示データの結合確認	送料無料金額に数字以外を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で送料無料金額に数字以外の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-057	IT-25	画面表示データ	P2	画面表示データの結合確認	郵便番号の片方だけ入力を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で郵便番号の片方だけ入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 郵便番号の片方だけ入力
+3. 画面表示と後続状態を確認する"	zip の Type／Length でエラーになりやすいであること。
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-058	IT-25	フォーム送信	P1	フォーム送信の結合確認	送料無料金額に数字以外を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で送料無料金額に数字以外の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 送料無料金額に数字以外を確認する
 3. 画面表示と後続状態を確認する"	Regex でエラーであること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-059	IT-12	画面表示データ	P2	画面表示データの結合確認	同一レコードの更新を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で同一レコードの更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-059	IT-16	ファイル選択	P2	ファイル選択の結合確認	同一レコードの更新を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で同一レコードの更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同一レコードの更新を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-060	IT-25	画面表示データ	P2	画面表示データの結合確認	結果キャッシュを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で結果キャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	楽観ロックは無いであること。
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-060	IT-12	非同期更新	P1	非同期更新の結合確認	結果キャッシュを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で結果キャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 結果キャッシュを確認する
 3. 画面表示と後続状態を確認する"	店舗基本情報の取得は結果キャッシュを使用すること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-061	IT-25	フォーム送信	P1	フォーム送信の結合確認	郵便番号の保存列を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で郵便番号の保存列の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-061	IT-12	エラー継続	P3	エラー継続の結合確認	郵便番号の保存列を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で郵便番号の保存列の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 郵便番号の保存列
 3. 画面表示と後続状態を確認する"	現行 pf-eccube3 はフォームを zip01・zip02 にマップし、結合列 zipcode は当フォームに無く送信だけでは変更セットに載らない（既存値が保持される）であること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-062	IT-16	ファイル選択	P2	ファイル選択の結合確認	保存後の再表示を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で保存後の再表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-062	IT-25	件数上限	P2	件数上限の結合確認	保存後の再表示を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で保存後の再表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存後の再表示
 3. 画面表示と後続状態を確認する"	リダイレクト後の GET で再度 get するため、キャッシュが無効化されていれば保存値が読み込まれるであること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-063	IT-12	非同期更新	P1	非同期更新の結合確認	成功時出力を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-063	IT-25	欠損値	P2	欠損値の結合確認	成功時出力を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	フラッシュ成功メッセージであること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-064	IT-12	エラー継続	P3	エラー継続の結合確認	失敗時出力を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-064	IT-25	データなし	P2	データなしの結合確認	失敗時出力を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	同一レスポンス内のフィールドエラーであること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-065	IT-25	件数上限	P2	件数上限の結合確認	副作用を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-065	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	副作用を試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	DB の dtb_base_info 更新、update_date の更新、結果キャッシュ全削除（設定・対象エンティティにより）、フックによるプラグイン処理であること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-066	IT-25	欠損値	P2	欠損値の結合確認	dtb_base_infoを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_base_infoを確認する
-3. 画面表示と後続状態を確認する"	送信元メール（From）であること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-067	IT-25	データなし	P2	データなしの結合確認	dtb_base_infoを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_base_infoを確認する
-3. 画面表示と後続状態を確認する"	送信エラー受付メールであること。
-店舗基本設定の店舗登録（SHOPマスター保存）	IT-M10-15-ADMIN-BASE-SETTING-SETTING-SHOP-REGISTER-068	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	dtb_base_infoを試験できる状態である	店舗基本設定の店舗登録（SHOPマスター保存）（m10_15_admin_base_setting_setting_shop_register）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_base_infoを確認する
-3. 画面表示と後続状態を確認する"	マイページ注文状況表示（0／1）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -344,4 +333,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.78, No.329, No.346。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.78, No.109, No.110, No.111, No.329, No.333。上限緩和または個別ケース化で収載可能。

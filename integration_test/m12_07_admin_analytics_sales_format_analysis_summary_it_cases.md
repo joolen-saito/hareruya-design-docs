@@ -12,15 +12,14 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、一覧、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、一覧、更新抑止、欠損値、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -236,52 +235,43 @@ M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-AN
 M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-066	IT-15	機密情報	P1	機密情報の結合確認	集計月を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で集計月の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	フォームキー monthであること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-067	IT-07	排他制御	P1	排他制御の結合確認	集計月のフォーマット売上が全て0を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で集計月のフォーマット売上が全て0の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	各日・各フォーマットを0として表示し、合計・平均も0となること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-068	IT-07	排他制御	P1	排他制御の結合確認	参照時点を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で参照時点の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	集計結果は検索実行時にデータベースから読み取った値であること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-069	IT-06	ロールバック	P3	ロールバックの結合確認	CSVとの整合性を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）でCSVとの整合性の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能はCSV出力時に検索条件をセッションから読まず、CSVダウンロードの送信に含まれる集計月で再集計すること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	一覧と合計の整合性を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で一覧と合計の整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-067	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	一覧と合計の整合性を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で一覧と合計の整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧と合計の整合性を確認する
 3. 画面表示と後続状態を確認する"	日別合計・フォーマット合計・平均は、表示中の集計結果から算出した値であること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	更新との整合性を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で更新との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-068	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	更新との整合性を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で更新との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 更新との整合性を確認する
 3. 画面表示と後続状態を確認する"	本機能は参照のみで台帳を更新しないこと。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	データ取得失敗時はアプリケーションの共通例外処理に委ねるであること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-070	IT-25	一覧	P2	一覧の結合確認	副作用を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	無し（参照のみであること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	集計月を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で集計月の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-071	IT-12	画面表示データ	P2	画面表示データの結合確認	集計月を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で集計月の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 集計月を確認する
-3. 画面表示と後続状態を確認する"	必須であること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	「フォーマット売上分析」を開くを試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で「フォーマット売上分析」を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-072	IT-25	画面表示データ	P2	画面表示データの結合確認	「フォーマット売上分析」を開くを試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で「フォーマット売上分析」を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「フォーマット売上分析」を開く
 3. 画面表示と後続状態を確認する"	集計検索画面（初期状態）であること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-076	IT-25	一覧	P2	一覧の結合確認	検索ボタン押下を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-073	IT-12	画面表示データ	P2	画面表示データの結合確認	検索ボタン押下を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索ボタン押下
-3. 画面表示と後続状態を確認する"	同一画面にグラフと表を表示であること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-077	IT-12	画面表示データ	P2	画面表示データの結合確認	「CSVダウンロード」押下を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で「CSVダウンロード」押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-074	IT-25	画面表示データ	P2	画面表示データの結合確認	「CSVダウンロード」押下を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で「CSVダウンロード」押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「CSVダウンロード」押下
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-078	IT-12	画面表示データ	P2	画面表示データの結合確認	集計表示を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で集計表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	集計結果CSVを出力（M12-08）であること。
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-075	IT-16	ファイル選択	P2	ファイル選択の結合確認	集計表示を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で集計表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 集計表示を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-079	IT-25	画面表示データ	P2	画面表示データの結合確認	サイドメニュー「フォーマット売上分析」を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）でサイドメニュー「フォーマット売上分析」の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	本機能単体で業務監査ログを追加で書く処理は持たないこと。
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-076	IT-12	非同期更新	P1	非同期更新の結合確認	サイドメニュー「フォーマット売上分析」を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）でサイドメニュー「フォーマット売上分析」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. サイドメニュー「フォーマット売上分析」を確認する
 3. 画面表示と後続状態を確認する"	集計月入力欄を持つ検索画面を表示すること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-080	IT-12	非同期更新	P1	非同期更新の結合確認	JS挙動を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-077	IT-25	欠損値	P2	欠損値の結合確認	JS挙動を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	折れ線グラフの描画ライブラリで、フォーマットごとの日別売上を折れ線グラフとして表示すること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-081	IT-12	エラー継続	P3	エラー継続の結合確認	金額表示を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で金額表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-078	IT-25	データなし	P2	データなしの結合確認	金額表示を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で金額表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 金額表示を確認する
 3. 画面表示と後続状態を確認する"	表・グラフの金額は金額表示の整形を適用すること。
-M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-082	IT-25	件数上限	P2	件数上限の結合確認	集計月を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で集計月の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-SUMMARY-079	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	集計月を試験できる状態である	M12-07（フォーマット売上分析 集計一覧表示）（m12_07_admin_analytics_sales_format_analysis_summary）で集計月の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 集計月を確認する
 3. 画面表示と後続状態を確認する"	フォームキー monthであること。
 ```
@@ -385,4 +375,4 @@ M12-07（フォーマット売上分析 集計一覧表示）	IT-M12-07-ADMIN-AN
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.332, No.357, No.381, No.382, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 10件 — No.109, No.110, No.111, No.329, No.330, No.332, No.336, No.381, No.387, No.412。上限緩和または個別ケース化で収載可能。

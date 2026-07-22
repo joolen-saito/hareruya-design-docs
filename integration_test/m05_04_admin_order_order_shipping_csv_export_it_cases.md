@@ -13,19 +13,17 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、更新抑止、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-16 | 実行結果 |
+| IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -280,15 +278,65 @@ m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送C
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	dtb_csv.sort_noであること。
 m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-087	IT-15	機密情報	P1	機密情報の結合確認	ブラウザのアドレスバーやブックマークから同一パスを開くを試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-088	IT-07	排他制御	P1	排他制御の結合確認	表示要素を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	"受注一覧テンプレートの「CSVダウンロード」ドロップダウン内に、id=""shippingCsvDownload""のアンカーとして「出荷CSVダウンロード」リンクがあること。"
-m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-089	IT-07	排他制御	P1	排他制御の結合確認	JS挙動を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	単純なGETリンクであり、送信前の確認ダイアログやクライアント側の検証は行わないこと。
-m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-090	IT-06	ロールバック	P3	ロールバックの結合確認	出力される受注件数を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索クエリに一致する受注であること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-088	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	"受注一覧テンプレートの「CSVダウンロード」ドロップダウン内に、id=""shippingCsvDownload""のアンカーとして「出荷CSVダウンロード」リンクがあること。"
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-089	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	JS挙動を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	単純なGETリンクであり、送信前の確認ダイアログやクライアント側の検証は行わないこと。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-090	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	出力される受注件数を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力される受注件数を確認する
+3. 画面表示と後続状態を確認する"	検索クエリに一致する受注であること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-091	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	出力されるCSV行数を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力されるCSV行数を確認する
+3. 画面表示と後続状態を確認する"	対象各受注のOrderItemsの件数の合計（受注明細ゼロの受注は行を増やさない）であること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-092	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	列セットと順序を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 列セットと順序を確認する
+3. 画面表示と後続状態を確認する"	csv_type_idが配送種別のdtb_csvのうちenabledが真の行のみであること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-093	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	文字コードとBOMを試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 文字コードとBOMを確認する
+3. 画面表示と後続状態を確認する"	出力ストリームはUTF-8から設定eccube_csv_export_encodingへ変換すること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-094	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	区切り文字を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 区切り文字を確認する
+3. 画面表示と後続状態を確認する"	eccube_csv_export_separatorをfputcsvの区切りとして用いること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-095	IT-25	一覧	P2	一覧の結合確認	有効な出力列が0件を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 有効な出力列が0件を確認する
+3. 画面表示と後続状態を確認する"	ヘッダ出力時点で論理例外となり、応答はエラー系となること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-096	IT-12	画面表示データ	P2	画面表示データの結合確認	検索結果が0件を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索結果が0件
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-097	IT-25	画面表示データ	P2	画面表示データの結合確認	同一配送に複数明細があるを試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 同一配送に複数明細があるを確認する
+3. 画面表示と後続状態を確認する"	明細ごとに行が分かれ、配送由来の列は同一値が繰り返し出力されるであること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-098	IT-12	画面表示データ	P2	画面表示データの結合確認	一覧との一致を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 一覧との一致を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-099	IT-25	画面表示データ	P2	画面表示データの結合確認	参照時点を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 参照時点を確認する
+3. 画面表示と後続状態を確認する"	ストリーム処理中にページごとにエンティティマネージャをクリアするため、長時間出力でもメモリ再利用優先の実装であること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-100	IT-25	フォーム送信	P1	フォーム送信の結合確認	DBの更新を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. DBの更新を確認する
+3. 画面表示と後続状態を確認する"	読み取りのみであり、受注・配送・明細を更新しないこと。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-101	IT-16	ファイル選択	P2	ファイル選択の結合確認	入力を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-102	IT-12	非同期更新	P1	非同期更新の結合確認	成功時出力を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	application/octet-streamのストリームであること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-103	IT-12	エラー継続	P3	エラー継続の結合確認	失敗時出力を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	初期化不備やストリーム中の例外はフレームワーク既定のエラー処理に委ねるであること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-104	IT-25	件数上限	P2	件数上限の結合確認	副作用を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	ログへファイル名を情報レベルで残すであること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-105	IT-25	欠損値	P2	欠損値の結合確認	dtb_csvを試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_csvを確認する
+3. 画面表示と後続状態を確認する"	配送種別かつenabledが出力対象であること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-106	IT-25	データなし	P2	データなしの結合確認	検索を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索
+3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
+m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）	IT-M05-04-ADMIN-ORDER-ORDER-SHIPPING-CSV-EXPORT-107	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	管理画面にログイン済みで、当管理プレフィックスのルートにアクセス可能な管理者を試験できる状態である	m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送CSV出力）（m05_04_admin_order_order_shipping_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 管理画面にログイン済みで、当管理プレフィックスのルートにアクセス可能な管理者を確認する
+3. 画面表示と後続状態を確認する"	ブラウザからGETでCSVを取得できること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -380,4 +428,4 @@ m05-04_admin_order_order_shipping_csv_export（管理画面_受注管理_配送C
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 20件 — No.329, No.330, No.332, No.333, No.334, No.336, No.338, No.346, No.356, No.357, No.358, No.359, No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

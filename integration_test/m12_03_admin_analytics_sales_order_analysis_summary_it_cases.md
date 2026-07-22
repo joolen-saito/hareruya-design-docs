@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、フォーム送信、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -234,63 +232,54 @@ M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SAL
 M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-065	IT-15	機密情報	P1	機密情報の結合確認	集計表示を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で集計表示の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	本機能単体で業務監査ログを追加で書く処理は持たないこと。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-066	IT-07	排他制御	P1	排他制御の結合確認	使用日付の日付列を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で使用日付の日付列の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_order に集約であること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-067	IT-07	排他制御	P1	排他制御の結合確認	都道府県・性別を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で都道府県・性別の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_order.pref_id・dtb_order.sex_id 等であること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-068	IT-06	ロールバック	P3	ロールバックの結合確認	集計単位を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で集計単位の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	集計の軸であること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	検索条件セッションを試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	使用日付の日付列を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で使用日付の日付列の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 使用日付の日付列を確認する
+3. 画面表示と後続状態を確認する"	dtb_order に集約であること。
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	都道府県・性別を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で都道府県・性別の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 都道府県・性別を確認する
+3. 画面表示と後続状態を確認する"	dtb_order.pref_id・dtb_order.sex_id 等であること。
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	集計単位を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で集計単位の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 集計単位を確認する
+3. 画面表示と後続状態を確認する"	集計の軸であること。
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	検索条件セッションを試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索条件セッション
 3. 画面表示と後続状態を確認する"	集計実行時に検索条件を保存するセッション領域であること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	サイドメニュー「受注・売上分析」を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）でサイドメニュー「受注・売上分析」の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	サイドメニュー「受注・売上分析」を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）でサイドメニュー「受注・売上分析」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. サイドメニュー「受注・売上分析」を確認する
 3. 画面表示と後続状態を確認する"	集計日を当月初日〜当月末日、使用日付を注文日、集計単位を商品、並び順を昇順とした検索画面を表示すること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-071	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	検索ボタン押下を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索ボタン押下を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索ボタン押下
 3. 画面表示と後続状態を確認する"	入力された検索条件で集計し、同一画面に集計結果一覧を表示すること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	絞り込みを試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で絞り込みの確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-072	IT-12	画面表示データ	P2	画面表示データの結合確認	集計単位を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で集計単位の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 集計単位を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-073	IT-25	画面表示データ	P2	画面表示データの結合確認	絞り込みを試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で絞り込みの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 絞り込みを確認する
 3. 画面表示と後続状態を確認する"	汎用ワード（商品名日/英・カード名・商品コード・備考）、カテゴリ、都道府県、性別、誕生日、利用端末、売上分析タグ、カードセット、状態を指定すると、対応する結合・条件を追加すること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-073	IT-25	一覧	P2	一覧の結合確認	平均単価を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で平均単価の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-074	IT-12	画面表示データ	P2	画面表示データの結合確認	平均単価を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で平均単価の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 平均単価を確認する
-3. 画面表示と後続状態を確認する"	金額合計を数量合計で割るであること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-074	IT-12	画面表示データ	P2	画面表示データの結合確認	合計行を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で合計行の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 合計行を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-075	IT-25	画面表示データ	P2	画面表示データの結合確認	表示件数を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で表示件数の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-075	IT-25	フォーム送信	P1	フォーム送信の結合確認	表示件数を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で表示件数の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示件数を確認する
 3. 画面表示と後続状態を確認する"	一覧は表示件数の上限で打ち切るであること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-076	IT-12	画面表示データ	P2	画面表示データの結合確認	汎用ワードを試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で汎用ワードの確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-076	IT-16	ファイル選択	P2	ファイル選択の結合確認	汎用ワードを試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で汎用ワードの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 汎用ワードを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-077	IT-25	画面表示データ	P2	画面表示データの結合確認	集計単位を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で集計単位の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	フォームキー multiであること。
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-077	IT-12	非同期更新	P1	非同期更新の結合確認	集計単位を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で集計単位の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 集計単位を確認する
 3. 画面表示と後続状態を確認する"	フォームキー summary_typeであること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-078	IT-25	フォーム送信	P1	フォーム送信の結合確認	表示件数を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で表示件数の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-078	IT-12	エラー継続	P3	エラー継続の結合確認	表示件数を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で表示件数の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示件数を確認する
 3. 画面表示と後続状態を確認する"	フォームキー limitであること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-079	IT-16	ファイル選択	P2	ファイル選択の結合確認	利用端末を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で利用端末の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-079	IT-25	件数上限	P2	件数上限の結合確認	利用端末を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で利用端末の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 利用端末を確認する
 3. 画面表示と後続状態を確認する"	フォームキー device_typeであること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-080	IT-12	非同期更新	P1	非同期更新の結合確認	集計対象が0件を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で集計対象が0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-080	IT-25	欠損値	P2	欠損値の結合確認	集計対象が0件を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で集計対象が0件の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 集計対象が0件を確認する
 3. 画面表示と後続状態を確認する"	該当データが無い旨の見出しを表示すること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-081	IT-25	件数上限	P2	件数上限の結合確認	CSVとの整合性を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）でCSVとの整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-081	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	CSVとの整合性を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）でCSVとの整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSVとの整合性を確認する
 3. 画面表示と後続状態を確認する"	集計実行で検索条件をセッションへ保存すること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-082	IT-25	欠損値	P2	欠損値の結合確認	一覧と合計の整合性を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で一覧と合計の整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧と合計の整合性を確認する
-3. 画面表示と後続状態を確認する"	合計行は表示中（表示件数上限内）の集計結果を合算した値であること。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-083	IT-25	データなし	P2	データなしの結合確認	更新との整合性を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で更新との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 更新との整合性を確認する
-3. 画面表示と後続状態を確認する"	本機能は参照のみで台帳を更新しないこと。
-M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SALES-ORDER-ANALYSIS-SUMMARY-084	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	成功時出力を試験できる状態である	M12-03（受注/売上分析 集計一覧表示）（m12_03_admin_analytics_sales_order_analysis_summary）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	集計結果一覧・割合・合計行を含む画面であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -392,4 +381,4 @@ M12-03（受注/売上分析 集計一覧表示）	IT-M12-03-ADMIN-ANALYTICS-SAL
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.48, No.333, No.334, No.336, No.387。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.48, No.109, No.110, No.111, No.338, No.346, No.359, No.414。上限緩和または個別ケース化で収載可能。

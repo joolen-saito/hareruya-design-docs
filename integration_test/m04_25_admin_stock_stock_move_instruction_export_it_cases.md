@@ -23,8 +23,6 @@
 | IT-33 | ファイル出力、ファイル登録 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 
 ## テストケースTSV
 
@@ -189,74 +187,65 @@ M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	出力完了時 log_info「在庫移動指示 送り状CSV出力完了. ファイル名: …」であること。
 M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-057	IT-15	機密情報	P1	機密情報の結合確認	出力列（ヘッダのみ）を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-058	IT-07	排他制御	P1	排他制御の結合確認	文字コードを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	eccube_csv_export_encoding（既定 SJIS-win）であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-059	IT-07	排他制御	P1	排他制御の結合確認	主データを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動指示 dtb_stock_move_instruction と関連店舗 BaseInfo（出庫元/入庫先・Pref）を**参照のみ**であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-060	IT-06	ロールバック	P3	ロールバックの結合確認	ログを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送り状CSV出力完了を log_info に記録であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-061	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	実装確認を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockMoveInstructionController::exportLabelCsv / ::csvTemplateDownload / StockMoveInstr…であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-062	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	2026-06-12を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 2026-06-12を確認する
-3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Exporter/Repository）と既存テストを読み込み、出力列・文字コード・ファイル名・整形を実装確認値で具体化であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-063	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	送り状CSV出力を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 送り状CSV出力を確認する
-3. 画面表示と後続状態を確認する"	一覧でチェックした指示ID（ids[]）の送り状CSVを StreamedResponse で出力であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-064	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	実績入力用CSV雛形ダウンロードを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 実績入力用CSV雛形ダウンロード
-3. 画面表示と後続状態を確認する"	ヘッダのみのCSV雛形を StreamedResponse で出力であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-065	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力サービスを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力サービスを確認する
-3. 画面表示と後続状態を確認する"	CsvExportService（fopen/fputcsv/fclose）であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-066	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ログを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ログを確認する
-3. 画面表示と後続状態を確認する"	出力完了時 log_info「在庫移動指示 送り状CSV出力完了. ファイル名: …」であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-067	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力列（ヘッダのみ）を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力列（ヘッダのみ）を確認する
-3. 画面表示と後続状態を確認する"	移動指示ID / 出庫元店舗(名称) / 入庫先店舗(名称) / 送り状No.であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-068	IT-25	一覧	P2	一覧の結合確認	文字コードを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	文字コードを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 文字コードを確認する
 3. 画面表示と後続状態を確認する"	eccube_csv_export_encoding（既定 SJIS-win）であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-069	IT-12	画面表示データ	P2	画面表示データの結合確認	主データを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 主データを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-070	IT-25	画面表示データ	P2	画面表示データの結合確認	ログを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ログを確認する
-3. 画面表示と後続状態を確認する"	送り状CSV出力完了を log_info に記録であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-071	IT-12	画面表示データ	P2	画面表示データの結合確認	実装確認を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-072	IT-25	画面表示データ	P2	画面表示データの結合確認	2026-06-12を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 2026-06-12を確認する
-3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Exporter/Repository）と既存テストを読み込み、出力列・文字コード・ファイル名・整形を実装確認値で具体化であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-073	IT-25	フォーム送信	P1	フォーム送信の結合確認	送り状CSV出力を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 送り状CSV出力を確認する
-3. 画面表示と後続状態を確認する"	一覧でチェックした指示ID（ids[]）の送り状CSVを StreamedResponse で出力であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-074	IT-16	ファイル選択	P2	ファイル選択の結合確認	実績入力用CSV雛形ダウンロードを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-075	IT-12	非同期更新	P1	非同期更新の結合確認	出力サービスを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力サービスを確認する
-3. 画面表示と後続状態を確認する"	CsvExportService（fopen/fputcsv/fclose）であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-076	IT-12	エラー継続	P3	エラー継続の結合確認	ログを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ログを確認する
-3. 画面表示と後続状態を確認する"	出力完了時 log_info「在庫移動指示 送り状CSV出力完了. ファイル名: …」であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-077	IT-25	件数上限	P2	件数上限の結合確認	出力列（ヘッダのみ）を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力列（ヘッダのみ）を確認する
-3. 画面表示と後続状態を確認する"	移動指示ID / 出庫元店舗(名称) / 入庫先店舗(名称) / 送り状No.であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-078	IT-25	欠損値	P2	欠損値の結合確認	文字コードを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 文字コードを確認する
-3. 画面表示と後続状態を確認する"	eccube_csv_export_encoding（既定 SJIS-win）であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-079	IT-25	データなし	P2	データなしの結合確認	主データを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-059	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	主データを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 主データを確認する
 3. 画面表示と後続状態を確認する"	在庫移動指示 dtb_stock_move_instruction と関連店舗 BaseInfo（出庫元/入庫先・Pref）を**参照のみ**であること。
-M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-080	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ログを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ログを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ログを確認する
 3. 画面表示と後続状態を確認する"	送り状CSV出力完了を log_info に記録であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-061	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	実装確認を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 実装確認を確認する
+3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockMoveInstructionController::exportLabelCsv / ::csvTemplateDownload / StockMoveInstr…であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	2026-06-12を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 2026-06-12を確認する
+3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Exporter/Repository）と既存テストを読み込み、出力列・文字コード・ファイル名・整形を実装確認値で具体化であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	送り状CSV出力を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 送り状CSV出力を確認する
+3. 画面表示と後続状態を確認する"	一覧でチェックした指示ID（ids[]）の送り状CSVを StreamedResponse で出力であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-064	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	実績入力用CSV雛形ダウンロードを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 実績入力用CSV雛形ダウンロード
+3. 画面表示と後続状態を確認する"	ヘッダのみのCSV雛形を StreamedResponse で出力であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-065	IT-25	一覧	P2	一覧の結合確認	出力サービスを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力サービスを確認する
+3. 画面表示と後続状態を確認する"	CsvExportService（fopen/fputcsv/fclose）であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-066	IT-12	画面表示データ	P2	画面表示データの結合確認	ログを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ログを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-067	IT-25	画面表示データ	P2	画面表示データの結合確認	出力列（ヘッダのみ）を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力列（ヘッダのみ）を確認する
+3. 画面表示と後続状態を確認する"	移動指示ID / 出庫元店舗(名称) / 入庫先店舗(名称) / 送り状No.であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-068	IT-12	画面表示データ	P2	画面表示データの結合確認	文字コードを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 文字コードを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-069	IT-25	画面表示データ	P2	画面表示データの結合確認	主データを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 主データを確認する
+3. 画面表示と後続状態を確認する"	在庫移動指示 dtb_stock_move_instruction と関連店舗 BaseInfo（出庫元/入庫先・Pref）を**参照のみ**であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-070	IT-25	フォーム送信	P1	フォーム送信の結合確認	ログを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ログを確認する
+3. 画面表示と後続状態を確認する"	送り状CSV出力完了を log_info に記録であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-071	IT-16	ファイル選択	P2	ファイル選択の結合確認	実装確認を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-072	IT-12	非同期更新	P1	非同期更新の結合確認	2026-06-12を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 2026-06-12を確認する
+3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Exporter/Repository）と既存テストを読み込み、出力列・文字コード・ファイル名・整形を実装確認値で具体化であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-073	IT-12	エラー継続	P3	エラー継続の結合確認	送り状CSV出力を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 送り状CSV出力を確認する
+3. 画面表示と後続状態を確認する"	一覧でチェックした指示ID（ids[]）の送り状CSVを StreamedResponse で出力であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-074	IT-25	件数上限	P2	件数上限の結合確認	実績入力用CSV雛形ダウンロードを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 実績入力用CSV雛形ダウンロード
+3. 画面表示と後続状態を確認する"	ヘッダのみのCSV雛形を StreamedResponse で出力であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-075	IT-25	欠損値	P2	欠損値の結合確認	出力サービスを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力サービスを確認する
+3. 画面表示と後続状態を確認する"	CsvExportService（fopen/fputcsv/fclose）であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-076	IT-25	データなし	P2	データなしの結合確認	ログを試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ログを確認する
+3. 画面表示と後続状態を確認する"	出力完了時 log_info「在庫移動指示 送り状CSV出力完了. ファイル名: …」であること。
+M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-EXPORT-077	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	出力列（ヘッダのみ）を試験できる状態である	M04-25（在庫移動指示リストエクスポート）（m04_25_admin_stock_stock_move_instruction_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力列（ヘッダのみ）を確認する
+3. 画面表示と後続状態を確認する"	移動指示ID / 出庫元店舗(名称) / 入庫先店舗(名称) / 送り状No.であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -349,3 +338,5 @@ M04-25（在庫移動指示リストエクスポート）	IT-M04-25-ADMIN-STOCK-
 | ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

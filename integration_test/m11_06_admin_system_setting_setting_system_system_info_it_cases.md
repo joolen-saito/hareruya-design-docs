@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 実行結果 |
-| IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -183,66 +181,57 @@ m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_シ
 m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-048	IT-15	機密情報	P1	機密情報の結合確認	DBバージョンと接続を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でDBバージョンと接続の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	表示はDoctrineの既定接続に対する問い合わせ結果であること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-049	IT-07	排他制御	P1	排他制御の結合確認	永続化を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で永続化の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能は表示のみで、システム情報の内容をDBに書き戻さないこと。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-050	IT-07	排他制御	P1	排他制御の結合確認	DB更新を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でDB更新の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	行わないこと。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-051	IT-06	ロールバック	P3	ロールバックの結合確認	キャッシュを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でキャッシュの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能の表示結果を専用にキャッシュしないこと。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-052	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	セッションを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でセッションの確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-049	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	DB更新を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でDB更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. DB更新を確認する
+3. 画面表示と後続状態を確認する"	行わないこと。
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-050	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	キャッシュを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でキャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. キャッシュを確認する
+3. 画面表示と後続状態を確認する"	本機能の表示結果を専用にキャッシュしないこと。
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-051	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	セッションを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でセッションの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. セッションを確認する
 3. 画面表示と後続状態を確認する"	本機能のコントローラがセッションを更新する処理は持たないこと。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-053	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功時出力を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	システム情報は管理画面共通レイアウトのHTMLであること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-054	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-053	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	認可失敗時は403であること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-055	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-054	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録/更新を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-056	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	利用者入力を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で利用者入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-055	IT-25	一覧	P2	一覧の結合確認	利用者入力を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で利用者入力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 利用者入力
 3. 画面表示と後続状態を確認する"	本機能はフォームを持たないため、入力検証はないこと。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-057	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	拒否URLパターンを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で拒否URLパターンの確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-056	IT-12	画面表示データ	P2	画面表示データの結合確認	拒否URLパターンを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で拒否URLパターンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 拒否URLパターンを確認する
-3. 画面表示と後続状態を確認する"	保存値が正規表現として解釈できない場合は例外を捕まえ、文字列の完全一致エスケープによる先頭一致検査にフォールバックする実装があること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-058	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	未認証を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-057	IT-25	画面表示データ	P2	画面表示データの結合確認	未認証を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未認証を確認する
 3. 画面表示と後続状態を確認する"	管理領域の要件に従い利用不可であること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-059	IT-25	一覧	P2	一覧の結合確認	ナビ表示を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でナビ表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-058	IT-12	画面表示データ	P2	画面表示データの結合確認	ナビ表示を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でナビ表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ナビ表示を確認する
-3. 画面表示と後続状態を確認する"	メンバー権限に応じてサイドナビを生成する処理があり、拒否URLに合致する項目は表示されない場合があること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-060	IT-12	画面表示データ	P2	画面表示データの結合確認	メニューからシステム情報を選ぶを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でメニューからシステム情報を選ぶの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. メニューからシステム情報を選ぶを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-061	IT-25	画面表示データ	P2	画面表示データの結合確認	システム情報カードを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でシステム情報カードの確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-059	IT-25	画面表示データ	P2	画面表示データの結合確認	メニューからシステム情報を選ぶを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でメニューからシステム情報を選ぶの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. メニューからシステム情報を選ぶを確認する
+3. 画面表示と後続状態を確認する"	同一画面としてシステム情報を表示であること。
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-060	IT-25	フォーム送信	P1	フォーム送信の結合確認	システム情報カードを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でシステム情報カードの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. システム情報カードを確認する
 3. 画面表示と後続状態を確認する"	画面本体の先頭カードであること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-062	IT-12	画面表示データ	P2	画面表示データの結合確認	PHP情報カードを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でPHP情報カードの確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-061	IT-16	ファイル選択	P2	ファイル選択の結合確認	PHP情報カードを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でPHP情報カードの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. PHP情報カードを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-063	IT-25	画面表示データ	P2	画面表示データの結合確認	権限別拒否URLを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で権限別拒否URLの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	eccube_phpinfo_enabled が真のときのみ表示されるカードであること。
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-062	IT-12	非同期更新	P1	非同期更新の結合確認	権限別拒否URLを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）で権限別拒否URLの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 権限別拒否URLを確認する
 3. 画面表示と後続状態を確認する"	dtb_authority_role に保存され、ログイン中メンバーの権限に紐付くであること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-064	IT-25	フォーム送信	P1	フォーム送信の結合確認	User Agentを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でUser Agentの確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-063	IT-12	エラー継続	P3	エラー継続の結合確認	User Agentを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でUser Agentの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. User Agentを確認する
 3. 画面表示と後続状態を確認する"	当該HTTP要求のUser-Agentヘッダー値であること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-065	IT-16	ファイル選択	P2	ファイル選択の結合確認	システム設定メニューからシステム情報を開くを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でシステム設定メニューからシステム情報を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-064	IT-25	件数上限	P2	件数上限の結合確認	システム設定メニューからシステム情報を開くを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でシステム設定メニューからシステム情報を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. システム設定メニューからシステム情報を開く
 3. 画面表示と後続状態を確認する"	権限により許可される場合、システム情報カードに複数行のラベルと値が出るであること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-066	IT-12	非同期更新	P1	非同期更新の結合確認	システム情報カード見出し右の角度アイコンを押下を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でシステム情報カード見出し右の角度アイコンを押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-065	IT-25	欠損値	P2	欠損値の結合確認	システム情報カード見出し右の角度アイコンを押下を試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でシステム情報カード見出し右の角度アイコンを押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. システム情報カード見出し右の角度アイコンを押下
 3. 画面表示と後続状態を確認する"	カード本文の表示領域が折りたたまれたり展開されたりすること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-067	IT-25	データなし	P2	データなしの結合確認	EC-CUBEを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でEC-CUBEの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. EC-CUBEを確認する
-3. 画面表示と後続状態を確認する"	製品が定数として保持するバージョン文字列を表示すること。
-m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）	IT-M11-06-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-SYSTEM-INFO-068	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	サーバーOSを試験できる状態である	m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_システム設定_システム情報）（m11_06_admin_system_setting_setting_system_system_info）でサーバーOSの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. サーバーOSを確認する
-3. 画面表示と後続状態を確認する"	php_uname() の戻り値をそのまま表示すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -344,4 +333,4 @@ m11-06_admin_system_setting_setting_system_system_info（管理画面_設定_シ
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.387, No.412, No.413。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.110, No.111, No.329, No.414, No.416。上限緩和または個別ケース化で収載可能。

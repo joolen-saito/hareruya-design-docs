@@ -13,7 +13,7 @@
 | IT-32 | データなし、バージョニング、リクエスト、レスポンス、受信検証、必須条件、資格情報 |
 | IT-09 | HTTPステータス、外部取得 |
 | IT-10 | HTTPステータス、エラー、形式不正、正常、正常系、異常系、通信、部分失敗、重複・順序、障害 |
-| IT-33 | エラー、区分整合、売上・返品、外部取引、実数更新、自動加算、金額確定 |
+| IT-33 | エラー、不正遷移、区分整合、売上・返品、外部取引、実数更新、自動加算、金額確定 |
 | IT-08 | Outbox、可観測性 |
 
 ## テストケースTSV
@@ -52,50 +52,52 @@ API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PROD
 2. 実行結果を確認する"	複数システムもしくは複数区分で数量を別管理する場合、更新対象外のシステム・区分・状態の数量と金額が変動しないこと。
 API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-010	IT-33	エラー	P1	エラーの結合確認	result[].productUpdateDateを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）でエラーの対象リクエストパラメータを指定する	"1. エラーの対象機能を実行する
 2. 実行結果を確認する"	数量更新失敗、検証エラー、外部連携エラー時に数量・金額・履歴・連携ステータス等のシステム状態が部分更新されず、連携元・自システム・連携先のいずれにも片側更新を残さず双方で整合すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-011	IT-33	外部取引	P3	外部取引の結合確認	参照時点を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で外部取引の対象リクエストパラメータを指定する	"1. 外部取引の対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-011	IT-33	外部取引	P3	外部取引の結合確認	A02-05-MSG-002を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で外部取引の対象リクエストパラメータを指定する	"1. 外部取引の対象機能を実行する
 2. 実行結果を確認する"	外部取引による売上・返品・取消等では、現在数量と現在金額から加算・減算額を仕様通り計算し、別取引で保持した金額と混同しないこと。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-012	IT-33	自動加算	P1	自動加算の結合確認	登録/更新を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で自動加算の対象リクエストパラメータを指定する	"1. 自動加算の対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-012	IT-33	自動加算	P1	自動加算の結合確認	A02-05-MSG-003を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で自動加算の対象リクエストパラメータを指定する	"1. 自動加算の対象機能を実行する
 2. 実行結果を確認する"	外部連携由来の自動加算時に、連携元の金額や評価額を加算金額として対象区分へ反映し、連携元ID付き履歴が作成されること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-013	IT-33	実数更新	P1	実数更新の結合確認	期間に該当なしを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で実数更新の対象リクエストパラメータを指定する	"1. 実数更新の対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-013	IT-33	実数更新	P1	実数更新の結合確認	参照時点を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で実数更新の対象リクエストパラメータを指定する	"1. 実数更新の対象機能を実行する
 2. 実行結果を確認する"	外部連携由来の実数更新で、連携元の金額合計と実数小計が一致し、対象区分の履歴へ反映されること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-014	IT-33	売上・返品	P1	売上・返品の結合確認	更新日時の絞り込みを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で売上・返品の対象リクエストパラメータを指定する	"1. 売上・返品の対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-014	IT-33	売上・返品	P1	売上・返品の結合確認	登録/更新を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で売上・返品の対象リクエストパラメータを指定する	"1. 売上・返品の対象機能を実行する
 2. 実行結果を確認する"	外部連携の売上で数量を減算し、返品で現在数量・現在金額から計算した加算金額で数量と金額を戻すこと。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-015	IT-09	外部取得	P1	外部取得のレスポンス確認	更新期間を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で外部取得の対象リクエストパラメータを指定する	"1. 外部取得の対象エンドポイントへリクエストを送信する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-015	IT-09	外部取得	P1	外部取得のレスポンス確認	期間に該当なしを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で外部取得の対象リクエストパラメータを指定する	"1. 外部取得の対象エンドポイントへリクエストを送信する
 2. レスポンスと後続状態を確認する"	HTTPステータスとレスポンス本文が外部取得の処理結果と一致すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-016	IT-10	HTTPステータス	P1	HTTPステータスのレスポンス確認	更新商品規格の取得を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）でHTTPステータスの対象リクエストパラメータを指定する	"1. HTTPステータスの対象エンドポイントへリクエストを送信する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-016	IT-10	HTTPステータス	P1	HTTPステータスのレスポンス確認	更新日時の絞り込みを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）でHTTPステータスの対象リクエストパラメータを指定する	"1. HTTPステータスの対象エンドポイントへリクエストを送信する
 2. レスポンスと後続状態を確認する"	HTTPステータスとレスポンス本文がHTTPステータスの処理結果と一致すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-017	IT-10	通信	P1	通信のレスポンス確認	取得対象を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で通信の対象リクエストパラメータを指定する	"1. 通信の対象エンドポイントへリクエストを送信する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-017	IT-10	通信	P1	通信のレスポンス確認	更新期間を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で通信の対象リクエストパラメータを指定する	"1. 通信の対象エンドポイントへリクエストを送信する
 2. レスポンスと後続状態を確認する"	HTTPステータスとレスポンス本文が通信の処理結果と一致すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-018	IT-10	正常	P2	正常のレスポンス確認	応答を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で正常で対象条件に該当する値を指定する	"1. 正常の対象エンドポイントへリクエストを送信する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-018	IT-10	正常	P2	正常のレスポンス確認	更新商品規格の取得を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で正常で対象条件に該当する値を指定する	"1. 正常の対象エンドポイントへリクエストを送信する
 2. レスポンスと後続状態を確認する"	HTTPステータスとレスポンス本文が正常の処理結果と一致すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-019	IT-10	形式不正	P2	形式不正の結合確認	strFromDateを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で形式不正の対象リクエストパラメータを指定する	"1. 形式不正の対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-019	IT-10	形式不正	P2	形式不正の結合確認	取得対象を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で形式不正の対象リクエストパラメータを指定する	"1. 形式不正の対象機能を実行する
 2. 実行結果を確認する"	外部キャッシュ上の値がJSON不正、必須キー欠落、期限切れなど利用不可な状態の場合、キャッシュを成功扱いせず外部再取得もしくはエラー表示へ分岐すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-020	IT-10	障害	P2	障害の結合確認	strToDateを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で障害の対象リクエストパラメータを指定する	"1. 障害の対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-020	IT-10	障害	P2	障害の結合確認	応答を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で障害の対象リクエストパラメータを指定する	"1. 障害の対象機能を実行する
 2. 実行結果を確認する"	外部キャッシュへの接続障害や読み書き失敗が発生した場合、フロント表示が未定義エラーにならず、外部取得・空表示・エラー表示など仕様で定めた代替動作となること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-021	IT-10	異常系	P2	異常系のレスポンス確認	countを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で異常系の対象リクエストパラメータを指定する	"1. 異常系の対象エンドポイントへリクエストを送信する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-021	IT-10	異常系	P2	異常系のレスポンス確認	strFromDateを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で異常系の対象リクエストパラメータを指定する	"1. 異常系の対象エンドポイントへリクエストを送信する
 2. レスポンスと後続状態を確認する"	HTTPステータスとレスポンス本文が異常系の処理結果と一致すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-022	IT-32	必須条件	P3	必須条件のレスポンス確認	result[].productClassUpdateDateを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で必須条件の対象リクエストパラメータを指定する	"1. 必須条件の対象エンドポイントへリクエストを送信する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-022	IT-32	必須条件	P3	必須条件のレスポンス確認	strToDateを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で必須条件の対象リクエストパラメータを指定する	"1. 必須条件の対象エンドポイントへリクエストを送信する
 2. レスポンスと後続状態を確認する"	HTTPステータスとレスポンス本文が必須条件の処理結果と一致すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-023	IT-32	レスポンス	P3	レスポンスのレスポンス確認	result[].productUpdateDateを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）でレスポンスの対象リクエストパラメータを指定する	"1. レスポンスの対象エンドポイントへリクエストを送信する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-023	IT-32	レスポンス	P3	レスポンスのレスポンス確認	countを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）でレスポンスの対象リクエストパラメータを指定する	"1. レスポンスの対象エンドポイントへリクエストを送信する
 2. レスポンスと後続状態を確認する"	HTTPステータスとレスポンス本文がレスポンスの処理結果と一致すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-024	IT-32	データなし	P3	データなしのレスポンス確認	参照時点を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）でデータなしの対象リクエストパラメータを指定する	"1. データなしの対象エンドポイントへリクエストを送信する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-024	IT-32	データなし	P3	データなしのレスポンス確認	result[].productClassUpdateDateを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）でデータなしの対象リクエストパラメータを指定する	"1. データなしの対象エンドポイントへリクエストを送信する
 2. レスポンスと後続状態を確認する"	HTTPステータスとレスポンス本文がデータなしの処理結果と一致すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-025	IT-10	正常系	P1	正常系の結合確認	登録/更新を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で正常系の対象リクエストパラメータを指定する	"1. 正常系の対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-025	IT-10	正常系	P1	正常系の結合確認	result[].productUpdateDateを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で正常系の対象リクエストパラメータを指定する	"1. 正常系の対象機能を実行する
 2. 実行結果を確認する"	決済代行や外部決済サービスへの登録、照会、決済、取消、返金等が成功した場合、外部側の処理結果と自システム側の状態、金額、履歴、通知、画面表示が同一取引として整合すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-026	IT-10	異常系	P1	異常系の結合確認	期間に該当なしを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で異常系の対象リクエストパラメータを指定する	"1. 異常系の対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-026	IT-10	異常系	P1	異常系の結合確認	A02-05-MSG-002を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で異常系の対象リクエストパラメータを指定する	"1. 異常系の対象機能を実行する
 2. 実行結果を確認する"	決済代行や外部決済サービスとの通信エラー、業務エラー、タイムアウト、外部側成功後の自システム更新失敗が発生した場合、二重課金・二重返金・状態不整合を起こさず、利用者表示、ログ、通知、再実行可否が仕様通り扱われること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-027	IT-32	受信検証	P1	受信検証のレスポンス確認	更新日時の絞り込みを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で受信検証の対象リクエストパラメータを指定する	"1. 受信検証の対象エンドポイントへリクエストを送信する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-027	IT-32	受信検証	P1	受信検証のレスポンス確認	A02-05-MSG-003を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で受信検証の対象リクエストパラメータを指定する	"1. 受信検証の対象エンドポイントへリクエストを送信する
 2. レスポンスと後続状態を確認する"	HTTPステータスとレスポンス本文が受信検証の処理結果と一致すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-028	IT-10	重複・順序	P1	重複・順序の操作結果確認	更新期間を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で重複・順序の対象リクエストパラメータを指定する	"1. 重複・順序の対象機能を実行する
-2. 実行結果を確認する"	取得対象を絞る更新日時の範囲であること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-029	IT-10	部分失敗	P1	部分失敗の結合確認	更新商品規格の取得を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で部分失敗の対象リクエストパラメータを指定する	"1. 部分失敗の対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-028	IT-10	重複・順序	P1	重複・順序の操作結果確認	参照時点を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で重複・順序の対象リクエストパラメータを指定する	"1. 重複・順序の対象機能を実行する
+2. 実行結果を確認する"	呼び出し時点で当該期間に更新された商品規格を返すこと。
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-029	IT-10	部分失敗	P1	部分失敗の結合確認	登録/更新を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で部分失敗の対象リクエストパラメータを指定する	"1. 部分失敗の対象機能を実行する
 2. 実行結果を確認する"	外部通知や外部取得結果を別システムへ転送・再連携する機能では、転送先の成功、失敗、タイムアウト、部分成功を区別し、連携元・自システム・連携先の更新結果、ログ、再実行可否が仕様通り整合すること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-030	IT-33	金額確定	P1	金額確定の操作結果確認	取得対象を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で金額確定の対象リクエストパラメータを指定する	"1. 金額確定の対象機能を実行する
-2. 実行結果を確認する"	更新日時が指定期間（開始日0時〜終了日23時59分59秒）内の商品規格であること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-031	IT-08	可観測性	P1	可観測性の結合確認	応答を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で可観測性の対象リクエストパラメータを指定する	"1. 可観測性の対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-030	IT-33	金額確定	P1	金額確定の操作結果確認	期間に該当なしを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で金額確定の対象リクエストパラメータを指定する	"1. 金額確定の対象機能を実行する
+2. 実行結果を確認する"	件数0・空の結果を返すこと。
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-031	IT-08	可観測性	P1	可観測性の結合確認	更新日時の絞り込みを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で可観測性の対象リクエストパラメータを指定する	"1. 可観測性の対象機能を実行する
 2. 実行結果を確認する"	外部I/F受信・バッチ・手動再実行を横断して同一イベントを識別する冪等キーが定義され、重複到達時に仕様で定めた結果を返し、重複検知が履歴・相関IDで追跡できること。
-API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-032	IT-08	Outbox	P1	Outboxの結合確認	strFromDateを試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）でOutboxの対象リクエストパラメータを指定する	"1. Outboxの対象機能を実行する
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-032	IT-08	Outbox	P1	Outboxの結合確認	更新期間を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）でOutboxの対象リクエストパラメータを指定する	"1. Outboxの対象機能を実行する
 2. 実行結果を確認する"	DB更新と下流通知(メール/Webhook/WebSocket/外部連携)を伴う機能で、DB更新済みなのに通知未発行、もしくは通知発行済みなのにDB未確定が発生せず、送信失敗後の再送でも重複通知が起きないこと。
+API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PRODUCT-CLASS-033	IT-33	不正遷移	P1	不正遷移の操作結果確認	更新商品規格の取得を試験できる状態である	API 商品管理 — 更新商品規格取得（a02_05_api_product_updated_product_class）で不正遷移の対象リクエストパラメータを指定する	"1. 不正遷移の対象機能を実行する
+2. 実行結果を確認する"	指定期間内に更新された商品規格を、件数とともにJSONで返すこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -195,4 +197,4 @@ API 商品管理 — 更新商品規格取得	IT-A02-05-API-PRODUCT-UPDATED-PROD
 | ウェブアプリケーション / 決済連携 / 状態表示（IT-25） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 決済連携 / 金額整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 在庫引当 / 状態遷移（IT-33） | 本機能に該当する画面操作起点がないため |
-| その他 | 同種の対象外観点 8 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 7 件は上記分類と同じ理由で対象外 |

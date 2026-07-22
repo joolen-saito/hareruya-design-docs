@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -69,8 +67,8 @@ m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_
 m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	ステータス別受注件数（当画面のフラグとの関係のみ）を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. ステータス別受注件数（当画面のフラグとの関係のみ）を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	保存しましたを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 保存しました
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	M10-11-MSG-002を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. M10-11-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
 m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	並び順を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で並び順の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 並び順を確認する
@@ -189,7 +187,7 @@ m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_
 m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-050	IT-26	更新内容	P1	更新時の更新内容確認	ステータス別受注件数（当画面のフラグとの関係のみ）を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でステータス別受注件数（当画面のフラグとの関係のみ）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-051	IT-26	更新内容	P1	更新時の更新内容確認	保存しましたを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で保存しましたの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-051	IT-26	更新内容	P1	更新時の更新内容確認	M10-11-MSG-002を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でM10-11-MSG-002の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-052	IT-26	更新内容	P1	更新時の更新内容確認	並び順を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で並び順の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
@@ -237,64 +235,64 @@ m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_
 m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-066	IT-15	機密情報	P1	機密情報の結合確認	副作用を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で副作用の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	永続化層では、各行についてOrderStatusをpersistし、同一IDのCustomerOrderStatus・OrderStatusColorが存在するときだけそれぞれ名称・色を更新してpersistすること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-067	IT-07	排他制御	P1	排他制御の結合確認	mtb_order_statusを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_order_statusの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一覧取得の並べ替えキーであること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-068	IT-07	排他制御	P1	排他制御の結合確認	mtb_order_statusを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_order_statusの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	件数表示フラグであること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-069	IT-06	ロールバック	P3	ロールバックの結合確認	mtb_customer_order_statusを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_customer_order_statusの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	名称(マイページ)であること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	mtb_customer_order_statusを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_customer_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	mtb_order_statusを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. mtb_order_statusを確認する
+3. 画面表示と後続状態を確認する"	一覧取得の並べ替えキーであること。
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	mtb_order_statusを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. mtb_order_statusを確認する
+3. 画面表示と後続状態を確認する"	件数表示フラグであること。
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	mtb_customer_order_statusを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_customer_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. mtb_customer_order_statusを確認する
+3. 画面表示と後続状態を確認する"	名称(マイページ)であること。
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	mtb_customer_order_statusを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_customer_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_customer_order_statusを確認する
 3. 画面表示と後続状態を確認する"	本機能では更新しないこと。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	mtb_order_status_colorを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_order_status_colorの確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	mtb_order_status_colorを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_order_status_colorの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_order_status_colorを確認する
 3. 画面表示と後続状態を確認する"	色の文字列であること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	mtb_order_status_colorを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_order_status_colorの確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	mtb_order_status_colorを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でmtb_order_status_colorの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_order_status_colorを確認する
 3. 画面表示と後続状態を確認する"	本機能では更新しないこと。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-073	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録/更新を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	名称(受注管理)を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で名称(受注管理)の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-074	IT-25	一覧	P2	一覧の結合確認	名称(受注管理)を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で名称(受注管理)の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 名称(受注管理)を確認する
 3. 画面表示と後続状態を確認する"	NotBlankであること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	件数表示を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で件数表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-075	IT-12	画面表示データ	P2	画面表示データの結合確認	件数表示を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で件数表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 件数表示を確認する
-3. 画面表示と後続状態を確認する"	required falseであること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	未認証を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-076	IT-25	画面表示データ	P2	画面表示データの結合確認	未認証を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未認証を確認する
 3. 画面表示と後続状態を確認する"	利用不可であること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-077	IT-25	一覧	P2	一覧の結合確認	システム管理者・モール系管理者など、店舗設定配下への拒否パターンが紐付いていな…を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でシステム管理者・モール系管理者など、店舗設定配下への拒否パターンが紐付いていな…の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-077	IT-12	画面表示データ	P2	画面表示データの結合確認	システム管理者・モール系管理者など、店舗設定配下への拒否パターンが紐付いていな…を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）でシステム管理者・モール系管理者など、店舗設定配下への拒否パターンが紐付いていな…の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. システム管理者・モール系管理者など、店舗設定配下への拒否パターンが紐付いていな…を確認する
-3. 画面表示と後続状態を確認する"	画面表示および登録送信が評価上許可されるであること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-078	IT-12	画面表示データ	P2	画面表示データの結合確認	店舗側の権種（Authorityのロールキー確認値としてtenant_owne…を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で店舗側の権種（Authorityのロールキー確認値としてtenant_owne…の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店舗側の権種（Authorityのロールキー確認値としてtenant_owne…を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-079	IT-25	画面表示データ	P2	画面表示データの結合確認	送信が検証と永続化に成功したを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で送信が検証と永続化に成功したの確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-078	IT-25	画面表示データ	P2	画面表示データの結合確認	店舗側の権種（Authorityのロールキー確認値としてtenant_owne…を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で店舗側の権種（Authorityのロールキー確認値としてtenant_owne…の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 店舗側の権種（Authorityのロールキー確認値としてtenant_owne…を確認する
+3. 画面表示と後続状態を確認する"	初期データではdtb_authority_roleに、管理パス先頭/setting/shopと前方一致するdeny_urlが紐付くであること。
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	送信が検証と永続化に成功したを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で送信が検証と永続化に成功したの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 送信が検証と永続化に成功した
 3. 画面表示と後続状態を確認する"	フラッシュ設定後、この画面へのリダイレクトによりGETで一覧を組み立て直すであること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-080	IT-12	画面表示データ	P2	画面表示データの結合確認	検証失敗を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-080	IT-16	ファイル選択	P2	ファイル選択の結合確認	検証失敗を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検証失敗を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-081	IT-25	画面表示データ	P2	画面表示データの結合確認	受注対応状況設定画面を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で受注対応状況設定画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	同一画面へ200で応答し、入力値とエラーを再表示すること。
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-081	IT-12	非同期更新	P1	非同期更新の結合確認	受注対応状況設定画面を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で受注対応状況設定画面の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注対応状況設定画面を確認する
 3. 画面表示と後続状態を確認する"	「受注対応状況設定」という管理画面見出しのもと、mtb_order_status の全件を昇順テーブル表示し、その場で入力をまとめて保存するページであること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-082	IT-25	フォーム送信	P1	フォーム送信の結合確認	件数表示を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で件数表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-082	IT-12	エラー継続	P3	エラー継続の結合確認	件数表示を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で件数表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 件数表示を確認する
 3. 画面表示と後続状態を確認する"	mtb_order_status.display_order_countが真のとき、受注検索Form等で当該ステータスが件数集計対象となるためのフラグであること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-083	IT-16	ファイル選択	P2	ファイル選択の結合確認	受注対応状況設定画面へ遷移（GET）を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で受注対応状況設定画面へ遷移（GET）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-083	IT-25	件数上限	P2	件数上限の結合確認	受注対応状況設定画面へ遷移（GET）を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で受注対応状況設定画面へ遷移（GET）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注対応状況設定画面へ遷移（GET）を確認する
 3. 画面表示と後続状態を確認する"	全受注ステータス行がsort_no昇順で表示され、各ステータスのID・4種の入力欄・画面上は翻訳キー確認値により「登録」ラベルの送信ボタンが見えるであること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-084	IT-12	非同期更新	P1	非同期更新の結合確認	「登録」で送信（POST、フォームのCSRFフィールドが有効値で同梱される）を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で「登録」で送信（POST、フォームのCSRFフィールドが有効値で同梱される）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-084	IT-25	欠損値	P2	欠損値の結合確認	「登録」で送信（POST、フォームのCSRFフィールドが有効値で同梱される）を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で「登録」で送信（POST、フォームのCSRFフィールドが有効値で同梱される）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「登録」で送信（POST、フォームのCSRFフィールドが有効値で同梱される）
 3. 画面表示と後続状態を確認する"	入力が検証を通れば関連テーブルの該当行が更新され、成功フラッシュ（メッセージ確認値として日本語ロケールでは「保存しました」）のあとこの画面へのリダイレクトとなること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-085	IT-12	エラー継続	P3	エラー継続の結合確認	権限評価で拒否となる利用者でGETを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で権限評価で拒否となる利用者でGETの確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-085	IT-25	データなし	P2	データなしの結合確認	権限評価で拒否となる利用者でGETを試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で権限評価で拒否となる利用者でGETの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 権限評価で拒否となる利用者でGETを確認する
 3. 画面表示と後続状態を確認する"	管理共通の認可失敗としてHTTP 403となること。
-m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-086	IT-25	件数上限	P2	件数上限の結合確認	表示要素を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）	IT-M10-11-ADMIN-BASE-SETTING-SETTING-SHOP-ORDER-STATUS-086	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	表示要素を試験できる状態である	m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_受注対応状況設定）（m10_11_admin_base_setting_setting_shop_order_status）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	共通管理フレーム内で、ページ見出しは翻訳キー確認値により日本語ロケールで「受注対応状況設定」、サブ見出しは「基本情報設定」となること。
 ```
@@ -398,4 +396,4 @@ m10-11_admin_base_setting_setting_shop_order_status（管理画面_店舗設定_
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

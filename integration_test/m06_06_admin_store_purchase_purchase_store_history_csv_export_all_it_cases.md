@@ -13,19 +13,17 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、更新抑止、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-16 | 実行結果 |
+| IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -280,15 +278,65 @@ m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ブラウザがCSVをダウンロードすること。
 m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-087	IT-15	機密情報	P1	機密情報の結合確認	検索送信を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-088	IT-07	排他制御	P1	排他制御の結合確認	検索結果全件取得を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一覧HTMLは自動では更新しないこと。
-m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-089	IT-07	排他制御	P1	排他制御の結合確認	CSV出力完了を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	処理カテゴリに沿った情報ログと生成ファイル名（プレフィックスおよび拡張子を含む文字列）であること。
-m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-090	IT-06	ロールバック	P3	ロールバックの結合確認	検索成功時を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理画面検索共通の命名規則で eccube.admin.otcbuyorder_history.search を含む複数キーが更新される（ページ番号・表示件数・検索条件など）であること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-088	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	検索結果全件取得を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索結果全件取得
+3. 画面表示と後続状態を確認する"	一覧HTMLは自動では更新しないこと。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-089	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSV出力完了を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSV出力完了を確認する
+3. 画面表示と後続状態を確認する"	処理カテゴリに沿った情報ログと生成ファイル名（プレフィックスおよび拡張子を含む文字列）であること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-090	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	検索成功時を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索成功時
+3. 画面表示と後続状態を確認する"	管理画面検索共通の命名規則で eccube.admin.otcbuyorder_history.search を含む複数キーが更新される（ページ番号・表示件数・検索条件など）であること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-091	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	買取商品履歴で条件を入力し「検索する」を押して検索成功を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 買取商品履歴で条件を入力し「検索する」を押して検索成功
+3. 画面表示と後続状態を確認する"	一覧ブロックが表示され、検索条件がセッションに保存されるであること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-092	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索済みであり一覧上部の「CSVダウンロード」から「検索結果全件取得」を押すを試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索済みであり一覧上部の「CSVダウンロード」から「検索結果全件取得」を押す
+3. 画面表示と後続状態を確認する"	直近検索と同一条件に合致する全履歴がCSVになること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-093	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索を一度も成功させていない、または検索セッションが無い状態で「検索結果全件取…を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索を一度も成功させていない、または検索セッションが無い状態で「検索結果全件取…
+3. 画面表示と後続状態を確認する"	エラーフラッシュ後、履歴のページネーション経路へリダイレクトされるであること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-094	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	セッションに保存した検索条件で指定ページを再表示する（ページ番号はパスまたはク…を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. セッションに保存した検索条件で指定ページを再表示する（ページ番号はパスまたはク…
+3. 画面表示と後続状態を確認する"	セッションに保存した検索条件で指定ページを再表示する（ページ番号はパスもしくはクエリのいずれか）であること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-095	IT-25	一覧	P2	一覧の結合確認	表示要素を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	一覧が描画されているときのみ、件数変更ドロップダウンと「CSVダウンロード」ドロップダウンが出るであること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-096	IT-12	画面表示データ	P2	画面表示データの結合確認	JS 挙動を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS 挙動を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-097	IT-25	画面表示データ	P2	画面表示データの結合確認	CSS・レイアウトを試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSS・レイアウトを確認する
+3. 画面表示と後続状態を確認する"	ドロップダウン表示のためのインライン補足スタイルがあること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-098	IT-12	画面表示データ	P2	画面表示データの結合確認	モーダル・ポップアップを試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-099	IT-25	画面表示データ	P2	画面表示データの結合確認	出力行単位を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力行単位を確認する
+3. 画面表示と後続状態を確認する"	実在庫履歴エンティティの1レコードにつきデータ行が1行であること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-100	IT-25	フォーム送信	P1	フォーム送信の結合確認	買取価格（CSV列）を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 買取価格（CSV列）を確認する
+3. 画面表示と後続状態を確認する"	実在庫行の単価であること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-101	IT-16	ファイル選択	P2	ファイル選択の結合確認	買取日時（CSV列）を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-102	IT-12	非同期更新	P1	非同期更新の結合確認	申込者（CSV列）を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 申込者（CSV列）を確認する
+3. 画面表示と後続状態を確認する"	会員が紐付いているとき会員の表示名へ変換した文字列であること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-103	IT-12	エラー継続	P3	エラー継続の結合確認	検索セッションが無い状態で「検索結果全件取得」を送るを試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索セッションが無い状態で「検索結果全件取得」を送る
+3. 画面表示と後続状態を確認する"	エラーフラッシュとリダイレクトのみであること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-104	IT-25	件数上限	P2	件数上限の結合確認	検索結果は画面上0件でも、セッション条件があればCSVは出力されるを試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索結果は画面上0件でも、セッション条件があればCSVは出力される
+3. 画面表示と後続状態を確認する"	データ行が0でもヘッダのみのファイルになりうる（ストリーム内処理の確認値）であること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-105	IT-25	欠損値	P2	欠損値の結合確認	一覧に「入庫数」「更新日時」列があるがCSVには無いを試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 一覧に「入庫数」「更新日時」列があるがCSVには無いを確認する
+3. 画面表示と後続状態を確認する"	CSVは固定ヘッダの列だけを出力する（後述）であること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-106	IT-25	データなし	P2	データなしの結合確認	一覧との表示値一致を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 一覧との表示値一致を確認する
+3. 画面表示と後続状態を確認する"	買取日時は一覧がキャンセル日を代用しうるのに対しCSVは成立日のみ参照する点で差が出うるであること。
+m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）	IT-M06-06-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-CSV-EXPORT-ALL-107	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	同時更新を試験できる状態である	m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面_店頭買取管理_買取商品履歴_検索結果全件CSV出力）（m06_06_admin_store_purchase_purchase_store_history_csv_export_all）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 同時更新を確認する
+3. 画面表示と後続状態を確認する"	出力処理は参照のみであり、他トランザクションの途中状態を読みうるが、一覧と同様の読み取り整合性であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -380,4 +428,4 @@ m06-06_admin_store_purchase_purchase_store_history_csv_export_all（管理画面
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 20件 — No.329, No.330, No.332, No.333, No.334, No.336, No.338, No.346, No.356, No.357, No.358, No.359, No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

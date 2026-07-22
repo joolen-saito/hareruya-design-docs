@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 更新内容 |
 | IT-05 | 削除条件、実行結果 |
-| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-02 | 公開コンテンツ、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -126,162 +124,168 @@ m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一
 m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	検索パターン削除対象無しを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン削除対象無しの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	トランザクション境界を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でトランザクション境界の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	M05-01-MSG-001を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-001の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	ロックを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でロックの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	M05-01-MSG-002を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-002の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	例外時を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で例外時の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	M05-01-MSG-003を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-003の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-033	IT-23	検索条件	P2	検索時の検索条件確認	管理画面ナビから受注一覧を開くを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で管理画面ナビから受注一覧を開くの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-033	IT-23	検索条件	P2	検索時の検索条件確認	M05-01-MSG-004を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-004の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	「検索」ボタンで送信を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で「検索」ボタンで送信の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	M05-01-MSG-013を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-013の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	ページリンクで移動を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でページリンクで移動の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	M05-01-MSG-014を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-014の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	他画面から一覧へ戻る（検索状態維持）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で他画面から一覧へ戻る（検索状態維持）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	M05-01-MSG-016を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-016の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-037	IT-23	実行結果	P2	検索時の実行結果確認	表示件数プルダウン変更を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で表示件数プルダウン変更の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-037	IT-23	実行結果	P2	検索時の実行結果確認	M05-01-MSG-017を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-017の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-038	IT-26	更新内容	P1	更新時の更新内容確認	一覧ヘッダの並びアイコンをクリックを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で一覧ヘッダの並びアイコンをクリックの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-038	IT-26	更新内容	P1	更新時の更新内容確認	M05-01-MSG-018を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-018の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-039	IT-26	更新内容	P1	更新時の更新内容確認	保存済み検索パターン名をクリックを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で保存済み検索パターン名をクリックの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-039	IT-26	更新内容	P1	更新時の更新内容確認	M05-01-MSG-027を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-027の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-040	IT-26	更新内容	P1	更新時の更新内容確認	検索パターン保存ボタンを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン保存ボタンの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-040	IT-26	更新内容	P1	更新時の更新内容確認	トランザクション境界を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でトランザクション境界の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-041	IT-26	更新内容	P1	更新時の更新内容確認	検索パターン削除ボタンを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン削除ボタンの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	パターン削除後、admin_order へリダイレクトすること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-042	IT-26	更新内容	P1	更新時の更新内容確認	一覧から受注日または注文番号のリンクを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で一覧から受注日または注文番号のリンクの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-043	IT-26	更新内容	P1	更新時の更新内容確認	パターンに保存された条件での件数をJSONで返す（一覧ヘッダからXHRで利用）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-044	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-045	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-046	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-047	IT-26	更新内容	P1	更新時の更新内容確認	ステータス別件数（ラベル横リンク）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でステータス別件数（ラベル横リンク）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-048	IT-05	実行結果	P1	更新時の実行結果確認	店舗（複数選択）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で店舗（複数選択）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-049	IT-05	実行結果	P1	更新時の実行結果確認	検索パターン名を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン名の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存処理時は必須扱いであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-050	IT-05	削除条件	P1	削除時の削除条件確認	検索パターンID（隠し）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存時に既存行の特定に使うこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-051	IT-05	削除条件	P1	削除時の削除条件確認	購入メッセージの有無（チェック複数可）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	値 1 のみ選択時は o.message IS NOT NULL、0 のみは IS NULLであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-052	IT-05	削除条件	P1	削除時の削除条件確認	ピック日時・入金日時・出荷指示日時・出荷日時・キャンセル日時・売上確定日時・店…を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	それぞれ o.confirmDate、o.payment_date、o.commitDate、o.shippingDate、o.cancel_date、o.receiptDate、o.otc_rsv_date、o.up…であること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-053	IT-05	削除条件	P1	削除時の削除条件確認	配送先カナを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	DQL文字列に括弧欠落があり、実行時エラーや無効条件になりうる実装になっている（要コード修正の可能性）であること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-054	IT-05	削除条件	P1	削除時の削除条件確認	並びキー・昇降（隠し）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で並びキー・昇降（隠し）の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-055	IT-05	実行結果	P1	削除時の実行結果確認	検索成功POSTを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索成功POSTの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-056	IT-05	実行結果	P1	削除時の実行結果確認	検索検証失敗を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索検証失敗の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一テンプレートでエラー表示、一覧領域は空メッセージ扱いであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-057	IT-05	実行結果	P1	削除時の実行結果確認	検索パターン保存で名称空を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン保存で名称空の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-058	IT-05	実行結果	P1	削除時の実行結果確認	検索パターン保存成功を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン保存成功の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin_order_search_pattern へリダイレクトであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-059	IT-02	初期行数	P2	初期行数の結合確認	削除成功を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で削除成功の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 削除成功
-3. 画面表示と後続状態を確認する"	admin_order へリダイレクトであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-060	IT-02	表示順	P2	表示順の結合確認	検索フォーム検証エラーを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索フォーム検証エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索フォーム検証エラー
-3. 画面表示と後続状態を確認する"	詳細枠は開くこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-061	IT-25	更新抑止	P1	更新抑止の結合確認	検索パターン削除対象無しを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン削除対象無しの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	admin_order へであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-062	IT-12	内部情報	P1	内部情報の結合確認	トランザクション境界を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でトランザクション境界の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検索・一覧・件数取得は読み取りのみで明示トランザクションを開始しないこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-063	IT-15	機密情報	P1	機密情報の結合確認	ロックを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でロックの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	受注検索、検索パターン保存・削除とも行ロック・悲観ロック・楽観ロック・ロックファイルは使用しないこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-064	IT-07	排他制御	P1	排他制御の結合確認	例外時を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で例外時の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索・一覧表示中の例外にロールバック対象は無いであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-065	IT-07	排他制御	P1	排他制御の結合確認	管理画面ナビから受注一覧を開くを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で管理画面ナビから受注一覧を開くの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-041	IT-26	更新内容	P1	更新時の更新内容確認	管理画面ナビから受注一覧を開くを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で管理画面ナビから受注一覧を開くの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	クエリに page_no も resume も無い通常GETの場合、検索条件は空に近い初期値、ページ1、表示件数はセッションもしくは eccube_default_page_count に従うであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-066	IT-06	ロールバック	P3	ロールバックの結合確認	「検索」ボタンで送信を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で「検索」ボタンで送信の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-042	IT-26	更新内容	P1	更新時の更新内容確認	「検索」ボタンで送信を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で「検索」ボタンで送信の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検証成功時のみ検索ビューデータとページ番号1がセッションへ書き込まれ、同一条件で一覧が組み立てられるであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ページリンクで移動を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でページリンクで移動の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ページリンクで移動を確認する
-3. 画面表示と後続状態を確認する"	セッションに保存済みの検索ビューデータから復元し、指定ページを表示すること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	他画面から一覧へ戻る（検索状態維持）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で他画面から一覧へ戻る（検索状態維持）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 他画面から一覧へ戻る（検索状態維持）
-3. 画面表示と後続状態を確認する"	セッションの検索ビューデータとページ番号を復元して一覧を表示すること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	表示件数プルダウン変更を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で表示件数プルダウン変更の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示件数プルダウン変更を確認する
-3. 画面表示と後続状態を確認する"	page_count がページマスタ mtb_page_max のいずれかの名前と一致するときだけセッションの表示件数が更新され、1ページ目が表示されるであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	一覧ヘッダの並びアイコンをクリックを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で一覧ヘッダの並びアイコンをクリックの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧ヘッダの並びアイコンをクリックを確認する
-3. 画面表示と後続状態を確認する"	隠し項目 sortkey と sorttype が更新された状態で検索フォーム全体が送信され、検証成功時はページ1相当のセッション更新と並び替え付き一覧となること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-071	IT-25	一覧	P2	一覧の結合確認	一覧から受注日または注文番号のリンクを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で一覧から受注日または注文番号のリンクの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧から受注日または注文番号のリンクを確認する
-3. 画面表示と後続状態を確認する"	受注編集画面へ遷移する（詳細仕様は別書）であること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-072	IT-12	画面表示データ	P2	画面表示データの結合確認	パターンに保存された条件での件数をJSONで返す（一覧ヘッダからXHRで利用）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でパターンに保存された条件での件数をJSONで返す（一覧ヘッダからXHRで利用）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. パターンに保存された条件での件数をJSONで返す（一覧ヘッダからXHRで利用）
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-073	IT-12	画面表示データ	P2	画面表示データの結合確認	JS挙動を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-074	IT-25	画面表示データ	P2	画面表示データの結合確認	モーダル・ポップアップを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	一括ステータス・メール確認モーダル、PDFや印刷の別ウィンドウを開く処理があること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-075	IT-25	フォーム送信	P1	フォーム送信の結合確認	ステータス別件数（ラベル横リンク）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でステータス別件数（ラベル横リンク）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ステータス別件数（ラベル横リンク）を確認する
-3. 画面表示と後続状態を確認する"	OrderRepository::countByOrderStatus が単純カウントすること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-076	IT-16	ファイル選択	P2	ファイル選択の結合確認	店舗（複数選択）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で店舗（複数選択）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店舗（複数選択）
-3. 画面表示と後続状態を確認する"	tenantsであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-077	IT-12	非同期更新	P1	非同期更新の結合確認	検索パターン名を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン名の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索パターン名
-3. 画面表示と後続状態を確認する"	保存処理時は必須扱いであること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-078	IT-12	エラー継続	P3	エラー継続の結合確認	検索パターンID（隠し）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターンID（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索パターンID（隠し）
-3. 画面表示と後続状態を確認する"	保存時に既存行の特定に使うこと。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-079	IT-25	欠損値	P2	欠損値の結合確認	ピック日時・入金日時・出荷指示日時・出荷日時・キャンセル日時・売上確定日時・店…を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でピック日時・入金日時・出荷指示日時・出荷日時・キャンセル日時・売上確定日時・店…の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-043	IT-26	更新内容	P1	更新時の更新内容確認	ページリンクで移動を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-044	IT-26	更新内容	P1	更新時の更新内容確認	他画面から一覧へ戻る（検索状態維持）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-045	IT-26	更新内容	P1	更新時の更新内容確認	表示件数プルダウン変更を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-046	IT-26	更新内容	P1	更新時の更新内容確認	一覧ヘッダの並びアイコンをクリックを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-047	IT-26	更新内容	P1	更新時の更新内容確認	保存済み検索パターン名をクリックを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で保存済み検索パターン名をクリックの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-048	IT-05	実行結果	P1	更新時の実行結果確認	検索パターン保存ボタンを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン保存ボタンの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-049	IT-05	実行結果	P1	更新時の実行結果確認	検索パターン削除ボタンを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン削除ボタンの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	パターン削除後、admin_order へリダイレクトすること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-050	IT-05	削除条件	P1	削除時の削除条件確認	一覧から受注日または注文番号のリンクを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注編集画面へ遷移する（詳細仕様は別書）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-051	IT-05	削除条件	P1	削除時の削除条件確認	パターンに保存された条件での件数をJSONで返す（一覧ヘッダからXHRで利用）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	パターンに保存された条件での件数をJSONで返す（一覧ヘッダからXHRで利用）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-052	IT-05	削除条件	P1	削除時の削除条件確認	表示要素を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ページタイトル・サブタイトルは受注一覧／受注管理であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-053	IT-05	削除条件	P1	削除時の削除条件確認	JS挙動を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	共通 function.js の .search-clear で、#search_form 内の .input_search および .search-box-inner 配下の入力をクリアすること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-054	IT-05	削除条件	P1	削除時の削除条件確認	モーダル・ポップアップを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-055	IT-05	実行結果	P1	削除時の実行結果確認	ステータス別件数（ラベル横リンク）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でステータス別件数（ラベル横リンク）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-056	IT-05	実行結果	P1	削除時の実行結果確認	店舗（複数選択）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で店舗（複数選択）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	tenantsであること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-057	IT-05	実行結果	P1	削除時の実行結果確認	検索パターン名を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン名の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-058	IT-05	実行結果	P1	削除時の実行結果確認	検索パターンID（隠し）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターンID（隠し）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存時に既存行の特定に使うこと。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-059	IT-02	表示順	P2	表示順の結合確認	ピック日時・入金日時・出荷指示日時・出荷日時・キャンセル日時・売上確定日時・店…を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でピック日時・入金日時・出荷指示日時・出荷日時・キャンセル日時・売上確定日時・店…の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ピック日時・入金日時・出荷指示日時・出荷日時・キャンセル日時・売上確定日時・店…を確認する
 3. 画面表示と後続状態を確認する"	それぞれ o.confirmDate、o.payment_date、o.commitDate、o.shippingDate、o.cancel_date、o.receiptDate、o.otc_rsv_date、o.up…であること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-080	IT-25	データなし	P2	データなしの結合確認	配送先カナを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で配送先カナの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 配送先カナを確認する
-3. 画面表示と後続状態を確認する"	DQL文字列に括弧欠落があり、実行時エラーや無効条件になりうる実装になっている（要コード修正の可能性）であること。
-m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-081	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	並びキー・昇降（隠し）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で並びキー・昇降（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 並びキー・昇降（隠し）を確認する
-3. 画面表示と後続状態を確認する"	sortkey・sorttype（a 以外は降順扱い）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-060	IT-25	更新抑止	P1	更新抑止の結合確認	配送先カナを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で配送先カナの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	DQL文字列に括弧欠落があり、実行時エラーや無効条件になりうる実装になっている（要コード修正の可能性）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-061	IT-12	内部情報	P1	内部情報の結合確認	並びキー・昇降（隠し）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で並びキー・昇降（隠し）の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	sortkey・sorttype（a 以外は降順扱い）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-062	IT-15	機密情報	P1	機密情報の結合確認	検索成功POSTを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索成功POSTの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	同一一覧URLでテンプレート再描画（ページは1起点にセッション更新）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-063	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	検索検証失敗を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索検証失敗
+3. 画面表示と後続状態を確認する"	同一テンプレートでエラー表示、一覧領域は空メッセージ扱いであること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-064	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	検索パターン保存で名称空を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン保存で名称空の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索パターン保存で名称空
+3. 画面表示と後続状態を確認する"	admin_order へリダイレクトであること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-065	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	検索パターン保存成功を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン保存成功の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索パターン保存成功
+3. 画面表示と後続状態を確認する"	admin_order_search_pattern へリダイレクトであること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-066	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	削除成功を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で削除成功の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 削除成功
+3. 画面表示と後続状態を確認する"	admin_order へリダイレクトであること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-067	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索フォーム検証エラーを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索フォーム検証エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索フォーム検証エラー
+3. 画面表示と後続状態を確認する"	詳細枠は開くこと。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-068	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索パターン削除対象無しを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で検索パターン削除対象無しの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索パターン削除対象無し
+3. 画面表示と後続状態を確認する"	admin_order へであること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M05-01-MSG-001を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-01-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	受注一覧の行削除で対象受注が存在しないとき（admin.common.delete_error / OrderController.php:311）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-070	IT-25	一覧	P2	一覧の結合確認	M05-01-MSG-002を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-01-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	受注の論理削除で ForeignKeyConstraintViolationException が発生したとき（OrderController.php:324）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-071	IT-12	画面表示データ	P2	画面表示データの結合確認	M05-01-MSG-003を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-01-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-072	IT-25	画面表示データ	P2	画面表示データの結合確認	M05-01-MSG-004を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-01-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	一括削除で選択受注を削除し flush 完了したとき（OrderController.php:377）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-073	IT-12	画面表示データ	P2	画面表示データの結合確認	M05-01-MSG-013を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-013の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-01-MSG-013を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-074	IT-25	画面表示データ	P2	画面表示データの結合確認	M05-01-MSG-014を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-014の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-01-MSG-014を確認する
+3. 画面表示と後続状態を確認する"	検索パターン保存が完了したとき（admin.order.save_pattern.success / SearchOrderController.php:164）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-075	IT-25	フォーム送信	P1	フォーム送信の結合確認	M05-01-MSG-016を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-016の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-01-MSG-016を確認する
+3. 画面表示と後続状態を確認する"	検索パターン削除が完了したとき（admin.order.delete_pattern.success / SearchOrderController.php:186）であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-076	IT-16	ファイル選択	P2	ファイル選択の結合確認	M05-01-MSG-017を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-017の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-01-MSG-017を確認する
+3. 画面表示と後続状態を確認する"	受注一覧のチェックボックス未選択で一括操作ボタン（スタック用紙印刷・送り状CSV出力・納品書印刷(日/英)・メール一括通知など）を押下したとき（index.twig:80-89 preventIfNoCheckedBu…であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-077	IT-12	非同期更新	P1	非同期更新の結合確認	M05-01-MSG-018を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-018の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-01-MSG-018を確認する
+3. 画面表示と後続状態を確認する"	受注一覧行の送り状番号インライン更新で admin_shipping_update_tracking_number のJSON応答statusがOK以外のとき（index.twig:181-193、alert後 ret…であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-078	IT-12	エラー継続	P3	エラー継続の結合確認	M05-01-MSG-027を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でM05-01-MSG-027の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-01-MSG-027を確認する
+3. 画面表示と後続状態を確認する"	更新日時の開始・終了がともに空でなく、開始が終了より後の場合であること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-079	IT-25	件数上限	P2	件数上限の結合確認	トランザクション境界を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でトランザクション境界の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. トランザクション境界を確認する
+3. 画面表示と後続状態を確認する"	検索・一覧・件数取得は読み取りのみで明示トランザクションを開始しないこと。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-080	IT-25	欠損値	P2	欠損値の結合確認	管理画面ナビから受注一覧を開くを試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で管理画面ナビから受注一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 管理画面ナビから受注一覧を開く
+3. 画面表示と後続状態を確認する"	クエリに page_no も resume も無い通常GETの場合、検索条件は空に近い初期値、ページ1、表示件数はセッションもしくは eccube_default_page_count に従うであること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-081	IT-25	データなし	P2	データなしの結合確認	「検索」ボタンで送信を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で「検索」ボタンで送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 「検索」ボタンで送信
+3. 画面表示と後続状態を確認する"	検証成功時のみ検索ビューデータとページ番号1がセッションへ書き込まれ、同一条件で一覧が組み立てられるであること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-082	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ページリンクで移動を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）でページリンクで移動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ページリンクで移動を確認する
+3. 画面表示と後続状態を確認する"	セッションに保存済みの検索ビューデータから復元し、指定ページを表示すること。
+m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）	IT-M05-01-ADMIN-ORDER-ORDER-SEARCH-LIST-083	IT-23	データ正当性	P3	データ正当性の結合確認	他画面から一覧へ戻る（検索状態維持）を試験できる状態である	m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一覧）（m05_01_admin_order_order_search_list）で他画面から一覧へ戻る（検索状態維持）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 他画面から一覧へ戻る（検索状態維持）
+3. 画面表示と後続状態を確認する"	セッションの検索ビューデータとページ番号を復元して一覧を表示すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -381,6 +385,6 @@ m05-01_admin_order_order_search_list（受注管理 — 受注情報検索・一
 | データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
-| その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.334, No.336, No.338, No.357, No.412。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.109, No.110, No.111, No.420。上限緩和または個別ケース化で収載可能。

@@ -13,19 +13,17 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 更新内容 |
 | IT-05 | 実行結果 |
-| IT-16 | 実行結果 |
+| IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -244,51 +242,65 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	CSV出力が可能であること。
 商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-075	IT-15	機密情報	P1	機密情報の結合確認	「CSV出力」を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-076	IT-07	排他制御	P1	排他制御の結合確認	認証・権限不足を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出力しないこと。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-077	IT-07	排他制御	P1	排他制御の結合確認	出力元の略称タグ本体を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一スキーマであること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-078	IT-06	ロールバック	P3	ロールバックの結合確認	並び順を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	略称タグの表示順序であること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	略称タグ管理の「CSV出力」を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	認証・権限不足を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 認証・権限不足を確認する
+3. 画面表示と後続状態を確認する"	出力しないこと。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	出力元の略称タグ本体を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力元の略称タグ本体を確認する
+3. 画面表示と後続状態を確認する"	同一スキーマであること。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	並び順を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 並び順を確認する
+3. 画面表示と後続状態を確認する"	略称タグの表示順序であること。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	略称タグ管理の「CSV出力」を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 略称タグ管理の「CSV出力」を確認する
 3. 画面表示と後続状態を確認する"	登録済みの略称タグをCSVとしてダウンロードすること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-080	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	CSVファイルのダウンロードであること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	JS挙動を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	JS挙動を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	本機能ではダウンロードのみで、動的な表示切替は扱わないこと。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	出力対象を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力対象を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 出力対象を確認する
 3. 画面表示と後続状態を確認する"	登録済みのすべての略称タグであること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力列を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-083	IT-25	一覧	P2	一覧の結合確認	出力列を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 出力列を確認する
 3. 画面表示と後続状態を確認する"	ID・名称・並び順であること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	参照時点を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-084	IT-12	画面表示データ	P2	画面表示データの結合確認	参照時点を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 参照時点を確認する
-3. 画面表示と後続状態を確認する"	画面表示もしくはCSV・帳票出力の実行時点で検索条件に一致するデータを参照すること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	一覧・出力の整合を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-085	IT-25	画面表示データ	P2	画面表示データの結合確認	一覧・出力の整合を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 一覧・出力の整合を確認する
 3. 画面表示と後続状態を確認する"	一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にすること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-086	IT-25	一覧	P2	一覧の結合確認	同時更新を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-086	IT-12	画面表示データ	P2	画面表示データの結合確認	同時更新を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 同時更新を確認する
-3. 画面表示と後続状態を確認する"	出力中に他処理が対象データを更新した場合のスナップショット保証は持たないこと。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-087	IT-12	画面表示データ	P2	画面表示データの結合確認	入力を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 入力
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-088	IT-25	画面表示データ	P2	画面表示データの結合確認	成功時出力を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-087	IT-25	画面表示データ	P2	画面表示データの結合確認	入力を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	なし（一覧をそのまま出力）であること。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-088	IT-25	フォーム送信	P1	フォーム送信の結合確認	成功時出力を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	略称タグのCSVファイル（ID・名称・並び順）であること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-089	IT-12	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-090	IT-25	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-089	IT-16	ファイル選択	P2	ファイル選択の結合確認	失敗時出力を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-090	IT-12	非同期更新	P1	非同期更新の結合確認	副作用を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	無し（参照・出力のみ）であること。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-091	IT-12	エラー継続	P3	エラー継続の結合確認	mtb_storage_code（略称タグ）を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. mtb_storage_code（略称タグ）を確認する
+3. 画面表示と後続状態を確認する"	CSVの出力列 ID・名称・並び順に対応であること。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-092	IT-25	件数上限	P2	件数上限の結合確認	検索を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索
+3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-093	IT-25	欠損値	P2	欠損値の結合確認	ログイン済み管理者を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ログイン済み管理者を確認する
+3. 画面表示と後続状態を確認する"	CSV出力が可能であること。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-094	IT-25	データなし	P2	データなしの結合確認	「CSV出力」を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 「CSV出力」を確認する
+3. 画面表示と後続状態を確認する"	画面遷移せずCSVを出力すること。
+商品管理 — 略称タグCSV出力	IT-M03-15-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-EXPORT-095	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	認証・権限不足を試験できる状態である	商品管理 — 略称タグCSV出力（m03_15_admin_product_product_storage_code_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 認証・権限不足を確認する
+3. 画面表示と後続状態を確認する"	出力しないこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -381,4 +393,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

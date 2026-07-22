@@ -13,19 +13,17 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、更新抑止、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 更新内容 |
 | IT-05 | 実行結果 |
-| IT-16 | 実行結果 |
+| IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録、対象機能、更新結果 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-11 | 実行結果 |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
 
@@ -250,45 +248,97 @@ m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	送信されるのは当該画面のチェックボックス由来のorder_idsのみであること。
 m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-077	IT-15	機密情報	P1	機密情報の結合確認	同時更新を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-078	IT-07	排他制御	P1	排他制御の結合確認	成功時出力を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	UTF-8想定HTML、英語納品書テンプレート、ステータスコード200であること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-079	IT-07	排他制御	P1	排他制御の結合確認	失敗時出力を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	上記判定でHTTP 404であること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-080	IT-06	ロールバック	P3	ロールバックの結合確認	検索を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件に合致するレコードを抽出すること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-081	IT-11	実行結果	P2	実行結果の結合確認	管理画面にログインした管理者を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-078	IT-11	実行結果	P2	実行結果の結合確認	成功時出力を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	UTF-8想定HTML、英語納品書テンプレート、ステータスコード200であること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-079	IT-28	実行結果	P2	実行結果の結合確認	失敗時出力を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	上記判定でHTTP 404であること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-080	IT-28	実行結果	P2	実行結果の結合確認	検索を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索
+3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-081	IT-28	ヘッダ	P2	ヘッダの結合確認	管理画面にログインした管理者を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）でヘッダの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 管理画面にログインした管理者を確認する
 3. 画面表示と後続状態を確認する"	管理ルートの共通制約を通過すれば利用できること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-082	IT-28	実行結果	P2	実行結果の結合確認	「納品書印刷（英語）」押下を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-082	IT-28	件名	P2	件名の結合確認	「納品書印刷（英語）」押下を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 「納品書印刷（英語）」押下
-3. 画面表示と後続状態を確認する"	親タブは編集画面のままであること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-083	IT-28	実行結果	P2	実行結果の結合確認	404応答を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-083	IT-28	件名	P2	件名の結合確認	404応答を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 404応答を確認する
-3. 画面表示と後続状態を確認する"	子ウィンドウ内にエラー表示であること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-084	IT-28	ヘッダ	P2	ヘッダの結合確認	本アクション限定の業務ログを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）でヘッダの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-084	IT-28	件名	P2	件名の結合確認	本アクション限定の業務ログを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で件名の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 本アクション限定の業務ログを確認する
 3. 画面表示と後続状態を確認する"	ソース上は専用の情報ログ出力を置いていない確認であること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-085	IT-28	件名	P2	件名の結合確認	Twigソースパス（確認値）を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-085	IT-28	本文	P2	本文の結合確認	Twigソースパス（確認値）を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で本文の対象項目を未入力にする	"1. 対象画面を表示する
 2. Twigソースパス（確認値）を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-086	IT-28	件名	P2	件名の結合確認	出荷指示リスト編集を表示するを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-086	IT-28	本文	P2	本文の結合確認	出荷指示リスト編集を表示するを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で本文の対象項目を未入力にする	"1. 対象画面を表示する
 2. 出荷指示リスト編集を表示するを確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-087	IT-28	件名	P2	件名の結合確認	表の行チェック状態を保ったまま「納品書印刷（英語）」を押すを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で件名の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-087	IT-28	本文	P2	本文の結合確認	表の行チェック状態を保ったまま「納品書印刷（英語）」を押すを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で本文の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表の行チェック状態を保ったまま「納品書印刷（英語）」を押すを確認する
 3. 画面表示と後続状態を確認する"	空の名前付きウィンドウを開き、form_bulkに載るorder_idsと他フィールドをPOSTして、子ウィンドウ内に英語納品書HTMLを表示すること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-088	IT-28	本文	P2	本文の結合確認	表示要素を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-089	IT-28	本文	P2	本文の結合確認	CSS・レイアウトを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-088	IT-28	本文	P2	本文の結合確認	表示要素を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で本文の対象ファイルと処理条件を指定する	"1. 対象画面で本文のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	本文のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-089	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSS・レイアウトを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSS・レイアウトを確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-090	IT-28	本文	P2	本文の結合確認	モーダル・ポップアップを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で本文の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	出力HTML側はassets/css/deliveryslips.cssを参照する受注一覧経路と同型であること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-090	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	モーダル・ポップアップを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	一覧側はブラウザ子ウィンドウであること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-091	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	国内配送のみの受注だけを選んだ英語を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 国内配送のみの受注だけを選んだ英語を確認する
+3. 画面表示と後続状態を確認する"	内部結合で行が落ち、DeliverySlipsが空配列になりうるであること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-092	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	labelsExportがform_bulk内のids[]隠し要素を消す操作を…を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. labelsExportがform_bulk内のids[]隠し要素を消す操作を…を確認する
+3. 画面表示と後続状態を確認する"	DOM状態次第で意図しないボディになること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-093	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	チェックと送信を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. チェックと送信
+3. 画面表示と後続状態を確認する"	送信されるのは当該画面のチェックボックス由来のorder_idsのみであること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-094	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	同時更新を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 同時更新を確認する
+3. 画面表示と後続状態を確認する"	読み取りのみであること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-095	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功時出力を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	UTF-8想定HTML、英語納品書テンプレート、ステータスコード200であること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-096	IT-25	一覧	P2	一覧の結合確認	失敗時出力を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	上記判定でHTTP 404であること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-097	IT-12	画面表示データ	P2	画面表示データの結合確認	検索を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-098	IT-25	画面表示データ	P2	画面表示データの結合確認	管理画面にログインした管理者を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 管理画面にログインした管理者を確認する
+3. 画面表示と後続状態を確認する"	管理ルートの共通制約を通過すれば利用できること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-099	IT-12	画面表示データ	P2	画面表示データの結合確認	「納品書印刷（英語）」押下を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 「納品書印刷（英語）」押下
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-100	IT-25	画面表示データ	P2	画面表示データの結合確認	404応答を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 404応答を確認する
+3. 画面表示と後続状態を確認する"	子ウィンドウ内にエラー表示であること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-101	IT-25	フォーム送信	P1	フォーム送信の結合確認	本アクション限定の業務ログを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 本アクション限定の業務ログを確認する
+3. 画面表示と後続状態を確認する"	ソース上は専用の情報ログ出力を置いていない確認であること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-102	IT-16	ファイル選択	P2	ファイル選択の結合確認	Twigソースパス（確認値）を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-103	IT-12	非同期更新	P1	非同期更新の結合確認	出荷指示リスト編集を表示するを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出荷指示リスト編集を表示するを確認する
+3. 画面表示と後続状態を確認する"	リストに含まれる受注が表で並び、各行先頭に既定でオンになったチェックボックスorder_ids[受注ID]があること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-104	IT-12	エラー継続	P3	エラー継続の結合確認	表の行チェック状態を保ったまま「納品書印刷（英語）」を押すを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表の行チェック状態を保ったまま「納品書印刷（英語）」を押すを確認する
+3. 画面表示と後続状態を確認する"	空の名前付きウィンドウを開き、form_bulkに載るorder_idsと他フィールドをPOSTして、子ウィンドウ内に英語納品書HTMLを表示すること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-105	IT-25	件数上限	P2	件数上限の結合確認	表示要素を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	編集カード（コメント・登録ボタン等）の下に一括用form_bulkがあり、ピッキングリスト・納品書（日）・納品書（英）・他出力ボタンが並ぶこと。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-106	IT-25	欠損値	P2	欠損値の結合確認	CSS・レイアウトを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSS・レイアウトを確認する
+3. 画面表示と後続状態を確認する"	出力HTML側はassets/css/deliveryslips.cssを参照する受注一覧経路と同型であること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-107	IT-25	データなし	P2	データなしの結合確認	モーダル・ポップアップを試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	一覧側はブラウザ子ウィンドウであること。
+m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）	IT-M05-23-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PRINT-DELIVERY-SLIPS-EN-108	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	国内配送のみの受注だけを選んだ英語を試験できる状態である	m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面_受注管理_出荷指示_納品書印刷_英語）（m05_23_admin_order_order_shipping_standby_print_delivery_slips_en）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 国内配送のみの受注だけを選んだ英語を確認する
+3. 画面表示と後続状態を確認する"	内部結合で行が落ち、DeliverySlipsが空配列になりうるであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -377,4 +427,4 @@ m05-23_admin_order_order_shipping_standby_print_delivery_slips_en（管理画面
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 21件 — No.261, No.329, No.330, No.332, No.333, No.334, No.336, No.338, No.346, No.356, No.357, No.358, No.359, No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

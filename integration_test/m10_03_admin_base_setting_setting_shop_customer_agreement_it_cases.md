@@ -12,16 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
-| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -180,60 +177,60 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-047	IT-15	機密情報	P1	機密情報の結合確認	バリデーション失敗を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でバリデーション失敗の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	該当フィールドにエラーを表示し、保存しないこと。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-048	IT-07	排他制御	P1	排他制御の結合確認	CSRF失敗を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でCSRF失敗の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フレームワークの既定動作（送信済みとならない等）であること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-049	IT-07	排他制御	P1	排他制御の結合確認	当機能の保存処理を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で当機能の保存処理の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	業務セッション状態を更新しない（フラッシュメッセージ以外）であること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-050	IT-06	ロールバック	P3	ロールバックの結合確認	保存先を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で保存先の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	該当列なしであること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-051	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ヘルプ情報を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でヘルプ情報の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-048	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSRF失敗を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でCSRF失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. CSRF失敗を確認する
+3. 画面表示と後続状態を確認する"	フレームワークの既定動作（送信済みとならない等）であること。
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-049	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	当機能の保存処理を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で当機能の保存処理の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 当機能の保存処理
+3. 画面表示と後続状態を確認する"	業務セッション状態を更新しない（フラッシュメッセージ以外）であること。
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-050	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	保存先を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で保存先の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 保存先
+3. 画面表示と後続状態を確認する"	該当列なしであること。
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-051	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ヘルプ情報を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でヘルプ情報の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ヘルプ情報を確認する
 3. 画面表示と後続状態を確認する"	dtb_helpに保存される1行を想定したエンティティであること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-052	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	利用規約本文を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で利用規約本文の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	利用規約本文を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で利用規約本文の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 利用規約本文を確認する
 3. 画面表示と後続状態を確認する"	コア実装ではヘルプ情報の customer_agreement 列に対応すること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-053	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	管理者を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で管理者の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-053	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	管理者を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で管理者の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 管理者を確認する
 3. 画面表示と後続状態を確認する"	管理画面にログインし ROLE_ADMIN を持つ利用者であること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-054	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	管理ナビから当画面を開くを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で管理ナビから当画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-054	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	管理ナビから当画面を開くを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で管理ナビから当画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 管理ナビから当画面を開く
 3. 画面表示と後続状態を確認する"	ヘルプ情報を識別子既定で取得し、その値をフォームに表示すること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-055	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	値を入力して送信するを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で値を入力して送信するの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-055	IT-25	一覧	P2	一覧の結合確認	値を入力して送信するを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で値を入力して送信するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 値を入力して送信する
 3. 画面表示と後続状態を確認する"	検証に成功すればDBに保存し、管理画面向け登録完了メッセージを積んだうえで、同一編集画面をGETで開き直すリダイレクト応答とすること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-056	IT-12	画面表示データ	P2	画面表示データの結合確認	当フォームに無い dtb_help の列を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で当フォームに無い dtb_help の列の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 当フォームに無い dtb_help の列を確認する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-056	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-057	IT-25	画面表示データ	P2	画面表示データの結合確認	ヘルプ情報の既定行が存在しないを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でヘルプ情報の既定行が存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-057	IT-12	画面表示データ	P2	画面表示データの結合確認	利用規約を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で利用規約の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 利用規約を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-058	IT-25	画面表示データ	P2	画面表示データの結合確認	当フォームに無い dtb_help の列を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で当フォームに無い dtb_help の列の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 当フォームに無い dtb_help の列を確認する
+3. 画面表示と後続状態を確認する"	既存行を読み込んでからマッピングするため、当フォームが触らない列は送信前の値が保持される（別機能で変更されていなければそのまま残る）であること。
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-059	IT-25	フォーム送信	P1	フォーム送信の結合確認	ヘルプ情報の既定行が存在しないを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でヘルプ情報の既定行が存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ヘルプ情報の既定行が存在しないを確認する
 3. 画面表示と後続状態を確認する"	リポジトリ取得が null を返すデータ状態では、フォーム生成やバインドが成立しない可能性があること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-058	IT-12	画面表示データ	P2	画面表示データの結合確認	管理画面とフロントを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で管理画面とフロントの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 管理画面とフロントを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-059	IT-25	画面表示データ	P2	画面表示データの結合確認	HTTPキャッシュを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でHTTPキャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-060	IT-12	非同期更新	P1	非同期更新の結合確認	HTTPキャッシュを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でHTTPキャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. HTTPキャッシュを確認する
 3. 画面表示と後続状態を確認する"	アプリケーション設定に利用規約ページがキャッシュ設定の列挙へ含まれる例があること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-060	IT-25	フォーム送信	P1	フォーム送信の結合確認	成功時出力を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-061	IT-12	エラー継続	P3	エラー継続の結合確認	成功時出力を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	同一編集画面へのリダイレクトと、成功フラッシュメッセージであること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-061	IT-16	ファイル選択	P2	ファイル選択の結合確認	失敗時出力を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-062	IT-25	件数上限	P2	件数上限の結合確認	失敗時出力を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	同一画面のHTMLとフィールドエラーであること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-062	IT-12	非同期更新	P1	非同期更新の結合確認	副作用を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-063	IT-25	欠損値	P2	欠損値の結合確認	副作用を試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	dtb_help の本文列の更新、update_date の更新（共通Doctrine購読処理）、イベント発火であること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-063	IT-12	エラー継続	P3	エラー継続の結合確認	dtb_helpを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でdtb_helpの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-064	IT-25	データなし	P2	データなしの結合確認	dtb_helpを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でdtb_helpの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_helpを確認する
 3. 画面表示と後続状態を確認する"	利用規約本文であること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-064	IT-25	件数上限	P2	件数上限の結合確認	dtb_helpを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でdtb_helpの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-065	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	dtb_helpを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でdtb_helpの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_helpを確認する
 3. 画面表示と後続状態を確認する"	flush前更新イベントで現在日時に更新されるであること。
-店舗設定／利用規約（ヘルプ情報の本文編集）	IT-M10-03-ADMIN-BASE-SETTING-SETTING-SHOP-CUSTOMER-AGREEMENT-065	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ログイン済み ROLE_ADMIN、権限マスタで当パスが拒否されていないを試験できる状態である	店舗設定／利用規約（ヘルプ情報の本文編集）（m10_03_admin_base_setting_setting_shop_customer_agreement）でログイン済み ROLE_ADMIN、権限マスタで当パスが拒否されていないの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ログイン済み ROLE_ADMIN、権限マスタで当パスが拒否されていないを確認する
-3. 画面表示と後続状態を確認する"	画面表示・保存が行えるであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -335,4 +332,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.336, No.338, No.346, No.413, No.414, No.420。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.110, No.111, No.357, No.382, No.420。上限緩和または個別ケース化で収載可能。

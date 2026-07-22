@@ -13,19 +13,17 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 更新内容 |
 | IT-05 | 実行結果 |
-| IT-16 | 実行結果 |
+| IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -241,54 +239,65 @@ M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STO
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	../ec-cube-enterpriseであること。
 M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-074	IT-15	機密情報	P1	機密情報の結合確認	出力を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-075	IT-07	排他制御	P1	排他制御の結合確認	副作用を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録であること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-076	IT-07	排他制御	P1	排他制御の結合確認	開始条件を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理画面にログイン済みの利用者が対象メニューもしくは操作を実行すること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-077	IT-06	ロールバック	P3	ロールバックの結合確認	終了条件を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面表示、ファイル出力、登録完了、もしくはエラー表示が完了すること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	主データを試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 主データを確認する
-3. 画面表示と後続状態を確認する"	管理画面の対象業務データを参照し、登録系では対象データと履歴を更新すること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	履歴・ログを試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 履歴・ログを確認する
-3. 画面表示と後続状態を確認する"	必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新すること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	DB関連実装確認値を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. DB関連実装確認値を確認する
-3. 画面表示と後続状態を確認する"	対象テーブル: dtb_otc_buy_order, dtb_otc_buy_order_stock, dtb_otc_buy_order_stock_history（店頭買取の受注・実在庫・在庫履歴）であること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	機能名を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 機能名を確認する
-3. 画面表示と後続状態を確認する"	戻しリストCSV出力であること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	実装確認を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	../ec-cube-enterpriseであること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力を確認する
-3. 画面表示と後続状態を確認する"	画面表示、CSV/PDFダウンロード、登録完了/エラー表示であること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録であること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-085	IT-25	一覧	P2	一覧の結合確認	開始条件を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	開始条件を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 開始条件を確認する
 3. 画面表示と後続状態を確認する"	管理画面にログイン済みの利用者が対象メニューもしくは操作を実行すること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-086	IT-12	画面表示データ	P2	画面表示データの結合確認	終了条件を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	終了条件を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 終了条件を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-087	IT-25	画面表示データ	P2	画面表示データの結合確認	主データを試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示、ファイル出力、登録完了、もしくはエラー表示が完了すること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	主データを試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 主データを確認する
 3. 画面表示と後続状態を確認する"	管理画面の対象業務データを参照し、登録系では対象データと履歴を更新すること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-088	IT-12	画面表示データ	P2	画面表示データの結合確認	履歴・ログを試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	履歴・ログを試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 履歴・ログを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-089	IT-25	画面表示データ	P2	画面表示データの結合確認	DB関連実装確認値を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必要に応じてCSV取込履歴、在庫履歴、ステータス履歴、API受信履歴、アプリケーションログを作成・更新すること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	DB関連実装確認値を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. DB関連実装確認値を確認する
 3. 画面表示と後続状態を確認する"	対象テーブル: dtb_otc_buy_order, dtb_otc_buy_order_stock, dtb_otc_buy_order_stock_history（店頭買取の受注・実在庫・在庫履歴）であること。
-M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-090	IT-25	フォーム送信	P1	フォーム送信の結合確認	機能名を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	機能名を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 機能名を確認する
 3. 画面表示と後続状態を確認する"	戻しリストCSV出力であること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-082	IT-25	一覧	P2	一覧の結合確認	実装確認を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 実装確認を確認する
+3. 画面表示と後続状態を確認する"	../ec-cube-enterpriseであること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-083	IT-12	画面表示データ	P2	画面表示データの結合確認	出力を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-084	IT-25	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録であること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-085	IT-12	画面表示データ	P2	画面表示データの結合確認	開始条件を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 開始条件を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-086	IT-25	画面表示データ	P2	画面表示データの結合確認	終了条件を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 終了条件を確認する
+3. 画面表示と後続状態を確認する"	画面表示、ファイル出力、登録完了、もしくはエラー表示が完了すること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-087	IT-25	フォーム送信	P1	フォーム送信の結合確認	主データを試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 主データを確認する
+3. 画面表示と後続状態を確認する"	管理画面の対象業務データを参照し、登録系では対象データと履歴を更新すること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-088	IT-16	ファイル選択	P2	ファイル選択の結合確認	履歴・ログを試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-089	IT-12	非同期更新	P1	非同期更新の結合確認	DB関連実装確認値を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. DB関連実装確認値を確認する
+3. 画面表示と後続状態を確認する"	対象テーブル: dtb_otc_buy_order, dtb_otc_buy_order_stock, dtb_otc_buy_order_stock_history（店頭買取の受注・実在庫・在庫履歴）であること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-090	IT-12	エラー継続	P3	エラー継続の結合確認	機能名を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 機能名を確認する
+3. 画面表示と後続状態を確認する"	戻しリストCSV出力であること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-091	IT-25	件数上限	P2	件数上限の結合確認	実装確認を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 実装確認を確認する
+3. 画面表示と後続状態を確認する"	../ec-cube-enterpriseであること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-092	IT-25	欠損値	P2	欠損値の結合確認	出力を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力を確認する
+3. 画面表示と後続状態を確認する"	画面表示、CSV/PDFダウンロード、登録完了/エラー表示であること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-093	IT-25	データなし	P2	データなしの結合確認	副作用を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	対象データの登録・更新、CSV取込履歴、在庫履歴、ステータス履歴の記録であること。
+M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STORE-RETURN-LIST-CSV-EXPORT-094	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	開始条件を試験できる状態である	M06-10（戻しリストCSV出力）（m06_10_admin_store_purchase_purchase_store_return_list_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 開始条件を確認する
+3. 画面表示と後続状態を確認する"	管理画面にログイン済みの利用者が対象メニューもしくは操作を実行すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -381,4 +390,4 @@ M06-10（戻しリストCSV出力）	IT-M06-10-ADMIN-STORE-PURCHASE-PURCHASE-STO
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.92, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.92, No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

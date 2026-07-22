@@ -12,15 +12,14 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、一覧、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -233,60 +232,54 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-065	IT-15	機密情報	P1	機密情報の結合確認	未ログインのブラウザを試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で未ログインのブラウザの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	管理画面ファイアウォールによりログインへ誘導される（EC-CUBE管理の共通挙動であること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-066	IT-07	排他制御	P1	排他制御の結合確認	ログイン済みの一般管理者を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でログイン済みの一般管理者の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	/{admin_route}/ 配下の保護ルートとしてアクセス可能な前提であること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-067	IT-07	排他制御	P1	排他制御の結合確認	CSVでセッション欠落を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でCSVでセッション欠落の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フラッシュエラー付きで GET admin_otcbuyorder_summary へリダイレクトであること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-068	IT-06	ロールバック	P3	ロールバックの結合確認	検索POSTが成功を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で検索POSTが成功の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一レスポンス内で一覧とフォーム再表示であること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSVダウンロードのPOSTでセッション欠落を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でCSVダウンロードのPOSTでセッション欠落の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ログイン済みの一般管理者を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でログイン済みの一般管理者の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ログイン済みの一般管理者を確認する
+3. 画面表示と後続状態を確認する"	/{admin_route}/ 配下の保護ルートとしてアクセス可能な前提であること。
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSVでセッション欠落を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でCSVでセッション欠落の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. CSVでセッション欠落を確認する
+3. 画面表示と後続状態を確認する"	フラッシュエラー付きで GET admin_otcbuyorder_summary へリダイレクトであること。
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSVダウンロードのPOSTでセッション欠落を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でCSVダウンロードのPOSTでセッション欠落の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSVダウンロードのPOSTでセッション欠落
 3. 画面表示と後続状態を確認する"	一覧初期画面に戻り、エラーメッセージを見せるであること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	検証失敗を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検証失敗を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検証失敗を確認する
 3. 画面表示と後続状態を確認する"	一覧は非表示のまま、フィールドエラーを表示すること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-071	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSVでセッションに条件が無いを試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でCSVでセッションに条件が無いの確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSVでセッションに条件が無いを試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でCSVでセッションに条件が無いの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSVでセッションに条件が無いを確認する
 3. 画面表示と後続状態を確認する"	管理向けエラーメッセージ「検索条件がありませんであること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	保存タイミングを試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で保存タイミングの確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	保存タイミングを試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で保存タイミングの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存タイミング
 3. 画面表示と後続状態を確認する"	検索POSTが検証成功したときのみであること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	保存内容を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で保存内容の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-072	IT-25	一覧	P2	一覧の結合確認	保存内容を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で保存内容の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存内容
 3. 画面表示と後続状態を確認する"	フォームのビュー用データ（CSV再現用）であること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	キー名を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でキー名の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-073	IT-12	画面表示データ	P2	画面表示データの結合確認	キー名を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でキー名の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. キー名を確認する
-3. 画面表示と後続状態を確認する"	eccube.admin.otcbuyorder_summary.search（現行実装の確認値）であること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ナビ「店頭買取管理」から「買取集計データ」を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でナビ「店頭買取管理」から「買取集計データ」の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-074	IT-25	画面表示データ	P2	画面表示データの結合確認	ナビ「店頭買取管理」から「買取集計データ」を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でナビ「店頭買取管理」から「買取集計データ」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ナビ「店頭買取管理」から「買取集計データ」を確認する
 3. 画面表示と後続状態を確認する"	メニューは「店頭買取」配下のアクティブ状態になること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-076	IT-25	一覧	P2	一覧の結合確認	「検索する」送信を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で「検索する」送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-075	IT-12	画面表示データ	P2	画面表示データの結合確認	「検索する」送信を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で「検索する」送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「検索する」送信
-3. 画面表示と後続状態を確認する"	入力が検証された場合のみ一覧を描画すること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-077	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-078	IT-25	画面表示データ	P2	画面表示データの結合確認	JS 挙動を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でJS 挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-076	IT-25	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	タイトルは翻訳キー admin.purchase.store.title（店頭買取管理）であること。
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-077	IT-25	フォーム送信	P1	フォーム送信の結合確認	JS 挙動を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）でJS 挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS 挙動を確認する
 3. 画面表示と後続状態を確認する"	assets/js/OtcBuyOrder/otc-buy-order-summary.js で、識別子末尾が _date_from もしくは _date_to の入力に datetimepicker（ロケール日本語、…であること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-079	IT-12	画面表示データ	P2	画面表示データの結合確認	日別一覧を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で日別一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-078	IT-16	ファイル選択	P2	ファイル選択の結合確認	日別一覧を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で日別一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 日別一覧を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-080	IT-25	画面表示データ	P2	画面表示データの結合確認	部門未設定を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で部門未設定の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	集計日（日単位）と部門識別子ごとに sell_price の合計を sellPriceTotal、buy_price の合計を buyPriceTotal として取得すること。
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-079	IT-12	非同期更新	P1	非同期更新の結合確認	部門未設定を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で部門未設定の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 部門未設定を確認する
 3. 画面表示と後続状態を確認する"	集計行の section_id が欠け、結合先が無い場合、部門名はTwigで定数「未設定」に置き換えて表示すること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-081	IT-12	エラー継続	P3	エラー継続の結合確認	期間および条件は妥当だが行が0件を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で期間および条件は妥当だが行が0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-080	IT-25	データなし	P2	データなしの結合確認	期間および条件は妥当だが行が0件を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で期間および条件は妥当だが行が0件の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 期間および条件は妥当だが行が0件を確認する
 3. 画面表示と後続状態を確認する"	「集計」「日別」それぞれ別メッセージのボックスのみ表示すること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-082	IT-25	件数上限	P2	件数上限の結合確認	複数店舗・複数部門の合算表示を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で複数店舗・複数部門の合算表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-081	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	複数店舗・複数部門の合算表示を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で複数店舗・複数部門の合算表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 複数店舗・複数部門の合算表示を確認する
 3. 画面表示と後続状態を確認する"	日別一覧は同一日かつ同一部門内で複数店舗を横断した合計が既にクエリ側でまとめられる一方、画面上は店舗列を持たず、複数店舗を選んだ場合はその合算値として見えるであること。
-店頭買取管理 — 買取集計データ（検索・一覧表示）	IT-M06-08-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SUMMARY-083	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取集計データ（検索・一覧表示）（m06_08_admin_store_purchase_purchase_store_summary）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	同一HTML上の検証エラーであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -388,4 +381,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.381, No.382, No.385, No.413, No.414, No.420。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.109, No.110, No.111, No.332, No.387, No.412, No.413, No.420。上限緩和または個別ケース化で収載可能。

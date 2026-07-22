@@ -12,18 +12,15 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、一覧、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 更新内容 |
 | IT-05 | 削除条件、実行結果 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
 | IT-11 | 実行結果 |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
-| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -83,234 +80,234 @@ m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設�
 m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	テーブルの行集合を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. テーブルの行集合を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	画面上の単一検索テキストを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 画面上の単一検索テキスト
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M10-14-MSG-001を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M10-14-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	論理削除後の再表示を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 論理削除後の再表示
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M10-14-MSG-002を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M10-14-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	検索結果ゼロを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 検索結果ゼロ
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M10-14-MSG-003を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M10-14-MSG-003を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	Ajax DELETEで一部失敗を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. Ajax DELETEで一部失敗を確認する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M10-14-MSG-004を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M10-14-MSG-004を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-019	IT-22	部分入力	P2	部分入力の入力検証	論理削除を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で論理削除の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 論理削除
-3. 画面表示と後続状態を確認する"	ステータスのみ更新であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-020	IT-23	検索条件	P2	検索時の検索条件確認	APIを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-019	IT-22	部分入力	P2	部分入力の入力検証	M10-14-MSG-005を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M10-14-MSG-005を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-020	IT-23	検索条件	P2	検索時の検索条件確認	M10-14-MSG-006を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	入力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	M10-14-MSG-007を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	画面上の単一検索テキストを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	論理削除後の再表示を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	検索結果ゼロを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	Ajax DELETEで一部失敗を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	論理削除を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	mtb_tenant_statusを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でmtb_tenant_statusの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-028	IT-23	検索条件	P2	検索時の検索条件確認	検索テキストを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索テキストの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	APIを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	店舗名リンク押下を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で店舗名リンク押下の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-028	IT-23	検索条件	P2	検索時の検索条件確認	入力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で入力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	表示件数プルダウン変更を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で表示件数プルダウン変更の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で成功時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	検索送信を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索送信の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で失敗時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	Ajax DELETE異常応答またはネットワーク失敗を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAjax DELETE異常応答またはネットワーク失敗の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で副作用の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-033	IT-23	実行結果	P2	検索時の実行結果確認	Ajax DELETE論理側の失敗応答(JSON success false)を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAjax DELETE論理側の失敗応答(JSON success false)の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でdtb_base_infoの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-033	IT-23	検索条件	P2	検索時の検索条件確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でdtb_base_infoの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でdtb_base_infoの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	一覧正常表示を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で一覧正常表示の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	mtb_tenant_statusを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でmtb_tenant_statusの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	検索条件とページ状態の保存タイミングを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件とページ状態の保存タイミングの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	検索テキストを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索テキストの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	表示件数を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で表示件数の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-037	IT-23	実行結果	P2	検索時の実行結果確認	店舗名リンク押下を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で店舗名リンク押下の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-037	IT-26	更新内容	P1	更新時の更新内容確認	店舗一覧画面を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で店舗一覧画面の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-038	IT-26	更新内容	P1	更新時の更新内容確認	表示件数プルダウン変更を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で表示件数プルダウン変更の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-038	IT-26	更新内容	P1	更新時の更新内容確認	検索条件セッションを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件セッションの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-039	IT-26	更新内容	P1	更新時の更新内容確認	検索送信を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索送信の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-039	IT-26	更新内容	P1	更新時の更新内容確認	論理削除を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で論理削除の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-040	IT-26	更新内容	P1	更新時の更新内容確認	Ajax DELETE異常応答またはネットワーク失敗を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAjax DELETE異常応答またはネットワーク失敗の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-040	IT-26	更新内容	P1	更新時の更新内容確認	メニューから店舗一覧を開くを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でメニューから店舗一覧を開くの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-041	IT-26	更新内容	P1	更新時の更新内容確認	店舗一覧画面を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で店舗一覧画面の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索欄にはフォーム項目「店舗名」相当の入力欄が並ぶこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-041	IT-26	更新内容	P1	更新時の更新内容確認	「検索」ボタンを押下してPOST送信するを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で「検索」ボタンを押下してPOST送信するの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-042	IT-26	更新内容	P1	更新時の更新内容確認	ページリンクや「表示件数」プルダウンで一覧をページ送りするを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	「基本情報」配下メニューを開いたときに表示される、テナント店舗の検索結果テーブルを持つページであること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-042	IT-26	更新内容	P1	更新時の更新内容確認	検索条件セッションを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件セッションの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-043	IT-26	更新内容	P1	更新時の更新内容確認	行のチェックボックスを操作するを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-043	IT-26	更新内容	P1	更新時の更新内容確認	論理削除を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-044	IT-26	更新内容	P1	更新時の更新内容確認	メニューから店舗一覧を開くを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-044	IT-26	更新内容	P1	更新時の更新内容確認	「削除」を実行するモーダルで確定して一括処理するを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-045	IT-26	更新内容	P1	更新時の更新内容確認	「検索」ボタンを押下してPOST送信するを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-045	IT-26	更新内容	P1	更新時の更新内容確認	店舗名リンクを押下するを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-046	IT-26	更新内容	P1	更新時の更新内容確認	ページリンクや「表示件数」プルダウンで一覧をページ送りするを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-046	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で表示要素の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-047	IT-26	更新内容	P1	更新時の更新内容確認	行のチェックボックスを操作するを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で行のチェックボックスを操作するの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-047	IT-05	実行結果	P1	更新時の実行結果確認	JS挙動を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でJS挙動の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-048	IT-05	実行結果	P1	更新時の実行結果確認	「削除」を実行するモーダルで確定して一括処理するを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で「削除」を実行するモーダルで確定して一括処理するの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-048	IT-05	実行結果	P1	更新時の実行結果確認	モーダル・ポップアップを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-049	IT-05	実行結果	P1	更新時の実行結果確認	店舗名リンクを押下するを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で店舗名リンクを押下するの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	店舗詳細編集へ遷移すること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-050	IT-05	削除条件	P1	削除時の削除条件確認	表示要素を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面上部に検索フォームであること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-051	IT-05	削除条件	P1	削除時の削除条件確認	JS挙動を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	表示件数プルダウン変更でクエリパラメタを付けた同一一覧へブラウザ遷移すること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-052	IT-05	削除条件	P1	削除時の削除条件確認	モーダル・ポップアップを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	論理削除確認モーダル、進捗バーであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-049	IT-05	削除条件	P1	削除時の削除条件確認	入力項目を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-053	IT-05	削除条件	P1	削除時の削除条件確認	入力項目を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索用テキスト1項目であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-050	IT-05	削除条件	P1	削除時の削除条件確認	テーブルの行集合を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	モールルートを除いたdtb_base_info行であり、クエリ側は初期時点ですべて読み込んですべて表示すること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-051	IT-05	削除条件	P1	削除時の削除条件確認	画面上の単一検索テキストを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	DBには保存しないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-052	IT-05	削除条件	P1	削除時の削除条件確認	論理削除後の再表示を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	標準の一覧クエリはtenant_statusで除外しないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-053	IT-05	削除条件	P1	削除時の削除条件確認	検索結果ゼロを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索結果ゼロの確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-054	IT-05	削除条件	P1	削除時の削除条件確認	テーブルの行集合を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でテーブルの行集合の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-054	IT-05	実行結果	P1	削除時の実行結果確認	Ajax DELETEで一部失敗を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAjax DELETEで一部失敗の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-055	IT-05	実行結果	P1	削除時の実行結果確認	M10-14-MSG-001を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-001の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-055	IT-05	実行結果	P1	削除時の実行結果確認	論理削除を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で論理削除の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-056	IT-05	実行結果	P1	削除時の実行結果確認	M10-14-MSG-002を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-002の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ステータスのみ更新であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-056	IT-05	実行結果	P1	削除時の実行結果確認	APIを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAPIの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当該ボタン押下で data-class-load 宛の GET Ajax が失敗(fail)したときであること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-057	IT-05	実行結果	P1	削除時の実行結果確認	M10-14-MSG-003を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-003の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-057	IT-05	実行結果	P1	削除時の実行結果確認	入力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で入力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-058	IT-05	実行結果	P1	削除時の実行結果確認	M10-14-MSG-004を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-004の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GETはページングとresumeであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-058	IT-02	初期行数	P2	初期行数の結合確認	成功時出力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	HTML一覧、もしくは削除成功JSONであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-059	IT-02	表示順	P2	表示順の結合確認	失敗時出力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	HTMLは検索エラー状態付きもしくはAjaxのシステムエラー文言リストであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-060	IT-25	更新抑止	P1	更新抑止の結合確認	副作用を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で副作用の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	全削除Ajaxが完了したとき(成否を問わず always コールバック)であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-059	IT-02	表示順	P2	表示順の結合確認	M10-14-MSG-006を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-006の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M10-14-MSG-006を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-060	IT-25	更新抑止	P1	更新抑止の結合確認	M10-14-MSG-007を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-007の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検索条件セッションの更新であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-061	IT-12	内部情報	P1	内部情報の結合確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でdtb_base_infoの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-061	IT-12	内部情報	P1	内部情報の結合確認	画面上の単一検索テキストを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で画面上の単一検索テキストの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧および検索ID条件、リンク生成に利用であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-062	IT-15	機密情報	P1	機密情報の結合確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でdtb_base_infoの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	DBには保存しないこと。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-062	IT-15	機密情報	P1	機密情報の結合確認	論理削除後の再表示を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で論理削除後の再表示の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧に表示および検索のLIKE参照であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-063	IT-07	排他制御	P1	排他制御の結合確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でdtb_base_infoの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	DELETEにより「削除」を表すマスタ参照へ更新であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-064	IT-07	排他制御	P1	排他制御の結合確認	mtb_tenant_statusを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でmtb_tenant_statusの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	「削除」を表す行の主キーであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-065	IT-06	ロールバック	P3	ロールバックの結合確認	検索テキストを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索テキストの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Symfonyフォーム単体ではほぼ束縛が無いであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-066	IT-11	実行結果	P2	実行結果の結合確認	店舗名リンク押下を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で店舗名リンク押下の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店舗名リンク押下
-3. 画面表示と後続状態を確認する"	店舗詳細編集であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-067	IT-28	実行結果	P2	実行結果の結合確認	表示件数プルダウン変更を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で表示件数プルダウン変更の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示件数プルダウン変更を確認する
-3. 画面表示と後続状態を確認する"	同一機能の一覧へGET、ページは1側へ明示付与であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-068	IT-28	実行結果	P2	実行結果の結合確認	検索送信を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索送信の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索送信
-3. 画面表示と後続状態を確認する"	保存済み入力でクエリであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-069	IT-28	ヘッダ	P2	ヘッダの結合確認	Ajax DELETE異常応答またはネットワーク失敗を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAjax DELETE異常応答またはネットワーク失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. Ajax DELETE異常応答またはネットワーク失敗を確認する
-3. 画面表示と後続状態を確認する"	モーダル内リストへエラー文を増やすであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-070	IT-28	件名	P2	件名の結合確認	Ajax DELETE論理側の失敗応答(JSON success false)を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. Ajax DELETE論理側の失敗応答(JSON success false)を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-071	IT-28	件名	P2	件名の結合確認	一覧正常表示を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 一覧正常表示を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-072	IT-28	件名	P2	件名の結合確認	検索条件とページ状態の保存タイミングを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件とページ状態の保存タイミングの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索条件とページ状態の保存タイミング
-3. 画面表示と後続状態を確認する"	POST検索有効時およびページ送りGET／resume付きGET、検索入力初期化GETであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-073	IT-28	本文	P2	本文の結合確認	表示件数を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 表示件数を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-074	IT-28	本文	P2	本文の結合確認	店舗一覧画面を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 店舗一覧画面を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-075	IT-28	本文	P2	本文の結合確認	検索条件セッションを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索条件セッション
-3. 画面表示と後続状態を確認する"	検索入力の表示復元およびページネーション状態を保持するセッション上の名前空間であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-076	IT-28	本文	P2	本文の結合確認	論理削除を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で論理削除の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 論理削除
-3. 画面表示と後続状態を確認する"	DELETE APIが行う処理のうち、tenant_statusを「削除」を表すマスタ状態に書き換えてフラッシュすること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	メニューから店舗一覧を開くを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でメニューから店舗一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. メニューから店舗一覧を開く
-3. 画面表示と後続状態を確認する"	検索欄にはフォーム項目「店舗名」相当の入力欄が並ぶこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	「検索」ボタンを押下してPOST送信するを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で「検索」ボタンを押下してPOST送信するの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 「検索」ボタンを押下してPOST送信する
-3. 画面表示と後続状態を確認する"	CSRFおよびフォーム項目を含んだ検索送信が処理されるであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ページリンクや「表示件数」プルダウンで一覧をページ送りするを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でページリンクや「表示件数」プルダウンで一覧をページ送りするの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ページリンクや「表示件数」プルダウンで一覧をページ送りするを確認する
-3. 画面表示と後続状態を確認する"	GETによりページ番号と表示件数を更新しつつ、resumeフラグもしくはパスパラメタに応じてセッション上の検索条件を復元して再クエリすること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	画面上部に検索フォームであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-081	IT-25	一覧	P2	一覧の結合確認	JS挙動を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	表示件数プルダウン変更でクエリパラメタを付けた同一一覧へブラウザ遷移すること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-082	IT-12	画面表示データ	P2	画面表示データの結合確認	モーダル・ポップアップを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-083	IT-25	画面表示データ	P2	画面表示データの結合確認	入力項目を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入力項目
-3. 画面表示と後続状態を確認する"	検索用テキスト1項目であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-084	IT-12	画面表示データ	P2	画面表示データの結合確認	テーブルの行集合を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でテーブルの行集合の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. テーブルの行集合を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-085	IT-25	画面表示データ	P2	画面表示データの結合確認	画面上の単一検索テキストを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で画面上の単一検索テキストの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 画面上の単一検索テキスト
-3. 画面表示と後続状態を確認する"	DBには保存しないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-086	IT-25	フォーム送信	P1	フォーム送信の結合確認	論理削除後の再表示を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で論理削除後の再表示の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 論理削除後の再表示
-3. 画面表示と後続状態を確認する"	標準の一覧クエリはtenant_statusで除外しないこと。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-087	IT-16	ファイル選択	P2	ファイル選択の結合確認	検索結果ゼロを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索結果ゼロの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	標準の一覧クエリはtenant_statusで除外しないこと。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-063	IT-11	実行結果	P2	実行結果の結合確認	検索結果ゼロを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索結果ゼロの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索結果ゼロ
 3. 画面表示と後続状態を確認する"	「検索結果はありません」系の共通メッセージと案内であること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-088	IT-12	非同期更新	P1	非同期更新の結合確認	Ajax DELETEで一部失敗を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAjax DELETEで一部失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-064	IT-28	実行結果	P2	実行結果の結合確認	Ajax DELETEで一部失敗を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAjax DELETEで一部失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. Ajax DELETEで一部失敗を確認する
 3. 画面表示と後続状態を確認する"	並列処理の結果配列側で個別文言をリスト表示し、処理完了文言へ至るであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-089	IT-25	件数上限	P2	件数上限の結合確認	APIを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-065	IT-28	実行結果	P2	実行結果の結合確認	論理削除を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で論理削除の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 論理削除
+3. 画面表示と後続状態を確認する"	ステータスのみ更新であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-066	IT-28	ヘッダ	P2	ヘッダの結合確認	APIを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. APIを確認する
 3. 画面表示と後続状態を確認する"	論理削除用DELETEはAjax向けであること。
-m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-090	IT-25	欠損値	P2	欠損値の結合確認	入力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-067	IT-28	件名	P2	件名の結合確認	入力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 入力
-3. 画面表示と後続状態を確認する"	GETはページングとresumeであること。
+3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-068	IT-28	件名	P2	件名の結合確認	成功時出力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-069	IT-28	件名	P2	件名の結合確認	失敗時出力を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	HTMLは検索エラー状態付きもしくはAjaxのシステムエラー文言リストであること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-070	IT-28	本文	P2	本文の結合確認	副作用を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-071	IT-28	本文	P2	本文の結合確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. dtb_base_infoを確認する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-072	IT-28	本文	P2	本文の結合確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_base_infoを確認する
+3. 画面表示と後続状態を確認する"	一覧に表示および検索のLIKE参照であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-073	IT-28	本文	P2	本文の結合確認	dtb_base_infoを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_base_infoを確認する
+3. 画面表示と後続状態を確認する"	DELETEにより「削除」を表すマスタ参照へ更新であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	mtb_tenant_statusを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でmtb_tenant_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. mtb_tenant_statusを確認する
+3. 画面表示と後続状態を確認する"	「削除」を表す行の主キーであること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	検索テキストを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索テキストの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索テキスト
+3. 画面表示と後続状態を確認する"	Symfonyフォーム単体ではほぼ束縛が無いであること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	店舗名リンク押下を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で店舗名リンク押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 店舗名リンク押下
+3. 画面表示と後続状態を確認する"	店舗詳細編集であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	表示件数プルダウン変更を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で表示件数プルダウン変更の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示件数プルダウン変更を確認する
+3. 画面表示と後続状態を確認する"	同一機能の一覧へGET、ページは1側へ明示付与であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索送信を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索送信
+3. 画面表示と後続状態を確認する"	保存済み入力でクエリであること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	Ajax DELETE異常応答またはネットワーク失敗を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でAjax DELETE異常応答またはネットワーク失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. Ajax DELETE異常応答またはネットワーク失敗を確認する
+3. 画面表示と後続状態を確認する"	モーダル内リストへエラー文を増やすであること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	店舗一覧画面を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で店舗一覧画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 店舗一覧画面を確認する
+3. 画面表示と後続状態を確認する"	「基本情報」配下メニューを開いたときに表示される、テナント店舗の検索結果テーブルを持つページであること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-081	IT-25	一覧	P2	一覧の結合確認	検索条件セッションを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索条件セッション
+3. 画面表示と後続状態を確認する"	検索入力の表示復元およびページネーション状態を保持するセッション上の名前空間であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-082	IT-12	画面表示データ	P2	画面表示データの結合確認	論理削除を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で論理削除の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 論理削除
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-083	IT-25	画面表示データ	P2	画面表示データの結合確認	メニューから店舗一覧を開くを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でメニューから店舗一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. メニューから店舗一覧を開く
+3. 画面表示と後続状態を確認する"	検索欄にはフォーム項目「店舗名」相当の入力欄が並ぶこと。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-084	IT-12	画面表示データ	P2	画面表示データの結合確認	「検索」ボタンを押下してPOST送信するを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で「検索」ボタンを押下してPOST送信するの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 「検索」ボタンを押下してPOST送信する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-085	IT-25	画面表示データ	P2	画面表示データの結合確認	ページリンクや「表示件数」プルダウンで一覧をページ送りするを試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でページリンクや「表示件数」プルダウンで一覧をページ送りするの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ページリンクや「表示件数」プルダウンで一覧をページ送りするを確認する
+3. 画面表示と後続状態を確認する"	GETによりページ番号と表示件数を更新しつつ、resumeフラグもしくはパスパラメタに応じてセッション上の検索条件を復元して再クエリすること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-086	IT-12	エラー継続	P3	エラー継続の結合確認	表示要素を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	画面上部に検索フォームであること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-087	IT-25	件数上限	P2	件数上限の結合確認	JS挙動を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	表示件数プルダウン変更でクエリパラメタを付けた同一一覧へブラウザ遷移すること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-088	IT-25	データなし	P2	データなしの結合確認	入力項目を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力項目
+3. 画面表示と後続状態を確認する"	検索用テキスト1項目であること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-089	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	テーブルの行集合を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でテーブルの行集合の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. テーブルの行集合を確認する
+3. 画面表示と後続状態を確認する"	モールルートを除いたdtb_base_info行であり、クエリ側は初期時点ですべて読み込んですべて表示すること。
+m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-090	IT-23	データ正当性	P3	データ正当性の結合確認	M10-14-MSG-001を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M10-14-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	.action-submit 押下時に name が ids で始まるチェックボックスが1件も選択されていないときであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -410,6 +407,6 @@ m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設�
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 1 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.44, No.333, No.334, No.336, No.387, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.109, No.110, No.111, No.381, No.382, No.385, No.413, No.420。上限緩和または個別ケース化で収載可能。

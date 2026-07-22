@@ -19,8 +19,6 @@
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -201,72 +199,63 @@ m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプ
 m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-054	IT-15	機密情報	P1	機密情報の結合確認	表示要素を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で表示要素の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	おすすめプラグインカードには、見出し、プラグイン画像、プラグイン名、短い説明、カード下部のオーナーズストアリンクを表示すること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-055	IT-07	排他制御	P1	排他制御の結合確認	一覧レイアウトを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で一覧レイアウトの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カード本文は最大高さを持ち、縦スクロールすること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-056	IT-07	排他制御	P1	排他制御の結合確認	モーダル表示を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でモーダル表示の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	プラグイン画像もしくは名称のリンクは Bootstrap のモーダル属性で対象プラグインの詳細モーダルを開くこと。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-057	IT-06	ロールバック	P3	ロールバックの結合確認	モーダル内容を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でモーダル内容の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画像、名称、短い説明、税込価格、ダウンロード数、バージョン、対応 EC-CUBE バージョン、公開日、最終更新日、ライセンス、制作者、問い合わせ URL、マニュアル URL、長い説明を表示すること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	対応バージョン警告を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で対応バージョン警告の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-055	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	一覧レイアウトを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で一覧レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧レイアウトを確認する
+3. 画面表示と後続状態を確認する"	カード本文は最大高さを持ち、縦スクロールすること。
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-056	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	モーダル表示を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でモーダル表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. モーダル表示を確認する
+3. 画面表示と後続状態を確認する"	プラグイン画像もしくは名称のリンクは Bootstrap のモーダル属性で対象プラグインの詳細モーダルを開くこと。
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-057	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	モーダル内容を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でモーダル内容の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. モーダル内容を確認する
+3. 画面表示と後続状態を確認する"	画像、名称、短い説明、税込価格、ダウンロード数、バージョン、対応 EC-CUBE バージョン、公開日、最終更新日、ライセンス、制作者、問い合わせ URL、マニュアル URL、長い説明を表示すること。
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-058	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	対応バージョン警告を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で対応バージョン警告の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 対応バージョン警告を確認する
 3. 画面表示と後続状態を確認する"	現在の EC-CUBE バージョンが対象プラグインの対応バージョン一覧に含まれない場合、モーダル内に警告を表示すること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	入力項目を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-059	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力項目を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力項目
 3. 画面表示と後続状態を確認する"	本ブロックは登録・更新のためのフォーム POST を持たないこと。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	おすすめプラグイン件数を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でおすすめプラグイン件数の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-060	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	おすすめプラグイン件数を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でおすすめプラグイン件数の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. おすすめプラグイン件数を確認する
 3. 画面表示と後続状態を確認する"	外部 API が返した配列件数をそのまま表示対象件数とすること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ローカルプラグイン突き合わせを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でローカルプラグイン突き合わせの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-061	IT-25	一覧	P2	一覧の結合確認	ローカルプラグイン突き合わせを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でローカルプラグイン突き合わせの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ローカルプラグイン突き合わせを確認する
 3. 画面表示と後続状態を確認する"	ローカルの登録済みプラグイン全件を取得し、外部 API のプラグイン ID とローカルの取得元 ID が一致するかをプラグインごとに確認すること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	外部 API の取得先を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で外部 API の取得先の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-062	IT-12	画面表示データ	P2	画面表示データの結合確認	外部 API の取得先を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で外部 API の取得先の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 外部 API の取得先を確認する
-3. 画面表示と後続状態を確認する"	設定値で定義されたプラグイン API の基底 URL に、おすすめ取得用のエンドポイントを連結して取得すること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	送信ヘッダを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で送信ヘッダの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-063	IT-25	画面表示データ	P2	画面表示データの結合確認	送信ヘッダを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で送信ヘッダの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 送信ヘッダ
 3. 画面表示と後続状態を確認する"	プラグイン認証キー、現在のサイト URL、EC-CUBE バージョンを送信すること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-064	IT-25	一覧	P2	一覧の結合確認	対応バージョンを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で対応バージョンの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-064	IT-12	画面表示データ	P2	画面表示データの結合確認	対応バージョンを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で対応バージョンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 対応バージョンを確認する
-3. 画面表示と後続状態を確認する"	現在の EC-CUBE バージョンが、外部 API 取得値の対応バージョン一覧に含まれるかで判定すること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-065	IT-12	画面表示データ	P2	画面表示データの結合確認	価格表示を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で価格表示の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 価格表示を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-066	IT-25	画面表示データ	P2	画面表示データの結合確認	外部 API が空配列を返すを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で外部 API が空配列を返すの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-065	IT-25	画面表示データ	P2	画面表示データの結合確認	価格表示を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で価格表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 価格表示を確認する
+3. 画面表示と後続状態を確認する"	モーダルでは価格を税込表記として表示すること。
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-066	IT-25	フォーム送信	P1	フォーム送信の結合確認	外部 API が空配列を返すを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で外部 API が空配列を返すの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 外部 API が空配列を返すを確認する
 3. 画面表示と後続状態を確認する"	おすすめプラグイン行は表示しないこと。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-067	IT-12	画面表示データ	P2	画面表示データの結合確認	外部 API 通信に失敗するを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で外部 API 通信に失敗するの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-067	IT-16	ファイル選択	P2	ファイル選択の結合確認	外部 API 通信に失敗するを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で外部 API 通信に失敗するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 外部 API 通信に失敗するを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-068	IT-25	画面表示データ	P2	画面表示データの結合確認	HTTP ステータスが 200 ではないを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でHTTP ステータスが 200 ではないの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	ホーム画面表示を継続し、おすすめプラグイン行は表示しないこと。
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-068	IT-12	非同期更新	P1	非同期更新の結合確認	HTTP ステータスが 200 ではないを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でHTTP ステータスが 200 ではないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. HTTP ステータスが 200 ではないを確認する
 3. 画面表示と後続状態を確認する"	プラグイン API 例外として扱い、ホーム画面では空配列表示にフォールバックすること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-069	IT-25	フォーム送信	P1	フォーム送信の結合確認	同じ取得元 ID のローカルプラグインが複数あるを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で同じ取得元 ID のローカルプラグインが複数あるの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-069	IT-12	エラー継続	P3	エラー継続の結合確認	同じ取得元 ID のローカルプラグインが複数あるを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で同じ取得元 ID のローカルプラグインが複数あるの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同じ取得元 ID のローカルプラグインが複数あるを確認する
 3. 画面表示と後続状態を確認する"	実装上は全件を走査し、一致したものに基づき状態を上書きすること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-070	IT-16	ファイル選択	P2	ファイル選択の結合確認	未購入かつ購入が必要なプラグインが、ローカル取得元 ID とも一致するを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で未購入かつ購入が必要なプラグインが、ローカル取得元 ID とも一致するの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-070	IT-25	件数上限	P2	件数上限の結合確認	未購入かつ購入が必要なプラグインが、ローカル取得元 ID とも一致するを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で未購入かつ購入が必要なプラグインが、ローカル取得元 ID とも一致するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未購入かつ購入が必要なプラグインが、ローカル取得元 ID とも一致するを確認する
 3. 画面表示と後続状態を確認する"	購入要否判定が後段で評価されるため、表示状態は「購入する」側に上書きされるであること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-071	IT-12	非同期更新	P1	非同期更新の結合確認	対応バージョン一覧に現在バージョンが含まれないを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で対応バージョン一覧に現在バージョンが含まれないの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-071	IT-25	欠損値	P2	欠損値の結合確認	対応バージョン一覧に現在バージョンが含まれないを試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で対応バージョン一覧に現在バージョンが含まれないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 対応バージョン一覧に現在バージョンが含まれないを確認する
 3. 画面表示と後続状態を確認する"	一覧行は表示すること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-072	IT-12	エラー継続	P3	エラー継続の結合確認	問い合わせ URL またはマニュアル URL が空を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で問い合わせ URL またはマニュアル URL が空の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-072	IT-25	データなし	P2	データなしの結合確認	問い合わせ URL またはマニュアル URL が空を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で問い合わせ URL またはマニュアル URL が空の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 問い合わせ URL またはマニュアル URL が空を確認する
 3. 画面表示と後続状態を確認する"	該当する外部リンクボタンは表示しないこと。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-073	IT-25	件数上限	P2	件数上限の結合確認	プラグイン画像が空を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でプラグイン画像が空の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-073	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	プラグイン画像が空を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でプラグイン画像が空の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. プラグイン画像が空を確認する
 3. 画面表示と後続状態を確認する"	一覧の画像は API 取得値をそのまま参照すること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-074	IT-25	欠損値	P2	欠損値の結合確認	参照時点を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 参照時点を確認する
-3. 画面表示と後続状態を確認する"	おすすめプラグイン一覧はホーム画面表示時に外部 API から取得した結果であること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-075	IT-25	データなし	P2	データなしの結合確認	ローカルプラグインとの整合性を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）でローカルプラグインとの整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ローカルプラグインとの整合性を確認する
-3. 画面表示と後続状態を確認する"	インストール状態は、ホーム画面表示時点のローカル登録済みプラグインと外部 API 取得値の突き合わせ結果であること。
-m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）	IT-M02-06-ADMIN-HOME-HOME-RECOMMEND-PLUGINS-076	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	一覧と詳細の整合性を試験できる状態である	m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプラグイン）（m02_06_admin_home_home_recommend_plugins）で一覧と詳細の整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧と詳細の整合性を確認する
-3. 画面表示と後続状態を確認する"	一覧行と詳細モーダルは同じ API 取得配列から同一 HTML 内に出力すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -368,4 +357,4 @@ m02-06_admin_home_home_recommend_plugins（管理画面_トップおすすめプ
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 1件 — No.330。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.109, No.110, No.111, No.334。上限緩和または個別ケース化で収載可能。

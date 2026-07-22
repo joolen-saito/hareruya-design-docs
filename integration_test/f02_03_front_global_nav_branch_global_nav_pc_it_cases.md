@@ -16,10 +16,8 @@
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、登録内容 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -200,72 +198,66 @@ F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-G
 F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-054	IT-15	機密情報	P1	機密情報の結合確認	カート個数を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でカート個数の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	非同期取得した時点の値であり、画面本文の描画時点とは別時点となり得るであること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-055	IT-07	排他制御	P1	排他制御の結合確認	APIを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でAPIの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カート個数取得は非同期リクエストで行うこと。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-056	IT-07	排他制御	P1	排他制御の結合確認	入力を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で入力の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	支店各画面の表示要求（店舗識別名もしくはイベントの店舗ID、ロケール付き）であること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-057	IT-06	ロールバック	P3	ロールバックの結合確認	成功時出力を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で成功時出力の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	店舗ヘッダ・店舗一覧・右カラムセクションナビ・店舗選択導線のHTMLであること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-055	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	APIを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. APIを確認する
+3. 画面表示と後続状態を確認する"	カート個数取得は非同期リクエストで行うこと。
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-056	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	入力を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	支店各画面の表示要求（店舗識別名もしくはイベントの店舗ID、ロケール付き）であること。
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-057	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	店舗ヘッダ・店舗一覧・右カラムセクションナビ・店舗選択導線のHTMLであること。
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-058	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	店舗未存在時は見つからない（HTTP404）であること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-059	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-059	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	カート個数の非同期取得であること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_base_info（現行 mtb_shop）を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でdtb_base_info（現行 mtb_shop）の確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-060	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_base_info（現行 mtb_shop）を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でdtb_base_info（現行 mtb_shop）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_base_info（現行 mtb_shop）を確認する
 3. 画面表示と後続状態を確認する"	店舗一覧・店舗選択導線の表示に用いること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-061	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_base_info（現行 mtb_shop）を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でdtb_base_info（現行 mtb_shop）の確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_base_info（現行 mtb_shop）を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でdtb_base_info（現行 mtb_shop）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_base_info（現行 mtb_shop）を確認する
 3. 画面表示と後続状態を確認する"	全店舗一覧・店舗選択列の表示順に用いること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_shop_page_elementを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でdtb_shop_page_elementの確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-062	IT-25	一覧	P2	一覧の結合確認	dtb_shop_page_elementを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でdtb_shop_page_elementの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_shop_page_elementを確認する
 3. 画面表示と後続状態を確認する"	右カラムナビの表示有無の判定に用いること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	未ログインを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で未ログインの確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-063	IT-12	画面表示データ	P2	画面表示データの結合確認	未ログインを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で未ログインの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未ログインを確認する
-3. 画面表示と後続状態を確認する"	表示できること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-064	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ログイン済み会員を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でログイン済み会員の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-064	IT-25	画面表示データ	P2	画面表示データの結合確認	ログイン済み会員を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でログイン済み会員の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ログイン済み会員を確認する
 3. 画面表示と後続状態を確認する"	表示できること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-065	IT-25	一覧	P2	一覧の結合確認	店舗ヘッダの店舗一覧導線押下を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で店舗ヘッダの店舗一覧導線押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-065	IT-12	画面表示データ	P2	画面表示データの結合確認	店舗ヘッダの店舗一覧導線押下を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で店舗ヘッダの店舗一覧導線押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 店舗ヘッダの店舗一覧導線押下
-3. 画面表示と後続状態を確認する"	店舗一覧の利用者データページであること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-066	IT-12	画面表示データ	P2	画面表示データの結合確認	店舗ヘッダの言語切替押下を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で店舗ヘッダの言語切替押下の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店舗ヘッダの言語切替押下
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-067	IT-25	画面表示データ	P2	画面表示データの結合確認	左カラム店舗一覧の店舗リンク押下を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で左カラム店舗一覧の店舗リンク押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-066	IT-25	画面表示データ	P2	画面表示データの結合確認	店舗ヘッダの言語切替押下を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で店舗ヘッダの言語切替押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 店舗ヘッダの言語切替押下
+3. 画面表示と後続状態を確認する"	反対ロケールの対応URLであること。
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-067	IT-25	フォーム送信	P1	フォーム送信の結合確認	左カラム店舗一覧の店舗リンク押下を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で左カラム店舗一覧の店舗リンク押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 左カラム店舗一覧の店舗リンク押下
 3. 画面表示と後続状態を確認する"	選択した店舗の店舗紹介ページであること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-068	IT-12	画面表示データ	P2	画面表示データの結合確認	右カラムセクションナビ押下を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で右カラムセクションナビ押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-068	IT-16	ファイル選択	P2	ファイル選択の結合確認	右カラムセクションナビ押下を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で右カラムセクションナビ押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 右カラムセクションナビ押下
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-069	IT-25	画面表示データ	P2	画面表示データの結合確認	カート個数の非同期取得失敗を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でカート個数の非同期取得失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	同一ページ内の対応セクションへアンカー移動であること。
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-069	IT-12	非同期更新	P1	非同期更新の結合確認	カート個数の非同期取得失敗を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）でカート個数の非同期取得失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カート個数の非同期取得失敗を確認する
 3. 画面表示と後続状態を確認する"	取得できない場合の表示は本書では仕様確定せず実装を確認値とすること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-070	IT-25	フォーム送信	P1	フォーム送信の結合確認	支店PC版ナビ表示を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で支店PC版ナビ表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-070	IT-12	エラー継続	P3	エラー継続の結合確認	支店PC版ナビ表示を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で支店PC版ナビ表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 支店PC版ナビ表示を確認する
 3. 画面表示と後続状態を確認する"	本機能固有の業務監査ログは追加しないこと。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-071	IT-16	ファイル選択	P2	ファイル選択の結合確認	全店舗一覧・店舗選択列の並び順を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で全店舗一覧・店舗選択列の並び順の確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-071	IT-25	件数上限	P2	件数上限の結合確認	全店舗一覧・店舗選択列の並び順を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で全店舗一覧・店舗選択列の並び順の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 全店舗一覧・店舗選択列の並び順
 3. 画面表示と後続状態を確認する"	dtb_base_infoにrank／sort_no列が見当たらず、並び順キーはec-cube-enterprise実装で要確認であること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-072	IT-12	非同期更新	P1	非同期更新の結合確認	左カラム店舗一覧を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で左カラム店舗一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-072	IT-25	欠損値	P2	欠損値の結合確認	左カラム店舗一覧を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で左カラム店舗一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 左カラム店舗一覧を確認する
 3. 画面表示と後続状態を確認する"	店舗紹介ページの左カラムに並ぶ全店舗の一覧であること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-073	IT-12	エラー継続	P3	エラー継続の結合確認	右カラムセクションナビを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で右カラムセクションナビの確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-073	IT-25	データなし	P2	データなしの結合確認	右カラムセクションナビを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で右カラムセクションナビの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 右カラムセクションナビを確認する
 3. 画面表示と後続状態を確認する"	店舗紹介ページの右カラムで、登録済みセクションへページ内移動するナビであること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-074	IT-25	件数上限	P2	件数上限の結合確認	店舗選択ボタン列・店舗切替セレクトを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で店舗選択ボタン列・店舗切替セレクトの確認に必要な条件を指定する	"1. 対象画面を表示する
+F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-074	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	店舗選択ボタン列・店舗切替セレクトを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で店舗選択ボタン列・店舗切替セレクトの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 店舗選択ボタン列・店舗切替セレクト
 3. 画面表示と後続状態を確認する"	イベント店舗文脈で店舗を切り替える導線であること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-075	IT-25	欠損値	P2	欠損値の結合確認	店舗紹介ページをPCで開くを試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で店舗紹介ページをPCで開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店舗紹介ページをPCで開く
-3. 画面表示と後続状態を確認する"	店舗ヘッダ・左カラム店舗一覧・右カラムセクションナビを描画すること。
-F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-GLOBAL-NAV-PC-076	IT-25	データなし	P2	データなしの結合確認	左カラム店舗一覧の店舗リンク押下を試験できる状態である	F02-03（支店PC版ナビゲーション）（f02_03_front_global_nav_branch_global_nav_pc）で左カラム店舗一覧の店舗リンク押下の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 左カラム店舗一覧の店舗リンク押下
-3. 画面表示と後続状態を確認する"	選択した店舗の店舗紹介ページへ遷移すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -367,4 +359,4 @@ F02-03（支店PC版ナビゲーション）	IT-F02-03-FRONT-GLOBAL-NAV-BRANCH-G
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 1件 — No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

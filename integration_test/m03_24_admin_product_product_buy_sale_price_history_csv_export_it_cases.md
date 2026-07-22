@@ -13,18 +13,16 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、登録内容 |
-| IT-16 | 実行結果 |
+| IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -243,51 +241,65 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	Content-Type: application/octet-stream、ファイル名 buy_sale_price_{YmdHis}.csv、本文は CSV ストリームであること。
 商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-075	IT-15	機密情報	P1	機密情報の結合確認	失敗時出力を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-076	IT-07	排他制御	P1	排他制御の結合確認	dtb_price_historyを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CSV の登録日時列であること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-077	IT-07	排他制御	P1	排他制御の結合確認	dtb_price_historyを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録者名解決であること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-078	IT-06	ロールバック	P3	ロールバックの結合確認	dtb_product_classを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	コード・状態表示列であること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	検索を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_price_historyを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_price_historyを確認する
+3. 画面表示と後続状態を確認する"	CSV の登録日時列であること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_price_historyを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_price_historyを確認する
+3. 画面表示と後続状態を確認する"	登録者名解決であること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_product_classを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_product_classを確認する
+3. 画面表示と後続状態を確認する"	コード・状態表示列であること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	検索を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 検索
 3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-080	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSV 成否を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSV 成否を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSV 成否を確認する
 3. 画面表示と後続状態を確認する"	キー eccube.admin.product.buy_sale_price_history.search が存在するかだけを見るであること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	初回表示のみで検索していないを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	初回表示のみで検索していないを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 初回表示のみで検索していない
 3. 画面表示と後続状態を確認する"	セッションキー欠落としてリダイレクトであること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	CSV 用の独自ウィジェットはないこと。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	JS 挙動を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-083	IT-25	一覧	P2	一覧の結合確認	JS 挙動を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. JS 挙動を確認する
 3. 画面表示と後続状態を確認する"	CSV 送信前の二重押し防止やクライアント側検証はないこと。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	モーダル・ポップアップを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-084	IT-12	画面表示データ	P2	画面表示データの結合確認	モーダル・ポップアップを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	出力確認ダイアログはないこと。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力行数を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-085	IT-25	画面表示データ	P2	画面表示データの結合確認	出力行数を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 出力行数を確認する
 3. 画面表示と後続状態を確認する"	検索条件を満たす履歴 1 行につき CSV データ行 1 行であること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-086	IT-25	一覧	P2	一覧の結合確認	登録日を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-086	IT-12	画面表示データ	P2	画面表示データの結合確認	登録日を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 登録日を確認する
-3. 画面表示と後続状態を確認する"	履歴 create_date を Y/m/d H:i 形式であること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-087	IT-12	画面表示データ	P2	画面表示データの結合確認	登録者を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 登録者を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-088	IT-25	画面表示データ	P2	画面表示データの結合確認	長大な件数を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-087	IT-25	画面表示データ	P2	画面表示データの結合確認	登録者を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 登録者を確認する
+3. 画面表示と後続状態を確認する"	履歴に紐づく会員がいればその表示名であること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-088	IT-25	フォーム送信	P1	フォーム送信の結合確認	長大な件数を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 長大な件数を確認する
 3. 画面表示と後続状態を確認する"	set_time_limit(0) とストリーム逐次出力であること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-089	IT-12	画面表示データ	P2	画面表示データの結合確認	表示のタイミングを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 表示のタイミングを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-090	IT-25	画面表示データ	P2	画面表示データの結合確認	成功時出力を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-089	IT-16	ファイル選択	P2	ファイル選択の結合確認	表示のタイミングを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-090	IT-12	非同期更新	P1	非同期更新の結合確認	成功時出力を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	Content-Type: application/octet-stream、ファイル名 buy_sale_price_{YmdHis}.csv、本文は CSV ストリームであること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-091	IT-12	エラー継続	P3	エラー継続の結合確認	失敗時出力を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	セッション欠落時は HTTP リダイレクトとフラッシュメッセージであること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-092	IT-25	件数上限	P2	件数上限の結合確認	dtb_price_historyを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_price_historyを確認する
+3. 画面表示と後続状態を確認する"	CSV の登録日時列であること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-093	IT-25	欠損値	P2	欠損値の結合確認	dtb_price_historyを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_price_historyを確認する
+3. 画面表示と後続状態を確認する"	登録者名解決であること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-094	IT-25	データなし	P2	データなしの結合確認	dtb_product_classを試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_product_classを確認する
+3. 画面表示と後続状態を確認する"	コード・状態表示列であること。
+商品管理 — 買取/販売価格履歴 CSV 出力	IT-M03-24-ADMIN-PRODUCT-PRODUCT-BUY-SALE-PRICE-HISTORY-CSV-EXPORT-095	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	検索を試験できる状態である	商品管理 — 買取/販売価格履歴 CSV 出力（m03_24_admin_product_product_buy_sale_price_history_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索
+3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -380,4 +392,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

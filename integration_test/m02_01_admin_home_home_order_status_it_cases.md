@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -234,64 +232,64 @@ m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M
 m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-065	IT-15	機密情報	P1	機密情報の結合確認	更新との整合性を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で更新との整合性の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	本ブロックは参照のみであり、受注やステータスマスタを更新しないこと。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-066	IT-07	排他制御	P1	排他制御の結合確認	外部連携との整合性を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で外部連携との整合性の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	外部連携やバッチにより受注が更新される場合の反映タイミングは、外部連携機能もしくはバッチ機能の設計を正とすること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-067	IT-07	排他制御	P1	排他制御の結合確認	APIを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でAPIの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本ブロックは件数表示のために専用 API を呼び出さないこと。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-068	IT-06	ロールバック	P3	ロールバックの結合確認	バッチを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でバッチの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本ブロックはバッチを起動しないこと。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	外部連携との整合性を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で外部連携との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 外部連携との整合性を確認する
+3. 画面表示と後続状態を確認する"	外部連携やバッチにより受注が更新される場合の反映タイミングは、外部連携機能もしくはバッチ機能の設計を正とすること。
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	APIを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. APIを確認する
+3. 画面表示と後続状態を確認する"	本ブロックは件数表示のために専用 API を呼び出さないこと。
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	バッチを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でバッチの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. バッチを確認する
+3. 画面表示と後続状態を確認する"	本ブロックはバッチを起動しないこと。
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時を確認する
 3. 画面表示と後続状態を確認する"	API 呼び出しやバッチ実行の成否を本ブロック内で判定しないこと。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	入力を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力
 3. 画面表示と後続状態を確認する"	ホーム画面表示要求であること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-071	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功時出力を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	受注状況カードにステータス名と件数であること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	データ取得失敗時はフレームワークの例外処理に委ねられ、ホーム画面全体の表示が成立しないことがあること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-073	IT-25	一覧	P2	一覧の結合確認	副作用を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	本ブロックの表示処理だけを見ると、受注台帳やマスタを更新しないこと。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	mtb_order_statusを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でmtb_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-074	IT-12	画面表示データ	P2	画面表示データの結合確認	mtb_order_statusを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でmtb_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_order_statusを確認する
-3. 画面表示と後続状態を確認する"	カード内のステータス表示名であること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	mtb_order_statusを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でmtb_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-075	IT-25	画面表示データ	P2	画面表示データの結合確認	mtb_order_statusを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でmtb_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_order_statusを確認する
 3. 画面表示と後続状態を確認する"	表示行の並びであること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-076	IT-25	一覧	P2	一覧の結合確認	登録/更新を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-076	IT-12	画面表示データ	P2	画面表示データの結合確認	登録/更新を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-077	IT-12	画面表示データ	P2	画面表示データの結合確認	利用者入力を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で利用者入力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 利用者入力
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-078	IT-25	画面表示データ	P2	画面表示データの結合確認	件数とマスタの整合を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で件数とマスタの整合の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-077	IT-25	画面表示データ	P2	画面表示データの結合確認	利用者入力を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で利用者入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 利用者入力
+3. 画面表示と後続状態を確認する"	本ブロックはフォームを持たないこと。
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-078	IT-25	フォーム送信	P1	フォーム送信の結合確認	件数とマスタの整合を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で件数とマスタの整合の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 件数とマスタの整合を確認する
 3. 画面表示と後続状態を確認する"	集計とマスタ取得は同一の除外配列に基づくであること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-079	IT-12	画面表示データ	P2	画面表示データの結合確認	未認証を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-079	IT-16	ファイル選択	P2	ファイル選択の結合確認	未認証を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未認証を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-080	IT-25	画面表示データ	P2	画面表示データの結合確認	除外ステータスを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で除外ステータスの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	利用不可であること。
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-080	IT-12	非同期更新	P1	非同期更新の結合確認	除外ステータスを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で除外ステータスの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 除外ステータスを確認する
 3. 画面表示と後続状態を確認する"	受注状況カードの「表示対象マスタ行」と「件数集計」の双方から除く受注ステータス識別子の集合であること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-081	IT-25	フォーム送信	P1	フォーム送信の結合確認	ホーム画面を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でホーム画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-081	IT-12	エラー継続	P3	エラー継続の結合確認	ホーム画面を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でホーム画面の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ホーム画面を確認する
 3. 画面表示と後続状態を確認する"	管理者認証後に表示されるダッシュボードであること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-082	IT-16	ファイル選択	P2	ファイル選択の結合確認	受注一覧を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で受注一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-082	IT-25	件数上限	P2	件数上限の結合確認	受注一覧を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で受注一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注一覧を確認する
 3. 画面表示と後続状態を確認する"	受注を検索・一覧表示する管理画面であること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-083	IT-12	非同期更新	P1	非同期更新の結合確認	ホーム画面を開くを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でホーム画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-083	IT-25	欠損値	P2	欠損値の結合確認	ホーム画面を開くを試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でホーム画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ホーム画面を開く
 3. 画面表示と後続状態を確認する"	受注状況カードに、除外ルールを通過した各受注ステータスがマスタの並び順で表示され、対応する件数が数値で示されるであること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-084	IT-12	エラー継続	P3	エラー継続の結合確認	受注状況カードの見出しを押下を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で受注状況カードの見出しを押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-084	IT-25	データなし	P2	データなしの結合確認	受注状況カードの見出しを押下を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）で受注状況カードの見出しを押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注状況カードの見出しを押下
 3. 画面表示と後続状態を確認する"	受注一覧へ遷移すること。
-m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-085	IT-25	件数上限	P2	件数上限の結合確認	ステータス行を押下を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でステータス行を押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M02-01-ADMIN-HOME-HOME-ORDER-STATUS-085	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ステータス行を押下を試験できる状態である	m02-01_admin_home_home_order_status（管理画面_トップ受注状況）（m02_01_admin_home_home_order_status）でステータス行を押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ステータス行を押下
 3. 画面表示と後続状態を確認する"	受注一覧へ遷移し、そのステータス識別子がクエリで渡されている場合は一覧の初期検索条件に反映されるであること。
 ```
@@ -395,4 +393,4 @@ m02-01_admin_home_home_order_status（管理画面_トップ受注状況）	IT-M
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.55, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.55, No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

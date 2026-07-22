@@ -13,16 +13,16 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
-| IT-23 | 実行結果 |
+| IT-23 | データ正当性、実行結果 |
 | IT-05 | 実行結果 |
 | IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-07 | 排他制御 |
 | IT-06 | ロールバック |
@@ -229,22 +229,22 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-070	IT-07	排他制御	P1	排他制御の結合確認	部門更新CSVを試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォーム NotBlank/File 最大サイズであること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-071	IT-07	排他制御	P1	排他制御の結合確認	部門CSV登録を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-071	IT-06	ロールバック	P3	ロールバックの結合確認	部門CSV登録を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同上に加え、必須ヘッダ集合の包含、部門IDの数字形式、既存 ID の実在、名称・コード・免税区分の非空であること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-072	IT-06	ロールバック	P3	ロールバックの結合確認	部門更新 POST 完了を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET /{admin_route}/product/section/csv_uploadであること。
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-072	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	部門更新 POST 完了を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 部門更新 POST 完了を確認する
+3. 画面表示と後続状態を確認する"	GET /{admin_route}/product/section/csv_uploadであること。
 商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-073	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	部門CSV登録 POST 完了（成功・一部失敗を問わずテンプレート再描画の実装）を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 部門CSV登録 POST 完了（成功・一部失敗を問わずテンプレート再描画の実装）を確認する
 3. 画面表示と後続状態を確認する"	同一 URL の HTML 応答であること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	部門更新の履歴ページングを試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-074	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	部門更新の履歴ページングを試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 部門更新の履歴ページングを確認する
 3. 画面表示と後続状態を確認する"	リダイレクト先 GET ではセッション値が引き続き使われるであること。
 商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-075	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	部門更新で行数超過を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 部門更新で行数超過を確認する
 3. 画面表示と後続状態を確認する"	admin.csv.error.upload.maxrecord をフラッシュしてアップロード画面へであること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	部門更新で商品未存在・部門未存在を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	部門更新で商品未存在・部門未存在を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 部門更新で商品未存在・部門未存在を確認する
 3. 画面表示と後続状態を確認する"	CsvImporter のメッセージをフラッシュしてアップロード画面へであること。
 商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	部門CSV登録で形式・必須欠如を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
@@ -253,41 +253,47 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSRF 不正を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSRF 不正を確認する
 3. 画面表示と後続状態を確認する"	フォーム検証失敗経路（部門更新はリダイレクト、部門登録はフォームエラー表示）であること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	部門更新CSV POST 開始を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-079	IT-25	一覧	P2	一覧の結合確認	部門更新CSV POST 開始を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 部門更新CSV POST 開始を確認する
 3. 画面表示と後続状態を確認する"	情報ログ「部門更新CSV登録開始」であること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-080	IT-25	一覧	P2	一覧の結合確認	部門更新CSV 成功を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-080	IT-12	画面表示データ	P2	画面表示データの結合確認	部門更新CSV 成功を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 部門更新CSV 成功を確認する
-3. 画面表示と後続状態を確認する"	情報ログ「部門更新CSV登録完了」と件数であること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-081	IT-12	画面表示データ	P2	画面表示データの結合確認	部門CSV登録の免税区分列を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-081	IT-25	画面表示データ	P2	画面表示データの結合確認	部門CSV登録の免税区分列を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 部門CSV登録の免税区分列を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-082	IT-25	画面表示データ	P2	画面表示データの結合確認	取込履歴を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	本書の部門CSV登録が扱う免税区分は移行先の mtb_section.tax_free_division を正とすること。
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-082	IT-12	画面表示データ	P2	画面表示データの結合確認	取込履歴を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 取込履歴を確認する
-3. 画面表示と後続状態を確認する"	同左（種別 ID は移行先の mtb_csv_import_type を要確認）であること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-083	IT-12	画面表示データ	P2	画面表示データの結合確認	ナビ「商品管理」→「商品CSV管理」→「部門更新CSV登録」を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ナビ「商品管理」→「商品CSV管理」→「部門更新CSV登録」を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-084	IT-25	画面表示データ	P2	画面表示データの結合確認	雛形ダウンロード（部門更新）を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-083	IT-25	画面表示データ	P2	画面表示データの結合確認	ナビ「商品管理」→「商品CSV管理」→「部門更新CSV登録」を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ナビ「商品管理」→「商品CSV管理」→「部門更新CSV登録」を確認する
+3. 画面表示と後続状態を確認する"	部門更新CSVの画面が開くこと。
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-084	IT-25	フォーム送信	P1	フォーム送信の結合確認	雛形ダウンロード（部門更新）を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 雛形ダウンロード（部門更新）
 3. 画面表示と後続状態を確認する"	product_section_update.csv が得られるであること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-085	IT-25	フォーム送信	P1	フォーム送信の結合確認	部門更新のファイル送信を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 部門更新のファイル送信
-3. 画面表示と後続状態を確認する"	検証・取込後、常に GET …/csv_upload へリダイレクトされ、フラッシュで成否が分かるであること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-086	IT-16	ファイル選択	P2	ファイル選択の結合確認	部門CSV登録画面の表示を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-085	IT-16	ファイル選択	P2	ファイル選択の結合確認	部門更新のファイル送信を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-087	IT-12	非同期更新	P1	非同期更新の結合確認	部門CSV登録の送信を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-086	IT-12	非同期更新	P1	非同期更新の結合確認	部門CSV登録画面の表示を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 部門CSV登録画面の表示を確認する
+3. 画面表示と後続状態を確認する"	ファイル選択・一括登録ボタン、フォーマット表、雛形リンクが表示されるであること。
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-087	IT-12	エラー継続	P3	エラー継続の結合確認	部門CSV登録の送信を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 部門CSV登録の送信
 3. 画面表示と後続状態を確認する"	検証成功時は部門マスタが更新され、成功メッセージが付いた同系画面が返るであること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-088	IT-12	エラー継続	P3	エラー継続の結合確認	雛形ダウンロード（部門マスタCSV登録）を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-088	IT-25	件数上限	P2	件数上限の結合確認	雛形ダウンロード（部門マスタCSV登録）を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 雛形ダウンロード（部門マスタCSV登録）
 3. 画面表示と後続状態を確認する"	department.csv が得られるであること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-089	IT-25	件数上限	P2	件数上限の結合確認	表示要素を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-089	IT-25	欠損値	P2	欠損値の結合確認	表示要素を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	ブロックタイトルは「商品管理」であること。
-商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-090	IT-25	欠損値	P2	欠損値の結合確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-090	IT-25	データなし	P2	データなしの結合確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	送信前の確認ダイアログはないこと。
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	表示要素を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	タイトルは admin.product.department_csv_upload（日本語確認値「部門CSV登録」）であること。
+商品管理 — 部門CSV入力	IT-M03-20-ADMIN-PRODUCT-PRODUCT-DEPARTMENT-CSV-IMPORT-092	IT-23	データ正当性	P3	データ正当性の結合確認	JS 挙動を試験できる状態である	商品管理 — 部門CSV入力（m03_20_admin_product_product_department_csv_import）でデータ正当性の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS 挙動を確認する
+3. 画面表示と後続状態を確認する"	送信時にアップロード・雛形ボタンを無効化し、スピナーを表示（spin.js）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -377,7 +383,6 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 1件 — No.109。上限緩和または個別ケース化で収載可能。

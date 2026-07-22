@@ -13,7 +13,7 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
@@ -22,10 +22,8 @@
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 
 ## テストケースTSV
 
@@ -226,68 +224,65 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	明示的な楽観ロック・悲観ロックを持たない場合、同一データを複数管理者が同時に更新すると後から保存された内容が残るであること。
 商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-069	IT-15	機密情報	P1	機密情報の結合確認	成功時出力を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-070	IT-07	排他制御	P1	排他制御の結合確認	失敗時出力を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ヘッダ不正・検証失敗時は取込画面を再表示すること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-071	IT-07	排他制御	P1	排他制御の結合確認	副作用を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	略称タグの登録であること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-072	IT-06	ロールバック	P3	ロールバックの結合確認	mtb_storage_code（略称タグ）を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CSV列 ID・名称・並び順に対応であること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-073	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	取込後を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 取込後を確認する
-3. 画面表示と後続状態を確認する"	取込結果を表示する取込画面であること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-075	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ヘッダ不正・検証失敗を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ヘッダ不正・検証失敗を確認する
-3. 画面表示と後続状態を確認する"	取込せず取込画面を再表示すること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	取込開始を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 取込開始を確認する
-3. 画面表示と後続状態を確認する"	略称タグCSV登録開始の情報ログであること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録方式を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 登録方式を確認する
-3. 画面表示と後続状態を確認する"	同一スキーマへ登録すること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	略称タグ管理の「CSV入力」を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 略称タグ管理の「CSV入力」
-3. 画面表示と後続状態を確認する"	CSV取込フォームとヘッダ説明を表示すること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	「アップロード」ボタンを試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 「アップロード」ボタン
-3. 画面表示と後続状態を確認する"	アップロードされたCSVを検証・取込し、略称タグを登録すること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-080	IT-25	一覧	P2	一覧の結合確認	表示要素を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	CSVファイルの選択、取込ヘッダの説明であること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-081	IT-12	画面表示データ	P2	画面表示データの結合確認	JS挙動を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-082	IT-25	画面表示データ	P2	画面表示データの結合確認	ヘッダ確認を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ヘッダ確認を確認する
-3. 画面表示と後続状態を確認する"	取込ヘッダと必須項目の妥当性を確認すること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-083	IT-12	画面表示データ	P2	画面表示データの結合確認	取込登録を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 取込登録を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-084	IT-25	画面表示データ	P2	画面表示データの結合確認	CSVファイルを試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSVファイルを確認する
-3. 画面表示と後続状態を確認する"	CSV取込フォーム（admin_csv_import）であること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-085	IT-25	フォーム送信	P1	フォーム送信の結合確認	更新単位を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 更新単位を確認する
-3. 画面表示と後続状態を確認する"	登録・編集・削除の対象データは、フォーム送信もしくはCSV取込で検証を通過した単位で更新すること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-086	IT-16	ファイル選択	P2	ファイル選択の結合確認	再表示を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-087	IT-12	非同期更新	P1	非同期更新の結合確認	同時更新を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 同時更新を確認する
-3. 画面表示と後続状態を確認する"	明示的な楽観ロック・悲観ロックを持たない場合、同一データを複数管理者が同時に更新すると後から保存された内容が残るであること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-088	IT-12	エラー継続	P3	エラー継続の結合確認	成功時出力を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	略称タグの登録であること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-089	IT-25	件数上限	P2	件数上限の結合確認	失敗時出力を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	ヘッダ不正・検証失敗時は取込画面を再表示すること。
-商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-090	IT-25	欠損値	P2	欠損値の結合確認	副作用を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	略称タグの登録であること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	mtb_storage_code（略称タグ）を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. mtb_storage_code（略称タグ）を確認する
+3. 画面表示と後続状態を確認する"	CSV列 ID・名称・並び順に対応であること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-073	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	取込後を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 取込後を確認する
+3. 画面表示と後続状態を確認する"	取込結果を表示する取込画面であること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ヘッダ不正・検証失敗を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ヘッダ不正・検証失敗を確認する
+3. 画面表示と後続状態を確認する"	取込せず取込画面を再表示すること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	取込開始を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 取込開始を確認する
+3. 画面表示と後続状態を確認する"	略称タグCSV登録開始の情報ログであること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-077	IT-25	一覧	P2	一覧の結合確認	登録方式を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 登録方式を確認する
+3. 画面表示と後続状態を確認する"	同一スキーマへ登録すること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-078	IT-12	画面表示データ	P2	画面表示データの結合確認	略称タグ管理の「CSV入力」を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 略称タグ管理の「CSV入力」
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-079	IT-25	画面表示データ	P2	画面表示データの結合確認	「アップロード」ボタンを試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 「アップロード」ボタン
+3. 画面表示と後続状態を確認する"	アップロードされたCSVを検証・取込し、略称タグを登録すること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-080	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-081	IT-25	画面表示データ	P2	画面表示データの結合確認	JS挙動を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	本機能ではアップロードの送信中心で、動的な表示切替は主としないこと。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-082	IT-25	フォーム送信	P1	フォーム送信の結合確認	ヘッダ確認を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ヘッダ確認を確認する
+3. 画面表示と後続状態を確認する"	取込ヘッダと必須項目の妥当性を確認すること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-083	IT-16	ファイル選択	P2	ファイル選択の結合確認	取込登録を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-084	IT-12	非同期更新	P1	非同期更新の結合確認	CSVファイルを試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSVファイルを確認する
+3. 画面表示と後続状態を確認する"	CSV取込フォーム（admin_csv_import）であること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-085	IT-12	エラー継続	P3	エラー継続の結合確認	更新単位を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 更新単位を確認する
+3. 画面表示と後続状態を確認する"	登録・編集・削除の対象データは、フォーム送信もしくはCSV取込で検証を通過した単位で更新すること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-086	IT-25	件数上限	P2	件数上限の結合確認	再表示を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 再表示を確認する
+3. 画面表示と後続状態を確認する"	保存成功後はDBに確定した値を次回表示・検索・出力の基準にすること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-087	IT-25	欠損値	P2	欠損値の結合確認	同時更新を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 同時更新を確認する
+3. 画面表示と後続状態を確認する"	明示的な楽観ロック・悲観ロックを持たない場合、同一データを複数管理者が同時に更新すると後から保存された内容が残るであること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-088	IT-25	データなし	P2	データなしの結合確認	成功時出力を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	略称タグの登録であること。
+商品管理 — 略称タグCSV入力	IT-M03-16-ADMIN-PRODUCT-PRODUCT-STORAGE-CODE-IMPORT-089	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	失敗時出力を試験できる状態である	商品管理 — 略称タグCSV入力（m03_16_admin_product_product_storage_code_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	ヘッダ不正・検証失敗時は取込画面を再表示すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -380,4 +375,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

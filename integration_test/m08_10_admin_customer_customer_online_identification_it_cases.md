@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -183,69 +181,60 @@ M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE
 M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-048	IT-15	機密情報	P1	機密情報の結合確認	JS挙動を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）でJS挙動の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	「確認済に変更する」押下時、身分証有効期限の入力値となりすまし対策トークンを隠しフォームに載せてPOST送信すること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-049	IT-07	排他制御	P1	排他制御の結合確認	CSS・レイアウトを試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）でCSS・レイアウトの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	サムネイルは縮小表示、拡大モーダルは大きめ表示であること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-050	IT-07	排他制御	P1	排他制御の結合確認	モーダル・ポップアップを試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	オンライン本人確認モーダルと、画像種別ごとの拡大表示モーダルを編集時のみ表示すること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-051	IT-06	ロールバック	P3	ロールバックの結合確認	表示対象を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で表示対象の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	会員編集画面の編集時（会員IDあり）にのみオンライン本人確認モーダルを表示すること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-052	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	確認済への変更を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で確認済への変更の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-049	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	モーダル・ポップアップを試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	オンライン本人確認モーダルと、画像種別ごとの拡大表示モーダルを編集時のみ表示すること。
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-050	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	表示対象を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で表示対象の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示対象を確認する
+3. 画面表示と後続状態を確認する"	会員編集画面の編集時（会員IDあり）にのみオンライン本人確認モーダルを表示すること。
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-051	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	確認済への変更を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で確認済への変更の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 確認済への変更を確認する
 3. 画面表示と後続状態を確認する"	「確認済に変更する」操作で本人確認ステータスを確認済みに更新すること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-053	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	身分証有効期限を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で身分証有効期限の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	身分証有効期限を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で身分証有効期限の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 身分証有効期限を確認する
 3. 画面表示と後続状態を確認する"	入力があれば日付として保存すること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-054	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	確認済からの降格を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で確認済からの降格の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-053	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	確認済からの降格を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で確認済からの降格の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 確認済からの降格を確認する
 3. 画面表示と後続状態を確認する"	確認済み・簡易書留確認済みの会員で本人確認用情報を変更すると未確認へ戻す判定は会員編集側で行う（M08-04を正とする）であること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-055	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	身分証有効期限を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で身分証有効期限の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-054	IT-25	一覧	P2	一覧の結合確認	身分証有効期限を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で身分証有効期限の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 身分証有効期限を確認する
 3. 画面表示と後続状態を確認する"	確認済への変更時に送信する隠しパラメータid_expiration_dateであること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-056	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	身分証有効期限が日付として不正を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で身分証有効期限が日付として不正の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-055	IT-12	画面表示データ	P2	画面表示データの結合確認	身分証有効期限が日付として不正を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で身分証有効期限が日付として不正の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 身分証有効期限が日付として不正を確認する
-3. 画面表示と後続状態を確認する"	エラーを表示し、ステータスを更新せず会員編集画面へ戻すであること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-057	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	身分証有効期限が空を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で身分証有効期限が空の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-056	IT-25	画面表示データ	P2	画面表示データの結合確認	身分証有効期限が空を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で身分証有効期限が空の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 身分証有効期限が空を確認する
 3. 画面表示と後続状態を確認する"	身分証有効期限を未設定にして確認済みへ更新すること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-058	IT-12	画面表示データ	P2	画面表示データの結合確認	身分証画像が未登録の種別を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で身分証画像が未登録の種別の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 身分証画像が未登録の種別を確認する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-057	IT-12	画面表示データ	P2	画面表示データの結合確認	本人確認の閲覧権限なしを試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で本人確認の閲覧権限なしの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 本人確認の閲覧権限なしを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-059	IT-25	画面表示データ	P2	画面表示データの結合確認	表示と保存を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で表示と保存の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-058	IT-25	画面表示データ	P2	画面表示データの結合確認	身分証画像が未登録の種別を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で身分証画像が未登録の種別の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 身分証画像が未登録の種別を確認する
+3. 画面表示と後続状態を確認する"	登録データなしの文言を表示すること。
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-059	IT-25	フォーム送信	P1	フォーム送信の結合確認	表示と保存を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で表示と保存の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示と保存
 3. 画面表示と後続状態を確認する"	モーダルに表示する個人情報・身分証画像は表示時点の永続化済みデータを読むであること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-060	IT-12	画面表示データ	P2	画面表示データの結合確認	画像の保存元を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で画像の保存元の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-060	IT-16	ファイル選択	P2	ファイル選択の結合確認	画像の保存元を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で画像の保存元の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 画像の保存元
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-061	IT-25	画面表示データ	P2	画面表示データの結合確認	会員情報変更との関係を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で会員情報変更との関係の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	身分証画像はオブジェクトストレージに保存され、保存先を参照して表示すること。
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-061	IT-12	非同期更新	P1	非同期更新の結合確認	会員情報変更との関係を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で会員情報変更との関係の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 会員情報変更との関係を確認する
 3. 画面表示と後続状態を確認する"	確認済みに変更した後で本人確認用情報を変更すると未確認へ戻り得る（M08-04を正とする）であること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-062	IT-25	フォーム送信	P1	フォーム送信の結合確認	成功時出力を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-062	IT-12	エラー継続	P3	エラー継続の結合確認	成功時出力を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	本人確認ステータスの確認済みへの更新、身分証有効期限の保存、保存成功フラッシュ、会員編集画面への再表示であること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-063	IT-16	ファイル選択	P2	ファイル選択の結合確認	失敗時出力を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-063	IT-25	件数上限	P2	件数上限の結合確認	失敗時出力を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	会員ID無し・選手情報無しは404であること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-064	IT-12	非同期更新	P1	非同期更新の結合確認	副作用を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-064	IT-25	欠損値	P2	欠損値の結合確認	副作用を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	選手情報の本人確認ステータス・身分証有効期限の更新であること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-065	IT-12	エラー継続	P3	エラー継続の結合確認	dtb_player（選手情報）を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）でdtb_player（選手情報）の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-065	IT-25	データなし	P2	データなしの結合確認	dtb_player（選手情報）を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）でdtb_player（選手情報）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_player（選手情報）を確認する
 3. 画面表示と後続状態を確認する"	確認済への変更時に確認済みへ更新すること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-066	IT-25	件数上限	P2	件数上限の結合確認	dtb_player（選手情報）を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）でdtb_player（選手情報）の確認に必要な条件を指定する	"1. 対象画面を表示する
+M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-066	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	dtb_player（選手情報）を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）でdtb_player（選手情報）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_player（選手情報）を確認する
 3. 画面表示と後続状態を確認する"	入力があれば保存、空なら未設定であること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-067	IT-25	欠損値	P2	欠損値の結合確認	dtb_identification_image（身分証画像）を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）でdtb_identification_image（身分証画像）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_identification_image（身分証画像）を確認する
-3. 画面表示と後続状態を確認する"	種別ごとの現在画像を表示に用いること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-068	IT-25	データなし	P2	データなしの結合確認	dtb_customerを試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）でdtb_customerの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_customerを確認する
-3. 画面表示と後続状態を確認する"	モーダルの個人情報表示（M08-04の会員情報を正とする）であること。
-M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-069	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	登録/更新を試験できる状態である	M08-10（オンライン本人確認）（m08_10_admin_customer_customer_online_identification）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -347,4 +336,4 @@ M08-10（オンライン本人確認）	IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.329, No.346。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.109, No.110, No.111, No.329, No.333。上限緩和または個別ケース化で収載可能。

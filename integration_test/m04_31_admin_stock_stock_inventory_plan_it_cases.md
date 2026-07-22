@@ -12,16 +12,15 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
+| IT-33 | 販売可能数 |
 
 ## テストケースTSV
 
@@ -225,66 +224,66 @@ M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-061	IT-12	�
 M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-062	IT-15	機密情報	P1	機密情報の結合確認	入力を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で入力の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	棚卸名・備考であること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-063	IT-07	排他制御	P1	排他制御の結合確認	成功時出力を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で成功時出力の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	計画を保存し、編集画面へリダイレクトして成功フラッシュを表示であること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-064	IT-07	排他制御	P1	排他制御の結合確認	失敗時出力を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で失敗時出力の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	新規は同一画面、更新は編集画面でエラー文言を表示であること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-065	IT-06	ロールバック	P3	ロールバックの結合確認	副作用を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で副作用の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	棚卸計画の登録・更新、作業者の設定であること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_inventory_planを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）でdtb_inventory_planの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-063	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	計画を保存し、編集画面へリダイレクトして成功フラッシュを表示であること。
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-064	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	新規は同一画面、更新は編集画面でエラー文言を表示であること。
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-065	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	棚卸計画の登録・更新、作業者の設定であること。
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-066	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_inventory_planを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）でdtb_inventory_planの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_inventory_planを確認する
 3. 画面表示と後続状態を確認する"	計画IDであること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_inventory_planを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）でdtb_inventory_planの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-067	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_inventory_planを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）でdtb_inventory_planの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_inventory_planを確認する
 3. 画面表示と後続状態を確認する"	作業者IDであること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_inventory_planを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）でdtb_inventory_planの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-068	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_inventory_planを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）でdtb_inventory_planの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_inventory_planを確認する
 3. 画面表示と後続状態を確認する"	在庫反映日であること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_inventory_planを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）でdtb_inventory_planの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_inventory_planを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）でdtb_inventory_planの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_inventory_planを確認する
 3. 画面表示と後続状態を確認する"	作成日・更新日であること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_inventory_planを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）でdtb_inventory_planの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-070	IT-25	一覧	P2	一覧の結合確認	dtb_inventory_planを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）でdtb_inventory_planの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_inventory_planを確認する
 3. 画面表示と後続状態を確認する"	一覧の件数表示（保持値）であること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で登録の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-071	IT-12	画面表示データ	P2	画面表示データの結合確認	登録を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で登録の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録を確認する
-3. 画面表示と後続状態を確認する"	棚卸計画の登録時に1件作成すること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で登録の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-072	IT-25	画面表示データ	P2	画面表示データの結合確認	登録を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で登録の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録を確認する
 3. 画面表示と後続状態を確認する"	計画対象の規格在庫ごとに棚卸明細を作成すること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-073	IT-25	一覧	P2	一覧の結合確認	登録を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で登録の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録を確認する
-3. 画面表示と後続状態を確認する"	棚卸明細の編集ごとに編集履歴を作成すること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-074	IT-12	画面表示データ	P2	画面表示データの結合確認	更新を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-073	IT-25	画面表示データ	P2	画面表示データの結合確認	更新を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 更新を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-075	IT-25	画面表示データ	P2	画面表示データの結合確認	棚卸名を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で棚卸名の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	棚卸の確定・実数反映時に在庫を更新する（確定条件・反映タイミングは ec-cube-enterprise 実装で要確認）であること。
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-074	IT-25	フォーム送信	P1	フォーム送信の結合確認	棚卸名を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で棚卸名の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 棚卸名を確認する
 3. 画面表示と後続状態を確認する"	最大255文字であること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-076	IT-12	画面表示データ	P2	画面表示データの結合確認	在庫反映済みを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で在庫反映済みの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-075	IT-16	ファイル選択	P2	ファイル選択の結合確認	在庫反映済みを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で在庫反映済みの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 在庫反映済みを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-077	IT-25	画面表示データ	P2	画面表示データの結合確認	在庫反映日を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で在庫反映日の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	更新時、在庫反映日が設定済みなら更新を拒否すること。
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-076	IT-12	非同期更新	P1	非同期更新の結合確認	在庫反映日を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で在庫反映日の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 在庫反映日を確認する
 3. 画面表示と後続状態を確認する"	棚卸結果を在庫へ反映した日時であること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-078	IT-25	フォーム送信	P1	フォーム送信の結合確認	作業者を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で作業者の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-077	IT-12	エラー継続	P3	エラー継続の結合確認	作業者を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で作業者の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 作業者を確認する
 3. 画面表示と後続状態を確認する"	計画を保存した管理者であること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-079	IT-16	ファイル選択	P2	ファイル選択の結合確認	棚卸計画一覧を開くを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で棚卸計画一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-078	IT-25	件数上限	P2	件数上限の結合確認	棚卸計画一覧を開くを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で棚卸計画一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 棚卸計画一覧を開く
 3. 画面表示と後続状態を確認する"	棚卸計画を一覧表示すること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-080	IT-12	非同期更新	P1	非同期更新の結合確認	新規登録画面を開くを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で新規登録画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-079	IT-25	欠損値	P2	欠損値の結合確認	新規登録画面を開くを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で新規登録画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 新規登録画面を開く
 3. 画面表示と後続状態を確認する"	棚卸名・備考の入力フォームを表示すること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-081	IT-12	エラー継続	P3	エラー継続の結合確認	新規登録を送信を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で新規登録を送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-080	IT-25	データなし	P2	データなしの結合確認	新規登録を送信を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で新規登録を送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 新規登録を送信
 3. 画面表示と後続状態を確認する"	検証に成功すれば計画を登録し、登録した計画の編集画面へ遷移すること。
-M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-082	IT-25	件数上限	P2	件数上限の結合確認	編集画面を開くを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で編集画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-081	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	編集画面を開くを試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で編集画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 編集画面を開く
 3. 画面表示と後続状態を確認する"	既存計画の棚卸名・備考と棚卸詳細一覧を表示すること。
+M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-082	IT-33	販売可能数	P1	販売可能数の操作結果確認	更新を送信を試験できる状態である	M04-31（棚卸計画）（m04_31_admin_stock_stock_inventory_plan）で更新を送信の確認に必要な条件を指定する	"1. 販売可能数の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫反映済みでなく検証に成功すれば計画を更新し編集画面へ戻ること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -376,7 +375,6 @@ M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-082	IT-25	�
 | データベースアクセス / 決済連携 / 金額整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 外部連携 / Webhook・外部通知（IT-10, IT-32） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブサービス / 外部連携 / 下流転送（IT-10） | 本機能は対象の外部I/Fを扱わないため |
-| データベースアクセス / 在庫引当 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 在庫引当 / 競合（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 注文・決済・在庫 / 原子性（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 状態遷移 / 遷移可否（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
@@ -384,6 +382,7 @@ M04-31（棚卸計画）	IT-M04-31-ADMIN-STOCK-STOCK-INVENTORY-PLAN-082	IT-25	�
 | データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
-| その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
+| データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.50, No.51, No.55, No.56, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.50, No.51, No.55, No.56, No.109, No.110, No.111, No.358。上限緩和または個別ケース化で収載可能。

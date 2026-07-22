@@ -12,16 +12,16 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、更新抑止、画面レイアウト、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 初期行数 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
-| IT-28 | ヘッダ、件名、実行結果、本文 |
+| IT-12 | 内部情報、画面レイアウト、画面表示データ |
+| IT-11 | 実行結果 |
+| IT-28 | 件名、実行結果、本文 |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -234,63 +234,54 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-065	IT-15	機密情報	P1	機密情報の結合確認	dtb_customerを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）でdtb_customerの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	本登録用URLの生成に使用すること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-066	IT-07	排他制御	P1	排他制御の結合確認	登録/更新を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で登録/更新の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-067	IT-07	排他制御	P1	排他制御の結合確認	なりすまし対策トークン不正を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）でなりすまし対策トークン不正の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	再送を行わない（トークン検証エラー）であること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-068	IT-06	ロールバック	P3	ロールバックの結合確認	本登録用キーを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本登録用キーの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一（dtb_customer.secret_key）であること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-069	IT-28	実行結果	P2	実行結果の結合確認	秘密キーを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で秘密キーの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 秘密キーを確認する
-3. 画面表示と後続状態を確認する"	会員ごとの本登録用キーであること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-070	IT-28	実行結果	P2	実行結果の結合確認	本登録用URLを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本登録用URLの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 本登録用URLを確認する
-3. 画面表示と後続状態を確認する"	本会員登録（アクティベート）画面へのURLであること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-071	IT-28	ヘッダ	P2	ヘッダの結合確認	会員一覧の「仮登録完了メール再送」操作を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で会員一覧の「仮登録完了メール再送」操作の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 会員一覧の「仮登録完了メール再送」操作を確認する
-3. 画面表示と後続状態を確認する"	対象会員へ本登録用URLを含む仮登録完了メールを再送し、成功メッセージとともに会員一覧へ戻ること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-072	IT-28	件名	P2	件名の結合確認	表示要素を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-073	IT-28	件名	P2	件名の結合確認	JS挙動を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-074	IT-28	本文	P2	本文の結合確認	更新単位を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 更新単位を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-075	IT-28	本文	P2	本文の結合確認	再表示を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 再表示を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	会員が存在しない場合はページが見つからない扱い（404）であること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	メール送信であること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_customerを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）でdtb_customerの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_customerを確認する
-3. 画面表示と後続状態を確認する"	本登録用URLの生成に使用すること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-066	IT-11	実行結果	P2	実行結果の結合確認	登録/更新を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	なりすまし対策トークン不正を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）でなりすまし対策トークン不正の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-067	IT-28	実行結果	P2	実行結果の結合確認	なりすまし対策トークン不正を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）でなりすまし対策トークン不正の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. なりすまし対策トークン不正を確認する
 3. 画面表示と後続状態を確認する"	再送を行わない（トークン検証エラー）であること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	本登録用キーを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本登録用キーの確認に必要な条件を指定する	"1. 対象画面を表示する
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-068	IT-28	実行結果	P2	実行結果の結合確認	本登録用キーを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本登録用キーの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 本登録用キーを確認する
 3. 画面表示と後続状態を確認する"	同一（dtb_customer.secret_key）であること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-082	IT-12	画面表示データ	P2	画面表示データの結合確認	本登録用URLを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本登録用URLの確認に必要な条件を指定する	"1. 対象画面を表示する
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-069	IT-28	件名	P2	件名の結合確認	秘密キーを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 秘密キーを確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-070	IT-28	件名	P2	件名の結合確認	本登録用URLを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 本登録用URLを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-083	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-071	IT-28	件名	P2	件名の結合確認	会員一覧の「仮登録完了メール再送」操作を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で会員一覧の「仮登録完了メール再送」操作の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 会員一覧の「仮登録完了メール再送」操作を確認する
+3. 画面表示と後続状態を確認する"	対象会員へ本登録用URLを含む仮登録完了メールを再送し、成功メッセージとともに会員一覧へ戻ること。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-072	IT-28	本文	P2	本文の結合確認	表示要素を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-084	IT-12	非同期更新	P1	非同期更新の結合確認	再表示を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で再表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-073	IT-28	本文	P2	本文の結合確認	JS挙動を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	再表示を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で再表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 再表示を確認する
 3. 画面表示と後続状態を確認する"	保存成功後はDBに確定した値を次回表示・検索・出力の基準にすること。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-075	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	会員が存在しない場合はページが見つからない扱い（404）であること。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	メール送信であること。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_customerを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）でdtb_customerの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_customerを確認する
+3. 画面表示と後続状態を確認する"	本登録用URLの生成に使用すること。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-078	IT-12	画面表示データ	P2	画面表示データの結合確認	本登録用キーを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本登録用キーの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 本登録用キーを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-079	IT-12	画面表示データ	P2	画面表示データの結合確認	秘密キーを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で秘密キーの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 秘密キーを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-080	IT-25	画面表示データ	P2	画面表示データの結合確認	本登録用URLを試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で本登録用URLの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 本登録用URLを確認する
+3. 画面表示と後続状態を確認する"	本会員登録（アクティベート）画面へのURLであること。
+会員管理 — 会員登録仮登録完了メール再送	IT-M08-14-ADMIN-CUSTOMER-CUSTOMER-RESEND-PROVISIONAL-MAIL-081	IT-16	ファイル選択	P2	ファイル選択の結合確認	表示要素を試験できる状態である	会員管理 — 会員登録仮登録完了メール再送（m08_14_admin_customer_customer_resend_provisional_mail）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	会員一覧の各会員に対する再送操作であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -392,4 +383,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 16件 — No.215, No.240, No.255, No.261, No.338, No.346, No.357, No.359, No.381, No.382, No.387, No.412, No.413, No.414, No.416, No.421。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 19件 — No.109, No.110, No.111, No.228, No.255, No.261, No.330, No.332, No.338, No.346, No.357, No.381, No.385, No.387, No.412, No.413, No.414, No.416, No.421。上限緩和または個別ケース化で収載可能。

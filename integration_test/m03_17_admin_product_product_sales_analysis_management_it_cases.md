@@ -12,16 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、一覧、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 削除条件、実行結果 |
-| IT-02 | 表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
-| IT-16 | ファイル選択 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -126,189 +123,195 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-029	IT-23	検索条件	P2	検索時の検索条件確認	削除時注文明細紐付けありを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除時注文明細紐付けありの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-030	IT-23	検索条件	P2	検索時の検索条件確認	本画面のみに閉じた専用ログを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で本画面のみに閉じた専用ログの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-030	IT-23	検索条件	P2	検索時の検索条件確認	M03-17-MSG-001を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-001の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-031	IT-23	検索条件	P2	検索時の検索条件確認	GET 表示時を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でGET 表示時の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-031	IT-23	検索条件	P2	検索時の検索条件確認	M03-17-MSG-002を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-002の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-032	IT-23	検索条件	P2	検索時の検索条件確認	削除方式を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除方式の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-032	IT-23	検索条件	P2	検索時の検索条件確認	M03-17-MSG-004を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-004の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-033	IT-23	検索条件	P2	検索時の検索条件確認	ナビ「売上分析登録/編集」を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でナビ「売上分析登録/編集」の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-033	IT-23	検索条件	P2	検索時の検索条件確認	M03-17-MSG-005を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-005の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-034	IT-23	実行結果	P2	検索時の実行結果確認	一覧のページリンク（新規時）を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で一覧のページリンク（新規時）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-034	IT-23	実行結果	P2	検索時の実行結果確認	M03-17-MSG-007を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-007の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-035	IT-23	実行結果	P2	検索時の実行結果確認	表示件数セレクト変更を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で表示件数セレクト変更の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-035	IT-23	実行結果	P2	検索時の実行結果確認	M03-17-MSG-008を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-008の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-036	IT-23	実行結果	P2	検索時の実行結果確認	「登録」ボタンを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で「登録」ボタンの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-036	IT-23	実行結果	P2	検索時の実行結果確認	M03-17-MSG-009を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-009の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-037	IT-23	実行結果	P2	検索時の実行結果確認	「削除」（確認モーダル経由の DELETE）を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で「削除」（確認モーダル経由の DELETE）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-037	IT-23	実行結果	P2	検索時の実行結果確認	M03-17-MSG-010を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-010の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-038	IT-26	登録内容	P1	登録時の登録内容確認	フォーム送信による登録または更新を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でフォーム送信による登録または更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-038	IT-26	登録内容	P1	登録時の登録内容確認	M03-17-MSG-011を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-011の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-039	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で表示要素の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-039	IT-26	登録内容	P1	登録時の登録内容確認	M03-17-MSG-012を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-012の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-040	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でJS 挙動の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-040	IT-26	登録内容	P1	登録時の登録内容確認	本画面のみに閉じた専用ログを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で本画面のみに閉じた専用ログの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-041	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除前に共通の削除確認モーダル文言（admin.common.delete_modal__messageであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-042	IT-26	登録内容	P1	登録時の登録内容確認	名称を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で名称の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-043	IT-26	登録内容	P1	登録時の登録内容確認	並び順を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-044	IT-26	登録内容	P1	登録時の登録内容確認	名称の重複で DB が一意を返すを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-045	IT-26	登録内容	P1	登録時の登録内容確認	商品にだけ紐付き、まだ注文明細に載っていないを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-046	IT-26	登録内容	P1	登録時の登録内容確認	一覧とフォームを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-047	IT-26	登録内容	P1	登録時の登録内容確認	商品側の関連を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で商品側の関連の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-048	IT-26	実行結果	P1	登録時の実行結果確認	注文明細側の関連を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で注文明細側の関連の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-049	IT-23	実行結果	P1	登録時の実行結果確認	同時更新を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で同時更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	楽観ロックは持たないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-050	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-051	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-052	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録/更新の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-053	IT-26	更新内容	P1	更新時の更新内容確認	並び順を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で並び順の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	必須、整数、1〜65535であること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-054	IT-26	更新内容	P1	更新時の更新内容確認	表示件数変更を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で表示件数変更の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-055	IT-26	更新内容	P1	更新時の更新内容確認	保存成功を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-056	IT-26	更新内容	P1	更新時の更新内容確認	保存検証失敗・一意エラーを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-057	IT-26	更新内容	P1	更新時の更新内容確認	GET 表示時を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-058	IT-26	更新内容	P1	更新時の更新内容確認	保存後リダイレクトを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-059	IT-26	更新内容	P1	更新時の更新内容確認	削除時商品紐付けありを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除時商品紐付けありの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-060	IT-05	実行結果	P1	更新時の実行結果確認	削除時注文明細紐付けありを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除時注文明細紐付けありの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-061	IT-05	実行結果	P1	更新時の実行結果確認	本画面のみに閉じた専用ログを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で本画面のみに閉じた専用ログの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	コントローラに明示は無く、フラッシュと HTTP 状態が利用者への主なフィードバックになること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-062	IT-05	削除条件	P1	削除時の削除条件確認	GET 表示時を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin.product.tag_sales_analysis.page_no と admin.product.tag_sales_analysis.page_count を更新すること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-063	IT-05	削除条件	P1	削除時の削除条件確認	削除方式を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-041	IT-26	登録内容	P1	登録時の登録内容確認	削除方式を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除方式の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一であること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-064	IT-05	削除条件	P1	削除時の削除条件確認	ナビ「売上分析登録/編集」を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-042	IT-26	登録内容	P1	登録時の登録内容確認	ナビ「売上分析登録/編集」を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でナビ「売上分析登録/編集」の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	新規フォームと一覧が表示されるであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-065	IT-05	削除条件	P1	削除時の削除条件確認	一覧のページリンク（新規時）を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-043	IT-26	登録内容	P1	登録時の登録内容確認	一覧のページリンク（新規時）を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	セッションのページ番号が更新されるであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-066	IT-05	削除条件	P1	削除時の削除条件確認	表示件数セレクト変更を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で表示件数セレクト変更の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-044	IT-26	登録内容	P1	登録時の登録内容確認	表示件数セレクト変更を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-045	IT-26	登録内容	P1	登録時の登録内容確認	「登録」ボタンを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-046	IT-26	登録内容	P1	登録時の登録内容確認	「削除」（確認モーダル経由の DELETE）を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-047	IT-26	登録内容	P1	登録時の登録内容確認	フォーム送信による登録または更新を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でフォーム送信による登録または更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-048	IT-26	実行結果	P1	登録時の実行結果確認	表示要素を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-049	IT-23	実行結果	P1	登録時の実行結果確認	JS 挙動を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でJS 挙動の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	.js-page-count の change で現在 URL に page_count を付け替えフルページ遷移すること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-050	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-051	IT-26	更新内容	P1	更新時の更新内容確認	名称を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で名称の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-052	IT-26	更新内容	P1	更新時の更新内容確認	並び順を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で並び順の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-053	IT-26	更新内容	P1	更新時の更新内容確認	名称の重複で DB が一意を返すを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で名称の重複で DB が一意を返すの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォーム側の単純検証より後に検知され、admin.error.non_unique と再描画であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-054	IT-26	更新内容	P1	更新時の更新内容確認	商品にだけ紐付き、まだ注文明細に載っていないを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で商品にだけ紐付き、まだ注文明細に載っていないの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-055	IT-26	更新内容	P1	更新時の更新内容確認	一覧とフォームを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-056	IT-26	更新内容	P1	更新時の更新内容確認	商品側の関連を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-057	IT-26	更新内容	P1	更新時の更新内容確認	注文明細側の関連を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-058	IT-26	更新内容	P1	更新時の更新内容確認	同時更新を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-059	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-060	IT-05	実行結果	P1	更新時の実行結果確認	失敗時出力を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-061	IT-05	実行結果	P1	更新時の実行結果確認	登録/更新を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-062	IT-05	削除条件	P1	削除時の削除条件確認	並び順を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	必須、整数、1〜65535であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-063	IT-05	削除条件	P1	削除時の削除条件確認	表示件数変更を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	現在と同種の GET に page_count を載せフル読み込みであること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-064	IT-05	削除条件	P1	削除時の削除条件確認	保存成功を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET m03-13_admin_product_product_tag_sales_analysisであること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-065	IT-05	削除条件	P1	削除時の削除条件確認	保存検証失敗・一意エラーを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一画面 HTML（フォーム状態は送信反映）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-066	IT-05	削除条件	P1	削除時の削除条件確認	GET 表示時を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でGET 表示時の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-067	IT-05	実行結果	P1	削除時の実行結果確認	「登録」ボタンを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で「登録」ボタンの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-067	IT-05	実行結果	P1	削除時の実行結果確認	保存後リダイレクトを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で保存後リダイレクトの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-068	IT-05	実行結果	P1	削除時の実行結果確認	「削除」（確認モーダル経由の DELETE）を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で「削除」（確認モーダル経由の DELETE）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-068	IT-05	実行結果	P1	削除時の実行結果確認	削除時商品紐付けありを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除時商品紐付けありの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	紐付けが無ければ行が消えるであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-069	IT-05	実行結果	P1	削除時の実行結果確認	フォーム送信による登録または更新を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でフォーム送信による登録または更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin.tag.delete.failed と一覧リダイレクトであること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-069	IT-05	実行結果	P1	削除時の実行結果確認	削除時注文明細紐付けありを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除時注文明細紐付けありの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-070	IT-05	実行結果	P1	削除時の実行結果確認	表示要素を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-070	IT-05	実行結果	P1	削除時の実行結果確認	M03-17-MSG-001を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-001の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	親フレームのタイトルは翻訳キー admin.product.product_management（確認値として「商品管理」）であること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-071	IT-02	表示順	P2	表示順の結合確認	モーダル・ポップアップを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	削除前に共通の削除確認モーダル文言（admin.common.delete_modal__messageであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-072	IT-25	更新抑止	P1	更新抑止の結合確認	名称を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で名称の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録/編集フォーム送信時、フォームが未送信もしくはバリデーション不正のとき（画面にとどまる）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-071	IT-02	初期行数	P2	初期行数の結合確認	M03-17-MSG-002を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-17-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	保存時に一意制約違反（UniqueConstraintViolationException）が発生したとき（画面にとどまる）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-072	IT-02	表示順	P2	表示順の結合確認	M03-17-MSG-004を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-17-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	削除対象タグのProductsコレクションが空でないとき（一覧へリダイレクト、削除中止）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-073	IT-25	更新抑止	P1	更新抑止の結合確認	M03-17-MSG-005を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-005の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	mtb_tag_sales_analysis.nameであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-073	IT-12	内部情報	P1	内部情報の結合確認	並び順を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で並び順の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	削除対象タグのOrderItemsコレクションが空でないとき（一覧へリダイレクト、削除中止）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-074	IT-12	内部情報	P1	内部情報の結合確認	M03-17-MSG-007を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-007の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	mtb_tag_sales_analysis.rank（Doctrine により列名 ` rank ）であること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-074	IT-15	機密情報	P1	機密情報の結合確認	名称の重複で DB が一意を返すを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で名称の重複で DB が一意を返すの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧の削除リンククリック時（OKでDELETE送信、キャンセルで中断）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-075	IT-15	機密情報	P1	機密情報の結合確認	M03-17-MSG-008を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-008の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	フォーム側の単純検証より後に検知され、admin.error.non_unique と再描画であること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-075	IT-07	排他制御	P1	排他制御の結合確認	商品にだけ紐付き、まだ注文明細に載っていないを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で商品にだけ紐付き、まだ注文明細に載っていないの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除処理は実行されず admin.tag.delete.failed と一覧へリダイレクトすること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-076	IT-07	排他制御	P1	排他制御の結合確認	一覧とフォームを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で一覧とフォームの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一覧は全件クエリからのページネーション結果であること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-077	IT-06	ロールバック	P3	ロールバックの結合確認	商品側の関連を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で商品側の関連の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_product_tag_sales_analysis が 1 件でもあれば当該タグを削除しないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	注文明細側の関連を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で注文明細側の関連の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 注文明細側の関連を確認する
-3. 画面表示と後続状態を確認する"	dtb_order_item_tag_sales_analysis が 1 件でも連結されていれば削除しないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	同時更新を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 同時更新を確認する
-3. 画面表示と後続状態を確認する"	楽観ロックは持たないこと。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	一覧付きフォーム HTML とエラー表示、もしくはフラッシュのみのリダイレクト応答であること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録/更新を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	並び順を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で並び順の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 並び順を確認する
-3. 画面表示と後続状態を確認する"	必須、整数、1〜65535であること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示件数変更を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で表示件数変更の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示件数変更を確認する
-3. 画面表示と後続状態を確認する"	現在と同種の GET に page_count を載せフル読み込みであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-084	IT-25	一覧	P2	一覧の結合確認	保存成功を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で保存成功の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存成功
-3. 画面表示と後続状態を確認する"	GET m03-13_admin_product_product_tag_sales_analysisであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-085	IT-12	画面表示データ	P2	画面表示データの結合確認	保存検証失敗・一意エラーを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で保存検証失敗・一意エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存検証失敗・一意エラー
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-086	IT-25	画面表示データ	P2	画面表示データの結合確認	GET 表示時を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でGET 表示時の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. GET 表示時を確認する
-3. 画面表示と後続状態を確認する"	直後に POST が失敗しても一覧の広さやページが途切れにくいであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-087	IT-12	画面表示データ	P2	画面表示データの結合確認	保存後リダイレクトを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で保存後リダイレクトの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存後リダイレクト
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-088	IT-25	画面表示データ	P2	画面表示データの結合確認	削除時商品紐付けありを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除時商品紐付けありの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 削除時商品紐付けあり
-3. 画面表示と後続状態を確認する"	admin.tag.delete.failed と一覧リダイレクトであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-089	IT-25	フォーム送信	P1	フォーム送信の結合確認	削除時注文明細紐付けありを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除時注文明細紐付けありの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 削除時注文明細紐付けあり
-3. 画面表示と後続状態を確認する"	admin.order_tag.delete.failed と一覧リダイレクトであること。
-商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-090	IT-16	ファイル選択	P2	ファイル選択の結合確認	本画面のみに閉じた専用ログを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で本画面のみに閉じた専用ログの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	名称が未入力のままフォーム送信されたとき（M03-17-MSG-001と同時表示）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-17-MSG-009を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-009の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-17-MSG-009を確認する
+3. 画面表示と後続状態を確認する"	名称が64文字（Length max=64）を超えてフォーム送信されたとき（M03-17-MSG-001と同時表示）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-17-MSG-010を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-17-MSG-010を確認する
+3. 画面表示と後続状態を確認する"	並び順が未入力のままフォーム送信されたとき（M03-17-MSG-001と同時表示）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M03-17-MSG-011を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-011の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-17-MSG-011を確認する
+3. 画面表示と後続状態を確認する"	並び順が1〜65535（Range min=1/max=65535）の範囲外でフォーム送信されたとき（M03-17-MSG-001と同時表示）であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M03-17-MSG-012を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でM03-17-MSG-012の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-17-MSG-012を確認する
+3. 画面表示と後続状態を確認する"	削除リンクを押下したとき（data-confirm が未指定のため共通JS function.js が data-message の文言で window.confirm を表示すること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	本画面のみに閉じた専用ログを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で本画面のみに閉じた専用ログの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 本画面のみに閉じた専用ログを確認する
 3. 画面表示と後続状態を確認する"	コントローラに明示は無く、フラッシュと HTTP 状態が利用者への主なフィードバックになること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	削除方式を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で削除方式の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 削除方式
+3. 画面表示と後続状態を確認する"	同一であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ナビ「売上分析登録/編集」を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でナビ「売上分析登録/編集」の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ナビ「売上分析登録/編集」を確認する
+3. 画面表示と後続状態を確認する"	新規フォームと一覧が表示されるであること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-083	IT-25	一覧	P2	一覧の結合確認	一覧のページリンク（新規時）を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で一覧のページリンク（新規時）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧のページリンク（新規時）を確認する
+3. 画面表示と後続状態を確認する"	セッションのページ番号が更新されるであること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-084	IT-12	画面表示データ	P2	画面表示データの結合確認	表示件数セレクト変更を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で表示件数セレクト変更の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示件数セレクト変更を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-085	IT-25	画面表示データ	P2	画面表示データの結合確認	「登録」ボタンを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で「登録」ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 「登録」ボタンを確認する
+3. 画面表示と後続状態を確認する"	妥当なら保存し成功メッセージののち一覧 GET へリダイレクトであること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-086	IT-12	画面表示データ	P2	画面表示データの結合確認	「削除」（確認モーダル経由の DELETE）を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で「削除」（確認モーダル経由の DELETE）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 「削除」（確認モーダル経由の DELETE）
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-087	IT-12	非同期更新	P1	非同期更新の結合確認	モーダル・ポップアップを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	削除前に共通の削除確認モーダル文言（admin.common.delete_modal__messageであること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-088	IT-12	エラー継続	P3	エラー継続の結合確認	名称を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で名称の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 名称を確認する
+3. 画面表示と後続状態を確認する"	mtb_tag_sales_analysis.nameであること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-089	IT-25	欠損値	P2	欠損値の結合確認	名称の重複で DB が一意を返すを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で名称の重複で DB が一意を返すの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 名称の重複で DB が一意を返すを確認する
+3. 画面表示と後続状態を確認する"	フォーム側の単純検証より後に検知され、admin.error.non_unique と再描画であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-090	IT-25	データなし	P2	データなしの結合確認	商品にだけ紐付き、まだ注文明細に載っていないを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で商品にだけ紐付き、まだ注文明細に載っていないの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 商品にだけ紐付き、まだ注文明細に載っていないを確認する
+3. 画面表示と後続状態を確認する"	削除処理は実行されず admin.tag.delete.failed と一覧へリダイレクトすること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	一覧とフォームを試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で一覧とフォームの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧とフォームを確認する
+3. 画面表示と後続状態を確認する"	一覧は全件クエリからのページネーション結果であること。
+商品管理 — 売上分析タグ登録/編集	IT-M03-17-ADMIN-PRODUCT-PRODUCT-SALES-ANALYSIS-MANAGEMENT-092	IT-23	データ正当性	P3	データ正当性の結合確認	商品側の関連を試験できる状態である	商品管理 — 売上分析タグ登録/編集（m03_17_admin_product_product_sales_analysis_management）で商品側の関連の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 商品側の関連を確認する
+3. 画面表示と後続状態を確認する"	dtb_product_tag_sales_analysis が 1 件でもあれば当該タグを削除しないこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -408,6 +411,6 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.332, No.385, No.387, No.412, No.413, No.414, No.416, No.420。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.110, No.111, No.359, No.381, No.382, No.412。上限緩和または個別ケース化で収載可能。

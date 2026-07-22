@@ -12,15 +12,15 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 削除条件、実行結果 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-06 | ロールバック |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -101,16 +101,16 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	削除時の繰り下げを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	削除しましたを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	M11-01-MSG-001を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	削除できませんでしたを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	M11-01-MSG-019を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	（削除対象不在の警告メッセージ）を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	M11-01-MSG-014を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	新規登録・編集リンク押下を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	M11-01-MSG-015を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	削除後の一覧を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
@@ -221,18 +221,18 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-061	IT-05	実行結果	P1	更新時の実行結果確認	削除時の繰り下げを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除時の繰り下げの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除対象より大きい sort_no の全行を 1 つ繰り下げるであること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-062	IT-05	削除条件	P1	削除時の削除条件確認	削除しましたを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-062	IT-05	削除条件	P1	削除時の削除条件確認	M11-01-MSG-001を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除完了メッセージキーに対応すること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-063	IT-05	削除条件	P1	削除時の削除条件確認	削除できませんでしたを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin.common.save_completeであること。
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-063	IT-05	削除条件	P1	削除時の削除条件確認	M11-01-MSG-019を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除失敗メッセージキーに対応すること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-064	IT-05	削除条件	P1	削除時の削除条件確認	（削除対象不在の警告メッセージ）を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	enterprise.form.type.member_already_existsであること。
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-064	IT-05	削除条件	P1	削除時の削除条件確認	M11-01-MSG-014を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	共通の削除警告メッセージを積むであること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-065	IT-05	削除条件	P1	削除時の削除条件確認	新規登録・編集リンク押下を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メッセージキー form_error.authority_guest（MemberType.php:108）であること。
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-065	IT-05	削除条件	P1	削除時の削除条件確認	M11-01-MSG-015を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メンバー登録・編集画面（M11-02）であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メッセージキー form_error.authority_customer（MemberType.php:112）であること。
 メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-066	IT-05	削除条件	P1	削除時の削除条件確認	削除後の一覧を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除後の一覧の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
@@ -263,51 +263,60 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-075	IT-15	機密情報	P1	機密情報の結合確認	入力を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で入力の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧表示の GET、削除・上へ・下への疑似フォームによるトークン付き要求であること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-076	IT-07	排他制御	P1	排他制御の結合確認	成功時出力を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で成功時出力の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-076	IT-06	ロールバック	P3	ロールバックの結合確認	成功時出力を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で成功時出力の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一覧の再描画、削除・上へ・下へ完了の翻訳キーに対応する成功フラッシュであること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-077	IT-07	排他制御	P1	排他制御の結合確認	失敗時出力を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で失敗時出力の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除・上へ・下へ失敗のエラーフラッシュ、削除対象不在時の警告フラッシュ、トークン不正時のアクセス拒否、上へ・下へでの 404であること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-078	IT-06	ロールバック	P3	ロールバックの結合確認	副作用を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で副作用の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除時の dtb_member の物理削除（DELETE）、順序変更・繰り下げ時の dtb_member.sort_no の UPDATE、Doctrine の flush、一覧初期化・削除前後イベントのディスパッチ（…であること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_memberを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	削除・上へ・下へ失敗のエラーフラッシュ、削除対象不在時の警告フラッシュ、トークン不正時のアクセス拒否、上へ・下へでの 404であること。
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	削除時の dtb_member の物理削除（DELETE）、順序変更・繰り下げ時の dtb_member.sort_no の UPDATE、Doctrine の flush、一覧初期化・削除前後イベントのディスパッチ（…であること。
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_memberを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_memberを確認する
 3. 画面表示と後続状態を確認する"	名前であること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-080	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_memberを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_memberを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_memberを確認する
 3. 画面表示と後続状態を確認する"	所属であること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	メンバーを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）でメンバーの確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	メンバーを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）でメンバーの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メンバーを確認する
 3. 画面表示と後続状態を確認する"	管理画面へログインするアカウントであること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-082	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	表示順を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で表示順の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示順を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で表示順の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示順を確認する
 3. 画面表示と後続状態を確認する"	dtb_member.sort_no によるメンバー一覧の表示順であること。
 メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	稼働を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で稼働の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 稼働を確認する
 3. 画面表示と後続状態を確認する"	mtb_work のマスタ項目であること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	権限を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で権限の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-084	IT-25	一覧	P2	一覧の結合確認	権限を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で権限の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 権限を確認する
 3. 画面表示と後続状態を確認する"	mtb_authority のマスタ項目であること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	所属を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で所属の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-085	IT-12	画面表示データ	P2	画面表示データの結合確認	所属を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で所属の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 所属を確認する
-3. 画面表示と後続状態を確認する"	メンバーの所属であること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-086	IT-25	一覧	P2	一覧の結合確認	削除を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-086	IT-25	画面表示データ	P2	画面表示データの結合確認	削除を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で削除の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 削除
 3. 画面表示と後続状態を確認する"	dtb_member の対象行を物理削除し、削除対象より大きい sort_no の行を繰り下げる扱いであること。
 メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-087	IT-12	画面表示データ	P2	画面表示データの結合確認	ナビからメンバー一覧を開くを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）でナビからメンバー一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ナビからメンバー一覧を開く
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-088	IT-12	画面表示データ	P2	画面表示データの結合確認	操作メニューから編集を開くを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で操作メニューから編集を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 操作メニューから編集を開く
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-089	IT-25	画面表示データ	P2	画面表示データの結合確認	ログイン中メンバー自身の行で削除を見るを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）でログイン中メンバー自身の行で削除を見るの確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-088	IT-16	ファイル選択	P2	ファイル選択の結合確認	ログイン中メンバー自身の行で削除を見るを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）でログイン中メンバー自身の行で削除を見るの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ログイン中メンバー自身の行で削除を見る
 3. 画面表示と後続状態を確認する"	自分自身の行では削除がリンクにならず、文言のみが表示されるであること。
-メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-090	IT-25	フォーム送信	P1	フォーム送信の結合確認	他行の削除を実行するを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で他行の削除を実行するの確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-089	IT-12	非同期更新	P1	非同期更新の結合確認	他行の削除を実行するを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で他行の削除を実行するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 他行の削除を実行する
 3. 画面表示と後続状態を確認する"	対象行を削除し、削除対象より大きい sort_no の行を繰り下げるであること。
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-090	IT-25	件数上限	P2	件数上限の結合確認	存在しないIDで削除を実行するを試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で存在しないIDで削除を実行するの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 存在しないIDで削除を実行する
+3. 画面表示と後続状態を確認する"	対象が見つからない場合は削除警告メッセージを積み、一覧へ遷移すること。
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-091	IT-25	欠損値	P2	欠損値の結合確認	表示要素を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	一覧テーブルの列は、名前、所属、権限（マスタ名称）、稼働（マスタ名称）、操作メニューであること。
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-092	IT-25	データなし	P2	データなしの結合確認	表示条件付き要素を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）で表示条件付き要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示条件付き要素を確認する
+3. 画面表示と後続状態を確認する"	削除は、行のメンバーがログイン中メンバー自身の場合はリンクにせず文言のみとし、それ以外はトークン付きの削除リンクとすること。
+メンバー管理一覧（システム情報設定／設定）	IT-M11-01-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-LIST-093	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	JS 挙動を試験できる状態である	メンバー管理一覧（システム情報設定／設定）（m11_01_admin_system_setting_setting_system_member_list）でJS 挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS 挙動を確認する
+3. 画面表示と後続状態を確認する"	一覧テンプレートに changeAction 関数が定義されているが、当該テンプレート内で呼び出しはなく、本機能の主操作には使われない確認値であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -409,4 +418,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.357, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.109, No.110, No.359, No.381, No.387。上限緩和または個別ケース化で収載可能。

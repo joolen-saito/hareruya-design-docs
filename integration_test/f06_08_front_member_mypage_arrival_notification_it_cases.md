@@ -12,15 +12,15 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、登録内容 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
-| IT-28 | ヘッダ、件名、実行結果、本文 |
+| IT-11 | 実行結果 |
+| IT-28 | 件名、実行結果、本文 |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -200,75 +200,72 @@ F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIF
 F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-054	IT-15	機密情報	P1	機密情報の結合確認	一覧のカード検索リンクを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で一覧のカード検索リンクの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	当該カードの検索結果へ遷移する（商品機能を正とする）であること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-055	IT-07	排他制御	P1	排他制御の結合確認	表示要素を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で表示要素の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	見出し「入荷待ち商品一覧」、入荷時に登録メールアドレスへ通知する旨の案内、入荷通知登録の上限拡張の案内、入荷通知登録した商品の一覧（商品名・言語・状態・価格、商品詳細リンク、カード検索リンク）、マイページへ戻るリンクであること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-056	IT-07	排他制御	P1	排他制御の結合確認	JS挙動を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）でJS挙動の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能ではJSによる非同期取得や動的な表示切替を主目的としないこと。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-057	IT-06	ロールバック	P3	ロールバックの結合確認	CSS・レイアウトを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）でCSS・レイアウトの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品ごとに状態・価格などをまとめて表示すること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-058	IT-28	実行結果	P2	実行結果の結合確認	集約を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で集約の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 集約を確認する
-3. 画面表示と後続状態を確認する"	同一商品・言語・価格区分でまとめ、状態・価格の明細を商品ごとに束ねて表示すること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-059	IT-28	ヘッダ	P2	ヘッダの結合確認	通知案内を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で通知案内の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 通知案内を確認する
-3. 画面表示と後続状態を確認する"	対象商品が入荷した際に登録メールアドレスへ通知する旨を案内すること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-060	IT-28	件名	P2	件名の結合確認	登録上限を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 登録上限を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-061	IT-28	件名	P2	件名の結合確認	業務計算を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 業務計算を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-062	IT-28	件名	P2	件名の結合確認	入荷通知依頼が0件を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で入荷通知依頼が0件の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入荷通知依頼が0件を確認する
-3. 画面表示と後続状態を確認する"	入荷待ち商品が無い旨を表示すること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-063	IT-28	本文	P2	本文の結合確認	同一商品で言語・価格区分が異なるを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 同一商品で言語・価格区分が異なるを確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-064	IT-28	本文	P2	本文の結合確認	高額コードを持つ商品規格を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 高額コードを持つ商品規格を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-065	IT-28	本文	P2	本文の結合確認	商品情報を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で商品情報の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 商品情報を確認する
-3. 画面表示と後続状態を確認する"	商品名・状態・言語・価格は表示時点の商品・商品クラス・状態・言語マスタを参照すること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-066	IT-28	本文	P2	本文の結合確認	通知を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で通知の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 通知を確認する
-3. 画面表示と後続状態を確認する"	入荷時の通知送信は別機能で行うこと。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	入荷待ち商品一覧のHTML表示（件数・商品ごとの明細）であること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	未ログイン時の会員ログインへの誘導であること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	一覧表示は更新を伴わないこと。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_product_requestを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）でdtb_product_requestの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_product_requestを確認する
-3. 画面表示と後続状態を確認する"	会員（選手情報）ごとの入荷通知依頼であること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_product_classを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）でdtb_product_classの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_product_classを確認する
-3. 画面表示と後続状態を確認する"	価格の表示であること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-072	IT-12	画面表示データ	P2	画面表示データの結合確認	マイページの「入荷待ち商品一覧」ブロックを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）でマイページの「入荷待ち商品一覧」ブロックの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. マイページの「入荷待ち商品一覧」ブロックを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-073	IT-25	画面表示データ	P2	画面表示データの結合確認	一覧の商品リンクを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で一覧の商品リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧の商品リンクを確認する
-3. 画面表示と後続状態を確認する"	当該商品の商品詳細へ遷移する（商品機能を正とする）であること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-074	IT-12	画面表示データ	P2	画面表示データの結合確認	一覧のカード検索リンクを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で一覧のカード検索リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧のカード検索リンク
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-075	IT-25	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-055	IT-11	実行結果	P2	実行結果の結合確認	表示要素を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	見出し「入荷待ち商品一覧」、入荷時に登録メールアドレスへ通知する旨の案内、入荷通知登録の上限拡張の案内、入荷通知登録した商品の一覧（商品名・言語・状態・価格、商品詳細リンク、カード検索リンク）、マイページへ戻るリンクであること。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-076	IT-25	フォーム送信	P1	フォーム送信の結合確認	JS挙動を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-056	IT-28	実行結果	P2	実行結果の結合確認	JS挙動を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	本機能ではJSによる非同期取得や動的な表示切替を主目的としないこと。
-F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-077	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	業務計算を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で業務計算の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-057	IT-28	件名	P2	件名の結合確認	抽出対象を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 抽出対象を確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-058	IT-28	件名	P2	件名の結合確認	集約を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 集約を確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-059	IT-28	件名	P2	件名の結合確認	通知案内を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で通知案内の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 通知案内を確認する
+3. 画面表示と後続状態を確認する"	対象商品が入荷した際に登録メールアドレスへ通知する旨を案内すること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-060	IT-28	本文	P2	本文の結合確認	登録上限を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 登録上限を確認する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-061	IT-28	本文	P2	本文の結合確認	業務計算を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で本文の対象項目を未入力にする	"1. 対象画面を表示する
 2. 業務計算を確認する
-3. 画面表示と後続状態を確認する"	価格は商品クラスの価格を表示すること。
+3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-062	IT-28	本文	P2	本文の結合確認	入荷通知依頼が0件を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で入荷通知依頼が0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入荷通知依頼が0件を確認する
+3. 画面表示と後続状態を確認する"	入荷待ち商品が無い旨を表示すること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-063	IT-28	本文	P2	本文の結合確認	同一商品で言語・価格区分が異なるを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で同一商品で言語・価格区分が異なるの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 同一商品で言語・価格区分が異なるを確認する
+3. 画面表示と後続状態を確認する"	集約キーが異なるため別のまとまりとして表示すること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-064	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	高額コードを持つ商品規格を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で高額コードを持つ商品規格の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 高額コードを持つ商品規格を確認する
+3. 画面表示と後続状態を確認する"	商品詳細リンクに規格を含めて遷移すること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-065	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	商品情報を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で商品情報の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 商品情報を確認する
+3. 画面表示と後続状態を確認する"	商品名・状態・言語・価格は表示時点の商品・商品クラス・状態・言語マスタを参照すること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-066	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	通知を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で通知の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 通知を確認する
+3. 画面表示と後続状態を確認する"	入荷時の通知送信は別機能で行うこと。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-067	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功時出力を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	入荷待ち商品一覧のHTML表示（件数・商品ごとの明細）であること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-068	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	未ログイン時の会員ログインへの誘導であること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	一覧表示は更新を伴わないこと。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-070	IT-25	一覧	P2	一覧の結合確認	dtb_product_requestを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）でdtb_product_requestの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_product_requestを確認する
+3. 画面表示と後続状態を確認する"	会員（選手情報）ごとの入荷通知依頼であること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-071	IT-12	画面表示データ	P2	画面表示データの結合確認	dtb_product_classを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）でdtb_product_classの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_product_classを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-072	IT-12	画面表示データ	P2	画面表示データの結合確認	入荷通知依頼を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で入荷通知依頼の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入荷通知依頼を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-073	IT-25	画面表示データ	P2	画面表示データの結合確認	マイページの「入荷待ち商品一覧」ブロックを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）でマイページの「入荷待ち商品一覧」ブロックの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. マイページの「入荷待ち商品一覧」ブロックを確認する
+3. 画面表示と後続状態を確認する"	会員ログインを要し、会員が入荷通知登録した商品を集約して一覧表示すること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-074	IT-25	フォーム送信	P1	フォーム送信の結合確認	一覧の商品リンクを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で一覧の商品リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧の商品リンクを確認する
+3. 画面表示と後続状態を確認する"	当該商品の商品詳細へ遷移する（商品機能を正とする）であること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-075	IT-16	ファイル選択	P2	ファイル選択の結合確認	一覧のカード検索リンクを試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で一覧のカード検索リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧のカード検索リンク
+3. 画面表示と後続状態を確認する"	当該カードの検索結果へ遷移する（商品機能を正とする）であること。
+F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIFICATION-076	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	集約を試験できる状態である	F06-08（入荷待ち商品一覧）（f06_08_front_member_mypage_arrival_notification）で集約の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 集約を確認する
+3. 画面表示と後続状態を確認する"	同一商品・言語・価格区分でまとめ、状態・価格の明細を商品ごとに束ねて表示すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -370,4 +367,4 @@ F06-08（入荷待ち商品一覧）	IT-F06-08-FRONT-MEMBER-MYPAGE-ARRIVAL-NOTIF
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.215, No.218, No.329, No.338, No.346, No.382, No.385, No.387, No.412, No.413, No.414。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 12件 — No.109, No.110, No.111, No.219, No.228, No.333, No.357, No.385, No.387, No.412, No.413, No.414。上限緩和または個別ケース化で収載可能。

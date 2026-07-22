@@ -12,14 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、一覧、件数上限、更新抑止、欠損値、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-06 | ロールバック |
 
 ## テストケースTSV
@@ -53,237 +52,240 @@ m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷�
 m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-005	IT-20	識別子	P1	識別子の結合確認	JSを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でJSの確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	当ページのjavascriptブロックは空であること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-006	IT-15	状態変化	P1	状態変化の結合確認	受注の更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注の更新の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-006	IT-15	状態変化	P1	状態変化の結合確認	M05-18-MSG-001を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でM05-18-MSG-001の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	各リスト行のflushの直後に、その行に紐づく受注へ対応状況と出荷指示日を一括適用すること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	全区分で0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で全区分で0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	フォーム未送信もしくはフォーム検証失敗であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	M05-18-MSG-002を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でM05-18-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-18-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	取得したOrderTypesが空であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	受注の更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注の更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 受注の更新を確認する
+3. 画面表示と後続状態を確認する"	各リスト行のflushの直後に、その行に紐づく受注へ対応状況と出荷指示日を一括適用すること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-009	IT-25	URL	P2	URLの操作結果確認	全区分で0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で全区分で0件の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 全区分で0件を確認する
 3. 画面表示と後続状態を確認する"	コントローラが配列空と判断し、永続化前にエラーフラッシュで終了すること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	受注明細が0件の受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注明細が0件の受注の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	受注明細が0件の受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 受注明細が0件の受注を確認する
-3. 画面表示と後続状態を確認する"	区分判定で先頭明細参照があり、実装上エラーになりうるであること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-009	IT-25	URL	P2	URLの操作結果確認	一覧再表示を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で一覧再表示の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧再表示を確認する
-3. 画面表示と後続状態を確認する"	成功後はadmin_shipping_standbyへGET相当で戻ること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	リストと受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. リストと受注を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	同時更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 同時更新を確認する
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	一覧再表示を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. 一覧再表示を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	成功時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	302でadmin_shipping_standbyへ遷移であること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	失敗時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	副作用を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	dtb_orderを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. dtb_orderを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	登録/更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	注文番号の各欄を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 注文番号の各欄を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	生成POSTを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 生成POSTを確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-019	IT-22	部分入力	P2	部分入力の入力検証	フォーム未送信／検証エラーを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でフォーム未送信／検証エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. フォーム未送信／検証エラー
-3. 画面表示と後続状態を確認する"	admin.common.save_errorを表示し一覧へであること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-020	IT-23	検索条件	P2	検索時の検索条件確認	トランザクション内のその他の例外を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-021	IT-23	検索条件	P2	検索時の検索条件確認	フラッシュを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-022	IT-23	検索条件	P2	検索時の検索条件確認	ナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-023	IT-23	検索条件	P2	検索時の検索条件確認	同上だが抽出0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-024	IT-23	検索条件	P2	検索時の検索条件確認	同上だがフォーム検証失敗を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-025	IT-23	検索条件	P2	検索時の検索条件確認	表示要素を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-026	IT-23	検索条件	P2	検索時の検索条件確認	JSを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-027	IT-23	検索条件	P2	検索時の検索条件確認	受注の更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-028	IT-23	検索条件	P2	検索時の検索条件確認	全区分で0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で全区分で0件の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-029	IT-23	検索条件	P2	検索時の検索条件確認	受注明細が0件の受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注明細が0件の受注の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-030	IT-23	検索条件	P2	検索時の検索条件確認	一覧再表示を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で一覧再表示の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-031	IT-23	検索条件	P2	検索時の検索条件確認	リストと受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でリストと受注の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-032	IT-23	検索条件	P2	検索時の検索条件確認	同時更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同時更新の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-033	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で成功時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-034	IT-23	実行結果	P2	検索時の実行結果確認	失敗時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-035	IT-23	実行結果	P2	検索時の実行結果確認	副作用を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-036	IT-23	実行結果	P2	検索時の実行結果確認	dtb_orderを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でdtb_orderの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-037	IT-23	実行結果	P2	検索時の実行結果確認	登録/更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-038	IT-26	登録内容	P1	登録時の登録内容確認	注文番号の各欄を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で注文番号の各欄の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-039	IT-26	登録内容	P1	登録時の登録内容確認	生成POSTを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で生成POSTの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-040	IT-26	登録内容	P1	登録時の登録内容確認	フォーム未送信／検証エラーを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でフォーム未送信／検証エラーの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-041	IT-26	登録内容	P1	登録時の登録内容確認	トランザクション内のその他の例外を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でトランザクション内のその他の例外の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ロールバック後に再送出であること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-042	IT-26	登録内容	P1	登録時の登録内容確認	フラッシュを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でフラッシュの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-043	IT-26	登録内容	P1	登録時の登録内容確認	ナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-044	IT-26	登録内容	P1	登録時の登録内容確認	同上だが抽出0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-045	IT-26	登録内容	P1	登録時の登録内容確認	同上だがフォーム検証失敗を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-046	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-047	IT-26	登録内容	P1	登録時の登録内容確認	JSを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でJSの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-048	IT-26	実行結果	P1	登録時の実行結果確認	受注の更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注の更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-049	IT-23	実行結果	P1	登録時の実行結果確認	全区分で0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で全区分で0件の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	コントローラが配列空と判断し、永続化前にエラーフラッシュで終了すること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-050	IT-26	更新内容	P1	更新時の更新内容確認	受注明細が0件の受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注明細が0件の受注の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-051	IT-26	更新内容	P1	更新時の更新内容確認	一覧再表示を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で一覧再表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-052	IT-26	更新内容	P1	更新時の更新内容確認	リストと受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でリストと受注の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-053	IT-26	更新内容	P1	更新時の更新内容確認	同時更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同時更新の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	楽観ロックは用いず、バルク更新は実行時点の行へ上書きすること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-054	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-055	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-056	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-057	IT-26	更新内容	P1	更新時の更新内容確認	dtb_orderを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-058	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-059	IT-26	更新内容	P1	更新時の更新内容確認	注文番号の各欄を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で注文番号の各欄の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-060	IT-05	実行結果	P1	更新時の実行結果確認	生成POSTを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で生成POSTの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-061	IT-05	実行結果	P1	更新時の実行結果確認	フォーム未送信／検証エラーを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でフォーム未送信／検証エラーの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin.common.save_errorを表示し一覧へであること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-062	IT-02	初期行数	P2	初期行数の結合確認	トランザクション内のその他の例外を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でトランザクション内のその他の例外の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. トランザクション内のその他の例外を確認する
-3. 画面表示と後続状態を確認する"	ロールバック後に再送出であること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-063	IT-02	表示順	P2	表示順の結合確認	フラッシュを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でフラッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. フラッシュを確認する
-3. 画面表示と後続状態を確認する"	リダイレクト先で一度表示されるメッセージに成功・失敗を載せるであること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-064	IT-25	更新抑止	P1	更新抑止の結合確認	ナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検証成功かつ抽出が1件以上なら区分ごとにリストが増え、対象受注に出荷指示日と対応状況「出荷指示」が入るであること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-065	IT-12	内部情報	P1	内部情報の結合確認	同上だが抽出0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同上だが抽出0件の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	エラーフラッシュのうえ一覧ルートへ戻ること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-066	IT-15	機密情報	P1	機密情報の結合確認	同上だがフォーム検証失敗を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同上だがフォーム検証失敗の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	エラーフラッシュのうえ一覧ルートへ戻ること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-067	IT-07	排他制御	P1	排他制御の結合確認	表示要素を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で表示要素の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	@admin/ShippingStandby/index.twig内の独立フォームgenerate_formであること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-068	IT-07	排他制御	P1	排他制御の結合確認	JSを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でJSの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当ページのjavascriptブロックは空であること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-069	IT-06	ロールバック	P3	ロールバックの結合確認	受注の更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注の更新の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	各リスト行のflushの直後に、その行に紐づく受注へ対応状況と出荷指示日を一括適用すること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	リストと受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でリストと受注の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	リストと受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でリストと受注の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. リストと受注を確認する
 3. 画面表示と後続状態を確認する"	同一トランザクションでリスト行・中間テーブル・受注の対応状況と出荷指示日が更新されるであること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	同時更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	同時更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 同時更新を確認する
-3. 画面表示と後続状態を確認する"	楽観ロックは用いず、バルク更新は実行時点の行へ上書きすること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	成功時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	失敗時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	同上ルートへ遷移であること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-073	IT-25	一覧	P2	一覧の結合確認	副作用を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	副作用を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	dtb_orderを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. dtb_orderを確認する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	登録/更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-019	IT-22	部分入力	P2	部分入力の入力検証	注文番号の各欄を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で注文番号の各欄の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 注文番号の各欄を確認する
+3. 画面表示と後続状態を確認する"	IntegerType・任意であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-020	IT-23	検索条件	P2	検索時の検索条件確認	生成POSTを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-021	IT-23	検索条件	P2	検索時の検索条件確認	フォーム未送信／検証エラーを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-022	IT-23	検索条件	P2	検索時の検索条件確認	トランザクション内のその他の例外を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-023	IT-23	検索条件	P2	検索時の検索条件確認	フラッシュを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-024	IT-23	検索条件	P2	検索時の検索条件確認	ナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-025	IT-23	検索条件	P2	検索時の検索条件確認	同上だが抽出0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-026	IT-23	検索条件	P2	検索時の検索条件確認	同上だがフォーム検証失敗を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-027	IT-23	検索条件	P2	検索時の検索条件確認	表示要素を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-028	IT-23	検索条件	P2	検索時の検索条件確認	JSを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でJSの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-029	IT-23	検索条件	P2	検索時の検索条件確認	M05-18-MSG-001を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でM05-18-MSG-001の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-030	IT-23	検索条件	P2	検索時の検索条件確認	M05-18-MSG-002を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でM05-18-MSG-002の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-031	IT-23	検索条件	P2	検索時の検索条件確認	受注の更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注の更新の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-032	IT-23	検索条件	P2	検索時の検索条件確認	全区分で0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で全区分で0件の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-033	IT-23	検索条件	P2	検索時の検索条件確認	受注明細が0件の受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注明細が0件の受注の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-034	IT-23	実行結果	P2	検索時の実行結果確認	一覧再表示を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で一覧再表示の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-035	IT-23	実行結果	P2	検索時の実行結果確認	リストと受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でリストと受注の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-036	IT-23	実行結果	P2	検索時の実行結果確認	同時更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同時更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-037	IT-23	実行結果	P2	検索時の実行結果確認	成功時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-038	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で失敗時出力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-039	IT-26	登録内容	P1	登録時の登録内容確認	副作用を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で副作用の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-040	IT-26	登録内容	P1	登録時の登録内容確認	dtb_orderを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でdtb_orderの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-041	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録/更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-042	IT-26	登録内容	P1	登録時の登録内容確認	注文番号の各欄を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で注文番号の各欄の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-043	IT-26	登録内容	P1	登録時の登録内容確認	生成POSTを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-044	IT-26	登録内容	P1	登録時の登録内容確認	フォーム未送信／検証エラーを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-045	IT-26	登録内容	P1	登録時の登録内容確認	トランザクション内のその他の例外を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-046	IT-26	登録内容	P1	登録時の登録内容確認	フラッシュを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-047	IT-26	登録内容	P1	登録時の登録内容確認	ナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-048	IT-26	実行結果	P1	登録時の実行結果確認	同上だが抽出0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同上だが抽出0件の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-049	IT-23	実行結果	P1	登録時の実行結果確認	同上だがフォーム検証失敗を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同上だがフォーム検証失敗の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	エラーフラッシュのうえ一覧ルートへ戻ること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-050	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で表示要素の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-051	IT-26	更新内容	P1	更新時の更新内容確認	JSを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でJSの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-052	IT-26	更新内容	P1	更新時の更新内容確認	M05-18-MSG-001を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でM05-18-MSG-001の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-053	IT-26	更新内容	P1	更新時の更新内容確認	M05-18-MSG-002を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でM05-18-MSG-002の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	取得したOrderTypesが空であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-054	IT-26	更新内容	P1	更新時の更新内容確認	受注の更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注の更新の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-055	IT-26	更新内容	P1	更新時の更新内容確認	全区分で0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-056	IT-26	更新内容	P1	更新時の更新内容確認	受注明細が0件の受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-057	IT-26	更新内容	P1	更新時の更新内容確認	一覧再表示を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-058	IT-26	更新内容	P1	更新時の更新内容確認	リストと受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-059	IT-26	更新内容	P1	更新時の更新内容確認	同時更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同時更新の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-060	IT-05	実行結果	P1	更新時の実行結果確認	成功時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-061	IT-05	実行結果	P1	更新時の実行結果確認	失敗時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同上ルートへ遷移であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-062	IT-02	初期行数	P2	初期行数の結合確認	副作用を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	dtb_shipping_standbyへのINSERT、中間テーブルへのINSERT、対象dtb_orderのorder_status_idとcommit_dateの更新であること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-074	IT-12	画面表示データ	P2	画面表示データの結合確認	dtb_orderを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でdtb_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-063	IT-02	表示順	P2	表示順の結合確認	dtb_orderを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でdtb_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_orderを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-075	IT-25	画面表示データ	P2	画面表示データの結合確認	登録/更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-076	IT-12	画面表示データ	P2	画面表示データの結合確認	注文番号の各欄を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で注文番号の各欄の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 注文番号の各欄を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-077	IT-25	画面表示データ	P2	画面表示データの結合確認	生成POSTを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で生成POSTの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 生成POSTを確認する
-3. 画面表示と後続状態を確認する"	一覧側のGET初期表示もしくは一覧が持つセッション復元規則に従うであること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-078	IT-12	エラー継続	P3	エラー継続の結合確認	ナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	出荷指示（9）へ更新であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-064	IT-25	更新抑止	P1	更新抑止の結合確認	登録/更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録/更新の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-065	IT-12	内部情報	P1	内部情報の結合確認	注文番号の各欄を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で注文番号の各欄の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	IntegerType・任意であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-066	IT-15	機密情報	P1	機密情報の結合確認	生成POSTを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で生成POSTの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧側のGET初期表示もしくは一覧が持つセッション復元規則に従うであること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-067	IT-06	ロールバック	P3	ロールバックの結合確認	フォーム未送信／検証エラーを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でフォーム未送信／検証エラーの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin.common.save_errorを表示し一覧へであること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	トランザクション内のその他の例外を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でトランザクション内のその他の例外の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. トランザクション内のその他の例外を確認する
+3. 画面表示と後続状態を確認する"	ロールバック後に再送出であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	フラッシュを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でフラッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. フラッシュを確認する
+3. 画面表示と後続状態を確認する"	リダイレクト先で一度表示されるメッセージに成功・失敗を載せるであること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ナビ「受注管理」→「出荷指示」で一覧画面を開き、上部カード「生成」を展開して条…を確認する
 3. 画面表示と後続状態を確認する"	検証成功かつ抽出が1件以上なら区分ごとにリストが増え、対象受注に出荷指示日と対応状況「出荷指示」が入るであること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-079	IT-25	件数上限	P2	件数上限の結合確認	同上だが抽出0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同上だが抽出0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-071	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	同上だが抽出0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同上だが抽出0件の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同上だが抽出0件を確認する
 3. 画面表示と後続状態を確認する"	エラーフラッシュのうえ一覧ルートへ戻ること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-080	IT-25	欠損値	P2	欠損値の結合確認	同上だがフォーム検証失敗を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同上だがフォーム検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	同上だがフォーム検証失敗を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同上だがフォーム検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同上だがフォーム検証失敗を確認する
 3. 画面表示と後続状態を確認する"	エラーフラッシュのうえ一覧ルートへ戻ること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-081	IT-25	データなし	P2	データなしの結合確認	表示要素を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	@admin/ShippingStandby/index.twig内の独立フォームgenerate_formであること。
-m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-082	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	JSを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でJSの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	JSを試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でJSの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JSを確認する
 3. 画面表示と後続状態を確認する"	当ページのjavascriptブロックは空であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-075	IT-25	一覧	P2	一覧の結合確認	M05-18-MSG-001を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でM05-18-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-18-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	フォーム未送信もしくはフォーム検証失敗であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-076	IT-12	画面表示データ	P2	画面表示データの結合確認	M05-18-MSG-002を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）でM05-18-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-18-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-077	IT-12	画面表示データ	P2	画面表示データの結合確認	全区分で0件を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で全区分で0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 全区分で0件を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-078	IT-25	画面表示データ	P2	画面表示データの結合確認	受注明細が0件の受注を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で受注明細が0件の受注の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 受注明細が0件の受注を確認する
+3. 画面表示と後続状態を確認する"	区分判定で先頭明細参照があり、実装上エラーになりうるであること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	一覧再表示を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で一覧再表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧再表示を確認する
+3. 画面表示と後続状態を確認する"	成功後はadmin_shipping_standbyへGET相当で戻ること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-080	IT-12	非同期更新	P1	非同期更新の結合確認	同時更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 同時更新を確認する
+3. 画面表示と後続状態を確認する"	楽観ロックは用いず、バルク更新は実行時点の行へ上書きすること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-081	IT-12	エラー継続	P3	エラー継続の結合確認	成功時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	302でadmin_shipping_standbyへ遷移であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-082	IT-25	件数上限	P2	件数上限の結合確認	失敗時出力を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	同上ルートへ遷移であること。
+m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）	IT-M05-18-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-LIST-CREATE-083	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	登録/更新を試験できる状態である	m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）（m05_18_admin_order_order_shipping_standby_list_create）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -385,4 +387,4 @@ m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷�
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.329, No.330, No.332, No.336, No.381, No.382, No.385。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.110, No.357, No.382, No.413, No.414。上限緩和または個別ケース化で収載可能。

@@ -13,8 +13,6 @@
 | IT-05 | 削除条件、実行結果 |
 | IT-12 | JSON形式、エラー、レスポンス、実行結果 |
 | IT-30 | コマンド、入力データ、公開・締切 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-11 | 実行結果 |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
 
@@ -81,36 +79,27 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 2. 実行結果と副作用を確認する"	レスポンスのジョブ終了状態と処理件数が実行結果に記録されること。
 バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-019	IT-30	公開・締切	P1	公開・締切の結合確認	dtb_product_classを試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）でdtb_product_classの確認に必要な条件を指定する	"1. 公開・締切の対象ジョブを実行する
 2. 実行結果と副作用を確認する"	公開・締切のジョブ終了状態と処理件数が実行結果に記録されること。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-020	IT-07	排他制御	P1	排他制御の結合確認	登録/更新を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で登録/更新の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録、更新、削除の実行時に楽観的ロックができること。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-021	IT-07	排他制御	P1	排他制御の結合確認	対象なしを試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で対象なしの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録、更新、削除の実行時に悲観的ロックができること。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-022	IT-06	ロールバック	P3	ロールバックの結合確認	一括更新時の例外を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で一括更新時の例外の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	エラーが発生した場合、ロールバックされること。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-023	IT-11	実行結果	P2	実行結果の結合確認	開始・完了を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で開始・完了の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-020	IT-11	実行結果	P2	実行結果の結合確認	登録/更新を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
 2. 実行結果を確認する"	指定した宛先（メールアドレス）への送信、転送が正常終了すること。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-024	IT-28	実行結果	P2	実行結果の結合確認	商品規格の削除表現を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で商品規格の削除表現の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-021	IT-28	実行結果	P2	実行結果の結合確認	対象なしを試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で対象なしの確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
 2. 実行結果を確認する"	"件名に改行・タブ・メタキャラクタ（ ""，&．<，>，',\ ）が含まれていた場合、送信、転送が正常終了すること。"
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-025	IT-28	実行結果	P2	実行結果の結合確認	商品の削除表現を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で商品の削除表現の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-022	IT-28	実行結果	P2	実行結果の結合確認	一括更新時の例外を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で一括更新時の例外の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
 2. 実行結果を確認する"	"本文に改行・タブ・メタキャラクタ（ ""，&．<，>，',\ ）が含まれていた場合、送信、転送が正常終了すること。"
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-026	IT-28	ヘッダ	P2	ヘッダの結合確認	論理削除を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で論理削除の確認に必要な条件を指定する	"1. ヘッダの対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-023	IT-28	ヘッダ	P2	ヘッダの結合確認	開始・完了を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で開始・完了の確認に必要な条件を指定する	"1. ヘッダの対象機能を実行する
 2. 実行結果を確認する"	ヘッダがエンコードされること。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-027	IT-28	件名	P2	件名の結合確認	コンソールのバッチコマンドを試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-024	IT-28	件名	P2	件名の結合確認	商品規格の削除表現を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
 2. 実行結果を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-028	IT-28	件名	P2	件名の結合確認	対象を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-025	IT-28	件名	P2	件名の結合確認	商品の削除表現を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
 2. 実行結果を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-029	IT-28	件名	P2	件名の結合確認	削除条件を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で削除条件の確認に必要な条件を指定する	"1. 件名の対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-026	IT-28	件名	P2	件名の結合確認	論理削除を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で論理削除の確認に必要な条件を指定する	"1. 件名の対象機能を実行する
 2. 実行結果を確認する"	取得した値に改行、タブ、メタキャラクタが含まれる場合、件名に設定された値がエンコーディング、サニタイジングされること。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-030	IT-28	本文	P2	本文の結合確認	反映を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-027	IT-28	本文	P2	本文の結合確認	コンソールのバッチコマンドを試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-031	IT-28	本文	P2	本文の結合確認	実行条件を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-028	IT-28	本文	P2	本文の結合確認	対象を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-032	IT-28	本文	P2	本文の結合確認	成功結果を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で成功結果の確認に必要な条件を指定する	"1. 本文の対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-029	IT-28	本文	P2	本文の結合確認	削除条件を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で削除条件の確認に必要な条件を指定する	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	取得した値に改行、タブ、メタキャラクタが含まれる場合、本文に設定された値がエンコーディング、サニタイジングされること。
-バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-033	IT-28	本文	P2	本文の結合確認	失敗結果を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で失敗結果の確認に必要な条件を指定する	"1. 本文の対象機能を実行する
+バッチ 商品管理 — 入荷通知キャンセル	IT-B02-02-BATCH-PRODUCT-PRODUCT-ARRIVAL-NOTIFICATION-CANCEL-030	IT-28	本文	P2	本文の結合確認	反映を試験できる状態である	バッチ 商品管理 — 入荷通知キャンセル（b02_02_batch_product_product_arrival_notification_cancel）で反映の確認に必要な条件を指定する	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	ファイルを添付する場合、指定したファイルが添付されること。
 ```
 
@@ -212,3 +201,5 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブアプリケーション / 副作用 / 表示・参照処理（IT-25） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブアプリケーション / 認証・認可 / セッション管理（IT-15） | 本機能は対象の外部I/Fを扱わないため |
 | その他 | 同種の対象外観点 19 件は上記分類と同じ理由で対象外 |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

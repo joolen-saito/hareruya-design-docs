@@ -14,13 +14,11 @@
 | IT-20 | 出力抑止、識別子 |
 | IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 更新内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -201,72 +199,66 @@ M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH
 M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-054	IT-15	機密情報	P1	機密情報の結合確認	価格一覧の件数を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で価格一覧の件数の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	価格変更履歴に検索条件を適用した件数であること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-055	IT-07	排他制御	P1	排他制御の結合確認	在庫一覧の件数を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で在庫一覧の件数の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫変更履歴に検索条件を適用した件数であること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-056	IT-07	排他制御	P1	排他制御の結合確認	他画面パラメータ優先を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で他画面パラメータ優先の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品ID・状態コード（カード状態コード）・言語が渡された場合は、その条件だけで在庫一覧を絞り、商品ID指定時は登録日降順・状態昇順で並べるであること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-057	IT-06	ロールバック	P3	ロールバックの結合確認	状態表示を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で状態表示の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	規格拡張のメモがあればメモを、無ければ状態名を状態列に表示すること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	本機能の計算を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で本機能の計算の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-055	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	在庫一覧の件数を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で在庫一覧の件数の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 在庫一覧の件数を確認する
+3. 画面表示と後続状態を確認する"	在庫変更履歴に検索条件を適用した件数であること。
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-056	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	他画面パラメータ優先を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で他画面パラメータ優先の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 他画面パラメータ優先を確認する
+3. 画面表示と後続状態を確認する"	商品ID・状態コード（カード状態コード）・言語が渡された場合は、その条件だけで在庫一覧を絞り、商品ID指定時は登録日降順・状態昇順で並べるであること。
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-057	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	状態表示を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で状態表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 状態表示を確認する
+3. 画面表示と後続状態を確認する"	規格拡張のメモがあればメモを、無ければ状態名を状態列に表示すること。
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-058	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	本機能の計算を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で本機能の計算の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 本機能の計算を確認する
 3. 画面表示と後続状態を確認する"	履歴の集計・再計算は行わないこと。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	日付（終了）を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で日付（終了）の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-059	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	日付（終了）を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で日付（終了）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 日付（終了）を確認する
 3. 画面表示と後続状態を確認する"	登録日上限であること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	初回表示（検索前）を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で初回表示（検索前）の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-060	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	初回表示（検索前）を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で初回表示（検索前）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 初回表示（検索前）
 3. 画面表示と後続状態を確認する"	セッションを消去し、価格一覧・在庫一覧とも空で表示すること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示件数・ページ番号がセッションに無い状態で在庫一覧を作ろうとするを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で表示件数・ページ番号がセッションに無い状態で在庫一覧を作ろうとするの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-061	IT-25	一覧	P2	一覧の結合確認	表示件数・ページ番号がセッションに無い状態で在庫一覧を作ろうとするを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で表示件数・ページ番号がセッションに無い状態で在庫一覧を作ろうとするの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示件数・ページ番号がセッションに無い状態で在庫一覧を作ろうとするを確認する
 3. 画面表示と後続状態を確認する"	在庫一覧を空配列として扱うこと。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	並び順が想定外の値を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で並び順が想定外の値の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-062	IT-12	画面表示データ	P2	画面表示データの結合確認	並び順が想定外の値を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で並び順が想定外の値の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 並び順が想定外の値を確認する
-3. 画面表示と後続状態を確認する"	並び順エラーを表示し初期表示へ戻すであること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索結果0件を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で検索結果0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-063	IT-25	画面表示データ	P2	画面表示データの結合確認	検索結果0件を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で検索結果0件の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索結果0件
 3. 画面表示と後続状態を確認する"	「検索条件に該当するデータがありませんでしたであること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-064	IT-25	一覧	P2	一覧の結合確認	表示時点を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で表示時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-064	IT-12	画面表示データ	P2	画面表示データの結合確認	表示時点を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で表示時点の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示時点を確認する
-3. 画面表示と後続状態を確認する"	各一覧は表示時点で履歴テーブルを読んだ結果であること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-065	IT-12	画面表示データ	P2	画面表示データの結合確認	入力を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入力
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-066	IT-25	画面表示データ	P2	画面表示データの結合確認	成功時出力を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-065	IT-25	画面表示データ	P2	画面表示データの結合確認	入力を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	検索フォーム（汎用ワード・日付帯・在庫変更理由・商品検索条件）、ページ番号、表示件数、セッションの検索状態、他画面からの商品ID・状態コード・言語であること。
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-066	IT-25	フォーム送信	P1	フォーム送信の結合確認	成功時出力を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	HTMLであること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-067	IT-12	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-067	IT-16	ファイル選択	P2	ファイル選択の結合確認	失敗時出力を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-068	IT-25	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	並び順エラー時はエラー表示で初期表示へ戻すであること。
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-068	IT-12	非同期更新	P1	非同期更新の結合確認	副作用を試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	検索条件セッション・ページ番号・表示件数・ソート条件の保存であること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-069	IT-25	フォーム送信	P1	フォーム送信の結合確認	dtb_stock_historyを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でdtb_stock_historyの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-069	IT-12	エラー継続	P3	エラー継続の結合確認	dtb_stock_historyを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でdtb_stock_historyの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_stock_historyを確認する
 3. 画面表示と後続状態を確認する"	在庫一覧の表示・絞り込みであること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-070	IT-16	ファイル選択	P2	ファイル選択の結合確認	dtb_price_historyを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でdtb_price_historyの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-070	IT-25	件数上限	P2	件数上限の結合確認	dtb_price_historyを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でdtb_price_historyの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_price_historyを確認する
 3. 画面表示と後続状態を確認する"	価格一覧の表示・絞り込みであること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-071	IT-12	非同期更新	P1	非同期更新の結合確認	dtb_product_sub_classを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でdtb_product_sub_classの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-071	IT-25	欠損値	P2	欠損値の結合確認	dtb_product_sub_classを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でdtb_product_sub_classの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_product_sub_classを確認する
 3. 画面表示と後続状態を確認する"	状態列のメモ表示であること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-072	IT-12	エラー継続	P3	エラー継続の結合確認	dtb_productを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でdtb_productの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-072	IT-25	データなし	P2	データなしの結合確認	dtb_productを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でdtb_productの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_productを確認する
 3. 画面表示と後続状態を確認する"	商品名表示であること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-073	IT-25	件数上限	P2	件数上限の結合確認	mtb_stock_change_typeを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でmtb_stock_change_typeの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-073	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	mtb_stock_change_typeを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でmtb_stock_change_typeの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_stock_change_typeを確認する
 3. 画面表示と後続状態を確認する"	在庫変動理由の表示と絞り込みであること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-074	IT-25	欠損値	P2	欠損値の結合確認	mtb_card_conditionを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でmtb_card_conditionの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-074	IT-23	データ正当性	P3	データ正当性の結合確認	mtb_card_conditionを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でmtb_card_conditionの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_card_conditionを確認する
 3. 画面表示と後続状態を確認する"	状態コードでの絞り込み・状態表示であること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-075	IT-25	データなし	P2	データなしの結合確認	mtb_languageを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でmtb_languageの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. mtb_languageを確認する
-3. 画面表示と後続状態を確認する"	言語表示・絞り込みであること。
-M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH-LIST-076	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	dtb_memberを試験できる状態である	M04-17（在庫履歴検索/一覧）（m04_17_admin_stock_stock_history_search_list）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_memberを確認する
-3. 画面表示と後続状態を確認する"	登録者名の表示であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -366,6 +358,6 @@ M04-17（在庫履歴検索/一覧）	IT-M04-17-ADMIN-STOCK-STOCK-HISTORY-SEARCH
 | ウェブサービス / 買取・査定 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
-| その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 1件 — No.330。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.109, No.110, No.111, No.334。上限緩和または個別ケース化で収載可能。

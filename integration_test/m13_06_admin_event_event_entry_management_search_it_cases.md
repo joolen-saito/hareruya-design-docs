@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、一覧、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 削除条件、実行結果 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -263,51 +261,57 @@ M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMEN
 M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-075	IT-15	機密情報	P1	機密情報の結合確認	dtb_deckを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でdtb_deckの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	デッキ登録検索の集計単位とソートキーであること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-076	IT-07	排他制御	P1	排他制御の結合確認	登録/更新を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で登録/更新の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-077	IT-07	排他制御	P1	排他制御の結合確認	並び順を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で並び順の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ASC／DESC（大文字小文字可）以外を不正として扱い初期表示へ戻すであること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-078	IT-06	ロールバック	P3	ロールバックの結合確認	一覧を開くを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で一覧を開くの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一画面に検索フォームを表示であること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	検索フォーム送信を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で検索フォーム送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	並び順を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で並び順の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 並び順を確認する
+3. 画面表示と後続状態を確認する"	ASC／DESC（大文字小文字可）以外を不正として扱い初期表示へ戻すであること。
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	一覧を開くを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧を開く
+3. 画面表示と後続状態を確認する"	同一画面に検索フォームを表示であること。
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	検索フォーム送信を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で検索フォーム送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索フォーム送信
 3. 画面表示と後続状態を確認する"	同一画面に検索結果一覧を表示であること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-080	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ページ送り・件数変更・ソートを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でページ送り・件数変更・ソートの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ページ送り・件数変更・ソートを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でページ送り・件数変更・ソートの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ページ送り・件数変更・ソートを確認する
 3. 画面表示と後続状態を確認する"	同一画面に再検索結果を表示であること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	論理削除を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で論理削除の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	論理削除を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で論理削除の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 論理削除
 3. 画面表示と後続状態を確認する"	同一方式（deleted_atによる論理削除を維持）であること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-082	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	デッキを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でデッキの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	デッキを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でデッキの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. デッキを確認する
 3. 画面表示と後続状態を確認する"	申込に対して登録されたデッキであること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索モードを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で検索モードの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-083	IT-25	一覧	P2	一覧の結合確認	検索モードを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で検索モードの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索モード
 3. 画面表示と後続状態を確認する"	検索フォームの選択肢であること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索条件セッションを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-084	IT-12	画面表示データ	P2	画面表示データの結合確認	検索条件セッションを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索条件セッション
-3. 画面表示と後続状態を確認する"	表示件数、検索条件、ページ番号、ソートキー、並び順を保持するセッション領域であること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	イベント詳細IDを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でイベント詳細IDの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-085	IT-25	画面表示データ	P2	画面表示データの結合確認	イベント詳細IDを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でイベント詳細IDの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. イベント詳細IDを確認する
 3. 画面表示と後続状態を確認する"	特定の日程を指す識別子であること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-086	IT-25	一覧	P2	一覧の結合確認	申込一覧を開くを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で申込一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-086	IT-12	画面表示データ	P2	画面表示データの結合確認	申込一覧を開くを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で申込一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 申込一覧を開く
-3. 画面表示と後続状態を確認する"	検索フォームを表示し、検索条件セッションを初期化すること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-087	IT-12	画面表示データ	P2	画面表示データの結合確認	検索フォームを送信を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で検索フォームを送信の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索フォームを送信
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-088	IT-12	画面表示データ	P2	画面表示データの結合確認	イベント詳細指定表示を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でイベント詳細指定表示の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. イベント詳細指定表示を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-089	IT-25	画面表示データ	P2	画面表示データの結合確認	デッキ表示ボタンを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でデッキ表示ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-087	IT-12	非同期更新	P1	非同期更新の結合確認	デッキ表示ボタンを試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でデッキ表示ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. デッキ表示ボタンを確認する
 3. 画面表示と後続状態を確認する"	現在の検索条件で登録デッキの表示画面を別ウィンドウで開く（M13-08）であること。
-M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-090	IT-25	フォーム送信	P1	フォーム送信の結合確認	CSV出力を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でCSV出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-088	IT-12	エラー継続	P3	エラー継続の結合確認	CSV出力を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でCSV出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSV出力を確認する
 3. 画面表示と後続状態を確認する"	現在の検索条件で申込CSVを出力する（本書では扱わない）であること。
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-089	IT-25	欠損値	P2	欠損値の結合確認	表示要素を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	検索ボックスにイベント名の一行テキスト、店舗・申込状況・支払方法のセレクト（複数）、支払番号・プレイヤー名の一行テキスト、DCIナンバーの複数行入力、開催日時From・To、確認済の複数選択、デッキ登録有無の複数選択、…であること。
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-090	IT-25	データなし	P2	データなしの結合確認	JS挙動を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	デッキ表示ボタンは申込一覧画面から別ウィンドウ（幅960、高さ900）でデッキ表示画面を開くこと。
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	イベント申込検索（entriedEvent）を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でイベント申込検索（entriedEvent）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. イベント申込検索（entriedEvent）
+3. 画面表示と後続状態を確認する"	申込プレイヤー（dtb_entry_player）を集計単位とし、申込プレイヤーリポジトリのクエリビルダ・件数取得を用いること。
+M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMENT-SEARCH-092	IT-23	データ正当性	P3	データ正当性の結合確認	デッキ登録検索（registedDeck）を試験できる状態である	M13-06（イベント申込検索）（m13_06_admin_event_event_entry_management_search）でデッキ登録検索（registedDeck）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. デッキ登録検索（registedDeck）
+3. 画面表示と後続状態を確認する"	デッキ（dtb_deck）を集計単位とし、デッキリポジトリのクエリビルダ・件数取得を用いること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -407,6 +411,6 @@ M13-06（イベント申込検索）	IT-M13-06-ADMIN-EVENT-EVENT-ENTRY-MANAGEMEN
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.357, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.110, No.111, No.359, No.381, No.382, No.412。上限緩和または個別ケース化で収載可能。

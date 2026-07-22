@@ -13,17 +13,17 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、一覧、更新抑止、画面レイアウト、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 削除条件、実行結果 |
-| IT-16 | 実行結果 |
+| IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-07 | 排他制御 |
 | IT-06 | ロールバック |
 
@@ -256,22 +256,22 @@ m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-079	IT-07	排他制御	P1	排他制御の結合確認	商品 IDを試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	空でなく、符号なし整数形式であること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-080	IT-07	排他制御	P1	排他制御の結合確認	管理画面にログインし、当プラグインの商品 CSV メニューに到達できる管理者を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-080	IT-06	ロールバック	P3	ロールバックの結合確認	管理画面にログインし、当プラグインの商品 CSV メニューに到達できる管理者を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	表示・取込とも許可される実装であること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-081	IT-06	ロールバック	P3	ロールバックの結合確認	POST 後を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォームは再表示であること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-081	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	POST 後を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. POST 後を確認する
+3. 画面表示と後続状態を確認する"	フォームは再表示であること。
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-082	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	取込開始を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 取込開始を確認する
 3. 画面表示と後続状態を確認する"	情報ログ「買取減額率変更CSV登録開始」であること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-083	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	正常完了を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-083	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	正常完了を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 正常完了を確認する
 3. 画面表示と後続状態を確認する"	情報ログ「買取減額率変更CSV登録完了」と countであること。
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-084	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	検証失敗で打ち切りを試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 検証失敗で打ち切りを確認する
 3. 画面表示と後続状態を確認する"	情報ログ「買取減額率変更CSV登録 異常終了」であること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-085	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	買取減額率の保存先を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	買取減額率の保存先を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 買取減額率の保存先
 3. 画面表示と後続状態を確認する"	補助表 dtb_product_sub は無く、dtb_product.buy_discount_id（mtb_buy_discount への外部参照列）に統合されていること。
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-086	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	商品の実在・非削除確認を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
@@ -280,15 +280,44 @@ m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理
 m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-087	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	管理画面メニュー「商品管理」→「CSV管理」内「買取減額率変更CSV登録」を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 管理画面メニュー「商品管理」→「CSV管理」内「買取減額率変更CSV登録」を確認する
 3. 画面表示と後続状態を確認する"	アップロードフォーム、フォーマット説明表、直近のインポート履歴が表示されるであること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-088	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSV 選択してアップロードを試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-088	IT-25	一覧	P2	一覧の結合確認	CSV 選択してアップロードを試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSV 選択してアップロード
 3. 画面表示と後続状態を確認する"	検証・更新が走るであること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-089	IT-25	一覧	P2	一覧の結合確認	表示要素を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-089	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	ページタイトルブロックは「商品管理」であること。
-m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-090	IT-12	画面表示データ	P2	画面表示データの結合確認	JS 挙動を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. JS 挙動を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-090	IT-25	画面表示データ	P2	画面表示データの結合確認	JS 挙動を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS 挙動を確認する
+3. 画面表示と後続状態を確認する"	card-csvimport.js とスピナー用 spin.min.js を読み込むであること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-091	IT-12	画面表示データ	P2	画面表示データの結合確認	モーダル・ポップアップを試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-092	IT-25	画面表示データ	P2	画面表示データの結合確認	更新単位を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 更新単位を確認する
+3. 画面表示と後続状態を確認する"	1 CSV 行につき 1 商品 IDであること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-093	IT-25	フォーム送信	P1	フォーム送信の結合確認	重複商品 IDを試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 重複商品 IDを確認する
+3. 画面表示と後続状態を確認する"	同一ファイル内に同一商品 ID が複数行あれば、後から処理された行が最終的な値を残す（エラーにはしない）であること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-094	IT-16	ファイル選択	P2	ファイル選択の結合確認	他列の扱いを試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-095	IT-12	非同期更新	P1	非同期更新の結合確認	CSVファイル選択を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSVファイル選択
+3. 画面表示と後続状態を確認する"	アップロード一時領域へ保存後、取込パイプラインが読み取るであること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-096	IT-12	エラー継続	P3	エラー継続の結合確認	商品IDを試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 商品IDを確認する
+3. 画面表示と後続状態を確認する"	更新対象の dtb_product.product_idであること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-097	IT-25	件数上限	P2	件数上限の結合確認	商品は存在するが補助表 dtb_product_sub に行が無い（現行）を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 商品は存在するが補助表 dtb_product_sub に行が無い（現行）を確認する
+3. 画面表示と後続状態を確認する"	現行で getProductSubByProductId が null を返すと、取得結果に対するメソッド呼び出しで実行時例外となりうるであること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-098	IT-25	欠損値	P2	欠損値の結合確認	途中行で検証エラー（商品不存在・マスタ不存在など）を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 途中行で検証エラー（商品不存在・マスタ不存在など）を確認する
+3. 画面表示と後続状態を確認する"	breakAll により以降の行は処理されず、メッセージストアに複数件が載るであること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-099	IT-25	データなし	P2	データなしの結合確認	商品本体との関係を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 商品本体との関係を確認する
+3. 画面表示と後続状態を確認する"	検証は dtb_product のみを参照すること。
+m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）	IT-M03-36-ADMIN-PRODUCT-PRODUCT-BUY-DISCOUNT-CSV-IMPORT-100	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	成功時出力を試験できる状態である	m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理_買取減額率変更CSV登録）（m03_36_admin_product_product_buy_discount_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	同一 URL の HTMLであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -380,4 +409,4 @@ m03-36_admin_product_product_buy_discount_csv_import（管理画面_商品管理
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.357, No.358, No.359, No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 1件 — No.109。上限緩和または個別ケース化で収載可能。

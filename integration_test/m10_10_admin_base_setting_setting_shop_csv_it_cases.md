@@ -24,8 +24,6 @@
 | IT-33 | ファイル出力、ファイル登録 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 
 ## テストケースTSV
 
@@ -220,74 +218,65 @@ CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHO
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	種別名であること。
 CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-067	IT-15	機密情報	P1	機密情報の結合確認	mtb_csv_typeを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-068	IT-07	排他制御	P1	排他制御の結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出力フィールド名であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-069	IT-07	排他制御	P1	排他制御の結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	関連経由出力時の参照先であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-070	IT-06	ロールバック	P3	ロールバックの結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	リスト表示・CSVヘッダラベルであること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_csvを確認する
+3. 画面表示と後続状態を確認する"	出力フィールド名であること。
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_csvを確認する
+3. 画面表示と後続状態を確認する"	関連経由出力時の参照先であること。
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_csvを確認する
+3. 画面表示と後続状態を確認する"	リスト表示・CSVヘッダラベルであること。
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-071	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. dtb_csvを確認する
 3. 画面表示と後続状態を確認する"	出力順であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-072	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. dtb_csvを確認する
 3. 画面表示と後続状態を確認する"	有効／無効であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-073	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. dtb_csvを確認する
 3. 画面表示と後続状態を確認する"	作成者であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-074	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. dtb_csvを確認する
 3. 画面表示と後続状態を確認する"	作成日時であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-075	IT-25	一覧	P2	一覧の結合確認	dtb_csvを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. dtb_csvを確認する
 3. 画面表示と後続状態を確認する"	更新日時列であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録/更新を試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-076	IT-12	画面表示データ	P2	画面表示データの結合確認	登録/更新を試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSRFを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-077	IT-25	画面表示データ	P2	画面表示データの結合確認	CSRFを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSRFを確認する
 3. 画面表示と後続状態を確認する"	画面はトークンhiddenを出すであること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-078	IT-25	一覧	P2	一覧の結合確認	ROLE_ADMINを持ち、拒否パターンに現在の管理パスが含まれないを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-078	IT-12	画面表示データ	P2	画面表示データの結合確認	ROLE_ADMINを持ち、拒否パターンに現在の管理パスが含まれないを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ROLE_ADMINを持ち、拒否パターンに現在の管理パスが含まれないを確認する
-3. 画面表示と後続状態を確認する"	表示・保存可能であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-079	IT-12	画面表示データ	P2	画面表示データの結合確認	補助列を試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 補助列を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-080	IT-25	画面表示データ	P2	画面表示データの結合確認	対象エンティティ・フィールド・参照・表示名・作成者・作成更新を試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-079	IT-25	画面表示データ	P2	画面表示データの結合確認	補助列を試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 補助列を確認する
+3. 画面表示と後続状態を確認する"	column_name（項目名コメント用の追加列、当画面では更新しない）であること。
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-080	IT-25	フォーム送信	P1	フォーム送信の結合確認	対象エンティティ・フィールド・参照・表示名・作成者・作成更新を試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 対象エンティティ・フィールド・参照・表示名・作成者・作成更新を確認する
 3. 画面表示と後続状態を確認する"	同名（dtb_csv 上で一致）であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-081	IT-12	画面表示データ	P2	画面表示データの結合確認	CSV出力項目を試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSV出力項目を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-082	IT-25	画面表示データ	P2	画面表示データの結合確認	ナビの店舗設定から当画面を開くを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-081	IT-16	ファイル選択	P2	ファイル選択の結合確認	CSV出力項目を試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-082	IT-12	非同期更新	P1	非同期更新の結合確認	ナビの店舗設定から当画面を開くを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ナビの店舗設定から当画面を開く
 3. 画面表示と後続状態を確認する"	既定では受注向けのCSV種別が選ばれた状態で、当該種別の「出力しない」「出力する」の2リストに定義行が振り分けて表示されるであること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-083	IT-25	フォーム送信	P1	フォーム送信の結合確認	CSV種別セレクトを変更するを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-083	IT-12	エラー継続	P3	エラー継続の結合確認	CSV種別セレクトを変更するを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSV種別セレクトを変更するを確認する
 3. 画面表示と後続状態を確認する"	選択した種別の内容を表示するため、ページ全体を再読み込みする（同一機能内の種別切替）であること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-084	IT-16	ファイル選択	P2	ファイル選択の結合確認	ボタンで項目を左右に移動／全移動するを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-085	IT-12	非同期更新	P1	非同期更新の結合確認	「一つ上」「一つ下」「一番上」「一番下」を押すを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-084	IT-25	件数上限	P2	件数上限の結合確認	ボタンで項目を左右に移動／全移動するを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ボタンで項目を左右に移動／全移動するを確認する
+3. 画面表示と後続状態を確認する"	画面内のリストだけが更新され、まだ保存しないこと。
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-085	IT-25	欠損値	P2	欠損値の結合確認	「一つ上」「一つ下」「一番上」「一番下」を押すを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 「一つ上」「一つ下」「一番上」「一番下」を押すを確認する
 3. 画面表示と後続状態を確認する"	右側「出力する項目」リスト内の選択行の順序が変わるであること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-086	IT-12	エラー継続	P3	エラー継続の結合確認	「設定」を押すを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-086	IT-25	データなし	P2	データなしの結合確認	「設定」を押すを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 「設定」を押すを確認する
 3. 画面表示と後続状態を確認する"	左右それぞれのリストに載っている行について、有効／無効と並びがDBに反映されるであること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-087	IT-25	件数上限	P2	件数上限の結合確認	存在しない種別IDで画面を開くを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-087	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	存在しない種別IDで画面を開くを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 存在しない種別IDで画面を開く
 3. 画面表示と後続状態を確認する"	NotFound相当のエラーになること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-088	IT-25	欠損値	P2	欠損値の結合確認	商品・会員・受注・カテゴリなどの各管理画面にある「出力項目設定」等のリンクを試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 商品・会員・受注・カテゴリなどの各管理画面にある「出力項目設定」等のリンクを確認する
-3. 画面表示と後続状態を確認する"	当該画面の文脈に合うCSV種別が既に選ばれた状態で当画面を開けるであること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-089	IT-25	データなし	P2	データなしの結合確認	表示要素を試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	画面上部タイトル帯は「システム設定／CSV出力項目設定」と表示されるであること。
-CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-090	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	入力項目を試験できる状態である	CSV出力項目設定（店舗設定）（m10_10_admin_base_setting_setting_shop_csv）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 入力項目
-3. 画面表示と後続状態を確認する"	CSV種別セレクト、左マルチセレクト、右マルチセレクトであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -380,4 +369,4 @@ CSV出力項目設定（店舗設定）	IT-M10-10-ADMIN-BASE-SETTING-SETTING-SHO
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.78, No.87。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.78, No.87, No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

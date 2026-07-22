@@ -12,15 +12,14 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -77,204 +76,216 @@ m03-08_admin_product_product_product_class_list（管理画面_商品管理_商�
 m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	商品登録画面上の確認付き規格一覧導線を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 商品登録画面上の確認付き規格一覧導線を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	トランザクション境界を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. トランザクション境界を確認する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M03-08-MSG-001を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. M03-08-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	ロックを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. ロックを確認する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M03-08-MSG-002を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	例外時を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 例外時を確認する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M03-08-MSG-003を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-003を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	言語・カード状態の参照を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 言語・カード状態の参照を確認する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M03-08-MSG-004を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-004を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M03-08-MSG-005を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-005を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-019	IT-22	部分入力	P2	部分入力の入力検証	return_product_list を付与して開くを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でreturn_product_list を付与して開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. return_product_list を付与して開く
-3. 画面表示と後続状態を確認する"	同じ一覧表示のうえ、フッタの戻りが商品一覧であり、クエリに resume=1 が付くであること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-020	IT-23	検索条件	P2	検索時の検索条件確認	「新規登録」ボタンを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-019	IT-22	部分入力	P2	部分入力の入力検証	M03-08-MSG-006を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-006の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-006を確認する
+3. 画面表示と後続状態を確認する"	更新処理が正常終了したとき（一覧へリダイレクト）であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-020	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-007を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	行「編集」を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-008を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	存在しない商品 IDを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-009を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	一覧 URL へ POSTを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-010を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	表示要素を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-011を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	画面上の並び順を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-012を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	在庫数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-013を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	販売制限数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-014を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-028	IT-23	検索条件	P2	検索時の検索条件確認	「新規登録」ヘッダを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で「新規登録」ヘッダの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-028	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-015を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-015の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	商品登録画面上の確認付き規格一覧導線を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品登録画面上の確認付き規格一覧導線の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-016を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-016の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	トランザクション境界を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でトランザクション境界の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-017を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-017の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	ロックを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でロックの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-018を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-018の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	例外時を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で例外時の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-019を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-019の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-033	IT-23	検索条件	P2	検索時の検索条件確認	言語・カード状態の参照を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で言語・カード状態の参照の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-033	IT-23	検索条件	P2	検索時の検索条件確認	トランザクション境界を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でトランザクション境界の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	ロックを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でロックの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	return_product_list を付与して開くを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でreturn_product_list を付与して開くの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	例外時を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で例外時の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	「新規登録」ボタンを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で「新規登録」ボタンの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	言語・カード状態の参照を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で言語・カード状態の参照の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-037	IT-23	実行結果	P2	検索時の実行結果確認	行「編集」を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で行「編集」の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-037	IT-23	実行結果	P2	検索時の実行結果確認	商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-038	IT-26	登録内容	P1	登録時の登録内容確認	存在しない商品 IDを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で存在しない商品 IDの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-038	IT-26	登録内容	P1	登録時の登録内容確認	return_product_list を付与して開くを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でreturn_product_list を付与して開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-039	IT-26	登録内容	P1	登録時の登録内容確認	一覧 URL へ POSTを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で一覧 URL へ POSTの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-039	IT-26	登録内容	P1	登録時の登録内容確認	「新規登録」ボタンを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で「新規登録」ボタンの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-040	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で表示要素の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-040	IT-26	登録内容	P1	登録時の登録内容確認	行「編集」を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で行「編集」の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-041	IT-26	登録内容	P1	登録時の登録内容確認	画面上の並び順を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で画面上の並び順の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-041	IT-26	登録内容	P1	登録時の登録内容確認	存在しない商品 IDを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で存在しない商品 IDの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	アクティブ・廃止とも、アルゴリズム順に言語昇順（実体の join 済みオブジェクト昇順として付与されている）、続いてカード状態昇順、続いて規格側の売価列降順、規格側の主キー昇順となる実装確認値となること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-042	IT-26	登録内容	P1	登録時の登録内容確認	在庫数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で在庫数の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-043	IT-26	登録内容	P1	登録時の登録内容確認	販売制限数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	応答が 404 となる実装確認値とすること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-042	IT-26	登録内容	P1	登録時の登録内容確認	一覧 URL へ POSTを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で一覧 URL へ POSTの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-044	IT-26	登録内容	P1	登録時の登録内容確認	「新規登録」ヘッダを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-043	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-044	IT-26	登録内容	P1	登録時の登録内容確認	画面上の並び順を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-045	IT-26	登録内容	P1	登録時の登録内容確認	商品登録画面上の確認付き規格一覧導線を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-045	IT-26	登録内容	P1	登録時の登録内容確認	在庫数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-046	IT-26	登録内容	P1	登録時の登録内容確認	トランザクション境界を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-046	IT-26	登録内容	P1	登録時の登録内容確認	販売制限数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-047	IT-26	登録内容	P1	登録時の登録内容確認	ロックを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でロックの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-047	IT-26	登録内容	P1	登録時の登録内容確認	「新規登録」ヘッダを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で「新規登録」ヘッダの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-048	IT-26	実行結果	P1	登録時の実行結果確認	例外時を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で例外時の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-048	IT-26	実行結果	P1	登録時の実行結果確認	商品登録画面上の確認付き規格一覧導線を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品登録画面上の確認付き規格一覧導線の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-049	IT-23	実行結果	P1	登録時の実行結果確認	言語・カード状態の参照を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で言語・カード状態の参照の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-049	IT-23	実行結果	P1	登録時の実行結果確認	M03-08-MSG-001を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-001の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_product_class の language_id・card_condition_id に統合（補助表は廃止であること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-050	IT-26	更新内容	P1	更新時の更新内容確認	商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	新規登録フォームが未送信もしくはバリデーション不正のとき（登録フォームを再描画）であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-050	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-002を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-002の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-051	IT-26	更新内容	P1	更新時の更新内容確認	return_product_list を付与して開くを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でreturn_product_list を付与して開くの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-051	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-003を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-003の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-052	IT-26	更新内容	P1	更新時の更新内容確認	「新規登録」ボタンを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で「新規登録」ボタンの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-052	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-004を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-004の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-053	IT-26	更新内容	P1	更新時の更新内容確認	行「編集」を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で行「編集」の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-053	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-005を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-005の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	規格編集へ遷移すること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-054	IT-26	更新内容	P1	更新時の更新内容確認	存在しない商品 IDを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で存在しない商品 IDの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-055	IT-26	更新内容	P1	更新時の更新内容確認	一覧 URL へ POSTを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新処理 ProductClassUpdateAction::handle() が任意の例外を送出したとき（表示文言は $e->getMessage() 由来で可変・固定不能であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-054	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-006を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-006の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-056	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-055	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-007を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-056	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-008を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-057	IT-26	更新内容	P1	更新時の更新内容確認	画面上の並び順を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-057	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-009を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-058	IT-26	更新内容	P1	更新時の更新内容確認	在庫数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-058	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-010を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-059	IT-26	更新内容	P1	更新時の更新内容確認	販売制限数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で販売制限数の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-059	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-011を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-011の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-060	IT-05	実行結果	P1	更新時の実行結果確認	「新規登録」ヘッダを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で「新規登録」ヘッダの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-060	IT-05	実行結果	P1	更新時の実行結果確認	M03-08-MSG-012を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-012の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-061	IT-05	実行結果	P1	更新時の実行結果確認	商品登録画面上の確認付き規格一覧導線を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品登録画面上の確認付き規格一覧導線の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-061	IT-05	実行結果	P1	更新時の実行結果確認	M03-08-MSG-013を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-013の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET …/product/product/class/{id} と同じルート名で id を渡す確認付きリンク（テンプレートは未保存のときの id 取り回し規則に従う）であること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-062	IT-02	初期行数	P2	初期行数の結合確認	トランザクション境界を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でトランザクション境界の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	要ソース確認であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-062	IT-02	初期行数	P2	初期行数の結合確認	M03-08-MSG-014を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-014の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-014を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-063	IT-02	表示順	P2	表示順の結合確認	M03-08-MSG-015を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-015の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-015を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-064	IT-25	更新抑止	P1	更新抑止の結合確認	M03-08-MSG-016を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-016の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-065	IT-12	内部情報	P1	内部情報の結合確認	M03-08-MSG-017を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-017の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-066	IT-15	機密情報	P1	機密情報の結合確認	M03-08-MSG-018を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-018の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-08-MSG-019を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-019の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-019を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	トランザクション境界を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でトランザクション境界の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. トランザクション境界を確認する
 3. 画面表示と後続状態を確認する"	本機能は参照・出力を主とし、業務データ更新用の明示トランザクションを開始しないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-063	IT-02	表示順	P2	表示順の結合確認	ロックを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でロックの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ロックを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でロックの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ロックを確認する
 3. 画面表示と後続状態を確認する"	行ロック・悲観ロック・楽観ロック・ロックファイルを使用しないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-064	IT-25	更新抑止	P1	更新抑止の結合確認	例外時を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で例外時の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	出力もしくは表示処理中に例外が発生した場合、未送信の出力は完了しないこと。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-065	IT-12	内部情報	P1	内部情報の結合確認	言語・カード状態の参照を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で言語・カード状態の参照の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	dtb_product_class の language_id・card_condition_id に統合（補助表は廃止であること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-066	IT-15	機密情報	P1	機密情報の結合確認	商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ヘッダに商品名であること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-067	IT-07	排他制御	P1	排他制御の結合確認	return_product_list を付与して開くを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でreturn_product_list を付与して開くの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同じ一覧表示のうえ、フッタの戻りが商品一覧であり、クエリに resume=1 が付くであること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-068	IT-07	排他制御	P1	排他制御の結合確認	「新規登録」ボタンを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で「新規登録」ボタンの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	規格新規入力へ遷移すること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-069	IT-06	ロールバック	P3	ロールバックの結合確認	行「編集」を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で行「編集」の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	規格編集へ遷移すること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	存在しない商品 IDを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で存在しない商品 IDの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 存在しない商品 IDを確認する
-3. 画面表示と後続状態を確認する"	応答が 404 となる実装確認値とすること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	在庫数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で在庫数の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 在庫数を確認する
-3. 画面表示と後続状態を確認する"	stock_unlimited が真ならロケールの「無制限」短文であること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	販売制限数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で販売制限数の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 販売制限数を確認する
-3. 画面表示と後続状態を確認する"	設定があれば数値として表示するが、 Twig は偽評価のとき空文字となること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-073	IT-25	一覧	P2	一覧の結合確認	商品登録画面上の確認付き規格一覧導線を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品登録画面上の確認付き規格一覧導線の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 商品登録画面上の確認付き規格一覧導線を確認する
-3. 画面表示と後続状態を確認する"	GET …/product/product/class/{id} と同じルート名で id を渡す確認付きリンク（テンプレートは未保存のときの id 取り回し規則に従う）であること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-074	IT-12	画面表示データ	P2	画面表示データの結合確認	トランザクション境界を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でトランザクション境界の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. トランザクション境界を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-075	IT-12	画面表示データ	P2	画面表示データの結合確認	例外時を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で例外時の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	例外時を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で例外時の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 例外時を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-076	IT-25	画面表示データ	P2	画面表示データの結合確認	言語・カード状態の参照を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で言語・カード状態の参照の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	出力もしくは表示処理中に例外が発生した場合、未送信の出力は完了しないこと。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	言語・カード状態の参照を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で言語・カード状態の参照の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 言語・カード状態の参照を確認する
 3. 画面表示と後続状態を確認する"	dtb_product_class の language_id・card_condition_id に統合（補助表は廃止であること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-077	IT-25	フォーム送信	P1	フォーム送信の結合確認	商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 商品編集サイドなどから規格一覧を開く（確認ダイアログ経由など）
 3. 画面表示と後続状態を確認する"	ヘッダに商品名であること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-078	IT-12	非同期更新	P1	非同期更新の結合確認	「新規登録」ボタンを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で「新規登録」ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	return_product_list を付与して開くを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でreturn_product_list を付与して開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. return_product_list を付与して開く
+3. 画面表示と後続状態を確認する"	同じ一覧表示のうえ、フッタの戻りが商品一覧であり、クエリに resume=1 が付くであること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-074	IT-25	一覧	P2	一覧の結合確認	「新規登録」ボタンを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で「新規登録」ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「新規登録」ボタンを確認する
 3. 画面表示と後続状態を確認する"	規格新規入力へ遷移すること。
-m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-079	IT-12	エラー継続	P3	エラー継続の結合確認	行「編集」を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で行「編集」の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-075	IT-12	画面表示データ	P2	画面表示データの結合確認	行「編集」を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で行「編集」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 行「編集」を確認する
-3. 画面表示と後続状態を確認する"	規格編集へ遷移すること。
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-076	IT-25	画面表示データ	P2	画面表示データの結合確認	存在しない商品 IDを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で存在しない商品 IDの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 存在しない商品 IDを確認する
+3. 画面表示と後続状態を確認する"	応答が 404 となる実装確認値とすること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-077	IT-12	画面表示データ	P2	画面表示データの結合確認	一覧 URL へ POSTを試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で一覧 URL へ POSTの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧 URL へ POSTを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-078	IT-16	ファイル選択	P2	ファイル選択の結合確認	在庫数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で在庫数の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 在庫数を確認する
+3. 画面表示と後続状態を確認する"	stock_unlimited が真ならロケールの「無制限」短文であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-079	IT-12	非同期更新	P1	非同期更新の結合確認	販売制限数を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で販売制限数の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 販売制限数を確認する
+3. 画面表示と後続状態を確認する"	設定があれば数値として表示するが、 Twig は偽評価のとき空文字となること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-080	IT-25	件数上限	P2	件数上限の結合確認	商品登録画面上の確認付き規格一覧導線を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で商品登録画面上の確認付き規格一覧導線の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 商品登録画面上の確認付き規格一覧導線を確認する
+3. 画面表示と後続状態を確認する"	GET …/product/product/class/{id} と同じルート名で id を渡す確認付きリンク（テンプレートは未保存のときの id 取り回し規則に従う）であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-081	IT-25	欠損値	P2	欠損値の結合確認	M03-08-MSG-001を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	新規登録フォームが未送信もしくはバリデーション不正のとき（登録フォームを再描画）であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-082	IT-25	データなし	P2	データなしの結合確認	M03-08-MSG-002を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	登録処理 ProductClassStoreAction::handle() が任意の例外を送出したとき（表示文言は $e->getMessage() 由来で可変・固定文言を確定不能であること。
+m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-083	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	M03-08-MSG-003を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-08-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	登録処理が正常終了したとき（一覧へリダイレクト）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -376,4 +387,4 @@ m03-08_admin_product_product_product_class_list（管理画面_商品管理_商�
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 10件 — No.330, No.332, No.333, No.338, No.357, No.382, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.110, No.111, No.359, No.381, No.387。上限緩和または個別ケース化で収載可能。

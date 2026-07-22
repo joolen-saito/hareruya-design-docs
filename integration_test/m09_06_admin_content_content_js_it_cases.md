@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -90,73 +88,73 @@ m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript�
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	保存に失敗しましたを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 保存に失敗しました
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	読み込み条件を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 読み込み条件を確認する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M09-06-MSG-001を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M09-06-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-019	IT-22	部分入力	P2	部分入力の入力検証	保存単位を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存単位の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存単位
-3. 画面表示と後続状態を確認する"	コード入力1つの内容をそのまま1ファイルへ書き出すであること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-020	IT-26	登録内容	P1	登録時の登録内容確認	保存経路を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存経路の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-019	IT-22	部分入力	P2	部分入力の入力検証	M09-06-MSG-002を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でM09-06-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M09-06-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	成功フラッシュを積み、続けてファイルアダプタで /html/user_data/assets/js/ へ customize.js を配置したうえで admin_content_js へリダイレクトする（リダイレクト先…であること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-020	IT-26	登録内容	P1	登録時の登録内容確認	M09-06-MSG-003を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でM09-06-MSG-003の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-021	IT-26	登録内容	P1	登録時の登録内容確認	必須表示と検証の差を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で必須表示と検証の差の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-021	IT-26	登録内容	P1	登録時の登録内容確認	読み込み条件を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で読み込み条件の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-022	IT-26	登録内容	P1	登録時の登録内容確認	構文チェックの扱いを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で構文チェックの扱いの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-022	IT-26	登録内容	P1	登録時の登録内容確認	保存単位を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存単位の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-023	IT-26	登録内容	P1	登録時の登録内容確認	フロント反映を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でフロント反映の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-023	IT-26	登録内容	P1	登録時の登録内容確認	保存経路を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存経路の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存とフロント公開先への配置が成功すれば、以後フロント全ページの読み込み対象が更新後の内容になること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-024	IT-26	登録内容	P1	登録時の登録内容確認	コードを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でコードの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-025	IT-26	登録内容	P1	登録時の登録内容確認	編集対象ファイルが存在しないを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	まず管理サーバ上の編集対象ファイルへ書き出し、続いてファイルアダプタでフロント公開先へ配置する2段の経路であること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-024	IT-26	登録内容	P1	登録時の登録内容確認	必須表示と検証の差を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で必須表示と検証の差の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-026	IT-26	登録内容	P1	登録時の登録内容確認	編集対象ファイルが存在するが書き込み不可を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-025	IT-26	登録内容	P1	登録時の登録内容確認	構文チェックの扱いを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-026	IT-26	登録内容	P1	登録時の登録内容確認	フロント反映を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-027	IT-26	登録内容	P1	登録時の登録内容確認	コードを空文字で登録を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-027	IT-26	登録内容	P1	登録時の登録内容確認	コードを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-028	IT-26	登録内容	P1	登録時の登録内容確認	ブラウザ側でJavaScript構文エラーを検知を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-028	IT-26	登録内容	P1	登録時の登録内容確認	編集対象ファイルが存在しないを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-029	IT-26	登録内容	P1	登録時の登録内容確認	ファイル書き込み中の入出力例外を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でファイル書き込み中の入出力例外の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-029	IT-26	登録内容	P1	登録時の登録内容確認	編集対象ファイルが存在するが書き込み不可を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で編集対象ファイルが存在するが書き込み不可の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-030	IT-26	実行結果	P1	登録時の実行結果確認	編集対象ファイルとフロント公開先を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で編集対象ファイルとフロント公開先の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-030	IT-26	実行結果	P1	登録時の実行結果確認	コードを空文字で登録を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でコードを空文字で登録の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-031	IT-23	実行結果	P1	登録時の実行結果確認	画面表示と保存値を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で画面表示と保存値の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-031	IT-23	実行結果	P1	登録時の実行結果確認	ブラウザ側でJavaScript構文エラーを検知を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でブラウザ側でJavaScript構文エラーを検知の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面初期表示は編集対象ファイルの内容を読むであること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-032	IT-26	更新内容	P1	更新時の更新内容確認	同時編集を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で同時編集の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録ボタンが非活性となり送信できないこと。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-032	IT-26	更新内容	P1	更新時の更新内容確認	ファイル書き込み中の入出力例外を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でファイル書き込み中の入出力例外の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-033	IT-26	更新内容	P1	更新時の更新内容確認	フロント反映タイミングを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でフロント反映タイミングの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-033	IT-26	更新内容	P1	更新時の更新内容確認	編集対象ファイルとフロント公開先を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で編集対象ファイルとフロント公開先の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-034	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で入力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-034	IT-26	更新内容	P1	更新時の更新内容確認	画面表示と保存値を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で画面表示と保存値の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-035	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-035	IT-26	更新内容	P1	更新時の更新内容確認	同時編集を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で同時編集の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存完了フラッシュを伴う同一画面へのリダイレクト応答であること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-036	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-037	IT-26	更新内容	P1	更新時の更新内容確認	構文チェックを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	複数管理者が同時に登録した場合、最後に書き込んだ内容がファイルに残るであること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-036	IT-26	更新内容	P1	更新時の更新内容確認	フロント反映タイミングを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でフロント反映タイミングの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-038	IT-26	更新内容	P1	更新時の更新内容確認	なりすまし対策トークンを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-037	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-038	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-039	IT-26	更新内容	P1	更新時の更新内容確認	ナビからJavaScript管理を開くを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-039	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-040	IT-26	更新内容	P1	更新時の更新内容確認	登録に成功を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-040	IT-26	更新内容	P1	更新時の更新内容確認	構文チェックを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-041	IT-26	更新内容	P1	更新時の更新内容確認	カスタマイズ用JavaScriptを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でカスタマイズ用JavaScriptの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
@@ -183,69 +181,60 @@ m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript�
 m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-048	IT-15	機密情報	P1	機密情報の結合確認	表示要素を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で表示要素の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	見出し「JavaScript管理」、サブ見出し「コンテンツ管理」であること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-049	IT-07	排他制御	P1	排他制御の結合確認	コードエディタを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でコードエディタの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Aceエディタを高さ480pxの領域に生成すること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-050	IT-07	排他制御	P1	排他制御の結合確認	JS挙動（構文チェック）を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でJS挙動（構文チェック）の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	エディタの注釈変更イベントを監視し、注釈にエラー種別が1件でもあれば登録ボタンを非活性にすること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-051	IT-06	ロールバック	P3	ロールバックの結合確認	JS挙動（送信）を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でJS挙動（送信）の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォーム送信時に、エディタの現在値を非表示textareaへ書き戻してから送信すること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-052	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	エディタ注釈変更を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でエディタ注釈変更の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-049	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	JS挙動（構文チェック）を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でJS挙動（構文チェック）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動（構文チェック）を確認する
+3. 画面表示と後続状態を確認する"	エディタの注釈変更イベントを監視し、注釈にエラー種別が1件でもあれば登録ボタンを非活性にすること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-050	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	JS挙動（送信）を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でJS挙動（送信）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動（送信）
+3. 画面表示と後続状態を確認する"	フォーム送信時に、エディタの現在値を非表示textareaへ書き戻してから送信すること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-051	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	エディタ注釈変更を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でエディタ注釈変更の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. エディタ注釈変更を確認する
 3. 画面表示と後続状態を確認する"	サーバ側ではJavaScript構文の妥当性を検証しないこと。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-053	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	フォーム送信を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でフォーム送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	フォーム送信を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でフォーム送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フォーム送信
 3. 画面表示と後続状態を確認する"	保存先ファイルへの書き込み可否とフロント公開先への配置可否をサーバ側で処理すること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-054	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	案内を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で案内の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-053	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	案内を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で案内の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 案内を確認する
 3. 画面表示と後続状態を確認する"	画面表示時に未表示であれば1回だけ情報メッセージとして表示すること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-055	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	保存しましたを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存しましたの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-054	IT-25	一覧	P2	一覧の結合確認	保存しましたを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存しましたの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存しました
 3. 画面表示と後続状態を確認する"	ロケールキー admin.common.save_completeであること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-056	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	保存に失敗しましたを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存に失敗しましたの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-055	IT-12	画面表示データ	P2	画面表示データの結合確認	保存に失敗しましたを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存に失敗しましたの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存に失敗しました
-3. 画面表示と後続状態を確認する"	ロケールキー admin.common.save_errorであること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-057	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	読み込み条件を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で読み込み条件の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-056	IT-25	画面表示データ	P2	画面表示データの結合確認	M09-06-MSG-001を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でM09-06-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M09-06-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	情報フラッシュを積むのみであること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-057	IT-12	画面表示データ	P2	画面表示データの結合確認	M09-06-MSG-002を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でM09-06-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M09-06-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-058	IT-25	画面表示データ	P2	画面表示データの結合確認	M09-06-MSG-003を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でM09-06-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M09-06-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	エラーフラッシュを積み、同文言と [対象パス, 例外] を log_error へ出力すること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-059	IT-25	フォーム送信	P1	フォーム送信の結合確認	読み込み条件を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で読み込み条件の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 読み込み条件を確認する
 3. 画面表示と後続状態を確認する"	編集対象ファイルが存在し、かつ書き込み可能なときに限り、その内容をエディタへ初期表示すること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-058	IT-12	画面表示データ	P2	画面表示データの結合確認	保存経路を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存経路の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-060	IT-16	ファイル選択	P2	ファイル選択の結合確認	保存単位を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存単位の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 保存単位
+3. 画面表示と後続状態を確認する"	コード入力1つの内容をそのまま1ファイルへ書き出すであること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-061	IT-12	非同期更新	P1	非同期更新の結合確認	保存経路を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で保存経路の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存経路
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-059	IT-25	画面表示データ	P2	画面表示データの結合確認	必須表示と検証の差を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で必須表示と検証の差の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	まず管理サーバ上の編集対象ファイルへ書き出し、続いてファイルアダプタでフロント公開先へ配置する2段の経路であること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-062	IT-12	エラー継続	P3	エラー継続の結合確認	必須表示と検証の差を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で必須表示と検証の差の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 必須表示と検証の差を確認する
 3. 画面表示と後続状態を確認する"	画面のコード見出しには必須バッジを表示するが、フォーム側のコード入力は必須指定を付与しないこと。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-060	IT-12	画面表示データ	P2	画面表示データの結合確認	構文チェックの扱いを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で構文チェックの扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-063	IT-25	件数上限	P2	件数上限の結合確認	構文チェックの扱いを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で構文チェックの扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 構文チェックの扱いを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-061	IT-25	画面表示データ	P2	画面表示データの結合確認	フロント反映を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でフロント反映の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	構文エラーの検知と登録ボタン非活性はブラウザ側のエディタ機能であること。
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-064	IT-25	欠損値	P2	欠損値の結合確認	フロント反映を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でフロント反映の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フロント反映を確認する
 3. 画面表示と後続状態を確認する"	保存とフロント公開先への配置が成功すれば、以後フロント全ページの読み込み対象が更新後の内容になること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-062	IT-25	フォーム送信	P1	フォーム送信の結合確認	コードを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でコードの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-065	IT-25	データなし	P2	データなしの結合確認	コードを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でコードの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. コードを確認する
 3. 画面表示と後続状態を確認する"	eccube_html_dir 配下 /user_data/assets/js/customize.js へ全文書き出し（フォームキー js、複数行入力）であること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-063	IT-16	ファイル選択	P2	ファイル選択の結合確認	編集対象ファイルが存在しないを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で編集対象ファイルが存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-066	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	編集対象ファイルが存在しないを試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で編集対象ファイルが存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 編集対象ファイルが存在しないを確認する
 3. 画面表示と後続状態を確認する"	エディタは空で表示すること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-064	IT-12	非同期更新	P1	非同期更新の結合確認	編集対象ファイルが存在するが書き込み不可を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で編集対象ファイルが存在するが書き込み不可の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 編集対象ファイルが存在するが書き込み不可を確認する
-3. 画面表示と後続状態を確認する"	既存内容を初期表示しない（空表示）であること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-065	IT-12	エラー継続	P3	エラー継続の結合確認	コードを空文字で登録を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でコードを空文字で登録の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. コードを空文字で登録を確認する
-3. 画面表示と後続状態を確認する"	フォーム検証を通過し、空内容でファイルを上書きすること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-066	IT-25	件数上限	P2	件数上限の結合確認	ブラウザ側でJavaScript構文エラーを検知を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でブラウザ側でJavaScript構文エラーを検知の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ブラウザ側でJavaScript構文エラーを検知を確認する
-3. 画面表示と後続状態を確認する"	登録ボタンが非活性となり送信できないこと。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-067	IT-25	欠損値	P2	欠損値の結合確認	ファイル書き込み中の入出力例外を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）でファイル書き込み中の入出力例外の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ファイル書き込み中の入出力例外を確認する
-3. 画面表示と後続状態を確認する"	保存完了メッセージを積まず、保存失敗メッセージを表示し、アプリケーションログにエラーを記録すること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-068	IT-25	データなし	P2	データなしの結合確認	編集対象ファイルとフロント公開先を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で編集対象ファイルとフロント公開先の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 編集対象ファイルとフロント公開先を確認する
-3. 画面表示と後続状態を確認する"	登録成功時は編集対象ファイルへ書き込んだ後にフロント公開先へ配置すること。
-m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）	IT-M09-06-ADMIN-CONTENT-CONTENT-JS-069	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	画面表示と保存値を試験できる状態である	m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）（m09_06_admin_content_content_js）で画面表示と保存値の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 画面表示と保存値
-3. 画面表示と後続状態を確認する"	画面初期表示は編集対象ファイルの内容を読むであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -347,4 +336,4 @@ m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.329, No.346。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.109, No.110, No.111, No.329, No.333。上限緩和または個別ケース化で収載可能。

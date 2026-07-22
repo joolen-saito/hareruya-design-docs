@@ -13,18 +13,16 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、登録内容 |
-| IT-16 | 実行結果 |
+| IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録、対象機能、更新結果 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -247,45 +245,65 @@ m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷�
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	「配列でかつ空でない」だけをハンドラ先頭で確認すること。
 m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-077	IT-15	機密情報	P1	機密情報の結合確認	アクセス権を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-078	IT-07	排他制御	P1	排他制御の結合確認	一覧でチェック付与後にボタン成功を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	POSTに成功すると新規ウィンドウボディへ納品書HTMLのみを返す親ドキュメントであること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-079	IT-07	排他制御	P1	排他制御の結合確認	受注一覧の「納品書印刷（日本語）」ボタン（一覧に配送行があること、かつチェック…を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	空ウィンドウを開き、一覧のPOST先を上記に差し替えて送信すること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-080	IT-06	ロールバック	P3	ロールバックの結合確認	チェックが無い状態で同名ボタンを押したときを試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	"alert(""チェックボックスが選択されていません"") のみであり、ブラウザ遷移は起こさないこと。"
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-081	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	PHPのタイム上限解除のあと、ids[] と内部結合用の配送マスタ海外フラグに…を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	一覧でチェック付与後にボタン成功を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 一覧でチェック付与後にボタン成功を確認する
+3. 画面表示と後続状態を確認する"	POSTに成功すると新規ウィンドウボディへ納品書HTMLのみを返す親ドキュメントであること。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	受注一覧の「納品書印刷（日本語）」ボタン（一覧に配送行があること、かつチェック…を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 受注一覧の「納品書印刷（日本語）」ボタン（一覧に配送行があること、かつチェック…を確認する
+3. 画面表示と後続状態を確認する"	空ウィンドウを開き、一覧のPOST先を上記に差し替えて送信すること。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	チェックが無い状態で同名ボタンを押したときを試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. チェックが無い状態で同名ボタンを押したときを確認する
+3. 画面表示と後続状態を確認する"	"alert(""チェックボックスが選択されていません"") のみであり、ブラウザ遷移は起こさないこと。"
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	PHPのタイム上限解除のあと、ids[] と内部結合用の配送マスタ海外フラグに…を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. PHPのタイム上限解除のあと、ids[] と内部結合用の配送マスタ海外フラグに…を確認する
 3. 画面表示と後続状態を確認する"	PHPのタイム上限解除のあと、ids[] と内部結合用の配送マスタ海外フラグにより納品書データを構築し、日本語HTMLを応答ボディへ載せて返すこと。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-082	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ルート要件上は許可されているを試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ルート要件上は許可されているを試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ルート要件上は許可されているを確認する
 3. 画面表示と後続状態を確認する"	ルート要件上は許可されていること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-083	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	「納品書印刷（日本語）」および英語側の並列ボタンが受注一覧の一括処理帯にあること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-084	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	JS挙動を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	JS挙動を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	チェック確認のあと window.open で名前 newwin のウィンドウを開き、form_bulk の action を日本語印刷URLへ、target を newwin へセットして送信すること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	モーダル・ポップアップを試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-085	IT-25	一覧	P2	一覧の結合確認	モーダル・ポップアップを試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	印刷前の確認モーダルは無い新規ウィンドウ遷移であること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-086	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	注文単位の合計数量（明細別ではない総数）を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-086	IT-12	画面表示データ	P2	画面表示データの結合確認	注文単位の合計数量（明細別ではない総数）を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 注文単位の合計数量（明細別ではない総数）を確認する
-3. 画面表示と後続状態を確認する"	同一注文の明細について quantity を合計したものをクエリ側で算出し、レイアウト下部の比率表示などに載せる実装となること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-087	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	日本語一覧に載る請求側の項目を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-087	IT-25	画面表示データ	P2	画面表示データの結合確認	日本語一覧に載る請求側の項目を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 日本語一覧に載る請求側の項目を確認する
 3. 画面表示と後続状態を確認する"	「お買上額」「送料」「手数料」「ポイント使用」「発送方法」はひとつの注文オブジェクトへ保持される各列相当の値としてテンプレートへ渡されるであること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-088	IT-25	一覧	P2	一覧の結合確認	一覧からの入力を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-088	IT-12	画面表示データ	P2	画面表示データの結合確認	一覧からの入力を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 一覧からの入力
-3. 画面表示と後続状態を確認する"	画面上は配送単位チェックのみが本機能固有の増分であること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-089	IT-12	画面表示データ	P2	画面表示データの結合確認	国内配送のみ残す内部結合を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 国内配送のみ残す内部結合を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-090	IT-25	画面表示データ	P2	画面表示データの結合確認	並び順を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-089	IT-25	画面表示データ	P2	画面表示データの結合確認	国内配送のみ残す内部結合を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 国内配送のみ残す内部結合を確認する
+3. 画面表示と後続状態を確認する"	海外フラグ・真側を要求するクエリ構成では、is_abroad が真へ一致する発送のみ残るであること。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-090	IT-25	フォーム送信	P1	フォーム送信の結合確認	並び順を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 並び順を確認する
 3. 画面表示と後続状態を確認する"	クエリ側で並び順用トレイトを呼ぶであること。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-091	IT-16	ファイル選択	P2	ファイル選択の結合確認	ids[] が無いまたは空であるを試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-092	IT-12	非同期更新	P1	非同期更新の結合確認	同一注文に複数配送が存在し両方選ばれたを試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 同一注文に複数配送が存在し両方選ばれたを確認する
+3. 画面表示と後続状態を確認する"	クエリおよび配列結合構造により、結果の単一注文キーを根にした配列要素へ複数配送列が順に上書きされる可能性があること。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-093	IT-12	エラー継続	P3	エラー継続の結合確認	一覧チェック状態と送信IDを試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 一覧チェック状態と送信ID
+3. 画面表示と後続状態を確認する"	POSTは送信時点でブラウザがマークしている配送行のみであり、一覧の並び順や検索状態は送信本文には埋め込まないこと。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-094	IT-25	件数上限	P2	件数上限の結合確認	適格請求書登録番号を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 適格請求書登録番号を確認する
+3. 画面表示と後続状態を確認する"	レイアウトは基本情報オブジェクトへ保持される登録番号をそのまま表示するのみであり、桁や形式チェック画面は無いであること。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-095	IT-25	欠損値	P2	欠損値の結合確認	入力（HTTP本文）を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 入力（HTTP本文）
+3. 画面表示と後続状態を確認する"	配送ID一覧 idsであること。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-096	IT-25	データなし	P2	データなしの結合確認	成功時出力を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	HTML応答であること。
+m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））	IT-M05-09-ADMIN-ORDER-ORDER-PRINT-DELIVERY-SLIPS-JA-097	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	失敗時出力を試験できる状態である	m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷（日本語））（m05_09_admin_order_order_print_delivery_slips_ja）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	配送ID入力が要件を満たさないときは異常応答（404系）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -376,4 +394,4 @@ m05-09_admin_order_order_print_delivery_slips_ja（受注管理_納品書印刷�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 10件 — No.358, No.359, No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

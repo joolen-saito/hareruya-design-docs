@@ -13,7 +13,7 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
@@ -22,10 +22,8 @@
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 
 ## テストケースTSV
 
@@ -52,7 +50,7 @@ M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-C
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
 M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-004	IT-15	対象データ	P1	対象データの結合確認	欠品履歴CSV出力を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で対象データの対象ファイルと処理条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	リクエストの ids[]（選択された在庫履歴ID配列）を受け取り、該当する欠品履歴のCSVを StreamedResponse で返すこと。
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	リクエストの ids[]（在庫履歴ID配列であること。
 M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-005	IT-20	出力抑止	P1	出力抑止の結合確認	文字コードを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力抑止の対象ファイルと処理条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	eccube_csv_export_encoding（既定 SJIS-win）であること。
@@ -64,7 +62,7 @@ M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-C
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	StreamedResponseであること。
 M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-008	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で確認ダイアログの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を確認する
-3. 画面表示と後続状態を確認する"	responseNoStockHistoryIdError()：addError('eccube.admin.error', trans('admin.stock_history.not_select')) を表示し、…であること。
+3. 画面表示と後続状態を確認する"	responseNoStockHistoryIdError()：addError('eccube.admin.error', trans('admin.stock_history.not_select')) を実行し、…であること。
 M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	指定IDに該当する在庫履歴が存在しない / 変換結果が空を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 指定IDに該当する在庫履歴が存在しない / 変換結果が空を確認する
 3. 画面表示と後続状態を確認する"	StockHistoryDisposalCsv::exportCsv() が RuntimeException を送出であること。
@@ -77,217 +75,214 @@ M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-C
 M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-012	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	ログを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. ログを確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-013	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-013	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	M04-20-MSG-004を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-20-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	欠品履歴CSV出力（admin_stock_history_disposal_csv_export）で StockHistoryDisposalCsv::exportCsv() が RuntimeException を…であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M04-20-MSG-005を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. M04-20-MSG-005を確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M04-20-MSG-007を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. M04-20-MSG-007を確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 出力対象の在庫履歴を確認する
-3. 画面表示と後続状態を確認する"	dtb_stock_history（移行先で実在）であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-017	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 欠品履歴の参照を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	CSV列の追加仕様を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	CSV列の追加仕様を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. CSV列の追加仕様を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	機能名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 機能名を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-017	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	実装確認を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	2026-06-12を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 2026-06-12を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-019	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	欠品履歴CSV出力を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 欠品履歴CSV出力を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-020	IT-22	部分入力	P2	部分入力の入力検証	文字コードを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 文字コードを確認する
-3. 画面表示と後続状態を確認する"	eccube_csv_export_encoding（既定 SJIS-win）であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-021	IT-26	登録内容	P1	登録時の登録内容確認	ファイル名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-022	IT-26	登録内容	P1	登録時の登録内容確認	出力方式を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-023	IT-26	登録内容	P1	登録時の登録内容確認	ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-024	IT-26	登録内容	P1	登録時の登録内容確認	指定IDに該当する在庫履歴が存在しない / 変換結果が空を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	StockHistoryDisposalCsv::exportCsv() が RuntimeException を送出であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	正常を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	主データを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	ログを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-030	IT-26	登録内容	P1	登録時の登録内容確認	CSV列の追加仕様を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-031	IT-26	実行結果	P1	登録時の実行結果確認	機能名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-032	IT-23	実行結果	P1	登録時の実行結果確認	実装確認を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	../ec-cube-enterprise（StockHistoryController::csvStockHistoryDispozalExport / Service\Csv\StockHistoryDisposa…であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-033	IT-26	更新内容	P1	更新時の更新内容確認	2026-06-12を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-034	IT-26	更新内容	P1	更新時の更新内容確認	欠品履歴CSV出力を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-035	IT-26	更新内容	P1	更新時の更新内容確認	文字コードを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-036	IT-26	更新内容	P1	更新時の更新内容確認	ファイル名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	stock_history_disposal_ + 出力時刻 YmdHis + .csv（例: stock_history_disposal_20260612153000.csv）であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	出力方式を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	指定IDに該当する在庫履歴が存在しない / 変換結果が空を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	正常を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	主データを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-042	IT-26	更新内容	P1	更新時の更新内容確認	ログを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-043	IT-05	実行結果	P1	更新時の実行結果確認	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-044	IT-05	実行結果	P1	更新時の実行結果確認	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_stock_history を参照であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-045	IT-16	実行結果	P2	実行結果の結合確認	CSV列の追加仕様を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-046	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	機能名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-047	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	実装確認を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-048	IT-27	実行結果	P2	実行結果の結合確認	2026-06-12を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-049	IT-27	実行結果	P2	実行結果の結合確認	欠品履歴CSV出力を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-050	IT-24	出力内容	P2	出力内容の結合確認	文字コードを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-051	IT-24	出力内容	P2	出力内容の結合確認	ファイル名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-052	IT-24	出力内容	P2	出力内容の結合確認	出力方式を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-053	IT-24	出力内容	P2	出力内容の結合確認	ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-054	IT-24	出力内容	P2	出力内容の結合確認	指定IDに該当する在庫履歴が存在しない / 変換結果が空を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-055	IT-27	削除	P1	削除の結合確認	正常を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-056	IT-27	移動・リネーム	P2	移動・リネームの結合確認	主データを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-057	IT-27	コピー	P1	コピーの結合確認	ログを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-058	IT-33	ファイル登録	P1	ファイル登録の結合確認	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-059	IT-33	ファイル出力	P1	ファイル出力の結合確認	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-060	IT-27	JSON	P1	JSONの結合確認	CSV列の追加仕様を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-061	IT-27	同名ファイル	P1	同名ファイルの結合確認	機能名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-062	IT-27	入力JSON	P1	入力JSONの結合確認	実装確認を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-063	IT-27	配置先	P1	配置先の結合確認	2026-06-12を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-064	IT-27	スキーマ	P1	スキーマの結合確認	欠品履歴CSV出力を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-065	IT-02	初期行数	P2	初期行数の結合確認	文字コードを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 文字コードを確認する
-3. 画面表示と後続状態を確認する"	eccube_csv_export_encoding（既定 SJIS-win）であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-066	IT-02	表示順	P2	表示順の結合確認	ファイル名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ファイル名を確認する
-3. 画面表示と後続状態を確認する"	stock_history_disposal_ + 出力時刻 YmdHis + .csv（例: stock_history_disposal_20260612153000.csv）であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-067	IT-25	更新抑止	P1	更新抑止の結合確認	出力方式を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-068	IT-12	内部情報	P1	内部情報の結合確認	ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	responseNoStockHistoryIdError()：addError('eccube.admin.error', trans('admin.stock_history.not_select')) を表示し、…であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-069	IT-15	機密情報	P1	機密情報の結合確認	指定IDに該当する在庫履歴が存在しない / 変換結果が空を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-070	IT-07	排他制御	P1	排他制御の結合確認	正常を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	StreamedResponse（HTTP 200、text/csv、attachment）を返すこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-071	IT-07	排他制御	P1	排他制御の結合確認	主データを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	欠品履歴CSV出力は**参照のみ**で業務データを更新しない（在庫・履歴の更新は行わない）であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-072	IT-06	ロールバック	P3	ロールバックの結合確認	ログを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出力ファイル名を log_info でアプリケーションログに記録すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-073	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力対象の在庫履歴を確認する
-3. 画面表示と後続状態を確認する"	dtb_stock_history（移行先で実在）であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 欠品履歴の参照を確認する
-3. 画面表示と後続状態を確認する"	dtb_stock_history を参照であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-075	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSV列の追加仕様を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSV列の追加仕様を確認する
-3. 画面表示と後続状態を確認する"	**Excelの列要件（店舗・在庫区分・登録元・登録元ID・欠品時販売価格・欠品理由・最終更新日・最終更新者）を正とすること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	機能名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-019	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	機能名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 機能名を確認する
-3. 画面表示と後続状態を確認する"	欠品履歴CSV出力であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	実装確認を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-020	IT-22	部分入力	P2	部分入力の入力検証	実装確認を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 実装確認を確認する
 3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockHistoryController::csvStockHistoryDispozalExport / Service\Csv\StockHistoryDisposa…であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	2026-06-12を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 2026-06-12を確認する
-3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	欠品履歴CSV出力を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 欠品履歴CSV出力を確認する
-3. 画面表示と後続状態を確認する"	リクエストの ids[]（選択された在庫履歴ID配列）を受け取り、該当する欠品履歴のCSVを StreamedResponse で返すこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-080	IT-25	一覧	P2	一覧の結合確認	文字コードを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 文字コードを確認する
-3. 画面表示と後続状態を確認する"	eccube_csv_export_encoding（既定 SJIS-win）であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-081	IT-12	画面表示データ	P2	画面表示データの結合確認	ファイル名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ファイル名を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-082	IT-25	画面表示データ	P2	画面表示データの結合確認	出力方式を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力方式を確認する
-3. 画面表示と後続状態を確認する"	StreamedResponseであること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-083	IT-12	画面表示データ	P2	画面表示データの結合確認	ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-084	IT-25	画面表示データ	P2	画面表示データの結合確認	指定IDに該当する在庫履歴が存在しない / 変換結果が空を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 指定IDに該当する在庫履歴が存在しない / 変換結果が空を確認する
-3. 画面表示と後続状態を確認する"	StockHistoryDisposalCsv::exportCsv() が RuntimeException を送出であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-085	IT-25	フォーム送信	P1	フォーム送信の結合確認	正常を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 正常を確認する
-3. 画面表示と後続状態を確認する"	StreamedResponse（HTTP 200、text/csv、attachment）を返すこと。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-086	IT-16	ファイル選択	P2	ファイル選択の結合確認	主データを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-087	IT-12	非同期更新	P1	非同期更新の結合確認	ログを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-021	IT-26	登録内容	P1	登録時の登録内容確認	2026-06-12を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-022	IT-26	登録内容	P1	登録時の登録内容確認	欠品履歴CSV出力を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-023	IT-26	登録内容	P1	登録時の登録内容確認	文字コードを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-024	IT-26	登録内容	P1	登録時の登録内容確認	ファイル名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	stock_history_disposal_ + 出力時刻 YmdHis + .csv（例: stock_history_disposal_20260612153000.csv）であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	出力方式を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	指定IDに該当する在庫履歴が存在しない / 変換結果が空を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	正常を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	主データを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-030	IT-26	登録内容	P1	登録時の登録内容確認	ログを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-031	IT-26	実行結果	P1	登録時の実行結果確認	M04-20-MSG-004を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-032	IT-23	実行結果	P1	登録時の実行結果確認	M04-20-MSG-005を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送信 ids[] を intval・正数抽出した結果が空のとき（responseNoStockHistoryIdError()であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-033	IT-26	更新内容	P1	更新時の更新内容確認	M04-20-MSG-007を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-034	IT-26	更新内容	P1	更新時の更新内容確認	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-035	IT-26	更新内容	P1	更新時の更新内容確認	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-036	IT-26	更新内容	P1	更新時の更新内容確認	CSV列の追加仕様を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	**Excelの列要件（店舗・在庫区分・登録元・登録元ID・欠品時販売価格・欠品理由・最終更新日・最終更新者）を正とすること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	機能名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	実装確認を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	2026-06-12を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	欠品履歴CSV出力を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	文字コードを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-042	IT-26	更新内容	P1	更新時の更新内容確認	ファイル名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-043	IT-05	実行結果	P1	更新時の実行結果確認	出力方式を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-044	IT-05	実行結果	P1	更新時の実行結果確認	ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	responseNoStockHistoryIdError()：addError('eccube.admin.error', trans('admin.stock_history.not_select')) を実行し、…であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-045	IT-16	実行結果	P2	実行結果の結合確認	指定IDに該当する在庫履歴が存在しない / 変換結果が空を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-046	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	正常を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-047	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	主データを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-048	IT-27	実行結果	P2	実行結果の結合確認	ログを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-049	IT-27	実行結果	P2	実行結果の結合確認	M04-20-MSG-004を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-050	IT-24	出力内容	P2	出力内容の結合確認	M04-20-MSG-005を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-051	IT-24	出力内容	P2	出力内容の結合確認	M04-20-MSG-007を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-052	IT-24	出力内容	P2	出力内容の結合確認	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-053	IT-24	出力内容	P2	出力内容の結合確認	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-054	IT-24	出力内容	P2	出力内容の結合確認	CSV列の追加仕様を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-055	IT-27	削除	P1	削除の結合確認	機能名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-056	IT-27	移動・リネーム	P2	移動・リネームの結合確認	実装確認を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-057	IT-27	コピー	P1	コピーの結合確認	2026-06-12を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-058	IT-33	ファイル登録	P1	ファイル登録の結合確認	欠品履歴CSV出力を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-059	IT-33	ファイル出力	P1	ファイル出力の結合確認	文字コードを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-060	IT-27	JSON	P1	JSONの結合確認	ファイル名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-061	IT-27	同名ファイル	P1	同名ファイルの結合確認	出力方式を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-062	IT-27	入力JSON	P1	入力JSONの結合確認	ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-063	IT-27	配置先	P1	配置先の結合確認	指定IDに該当する在庫履歴が存在しない / 変換結果が空を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-064	IT-27	スキーマ	P1	スキーマの結合確認	正常を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-065	IT-02	初期行数	P2	初期行数の結合確認	主データを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 主データを確認する
+3. 画面表示と後続状態を確認する"	欠品履歴CSV出力は**参照のみ**で業務データを更新しない（在庫・履歴の更新は行わない）であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-066	IT-02	表示順	P2	表示順の結合確認	ログを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ログを確認する
 3. 画面表示と後続状態を確認する"	出力ファイル名を log_info でアプリケーションログに記録すること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-088	IT-12	エラー継続	P3	エラー継続の結合確認	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-067	IT-25	更新抑止	P1	更新抑止の結合確認	M04-20-MSG-004を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-068	IT-12	内部情報	P1	内部情報の結合確認	M04-20-MSG-005を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	送信 ids[] を intval・正数抽出した結果が空のとき（responseNoStockHistoryIdError()であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-069	IT-15	機密情報	P1	機密情報の結合確認	M04-20-MSG-007を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 出力対象の在庫履歴を確認する
 3. 画面表示と後続状態を確認する"	dtb_stock_history（移行先で実在）であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-089	IT-25	件数上限	P2	件数上限の結合確認	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 欠品履歴の参照を確認する
 3. 画面表示と後続状態を確認する"	dtb_stock_history を参照であること。
-M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-090	IT-25	欠損値	P2	欠損値の結合確認	CSV列の追加仕様を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSV列の追加仕様を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSV列の追加仕様を確認する
 3. 画面表示と後続状態を確認する"	**Excelの列要件（店舗・在庫区分・登録元・登録元ID・欠品時販売価格・欠品理由・最終更新日・最終更新者）を正とすること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-073	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	機能名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 機能名を確認する
+3. 画面表示と後続状態を確認する"	欠品履歴CSV出力であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	実装確認を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 実装確認を確認する
+3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockHistoryController::csvStockHistoryDispozalExport / Service\Csv\StockHistoryDisposa…であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	2026-06-12を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 2026-06-12を確認する
+3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	欠品履歴CSV出力を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 欠品履歴CSV出力を確認する
+3. 画面表示と後続状態を確認する"	リクエストの ids[]（在庫履歴ID配列であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-077	IT-25	一覧	P2	一覧の結合確認	文字コードを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 文字コードを確認する
+3. 画面表示と後続状態を確認する"	eccube_csv_export_encoding（既定 SJIS-win）であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-078	IT-12	画面表示データ	P2	画面表示データの結合確認	ファイル名を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ファイル名を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-079	IT-25	画面表示データ	P2	画面表示データの結合確認	出力方式を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力方式を確認する
+3. 画面表示と後続状態を確認する"	StreamedResponseであること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-080	IT-12	画面表示データ	P2	画面表示データの結合確認	ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ids パラメータ無し / 空配列 / 0以下のみ（有効ID0件）を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-081	IT-25	画面表示データ	P2	画面表示データの結合確認	指定IDに該当する在庫履歴が存在しない / 変換結果が空を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 指定IDに該当する在庫履歴が存在しない / 変換結果が空を確認する
+3. 画面表示と後続状態を確認する"	StockHistoryDisposalCsv::exportCsv() が RuntimeException を送出であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-082	IT-25	フォーム送信	P1	フォーム送信の結合確認	正常を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 正常を確認する
+3. 画面表示と後続状態を確認する"	StreamedResponse（HTTP 200、text/csv、attachment）を返すこと。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-083	IT-16	ファイル選択	P2	ファイル選択の結合確認	主データを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-084	IT-12	非同期更新	P1	非同期更新の結合確認	ログを試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ログを確認する
+3. 画面表示と後続状態を確認する"	出力ファイル名を log_info でアプリケーションログに記録すること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-085	IT-12	エラー継続	P3	エラー継続の結合確認	M04-20-MSG-004を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-20-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	欠品履歴CSV出力（admin_stock_history_disposal_csv_export）で StockHistoryDisposalCsv::exportCsv() が RuntimeException を…であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-086	IT-25	件数上限	P2	件数上限の結合確認	M04-20-MSG-005を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-20-MSG-005を確認する
+3. 画面表示と後続状態を確認する"	送信 ids[] を intval・正数抽出した結果が空のとき（responseNoStockHistoryIdError()であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-087	IT-25	欠損値	P2	欠損値の結合確認	M04-20-MSG-007を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-20-MSG-007を確認する
+3. 画面表示と後続状態を確認する"	検索フォームの日付項目（登録日/更新日/承認日の from/to）が 1900-01-01 より前のとき（Assert\Range の minMessage=form_error.out_of_range）であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-088	IT-25	データなし	P2	データなしの結合確認	出力対象の在庫履歴を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力対象の在庫履歴を確認する
+3. 画面表示と後続状態を確認する"	dtb_stock_history（移行先で実在）であること。
+M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-CSV-EXPORT-089	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	欠品履歴の参照を試験できる状態である	M04-20（欠品履歴CSV出力）（m04_20_admin_stock_stock_shortage_history_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 欠品履歴の参照を確認する
+3. 画面表示と後続状態を確認する"	dtb_stock_history を参照であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -380,4 +375,4 @@ M04-20（欠品履歴CSV出力）	IT-M04-20-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-C
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

@@ -12,17 +12,16 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、一覧、件数上限、更新抑止、欠損値、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 削除条件、実行結果 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-11 | 実行結果 |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -139,84 +138,84 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-033	IT-26	登録内容	P1	登録時の登録内容確認	フォーム検証エラーを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でフォーム検証エラーの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-034	IT-26	登録内容	P1	登録時の登録内容確認	削除方式を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で削除方式の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-034	IT-26	登録内容	P1	登録時の登録内容確認	M10-08-MSG-001を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でM10-08-MSG-001の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-035	IT-26	登録内容	P1	登録時の登録内容確認	自動送信対象の判定を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で自動送信対象の判定の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-035	IT-26	登録内容	P1	登録時の登録内容確認	削除方式を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で削除方式の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_mail_template.is_auto_send（真偽型、自動送信フラグ）で判定であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-036	IT-26	登録内容	P1	登録時の登録内容確認	名称・本文ファイル・ヘッダー・フッター・作成者・作成更新を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で名称・本文ファイル・ヘッダー・フッター・作成者・作成更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-037	IT-26	登録内容	P1	登録時の登録内容確認	メールテンプレート行を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	del_flg 列は無いであること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-036	IT-26	登録内容	P1	登録時の登録内容確認	自動送信対象の判定を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で自動送信対象の判定の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-038	IT-26	登録内容	P1	登録時の登録内容確認	自動送信対象テンプレートを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-037	IT-26	登録内容	P1	登録時の登録内容確認	名称・本文ファイル・ヘッダー・フッター・作成者・作成更新を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-038	IT-26	登録内容	P1	登録時の登録内容確認	メールテンプレート行を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-039	IT-26	登録内容	P1	登録時の登録内容確認	管理者を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-039	IT-26	登録内容	P1	登録時の登録内容確認	自動送信対象テンプレートを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-040	IT-26	登録内容	P1	登録時の登録内容確認	管理ナビの「店舗設定」配下から「自動送信メール」を開くを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-040	IT-26	登録内容	P1	登録時の登録内容確認	管理者を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-041	IT-26	登録内容	P1	登録時の登録内容確認	テンプレ選択を変更するを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でテンプレ選択を変更するの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-041	IT-26	登録内容	P1	登録時の登録内容確認	管理ナビの「店舗設定」配下から「自動送信メール」を開くを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で管理ナビの「店舗設定」配下から「自動送信メール」を開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-042	IT-26	実行結果	P1	登録時の実行結果確認	値を入力して「登録」を押すを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で値を入力して「登録」を押すの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-042	IT-26	実行結果	P1	登録時の実行結果確認	テンプレ選択を変更するを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でテンプレ選択を変更するの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-043	IT-23	実行結果	P1	登録時の実行結果確認	自動送信対象外の識別子をURL等で直接指定するを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で自動送信対象外の識別子をURL等で直接指定するの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-043	IT-23	実行結果	P1	登録時の実行結果確認	値を入力して「登録」を押すを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で値を入力して「登録」を押すの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	該当行が検索条件に合致しないため、見つからない扱いとなりブラウザには404相当の応答となること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-044	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で表示要素の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CSRFと入力検証に成功すればDBへ保存し、管理画面向け成功メッセージを積んだうえで、同じテンプレートの編集表示へリダイレクトすること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-044	IT-26	更新内容	P1	更新時の更新内容確認	自動送信対象外の識別子をURL等で直接指定するを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で自動送信対象外の識別子をURL等で直接指定するの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-045	IT-26	更新内容	P1	更新時の更新内容確認	CSS・レイアウトを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でCSS・レイアウトの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-045	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で表示要素の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-046	IT-26	更新内容	P1	更新時の更新内容確認	テンプレ選択を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でテンプレ選択の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-046	IT-26	更新内容	P1	更新時の更新内容確認	CSS・レイアウトを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でCSS・レイアウトの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-047	IT-26	更新内容	P1	更新時の更新内容確認	AUTO_SEND_MAILS に含まれない識別子で開くを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でAUTO_SEND_MAILS に含まれない識別子で開くの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-047	IT-26	更新内容	P1	更新時の更新内容確認	テンプレ選択を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でテンプレ選択の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	リポジトリ検索が空になり404であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-048	IT-26	更新内容	P1	更新時の更新内容確認	POSTで現在行nullを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でPOSTで現在行nullの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-049	IT-26	更新内容	P1	更新時の更新内容確認	一覧との一致を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	mapped falseであること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-048	IT-26	更新内容	P1	更新時の更新内容確認	AUTO_SEND_MAILS に含まれない識別子で開くを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でAUTO_SEND_MAILS に含まれない識別子で開くの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-050	IT-26	更新内容	P1	更新時の更新内容確認	本文ファイルとの関係を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-049	IT-26	更新内容	P1	更新時の更新内容確認	POSTで現在行nullを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-050	IT-26	更新内容	P1	更新時の更新内容確認	一覧との一致を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-051	IT-26	更新内容	P1	更新時の更新内容確認	同時更新を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-051	IT-26	更新内容	P1	更新時の更新内容確認	本文ファイルとの関係を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-052	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-052	IT-26	更新内容	P1	更新時の更新内容確認	同時更新を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-053	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-053	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-054	IT-05	実行結果	P1	更新時の実行結果確認	副作用を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-054	IT-05	実行結果	P1	更新時の実行結果確認	失敗時出力を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-055	IT-05	実行結果	P1	更新時の実行結果確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-055	IT-05	実行結果	P1	更新時の実行結果確認	副作用を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	テンプレ名称であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_mail_template の更新、Doctrineflush、Twigローダへのディレクトリ追加、ソフトデリートフィルタ設定の一時書き換えであること。
 店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-056	IT-05	削除条件	P1	削除時の削除条件確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本文Twigの論理パスであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	テンプレ名称であること。
 店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-057	IT-05	削除条件	P1	削除時の削除条件確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	件名であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本文Twigの論理パスであること。
 店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-058	IT-05	削除条件	P1	削除時の削除条件確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ヘッダーであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	件名であること。
 店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-059	IT-05	削除条件	P1	削除時の削除条件確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フッターであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ヘッダーであること。
 店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-060	IT-05	削除条件	P1	削除時の削除条件確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
@@ -225,91 +224,103 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-062	IT-05	実行結果	P1	削除時の実行結果確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	自動送信フラグであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除可否であること。
 店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-063	IT-05	実行結果	P1	削除時の実行結果確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存成功時に現在日時へ更新であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-064	IT-02	初期行数	P2	初期行数の結合確認	登録/更新を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	移行先のテンプレ識別キーであること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-064	IT-02	初期行数	P2	初期行数の結合確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_mail_templateを確認する
+3. 画面表示と後続状態を確認する"	保存成功時に現在日時へ更新であること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-065	IT-02	表示順	P2	表示順の結合確認	登録/更新を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-065	IT-02	表示順	P2	表示順の結合確認	CSRFを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でCSRFの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. CSRFを確認する
-3. 画面表示と後続状態を確認する"	FormValidHelper で検証であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-066	IT-25	更新抑止	P1	更新抑止の結合確認	ログイン済みで IP 制限内を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でログイン済みで IP 制限内の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-066	IT-25	更新抑止	P1	更新抑止の結合確認	CSRFを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でCSRFの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	FormValidHelper で検証であること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-067	IT-12	内部情報	P1	内部情報の結合確認	ログイン済みで IP 制限内を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でログイン済みで IP 制限内の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	画面表示・保存が可能であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-067	IT-12	内部情報	P1	内部情報の結合確認	テンプレ選択を変更を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でテンプレ選択を変更の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-068	IT-15	機密情報	P1	機密情報の結合確認	テンプレ選択を変更を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でテンプレ選択を変更の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	同一機能内の別識別子の編集表示（GET）であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-068	IT-15	機密情報	P1	機密情報の結合確認	登録成功を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録成功の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	同一識別子の編集表示（リダイレクトGET）であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-069	IT-07	排他制御	P1	排他制御の結合確認	POSTかつ編集中行なしを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でPOSTかつ編集中行なしの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	識別子なしの初期表示へリダイレクトであること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-070	IT-07	排他制御	P1	排他制御の結合確認	登録成功リダイレクトを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録成功リダイレクトの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同テンプレのDB最新値でフォーム再表示であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-071	IT-06	ロールバック	P3	ロールバックの結合確認	フォーム検証エラーを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でフォーム検証エラーの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一レスポンスで再描画であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-072	IT-11	実行結果	P2	実行結果の結合確認	削除方式を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で削除方式の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-069	IT-11	実行結果	P2	実行結果の結合確認	登録成功を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録成功の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録成功を確認する
+3. 画面表示と後続状態を確認する"	同一識別子の編集表示（リダイレクトGET）であること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-070	IT-28	実行結果	P2	実行結果の結合確認	POSTかつ編集中行なしを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でPOSTかつ編集中行なしの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. POSTかつ編集中行なしを確認する
+3. 画面表示と後続状態を確認する"	識別子なしの初期表示へリダイレクトであること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-071	IT-28	実行結果	P2	実行結果の結合確認	登録成功リダイレクトを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で登録成功リダイレクトの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録成功リダイレクトを確認する
+3. 画面表示と後続状態を確認する"	同テンプレのDB最新値でフォーム再表示であること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-072	IT-28	ヘッダ	P2	ヘッダの結合確認	フォーム検証エラーを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でフォーム検証エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. フォーム検証エラーを確認する
+3. 画面表示と後続状態を確認する"	同一レスポンスで再描画であること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-073	IT-28	件名	P2	件名の結合確認	M10-08-MSG-001を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. M10-08-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-074	IT-28	件名	P2	件名の結合確認	削除方式を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 削除方式
-3. 画面表示と後続状態を確認する"	del_flg 列は無いであること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-073	IT-28	実行結果	P2	実行結果の結合確認	自動送信対象の判定を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で自動送信対象の判定の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-075	IT-28	件名	P2	件名の結合確認	自動送信対象の判定を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で自動送信対象の判定の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 自動送信対象の判定
 3. 画面表示と後続状態を確認する"	dtb_mail_template.is_auto_send（真偽型、自動送信フラグ）で判定であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-074	IT-28	実行結果	P2	実行結果の結合確認	名称・本文ファイル・ヘッダー・フッター・作成者・作成更新を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で名称・本文ファイル・ヘッダー・フッター・作成者・作成更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-076	IT-28	本文	P2	本文の結合確認	名称・本文ファイル・ヘッダー・フッター・作成者・作成更新を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
 2. 名称・本文ファイル・ヘッダー・フッター・作成者・作成更新を確認する
-3. 画面表示と後続状態を確認する"	同名（dtb_mail_template 上で一致）であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-075	IT-28	ヘッダ	P2	ヘッダの結合確認	メールテンプレート行を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でメールテンプレート行の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. メールテンプレート行を確認する
-3. 画面表示と後続状態を確認する"	dtb_mail_template の1行であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-076	IT-28	件名	P2	件名の結合確認	自動送信対象テンプレートを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 自動送信対象テンプレート
-3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-077	IT-28	件名	P2	件名の結合確認	管理者を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 管理者を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-078	IT-28	本文	P2	本文の結合確認	テンプレ選択を変更するを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. テンプレ選択を変更する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-079	IT-28	本文	P2	本文の結合確認	値を入力して「登録」を押すを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 値を入力して「登録」を押す
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-077	IT-28	本文	P2	本文の結合確認	メールテンプレート行を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. メールテンプレート行を確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-080	IT-28	本文	P2	本文の結合確認	自動送信対象外の識別子をURL等で直接指定するを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で自動送信対象外の識別子をURL等で直接指定するの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-078	IT-28	本文	P2	本文の結合確認	自動送信対象テンプレートを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で自動送信対象テンプレートの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 自動送信対象テンプレート
+3. 画面表示と後続状態を確認する"	HareruyaEc の MailTemplate::AUTO_SEND_MAILS に含まれるテンプレート識別子の集合であること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-079	IT-28	本文	P2	本文の結合確認	管理者を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で管理者の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 管理者を確認する
+3. 画面表示と後続状態を確認する"	管理画面にログインした利用者であること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	自動送信対象外の識別子をURL等で直接指定するを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で自動送信対象外の識別子をURL等で直接指定するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 自動送信対象外の識別子をURL等で直接指定する
 3. 画面表示と後続状態を確認する"	該当行が検索条件に合致しないため、見つからない扱いとなりブラウザには404相当の応答となること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-081	IT-28	本文	P2	本文の結合確認	表示要素を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	ページタイトル「ショップ設定」、サブタイトル「メール管理」であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-082	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	テンプレ選択を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でテンプレ選択の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	テンプレ選択を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でテンプレ選択の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. テンプレ選択
 3. 画面表示と後続状態を確認する"	mapped falseであること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-083	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	AUTO_SEND_MAILS に含まれない識別子で開くを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でAUTO_SEND_MAILS に含まれない識別子で開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-083	IT-25	一覧	P2	一覧の結合確認	AUTO_SEND_MAILS に含まれない識別子で開くを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でAUTO_SEND_MAILS に含まれない識別子で開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. AUTO_SEND_MAILS に含まれない識別子で開く
 3. 画面表示と後続状態を確認する"	リポジトリ検索が空になり404であること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-084	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	POSTで現在行nullを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でPOSTで現在行nullの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-084	IT-12	画面表示データ	P2	画面表示データの結合確認	POSTで現在行nullを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でPOSTで現在行nullの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. POSTで現在行nullを確認する
-3. 画面表示と後続状態を確認する"	エラーフラッシュを積み、識別子なし表示へリダイレクトであること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	一覧との一致を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で一覧との一致の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-085	IT-25	画面表示データ	P2	画面表示データの結合確認	一覧との一致を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で一覧との一致の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧との一致を確認する
 3. 画面表示と後続状態を確認する"	同一テーブルの行を直接更新すること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-086	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	本文ファイルとの関係を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で本文ファイルとの関係の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-086	IT-12	画面表示データ	P2	画面表示データの結合確認	本文ファイルとの関係を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で本文ファイルとの関係の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 本文ファイルとの関係を確認する
-3. 画面表示と後続状態を確認する"	file_name は当画面の入力からは変更しないこと。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-087	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	同時更新を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-087	IT-25	画面表示データ	P2	画面表示データの結合確認	同時更新を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同時更新を確認する
 3. 画面表示と後続状態を確認する"	楽観ロックは持たないこと。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-088	IT-12	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-088	IT-16	ファイル選択	P2	ファイル選択の結合確認	失敗時出力を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-089	IT-25	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	再描画HTMLと項目エラー、もしくは404、もしくはCSRFエラーであること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-089	IT-12	非同期更新	P1	非同期更新の結合確認	副作用を試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	dtb_mail_template の更新、Doctrineflush、Twigローダへのディレクトリ追加、ソフトデリートフィルタ設定の一時書き換えであること。
-店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-090	IT-12	画面表示データ	P2	画面表示データの結合確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-090	IT-12	エラー継続	P3	エラー継続の結合確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_mail_templateを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+3. 画面表示と後続状態を確認する"	テンプレ名称であること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-091	IT-25	件数上限	P2	件数上限の結合確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_mail_templateを確認する
+3. 画面表示と後続状態を確認する"	本文Twigの論理パスであること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-092	IT-25	欠損値	P2	欠損値の結合確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_mail_templateを確認する
+3. 画面表示と後続状態を確認する"	件名であること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-093	IT-25	データなし	P2	データなしの結合確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_mail_templateを確認する
+3. 画面表示と後続状態を確認する"	ヘッダーであること。
+店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）	IT-M10-08-ADMIN-BASE-SETTING-SETTING-SHOP-AUTO-MAIL-094	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	dtb_mail_templateを試験できる状態である	店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）（m10_08_admin_base_setting_setting_shop_auto_mail）でdtb_mail_templateの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_mail_templateを確認する
+3. 画面表示と後続状態を確認する"	フッターであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -411,4 +422,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 1 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 19件 — No.41, No.42, No.43, No.44, No.47, No.48, No.105, No.240, No.329, No.346, No.359, No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 15件 — No.41, No.42, No.43, No.44, No.47, No.48, No.105, No.109, No.110, No.111, No.329, No.330, No.332, No.336, No.381。上限緩和または個別ケース化で収載可能。

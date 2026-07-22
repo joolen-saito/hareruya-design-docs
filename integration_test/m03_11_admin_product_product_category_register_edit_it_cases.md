@@ -12,16 +12,14 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-07 | 排他制御 |
-| IT-06 | ロールバック |
-| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -81,213 +79,210 @@ m03-11_admin_product_product_category_register_edit（管理画面_商品管理_
 m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	副作用を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	dtb_categoryを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. dtb_categoryを確認する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M03-11-MSG-001を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	登録/更新を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M03-11-MSG-002を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	新規保存成功を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 新規保存成功
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M03-11-MSG-003を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-003を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	更新保存成功かつ親ありを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 更新保存成功かつ親あり
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M03-11-MSG-004を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-004を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-019	IT-22	部分入力	P2	部分入力の入力検証	更新保存成功かつ親なしを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新保存成功かつ親なしの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 更新保存成功かつ親なし
-3. 画面表示と後続状態を確認する"	GET /{admin_route}/product/categoryであること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	検証失敗・画像失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-019	IT-22	部分入力	P2	部分入力の入力検証	M03-11-MSG-007を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-007の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-007を確認する
+3. 画面表示と後続状態を確認する"	バナー／アイコン画像がフォーム経由で MIME 不一致のとき（CategoryType.php:81 form_error.category_image_invalid_mime）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	M03-11-MSG-008を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	Symfony フォーム検証を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	M03-11-MSG-009を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	画像アップロードまたはディレクトリ作成失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	M03-11-MSG-010を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	保存開始・完了を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	dtb_categoryを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	英語名・拡張列を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	登録/更新を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	新規保存時の並び順キーを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	新規保存成功を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	親を選んだ子一覧を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	更新保存成功かつ親ありを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	行の編集アイコンを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	更新保存成功かつ親なしを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-028	IT-23	検索条件	P2	検索時の検索条件確認	子カテゴリ作成の送信を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で子カテゴリ作成の送信の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-028	IT-23	検索条件	P2	検索時の検索条件確認	検証失敗・画像失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検証失敗・画像失敗の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-029	IT-23	検索条件	P2	検索時の検索条件確認	カテゴリ更新の送信を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でカテゴリ更新の送信の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-029	IT-23	検索条件	P2	検索時の検索条件確認	Symfony フォーム検証を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でSymfony フォーム検証の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-030	IT-23	検索条件	P2	検索時の検索条件確認	表示要素を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で表示要素の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-030	IT-23	検索条件	P2	検索時の検索条件確認	画像アップロードまたはディレクトリ作成失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で画像アップロードまたはディレクトリ作成失敗の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-031	IT-23	検索条件	P2	検索時の検索条件確認	JS 挙動を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でJS 挙動の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-031	IT-23	検索条件	P2	検索時の検索条件確認	保存開始・完了を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で保存開始・完了の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-032	IT-23	検索条件	P2	検索時の検索条件確認	モーダル・ポップアップを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-032	IT-23	検索条件	P2	検索時の検索条件確認	英語名・拡張列を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で英語名・拡張列の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-033	IT-23	検索条件	P2	検索時の検索条件確認	支店非表示フラグを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で支店非表示フラグの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-033	IT-23	検索条件	P2	検索時の検索条件確認	新規保存時の並び順キーを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で新規保存時の並び順キーの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-034	IT-23	実行結果	P2	検索時の実行結果確認	ルート直下一覧のみ（親 null）を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でルート直下一覧のみ（親 null）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-034	IT-23	実行結果	P2	検索時の実行結果確認	親を選んだ子一覧を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で親を選んだ子一覧の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-035	IT-23	実行結果	P2	検索時の実行結果確認	成功時出力を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-035	IT-23	実行結果	P2	検索時の実行結果確認	行の編集アイコンを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で行の編集アイコンの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-036	IT-23	実行結果	P2	検索時の実行結果確認	失敗時出力を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-036	IT-23	実行結果	P2	検索時の実行結果確認	子カテゴリ作成の送信を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で子カテゴリ作成の送信の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-037	IT-23	実行結果	P2	検索時の実行結果確認	副作用を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-037	IT-23	実行結果	P2	検索時の実行結果確認	カテゴリ更新の送信を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でカテゴリ更新の送信の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	dtb_categoryを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でdtb_categoryの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で表示要素の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録/更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でJS 挙動の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	新規保存成功を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で新規保存成功の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-041	IT-26	登録内容	P1	登録時の登録内容確認	更新保存成功かつ親ありを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新保存成功かつ親ありの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-041	IT-26	登録内容	P1	登録時の登録内容確認	支店非表示フラグを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で支店非表示フラグの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET /{admin_route}/product/category/{parent_id}であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-042	IT-26	登録内容	P1	登録時の登録内容確認	更新保存成功かつ親なしを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新保存成功かつ親なしの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-043	IT-26	登録内容	P1	登録時の登録内容確認	検証失敗・画像失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_category.branch_hide_flgであること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-042	IT-26	登録内容	P1	登録時の登録内容確認	ルート直下一覧のみ（親 null）を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でルート直下一覧のみ（親 null）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-044	IT-26	登録内容	P1	登録時の登録内容確認	Symfony フォーム検証を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-043	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-044	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-045	IT-26	登録内容	P1	登録時の登録内容確認	画像アップロードまたはディレクトリ作成失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-045	IT-26	登録内容	P1	登録時の登録内容確認	副作用を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-046	IT-26	登録内容	P1	登録時の登録内容確認	保存開始・完了を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-046	IT-26	登録内容	P1	登録時の登録内容確認	M03-11-MSG-001を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-047	IT-26	登録内容	P1	登録時の登録内容確認	英語名・拡張列を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で英語名・拡張列の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-047	IT-26	登録内容	P1	登録時の登録内容確認	M03-11-MSG-002を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-002の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-048	IT-26	実行結果	P1	登録時の実行結果確認	新規保存時の並び順キーを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で新規保存時の並び順キーの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-048	IT-26	実行結果	P1	登録時の実行結果確認	M03-11-MSG-003を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-003の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-049	IT-23	実行結果	P1	登録時の実行結果確認	親を選んだ子一覧を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で親を選んだ子一覧の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-049	IT-23	実行結果	P1	登録時の実行結果確認	M03-11-MSG-004を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-004の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	上部に新規用フォーム（子カテゴリ作成）であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-050	IT-26	更新内容	P1	更新時の更新内容確認	行の編集アイコンを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で行の編集アイコンの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	DELETE 時に対象カテゴリが DB 上に存在しないとき（CategoryController.php:669-674 deleteMessage() → admin.common.delete_error_alre…であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-050	IT-26	更新内容	P1	更新時の更新内容確認	M03-11-MSG-007を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-007の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-051	IT-26	更新内容	P1	更新時の更新内容確認	子カテゴリ作成の送信を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で子カテゴリ作成の送信の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-051	IT-26	更新内容	P1	更新時の更新内容確認	M03-11-MSG-008を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-008の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-052	IT-26	更新内容	P1	更新時の更新内容確認	カテゴリ更新の送信を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でカテゴリ更新の送信の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-052	IT-26	更新内容	P1	更新時の更新内容確認	M03-11-MSG-009を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-009の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-053	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で表示要素の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-053	IT-26	更新内容	P1	更新時の更新内容確認	M03-11-MSG-010を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-010の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	親がいる一覧もしくは編集モードのとき、カード内にフォームであること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でJS 挙動の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カテゴリ名（日）未入力で送信したとき（CategoryType.php:49 NotBlank、validators.ja.yaml:17 デフォルト文言）（fable5レビュー追加）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	dtb_categoryを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でdtb_categoryの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	支店非表示フラグを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	新規保存成功を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	ルート直下一覧のみ（親 null）を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	更新保存成功かつ親ありを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	更新保存成功かつ親なしを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-059	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-059	IT-26	更新内容	P1	更新時の更新内容確認	検証失敗・画像失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検証失敗・画像失敗の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	副作用を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	Symfony フォーム検証を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でSymfony フォーム検証の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-061	IT-05	実行結果	P1	更新時の実行結果確認	dtb_categoryを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でdtb_categoryの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	新規時にサーバ・リポジトリが設定もしくは更新であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-062	IT-02	初期行数	P2	初期行数の結合確認	登録/更新を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-063	IT-02	表示順	P2	表示順の結合確認	新規保存成功を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で新規保存成功の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 新規保存成功
-3. 画面表示と後続状態を確認する"	GET /{admin_route}/product/category/{parent_id}であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-064	IT-25	更新抑止	P1	更新抑止の結合確認	更新保存成功かつ親ありを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新保存成功かつ親ありの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	GET /{admin_route}/product/category/{parent_id}であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-065	IT-12	内部情報	P1	内部情報の結合確認	更新保存成功かつ親なしを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新保存成功かつ親なしの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	GET /{admin_route}/product/categoryであること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-066	IT-15	機密情報	P1	機密情報の結合確認	検証失敗・画像失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検証失敗・画像失敗の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	同一 URL のフォーム表示に相当する Twig を 200 で再描画であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-067	IT-07	排他制御	P1	排他制御の結合確認	Symfony フォーム検証を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でSymfony フォーム検証の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一 Twig 200、フィールドエラー表示であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-068	IT-07	排他制御	P1	排他制御の結合確認	画像アップロードまたはディレクトリ作成失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で画像アップロードまたはディレクトリ作成失敗の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-061	IT-05	実行結果	P1	更新時の実行結果確認	画像アップロードまたはディレクトリ作成失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で画像アップロードまたはディレクトリ作成失敗の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	共通アップロードエラー文言を該当フィールドもしくはフォームに付与であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-069	IT-06	ロールバック	P3	ロールバックの結合確認	保存開始・完了を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で保存開始・完了の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	日本語短文とカテゴリ id（完了時）であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	英語名・拡張列を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で英語名・拡張列の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-062	IT-02	初期行数	P2	初期行数の結合確認	保存開始・完了を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で保存開始・完了の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 保存開始・完了
+3. 画面表示と後続状態を確認する"	日本語短文とカテゴリ id（完了時）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-063	IT-02	表示順	P2	表示順の結合確認	英語名・拡張列を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で英語名・拡張列の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 英語名・拡張列を確認する
 3. 画面表示と後続状態を確認する"	dtb_category に統合（category_name_en・front_search_hide_flg・branch_hide_flg・banner_image・icon_image・html_ja・html_…であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	新規保存時の並び順キーを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で新規保存時の並び順キーの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 新規保存時の並び順キー
-3. 画面表示と後続状態を確認する"	dtb_category.sort_no を採番・繰り上げ（実在確認済み）であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	親を選んだ子一覧を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で親を選んだ子一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 親を選んだ子一覧を確認する
-3. 画面表示と後続状態を確認する"	上部に新規用フォーム（子カテゴリ作成）であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-073	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	行の編集アイコンを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で行の編集アイコンの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 行の編集アイコンを確認する
-3. 画面表示と後続状態を確認する"	上部に編集用フォームであること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	子カテゴリ作成の送信を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で子カテゴリ作成の送信の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 子カテゴリ作成の送信
-3. 画面表示と後続状態を確認する"	検証と画像処理のあと保存し、成功なら GET …/category/{parent_id} へリダイレクトすること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	カテゴリ更新の送信を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でカテゴリ更新の送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-064	IT-25	更新抑止	P1	更新抑止の結合確認	新規保存時の並び順キーを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で新規保存時の並び順キーの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	dtb_category.sort_no を採番・繰り上げ（実在確認済み）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-065	IT-12	内部情報	P1	内部情報の結合確認	親を選んだ子一覧を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で親を選んだ子一覧の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	上部に新規用フォーム（子カテゴリ作成）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-066	IT-15	機密情報	P1	機密情報の結合確認	行の編集アイコンを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で行の編集アイコンの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	上部に編集用フォームであること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-067	IT-07	排他制御	P1	排他制御の結合確認	子カテゴリ作成の送信を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で子カテゴリ作成の送信の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検証と画像処理のあと保存し、成功なら GET …/category/{parent_id} へリダイレクトすること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	カテゴリ更新の送信を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でカテゴリ更新の送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カテゴリ更新の送信
 3. 画面表示と後続状態を確認する"	検証後保存し、成功なら親がいれば GET …/category/{parent_id}、ルートカテゴリなら GET …/product/category へリダイレクトすること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-076	IT-12	画面表示データ	P2	画面表示データの結合確認	モーダル・ポップアップを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-077	IT-25	画面表示データ	P2	画面表示データの結合確認	支店非表示フラグを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で支店非表示フラグの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	支店非表示フラグを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で支店非表示フラグの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 支店非表示フラグを確認する
 3. 画面表示と後続状態を確認する"	dtb_category.branch_hide_flgであること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-078	IT-12	画面表示データ	P2	画面表示データの結合確認	ルート直下一覧のみ（親 null）を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でルート直下一覧のみ（親 null）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ルート直下一覧のみ（親 null）を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でルート直下一覧のみ（親 null）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ルート直下一覧のみ（親 null）を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	失敗時出力を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	登録フォームカードは出ないこと。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-071	IT-25	一覧	P2	一覧の結合確認	失敗時出力を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	検証失敗や画像失敗は 200 で同一 Twigであること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-080	IT-16	ファイル選択	P2	ファイル選択の結合確認	副作用を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-072	IT-12	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	DB 更新、ファイル作成（新規かつ画像選択時）、失敗時の限定 unlink、処理ログ、イベント通知、Doctrine キャッシュ破棄であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-081	IT-12	非同期更新	P1	非同期更新の結合確認	dtb_categoryを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でdtb_categoryの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-073	IT-25	画面表示データ	P2	画面表示データの結合確認	M03-11-MSG-001を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	カテゴリ作成/更新フォームが送信・妥当で保存処理が正常完了したとき（成功後、親があれば親配下、なければ一覧へリダイレクト）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-074	IT-12	画面表示データ	P2	画面表示データの結合確認	M03-11-MSG-002を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-075	IT-25	画面表示データ	P2	画面表示データの結合確認	M03-11-MSG-003を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	カテゴリ削除処理の try 節で例外（\Exception）を捕捉したとき（CategoryController.php:700 admin.common.delete_error_foreign_key）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-076	IT-25	フォーム送信	P1	フォーム送信の結合確認	M03-11-MSG-004を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	DELETE 時に対象カテゴリが DB 上に存在しないとき（CategoryController.php:669-674 deleteMessage() → admin.common.delete_error_alre…であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-077	IT-12	非同期更新	P1	非同期更新の結合確認	M03-11-MSG-008を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-008を確認する
+3. 画面表示と後続状態を確認する"	バナー／アイコン画像がフォーム経由で 10M 超過のとき（CategoryType.php:82 form_error.category_image_too_large）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-078	IT-12	エラー継続	P3	エラー継続の結合確認	M03-11-MSG-009を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-009の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-009を確認する
+3. 画面表示と後続状態を確認する"	バナー／アイコン画像がフォーム経由で破損検出されたとき（CategoryType.php:84 form_error.category_image_corrupted）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-079	IT-25	件数上限	P2	件数上限の結合確認	M03-11-MSG-010を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でM03-11-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-11-MSG-010を確認する
+3. 画面表示と後続状態を確認する"	カテゴリ名（日）未入力で送信したとき（CategoryType.php:49 NotBlank、validators.ja.yaml:17 デフォルト文言）（fable5レビュー追加）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-080	IT-25	欠損値	P2	欠損値の結合確認	dtb_categoryを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）でdtb_categoryの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_categoryを確認する
 3. 画面表示と後続状態を確認する"	新規時にサーバ・リポジトリが設定もしくは更新であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-082	IT-25	欠損値	P2	欠損値の結合確認	更新保存成功かつ親ありを試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で更新保存成功かつ親ありの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 更新保存成功かつ親あり
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-081	IT-25	データなし	P2	データなしの結合確認	登録/更新を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-082	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	新規保存成功を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で新規保存成功の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 新規保存成功
 3. 画面表示と後続状態を確認する"	GET /{admin_route}/product/category/{parent_id}であること。
-m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）	IT-M03-11-ADMIN-PRODUCT-PRODUCT-CATEGORY-REGISTER-EDIT-083	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	検証失敗・画像失敗を試験できる状態である	m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）（m03_11_admin_product_product_category_register_edit）で検証失敗・画像失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検証失敗・画像失敗を確認する
-3. 画面表示と後続状態を確認する"	同一 URL のフォーム表示に相当する Twig を 200 で再描画であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -389,4 +384,4 @@ m03-11_admin_product_product_category_register_edit（管理画面_商品管理_
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.338, No.346, No.359, No.387, No.412, No.414。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.111, No.330, No.332, No.333, No.338, No.382。上限緩和または個別ケース化で収載可能。

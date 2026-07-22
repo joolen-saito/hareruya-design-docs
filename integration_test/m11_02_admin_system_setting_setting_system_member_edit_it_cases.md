@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -234,61 +232,64 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-065	IT-15	機密情報	P1	機密情報の結合確認	編集でパスワードをプレースホルダのまま送信を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で編集でパスワードをプレースホルダのまま送信の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	退避した暗号化パスワードをそのまま保存すること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-066	IT-07	排他制御	P1	排他制御の結合確認	新規でログインIDが既存と重複を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で新規でログインIDが既存と重複の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一意制約によりエラーとなり保存が成立しないこと。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-067	IT-07	排他制御	P1	排他制御の結合確認	スマレジ用アカウントを有効化したが他に有効な行があるを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でスマレジ用アカウントを有効化したが他に有効な行があるの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メンバー自体は保存済みのまま、エラーメッセージを積み編集画面へ戻すであること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-068	IT-06	ロールバック	P3	ロールバックの結合確認	所属店舗を未選択で保存を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で所属店舗を未選択で保存の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	現行は所属店舗を空にできる（補助表 dtb_member_sub.shop_id を空）であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	所属店舗・スマレジ等の保存先を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で所属店舗・スマレジ等の保存先の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	新規でログインIDが既存と重複を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で新規でログインIDが既存と重複の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 新規でログインIDが既存と重複を確認する
+3. 画面表示と後続状態を確認する"	一意制約によりエラーとなり保存が成立しないこと。
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	スマレジ用アカウントを有効化したが他に有効な行があるを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でスマレジ用アカウントを有効化したが他に有効な行があるの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. スマレジ用アカウントを有効化したが他に有効な行があるを確認する
+3. 画面表示と後続状態を確認する"	メンバー自体は保存済みのまま、エラーメッセージを積み編集画面へ戻すであること。
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	所属店舗を未選択で保存を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で所属店舗を未選択で保存の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 所属店舗を未選択で保存
+3. 画面表示と後続状態を確認する"	現行は所属店舗を空にできる（補助表 dtb_member_sub.shop_id を空）であること。
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	所属店舗・スマレジ等の保存先を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で所属店舗・スマレジ等の保存先の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 所属店舗・スマレジ等の保存先
 3. 画面表示と後続状態を確認する"	移行先は所属店舗（base_info_id）・スマレジ用アカウント（smaregi_member_flg）を dtb_member 本体に保存する（本書のDB記述はこれを正とする）であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	スマレジ用アカウントの一意性を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でスマレジ用アカウントの一意性の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	スマレジ用アカウントの一意性を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でスマレジ用アカウントの一意性の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. スマレジ用アカウントの一意性を確認する
 3. 画面表示と後続状態を確認する"	有効なスマレジ用アカウントは全メンバーで1件までとすること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-071	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	一覧との関係を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で一覧との関係の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	一覧との関係を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で一覧との関係の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧との関係を確認する
 3. 画面表示と後続状態を確認する"	保存後の表示は一覧（M11-01）に反映されるであること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	入力を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力
 3. 画面表示と後続状態を確認する"	登録・編集フォームの各フィールド（名前・所属・ログインID・パスワード・権限・所属店舗・稼働・スマレジ用アカウント）であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功時出力を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-073	IT-25	一覧	P2	一覧の結合確認	成功時出力を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	保存完了の成功フラッシュ、編集画面の再表示であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-074	IT-12	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	フィールドエラー、保存失敗エラーフラッシュ、スマレジ重複エラーフラッシュ、404であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-075	IT-25	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	dtb_member の INSERT/UPDATE（所属店舗 base_info_id・スマレジ smaregi_member_flg 等を含む）、編集可能店舗を扱う場合は結合表 dtb_member_base_in…であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-076	IT-25	一覧	P2	一覧の結合確認	dtb_memberを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_memberを確認する
-3. 画面表示と後続状態を確認する"	不可逆なハッシュ等の保存先であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-077	IT-12	画面表示データ	P2	画面表示データの結合確認	dtb_memberを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-076	IT-12	画面表示データ	P2	画面表示データの結合確認	dtb_memberを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_memberを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-078	IT-25	画面表示データ	P2	画面表示データの結合確認	dtb_memberを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-077	IT-25	画面表示データ	P2	画面表示データの結合確認	dtb_memberを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_memberを確認する
+3. 画面表示と後続状態を確認する"	パスワードストレッチング用であること。
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-078	IT-25	フォーム送信	P1	フォーム送信の結合確認	dtb_memberを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_memberを確認する
 3. 画面表示と後続状態を確認する"	表示順であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-079	IT-25	画面表示データ	P2	画面表示データの結合確認	メンバーを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でメンバーの確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-079	IT-16	ファイル選択	P2	ファイル選択の結合確認	dtb_memberを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でdtb_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_memberを確認する
+3. 画面表示と後続状態を確認する"	デフォルト検索表示店舗であること。
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-080	IT-12	非同期更新	P1	非同期更新の結合確認	メンバーを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でメンバーの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メンバーを確認する
 3. 画面表示と後続状態を確認する"	管理画面へログインするアカウントであること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-080	IT-25	フォーム送信	P1	フォーム送信の結合確認	所属を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で所属の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-081	IT-12	エラー継続	P3	エラー継続の結合確認	所属を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で所属の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 所属を確認する
 3. 画面表示と後続状態を確認する"	フォーム上のラベルは「所属」であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-081	IT-16	ファイル選択	P2	ファイル選択の結合確認	所属店舗を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で所属店舗の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-082	IT-25	件数上限	P2	件数上限の結合確認	所属店舗を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で所属店舗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 所属店舗を確認する
 3. 画面表示と後続状態を確認する"	基本設計の「所属店舗」に対応すること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-082	IT-12	非同期更新	P1	非同期更新の結合確認	権限を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で権限の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-083	IT-25	欠損値	P2	欠損値の結合確認	権限を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で権限の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 権限を確認する
 3. 画面表示と後続状態を確認する"	mtb_authority のマスタ項目であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-083	IT-12	エラー継続	P3	エラー継続の結合確認	稼働を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で稼働の確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-084	IT-25	データなし	P2	データなしの結合確認	稼働を試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）で稼働の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 稼働を確認する
 3. 画面表示と後続状態を確認する"	mtb_work のマスタ項目であること。
-メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-084	IT-25	件数上限	P2	件数上限の結合確認	スマレジ用アカウントを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でスマレジ用アカウントの確認に必要な条件を指定する	"1. 対象画面を表示する
+メンバー管理（システム情報設定／設定）	IT-M11-02-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-MEMBER-EDIT-085	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	スマレジ用アカウントを試験できる状態である	メンバー管理（システム情報設定／設定）（m11_02_admin_system_setting_setting_system_member_edit）でスマレジ用アカウントの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. スマレジ用アカウントを確認する
 3. 画面表示と後続状態を確認する"	スマレジ連携時の更新ユーザーとして利用する管理者アカウントを識別するフラグであること。
 ```
@@ -392,4 +393,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.59, No.358, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.59, No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

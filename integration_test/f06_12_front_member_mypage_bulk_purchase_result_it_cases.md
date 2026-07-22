@@ -12,16 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、一覧、件数上限、更新抑止、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 削除条件、実行結果 |
 | IT-02 | 表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
-| IT-16 | ファイル選択 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -207,49 +204,37 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-056	IT-15	機密情報	P1	機密情報の結合確認	小計を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で小計の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	各商品の小計は査定価格×数量で算出して表示すること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-057	IT-07	排他制御	P1	排他制御の結合確認	状態表示を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で状態表示の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	状態コードがPLD相当の集合に含まれる場合はPLDの表示文言に置き換え、それ以外は状態コードを表示すること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-058	IT-07	排他制御	P1	排他制御の結合確認	削除済み商品を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で削除済み商品の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	査定後に削除された商品・商品規格も、論理削除フィルタの除外により査定結果として表示すること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-059	IT-06	ロールバック	P3	ロールバックの結合確認	価格表示を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で価格表示の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	査定価格・小計は金額書式で表示すること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-060	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	他会員の買取依頼IDを試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で他会員の買取依頼IDの確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-057	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	他会員の買取依頼IDを試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で他会員の買取依頼IDの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 他会員の買取依頼IDを確認する
 3. 画面表示と後続状態を確認する"	会員条件で絞るため取得できず、ページが見つからない扱い（404）であること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-061	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	査定後に商品が削除済みを試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で査定後に商品が削除済みの確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-058	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	査定後に商品が削除済みを試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で査定後に商品が削除済みの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 査定後に商品が削除済み
 3. 画面表示と後続状態を確認する"	論理削除フィルタの除外により査定結果に表示すること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-062	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	参照時点を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-059	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	参照時点を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 参照時点を確認する
 3. 画面表示と後続状態を確認する"	画面表示時点の明細を参照すること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功時出力を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-060	IT-25	一覧	P2	一覧の結合確認	成功時出力を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	まとめて買取査定結果一覧のHTML表示であること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-064	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-061	IT-12	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	ページが見つからない扱い（404）であること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-065	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	まとめて買取明細（dtb_buy_main_card）を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）でまとめて買取明細（dtb_buy_main_card）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-062	IT-25	画面表示データ	P2	画面表示データの結合確認	まとめて買取明細（dtb_buy_main_card）を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）でまとめて買取明細（dtb_buy_main_card）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. まとめて買取明細（dtb_buy_main_card）を確認する
 3. 画面表示と後続状態を確認する"	purchase_category でまとめて買取を抽出し、商品名／言語／状態／査定価格／数量を一覧表示すること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-066	IT-25	一覧	P2	一覧の結合確認	登録/更新を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-063	IT-12	画面表示データ	P2	画面表示データの結合確認	登録/更新を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-067	IT-12	画面表示データ	P2	画面表示データの結合確認	まとめて買取を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）でまとめて買取の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-064	IT-25	画面表示データ	P2	画面表示データの結合確認	まとめて買取を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）でまとめて買取の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. まとめて買取を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-068	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-069	IT-25	画面表示データ	P2	画面表示データの結合確認	JS挙動を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	買取依頼のうち、個別表示しきれない商品を一括で扱う買取であること。
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-065	IT-12	非同期更新	P1	非同期更新の結合確認	JS挙動を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	本機能ではJSによる非同期取得や動的な表示切替を扱わないこと。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-070	IT-25	フォーム送信	P1	フォーム送信の結合確認	CSS・レイアウトを試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-066	IT-12	エラー継続	P3	エラー継続の結合確認	CSS・レイアウトを試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSS・レイアウトを確認する
 3. 画面表示と後続状態を確認する"	買取一覧用のスタイルを読み込むであること。
-会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-071	IT-16	ファイル選択	P2	ファイル選択の結合確認	小計を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で小計の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — まとめて買取査定結果	IT-F06-12-FRONT-MEMBER-MYPAGE-BULK-PURCHASE-RESULT-067	IT-25	件数上限	P2	件数上限の結合確認	小計を試験できる状態である	会員 — まとめて買取査定結果（f06_12_front_member_mypage_bulk_purchase_result）で小計の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 小計を確認する
 3. 画面表示と後続状態を確認する"	各商品の小計は査定価格×数量で算出して表示すること。
 ```
@@ -353,4 +338,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.332, No.357, No.385, No.387, No.412, No.413, No.414, No.416, No.420。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 13件 — No.109, No.110, No.111, No.329, No.330, No.332, No.336, No.381, No.382, No.413, No.414, No.416, No.420。上限緩和または個別ケース化で収載可能。

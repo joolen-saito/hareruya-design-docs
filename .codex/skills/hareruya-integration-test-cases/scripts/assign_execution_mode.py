@@ -41,13 +41,18 @@ def load_generator(repo: Path):
 
 
 def compute_trace(repo: Path) -> dict:
-    """testID -> Viewpoint。生成器のmake_rowsで決定論的に算出(既存台帳とID一致)。"""
+    """testID -> Viewpoint。生成器のmake_rowsで決定論的に算出(生成器と同条件=既存台帳とID一致)。
+
+    生成器の既定に合わせる: 上限なし(max_cases=0)かつ適用述語(applicability)ロード。
+    条件がずれると再計算traceが実台帳とID不一致になる(上限90や適用述語未ロードで発覚)。
+    """
     gen = load_generator(repo)
     vps = gen.read_viewpoints(repo / "integration_test" / "integration-test-viewpoints.md")
+    gen.load_applicability(repo)
     trace = {}
     for h in gen.discover_html(repo):
         doc = gen.read_html(h)
-        rows, selected, _ = gen.make_rows(doc, vps, 90, {"結合"})
+        rows, selected, _ = gen.make_rows(doc, vps, 0, {"結合"})
         for row, vp in zip(rows, selected):
             trace[row[1]] = vp
     return trace

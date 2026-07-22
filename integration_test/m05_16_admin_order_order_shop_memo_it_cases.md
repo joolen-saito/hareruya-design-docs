@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -183,69 +181,60 @@ m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用�
 m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-048	IT-15	機密情報	P1	機密情報の結合確認	表示要素を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で表示要素の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	受注編集（詳細）画面の右カラムに「ショップ用メモ欄」カードを置くであること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-049	IT-07	排他制御	P1	排他制御の結合確認	ツールチップを試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でツールチップの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	見出しにマウスを重ねると、ロケール tooltip.order.shop_memo の「店舗用メモを保存しておけますであること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-050	IT-07	排他制御	P1	排他制御の結合確認	開閉を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で開閉の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カード見出し右の折りたたみリンク（対象領域 #freeArea）で本文を開閉できること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-051	IT-06	ロールバック	P3	ロールバックの結合確認	JS挙動を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でJS挙動の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ショップ用メモ欄に固有の入力補助・非同期保存・文字数カウンタ・動的バリデーションは持たないこと。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-052	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	メモの保存契機を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でメモの保存契機の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-049	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	開閉を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で開閉の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 開閉を確認する
+3. 画面表示と後続状態を確認する"	カード見出し右の折りたたみリンク（対象領域 #freeArea）で本文を開閉できること。
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-050	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	JS挙動を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	ショップ用メモ欄に固有の入力補助・非同期保存・文字数カウンタ・動的バリデーションは持たないこと。
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-051	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	メモの保存契機を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でメモの保存契機の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メモの保存契機
 3. 画面表示と後続状態を確認する"	受注編集の「登録」押下時に、受注情報の保存に同梱して保存すること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-053	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	メモの保存単位を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でメモの保存単位の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	メモの保存単位を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でメモの保存単位の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メモの保存単位
 3. 画面表示と後続状態を確認する"	受注1件につきメモ1件であること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-054	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	未入力時を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で未入力時の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-053	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	未入力時を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で未入力時の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未入力時
 3. 画面表示と後続状態を確認する"	任意項目のため空のまま保存できること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-055	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	フロント表示を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でフロント表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-054	IT-25	一覧	P2	一覧の結合確認	フロント表示を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でフロント表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フロント表示を確認する
 3. 画面表示と後続状態を確認する"	ショップ運営者の確認用であり、購入者側のフロント画面には表示しないこと。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-056	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ショップ用メモ欄を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でショップ用メモ欄の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-055	IT-12	画面表示データ	P2	画面表示データの結合確認	ショップ用メモ欄を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でショップ用メモ欄の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ショップ用メモ欄を確認する
-3. 画面表示と後続状態を確認する"	dtb_order.note（フォームキー note）であること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-057	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	メモ未入力で登録を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でメモ未入力で登録の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-056	IT-25	画面表示データ	P2	画面表示データの結合確認	メモ未入力で登録を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でメモ未入力で登録の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メモ未入力で登録
 3. 画面表示と後続状態を確認する"	任意項目のため空のまま保存すること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-058	IT-12	画面表示データ	P2	画面表示データの結合確認	改行を含むメモを試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で改行を含むメモの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 改行を含むメモを確認する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-057	IT-12	画面表示データ	P2	画面表示データの結合確認	メモが3000文字を超えるを試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でメモが3000文字を超えるの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. メモが3000文字を超えるを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-059	IT-25	画面表示データ	P2	画面表示データの結合確認	受注編集の他項目で検証失敗を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で受注編集の他項目で検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-058	IT-25	画面表示データ	P2	画面表示データの結合確認	改行を含むメモを試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で改行を含むメモの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 改行を含むメモを確認する
+3. 画面表示と後続状態を確認する"	複数行入力のテキストエリアのため改行を含めて保存すること。
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-059	IT-25	フォーム送信	P1	フォーム送信の結合確認	受注編集の他項目で検証失敗を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で受注編集の他項目で検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注編集の他項目で検証失敗を確認する
 3. 画面表示と後続状態を確認する"	受注全体が保存されないため、メモも保存されないこと。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-060	IT-12	画面表示データ	P2	画面表示データの結合確認	編集画面と保存値を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で編集画面と保存値の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-060	IT-16	ファイル選択	P2	ファイル選択の結合確認	編集画面と保存値を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で編集画面と保存値の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 編集画面と保存値
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-061	IT-25	画面表示データ	P2	画面表示データの結合確認	受注全体との整合を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で受注全体との整合の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	編集画面の初期表示は永続化済みの dtb_order.note を読むであること。
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-061	IT-12	非同期更新	P1	非同期更新の結合確認	受注全体との整合を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で受注全体との整合の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注全体との整合を確認する
 3. 画面表示と後続状態を確認する"	メモは受注の他項目と同一トランザクション・同一 flush で保存されるため、登録成功時はメモと受注他項目が一括で確定すること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-062	IT-25	フォーム送信	P1	フォーム送信の結合確認	他画面との整合を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で他画面との整合の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-062	IT-12	エラー継続	P3	エラー継続の結合確認	他画面との整合を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で他画面との整合の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 他画面との整合を確認する
 3. 画面表示と後続状態を確認する"	メモを参照する他画面（受注一覧・CSV等）の表示・抽出ルールは各機能の設計を正とすること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-063	IT-16	ファイル選択	P2	ファイル選択の結合確認	同時編集を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で同時編集の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-063	IT-25	件数上限	P2	件数上限の結合確認	同時編集を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で同時編集の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同時編集を確認する
 3. 画面表示と後続状態を確認する"	複数管理者が同一受注を同時編集した場合の結果は、受注編集の保存処理（最後にflushされた内容）に従うであること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-064	IT-12	非同期更新	P1	非同期更新の結合確認	入力を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-064	IT-25	欠損値	P2	欠損値の結合確認	入力を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力
 3. 画面表示と後続状態を確認する"	受注編集（詳細）画面のショップ用メモ欄への自由文入力であること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-065	IT-12	エラー継続	P3	エラー継続の結合確認	成功時出力を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-065	IT-25	データなし	P2	データなしの結合確認	成功時出力を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	検証成功時、メモを含む受注が永続化され、同一受注の編集画面へリダイレクトすること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-066	IT-25	件数上限	P2	件数上限の結合確認	失敗時出力を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-066	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	失敗時出力を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	検証失敗時は同一編集画面を再表示し、入力したメモを再表示すること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-067	IT-25	欠損値	P2	欠損値の結合確認	副作用を試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	dtb_order.note の更新（受注他項目とともに）であること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-068	IT-25	データなし	P2	データなしの結合確認	dtb_orderを試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でdtb_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_orderを確認する
-3. 画面表示と後続状態を確認する"	ショップ用メモ欄の保存先であること。
-m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）	IT-M05-16-ADMIN-ORDER-ORDER-SHOP-MEMO-069	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	dtb_orderを試験できる状態である	m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用メモ登録）（m05_16_admin_order_order_shop_memo）でdtb_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_orderを確認する
-3. 画面表示と後続状態を確認する"	受注編集の保存時に更新されるであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -347,4 +336,4 @@ m05-16_admin_order_order_shop_memo（管理画面_受注編集_ショップ用�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.329, No.346。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.109, No.110, No.111, No.329, No.333。上限緩和または個別ケース化で収載可能。

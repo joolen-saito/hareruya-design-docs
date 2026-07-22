@@ -12,15 +12,16 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、一覧、件数上限、更新抑止、欠損値、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-06 | ロールバック |
+| IT-16 | ファイル選択 |
+| IT-33 | 販売可能数 |
 
 ## テストケースTSV
 
@@ -101,189 +102,204 @@ M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-020	IT-23	検
 M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	セッションキーを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	実装確認を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	M04-32-MSG-002を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	2026-06-12を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	M04-32-MSG-003を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	承認一覧トップ／検索を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	M04-32-MSG-004を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	ページ送りを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	M04-32-MSG-005を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	表示件数変更を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	M04-32-MSG-006を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	検索結果CSV出力を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	M04-32-MSG-007を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-028	IT-23	検索条件	P2	検索時の検索条件確認	明細モーダルHTML取得を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細モーダルHTML取得の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-028	IT-23	検索条件	P2	検索時の検索条件確認	M04-32-MSG-008を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-008の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	明細モーダルのページ切替を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細モーダルのページ切替の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	M04-32-MSG-009を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-009の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	明細CSV出力を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細CSV出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	実装確認を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で実装確認の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	デフォルト表示を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でデフォルト表示の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	2026-06-12を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で2026-06-12の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	表示順を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示順の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	承認一覧トップ／検索を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で承認一覧トップ／検索の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-033	IT-23	検索条件	P2	検索時の検索条件確認	一覧項目を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で一覧項目の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-033	IT-23	検索条件	P2	検索時の検索条件確認	ページ送りを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でページ送りの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	検索結果件数を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索結果件数の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	表示件数変更を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示件数変更の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	表示件数を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示件数の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	検索結果CSV出力を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索結果CSV出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	登録者（所属選択）registered_departmentを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録者（所属選択）registered_departmentの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	明細モーダルHTML取得を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細モーダルHTML取得の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-037	IT-23	実行結果	P2	検索時の実行結果確認	登録者（メンバー選択）registered_memberを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録者（メンバー選択）registered_memberの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-037	IT-23	実行結果	P2	検索時の実行結果確認	明細モーダルのページ切替を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細モーダルのページ切替の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-038	IT-26	登録内容	P1	登録時の登録内容確認	登録日 registered_date_start / registered_…を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録日 registered_date_start / registered_…の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-038	IT-26	登録内容	P1	登録時の登録内容確認	明細CSV出力を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細CSV出力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-039	IT-26	登録内容	P1	登録時の登録内容確認	承認日 approved_date_start / approved_date…を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で承認日 approved_date_start / approved_date…の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-039	IT-26	登録内容	P1	登録時の登録内容確認	デフォルト表示を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でデフォルト表示の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-040	IT-26	登録内容	P1	登録時の登録内容確認	参照系を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で参照系の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-040	IT-26	登録内容	P1	登録時の登録内容確認	表示順を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示順の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-041	IT-26	登録内容	P1	登録時の登録内容確認	更新系（一括承認/却下）を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新系（一括承認/却下）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-041	IT-26	登録内容	P1	登録時の登録内容確認	一覧項目を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で一覧項目の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	承認一覧 dtb_stock_approval_list（approval_status / approved_date / approval_member_id）と在庫編集承認 dtb_stock_edit_appr…であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-042	IT-26	登録内容	P1	登録時の登録内容確認	セッションキーを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でセッションキーの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-043	IT-26	登録内容	P1	登録時の登録内容確認	実装確認を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	チェックボックス（一括操作用）／承認状態（approval_status_label）／承認対象（approval_target_label、種別によりリンク・別タブ）／店舗（store_name）／在庫区分（stoc…であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-042	IT-26	登録内容	P1	登録時の登録内容確認	検索結果件数を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索結果件数の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-044	IT-26	登録内容	P1	登録時の登録内容確認	2026-06-12を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-043	IT-26	登録内容	P1	登録時の登録内容確認	表示件数を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-044	IT-26	登録内容	P1	登録時の登録内容確認	登録者（所属選択）registered_departmentを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-045	IT-26	登録内容	P1	登録時の登録内容確認	承認一覧トップ／検索を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-045	IT-26	登録内容	P1	登録時の登録内容確認	登録者（メンバー選択）registered_memberを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-046	IT-26	登録内容	P1	登録時の登録内容確認	ページ送りを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-046	IT-26	登録内容	P1	登録時の登録内容確認	登録日 registered_date_start / registered_…を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-047	IT-26	登録内容	P1	登録時の登録内容確認	表示件数変更を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示件数変更の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-047	IT-26	登録内容	P1	登録時の登録内容確認	承認日 approved_date_start / approved_date…を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で承認日 approved_date_start / approved_date…の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-048	IT-26	実行結果	P1	登録時の実行結果確認	検索結果CSV出力を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索結果CSV出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-048	IT-26	実行結果	P1	登録時の実行結果確認	参照系を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で参照系の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-049	IT-23	実行結果	P1	登録時の実行結果確認	明細モーダルHTML取得を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細モーダルHTML取得の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-049	IT-23	実行結果	P1	登録時の実行結果確認	更新系（一括承認/却下）を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新系（一括承認/却下）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Ajax専用であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-050	IT-26	更新内容	P1	更新時の更新内容確認	明細モーダルのページ切替を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細モーダルのページ切替の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	承認一覧 dtb_stock_approval_list（approval_status / approved_date / approval_member_id）と在庫編集承認 dtb_stock_edit_appr…であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-050	IT-26	更新内容	P1	更新時の更新内容確認	セッションキーを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でセッションキーの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-051	IT-26	更新内容	P1	更新時の更新内容確認	明細CSV出力を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細CSV出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-051	IT-26	更新内容	P1	更新時の更新内容確認	M04-32-MSG-002を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-002の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-052	IT-26	更新内容	P1	更新時の更新内容確認	デフォルト表示を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でデフォルト表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-052	IT-26	更新内容	P1	更新時の更新内容確認	M04-32-MSG-003を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-003の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-053	IT-26	更新内容	P1	更新時の更新内容確認	表示順を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示順の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-053	IT-26	更新内容	P1	更新時の更新内容確認	M04-32-MSG-004を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-004の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	承認日 approved_date 降順 → 登録日 registered_date 昇順 → ID 昇順であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-054	IT-26	更新内容	P1	更新時の更新内容確認	一覧項目を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で一覧項目の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-055	IT-26	更新内容	P1	更新時の更新内容確認	検索結果件数を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一括承認/却下の更新処理が errorMessage を返さず例外も送出せず完了したときであること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-054	IT-26	更新内容	P1	更新時の更新内容確認	M04-32-MSG-005を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-005の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-056	IT-26	更新内容	P1	更新時の更新内容確認	表示件数を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-055	IT-26	更新内容	P1	更新時の更新内容確認	M04-32-MSG-006を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-056	IT-26	更新内容	P1	更新時の更新内容確認	M04-32-MSG-007を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-057	IT-26	更新内容	P1	更新時の更新内容確認	登録者（所属選択）registered_departmentを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-057	IT-26	更新内容	P1	更新時の更新内容確認	M04-32-MSG-008を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-058	IT-26	更新内容	P1	更新時の更新内容確認	登録者（メンバー選択）registered_memberを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-058	IT-26	更新内容	P1	更新時の更新内容確認	M04-32-MSG-009を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-059	IT-26	更新内容	P1	更新時の更新内容確認	登録日 registered_date_start / registered_…を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録日 registered_date_start / registered_…の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-059	IT-26	更新内容	P1	更新時の更新内容確認	実装確認を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で実装確認の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-060	IT-05	実行結果	P1	更新時の実行結果確認	承認日 approved_date_start / approved_date…を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で承認日 approved_date_start / approved_date…の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-060	IT-05	実行結果	P1	更新時の実行結果確認	2026-06-12を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で2026-06-12の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-061	IT-05	実行結果	P1	更新時の実行結果確認	参照系を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で参照系の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-061	IT-05	実行結果	P1	更新時の実行結果確認	承認一覧トップ／検索を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で承認一覧トップ／検索の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一覧表示・検索・明細モーダル・各種CSV出力は参照のみであること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-062	IT-02	初期行数	P2	初期行数の結合確認	更新系（一括承認/却下）を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新系（一括承認/却下）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 更新系（一括承認/却下）を確認する
-3. 画面表示と後続状態を確認する"	承認一覧 dtb_stock_approval_list（approval_status / approved_date / approval_member_id）と在庫編集承認 dtb_stock_edit_appr…であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-063	IT-02	表示順	P2	表示順の結合確認	セッションキーを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でセッションキーの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. セッションキーを確認する
-3. 画面表示と後続状態を確認する"	検索条件 eccube.admin.stock.approval_list.search.search / ページ ...search.pageNo / 表示件数 ...search.page_count / 明細選択…であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-064	IT-25	更新抑止	P1	更新抑止の結合確認	実装確認を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で実装確認の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	../ec-cube-enterprise（StockApprovalListController / SearchStockApprovalListType / DtbStockApprovalListReposit…であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-065	IT-12	内部情報	P1	内部情報の結合確認	2026-06-12を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で2026-06-12の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-066	IT-15	機密情報	P1	機密情報の結合確認	承認一覧トップ／検索を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で承認一覧トップ／検索の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	GETは検索条件をセッションから復元して表示（未保持時はログインメンバーのデフォルト店舗で初期検索）、POSTは検索実行であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-067	IT-07	排他制御	P1	排他制御の結合確認	ページ送りを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でページ送りの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	セッションの検索条件を復元し、指定ページを表示すること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-068	IT-07	排他制御	P1	排他制御の結合確認	表示件数変更を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示件数変更の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	page_count が表示件数マスタ（mtb_page_max）に一致すれば採用しセッション保存、なければ既定件数（eccube_default_page_count）に丸めるであること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-069	IT-06	ロールバック	P3	ロールバックの結合確認	検索結果CSV出力を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索結果CSV出力の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	セッションの検索条件で検索結果全件をCSV出力する（ページングに依らず全件）であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	デフォルト表示を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でデフォルト表示の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. デフォルト表示を確認する
-3. 画面表示と後続状態を確認する"	検索条件がセッションに無い場合、ログインメンバーの所属店舗（BaseInfo）を base_info 初期値として検索する（getDefaultSearchViewData()）であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示順を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示順の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示順を確認する
-3. 画面表示と後続状態を確認する"	承認日 approved_date 降順 → 登録日 registered_date 昇順 → ID 昇順であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索結果件数を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索結果件数の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索結果件数
-3. 画面表示と後続状態を確認する"	画面に「検索結果：N件が該当しました」を表示（totalCount）であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-073	IT-25	一覧	P2	一覧の結合確認	表示件数を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示件数の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示件数を確認する
-3. 画面表示と後続状態を確認する"	既定 eccube_default_page_count（テスト上は10件）であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-074	IT-12	画面表示データ	P2	画面表示データの結合確認	登録者（所属選択）registered_departmentを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録者（所属選択）registered_departmentの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録者（所属選択）registered_department
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-075	IT-25	画面表示データ	P2	画面表示データの結合確認	登録者（メンバー選択）registered_memberを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録者（メンバー選択）registered_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録者（メンバー選択）registered_member
-3. 画面表示と後続状態を確認する"	RegisteredMember INであること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-076	IT-12	画面表示データ	P2	画面表示データの結合確認	登録日 registered_date_start / registered_…を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録日 registered_date_start / registered_…の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録日 registered_date_start / registered_…を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-077	IT-25	画面表示データ	P2	画面表示データの結合確認	承認日 approved_date_start / approved_date…を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で承認日 approved_date_start / approved_date…の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 承認日 approved_date_start / approved_date…を確認する
-3. 画面表示と後続状態を確認する"	approved_date >= start 00:00:00 / < end 23:59:59であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-078	IT-12	エラー継続	P3	エラー継続の結合確認	実装確認を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で実装確認の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockApprovalListController / SearchStockApprovalListType / DtbStockApprovalListReposit…であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-079	IT-25	件数上限	P2	件数上限の結合確認	2026-06-12を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で2026-06-12の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 2026-06-12を確認する
-3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-080	IT-25	欠損値	P2	欠損値の結合確認	承認一覧トップ／検索を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で承認一覧トップ／検索の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 承認一覧トップ／検索
-3. 画面表示と後続状態を確認する"	GETは検索条件をセッションから復元して表示（未保持時はログインメンバーのデフォルト店舗で初期検索）、POSTは検索実行であること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-081	IT-25	データなし	P2	データなしの結合確認	ページ送りを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でページ送りの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GETは検索条件をセッションから復元して表示（未保持時はログインメンバーのデフォルト店舗で初期検索）、POSTは検索実行であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-062	IT-02	初期行数	P2	初期行数の結合確認	ページ送りを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でページ送りの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ページ送りを確認する
 3. 画面表示と後続状態を確認する"	セッションの検索条件を復元し、指定ページを表示すること。
-M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-082	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	表示件数変更を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示件数変更の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-063	IT-02	表示順	P2	表示順の結合確認	表示件数変更を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示件数変更の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示件数変更を確認する
 3. 画面表示と後続状態を確認する"	page_count が表示件数マスタ（mtb_page_max）に一致すれば採用しセッション保存、なければ既定件数（eccube_default_page_count）に丸めるであること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-064	IT-25	更新抑止	P1	更新抑止の結合確認	検索結果CSV出力を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索結果CSV出力の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	セッションの検索条件で検索結果全件をCSV出力する（ページングに依らず全件）であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-065	IT-12	内部情報	P1	内部情報の結合確認	明細モーダルHTML取得を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細モーダルHTML取得の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	Ajax専用であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-066	IT-15	機密情報	P1	機密情報の結合確認	明細モーダルのページ切替を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細モーダルのページ切替の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	Ajax専用であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-067	IT-06	ロールバック	P3	ロールバックの結合確認	明細CSV出力を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で明細CSV出力の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	セッションの承認一覧IDに紐づく在庫編集明細を表示上限を超えた件数も含め全件CSV出力すること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	デフォルト表示を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でデフォルト表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. デフォルト表示を確認する
+3. 画面表示と後続状態を確認する"	検索条件がセッションに無い場合、ログインメンバーの所属店舗（BaseInfo）を base_info 初期値として検索する（getDefaultSearchViewData()）であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	表示順を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示順の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示順を確認する
+3. 画面表示と後続状態を確認する"	承認日 approved_date 降順 → 登録日 registered_date 昇順 → ID 昇順であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	検索結果件数を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で検索結果件数の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索結果件数
+3. 画面表示と後続状態を確認する"	画面に「検索結果：N件が該当しました」を表示（totalCount）であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示件数を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で表示件数の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示件数を確認する
+3. 画面表示と後続状態を確認する"	既定 eccube_default_page_count（テスト上は10件）であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録者（所属選択）registered_departmentを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録者（所属選択）registered_departmentの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録者（所属選択）registered_department
+3. 画面表示と後続状態を確認する"	画面上で登録者メンバー候補を所属で絞る補助項目（data-department）であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録者（メンバー選択）registered_memberを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録者（メンバー選択）registered_memberの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録者（メンバー選択）registered_member
+3. 画面表示と後続状態を確認する"	RegisteredMember INであること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-074	IT-25	一覧	P2	一覧の結合確認	登録日 registered_date_start / registered_…を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で登録日 registered_date_start / registered_…の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録日 registered_date_start / registered_…を確認する
+3. 画面表示と後続状態を確認する"	registered_date >= start 00:00:00 / < end 23:59:59であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-075	IT-12	画面表示データ	P2	画面表示データの結合確認	承認日 approved_date_start / approved_date…を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で承認日 approved_date_start / approved_date…の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 承認日 approved_date_start / approved_date…を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-076	IT-12	画面表示データ	P2	画面表示データの結合確認	更新系（一括承認/却下）を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で更新系（一括承認/却下）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 更新系（一括承認/却下）を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-077	IT-25	画面表示データ	P2	画面表示データの結合確認	セッションキーを試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でセッションキーの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. セッションキーを確認する
+3. 画面表示と後続状態を確認する"	検索条件 eccube.admin.stock.approval_list.search.search / ページ ...search.pageNo / 表示件数 ...search.page_count / 明細選択…であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-078	IT-25	フォーム送信	P1	フォーム送信の結合確認	M04-32-MSG-002を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-32-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	一括承認/却下の更新処理が errorMessage を返したとき（正規化後の承認一覧IDが空、もしくは更新処理内の isGrantedForStockApprovalList が不許可）であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-079	IT-16	ファイル選択	P2	ファイル選択の結合確認	M04-32-MSG-003を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-32-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	一括承認/却下の更新処理中に例外が送出されたときであること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-080	IT-12	非同期更新	P1	非同期更新の結合確認	M04-32-MSG-004を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-32-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	一括承認/却下の更新処理が errorMessage を返さず例外も送出せず完了したときであること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-081	IT-12	エラー継続	P3	エラー継続の結合確認	M04-32-MSG-005を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-32-MSG-005を確認する
+3. 画面表示と後続状態を確認する"	確認モーダル内「CSVダウンロード」実行時、セッション内の選択済み承認一覧IDが空のときであること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-082	IT-25	件数上限	P2	件数上限の結合確認	M04-32-MSG-006を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-006の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-32-MSG-006を確認する
+3. 画面表示と後続状態を確認する"	確認モーダルで却下理由が空のまま「却下する」を押下したときであること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-083	IT-25	欠損値	P2	欠損値の結合確認	M04-32-MSG-007を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-007の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-32-MSG-007を確認する
+3. 画面表示と後続状態を確認する"	確認モーダルの明細取得（初回表示/ページ切替）のAjaxが失敗したときであること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-084	IT-25	データなし	P2	データなしの結合確認	M04-32-MSG-008を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-32-MSG-008を確認する
+3. 画面表示と後続状態を確認する"	確認モーダルで却下理由(#rejection_reason)が空のまま「却下する」ボタンを押下したときであること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-085	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	M04-32-MSG-009を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）でM04-32-MSG-009の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-32-MSG-009を確認する
+3. 画面表示と後続状態を確認する"	POST_SUBMIT時、登録日開始日が登録日終了日より後であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-086	IT-33	販売可能数	P1	販売可能数の操作結果確認	実装確認を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で実装確認の確認に必要な条件を指定する	"1. 販売可能数の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	../ec-cube-enterprise（StockApprovalListController / SearchStockApprovalListType / DtbStockApprovalListReposit…であること。
+M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-087	IT-23	データ正当性	P3	データ正当性の結合確認	2026-06-12を試験できる状態である	M04-32（承認一覧）（m04_32_admin_stock_stock_approval_list）で2026-06-12の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 2026-06-12を確認する
+3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -375,7 +391,6 @@ M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-082	IT-02	公
 | データベースアクセス / 決済連携 / 金額整合（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 外部連携 / Webhook・外部通知（IT-10, IT-32） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブサービス / 外部連携 / 下流転送（IT-10） | 本機能は対象の外部I/Fを扱わないため |
-| データベースアクセス / 在庫引当 / 状態遷移（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 在庫引当 / 競合（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 注文・決済・在庫 / 原子性（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 状態遷移 / 遷移可否（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
@@ -383,6 +398,7 @@ M04-32（承認一覧）	IT-M04-32-ADMIN-STOCK-STOCK-APPROVAL-LIST-082	IT-02	公
 | データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
-| その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
+| データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
+| その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.329, No.330, No.332, No.336, No.381, No.382, No.385。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.109, No.110, No.332, No.357。上限緩和または個別ケース化で収載可能。

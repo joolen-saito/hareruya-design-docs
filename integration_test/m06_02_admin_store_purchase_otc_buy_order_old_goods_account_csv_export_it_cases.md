@@ -13,18 +13,16 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、登録内容 |
-| IT-16 | 実行結果 |
+| IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -243,51 +241,65 @@ m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭�
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ヘッダのみのCSVが返り、エラーにしないこと。
 m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-075	IT-15	機密情報	P1	機密情報の結合確認	一覧との対応を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-076	IT-07	排他制御	P1	排他制御の結合確認	トランザクションを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本処理は参照SQLとストリーム出力のみであり、注文データを更新しない（戻しリストCSV種別での別副作用は本機能では扱わない）であること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-077	IT-07	排他制御	P1	排他制御の結合確認	成功時出力を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	StreamedResponse本体にCSVバイト列であること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-078	IT-06	ロールバック	P3	ロールバックの結合確認	失敗時出力を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	選択なしはフラッシュエラー付きリダイレクトであること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	トランザクションを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. トランザクションを確認する
+3. 画面表示と後続状態を確認する"	本処理は参照SQLとストリーム出力のみであり、注文データを更新しない（戻しリストCSV種別での別副作用は本機能では扱わない）であること。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	StreamedResponse本体にCSVバイト列であること。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	選択なしはフラッシュエラー付きリダイレクトであること。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	old_goods_accountでは注文レコードを更新しないこと。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-080	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	mtb_identificationを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	mtb_identificationを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. mtb_identificationを確認する
 3. 画面表示と後続状態を確認する"	身分証種別表示名であること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	mtb_jobを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	mtb_jobを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. mtb_jobを確認する
 3. 画面表示と後続状態を確認する"	職業表示名であること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	検索を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 検索
 3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	otcBuyOrderIdsを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-083	IT-25	一覧	P2	一覧の結合確認	otcBuyOrderIdsを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. otcBuyOrderIdsを確認する
 3. 画面表示と後続状態を確認する"	整数化後に空ならエラーメッセージを表示してリダイレクトすること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSV送信が成功を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-084	IT-12	画面表示データ	P2	画面表示データの結合確認	CSV送信が成功を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSV送信が成功
-3. 画面表示と後続状態を確認する"	ブラウザのファイルダウンロードとして応答（画面ルート遷移なし）であること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	otcBuyOrderIdsが空を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-085	IT-25	画面表示データ	P2	画面表示データの結合確認	otcBuyOrderIdsが空を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. otcBuyOrderIdsが空を確認する
 3. 画面表示と後続状態を確認する"	admin_otcbuyorder_pageへHTTPリダイレクト（ページ番号はセッション確認値）であること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-086	IT-25	一覧	P2	一覧の結合確認	export_type不正を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-086	IT-12	画面表示データ	P2	画面表示データの結合確認	export_type不正を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. export_type不正を確認する
-3. 画面表示と後続状態を確認する"	エラー応答（一覧へのアプリ制御リダイレクトではない）であること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-087	IT-12	画面表示データ	P2	画面表示データの結合確認	選択なしエラーを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 選択なしエラー
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-088	IT-25	画面表示データ	P2	画面表示データの結合確認	export_typeが未知を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-087	IT-25	画面表示データ	P2	画面表示データの結合確認	選択なしエラーを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 選択なしエラー
+3. 画面表示と後続状態を確認する"	買取一覧の該当ページが再表示され、エラーメッセージが見えるであること。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-088	IT-25	フォーム送信	P1	フォーム送信の結合確認	export_typeが未知を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. export_typeが未知を確認する
 3. 画面表示と後続状態を確認する"	例外によりエラー応答（運用上は不正改ざんや実装不整合時）であること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-089	IT-12	画面表示データ	P2	画面表示データの結合確認	CSV応答オブジェクト生成直前を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSV応答オブジェクト生成直前を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-090	IT-25	画面表示データ	P2	画面表示データの結合確認	クォートを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-089	IT-16	ファイル選択	P2	ファイル選択の結合確認	CSV応答オブジェクト生成直前を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-090	IT-12	非同期更新	P1	非同期更新の結合確認	クォートを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. クォートを確認する
 3. 画面表示と後続状態を確認する"	PHP標準のfputcsvに準ずる（エンクロージャとエスケープ文字はサービス実装の確認値）であること。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-091	IT-12	エラー継続	P3	エラー継続の結合確認	検索結果が0件で一覧ブロックが「該当なし」表示のみを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索結果が0件で一覧ブロックが「該当なし」表示のみ
+3. 画面表示と後続状態を確認する"	「CSVダウンロード」ドロップダウンは検索結果ヘッダ付近にのみ置かれるため、この入口からは実行できないこと。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-092	IT-25	件数上限	P2	件数上限の結合確認	一覧はあるがチェックを1つも付けずに「古物台帳入力用CSV」を選ぶを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 一覧はあるがチェックを1つも付けずに「古物台帳入力用CSV」を選ぶ
+3. 画面表示と後続状態を確認する"	エラーフラッシュが出て買取一覧のページ付きルートへリダイレクトされるであること。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-093	IT-25	欠損値	P2	欠損値の結合確認	表示要素を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	検索結果ボックス内、pagination.totalItemCount > 0のときのみ「CSVダウンロード」ドロップダウンを表示すること。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-094	IT-25	データなし	P2	データなしの結合確認	JS挙動を試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	.export-linkクリックで既定のリンク遷移を抑止し、#export_type隠し項目にdata-typeを代入して#result_formを送信すること。
+m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）	IT-M06-02-ADMIN-STORE-PURCHASE-OTC-BUY-ORDER-OLD-GOODS-ACCOUNT-CSV-EXPORT-095	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	CSS・レイアウトを試験できる状態である	m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭買取管理 — 古物台帳入力用CSV出力）（m06_02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSS・レイアウトを確認する
+3. 画面表示と後続状態を確認する"	Bootstrapドロップダウンが非表示になる問題への回避として、#result_list__custom_csv_menu周りに限定したインラインスタイルがあること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -380,4 +392,4 @@ m06-02_admin_store_purchase_otc_buy_order_old_goods_account_csv_export（店頭�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

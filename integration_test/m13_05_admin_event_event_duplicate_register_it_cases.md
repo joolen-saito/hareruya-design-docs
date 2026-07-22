@@ -12,15 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 削除条件、実行結果 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -210,69 +208,66 @@ M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-056	IT-1
 M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-057	IT-15	機密情報	P1	機密情報の結合確認	複製元との独立性を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製元との独立性の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	複製新規画面の保存は新規イベントを作るため、複製元イベントは更新されないこと。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-058	IT-07	排他制御	P1	排他制御の結合確認	入力を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で入力の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	複製新規表示のGET（複製元ID）であること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-059	IT-07	排他制御	P1	排他制御の結合確認	成功時出力を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で成功時出力の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	複製元の値を載せた新規登録フォームのHTMLであること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-060	IT-06	ロールバック	P3	ロールバックの結合確認	失敗時出力を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で失敗時出力の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	存在しない複製元IDは404であること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-061	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	入力を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	複製新規表示のGET（複製元ID）であること。
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-059	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	複製元の値を載せた新規登録フォームのHTMLであること。
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	存在しない複製元IDは404であること。
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-061	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	表示時点では副作用を持たないこと。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-062	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_eventを試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）でdtb_eventの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_eventを試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）でdtb_eventの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_eventを確認する
 3. 画面表示と後続状態を確認する"	複製元の特定キーであること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-063	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_eventを試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）でdtb_eventの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_eventを試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）でdtb_eventの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_eventを確認する
 3. 画面表示と後続状態を確認する"	複製元の値を初期値として表示であること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-064	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_eventを試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）でdtb_eventの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-064	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_eventを試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）でdtb_eventの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_eventを確認する
 3. 画面表示と後続状態を確認する"	複製しないこと。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-065	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録/更新を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-065	IT-25	一覧	P2	一覧の結合確認	登録/更新を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-066	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	管理メンバーでログイン済みを試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で管理メンバーでログイン済みの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-066	IT-12	画面表示データ	P2	画面表示データの結合確認	管理メンバーでログイン済みを試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で管理メンバーでログイン済みの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 管理メンバーでログイン済みを確認する
-3. 画面表示と後続状態を確認する"	管理画面のアクセス制御がイベント管理のURLを許可するときに到達すること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-067	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	複製新規ボタン押下を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製新規ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-067	IT-25	画面表示データ	P2	画面表示データの結合確認	複製新規ボタン押下を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製新規ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 複製新規ボタン押下
 3. 画面表示と後続状態を確認する"	複製元の値を載せた新規登録画面（同一テンプレート）であること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-068	IT-25	一覧	P2	一覧の結合確認	複製新規画面の保存成功を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製新規画面の保存成功の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-068	IT-12	画面表示データ	P2	画面表示データの結合確認	複製新規画面の保存成功を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製新規画面の保存成功の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 複製新規画面の保存成功
-3. 画面表示と後続状態を確認する"	登録した新規イベントの編集画面（M13-02）であること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-069	IT-12	画面表示データ	P2	画面表示データの結合確認	保存時の検証失敗を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で保存時の検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存時の検証失敗
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-070	IT-25	画面表示データ	P2	画面表示データの結合確認	保存時の検証失敗を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で保存時の検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-069	IT-25	画面表示データ	P2	画面表示データの結合確認	保存時の検証失敗を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で保存時の検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 保存時の検証失敗
+3. 画面表示と後続状態を確認する"	新規登録テンプレートの再描画（M13-02）であること。
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-070	IT-25	フォーム送信	P1	フォーム送信の結合確認	保存時の検証失敗を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で保存時の検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存時の検証失敗
 3. 画面表示と後続状態を確認する"	M13-02のエラー処理に従うであること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-071	IT-12	画面表示データ	P2	画面表示データの結合確認	複製新規画面の表示を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製新規画面の表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-071	IT-16	ファイル選択	P2	ファイル選択の結合確認	複製新規画面の表示を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製新規画面の表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 複製新規画面の表示を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-072	IT-25	画面表示データ	P2	画面表示データの結合確認	保存を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で保存の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	本機能単体では業務監査ログを追加で書く処理は持たないこと。
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-072	IT-12	非同期更新	P1	非同期更新の結合確認	保存を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で保存の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存
 3. 画面表示と後続状態を確認する"	新規登録のフローに従う（M13-02）であること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-073	IT-25	フォーム送信	P1	フォーム送信の結合確認	論理削除を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で論理削除の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-073	IT-12	エラー継続	P3	エラー継続の結合確認	論理削除を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で論理削除の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 論理削除
 3. 画面表示と後続状態を確認する"	同一方式（deleted_atによる論理削除を維持）であること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-074	IT-16	ファイル選択	P2	ファイル選択の結合確認	略称を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で略称の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-074	IT-25	件数上限	P2	件数上限の結合確認	略称を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で略称の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 略称を確認する
 3. 画面表示と後続状態を確認する"	該当列が見当たらない（ec-cube-enterprise実装で要確認）であること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-075	IT-12	非同期更新	P1	非同期更新の結合確認	詳細を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で詳細の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-075	IT-25	欠損値	P2	欠損値の結合確認	詳細を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で詳細の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 詳細を確認する
 3. 画面表示と後続状態を確認する"	詳細列は廃止し、フリー入力エリア（free_text_area1〜free_text_area3の項目名・内容・アコーディオン表示）へ置換であること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-076	IT-12	エラー継続	P3	エラー継続の結合確認	複製元イベントを試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製元イベントの確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-076	IT-25	データなし	P2	データなしの結合確認	複製元イベントを試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製元イベントの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 複製元イベントを確認する
 3. 画面表示と後続状態を確認する"	複製新規の元となる登録済みイベントであること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-077	IT-25	件数上限	P2	件数上限の結合確認	複製新規画面を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製新規画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-077	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	複製新規画面を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製新規画面の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 複製新規画面を確認する
 3. 画面表示と後続状態を確認する"	複製元イベントの値を載せた状態で表示される新規登録フォームであること。
-M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-078	IT-25	欠損値	P2	欠損値の結合確認	複製新規ボタン（編集画面）を試験できる状態である	M13-05（複製新規）（m13_05_admin_event_event_duplicate_register）で複製新規ボタン（編集画面）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 複製新規ボタン（編集画面）を確認する
-3. 画面表示と後続状態を確認する"	複製元イベントの値を載せた新規登録フォームを表示すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -374,4 +369,4 @@ M13-05（複製新規）	IT-M13-05-ADMIN-EVENT-EVENT-DUPLICATE-REGISTER-078	IT-2
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

@@ -13,19 +13,17 @@
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
 | IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、更新抑止、画面レイアウト、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 更新内容 |
 | IT-05 | 削除条件、実行結果 |
-| IT-16 | 実行結果 |
+| IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
 | IT-33 | ファイル出力、ファイル登録、対象機能、更新結果 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | 内部情報 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -275,18 +273,65 @@ m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受�
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	共通レイアウトは使わず、picking_list.twig が単独HTMLを返すこと。
 m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-086	IT-15	機密情報	P1	機密情報の結合確認	CSS・レイアウト（印刷）を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-087	IT-07	排他制御	P1	排他制御の結合確認	モーダルを試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	共通モーダルはなく、確認はブラウザの印刷ダイアログに委ねるであること。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-088	IT-07	排他制御	P1	排他制御の結合確認	order_ids でのフィルタを試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	WITH句側で、そのスタンバイにぶらさがっている注文のうち、渡された注文ID集合への IN 一致を追加していること。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-089	IT-06	ロールバック	P3	ロールバックの結合確認	単価の参照ソースを試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Twig の価格列はクエリ結果 price02 が price エイリアスで載った値を出力する実装であり、画面上の並びクエリ側の CASE が参照する閾値比較 oi.price と一致することをソース上は狙っていること。
-m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-090	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	商品名の略称削除を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-087	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	モーダルを試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. モーダルを確認する
+3. 画面表示と後続状態を確認する"	共通モーダルはなく、確認はブラウザの印刷ダイアログに委ねるであること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-088	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	order_ids でのフィルタを試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. order_ids でのフィルタを確認する
+3. 画面表示と後続状態を確認する"	WITH句側で、そのスタンバイにぶらさがっている注文のうち、渡された注文ID集合への IN 一致を追加していること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-089	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	単価の参照ソースを試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 単価の参照ソースを確認する
+3. 画面表示と後続状態を確認する"	Twig の価格列はクエリ結果 price02 が price エイリアスで載った値を出力する実装であり、画面上の並びクエリ側の CASE が参照する閾値比較 oi.price と一致することをソース上は狙っていること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-090	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	商品名の略称削除を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 商品名の略称削除
 3. 画面表示と後続状態を確認する"	[storageCode と一致する収納略称] が商品名にあるときその括弧を削るであること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-091	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	色／レラ列の抽出優先順を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 色／レラ列の抽出優先順を確認する
+3. 画面表示と後続状態を確認する"	文末パターン、括弧直前パターン、語間空白パターン、旧角括弧直前パターンの順に最初のヒットのみ採用し、ヒットぶんだけ商品名からも削除する（いずれも未ヒット時は後続へ）であること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-092	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	言語状態列の表示を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 言語状態列の表示を確認する
+3. 画面表示と後続状態を確認する"	"Twig は通常帯で (箔ならば文字列「Foil」) + languageCode + ""/"" + conditionCodeであること。"
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-093	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	quantitySubtotal の画面上の強調を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. quantitySubtotal の画面上の強調を確認する
+3. 画面表示と後続状態を確認する"	!= 1 のときのみ数量セルを太字スタイルにする（整数桁ゼロの桁区切り表示）であること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-094	IT-25	一覧	P2	一覧の結合確認	読み取りと表示を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 読み取りと表示を確認する
+3. 画面表示と後続状態を確認する"	クエリ送信時点の注文明細とマスタ状態を読むであること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-095	IT-12	画面表示データ	P2	画面表示データの結合確認	永続変更を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 永続変更を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-096	IT-25	画面表示データ	P2	画面表示データの結合確認	成功時出力を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	text/htmlであること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-097	IT-12	画面表示データ	P2	画面表示データの結合確認	未ログインを試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 未ログインを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-098	IT-25	画面表示データ	P2	画面表示データの結合確認	mtb_optionを試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. mtb_optionを確認する
+3. 画面表示と後続状態を確認する"	DQL と見出し数値両方へであること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-099	IT-25	フォーム送信	P1	フォーム送信の結合確認	検索を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 検索
+3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-100	IT-16	ファイル選択	P2	ファイル選択の結合確認	ピッキング表示成功時に専用の業務ログを試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-101	IT-12	非同期更新	P1	非同期更新の結合確認	ナビから受注管理に相当するメニューを開き、「出荷指示リスト」一覧からスタンバイ…を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ナビから受注管理に相当するメニューを開き、「出荷指示リスト」一覧からスタンバイ…を確認する
+3. 画面表示と後続状態を確認する"	コメント用フォームと、紐づく受注表（チェックは初期ですべてオン）、一括操作ボタン行が現れる（詳細は出荷指示編集の別設計を正）であること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-102	IT-12	エラー継続	P3	エラー継続の結合確認	印刷に含める受注だけチェックを残し、「ピッキングリスト印刷」を押すを試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 印刷に含める受注だけチェックを残し、「ピッキングリスト印刷」を押すを確認する
+3. 画面表示と後続状態を確認する"	親画面の #form_bulk の action が当パスになり target=newwin で送信され、ウィンドウ内に単体のピッキングリストHTMLが表示されるであること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-103	IT-25	件数上限	P2	件数上限の結合確認	表示要素（編集）を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素（編集）を確認する
+3. 画面表示と後続状態を確認する"	共通管理フレーム @admin/default_frameであること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-104	IT-25	欠損値	P2	欠損値の結合確認	JS挙動（編集）を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS挙動（編集）を確認する
+3. 画面表示と後続状態を確認する"	クリック時に縦横700程度の名前付きウィンドウを空で開き、#form_bulk の action をピッキング印刷URL、target を newwin にセットし、type=hidden、name=id、value=…であること。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-105	IT-25	データなし	P2	データなしの結合確認	表示要素（印刷）を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素（印刷）を確認する
+3. 画面表示と後続状態を確認する"	共通レイアウトは使わず、picking_list.twig が単独HTMLを返すこと。
+m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）	IT-M05-21-ADMIN-ORDER-ORDER-SHIPPING-STANDBY-PICKING-LIST-PRINT-106	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	CSS・レイアウト（印刷）を試験できる状態である	m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受注管理_ピッキングリスト印刷）（m05_21_admin_order_order_shipping_standby_picking_list_print）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSS・レイアウト（印刷）を確認する
+3. 画面表示と後続状態を確認する"	アセットパス経由で assets/css/pickinglist.css（成果物は html/template/admin/assets/css/ 側）を読むであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -376,4 +421,4 @@ m05-21_admin_order_order_shipping_standby_picking_list_print（管理画面_受�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 19件 — No.330, No.332, No.333, No.334, No.336, No.338, No.346, No.356, No.357, No.358, No.359, No.381, No.382, No.385, No.387, No.412, No.413, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。

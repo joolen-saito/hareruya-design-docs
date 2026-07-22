@@ -23,8 +23,6 @@
 | IT-33 | ファイル出力、ファイル登録 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-07 | 排他制御 |
-| IT-06 | ロールバック |
 
 ## テストケースTSV
 
@@ -189,74 +187,65 @@ m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	出力もしくは表示処理中に例外が発生した場合、未送信の出力は完了しないこと。
 m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-057	IT-15	機密情報	P1	機密情報の結合確認	同上だがチェックを1件も付けずに「入金CSV」を押すを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-058	IT-07	排他制御	P1	排他制御の結合確認	表示要素を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	「ダウンロード」ドロップダウンと、その中の「入金CSV」は、検索結果があり pagination が描画されるときのみ表示されるであること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-059	IT-07	排他制御	P1	排他制御の結合確認	JS挙動を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	#csvexport_deposit クリック時、チェック済み件数が0ならアラート「CSV出力する買取注文情報をひとつ以上選択してくださいであること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-060	IT-06	ロールバック	P3	ロールバックの結合確認	CSS・レイアウトを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ドロップダウン表示のため、Bootstrapのドロップダウンに display:block !important を当てる回避スタイルがテンプレート内にあること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-061	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	モーダル・ポップアップを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	出力前の確認ダイアログはないこと。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-062	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	銀行名を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 銀行名を確認する
-3. 画面表示と後続状態を確認する"	銀行口座マスタ上の銀行コード文字列であること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-063	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	支店名を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 支店名を確認する
-3. 画面表示と後続状態を確認する"	銀行口座マスタ上の支店コード文字列であること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-064	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	オンライン本人確認区分を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. オンライン本人確認区分を確認する
-3. 画面表示と後続状態を確認する"	プレイヤーに紐付く本人確認ステータスの日本語名称であること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-065	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	POSTの買取注文IDが空を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. POSTの買取注文IDが空を確認する
-3. 画面表示と後続状態を確認する"	エラーメッセージをフラッシュし、買取一覧のページへリダイレクトであること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-066	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	一部のIDだけ存在するを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 一部のIDだけ存在するを確認する
-3. 画面表示と後続状態を確認する"	存在する買取注文分だけCSVに行が出るであること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-067	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	銀行口座または本人確認の結合行が取れないを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 銀行口座または本人確認の結合行が取れないを確認する
-3. 画面表示と後続状態を確認する"	該当買取注文行の銀行列・本人確認列は空文字であること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-068	IT-25	一覧	P2	一覧の結合確認	トランザクション境界を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. トランザクション境界を確認する
-3. 画面表示と後続状態を確認する"	本機能は参照・出力を主とし、業務データ更新用の明示トランザクションを開始しないこと。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-069	IT-12	画面表示データ	P2	画面表示データの結合確認	ロックを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ロックを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-070	IT-25	画面表示データ	P2	画面表示データの結合確認	例外時を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 例外時を確認する
-3. 画面表示と後続状態を確認する"	出力もしくは表示処理中に例外が発生した場合、未送信の出力は完了しないこと。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-071	IT-12	画面表示データ	P2	画面表示データの結合確認	同上だがチェックを1件も付けずに「入金CSV」を押すを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 同上だがチェックを1件も付けずに「入金CSV」を押すを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-072	IT-25	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	「ダウンロード」ドロップダウンと、その中の「入金CSV」は、検索結果があり pagination が描画されるときのみ表示されるであること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-073	IT-25	フォーム送信	P1	フォーム送信の結合確認	JS挙動を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-059	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	JS挙動を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	#csvexport_deposit クリック時、チェック済み件数が0ならアラート「CSV出力する買取注文情報をひとつ以上選択してくださいであること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-074	IT-16	ファイル選択	P2	ファイル選択の結合確認	CSS・レイアウトを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-075	IT-12	非同期更新	P1	非同期更新の結合確認	モーダル・ポップアップを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSS・レイアウトを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSS・レイアウトを確認する
+3. 画面表示と後続状態を確認する"	ドロップダウン表示のため、Bootstrapのドロップダウンに display:block !important を当てる回避スタイルがテンプレート内にあること。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-061	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	モーダル・ポップアップを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	出力前の確認ダイアログはないこと。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-076	IT-12	エラー継続	P3	エラー継続の結合確認	銀行名を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	銀行名を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 銀行名を確認する
 3. 画面表示と後続状態を確認する"	銀行口座マスタ上の銀行コード文字列であること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-077	IT-25	件数上限	P2	件数上限の結合確認	支店名を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	支店名を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 支店名を確認する
 3. 画面表示と後続状態を確認する"	銀行口座マスタ上の支店コード文字列であること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-078	IT-25	欠損値	P2	欠損値の結合確認	オンライン本人確認区分を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-064	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	オンライン本人確認区分を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. オンライン本人確認区分を確認する
 3. 画面表示と後続状態を確認する"	プレイヤーに紐付く本人確認ステータスの日本語名称であること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-079	IT-25	データなし	P2	データなしの結合確認	POSTの買取注文IDが空を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-065	IT-25	一覧	P2	一覧の結合確認	POSTの買取注文IDが空を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. POSTの買取注文IDが空を確認する
 3. 画面表示と後続状態を確認する"	エラーメッセージをフラッシュし、買取一覧のページへリダイレクトであること。
-m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-080	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	一部のIDだけ存在するを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-066	IT-12	画面表示データ	P2	画面表示データの結合確認	一部のIDだけ存在するを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 一部のIDだけ存在するを確認する
-3. 画面表示と後続状態を確認する"	存在する買取注文分だけCSVに行が出るであること。
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-067	IT-25	画面表示データ	P2	画面表示データの結合確認	銀行口座または本人確認の結合行が取れないを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 銀行口座または本人確認の結合行が取れないを確認する
+3. 画面表示と後続状態を確認する"	該当買取注文行の銀行列・本人確認列は空文字であること。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-068	IT-12	画面表示データ	P2	画面表示データの結合確認	トランザクション境界を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. トランザクション境界を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-069	IT-25	画面表示データ	P2	画面表示データの結合確認	ロックを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ロックを確認する
+3. 画面表示と後続状態を確認する"	行ロック・悲観ロック・楽観ロック・ロックファイルを使用しないこと。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-070	IT-25	フォーム送信	P1	フォーム送信の結合確認	例外時を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 例外時を確認する
+3. 画面表示と後続状態を確認する"	出力もしくは表示処理中に例外が発生した場合、未送信の出力は完了しないこと。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-071	IT-16	ファイル選択	P2	ファイル選択の結合確認	同上だがチェックを1件も付けずに「入金CSV」を押すを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-072	IT-12	非同期更新	P1	非同期更新の結合確認	表示要素を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	「ダウンロード」ドロップダウンと、その中の「入金CSV」は、検索結果があり pagination が描画されるときのみ表示されるであること。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-073	IT-12	エラー継続	P3	エラー継続の結合確認	JS挙動を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	#csvexport_deposit クリック時、チェック済み件数が0ならアラート「CSV出力する買取注文情報をひとつ以上選択してくださいであること。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-074	IT-25	件数上限	P2	件数上限の結合確認	CSS・レイアウトを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSS・レイアウトを確認する
+3. 画面表示と後続状態を確認する"	ドロップダウン表示のため、Bootstrapのドロップダウンに display:block !important を当てる回避スタイルがテンプレート内にあること。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-075	IT-25	欠損値	P2	欠損値の結合確認	モーダル・ポップアップを試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	出力前の確認ダイアログはないこと。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-076	IT-25	データなし	P2	データなしの結合確認	銀行名を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 銀行名を確認する
+3. 画面表示と後続状態を確認する"	銀行口座マスタ上の銀行コード文字列であること。
+m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）	IT-M07-05-ADMIN-ONLINE-PURCHASE-PURCHASE-CSV-EXPORT-DEPOSIT-077	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	支店名を試験できる状態である	m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）（m07_05_admin_online_purchase_purchase_csv_export_deposit）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 支店名を確認する
+3. 画面表示と後続状態を確認する"	銀行口座マスタ上の支店コード文字列であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -349,3 +338,5 @@ m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理
 | ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。
