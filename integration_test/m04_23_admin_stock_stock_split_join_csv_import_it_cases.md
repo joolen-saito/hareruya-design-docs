@@ -84,59 +84,59 @@ M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-C
 M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	取込履歴を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 取込履歴を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M04-23-MSG-008を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. M04-23-MSG-008を確認する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M04-23-MSG-001を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M04-23-MSG-017を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. M04-23-MSG-017を確認する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M04-23-MSG-002を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	機能名を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 機能名を確認する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M04-23-MSG-003を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-003を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-019	IT-22	部分入力	P2	部分入力の入力検証	実装確認を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockSplitJoinController::listSplitCsvImport / ::listJoinCsvImport / StockSplitListCsvI…であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-020	IT-26	登録内容	P1	登録時の登録内容確認	2026-06-12を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-019	IT-22	部分入力	P2	部分入力の入力検証	M04-23-MSG-004を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、在庫分割結合検索/一覧画面に遷移すること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-020	IT-26	登録内容	P1	登録時の登録内容確認	M04-23-MSG-005を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-021	IT-26	登録内容	P1	登録時の登録内容確認	分割CSV登録を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-021	IT-26	登録内容	P1	登録時の登録内容確認	M04-23-MSG-006を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-022	IT-26	登録内容	P1	登録時の登録内容確認	結合CSV登録を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-022	IT-26	登録内容	P1	登録時の登録内容確認	M04-23-MSG-007を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-023	IT-26	登録内容	P1	登録時の登録内容確認	承認通知先メンバー取得を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-023	IT-26	登録内容	P1	登録時の登録内容確認	M04-23-MSG-008を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	分割CSV登録モーダル用に店舗の承認権限メンバーをJSONで返すこと。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-024	IT-26	登録内容	P1	登録時の登録内容確認	onValidateRow（形式検証）を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	onAfterImport（業務登録）を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	要ソース確認であること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-024	IT-26	登録内容	P1	登録時の登録内容確認	M04-23-MSG-009を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	主データを試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	M04-23-MSG-010を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	M04-23-MSG-011を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	ステータスを試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	M04-23-MSG-012を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	在庫を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	M04-23-MSG-013を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	取込履歴を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	M04-23-MSG-014を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-030	IT-26	実行結果	P1	登録時の実行結果確認	通知を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-030	IT-26	実行結果	P1	登録時の実行結果確認	M04-23-MSG-015を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-031	IT-23	実行結果	P1	登録時の実行結果確認	ステータスを試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-031	IT-23	実行結果	P1	登録時の実行結果確認	M04-23-MSG-016を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	mtb_stock_split_join_status（1新規登録/2結合元登録/3分割承認待ち/4結合承認待ち/5入庫済み/6却下）、履歴 dtb_stock_split_join_status_historyであること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-032	IT-16	実行結果	P2	実行結果の結合確認	取込履歴を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	要ソース確認であること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-032	IT-16	実行結果	P2	実行結果の結合確認	M04-23-MSG-017を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-033	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	M04-23-MSG-008を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-033	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	M04-23-MSG-018を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-034	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	M04-23-MSG-017を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-034	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	M04-23-MSG-019を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
 M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-035	IT-27	実行結果	P2	実行結果の結合確認	機能名を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
@@ -168,60 +168,60 @@ M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-C
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
 M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-049	IT-27	入力JSON	P1	入力JSONの結合確認	取込履歴を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-050	IT-27	配置先	P1	配置先の結合確認	M04-23-MSG-008を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-050	IT-27	配置先	P1	配置先の結合確認	M04-23-MSG-001を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-051	IT-27	スキーマ	P1	スキーマの結合確認	M04-23-MSG-017を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-051	IT-27	スキーマ	P1	スキーマの結合確認	M04-23-MSG-002を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-052	IT-02	初期行数	P2	初期行数の結合確認	機能名を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 機能名を確認する
-3. 画面表示と後続状態を確認する"	在庫分割結合CSV登録であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-053	IT-02	表示順	P2	表示順の結合確認	実装確認を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockSplitJoinController::listSplitCsvImport / ::listJoinCsvImport / StockSplitListCsvI…であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-054	IT-25	更新抑止	P1	更新抑止の結合確認	2026-06-12を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-052	IT-02	初期行数	P2	初期行数の結合確認	M04-23-MSG-003を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、在庫分割結合検索/一覧画面に遷移すること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-053	IT-02	表示順	P2	表示順の結合確認	M04-23-MSG-004を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、在庫分割結合検索/一覧画面に遷移すること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-054	IT-25	更新抑止	P1	更新抑止の結合確認	M04-23-MSG-005を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-055	IT-12	内部情報	P1	内部情報の結合確認	分割CSV登録を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-055	IT-12	内部情報	P1	内部情報の結合確認	M04-23-MSG-006を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	分割CSVを取り込み、登録＋承認申請であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-056	IT-06	ロールバック	P3	ロールバックの結合確認	結合CSV登録を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	エラーを表示して、在庫分割結合検索/一覧画面に遷移すること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-056	IT-06	ロールバック	P3	ロールバックの結合確認	M04-23-MSG-007を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	結合CSVを取り込み、登録＋欠品入力遷移であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-057	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	承認通知先メンバー取得を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 承認通知先メンバー取得を確認する
-3. 画面表示と後続状態を確認する"	分割CSV登録モーダル用に店舗の承認権限メンバーをJSONで返すこと。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	onValidateRow（形式検証）を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. onValidateRow（形式検証）を確認する
-3. 画面表示と後続状態を確認する"	行ごとに検証であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	onAfterImport（業務登録）を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. onAfterImport（業務登録）を確認する
-3. 画面表示と後続状態を確認する"	エラー有り・空・未成功なら即ロールバックであること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	主データを試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 主データを確認する
-3. 画面表示と後続状態を確認する"	在庫分割結合 dtb_stock_split_join（タイプ・基準価格・原価単価・総原価・在庫数・分割結合数・ステータス等）と明細 dtb_stock_split_join_detail（基準価格・原価単価・在庫数・…であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ステータスを試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ステータスを確認する
-3. 画面表示と後続状態を確認する"	分割＝分割承認待ち（SPLIT_APPROVAL_WAITING=3）、結合＝結合元登録（JOIN_SOURCE_REGISTERED=2）へであること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	在庫を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 在庫を確認する
-3. 画面表示と後続状態を確認する"	各Actionにより分割元/結合元の在庫が分割数/結合元数量分の確保・更新を受ける（M04-13の登録ロジック）であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	取込履歴を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 取込履歴を確認する
-3. 画面表示と後続状態を確認する"	本取込ルートの CsvImporter は dtb_csv_import_history への記録処理を持たない（実装確認値であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-064	IT-25	一覧	P2	一覧の結合確認	通知を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 通知を確認する
-3. 画面表示と後続状態を確認する"	取込成功時、承認通知先メンバーへ承認アラートメールを送信であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-065	IT-12	画面表示データ	P2	画面表示データの結合確認	ステータスを試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ステータスを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-066	IT-25	画面表示データ	P2	画面表示データの結合確認	取込履歴を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 取込履歴を確認する
-3. 画面表示と後続状態を確認する"	現状の取込ルートでは dtb_csv_import_history への記録は確認できない（実装要確認）であること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-067	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-23-MSG-008を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	要ソース確認であること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-057	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-23-MSG-008を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M04-23-MSG-008を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-23-MSG-009を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-009を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-23-MSG-010を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-010を確認する
+3. 画面表示と後続状態を確認する"	成功メッセージを表示して、在庫分割結合検索/一覧画面に遷移すること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-23-MSG-011を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-011を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、在庫分割結合検索/一覧画面に遷移すること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-23-MSG-012を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-012を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、在庫分割結合検索/一覧画面に遷移すること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-23-MSG-013を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-013を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、在庫分割結合検索/一覧画面に遷移すること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-23-MSG-014を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-014を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、在庫分割結合検索/一覧画面に遷移すること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-064	IT-25	一覧	P2	一覧の結合確認	M04-23-MSG-015を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-015を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、在庫分割結合検索/一覧画面に遷移すること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-065	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-23-MSG-016を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-016を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-068	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-23-MSG-017を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-066	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-23-MSG-017を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M04-23-MSG-017を確認する
-3. 画面表示と後続状態を確認する"	CsvImporterの行エラーありであること。
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-067	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-23-MSG-018を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-018を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-068	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-23-MSG-019を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-23-MSG-019を確認する
+3. 画面表示と後続状態を確認する"	成功メッセージを表示して、在庫分割結合検索/一覧画面に遷移すること。
 M04-23（在庫分割結合CSV登録）	IT-M04-23-ADMIN-STOCK-STOCK-SPLIT-JOIN-CSV-IMPORT-069	IT-25	フォーム送信	P1	フォーム送信の結合確認	機能名を試験できる状態である	M04-23（在庫分割結合CSV登録）（m04_23_admin_stock_stock_split_join_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 機能名を確認する
 3. 画面表示と後続状態を確認する"	在庫分割結合CSV登録であること。

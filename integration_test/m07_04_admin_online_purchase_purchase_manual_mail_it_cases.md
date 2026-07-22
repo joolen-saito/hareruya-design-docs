@@ -299,7 +299,7 @@ m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	IT-M07-04-ADMIN-ONLINE-PURCHASE-PURCHASE-MANUAL-MAIL-087	IT-16	ファイル選択	P2	ファイル選択の結合確認	M07-04-MSG-001を試験できる状態である	m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）（m07_04_admin_online_purchase_purchase_manual_mail）でM07-04-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M07-04-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	POST mode=completeでフォームが送信済み・有効、かつtemplateがMailTemplateであるときであること。
+3. 画面表示と後続状態を確認する"	買取情報編集（買取詳細）画面に遷移すること。
 m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）	IT-M07-04-ADMIN-ONLINE-PURCHASE-PURCHASE-MANUAL-MAIL-088	IT-12	非同期更新	P1	非同期更新の結合確認	テンプレート候補を試験できる状態である	m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）（m07_04_admin_online_purchase_purchase_manual_mail）でテンプレート候補の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. テンプレート候補を確認する
 3. 画面表示と後続状態を確認する"	dtb_mail_template で自動送信ではない行のみであること。

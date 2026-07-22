@@ -89,7 +89,7 @@ m03-08_admin_product_product_product_class_list（管理画面_商品管理_商�
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-018	IT-22	部分入力	P2	部分入力の入力検証	M03-08-MSG-005を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-08-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	更新処理 ProductClassUpdateAction::handle() が任意の例外を送出したとき（表示文言は $e->getMessage() 由来で可変・固定不能であること。
+3. 画面表示と後続状態を確認する"	商品規格登録/編集画面に留まるであること。
 m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-019	IT-23	検索条件	P2	検索時の検索条件確認	M03-08-MSG-006を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
@@ -191,7 +191,7 @@ m03-08_admin_product_product_product_class_list（管理画面_商品管理_商�
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-052	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-004を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-004の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	編集フォームが未送信もしくはバリデーション不正のとき（編集フォームを再描画）であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存せず商品規格登録/編集画面に留まるであること。
 m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）	IT-M03-08-ADMIN-PRODUCT-PRODUCT-PRODUCT-CLASS-LIST-053	IT-26	更新内容	P1	更新時の更新内容確認	M03-08-MSG-005を試験できる状態である	m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）（m03_08_admin_product_product_product_class_list）でM03-08-MSG-005の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。

@@ -224,7 +224,7 @@ F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-
 3. 画面表示と後続状態を確認する"	キー front.otcbuy.error.not_fullwidth_qualified_invoice_issuer_code_inputであること。
 F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	F08-03-MSG-001を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でF08-03-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. F08-03-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	confirm() がフォーム不正として OtcBuy/index.twig を再表示すること。
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
 F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-063	IT-25	一覧	P2	一覧の結合確認	入力データのマージを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で入力データのマージの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力データのマージ
 3. 画面表示と後続状態を確認する"	セッションの入力データとリクエストの入力データをマージして確認・登録に用いること。

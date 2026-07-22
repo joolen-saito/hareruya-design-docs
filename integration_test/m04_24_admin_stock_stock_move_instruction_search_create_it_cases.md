@@ -19,8 +19,7 @@
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 削除条件、実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-16 | ファイル選択 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
 
 ## テストケースTSV
 
@@ -89,31 +88,31 @@ M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK
 M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	連動更新を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 連動更新を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M04-24-MSG-001を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. M04-24-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-019	IT-22	部分入力	P2	部分入力の入力検証	M04-24-MSG-002を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M04-24-MSG-002を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. M04-24-MSG-002を確認する
-3. 画面表示と後続状態を確認する"	詳細「登録」ボタン押下で更新完了（同詳細へリダイレクト）であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-020	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-003を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-019	IT-22	部分入力	P2	部分入力の入力検証	M04-24-MSG-003を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-24-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	在庫移動指示リスト作成/検索画面に遷移すること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-020	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-004を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-021	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-004を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-021	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-005を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-022	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-005を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-022	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-006を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-023	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-006を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-023	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-007を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-024	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-007を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-024	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-008を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-025	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-008を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-025	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-009を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-026	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-009を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-026	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-010を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-027	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-011を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
@@ -122,91 +121,91 @@ M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK
 M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-028	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-012を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-012の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-029	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-014を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-014の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-029	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-013を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-013の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-030	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-017を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-017の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-030	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-014を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-014の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-031	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-018を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-018の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-031	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-015を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-015の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-032	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-019を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-019の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-032	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-016を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-016の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-033	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-020を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-020の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-033	IT-23	検索条件	P2	検索時の検索条件確認	M04-24-MSG-017を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-017の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-034	IT-23	実行結果	P2	検索時の実行結果確認	M04-24-MSG-021を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-021の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-034	IT-23	実行結果	P2	検索時の実行結果確認	M04-24-MSG-018を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-018の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-035	IT-23	実行結果	P2	検索時の実行結果確認	M04-24-MSG-022を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-022の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-035	IT-23	実行結果	P2	検索時の実行結果確認	M04-24-MSG-020を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-020の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-036	IT-23	実行結果	P2	検索時の実行結果確認	M04-24-MSG-023を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-023の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-036	IT-23	実行結果	P2	検索時の実行結果確認	M04-24-MSG-021を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-021の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-037	IT-23	実行結果	P2	検索時の実行結果確認	店舗・登録者・更新者を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で店舗・登録者・更新者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-037	IT-23	実行結果	P2	検索時の実行結果確認	M04-24-MSG-022を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-022の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-038	IT-26	登録内容	P1	登録時の登録内容確認	在庫移動との関連を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で在庫移動との関連の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-038	IT-26	登録内容	P1	登録時の登録内容確認	M04-24-MSG-023を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-023の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-039	IT-26	登録内容	P1	登録時の登録内容確認	高額/通常合計の算出列を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で高額/通常合計の算出列の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-039	IT-26	登録内容	P1	登録時の登録内容確認	店舗・登録者・更新者を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で店舗・登録者・更新者の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-040	IT-26	登録内容	P1	登録時の登録内容確認	実装確認を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で実装確認の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-040	IT-26	登録内容	P1	登録時の登録内容確認	在庫移動との関連を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で在庫移動との関連の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-041	IT-26	登録内容	P1	登録時の登録内容確認	2026-06-12を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で2026-06-12の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-041	IT-26	登録内容	P1	登録時の登録内容確認	実装確認を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で実装確認の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-042	IT-26	登録内容	P1	登録時の登録内容確認	一覧／検索を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で一覧／検索の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-043	IT-26	登録内容	P1	登録時の登録内容確認	指示詳細／更新を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	../ec-cube-enterprise（StockMoveInstructionController / SearchStockMoveInstructionType / StockMoveInstructionD…であること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-042	IT-26	登録内容	P1	登録時の登録内容確認	2026-06-12を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で2026-06-12の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-044	IT-26	登録内容	P1	登録時の登録内容確認	送り状No.登録（モーダル）を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-043	IT-26	登録内容	P1	登録時の登録内容確認	一覧／検索を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-044	IT-26	登録内容	P1	登録時の登録内容確認	指示詳細／更新を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-045	IT-26	登録内容	P1	登録時の登録内容確認	指示削除を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-045	IT-26	登録内容	P1	登録時の登録内容確認	送り状No.登録（モーダル）を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-046	IT-26	登録内容	P1	登録時の登録内容確認	在庫移動実績CSV登録を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-046	IT-26	登録内容	P1	登録時の登録内容確認	指示削除を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-047	IT-26	登録内容	P1	登録時の登録内容確認	CSV雛形ダウンロードを試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でCSV雛形ダウンロードの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-047	IT-26	登録内容	P1	登録時の登録内容確認	在庫移動実績CSV登録を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で在庫移動実績CSV登録の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-048	IT-26	実行結果	P1	登録時の実行結果確認	送り状CSV出力を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で送り状CSV出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-048	IT-26	実行結果	P1	登録時の実行結果確認	CSV雛形ダウンロードを試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でCSV雛形ダウンロードの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-049	IT-23	実行結果	P1	登録時の実行結果確認	表示順を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で表示順の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-049	IT-23	実行結果	P1	登録時の実行結果確認	送り状CSV出力を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で送り状CSV出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録日（create_date）降順（getQueryBuilderBySearchData の orderBy('s.createDate', 'DESC')）であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-050	IT-26	更新内容	P1	更新時の更新内容確認	件数を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で件数の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	チェックした指示IDの送り状CSVを出力（出力列・整形はM04-25）であること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-050	IT-26	更新内容	P1	更新時の更新内容確認	表示順を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で表示順の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-051	IT-26	更新内容	P1	更新時の更新内容確認	一覧項目を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で一覧項目の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-051	IT-26	更新内容	P1	更新時の更新内容確認	件数を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で件数の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-052	IT-26	更新内容	P1	更新時の更新内容確認	初回表示を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で初回表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-052	IT-26	更新内容	P1	更新時の更新内容確認	一覧項目を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で一覧項目の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-053	IT-26	更新内容	P1	更新時の更新内容確認	登録日 create_date_start / create_date_endを試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で登録日 create_date_start / create_date_endの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-053	IT-26	更新内容	P1	更新時の更新内容確認	初回表示を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で初回表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	日付であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-054	IT-26	更新内容	P1	更新時の更新内容確認	更新日 update_date_start / update_date_endを試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で更新日 update_date_start / update_date_endの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-055	IT-26	更新内容	P1	更新時の更新内容確認	主データ（更新）を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET（resume 無し）では検索条件セッションを初期化し、検索フォームのビューデータのみ表示（一覧は空）であること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-054	IT-26	更新内容	P1	更新時の更新内容確認	登録日 create_date_start / create_date_endを試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で登録日 create_date_start / create_date_endの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-056	IT-26	更新内容	P1	更新時の更新内容確認	連動更新を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-055	IT-26	更新内容	P1	更新時の更新内容確認	更新日 update_date_start / update_date_endを試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-056	IT-26	更新内容	P1	更新時の更新内容確認	主データ（更新）を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-057	IT-26	更新内容	P1	更新時の更新内容確認	M04-24-MSG-001を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-057	IT-26	更新内容	P1	更新時の更新内容確認	連動更新を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-058	IT-26	更新内容	P1	更新時の更新内容確認	M04-24-MSG-002を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
@@ -220,88 +219,88 @@ M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
 M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-061	IT-05	実行結果	P1	更新時の実行結果確認	M04-24-MSG-005を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-005の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除処理時に送り状No.登録済み（StockMoveInstructionDeleteException）の場合（詳細へリダイレクト）であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動指示詳細画面に遷移すること。
 M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-062	IT-05	削除条件	P1	削除時の削除条件確認	M04-24-MSG-006を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除処理が例外なく完了（一覧へresume=1のみ付けてリダイレクトであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動指示リスト作成/検索画面に遷移すること。
 M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-063	IT-05	削除条件	P1	削除時の削除条件確認	M04-24-MSG-007を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動実績CSV登録モーダルの「登録」ボタン押下で csv_file がUploadedFileでない、もしくはisValid()がfalseの場合（一覧へresume=1のみ付けてリダイレクトであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動指示リスト作成/検索画面に遷移すること。
 M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-064	IT-05	削除条件	P1	削除時の削除条件確認	M04-24-MSG-008を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CSV取込結果のエラー件数が20件を超える場合であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動指示リスト作成/検索画面に遷移すること。
 M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-065	IT-05	削除条件	P1	削除時の削除条件確認	M04-24-MSG-009を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CSV取込結果 getErrors() の各エラーmessageをそのままaddErrorする可変文言（行番号連結・翻訳置換を含み逐語literal確定不可）であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-066	IT-05	削除条件	P1	削除時の削除条件確認	M04-24-MSG-011を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-011の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	要ソース確認であること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-066	IT-05	削除条件	P1	削除時の削除条件確認	M04-24-MSG-010を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-010の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-067	IT-05	実行結果	P1	削除時の実行結果確認	M04-24-MSG-012を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-012の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-067	IT-05	実行結果	P1	削除時の実行結果確認	M04-24-MSG-011を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-011の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-068	IT-05	実行結果	P1	削除時の実行結果確認	M04-24-MSG-014を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-014の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-068	IT-05	実行結果	P1	削除時の実行結果確認	M04-24-MSG-012を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-012の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CSV取込でRuntimeException（message=csv_tracking_temp_dir_invalid）の場合（当該messageをthrowする実装は現行ソースになく防御的分岐であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-069	IT-05	実行結果	P1	削除時の実行結果確認	M04-24-MSG-017を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-017の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動指示リスト作成/検索画面に遷移すること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-069	IT-05	実行結果	P1	削除時の実行結果確認	M04-24-MSG-013を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-013の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-070	IT-05	実行結果	P1	削除時の実行結果確認	M04-24-MSG-018を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-018の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-070	IT-05	実行結果	P1	削除時の実行結果確認	M04-24-MSG-014を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-014の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送り状No.未登録時に詳細「削除」ボタン押下でモーダル表示（「削除」で削除POST、キャンセルで閉じるであること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-071	IT-02	初期行数	P2	初期行数の結合確認	M04-24-MSG-019を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-019の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-24-MSG-019を確認する
-3. 画面表示と後続状態を確認する"	検索で登録日/更新日が1900-01-01より前（Assert\Range違反）の場合（SearchStockMoveInstructionType.php:76-141 / validators.ja.yaml:60…であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-072	IT-02	表示順	P2	表示順の結合確認	M04-24-MSG-020を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-020の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動指示リスト作成/検索画面に遷移すること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-071	IT-02	初期行数	P2	初期行数の結合確認	M04-24-MSG-015を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-015の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-24-MSG-015を確認する
+3. 画面表示と後続状態を確認する"	在庫移動指示リスト作成/検索画面に遷移すること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-072	IT-02	表示順	P2	表示順の結合確認	M04-24-MSG-016を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-016の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-24-MSG-016を確認する
+3. 画面表示と後続状態を確認する"	在庫移動指示リスト作成/検索画面に遷移すること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-073	IT-25	更新抑止	P1	更新抑止の結合確認	M04-24-MSG-017を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-017の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	送信せず在庫移動指示リスト作成/検索画面に留まるであること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-074	IT-12	内部情報	P1	内部情報の結合確認	M04-24-MSG-018を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-018の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	削除確認モーダルを表示し、キャンセル時は在庫移動指示詳細画面に留まるであること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-24-MSG-020を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-020の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-24-MSG-020を確認する
-3. 画面表示と後続状態を確認する"	検索で登録日/更新日の開始日が終了日より後の場合（SearchStockMoveInstructionType.php:150-162）であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-073	IT-25	更新抑止	P1	更新抑止の結合確認	M04-24-MSG-021を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-021の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	詳細「登録」で送り状No.が255文字を超える場合（StockMoveInstructionDetailType.php:38-40 の Assert\Length(['max' => 255])）であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-074	IT-12	内部情報	P1	内部情報の結合確認	M04-24-MSG-022を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-022の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	POST_SUBMIT時、登録日開始日が登録日終了日より後であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-24-MSG-023を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-023の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-24-MSG-021を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-021の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-24-MSG-021を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-24-MSG-022を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-022の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-24-MSG-022を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-24-MSG-023を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）でM04-24-MSG-023の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-24-MSG-023を確認する
-3. 画面表示と後続状態を確認する"	POST_SUBMIT時、更新日開始日が更新日終了日より後であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	店舗・登録者・更新者を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で店舗・登録者・更新者の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	店舗・登録者・更新者を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で店舗・登録者・更新者の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 店舗・登録者・更新者を確認する
 3. 画面表示と後続状態を確認する"	出庫元/入庫先店舗は move_from_base_info_id / move_to_base_info_id（BaseInfo）、登録者は registered_member_id、更新者は update_memb…であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	在庫移動との関連を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で在庫移動との関連の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	在庫移動との関連を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で在庫移動との関連の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 在庫移動との関連を確認する
 3. 画面表示と後続状態を確認する"	1移動指示は複数の在庫移動（dtb_stock_move_transfer、move_instruction_id で関連）をまとめるであること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	高額/通常合計の算出列を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で高額/通常合計の算出列の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 高額/通常合計の算出列を確認する
-3. 画面表示と後続状態を確認する"	Excel設計が描く「出庫元店舗の高額商品閾値による●●円以上/未満の合計」は、high_total_price / regular_total_price と move_from_price_threshold に対…であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	実装確認を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で実装確認の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	実装確認を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で実装確認の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 実装確認を確認する
 3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockMoveInstructionController / SearchStockMoveInstructionType / StockMoveInstructionD…であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	2026-06-12を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で2026-06-12の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-082	IT-25	一覧	P2	一覧の結合確認	2026-06-12を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で2026-06-12の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 2026-06-12を確認する
 3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	一覧／検索を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で一覧／検索の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-083	IT-12	画面表示データ	P2	画面表示データの結合確認	一覧／検索を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で一覧／検索の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧／検索
-3. 画面表示と後続状態を確認する"	GETは初期表示（検索条件をセッション初期化）、?resume=1 付きGETはセッション復元して再検索、POSTは検索実行し検索条件をセッション保存であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-082	IT-25	一覧	P2	一覧の結合確認	指示詳細／更新を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で指示詳細／更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-084	IT-25	画面表示データ	P2	画面表示データの結合確認	指示詳細／更新を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で指示詳細／更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 指示詳細／更新を確認する
 3. 画面表示と後続状態を確認する"	GETは詳細表示であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-083	IT-12	画面表示データ	P2	画面表示データの結合確認	送り状No.登録（モーダル）を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で送り状No.登録（モーダル）の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-085	IT-12	画面表示データ	P2	画面表示データの結合確認	送り状No.登録（モーダル）を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で送り状No.登録（モーダル）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 送り状No.登録（モーダル）を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-084	IT-25	画面表示データ	P2	画面表示データの結合確認	指示削除を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で指示削除の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-086	IT-25	画面表示データ	P2	画面表示データの結合確認	指示削除を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で指示削除の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 指示削除
 3. 画面表示と後続状態を確認する"	送り状No.未登録時のみ削除可であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-085	IT-12	画面表示データ	P2	画面表示データの結合確認	在庫移動実績CSV登録を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で在庫移動実績CSV登録の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 在庫移動実績CSV登録を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-086	IT-16	ファイル選択	P2	ファイル選択の結合確認	表示順を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で表示順の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-087	IT-12	エラー継続	P3	エラー継続の結合確認	表示順を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で表示順の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示順を確認する
 3. 画面表示と後続状態を確認する"	登録日（create_date）降順（getQueryBuilderBySearchData の orderBy('s.createDate', 'DESC')）であること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-087	IT-12	非同期更新	P1	非同期更新の結合確認	件数を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で件数の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-088	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	件数を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で件数の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 件数を確認する
 3. 画面表示と後続状態を確認する"	ページングなしであること。
-M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK-MOVE-INSTRUCTION-SEARCH-CREATE-088	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	初回表示を試験できる状態である	M04-24（在庫移動指示リスト作成/検索）（m04_24_admin_stock_stock_move_instruction_search_create）で初回表示の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 初回表示を確認する
-3. 画面表示と後続状態を確認する"	GET（resume 無し）では検索条件セッションを初期化し、検索フォームのビューデータのみ表示（一覧は空）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -403,4 +402,4 @@ M04-24（在庫移動指示リスト作成/検索）	IT-M04-24-ADMIN-STOCK-STOCK
 | ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.109, No.110, No.111, No.359, No.381, No.387, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.109, No.110, No.111, No.381, No.382, No.385, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

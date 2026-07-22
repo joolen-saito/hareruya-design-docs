@@ -14,11 +14,11 @@
 | IT-20 | 出力抑止、識別子 |
 | IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
+| IT-02 | 初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-16 | ファイル選択 |
 | IT-33 | 販売可能数 |
 
@@ -140,144 +140,150 @@ m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買�
 m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	M06-01-MSG-025を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-025の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	M06-01-MSG-030を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-030の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	M06-01-MSG-029を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-029の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	検索ヒット後を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で検索ヒット後の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	M06-01-MSG-030を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-030の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-037	IT-26	登録内容	P1	登録時の登録内容確認	「棚戻し未完了のみ表示」絞り込みを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で「棚戻し未完了のみ表示」絞り込みの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-037	IT-26	登録内容	P1	登録時の登録内容確認	検索ヒット後を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で検索ヒット後の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-038	IT-26	登録内容	P1	登録時の登録内容確認	管理画面ナビ「店頭買取管理」→「買取一覧」を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で管理画面ナビ「店頭買取管理」→「買取一覧」の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-038	IT-26	登録内容	P1	登録時の登録内容確認	「棚戻し未完了のみ表示」絞り込みを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で「棚戻し未完了のみ表示」絞り込みの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-039	IT-26	登録内容	P1	登録時の登録内容確認	検索ボタン押下を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で検索ボタン押下の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-039	IT-26	登録内容	P1	登録時の登録内容確認	管理画面ナビ「店頭買取管理」→「買取一覧」を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で管理画面ナビ「店頭買取管理」→「買取一覧」の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-040	IT-26	登録内容	P1	登録時の登録内容確認	ページャのリンクを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でページャのリンクの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-040	IT-26	登録内容	P1	登録時の登録内容確認	検索ボタン押下を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で検索ボタン押下の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	直前の検索条件をセッションから復元し、指定ページを表示すること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-041	IT-26	登録内容	P1	登録時の登録内容確認	表示件数ドロップダウンを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で表示件数ドロップダウンの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-042	IT-26	登録内容	P1	登録時の登録内容確認	パス形式のページングを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	入力に基づき一覧を構築し、ヒット件数とテーブル・ページャを表示すること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-041	IT-26	登録内容	P1	登録時の登録内容確認	ページャのリンクを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でページャのリンクの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-043	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-042	IT-26	登録内容	P1	登録時の登録内容確認	表示件数ドロップダウンを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-043	IT-26	登録内容	P1	登録時の登録内容確認	パス形式のページングを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-044	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-044	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-045	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-045	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-046	IT-26	登録内容	P1	登録時の登録内容確認	買取金額を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で買取金額の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-046	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-047	IT-26	実行結果	P1	登録時の実行結果確認	査定担当者を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で査定担当者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-047	IT-26	実行結果	P1	登録時の実行結果確認	買取金額を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で買取金額の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-048	IT-23	実行結果	P1	登録時の実行結果確認	最終更新者を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で最終更新者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-048	IT-23	実行結果	P1	登録時の実行結果確認	査定担当者を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で査定担当者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Member.nameであること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-049	IT-26	更新内容	P1	更新時の更新内容確認	ステータスを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でステータスの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	getLatestUpdaterByStatus(買取完了ステータスID) の名前を優先するテンプレート式だが、現行実装の当該メソッドは常に null を返すため、実質 Member.name が表示される（Twig …であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-049	IT-26	更新内容	P1	更新時の更新内容確認	最終更新者を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で最終更新者の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-050	IT-26	更新内容	P1	更新時の更新内容確認	棚戻し未完了のみ表示を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で棚戻し未完了のみ表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-050	IT-26	更新内容	P1	更新時の更新内容確認	ステータスを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でステータスの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-051	IT-26	更新内容	P1	更新時の更新内容確認	一覧と詳細を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で一覧と詳細の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-051	IT-26	更新内容	P1	更新時の更新内容確認	棚戻し未完了のみ表示を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で棚戻し未完了のみ表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-052	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で入力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-052	IT-26	更新内容	P1	更新時の更新内容確認	一覧と詳細を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で一覧と詳細の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索フォームの各フィールド、ページ番号、表示件数、ソート（一覧画面にソート UI は無く主にセッション継承）であること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-053	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-054	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一覧は検索時点のスナップショットでページングすること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-053	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で入力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-055	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-054	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-055	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-056	IT-26	更新内容	P1	更新時の更新内容確認	dtb_otc_buy_orderを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-056	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-057	IT-26	更新内容	P1	更新時の更新内容確認	査定IDリンク押下を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-057	IT-26	更新内容	P1	更新時の更新内容確認	dtb_otc_buy_orderを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-058	IT-26	更新内容	P1	更新時の更新内容確認	CSV出力でID未選択を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でCSV出力でID未選択の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-058	IT-26	更新内容	P1	更新時の更新内容確認	査定IDリンク押下を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で査定IDリンク押下の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-059	IT-05	実行結果	P1	更新時の実行結果確認	M06-01-MSG-001を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-001の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-059	IT-05	実行結果	P1	更新時の実行結果確認	CSV出力でID未選択を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でCSV出力でID未選択の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-060	IT-05	実行結果	P1	更新時の実行結果確認	M06-01-MSG-002を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-002の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-060	IT-05	実行結果	P1	更新時の実行結果確認	M06-01-MSG-001を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-001の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	戻しリストCSV出力の追加バリデーションがエラーを返したときであること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-061	IT-02	初期行数	P2	初期行数の結合確認	M06-01-MSG-005を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	買取検索/一覧画面に遷移すること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-061	IT-02	初期行数	P2	初期行数の結合確認	M06-01-MSG-002を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M06-01-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-062	IT-02	表示順	P2	表示順の結合確認	M06-01-MSG-005を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-01-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	ステータス変更でUpdateStatusActionがInvalidArgumentExceptionを送出したときであること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-062	IT-02	表示順	P2	表示順の結合確認	M06-01-MSG-011を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-011の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M06-01-MSG-011を確認する
-3. 画面表示と後続状態を確認する"	経理払出し済のステータス更新処理が例外を送出したときであること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-063	IT-25	更新抑止	P1	更新抑止の結合確認	M06-01-MSG-014を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-014の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-063	IT-25	更新抑止	P1	更新抑止の結合確認	M06-01-MSG-011を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-011の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	入庫済みへのステータス更新処理が例外を送出したときであること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-064	IT-12	内部情報	P1	内部情報の結合確認	M06-01-MSG-016を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-016の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-064	IT-12	内部情報	P1	内部情報の結合確認	M06-01-MSG-014を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-014の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	有効な詳細フォーム送信後、実在庫更新処理が例外を送出したときであること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-065	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M06-01-MSG-020を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-020の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-065	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M06-01-MSG-016を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-016の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M06-01-MSG-016を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M06-01-MSG-020を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-020の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-01-MSG-020を確認する
-3. 画面表示と後続状態を確認する"	個別入力商品の実在庫登録処理が例外を送出したときであること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M06-01-MSG-021を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-021の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-067	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M06-01-MSG-021を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-021の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-01-MSG-021を確認する
-3. 画面表示と後続状態を確認する"	戻しリストPDFで選択注文IDが空のPOSTを受けたとき（サーバはJSONでok:false・redirectUrlを返すこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-067	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M06-01-MSG-022を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-022の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	買取検索/一覧画面に遷移すること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M06-01-MSG-022を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-022の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-01-MSG-022を確認する
-3. 画面表示と後続状態を確認する"	戻しリストPDF出力の追加バリデーションがエラーを返したときであること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M06-01-MSG-023を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-023の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	買取検索/一覧画面に遷移すること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M06-01-MSG-023を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-023の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-01-MSG-023を確認する
-3. 画面表示と後続状態を確認する"	買取情報を1件も選択せずに戻しリストPDFを押下したとき（otc-buy-order.js:25、サーバへ送信せず中断）であること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M06-01-MSG-024を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-024の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M06-01-MSG-024を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-024の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-01-MSG-024を確認する
-3. 画面表示と後続状態を確認する"	PDF表示用ポップアップがブラウザにブロックされたとき（otc-buy-order.js:39、サーバへ送信せず中断）であること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M06-01-MSG-025を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-025の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M06-01-MSG-025を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-025の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-01-MSG-025を確認する
-3. 画面表示と後続状態を確認する"	PDF用データ取得のAjaxが失敗、もしくはok以外の応答にredirectUrlが無いとき（otc-buy-order.js:71,75、ポップアップを閉じて一覧に留まる）であること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M06-01-MSG-030を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-030の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-072	IT-25	一覧	P2	一覧の結合確認	M06-01-MSG-029を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-029の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M06-01-MSG-029を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-073	IT-12	画面表示データ	P2	画面表示データの結合確認	M06-01-MSG-030を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でM06-01-MSG-030の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-01-MSG-030を確認する
-3. 画面表示と後続状態を確認する"	orderパラメータがASC/DESC(大小無視)に合致しないとき（SearchControllerTrait.php:143であること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-072	IT-25	一覧	P2	一覧の結合確認	検索ヒット後を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で検索ヒット後の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-074	IT-25	画面表示データ	P2	画面表示データの結合確認	検索ヒット後を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で検索ヒット後の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索ヒット後
 3. 画面表示と後続状態を確認する"	eccube.admin.otcbuyorder.search にフォームのビューデータ、eccube.admin.otcbuyorder.search.page_no にページ番号、eccube.admin.otcb…であること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-073	IT-12	画面表示データ	P2	画面表示データの結合確認	「棚戻し未完了のみ表示」絞り込みを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で「棚戻し未完了のみ表示」絞り込みの確認に必要な条件を指定する	"1. 対象画面を表示する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-075	IT-12	画面表示データ	P2	画面表示データの結合確認	「棚戻し未完了のみ表示」絞り込みを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で「棚戻し未完了のみ表示」絞り込みの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「棚戻し未完了のみ表示」絞り込みを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-074	IT-25	画面表示データ	P2	画面表示データの結合確認	管理画面ナビ「店頭買取管理」→「買取一覧」を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で管理画面ナビ「店頭買取管理」→「買取一覧」の確認に必要な条件を指定する	"1. 対象画面を表示する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-076	IT-25	画面表示データ	P2	画面表示データの結合確認	管理画面ナビ「店頭買取管理」→「買取一覧」を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で管理画面ナビ「店頭買取管理」→「買取一覧」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 管理画面ナビ「店頭買取管理」→「買取一覧」を確認する
 3. 画面表示と後続状態を確認する"	検索フォームのみ表示され、結果一覧ブロックは出ないこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-075	IT-12	画面表示データ	P2	画面表示データの結合確認	検索ボタン押下を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-077	IT-25	フォーム送信	P1	フォーム送信の結合確認	検索ボタン押下を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索ボタン押下
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-076	IT-25	画面表示データ	P2	画面表示データの結合確認	ページャのリンクを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でページャのリンクの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	入力に基づき一覧を構築し、ヒット件数とテーブル・ページャを表示すること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-078	IT-16	ファイル選択	P2	ファイル選択の結合確認	ページャのリンクを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でページャのリンクの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ページャのリンクを確認する
 3. 画面表示と後続状態を確認する"	直前の検索条件をセッションから復元し、指定ページを表示すること。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-077	IT-25	フォーム送信	P1	フォーム送信の結合確認	表示件数ドロップダウンを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で表示件数ドロップダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-079	IT-12	非同期更新	P1	非同期更新の結合確認	表示件数ドロップダウンを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で表示件数ドロップダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示件数ドロップダウンを確認する
 3. 画面表示と後続状態を確認する"	表示件数をセッションに保存し、1ページ目で再検索相当の結果を返すこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-078	IT-16	ファイル選択	P2	ファイル選択の結合確認	パス形式のページングを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でパス形式のページングの確認に必要な条件を指定する	"1. 対象画面を表示する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-080	IT-12	エラー継続	P3	エラー継続の結合確認	パス形式のページングを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でパス形式のページングの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. パス形式のページングを確認する
 3. 画面表示と後続状態を確認する"	page_no が1以上のとき、セッションの検索条件で一覧を開くこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-079	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	モーダル・ポップアップを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-081	IT-33	販売可能数	P1	販売可能数の操作結果確認	JS 挙動を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でJS 挙動の確認に必要な条件を指定する	"1. 販売可能数の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Moment と Tempus Dominus で datetimepicker-input に日時選択 UI を付与すること。
+m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-082	IT-23	データ正当性	P3	データ正当性の結合確認	モーダル・ポップアップを試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	検索一覧画面自体にはモーダルはないこと。
-m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）	IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-080	IT-33	販売可能数	P1	販売可能数の操作結果確認	買取金額を試験できる状態である	m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）（m06_01_admin_store_purchase_purchase_store_search_list）で買取金額の確認に必要な条件を指定する	"1. 販売可能数の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	totalPrice を価格フィルタ表示であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -377,6 +383,6 @@ m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 10件 — No.109, No.110, No.111, No.385, No.387, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.109, No.110, No.111, No.412, No.413, No.414, No.415, No.416, No.510。上限緩和または個別ケース化で収載可能。

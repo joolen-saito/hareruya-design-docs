@@ -81,55 +81,55 @@ F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	承諾案内を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 承諾案内を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	対象の限定を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 対象の限定を確認する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	F06-15-MSG-001を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. F06-15-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	承諾フォームの表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 承諾フォームの表示を確認する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	対象の限定を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 対象の限定を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	査定価格の表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 査定価格の表示を確認する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	承諾フォームの表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 承諾フォームの表示を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-019	IT-22	部分入力	P2	部分入力の入力検証	まとめて買取の個別表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でまとめて買取の個別表示の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. まとめて買取の個別表示を確認する
-3. 画面表示と後続状態を確認する"	まとめて買取区分は一定価格以上の商品を個別表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-020	IT-23	検索条件	P2	検索時の検索条件確認	承諾合計の画面集計を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-019	IT-22	部分入力	P2	部分入力の入力検証	査定価格の表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で査定価格の表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 査定価格の表示を確認する
+3. 画面表示と後続状態を確認する"	査定価格が未確定の明細は「査定中」と表示すること。
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-020	IT-23	検索条件	P2	検索時の検索条件確認	まとめて買取の個別表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-021	IT-23	検索条件	P2	検索時の検索条件確認	他人の注文・存在しない注文を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-021	IT-23	検索条件	P2	検索時の検索条件確認	承諾合計の画面集計を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-022	IT-23	検索条件	P2	検索時の検索条件確認	処理状態が連絡済み以外を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-022	IT-23	検索条件	P2	検索時の検索条件確認	他人の注文・存在しない注文を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-023	IT-23	検索条件	P2	検索時の検索条件確認	査定価格未確定の明細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-023	IT-23	検索条件	P2	検索時の検索条件確認	処理状態が連絡済み以外を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-024	IT-23	検索条件	P2	検索時の検索条件確認	商品が論理削除済みを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-024	IT-23	検索条件	P2	検索時の検索条件確認	査定価格未確定の明細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-025	IT-23	検索条件	P2	検索時の検索条件確認	一覧と詳細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-025	IT-23	検索条件	P2	検索時の検索条件確認	商品が論理削除済みを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-026	IT-23	検索条件	P2	検索時の検索条件確認	削除済み商品を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-026	IT-23	検索条件	P2	検索時の検索条件確認	一覧と詳細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-027	IT-23	検索条件	P2	検索時の検索条件確認	承諾後の値を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-027	IT-23	検索条件	P2	検索時の検索条件確認	削除済み商品を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-028	IT-23	検索条件	P2	検索時の検索条件確認	APIを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でAPIの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-028	IT-23	検索条件	P2	検索時の検索条件確認	承諾後の値を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で承諾後の値の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-029	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で成功時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-029	IT-23	検索条件	P2	検索時の検索条件確認	APIを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でAPIの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-030	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で失敗時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-030	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で成功時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-031	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で副作用の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-031	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で失敗時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-032	IT-23	検索条件	P2	検索時の検索条件確認	買取注文（dtb_buy_order）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文（dtb_buy_order）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-032	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で副作用の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-033	IT-23	検索条件	P2	検索時の検索条件確認	買取注文（dtb_buy_order）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文（dtb_buy_order）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
@@ -144,166 +144,163 @@ F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-036	IT-23	実行結果	P2	検索時の実行結果確認	買取注文状態履歴（dtb_buy_order_status_histry）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文状態履歴（dtb_buy_order_status_histry）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-037	IT-23	実行結果	P2	検索時の実行結果確認	ログイン済み会員（本人の注文）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でログイン済み会員（本人の注文）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-037	IT-26	登録内容	P1	登録時の登録内容確認	ログイン済み会員（本人の注文）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でログイン済み会員（本人の注文）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-038	IT-26	登録内容	P1	登録時の登録内容確認	ログイン済み会員（他人の注文）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でログイン済み会員（他人の注文）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-039	IT-26	登録内容	P1	登録時の登録内容確認	「承諾確定」ボタン押下を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で「承諾確定」ボタン押下の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-040	IT-26	登録内容	P1	登録時の登録内容確認	商品明細の商品リンクを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で商品明細の商品リンクの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-041	IT-26	登録内容	P1	登録時の登録内容確認	まとめて買取を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でまとめて買取の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-040	IT-26	登録内容	P1	登録時の登録内容確認	まとめて買取を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でまとめて買取の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品をまとめて申し込む買取区分であること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-042	IT-26	登録内容	P1	登録時の登録内容確認	買取履歴一覧のオーダーID・処理状態画像を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取履歴一覧のオーダーID・処理状態画像の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-041	IT-26	登録内容	P1	登録時の登録内容確認	買取履歴一覧のオーダーID・処理状態画像を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取履歴一覧のオーダーID・処理状態画像の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-043	IT-26	登録内容	P1	登録時の登録内容確認	詳細画面の「承諾確定」ボタンを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-042	IT-26	登録内容	P1	登録時の登録内容確認	詳細画面の「承諾確定」ボタンを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-044	IT-26	登録内容	P1	登録時の登録内容確認	商品明細の商品リンクを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-043	IT-26	登録内容	P1	登録時の登録内容確認	商品明細の商品リンクを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-045	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-044	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-046	IT-26	登録内容	P1	登録時の登録内容確認	JS挙動を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-045	IT-26	登録内容	P1	登録時の登録内容確認	JS挙動を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-047	IT-26	登録内容	P1	登録時の登録内容確認	CSS・レイアウトを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でCSS・レイアウトの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-046	IT-26	登録内容	P1	登録時の登録内容確認	CSS・レイアウトを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でCSS・レイアウトの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-048	IT-26	実行結果	P1	登録時の実行結果確認	詳細の取得を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で詳細の取得の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-047	IT-26	実行結果	P1	登録時の実行結果確認	詳細の取得を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で詳細の取得の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-049	IT-23	実行結果	P1	登録時の実行結果確認	査定金額合計を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で査定金額合計の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-048	IT-23	実行結果	P1	登録時の実行結果確認	査定金額合計を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で査定金額合計の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	買取注文の査定金額合計を表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-050	IT-26	更新内容	P1	更新時の更新内容確認	査定承諾金額合計を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で査定承諾金額合計の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-049	IT-26	更新内容	P1	更新時の更新内容確認	査定承諾金額合計を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で査定承諾金額合計の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-051	IT-26	更新内容	P1	更新時の更新内容確認	えらんで買取明細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でえらんで買取明細の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-050	IT-26	更新内容	P1	更新時の更新内容確認	えらんで買取明細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でえらんで買取明細の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-052	IT-26	更新内容	P1	更新時の更新内容確認	まとめて買取明細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でまとめて買取明細の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-051	IT-26	更新内容	P1	更新時の更新内容確認	まとめて買取明細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でまとめて買取明細の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-053	IT-26	更新内容	P1	更新時の更新内容確認	進行履歴日付を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で進行履歴日付の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-052	IT-26	更新内容	P1	更新時の更新内容確認	進行履歴日付を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で進行履歴日付の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	査定・承諾・振込完了の各状態履歴の日付を表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-054	IT-26	更新内容	P1	更新時の更新内容確認	削除済み商品の表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除済み商品の表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-053	IT-26	更新内容	P1	更新時の更新内容確認	削除済み商品の表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除済み商品の表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-055	IT-26	更新内容	P1	更新時の更新内容確認	承諾案内を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-054	IT-26	更新内容	P1	更新時の更新内容確認	承諾案内を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-056	IT-26	更新内容	P1	更新時の更新内容確認	対象の限定を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-055	IT-26	更新内容	P1	更新時の更新内容確認	F06-15-MSG-001を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-057	IT-26	更新内容	P1	更新時の更新内容確認	承諾フォームの表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-056	IT-26	更新内容	P1	更新時の更新内容確認	対象の限定を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-058	IT-26	更新内容	P1	更新時の更新内容確認	査定価格の表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-057	IT-26	更新内容	P1	更新時の更新内容確認	承諾フォームの表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-059	IT-26	更新内容	P1	更新時の更新内容確認	まとめて買取の個別表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でまとめて買取の個別表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-058	IT-26	更新内容	P1	更新時の更新内容確認	査定価格の表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で査定価格の表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-060	IT-05	実行結果	P1	更新時の実行結果確認	承諾合計の画面集計を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で承諾合計の画面集計の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-059	IT-05	実行結果	P1	更新時の実行結果確認	まとめて買取の個別表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でまとめて買取の個別表示の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-061	IT-05	実行結果	P1	更新時の実行結果確認	他人の注文・存在しない注文を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で他人の注文・存在しない注文の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-060	IT-05	実行結果	P1	更新時の実行結果確認	承諾合計の画面集計を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で承諾合計の画面集計の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	売却可否の選択に応じて承諾合計・非承諾合計を画面上で集計表示すること。
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-061	IT-05	削除条件	P1	削除時の削除条件確認	他人の注文・存在しない注文を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	取得できず存在しない（HTTP404）であること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-062	IT-05	削除条件	P1	削除時の削除条件確認	処理状態が連絡済み以外を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-062	IT-05	削除条件	P1	削除時の削除条件確認	処理状態が連絡済み以外を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	売却可否を操作不可で表示し、承諾フォームを出さないこと。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-063	IT-05	削除条件	P1	削除時の削除条件確認	査定価格未確定の明細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-063	IT-05	削除条件	P1	削除時の削除条件確認	査定価格未確定の明細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	「査定中」と表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-064	IT-05	削除条件	P1	削除時の削除条件確認	商品が論理削除済みを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-064	IT-05	削除条件	P1	削除時の削除条件確認	商品が論理削除済みを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	論理削除フィルタを外して名称等を表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-065	IT-05	削除条件	P1	削除時の削除条件確認	一覧と詳細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	詳細は一覧と同一の買取注文識別子で表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-066	IT-05	削除条件	P1	削除時の削除条件確認	削除済み商品を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除済み商品の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-065	IT-05	削除条件	P1	削除時の削除条件確認	一覧と詳細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で一覧と詳細の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-066	IT-05	実行結果	P1	削除時の実行結果確認	削除済み商品を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除済み商品の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-067	IT-05	実行結果	P1	削除時の実行結果確認	承諾後の値を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で承諾後の値の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	承諾確定後の状態・金額は承諾機能の確定結果を正とし、本画面は再表示時にその結果を反映すること。
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-068	IT-05	実行結果	P1	削除時の実行結果確認	APIを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でAPIの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能では詳細表示のための同期取得のみで、非同期APIの呼び出しを扱わないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-069	IT-05	実行結果	P1	削除時の実行結果確認	成功時出力を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-070	IT-05	実行結果	P1	削除時の実行結果確認	失敗時出力を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	{id}なし・他人の注文・存在しない注文は存在しない（HTTP404）であること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-071	IT-02	初期行数	P2	初期行数の結合確認	副作用を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	買取履歴詳細のHTML表示であること。
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-070	IT-02	初期行数	P2	初期行数の結合確認	失敗時出力を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	{id}なし・他人の注文・存在しない注文は存在しない（HTTP404）であること。
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-071	IT-02	表示順	P2	表示順の結合確認	副作用を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	本機能（詳細表示）はデータを更新しない（参照のみ）であること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-072	IT-02	表示順	P2	表示順の結合確認	買取注文（dtb_buy_order）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文（dtb_buy_order）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 買取注文（dtb_buy_order）を確認する
-3. 画面表示と後続状態を確認する"	詳細の取得キーであること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-073	IT-25	更新抑止	P1	更新抑止の結合確認	買取注文（dtb_buy_order）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文（dtb_buy_order）の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-072	IT-25	更新抑止	P1	更新抑止の結合確認	買取注文（dtb_buy_order）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文（dtb_buy_order）の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	詳細の取得キーであること。
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-073	IT-12	内部情報	P1	内部情報の結合確認	買取注文（dtb_buy_order）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文（dtb_buy_order）の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	処理状態画像と承諾フォームの表示条件であること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-074	IT-12	内部情報	P1	内部情報の結合確認	買取注文（dtb_buy_order）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文（dtb_buy_order）の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	金額合計と承諾方法（自動承諾フラグ）の表示であること。
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	買取注文（dtb_buy_order）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文（dtb_buy_order）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 買取注文（dtb_buy_order）を確認する
+3. 画面表示と後続状態を確認する"	金額合計と承諾方法（自動承諾フラグ）の表示であること。
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	買取代表カード（dtb_buy_main_card）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取代表カード（dtb_buy_main_card）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 買取代表カード（dtb_buy_main_card）を確認する
 3. 画面表示と後続状態を確認する"	明細の査定価格・数量・売却可否・買取区分の表示であること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	買取注文状態履歴（dtb_buy_order_status_histry）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文状態履歴（dtb_buy_order_status_histry）の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	買取注文状態履歴（dtb_buy_order_status_histry）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取注文状態履歴（dtb_buy_order_status_histry）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 買取注文状態履歴（dtb_buy_order_status_histry）を確認する
 3. 画面表示と後続状態を確認する"	査定・承諾・振込完了の日付の表示であること。
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ログイン済み会員（本人の注文）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でログイン済み会員（本人の注文）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ログイン済み会員（本人の注文）を確認する
 3. 画面表示と後続状態を確認する"	閲覧可能であること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ログイン済み会員（他人の注文）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でログイン済み会員（他人の注文）の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ログイン済み会員（他人の注文）を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でログイン済み会員（他人の注文）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ログイン済み会員（他人の注文）を確認する
 3. 画面表示と後続状態を確認する"	取得できず存在しない（HTTP404）であること。
 F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	「承諾確定」ボタン押下を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で「承諾確定」ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「承諾確定」ボタン押下
 3. 画面表示と後続状態を確認する"	承諾処理（POST /{_locale}/mypage/purchase_history/update/{id}、買取査定承諾機能を正とする）であること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	商品明細の商品リンクを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で商品明細の商品リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 商品明細の商品リンクを確認する
-3. 画面表示と後続状態を確認する"	買取用商品詳細を別タブで表示であること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	まとめて買取を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でまとめて買取の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	まとめて買取を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でまとめて買取の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. まとめて買取を確認する
 3. 画面表示と後続状態を確認する"	商品をまとめて申し込む買取区分であること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-082	IT-25	一覧	P2	一覧の結合確認	買取履歴一覧のオーダーID・処理状態画像を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取履歴一覧のオーダーID・処理状態画像の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-081	IT-25	一覧	P2	一覧の結合確認	買取履歴一覧のオーダーID・処理状態画像を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で買取履歴一覧のオーダーID・処理状態画像の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 買取履歴一覧のオーダーID・処理状態画像を確認する
 3. 画面表示と後続状態を確認する"	当該買取注文の詳細を表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-083	IT-12	画面表示データ	P2	画面表示データの結合確認	詳細画面の「承諾確定」ボタンを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で詳細画面の「承諾確定」ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-082	IT-12	画面表示データ	P2	画面表示データの結合確認	詳細画面の「承諾確定」ボタンを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で詳細画面の「承諾確定」ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 詳細画面の「承諾確定」ボタンを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-084	IT-25	画面表示データ	P2	画面表示データの結合確認	商品明細の商品リンクを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で商品明細の商品リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-083	IT-25	画面表示データ	P2	画面表示データの結合確認	商品明細の商品リンクを試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で商品明細の商品リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 商品明細の商品リンクを確認する
 3. 画面表示と後続状態を確認する"	商品・規格が特定できる明細は商品詳細へ遷移すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-085	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-084	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-086	IT-25	画面表示データ	P2	画面表示データの結合確認	JS挙動を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-085	IT-25	画面表示データ	P2	画面表示データの結合確認	JS挙動を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	買取履歴用スクリプトを読み込み、売却可否の選択に応じて承諾合計・非承諾合計を画面上で集計表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-087	IT-12	エラー継続	P3	エラー継続の結合確認	査定承諾金額合計を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で査定承諾金額合計の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-086	IT-12	エラー継続	P3	エラー継続の結合確認	査定承諾金額合計を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で査定承諾金額合計の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 査定承諾金額合計を確認する
 3. 画面表示と後続状態を確認する"	売却すると選択された明細の合計を表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-088	IT-25	件数上限	P2	件数上限の結合確認	えらんで買取明細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でえらんで買取明細の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-087	IT-25	件数上限	P2	件数上限の結合確認	えらんで買取明細を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）でえらんで買取明細の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. えらんで買取明細を確認する
 3. 画面表示と後続状態を確認する"	えらんで買取区分の代表カードを一覧表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-089	IT-25	データなし	P2	データなしの結合確認	進行履歴日付を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で進行履歴日付の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-088	IT-25	データなし	P2	データなしの結合確認	進行履歴日付を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で進行履歴日付の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 進行履歴日付を確認する
 3. 画面表示と後続状態を確認する"	査定・承諾・振込完了の各状態履歴の日付を表示すること。
-F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-090	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	削除済み商品の表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除済み商品の表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-089	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	削除済み商品の表示を試験できる状態である	F06-15（買取履歴詳細）（f06_15_front_member_mypage_buy_history_detail）で削除済み商品の表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 削除済み商品の表示
 3. 画面表示と後続状態を確認する"	商品・商品規格の論理削除フィルタを一時的に外し、削除済みでも明細を表示すること。
 ```
@@ -407,4 +404,4 @@ F06-15（買取履歴詳細）	IT-F06-15-FRONT-MEMBER-MYPAGE-BUY-HISTORY-DETAIL-
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.109, No.110, No.111, No.381, No.382, No.385, No.413, No.510。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.54, No.109, No.110, No.111, No.381, No.382, No.385, No.413, No.510。上限緩和または個別ケース化で収載可能。

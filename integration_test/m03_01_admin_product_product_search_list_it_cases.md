@@ -88,75 +88,75 @@ m03-01_admin_product_product_search_list（管理画面_商品管理_商品検�
 m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M03-01-MSG-005を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. M03-01-MSG-005を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-018	IT-22	部分入力	P2	部分入力の入力検証	M03-01-MSG-007を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-007の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M03-01-MSG-007を確認する
-3. 画面表示と後続状態を確認する"	個別商品の状態保存中に例外が発生したときであること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-019	IT-23	検索条件	P2	検索時の検索条件確認	M03-01-MSG-008を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-018	IT-22	部分入力	P2	部分入力の入力検証	M03-01-MSG-006を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-006の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-01-MSG-006を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-019	IT-23	検索条件	P2	検索時の検索条件確認	M03-01-MSG-007を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-020	IT-23	検索条件	P2	検索時の検索条件確認	M03-01-MSG-010を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-020	IT-23	検索条件	P2	検索時の検索条件確認	M03-01-MSG-008を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	基準価格（開始）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	M03-01-MSG-009を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	規格更新日（開始）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	M03-01-MSG-010を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	規格更新日（終了）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	基準価格（開始）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	POST 検証エラーを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	規格更新日（開始）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	検索結果 0 件を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	規格更新日（終了）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	sortkey が列マップ外を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	POST 検証エラーを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	ホームの search_nonstock のみをセッションに載せて一覧へ入るを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でホームの search_nonstock のみをセッションに載せて一覧へ入るの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	検索結果 0 件を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索結果 0 件の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-028	IT-23	検索条件	P2	検索時の検索条件確認	一覧テンプレートの在庫・期間別数量セルを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で一覧テンプレートの在庫・期間別数量セルの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-028	IT-23	検索条件	P2	検索時の検索条件確認	sortkey が列マップ外を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でsortkey が列マップ外の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	一覧と CSVを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で一覧と CSVの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	ホームの search_nonstock のみをセッションに載せて一覧へ入るを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でホームの search_nonstock のみをセッションに載せて一覧へ入るの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	一覧と編集画面を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で一覧と編集画面の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	一覧テンプレートの在庫・期間別数量セルを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で一覧テンプレートの在庫・期間別数量セルの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	クエリカスタマイザを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でクエリカスタマイザの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	一覧と CSVを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で一覧と CSVの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で成功時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	一覧と編集画面を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で一覧と編集画面の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-033	IT-23	実行結果	P2	検索時の実行結果確認	失敗時出力を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-033	IT-23	実行結果	P2	検索時の実行結果確認	クエリカスタマイザを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でクエリカスタマイザの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	副作用を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	成功時出力を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	規格更新日を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で規格更新日の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-035	IT-23	実行結果	P2	検索時の実行結果確認	失敗時出力を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	その他テキストを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でその他テキストの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	副作用を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-037	IT-26	更新内容	P1	更新時の更新内容確認	管理画面にログインしルートへ到達できる運用者を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で管理画面にログインしルートへ到達できる運用者の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-037	IT-26	更新内容	P1	更新時の更新内容確認	規格更新日を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で規格更新日の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-038	IT-26	更新内容	P1	更新時の更新内容確認	未ログインまたは拒否された主体を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で未ログインまたは拒否された主体の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-038	IT-26	更新内容	P1	更新時の更新内容確認	その他テキストを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でその他テキストの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-039	IT-26	更新内容	P1	更新時の更新内容確認	編集などから resume=1 で戻るを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で編集などから resume=1 で戻るの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-039	IT-26	更新内容	P1	更新時の更新内容確認	管理画面にログインしルートへ到達できる運用者を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で管理画面にログインしルートへ到達できる運用者の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-040	IT-26	更新内容	P1	更新時の更新内容確認	POST 検証失敗を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でPOST 検証失敗の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-040	IT-26	更新内容	P1	更新時の更新内容確認	未ログインまたは拒否された主体を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で未ログインまたは拒否された主体の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一画面でエラーメッセージを表示し、一覧は出さないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理画面共通の挙動により利用できないこと。
 m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-041	IT-26	更新内容	P1	更新時の更新内容確認	ナビから商品一覧を開くを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でナビから商品一覧を開くの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
@@ -195,55 +195,55 @@ m03-01_admin_product_product_search_list（管理画面_商品管理_商品検�
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	規格一覧確認モーダル、一括完全削除モーダルであること。
 m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-053	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-01-MSG-001を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-01-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	パスワード変更フォームが送信済みかつ有効なとき（$form->isSubmitted() && $form->isValid()）であること。
+3. 画面表示と後続状態を確認する"	パスワード変更画面に遷移すること。
 m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-054	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-01-MSG-002を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-01-MSG-002を確認する
-3. 画面表示と後続状態を確認する"	規格データ取得Ajax（GET btnClass.data('class-load')）が fail したときであること。
+3. 画面表示と後続状態を確認する"	エラーを表示し、商品検索・一覧画面に留まるであること。
 m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-055	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M03-01-MSG-003を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-01-MSG-003を確認する
-3. 画面表示と後続状態を確認する"	#bulkDelete 押下直後（チェック済み行への削除Ajax開始時にモーダル本文を差し替える）であること。
+3. 画面表示と後続状態を確認する"	削除処理中を表示し、商品検索・一覧画面に留まるであること。
 m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-056	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M03-01-MSG-004を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-01-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	一括削除の全DELETE Ajaxが完了したとき（$.when(...).always、成功・失敗を問わない）であること。
+3. 画面表示と後続状態を確認する"	完了を表示し、商品検索・一覧画面を再読み込みすること。
 m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-057	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-01-MSG-005を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-01-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	非XHRのDELETEで商品削除が成功したときであること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-058	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-01-MSG-008を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	商品検索・一覧画面に遷移すること。
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-058	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-01-MSG-007を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-007の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-01-MSG-007を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-059	IT-25	一覧	P2	一覧の結合確認	M03-01-MSG-008を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-01-MSG-008を確認する
-3. 画面表示と後続状態を確認する"	少なくとも1件の商品の状態保存に成功したときであること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-059	IT-25	一覧	P2	一覧の結合確認	M03-01-MSG-010を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	商品検索・一覧画面に遷移すること。
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-060	IT-12	画面表示データ	P2	画面表示データの結合確認	M03-01-MSG-009を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-009の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-01-MSG-009を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-061	IT-25	画面表示データ	P2	画面表示データの結合確認	M03-01-MSG-010を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でM03-01-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-01-MSG-010を確認する
-3. 画面表示と後続状態を確認する"	非XHRのDELETE要求でidに対応する商品が存在しない（削除済み）ときであること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-060	IT-12	画面表示データ	P2	画面表示データの結合確認	基準価格（開始）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で基準価格（開始）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	商品検索・一覧画面に遷移すること。
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-062	IT-12	画面表示データ	P2	画面表示データの結合確認	基準価格（開始）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で基準価格（開始）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 基準価格（開始）を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-061	IT-25	画面表示データ	P2	画面表示データの結合確認	規格更新日（開始）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で規格更新日（開始）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-063	IT-25	画面表示データ	P2	画面表示データの結合確認	規格更新日（開始）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で規格更新日（開始）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 規格更新日（開始）を確認する
 3. 画面表示と後続状態を確認する"	pc.update_date の下限であること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-062	IT-12	画面表示データ	P2	画面表示データの結合確認	規格更新日（終了）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で規格更新日（終了）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-064	IT-25	フォーム送信	P1	フォーム送信の結合確認	規格更新日（終了）を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で規格更新日（終了）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 規格更新日（終了）を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-063	IT-25	画面表示データ	P2	画面表示データの結合確認	POST 検証エラーを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でPOST 検証エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	終日 inclusiveであること。
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-065	IT-16	ファイル選択	P2	ファイル選択の結合確認	POST 検証エラーを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でPOST 検証エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. POST 検証エラーを確認する
 3. 画面表示と後続状態を確認する"	has_errors が真となり、「検索条件に誤りがあります」系のメッセージブロックを表示であること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-064	IT-25	フォーム送信	P1	フォーム送信の結合確認	検索結果 0 件を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索結果 0 件の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-066	IT-12	非同期更新	P1	非同期更新の結合確認	検索結果 0 件を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で検索結果 0 件の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索結果 0 件
 3. 画面表示と後続状態を確認する"	「検索結果がありません」メッセージを表示であること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-065	IT-16	ファイル選択	P2	ファイル選択の結合確認	sortkey が列マップ外を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でsortkey が列マップ外の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-067	IT-12	エラー継続	P3	エラー継続の結合確認	sortkey が列マップ外を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でsortkey が列マップ外の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. sortkey が列マップ外を確認する
 3. 画面表示と後続状態を確認する"	リポジトリが orderBy する時点で未定義添字参照となり、実行時エラーになり得る（不正な隠しフィールド送付）であること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-066	IT-12	非同期更新	P1	非同期更新の結合確認	ホームの search_nonstock のみをセッションに載せて一覧へ入るを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でホームの search_nonstock のみをセッションに載せて一覧へ入るの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-068	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ホームの search_nonstock のみをセッションに載せて一覧へ入るを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）でホームの search_nonstock のみをセッションに載せて一覧へ入るの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ホームの search_nonstock のみをセッションに載せて一覧へ入るを確認する
 3. 画面表示と後続状態を確認する"	コントローラは CSV 用に用意しているマージ処理を経由せず submitAndGetData するため、フォームに無いキーだけが残ると Symfony のフォームがエラーになり得るであること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-067	IT-12	エラー継続	P3	エラー継続の結合確認	一覧テンプレートの在庫・期間別数量セルを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で一覧テンプレートの在庫・期間別数量セルの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-069	IT-23	データ正当性	P3	データ正当性の結合確認	一覧テンプレートの在庫・期間別数量セルを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で一覧テンプレートの在庫・期間別数量セルの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧テンプレートの在庫・期間別数量セルを確認する
 3. 画面表示と後続状態を確認する"	一部が固定文字列のプレースホルダのまま残っており、検索結果データと一致しない表示になり得るであること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-068	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	一覧と CSVを試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で一覧と CSVの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧と CSVを確認する
-3. 画面表示と後続状態を確認する"	CSV 出力側はセッションと既定フォーム値をマージしてから submitAndGetData するため、一覧画面よりセッションの未知キーを引きずりやすいであること。
-m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）	IT-M03-01-ADMIN-PRODUCT-PRODUCT-SEARCH-LIST-069	IT-23	データ正当性	P3	データ正当性の結合確認	一覧と編集画面を試験できる状態である	m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）（m03_01_admin_product_product_search_list）で一覧と編集画面の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧と編集画面を確認する
-3. 画面表示と後続状態を確認する"	一覧は読み取りクエリのみであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）

@@ -62,174 +62,171 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	CSS・レイアウトを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSS・レイアウトを確認する
 3. 画面表示と後続状態を確認する"	ステータス変更画面は4系の変換エリア（下部バー）に戻る・保存を配置であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	M06-04-MSG-002を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. M06-04-MSG-002を確認する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	M06-04-MSG-001を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. M06-04-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	プルダウン選択肢を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. プルダウン選択肢
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	M06-04-MSG-002を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. M06-04-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	買取成立後の自動遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で買取成立後の自動遷移の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	M06-04-MSG-003を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でM06-04-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M06-04-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	買取情報編集画面に遷移すること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	プルダウン選択肢を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. プルダウン選択肢
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	買取成立後の自動遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 買取成立後の自動遷移を確認する
-3. 画面表示と後続状態を確認する"	個別入力商品コレクションが空なら入庫待ち（ID13）、空でなければ未登録在庫あり（ID12）であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入庫済みへのショートカットを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入庫済みへのショートカットを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 入庫済みへのショートカットを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	DB上の現在ステータスが廃止IDを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	DB上の現在ステータスが廃止IDを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. DB上の現在ステータスが廃止IDを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	買取成立へ遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 買取成立へ遷移を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入庫済み以外から「入庫済みにする」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 入庫済み以外から「入庫済みにする」を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	履歴を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 履歴を確認する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	買取成立へ遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 買取成立へ遷移を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	在庫を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 在庫を確認する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	入庫済み以外から「入庫済みにする」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 入庫済み以外から「入庫済みにする」を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-018	IT-22	部分入力	P2	部分入力の入力検証	成功時出力を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	302リダイレクトとフラッシュ（保存完了もしくはエラーメッセージ）であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-019	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で失敗時出力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-018	IT-22	部分入力	P2	部分入力の入力検証	履歴を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で履歴の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 履歴を確認する
+3. 画面表示と後続状態を確認する"	各成功遷移で最低1件、買取成立なら2件の履歴が同一トランザクションに乗るであること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-019	IT-26	登録内容	P1	登録時の登録内容確認	在庫を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で在庫の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-020	IT-26	登録内容	P1	登録時の登録内容確認	副作用を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で副作用の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-020	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で成功時出力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-021	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録/更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-021	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で失敗時出力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-022	IT-26	登録内容	P1	登録時の登録内容確認	業務検証を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で業務検証の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-022	IT-26	登録内容	P1	登録時の登録内容確認	副作用を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で副作用の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	店舗一致、入庫済みからの遷移制限、入庫済み化時の商品規格紐付けであること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-023	IT-26	登録内容	P1	登録時の登録内容確認	フォーム検証エラーを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でフォーム検証エラーの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-024	IT-26	登録内容	P1	登録時の登録内容確認	成功リダイレクトを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_otc_buy_order 更新、履歴挿入、条件付きで商品在庫・在庫履歴、条件付きで日別集計の再計算であること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-023	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録/更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-025	IT-26	登録内容	P1	登録時の登録内容確認	CSRF不一致を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-024	IT-26	登録内容	P1	登録時の登録内容確認	業務検証を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-025	IT-26	登録内容	P1	登録時の登録内容確認	フォーム検証エラーを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-026	IT-26	登録内容	P1	登録時の登録内容確認	店舗不一致（ショートカットPOST）を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-026	IT-26	登録内容	P1	登録時の登録内容確認	成功リダイレクトを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-027	IT-26	登録内容	P1	登録時の登録内容確認	入庫済みからの違反遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-027	IT-26	登録内容	P1	登録時の登録内容確認	CSRF不一致を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-028	IT-26	登録内容	P1	登録時の登録内容確認	入庫済み化のマスタ未登録を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済み化のマスタ未登録の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-028	IT-26	登録内容	P1	登録時の登録内容確認	店舗不一致（ショートカットPOST）を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店舗不一致（ショートカットPOST）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-029	IT-26	実行結果	P1	登録時の実行結果確認	アプリ汎用ログを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でアプリ汎用ログの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-029	IT-26	実行結果	P1	登録時の実行結果確認	入庫済みからの違反遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済みからの違反遷移の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-030	IT-23	実行結果	P1	登録時の実行結果確認	入庫日時列を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫日時列の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-030	IT-23	実行結果	P1	登録時の実行結果確認	入庫済み化のマスタ未登録を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済み化のマスタ未登録の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	restocked_date（入庫日時）を追加であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-031	IT-26	更新内容	P1	更新時の更新内容確認	店頭買取詳細の「ステータス変更」リンクを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店頭買取詳細の「ステータス変更」リンクの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メッセージで拒否であること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-031	IT-26	更新内容	P1	更新時の更新内容確認	アプリ汎用ログを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でアプリ汎用ログの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-032	IT-26	更新内容	P1	更新時の更新内容確認	ステータス変更画面の「保存」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でステータス変更画面の「保存」の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-032	IT-26	更新内容	P1	更新時の更新内容確認	入庫日時列を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫日時列の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-033	IT-26	更新内容	P1	更新時の更新内容確認	店頭買取詳細の「経理払出し済」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店頭買取詳細の「経理払出し済」の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-033	IT-26	更新内容	P1	更新時の更新内容確認	店頭買取詳細の「ステータス変更」リンクを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店頭買取詳細の「ステータス変更」リンクの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-034	IT-26	更新内容	P1	更新時の更新内容確認	店頭買取詳細の「入庫済みにする」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店頭買取詳細の「入庫済みにする」の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-034	IT-26	更新内容	P1	更新時の更新内容確認	ステータス変更画面の「保存」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でステータス変更画面の「保存」の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	入庫済みへの更新処理を行う（専用の確認ダイアログは無い）であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-035	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で表示要素の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-036	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	選んだステータスへ更新し、成功時は詳細へリダイレクトすること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-035	IT-26	更新内容	P1	更新時の更新内容確認	店頭買取詳細の「経理払出し済」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店頭買取詳細の「経理払出し済」の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-037	IT-26	更新内容	P1	更新時の更新内容確認	CSS・レイアウトを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-036	IT-26	更新内容	P1	更新時の更新内容確認	店頭買取詳細の「入庫済みにする」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-037	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-038	IT-26	更新内容	P1	更新時の更新内容確認	M06-04-MSG-002を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-038	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-039	IT-26	更新内容	P1	更新時の更新内容確認	プルダウン選択肢を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-039	IT-26	更新内容	P1	更新時の更新内容確認	CSS・レイアウトを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-040	IT-26	更新内容	P1	更新時の更新内容確認	買取成立後の自動遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で買取成立後の自動遷移の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-040	IT-26	更新内容	P1	更新時の更新内容確認	M06-04-MSG-001を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でM06-04-MSG-001の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-041	IT-05	実行結果	P1	更新時の実行結果確認	入庫済みへのショートカットを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済みへのショートカットの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-041	IT-05	実行結果	P1	更新時の実行結果確認	M06-04-MSG-002を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でM06-04-MSG-002の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-042	IT-05	実行結果	P1	更新時の実行結果確認	DB上の現在ステータスが廃止IDを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でDB上の現在ステータスが廃止IDの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-042	IT-05	実行結果	P1	更新時の実行結果確認	M06-04-MSG-003を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でM06-04-MSG-003の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	プルダウンに無くても、他IDへの変更は可能（画面は現在名をそのまま表示）であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-043	IT-02	初期行数	P2	初期行数の結合確認	買取成立へ遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で買取成立へ遷移の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 買取成立へ遷移を確認する
-3. 画面表示と後続状態を確認する"	履歴は最大2件連続で同一操作時刻ベースで残るであること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-044	IT-02	表示順	P2	表示順の結合確認	入庫済み以外から「入庫済みにする」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済み以外から「入庫済みにする」の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	買取情報編集画面に遷移すること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-043	IT-02	初期行数	P2	初期行数の結合確認	プルダウン選択肢を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でプルダウン選択肢の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. プルダウン選択肢
+3. 画面表示と後続状態を確認する"	mtb_otc_buy_order_status のうち廃止IDを除き、ID昇順で表示すること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-044	IT-02	表示順	P2	表示順の結合確認	買取成立後の自動遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で買取成立後の自動遷移の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 買取成立後の自動遷移を確認する
+3. 画面表示と後続状態を確認する"	個別入力商品コレクションが空なら入庫待ち（ID13）、空でなければ未登録在庫あり（ID12）であること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-045	IT-25	更新抑止	P1	更新抑止の結合確認	入庫済みへのショートカットを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済みへのショートカットの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	詳細ボタンは常に表示されるであること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-046	IT-12	内部情報	P1	内部情報の結合確認	DB上の現在ステータスが廃止IDを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でDB上の現在ステータスが廃止IDの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	プルダウンに無くても、他IDへの変更は可能（画面は現在名をそのまま表示）であること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-047	IT-06	ロールバック	P3	ロールバックの結合確認	買取成立へ遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で買取成立へ遷移の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	履歴は最大2件連続で同一操作時刻ベースで残るであること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-048	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	入庫済み以外から「入庫済みにする」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済み以外から「入庫済みにする」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入庫済み以外から「入庫済みにする」を確認する
 3. 画面表示と後続状態を確認する"	入庫待ちを前提とした先行更新は0件となり在庫入庫処理は走らないこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-045	IT-25	更新抑止	P1	更新抑止の結合確認	履歴を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で履歴の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	各成功遷移で最低1件、買取成立なら2件の履歴が同一トランザクションに乗るであること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-046	IT-12	内部情報	P1	内部情報の結合確認	在庫を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で在庫の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	入庫待ちから入庫済みへ変えるときだけ、受注が入庫待ちであることを条件とした先行更新が1件起きた場合に店頭買取実在庫に基づく入庫が走るであること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-047	IT-06	ロールバック	P3	ロールバックの結合確認	成功時出力を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で成功時出力の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	302リダイレクトとフラッシュ（保存完了もしくはエラーメッセージ）であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-048	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-049	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	在庫を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で在庫の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 在庫を確認する
+3. 画面表示と後続状態を確認する"	入庫待ちから入庫済みへ変えるときだけ、受注が入庫待ちであることを条件とした先行更新が1件起きた場合に店頭買取実在庫に基づく入庫が走るであること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-050	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	302リダイレクトとフラッシュ（保存完了もしくはエラーメッセージ）であること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-051	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	妥当性エラーは200でフォーム再表示、業務拒否は多くフラッシュ付き302、CSRFはフラッシュ付き302、存在なしは404であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-049	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	dtb_otc_buy_order 更新、履歴挿入、条件付きで商品在庫・在庫履歴、条件付きで日別集計の再計算であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-050	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-053	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録/更新を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-051	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	業務検証を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で業務検証の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-054	IT-25	一覧	P2	一覧の結合確認	業務検証を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で業務検証の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 業務検証を確認する
 3. 画面表示と後続状態を確認する"	店舗一致、入庫済みからの遷移制限、入庫済み化時の商品規格紐付けであること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	フォーム検証エラーを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でフォーム検証エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-055	IT-12	画面表示データ	P2	画面表示データの結合確認	フォーム検証エラーを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でフォーム検証エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フォーム検証エラーを確認する
-3. 画面表示と後続状態を確認する"	同一レスポンスでステータス変更画面であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-053	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功リダイレクトを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で成功リダイレクトの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-056	IT-25	画面表示データ	P2	画面表示データの結合確認	成功リダイレクトを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で成功リダイレクトの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功リダイレクトを確認する
 3. 画面表示と後続状態を確認する"	詳細もしくはステータス画面がメッセージ付きで開くこと。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-054	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSRF不一致を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でCSRF不一致の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-057	IT-12	画面表示データ	P2	画面表示データの結合確認	CSRF不一致を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でCSRF不一致の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSRF不一致を確認する
-3. 画面表示と後続状態を確認する"	エラーフラッシュして詳細へであること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-055	IT-25	一覧	P2	一覧の結合確認	店舗不一致（ショートカットPOST）を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店舗不一致（ショートカットPOST）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-058	IT-25	画面表示データ	P2	画面表示データの結合確認	店舗不一致（ショートカットPOST）を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店舗不一致（ショートカットPOST）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 店舗不一致（ショートカットPOST）を確認する
 3. 画面表示と後続状態を確認する"	コントローラが実行時例外を投げ、利用者向け表現はアプリケーション全体のエラー表示に従うであること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-056	IT-12	画面表示データ	P2	画面表示データの結合確認	入庫済みからの違反遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済みからの違反遷移の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-059	IT-25	フォーム送信	P1	フォーム送信の結合確認	入庫済みからの違反遷移を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済みからの違反遷移の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入庫済みからの違反遷移を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-057	IT-25	画面表示データ	P2	画面表示データの結合確認	入庫済み化のマスタ未登録を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済み化のマスタ未登録の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	フォーム経由は業務拒否の行と同様であること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-060	IT-16	ファイル選択	P2	ファイル選択の結合確認	入庫済み化のマスタ未登録を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫済み化のマスタ未登録の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入庫済み化のマスタ未登録を確認する
 3. 画面表示と後続状態を確認する"	メッセージで拒否であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-058	IT-12	画面表示データ	P2	画面表示データの結合確認	アプリ汎用ログを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でアプリ汎用ログの確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-061	IT-12	非同期更新	P1	非同期更新の結合確認	アプリ汎用ログを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でアプリ汎用ログの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. アプリ汎用ログを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-059	IT-25	画面表示データ	P2	画面表示データの結合確認	入庫日時列を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫日時列の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	本機能専用の情報レベルログ追記は更新処理本体には無いであること。
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-062	IT-12	エラー継続	P3	エラー継続の結合確認	入庫日時列を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で入庫日時列の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入庫日時列を確認する
 3. 画面表示と後続状態を確認する"	restocked_date（入庫日時）を追加であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-060	IT-25	フォーム送信	P1	フォーム送信の結合確認	店頭買取詳細の「ステータス変更」リンクを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店頭買取詳細の「ステータス変更」リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-063	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	店頭買取詳細の「ステータス変更」リンクを試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店頭買取詳細の「ステータス変更」リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 店頭買取詳細の「ステータス変更」リンクを確認する
 3. 画面表示と後続状態を確認する"	査定番号・現在ステータスが表示され、「変更後のステータス」を選んで保存できること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-061	IT-16	ファイル選択	P2	ファイル選択の結合確認	ステータス変更画面の「保存」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）でステータス変更画面の「保存」の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ステータス変更画面の「保存」
-3. 画面表示と後続状態を確認する"	選んだステータスへ更新し、成功時は詳細へリダイレクトすること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-062	IT-12	非同期更新	P1	非同期更新の結合確認	店頭買取詳細の「経理払出し済」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店頭買取詳細の「経理払出し済」の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店頭買取詳細の「経理払出し済」を確認する
-3. 画面表示と後続状態を確認する"	確認ダイアログのあと、現在が経理払出し待ちなら買取成立処理（2段階目含む）へ進めるであること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-063	IT-12	エラー継続	P3	エラー継続の結合確認	店頭買取詳細の「入庫済みにする」を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で店頭買取詳細の「入庫済みにする」の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店頭買取詳細の「入庫済みにする」を確認する
-3. 画面表示と後続状態を確認する"	入庫済みへの更新処理を行う（専用の確認ダイアログは無い）であること。
-店頭買取管理 — 買取ステータス変更	IT-M06-04-ADMIN-STORE-PURCHASE-PURCHASE-STORE-STATUS-CHANGE-064	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	表示要素を試験できる状態である	店頭買取管理 — 買取ステータス変更（m06_04_admin_store_purchase_purchase_store_status_change）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	ステータス変更画面は menus = ['purchase_store', 'list']であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -331,4 +328,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.110, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.109, No.110, No.330, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

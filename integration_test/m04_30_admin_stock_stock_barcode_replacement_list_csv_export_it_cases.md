@@ -213,13 +213,13 @@ M04-30（バーコード貼替リストCSV出力）	IT-M04-30-ADMIN-STOCK-STOCK-
 3. 画面表示と後続状態を確認する"	アプリケーションログに出力完了（log_info）を記録であること。
 M04-30（バーコード貼替リストCSV出力）	IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-066	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-30-MSG-001を試験できる状態である	M04-30（バーコード貼替リストCSV出力）（m04_30_admin_stock_stock_barcode_replacement_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M04-30-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	出力対象店舗・価格変更発生期間（開始日/終了日）が未入力など NotBlank 制約に違反したとき（validators.ja.yaml:17、制約 BarcodeReplacementListType.php:54,…であること。
+3. 画面表示と後続状態を確認する"	エラーを表示し、バーコード貼替リスト画面に遷移すること。
 M04-30（バーコード貼替リストCSV出力）	IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-067	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-30-MSG-002を試験できる状態である	M04-30（バーコード貼替リストCSV出力）（m04_30_admin_stock_stock_barcode_replacement_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M04-30-MSG-002を確認する
-3. 画面表示と後続状態を確認する"	価格変更発生期間の終了日が開始日より前のとき（POST_SUBMIT で price_change_period_to にエラー付与、messages.ja.yaml:4843 / BarcodeReplacement…であること。
+3. 画面表示と後続状態を確認する"	エラーを表示し、バーコード貼替リスト画面に遷移すること。
 M04-30（バーコード貼替リストCSV出力）	IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-068	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-30-MSG-003を試験できる状態である	M04-30（バーコード貼替リストCSV出力）（m04_30_admin_stock_stock_barcode_replacement_list_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M04-30-MSG-003を確認する
-3. 画面表示と後続状態を確認する"	CSV出力POSTで開始日が終了日より後であること。
+3. 画面表示と後続状態を確認する"	エラーを表示し、バーコード貼替リスト画面に遷移すること。
 M04-30（バーコード貼替リストCSV出力）	IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-069	IT-25	一覧	P2	一覧の結合確認	機能名を試験できる状態である	M04-30（バーコード貼替リストCSV出力）（m04_30_admin_stock_stock_barcode_replacement_list_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 機能名を確認する
 3. 画面表示と後続状態を確認する"	バーコード貼替リストCSV出力であること。

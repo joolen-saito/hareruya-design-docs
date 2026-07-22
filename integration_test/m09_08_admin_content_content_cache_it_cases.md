@@ -76,87 +76,87 @@ m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャ�
 m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	キャッシュ削除ボタン押下を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. キャッシュ削除ボタン押下
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M09-08-MSG-003を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. M09-08-MSG-003を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M09-08-MSG-004を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M09-08-MSG-004を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. M09-08-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M09-08-MSG-005を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M09-08-MSG-005を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. M09-08-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M09-08-MSG-006を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. M09-08-MSG-006を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-018	IT-22	部分入力	P2	部分入力の入力検証	削除対象を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で削除対象の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	削除対象を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 削除対象
-3. 画面表示と後続状態を確認する"	Symfonyのキャッシュ削除コマンドにより、アプリケーションキャッシュ全体を削除すること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-019	IT-26	登録内容	P1	登録時の登録内容確認	追加のリセットを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で追加のリセットの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	追加のリセットを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 追加のリセットを確認する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-018	IT-22	部分入力	P2	部分入力の入力検証	実行タイミングを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で実行タイミングの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 実行タイミング
+3. 画面表示と後続状態を確認する"	ボタン押下時は削除を予約するだけで、実際の削除はレスポンス送出後のカーネル終了処理で実行すること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-019	IT-26	登録内容	P1	登録時の登録内容確認	メンテナンス連動を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でメンテナンス連動の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-020	IT-26	登録内容	P1	登録時の登録内容確認	実行タイミングを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で実行タイミングの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-020	IT-26	登録内容	P1	登録時の登録内容確認	なりすまし対策トークンが不正・欠落を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でなりすまし対策トークンが不正・欠落の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-021	IT-26	登録内容	P1	登録時の登録内容確認	メンテナンス連動を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でメンテナンス連動の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-021	IT-26	登録内容	P1	登録時の登録内容確認	メンテナンスモード許可設定が無効を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でメンテナンスモード許可設定が無効の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-022	IT-26	登録内容	P1	登録時の登録内容確認	なりすまし対策トークンが不正・欠落を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でなりすまし対策トークンが不正・欠落の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-022	IT-26	登録内容	P1	登録時の登録内容確認	opcache等の拡張が無効な環境を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でopcache等の拡張が無効な環境の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	キャッシュ削除を予約せず、メンテナンスモードも操作しないこと。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-023	IT-26	登録内容	P1	登録時の登録内容確認	メンテナンスモード許可設定が無効を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でメンテナンスモード許可設定が無効の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-024	IT-26	登録内容	P1	登録時の登録内容確認	opcache等の拡張が無効な環境を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	利用できないリセット関数は呼ばず、キャッシュ削除コマンドの実行のみ行うこと。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-023	IT-26	登録内容	P1	登録時の登録内容確認	連続してボタンを押下を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で連続してボタンを押下の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-025	IT-26	登録内容	P1	登録時の登録内容確認	連続してボタンを押下を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-024	IT-26	登録内容	P1	登録時の登録内容確認	参照時点を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-025	IT-26	登録内容	P1	登録時の登録内容確認	削除反映の時点を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-026	IT-26	登録内容	P1	登録時の登録内容確認	参照時点を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-026	IT-26	登録内容	P1	登録時の登録内容確認	バッチを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-027	IT-26	登録内容	P1	登録時の登録内容確認	削除反映の時点を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-027	IT-26	登録内容	P1	登録時の登録内容確認	成功時の扱いを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-028	IT-26	登録内容	P1	登録時の登録内容確認	バッチを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でバッチの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-028	IT-26	登録内容	P1	登録時の登録内容確認	失敗時の扱いを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で失敗時の扱いの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-029	IT-26	実行結果	P1	登録時の実行結果確認	成功時の扱いを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で成功時の扱いの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-029	IT-26	実行結果	P1	登録時の実行結果確認	再実行時の扱いを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で再実行時の扱いの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-030	IT-23	実行結果	P1	登録時の実行結果確認	失敗時の扱いを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で失敗時の扱いの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除はレスポンス送出後に実行するため、削除コマンドが失敗しても利用者画面には削除完了のフラッシュが既に表示された状態となること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-031	IT-05	削除条件	P1	削除時の削除条件確認	再実行時の扱いを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	再度ボタンを押下すれば再びキャッシュ削除を予約し、レスポンス送出後に削除コマンドを実行すること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-032	IT-05	削除条件	P1	削除時の削除条件確認	入力を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-030	IT-23	実行結果	P1	登録時の実行結果確認	入力を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で入力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	キャッシュ管理画面表示のGET要求、およびキャッシュ削除ボタンのPOST要求（なりすまし対策トークンのみを伴う）であること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-033	IT-05	削除条件	P1	削除時の削除条件確認	成功時出力を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-031	IT-05	削除条件	P1	削除時の削除条件確認	成功時出力を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一画面を再表示し、削除完了のフラッシュメッセージを表示すること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-034	IT-05	削除条件	P1	削除時の削除条件確認	失敗時出力を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-032	IT-05	削除条件	P1	削除時の削除条件確認	失敗時出力を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	なりすまし対策トークンが妥当でない場合は削除完了のフラッシュを表示せず画面を再表示すること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-035	IT-05	削除条件	P1	削除時の削除条件確認	副作用を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で副作用の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-033	IT-05	削除条件	P1	削除時の削除条件確認	副作用を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	レスポンス送出後にアプリケーションキャッシュを削除し、opcache等のリセットを行うこと。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-034	IT-05	削除条件	P1	削除時の削除条件確認	利用者入力を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本画面は値の入力欄を持たないこと。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-035	IT-05	削除条件	P1	削除時の削除条件確認	未認証を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で未認証の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-036	IT-05	実行結果	P1	削除時の実行結果確認	利用者入力を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で利用者入力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-036	IT-05	実行結果	P1	削除時の実行結果確認	管理者として認証済みを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で管理者として認証済みの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-037	IT-05	実行結果	P1	削除時の実行結果確認	未認証を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で未認証の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	利用不可であること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-038	IT-05	実行結果	P1	削除時の実行結果確認	管理者として認証済みを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で管理者として認証済みの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-039	IT-05	実行結果	P1	削除時の実行結果確認	キャッシュ削除ボタンを押下を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でキャッシュ削除ボタンを押下の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-037	IT-05	実行結果	P1	削除時の実行結果確認	キャッシュ削除ボタンを押下を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でキャッシュ削除ボタンを押下の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一のキャッシュ管理画面を再表示し、削除完了のフラッシュを表示すること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-040	IT-02	初期行数	P2	初期行数の結合確認	メンテナンス解除の非同期要求を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でメンテナンス解除の非同期要求の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. メンテナンス解除の非同期要求を確認する
-3. 画面表示と後続状態を確認する"	画面遷移を伴わず、メンテナンス解除エンドポイントへ非同期で送信すること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-038	IT-05	実行結果	P1	削除時の実行結果確認	メンテナンス解除の非同期要求を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でメンテナンス解除の非同期要求の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-039	IT-05	実行結果	P1	削除時の実行結果確認	なりすまし対策トークンが妥当でないを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でなりすまし対策トークンが妥当でないの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	キャッシュ削除を予約せず画面を再表示すること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-040	IT-02	初期行数	P2	初期行数の結合確認	レスポンス送出後の削除コマンド失敗を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でレスポンス送出後の削除コマンド失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. レスポンス送出後の削除コマンド失敗
+3. 画面表示と後続状態を確認する"	アプリケーションの共通処理に委ねるであること。
 m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-041	IT-02	表示順	P2	表示順の結合確認	キャッシュ削除を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でキャッシュ削除の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. キャッシュ削除
 3. 画面表示と後続状態を確認する"	本画面のボタン押下で起動する、アプリケーションキャッシュの一括削除であること。
@@ -187,24 +187,24 @@ m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャ�
 m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-050	IT-25	画面表示データ	P2	画面表示データの結合確認	キャッシュ削除ボタン押下を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でキャッシュ削除ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. キャッシュ削除ボタン押下
 3. 画面表示と後続状態を確認する"	キャッシュ削除、メンテナンス切替、削除後処理はサーバ側で判定すること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-051	IT-12	画面表示データ	P2	画面表示データの結合確認	M09-08-MSG-003を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でM09-08-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M09-08-MSG-003を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-052	IT-25	画面表示データ	P2	画面表示データの結合確認	M09-08-MSG-004を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でM09-08-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-051	IT-12	画面表示データ	P2	画面表示データの結合確認	M09-08-MSG-004を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でM09-08-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M09-08-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	フラッシュ種別eccube.admin.disable_maintenanceを空文字で登録する内部フラグであること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-053	IT-25	フォーム送信	P1	フォーム送信の結合確認	M09-08-MSG-005を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でM09-08-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-052	IT-25	画面表示データ	P2	画面表示データの結合確認	M09-08-MSG-005を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でM09-08-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M09-08-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	再表示された画面のJSが POST /%eccube_admin_route%/disable_maintenance/auto_maintenance を1回送り、自動メンテナンスモードを解除すること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-054	IT-16	ファイル選択	P2	ファイル選択の結合確認	M09-08-MSG-006を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でM09-08-MSG-006の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M09-08-MSG-006を確認する
-3. 画面表示と後続状態を確認する"	同一のキャッシュ管理画面を再表示すること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-055	IT-12	エラー継続	P3	エラー継続の結合確認	追加のリセットを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で追加のリセットの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-053	IT-25	フォーム送信	P1	フォーム送信の結合確認	削除対象を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で削除対象の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 削除対象
+3. 画面表示と後続状態を確認する"	Symfonyのキャッシュ削除コマンドにより、アプリケーションキャッシュ全体を削除すること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-054	IT-16	ファイル選択	P2	ファイル選択の結合確認	追加のリセットを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で追加のリセットの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 追加のリセットを確認する
 3. 画面表示と後続状態を確認する"	キャッシュ削除コマンドの実行に続けて、opcache・APCユーザーキャッシュ・APCキャッシュ・WinCacheユーザーキャッシュを、それぞれの関数が利用可能な環境でのみリセットすること。
-m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-056	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	実行タイミングを試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）で実行タイミングの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 実行タイミング
-3. 画面表示と後続状態を確認する"	ボタン押下時は削除を予約するだけで、実際の削除はレスポンス送出後のカーネル終了処理で実行すること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-055	IT-12	エラー継続	P3	エラー継続の結合確認	メンテナンス連動を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でメンテナンス連動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. メンテナンス連動を確認する
+3. 画面表示と後続状態を確認する"	メンテナンスモード許可設定が有効な場合に限り、削除前に自動メンテナンスモードへ切り替え、削除完了画面の表示後にJSの非同期要求で解除すること。
+m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）	IT-M09-08-ADMIN-CONTENT-CONTENT-CACHE-056	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	なりすまし対策トークンが不正・欠落を試験できる状態である	m09-08_admin_content_content_cache（管理画面_コンテンツ管理_キャッシュ管理）（m09_08_admin_content_content_cache）でなりすまし対策トークンが不正・欠落の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. なりすまし対策トークンが不正・欠落を確認する
+3. 画面表示と後続状態を確認する"	キャッシュ削除を予約せず、メンテナンスモードも操作しないこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）

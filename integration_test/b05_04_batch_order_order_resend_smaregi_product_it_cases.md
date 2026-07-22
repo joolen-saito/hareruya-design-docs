@@ -11,13 +11,12 @@
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
 | IT-12 | JSON形式、エラー、レスポンス、実行結果 |
-| IT-30 | コマンド、入力データ、公開・締切 |
+| IT-30 | コマンド、入力データ |
 | IT-11 | 実行結果 |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
 | IT-33 | エラー、売上・返品、実数更新、自動加算 |
 | IT-32 | 受信検証 |
 | IT-10 | 部分失敗、重複・順序 |
-| IT-08 | Outbox |
 
 ## テストケースTSV
 
@@ -53,46 +52,42 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 2. 実行結果と副作用を確認する"	JSON形式のジョブ終了状態と処理件数が実行結果に記録されること。
 バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-009	IT-12	レスポンス	P1	レスポンスの結合確認	成功時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で成功時出力の確認に必要な条件を指定する	"1. レスポンスの対象ジョブを実行する
 2. 実行結果と副作用を確認する"	レスポンスのジョブ終了状態と処理件数が実行結果に記録されること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-010	IT-30	公開・締切	P1	公開・締切の結合確認	失敗時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で失敗時出力の確認に必要な条件を指定する	"1. 公開・締切の対象ジョブを実行する
-2. 実行結果と副作用を確認する"	公開・締切のジョブ終了状態と処理件数が実行結果に記録されること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-011	IT-11	実行結果	P2	実行結果の結合確認	副作用を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-010	IT-11	実行結果	P2	実行結果の結合確認	失敗時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
 2. 実行結果を確認する"	指定した宛先（メールアドレス）への送信、転送が正常終了すること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-012	IT-28	実行結果	P2	実行結果の結合確認	登録/更新を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-011	IT-28	実行結果	P2	実行結果の結合確認	副作用を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
 2. 実行結果を確認する"	"件名に改行・タブ・メタキャラクタ（ ""，&．<，>，',\ ）が含まれていた場合、送信、転送が正常終了すること。"
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-013	IT-28	実行結果	P2	実行結果の結合確認	連携時のエラーを試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で連携時のエラーの確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-012	IT-28	実行結果	P2	実行結果の結合確認	登録/更新を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
 2. 実行結果を確認する"	"本文に改行・タブ・メタキャラクタ（ ""，&．<，>，',\ ）が含まれていた場合、送信、転送が正常終了すること。"
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-014	IT-28	ヘッダ	P2	ヘッダの結合確認	開始・完了を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で開始・完了の確認に必要な条件を指定する	"1. ヘッダの対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-013	IT-28	ヘッダ	P2	ヘッダの結合確認	連携時のエラーを試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で連携時のエラーの確認に必要な条件を指定する	"1. ヘッダの対象機能を実行する
 2. 実行結果を確認する"	ヘッダがエンコードされること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-015	IT-28	件名	P2	件名の結合確認	スマレジ連携の構成を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-014	IT-28	件名	P2	件名の結合確認	開始・完了を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
 2. 実行結果を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-016	IT-28	件名	P2	件名の結合確認	成功時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-015	IT-28	件名	P2	件名の結合確認	スマレジ連携の構成を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
 2. 実行結果を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-017	IT-28	件名	P2	件名の結合確認	失敗時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で失敗時出力の確認に必要な条件を指定する	"1. 件名の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-016	IT-28	件名	P2	件名の結合確認	成功時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で成功時出力の確認に必要な条件を指定する	"1. 件名の対象機能を実行する
 2. 実行結果を確認する"	取得した値に改行、タブ、メタキャラクタが含まれる場合、件名に設定された値がエンコーディング、サニタイジングされること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-018	IT-28	本文	P2	本文の結合確認	副作用を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-017	IT-28	本文	P2	本文の結合確認	失敗時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-019	IT-28	本文	P2	本文の結合確認	登録/更新を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-018	IT-28	本文	P2	本文の結合確認	副作用を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-020	IT-28	本文	P2	本文の結合確認	連携時のエラーを試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で連携時のエラーの確認に必要な条件を指定する	"1. 本文の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-019	IT-28	本文	P2	本文の結合確認	登録/更新を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で登録/更新の確認に必要な条件を指定する	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	取得した値に改行、タブ、メタキャラクタが含まれる場合、本文に設定された値がエンコーディング、サニタイジングされること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-021	IT-28	本文	P2	本文の結合確認	開始・完了を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で開始・完了の確認に必要な条件を指定する	"1. 本文の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-020	IT-28	本文	P2	本文の結合確認	連携時のエラーを試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で連携時のエラーの確認に必要な条件を指定する	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	ファイルを添付する場合、指定したファイルが添付されること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-022	IT-33	エラー	P1	エラーの結合確認	スマレジ連携の構成を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）でスマレジ連携の構成の確認に必要な条件を指定する	"1. エラーの対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-021	IT-33	エラー	P1	エラーの結合確認	開始・完了を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で開始・完了の確認に必要な条件を指定する	"1. エラーの対象機能を実行する
 2. 実行結果を確認する"	数量更新失敗、検証エラー、外部連携エラー時に数量・金額・履歴・連携ステータス等のシステム状態が部分更新されず、連携元・自システム・連携先のいずれにも片側更新を残さず双方で整合すること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-023	IT-33	自動加算	P1	自動加算の結合確認	成功時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で成功時出力の確認に必要な条件を指定する	"1. 自動加算の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-022	IT-33	自動加算	P1	自動加算の結合確認	スマレジ連携の構成を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）でスマレジ連携の構成の確認に必要な条件を指定する	"1. 自動加算の対象機能を実行する
 2. 実行結果を確認する"	外部連携由来の自動加算時に、連携元の金額や評価額を加算金額として対象区分へ反映し、連携元ID付き履歴が作成されること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-024	IT-33	実数更新	P1	実数更新の結合確認	失敗時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で失敗時出力の確認に必要な条件を指定する	"1. 実数更新の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-023	IT-33	実数更新	P1	実数更新の結合確認	成功時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で成功時出力の確認に必要な条件を指定する	"1. 実数更新の対象機能を実行する
 2. 実行結果を確認する"	外部連携由来の実数更新で、連携元の金額合計と実数小計が一致し、対象区分の履歴へ反映されること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-025	IT-33	売上・返品	P1	売上・返品の結合確認	副作用を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で副作用の確認に必要な条件を指定する	"1. 売上・返品の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-024	IT-33	売上・返品	P1	売上・返品の結合確認	失敗時出力を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で失敗時出力の確認に必要な条件を指定する	"1. 売上・返品の対象機能を実行する
 2. 実行結果を確認する"	外部連携の売上で数量を減算し、返品で現在数量・現在金額から計算した加算金額で数量と金額を戻すこと。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-026	IT-32	受信検証	P1	受信検証の結合確認	登録/更新を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で登録/更新の確認に必要な条件を指定する	"1. 受信検証の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-025	IT-32	受信検証	P1	受信検証の結合確認	副作用を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で副作用の確認に必要な条件を指定する	"1. 受信検証の対象機能を実行する
 2. 実行結果を確認する"	Webhookや外部システム通知を受信する機能では、HTTPメソッド、ヘッダ、署名・トークン、通知種別、必須項目、値型、取引ID等の識別子を検証し、不正な通知では業務更新を行わず仕様通りの応答を返すこと。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-027	IT-10	重複・順序	P1	重複・順序の操作結果確認	連携時のエラーを試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で連携時のエラーの確認に必要な条件を指定する	"1. 重複・順序の対象機能を実行する
-2. 実行結果を確認する"	エラーメッセージをコンソールに出力すること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-028	IT-10	部分失敗	P1	部分失敗の結合確認	開始・完了を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で開始・完了の確認に必要な条件を指定する	"1. 部分失敗の対象機能を実行する
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-026	IT-10	重複・順序	P1	重複・順序の操作結果確認	登録/更新を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で登録/更新の確認に必要な条件を指定する	"1. 重複・順序の対象機能を実行する
+2. 実行結果を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-027	IT-10	部分失敗	P1	部分失敗の結合確認	連携時のエラーを試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）で連携時のエラーの確認に必要な条件を指定する	"1. 部分失敗の対象機能を実行する
 2. 実行結果を確認する"	外部通知や外部取得結果を別システムへ転送・再連携する機能では、転送先の成功、失敗、タイムアウト、部分成功を区別し、連携元・自システム・連携先の更新結果、ログ、再実行可否が仕様通り整合すること。
-バッチ 受注管理 — スマレジ商品再連携	IT-B05-04-BATCH-ORDER-ORDER-RESEND-SMAREGI-PRODUCT-029	IT-08	Outbox	P1	Outboxの結合確認	スマレジ連携の構成を試験できる状態である	バッチ 受注管理 — スマレジ商品再連携（b05_04_batch_order_order_resend_smaregi_product）でスマレジ連携の構成の確認に必要な条件を指定する	"1. Outboxの対象機能を実行する
-2. 実行結果を確認する"	DB更新と下流通知(メール/Webhook/WebSocket/外部連携)を伴う機能で、DB更新済みなのに通知未発行、もしくは通知発行済みなのにDB未確定が発生せず、送信失敗後の再送でも重複通知が起きないこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -193,3 +188,5 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブアプリケーション / 認証・認可 / セッション管理（IT-15） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / エラー表示 / 情報漏洩（IT-12） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 15 件は上記分類と同じ理由で対象外 |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.523, No.528。上限緩和または個別ケース化で収載可能。

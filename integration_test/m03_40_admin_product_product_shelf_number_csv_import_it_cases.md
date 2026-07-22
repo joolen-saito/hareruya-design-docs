@@ -116,224 +116,224 @@ m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理
 m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-025	IT-23	検索条件	P2	検索時の検索条件確認	M03-40-MSG-002を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-026	IT-23	検索条件	P2	検索時の検索条件確認	M03-40-MSG-004を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-026	IT-23	検索条件	P2	検索時の検索条件確認	M03-40-MSG-003を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-027	IT-23	検索条件	P2	検索時の検索条件確認	フォーム不正を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-027	IT-23	検索条件	P2	検索時の検索条件確認	M03-40-MSG-004を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-028	IT-23	検索条件	P2	検索時の検索条件確認	インポータが返した検証エラーを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-028	IT-23	検索条件	P2	検索時の検索条件確認	M03-40-MSG-005を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-029	IT-23	検索条件	P2	検索時の検索条件確認	取込開始直前を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-029	IT-23	検索条件	P2	検索時の検索条件確認	フォーム不正を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-030	IT-23	検索条件	P2	検索時の検索条件確認	取込正常終了を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-030	IT-23	検索条件	P2	検索時の検索条件確認	インポータが返した検証エラーを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-031	IT-23	検索条件	P2	検索時の検索条件確認	取込がエラー結果を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-031	IT-23	検索条件	P2	検索時の検索条件確認	取込開始直前を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-032	IT-23	検索条件	P2	検索時の検索条件確認	履歴ページングを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-032	IT-23	検索条件	P2	検索時の検索条件確認	取込正常終了を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-033	IT-23	検索条件	P2	検索時の検索条件確認	更新対象列を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-033	IT-23	検索条件	P2	検索時の検索条件確認	取込がエラー結果を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-034	IT-23	実行結果	P2	検索時の実行結果確認	ナビ「商品管理」→「商品CSV管理」→「棚番号更新CSV登録」を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-034	IT-23	実行結果	P2	検索時の実行結果確認	履歴ページングを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-035	IT-23	実行結果	P2	検索時の実行結果確認	アップロード送信を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-035	IT-23	実行結果	P2	検索時の実行結果確認	更新対象列を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-036	IT-23	実行結果	P2	検索時の実行結果確認	履歴の表示件数変更を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-036	IT-23	実行結果	P2	検索時の実行結果確認	ナビ「商品管理」→「商品CSV管理」→「棚番号更新CSV登録」を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-037	IT-23	実行結果	P2	検索時の実行結果確認	表示要素を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-037	IT-23	実行結果	P2	検索時の実行結果確認	アップロード送信を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-038	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-038	IT-26	登録内容	P1	登録時の登録内容確認	履歴の表示件数変更を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-039	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-039	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-040	IT-26	登録内容	P1	登録時の登録内容確認	CSV ファイルを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-040	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-041	IT-26	登録内容	P1	登録時の登録内容確認	商品コードを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-041	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一コードの規格がちょうど 1 件であることが検証されるであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-042	IT-26	登録内容	P1	登録時の登録内容確認	棚番号を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-043	IT-26	登録内容	P1	登録時の登録内容確認	棚番号を未設定に戻したいを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送信前確認ダイアログはないこと。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-042	IT-26	登録内容	P1	登録時の登録内容確認	CSV ファイルを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-044	IT-26	登録内容	P1	登録時の登録内容確認	同一 product_code の規格が複数存在するデータ不整合を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-043	IT-26	登録内容	P1	登録時の登録内容確認	商品コードを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-044	IT-26	登録内容	P1	登録時の登録内容確認	棚番号を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-045	IT-26	登録内容	P1	登録時の登録内容確認	一覧と反映内容を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-045	IT-26	登録内容	P1	登録時の登録内容確認	棚番号を未設定に戻したいを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-046	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-046	IT-26	登録内容	P1	登録時の登録内容確認	同一 product_code の規格が複数存在するデータ不整合を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-047	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-047	IT-26	登録内容	P1	登録時の登録内容確認	一覧と反映内容を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-048	IT-26	実行結果	P1	登録時の実行結果確認	副作用を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-048	IT-26	実行結果	P1	登録時の実行結果確認	成功時出力を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-049	IT-23	実行結果	P1	登録時の実行結果確認	dtb_product_classを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-049	IT-23	実行結果	P1	登録時の実行結果確認	失敗時出力を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新対象であること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-050	IT-26	更新内容	P1	更新時の更新内容確認	dtb_shelf_numberを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同上リダイレクトにエラーフラッシュ、異常時はログ文言「異常終了」であること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-050	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-051	IT-26	更新内容	P1	更新時の更新内容確認	dtb_csv_import_historyを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-051	IT-26	更新内容	P1	更新時の更新内容確認	dtb_product_classを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-052	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-052	IT-26	更新内容	P1	更新時の更新内容確認	dtb_shelf_numberを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-053	IT-26	更新内容	P1	更新時の更新内容確認	アップロードファイルを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-053	IT-26	更新内容	P1	更新時の更新内容確認	dtb_csv_import_historyを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CsvImportType の NotBlank と File（最大サイズ）であること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-054	IT-26	更新内容	P1	更新時の更新内容確認	各行を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-055	IT-26	更新内容	P1	更新時の更新内容確認	ナビから開くを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	成功時のみ INSERTであること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-054	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-056	IT-26	更新内容	P1	更新時の更新内容確認	M03-40-MSG-001を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-055	IT-26	更新内容	P1	更新時の更新内容確認	アップロードファイルを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-056	IT-26	更新内容	P1	更新時の更新内容確認	各行を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-057	IT-26	更新内容	P1	更新時の更新内容確認	M03-40-MSG-002を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-057	IT-26	更新内容	P1	更新時の更新内容確認	ナビから開くを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-058	IT-26	更新内容	P1	更新時の更新内容確認	M03-40-MSG-004を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-058	IT-26	更新内容	P1	更新時の更新内容確認	M03-40-MSG-001を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-059	IT-26	更新内容	P1	更新時の更新内容確認	フォーム不正を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-059	IT-26	更新内容	P1	更新時の更新内容確認	M03-40-MSG-002を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-060	IT-05	実行結果	P1	更新時の実行結果確認	インポータが返した検証エラーを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-060	IT-05	実行結果	P1	更新時の実行結果確認	M03-40-MSG-003を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-061	IT-05	実行結果	P1	更新時の実行結果確認	取込開始直前を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-061	IT-05	実行結果	P1	更新時の実行結果確認	M03-40-MSG-004を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	情報ログ「棚番号更新CSV登録開始」であること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-062	IT-16	実行結果	P2	実行結果の結合確認	取込正常終了を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	要ソース確認であること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-062	IT-16	実行結果	P2	実行結果の結合確認	M03-40-MSG-005を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-063	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	取込がエラー結果を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-063	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	フォーム不正を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-064	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	履歴ページングを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-064	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	インポータが返した検証エラーを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-065	IT-27	実行結果	P2	実行結果の結合確認	更新対象列を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-065	IT-27	実行結果	P2	実行結果の結合確認	取込開始直前を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-066	IT-27	実行結果	P2	実行結果の結合確認	ナビ「商品管理」→「商品CSV管理」→「棚番号更新CSV登録」を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-066	IT-27	実行結果	P2	実行結果の結合確認	取込正常終了を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-067	IT-24	出力内容	P2	出力内容の結合確認	アップロード送信を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-067	IT-24	出力内容	P2	出力内容の結合確認	取込がエラー結果を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-068	IT-24	出力内容	P2	出力内容の結合確認	履歴の表示件数変更を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-068	IT-24	出力内容	P2	出力内容の結合確認	履歴ページングを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-069	IT-24	出力内容	P2	出力内容の結合確認	表示要素を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-069	IT-24	出力内容	P2	出力内容の結合確認	更新対象列を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-070	IT-24	出力内容	P2	出力内容の結合確認	JS 挙動を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-070	IT-24	出力内容	P2	出力内容の結合確認	ナビ「商品管理」→「商品CSV管理」→「棚番号更新CSV登録」を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-071	IT-24	出力内容	P2	出力内容の結合確認	モーダル・ポップアップを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-071	IT-24	出力内容	P2	出力内容の結合確認	アップロード送信を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-072	IT-27	削除	P1	削除の結合確認	CSV ファイルを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-072	IT-27	削除	P1	削除の結合確認	履歴の表示件数変更を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-073	IT-27	移動・リネーム	P2	移動・リネームの結合確認	商品コードを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-073	IT-27	移動・リネーム	P2	移動・リネームの結合確認	表示要素を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-074	IT-27	コピー	P1	コピーの結合確認	棚番号を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-074	IT-27	コピー	P1	コピーの結合確認	JS 挙動を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-075	IT-33	ファイル登録	P1	ファイル登録の結合確認	棚番号を未設定に戻したいを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-075	IT-33	ファイル登録	P1	ファイル登録の結合確認	モーダル・ポップアップを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-076	IT-33	ファイル出力	P1	ファイル出力の結合確認	同一 product_code の規格が複数存在するデータ不整合を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-076	IT-33	ファイル出力	P1	ファイル出力の結合確認	CSV ファイルを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-077	IT-27	JSON	P1	JSONの結合確認	一覧と反映内容を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-077	IT-27	JSON	P1	JSONの結合確認	商品コードを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-078	IT-27	同名ファイル	P1	同名ファイルの結合確認	成功時出力を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-078	IT-27	同名ファイル	P1	同名ファイルの結合確認	棚番号を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-079	IT-27	入力JSON	P1	入力JSONの結合確認	失敗時出力を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-079	IT-27	入力JSON	P1	入力JSONの結合確認	棚番号を未設定に戻したいを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-080	IT-27	配置先	P1	配置先の結合確認	副作用を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-080	IT-27	配置先	P1	配置先の結合確認	同一 product_code の規格が複数存在するデータ不整合を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-081	IT-27	スキーマ	P1	スキーマの結合確認	dtb_product_classを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-081	IT-27	スキーマ	P1	スキーマの結合確認	一覧と反映内容を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-082	IT-02	初期行数	P2	初期行数の結合確認	dtb_shelf_numberを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. dtb_shelf_numberを確認する
-3. 画面表示と後続状態を確認する"	参照のみ（棚番号 ID の実在確認）であること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-083	IT-02	表示順	P2	表示順の結合確認	dtb_csv_import_historyを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. dtb_csv_import_historyを確認する
-3. 画面表示と後続状態を確認する"	成功時のみ INSERTであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-084	IT-25	更新抑止	P1	更新抑止の結合確認	登録/更新を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-082	IT-02	初期行数	P2	初期行数の結合確認	成功時出力を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	PRG パターンで GET m03-40_admin_product_product_shelf_number_csv_import へリダイレクトし、成功フラッシュとログ、履歴 1 件 INSERTであること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-083	IT-02	表示順	P2	表示順の結合確認	失敗時出力を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	同上リダイレクトにエラーフラッシュ、異常時はログ文言「異常終了」であること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-084	IT-25	更新抑止	P1	更新抑止の結合確認	副作用を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-085	IT-12	内部情報	P1	内部情報の結合確認	アップロードファイルを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-085	IT-12	内部情報	P1	内部情報の結合確認	dtb_product_classを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	CsvImportType の NotBlank と File（最大サイズ）であること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-086	IT-07	排他制御	P1	排他制御の結合確認	各行を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	更新対象であること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-086	IT-07	排他制御	P1	排他制御の結合確認	dtb_shelf_numberを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	列数 2、商品コード必須、規格件数ちょうど 1、棚番号が正の整数 ID と解釈されるときだけ棚番号マスタ実在を確認すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-087	IT-06	ロールバック	P3	ロールバックの結合確認	ナビから開くを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	参照のみ（棚番号 ID の実在確認）であること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-087	IT-06	ロールバック	P3	ロールバックの結合確認	dtb_csv_import_historyを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET …/product/product_shelf_number_csv_importであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-088	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-40-MSG-001を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	成功時のみ INSERTであること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-088	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-089	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	アップロードファイルを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. アップロードファイル
+3. 画面表示と後続状態を確認する"	CsvImportType の NotBlank と File（最大サイズ）であること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-090	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	各行を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 各行を確認する
+3. 画面表示と後続状態を確認する"	列数 2、商品コード必須、規格件数ちょうど 1、棚番号が正の整数 ID と解釈されるときだけ棚番号マスタ実在を確認すること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-091	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ナビから開くを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ナビから開く
+3. 画面表示と後続状態を確認する"	GET …/product/product_shelf_number_csv_importであること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-092	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-40-MSG-001を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M03-40-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	CSV取込フォーム送信でフォーム検証がNGのとき（各エラーごと）であること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-089	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-40-MSG-002を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-093	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-40-MSG-002を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M03-40-MSG-002を確認する
-3. 画面表示と後続状態を確認する"	アップロードファイルが取得できない（null）のときであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-090	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M03-40-MSG-004を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	管理画面_商品管理_棚番号更新CSV登録画面に遷移すること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-094	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-40-MSG-003を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M03-40-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	管理画面_商品管理_棚番号更新CSV登録画面に遷移すること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-095	IT-25	一覧	P2	一覧の結合確認	M03-40-MSG-004を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M03-40-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	インポータがエラーを返したとき（エラーごとであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-091	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	フォーム不正を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-096	IT-12	画面表示データ	P2	画面表示データの結合確認	M03-40-MSG-005を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M03-40-MSG-005を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-097	IT-25	画面表示データ	P2	画面表示データの結合確認	フォーム不正を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. フォーム不正を確認する
 3. 画面表示と後続状態を確認する"	管理者向けエラーフラッシュを積みリダイレクトであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-092	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	インポータが返した検証エラーを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-098	IT-12	画面表示データ	P2	画面表示データの結合確認	インポータが返した検証エラーを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. インポータが返した検証エラーを確認する
-3. 画面表示と後続状態を確認する"	各メッセージをフラッシュに積みリダイレクトであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-093	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	取込開始直前を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-099	IT-25	画面表示データ	P2	画面表示データの結合確認	取込開始直前を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 取込開始直前を確認する
 3. 画面表示と後続状態を確認する"	情報ログ「棚番号更新CSV登録開始」であること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-094	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	取込正常終了を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-100	IT-25	フォーム送信	P1	フォーム送信の結合確認	取込正常終了を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 取込正常終了を確認する
 3. 画面表示と後続状態を確認する"	情報ログ「棚番号更新CSV登録完了」と件数パラメータ countであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-095	IT-25	一覧	P2	一覧の結合確認	取込がエラー結果を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 取込がエラー結果を確認する
-3. 画面表示と後続状態を確認する"	情報ログ「棚番号更新CSV登録 異常終了」であること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-096	IT-12	画面表示データ	P2	画面表示データの結合確認	履歴ページングを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-101	IT-16	ファイル選択	P2	ファイル選択の結合確認	取込がエラー結果を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-102	IT-12	非同期更新	P1	非同期更新の結合確認	履歴ページングを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 履歴ページングを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-097	IT-25	画面表示データ	P2	画面表示データの結合確認	更新対象列を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	キー文字列 admin.product.shelf_number_csv.page_count と admin.product.shelf_number_csv.page_no に保存すること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-103	IT-12	エラー継続	P3	エラー継続の結合確認	更新対象列を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 更新対象列を確認する
 3. 画面表示と後続状態を確認する"	同一スキーマであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-098	IT-12	画面表示データ	P2	画面表示データの結合確認	ナビ「商品管理」→「商品CSV管理」→「棚番号更新CSV登録」を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-104	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ナビ「商品管理」→「商品CSV管理」→「棚番号更新CSV登録」を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ナビ「商品管理」→「商品CSV管理」→「棚番号更新CSV登録」を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-099	IT-25	画面表示データ	P2	画面表示データの結合確認	アップロード送信を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	アップロード画面が開き、フォーマット表と履歴が表示されるであること。
+m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-105	IT-23	データ正当性	P3	データ正当性の結合確認	アップロード送信を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でデータ正当性の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. アップロード送信
 3. 画面表示と後続状態を確認する"	検証・取込後、常に GET …/product_shelf_number_csv_import へリダイレクトされ、フラッシュで結果が示されるであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-100	IT-25	フォーム送信	P1	フォーム送信の結合確認	履歴の表示件数変更を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 履歴の表示件数変更を確認する
-3. 画面表示と後続状態を確認する"	クエリの件数が許容リストに含まれるときだけセッションに保存されるであること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-101	IT-16	ファイル選択	P2	ファイル選択の結合確認	表示要素を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-102	IT-12	非同期更新	P1	非同期更新の結合確認	JS 挙動を試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. JS 挙動を確認する
-3. 画面表示と後続状態を確認する"	ファイル選択でカスタムラベルへファイル名表示であること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-103	IT-12	エラー継続	P3	エラー継続の結合確認	モーダル・ポップアップを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	送信前確認ダイアログはないこと。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-104	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	CSV ファイルを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSV ファイルを確認する
-3. 画面表示と後続状態を確認する"	一時ディレクトリ eccube_csv_temp_realdir へ退避後にインポータが読込み、終了時に一時ファイル削除を試行であること。
-m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）	IT-M03-40-ADMIN-PRODUCT-PRODUCT-SHELF-NUMBER-CSV-IMPORT-105	IT-23	データ正当性	P3	データ正当性の結合確認	商品コードを試験できる状態である	m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）（m03_40_admin_product_product_shelf_number_csv_import）でデータ正当性の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 商品コードを確認する
-3. 画面表示と後続状態を確認する"	同一コードの規格がちょうど 1 件であることが検証されるであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）

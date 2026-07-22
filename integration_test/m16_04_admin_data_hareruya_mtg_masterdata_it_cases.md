@@ -59,7 +59,7 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 3. 画面表示と後続状態を確認する"	"hareruya-masterdata.js は moment のロケールを日本語曜始まりで整え、class=""calendar"" 付き入力に Bootstrap DateTimePicker を YYYY-MM-DD…であること。"
 データ管理 — MTGマスターデータ編集	IT-M16-04-ADMIN-DATA-HARERUYA-MTG-MASTERDATA-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	M16-04-MSG-001を試験できる状態である	データ管理 — MTGマスターデータ編集（m16_04_admin_data_hareruya_mtg_masterdata）でM16-04-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M16-04-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	POSTでeditFormが送信済みかつ有効で、postedEntityKeyの設定が存在し storeAction->handle が正常終了したときであること。
+3. 画面表示と後続状態を確認する"	保存後、MTGマスターデータ編集画面に遷移すること。
 データ管理 — MTGマスターデータ編集	IT-M16-04-ADMIN-DATA-HARERUYA-MTG-MASTERDATA-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	M16-04-MSG-002を試験できる状態である	データ管理 — MTGマスターデータ編集（m16_04_admin_data_hareruya_mtg_masterdata）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. M16-04-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
@@ -236,7 +236,7 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 3. 画面表示と後続状態を確認する"	画面タイトルブロック見出しは「MTGマスターデータ管理」であること。
 データ管理 — MTGマスターデータ編集	IT-M16-04-ADMIN-DATA-HARERUYA-MTG-MASTERDATA-067	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M16-04-MSG-002を試験できる状態である	データ管理 — MTGマスターデータ編集（m16_04_admin_data_hareruya_mtg_masterdata）でM16-04-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M16-04-MSG-002を確認する
-3. 画面表示と後続状態を確認する"	POSTでeditFormが送信済みかつ有効で、storeAction->handle 中に \RuntimeException を捕捉したとき（catch節）であること。
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
 データ管理 — MTGマスターデータ編集	IT-M16-04-ADMIN-DATA-HARERUYA-MTG-MASTERDATA-068	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	マスタ種別（プルダウン直下のウィジェットを試験できる状態である	データ管理 — MTGマスターデータ編集（m16_04_admin_data_hareruya_mtg_masterdata）でマスタ種別（プルダウン直下のウィジェットの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. マスタ種別（プルダウン直下のウィジェットを確認する
 3. 画面表示と後続状態を確認する"	「選択」の POST で確定される {entity} 文字列であること。

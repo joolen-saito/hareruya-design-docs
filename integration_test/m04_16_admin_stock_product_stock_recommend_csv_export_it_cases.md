@@ -92,11 +92,11 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-018	IT-22	部分入力	P2	部分入力の入力検証	M04-16-MSG-005を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M04-16-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	在庫リコメンドCSV出力リンク押下時に検索条件がセッションに無い、もしくはセッションの検索条件が不正なときであること。
-在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-019	IT-23	検索条件	P2	検索時の検索条件確認	M04-16-MSG-001を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+3. 画面表示と後続状態を確認する"	在庫一覧画面に遷移すること。
+在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-019	IT-23	検索条件	P2	検索時の検索条件確認	M04-16-MSG-006を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-020	IT-23	検索条件	P2	検索時の検索条件確認	M04-16-MSG-004を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-020	IT-23	検索条件	P2	検索時の検索条件確認	M04-16-MSG-007を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-021	IT-23	検索条件	P2	検索時の検索条件確認	起動形態を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
@@ -153,12 +153,12 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	M04-16-MSG-005を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	M04-16-MSG-001を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	M04-16-MSG-006を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	M04-16-MSG-004を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	M04-16-MSG-007を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫一覧検索フォームのフォームデータで更新日時の開始が終了より大きいとき（SearchStockListType.php:477-481; messages.ja.yaml:1611）であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫一覧画面に遷移すること。
 在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	起動形態を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
@@ -203,9 +203,9 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-058	IT-24	出力内容	P2	出力内容の結合確認	M04-16-MSG-005を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-059	IT-27	削除	P1	削除の結合確認	M04-16-MSG-001を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-059	IT-27	削除	P1	削除の結合確認	M04-16-MSG-006を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-060	IT-27	移動・リネーム	P2	移動・リネームの結合確認	M04-16-MSG-004を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-060	IT-27	移動・リネーム	P2	移動・リネームの結合確認	M04-16-MSG-007を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
 在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-061	IT-27	コピー	P1	コピーの結合確認	起動形態を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
@@ -251,13 +251,13 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 3. 画面表示と後続状態を確認する"	開始・完了のコンソール出力（日時付き）であること。
 在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-16-MSG-005を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M04-16-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	在庫リコメンドCSV出力リンク押下時に検索条件がセッションに無い、もしくはセッションの検索条件が不正なときであること。
-在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-16-MSG-001を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. M04-16-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	在庫一覧検索フォーム（SearchStockListType）のPOST検索で基準価格の下限が上限より大きいときであること。
-在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-080	IT-25	一覧	P2	一覧の結合確認	M04-16-MSG-004を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. M04-16-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	在庫一覧検索フォームのフォームデータで更新日時の開始が終了より大きいとき（SearchStockListType.php:477-481; messages.ja.yaml:1611）であること。
+3. 画面表示と後続状態を確認する"	在庫一覧画面に遷移すること。
+在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-16-MSG-006を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-16-MSG-006を確認する
+3. 画面表示と後続状態を確認する"	在庫一覧画面に遷移すること。
+在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-080	IT-25	一覧	P2	一覧の結合確認	M04-16-MSG-007を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M04-16-MSG-007を確認する
+3. 画面表示と後続状態を確認する"	在庫一覧画面に遷移すること。
 在庫管理 — 在庫リコメンドCSV出力	IT-M04-16-ADMIN-STOCK-PRODUCT-STOCK-RECOMMEND-CSV-EXPORT-081	IT-12	画面表示データ	P2	画面表示データの結合確認	起動形態を試験できる状態である	在庫管理 — 在庫リコメンドCSV出力（m04_16_admin_stock_product_stock_recommend_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 起動形態を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。

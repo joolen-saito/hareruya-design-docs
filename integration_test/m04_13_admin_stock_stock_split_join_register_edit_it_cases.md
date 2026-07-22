@@ -128,37 +128,37 @@ M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JO
 M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-029	IT-26	登録内容	P1	登録時の登録内容確認	CSV取込時のCSRF/ファイル不正・ステータス不可を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でCSV取込時のCSRF/ファイル不正・ステータス不可の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-030	IT-26	実行結果	P1	登録時の実行結果確認	dtb_stock_split_joinを試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でdtb_stock_split_joinの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-030	IT-26	実行結果	P1	登録時の実行結果確認	M04-13-MSG-001を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-001の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-031	IT-23	実行結果	P1	登録時の実行結果確認	dtb_stock_split_join_detailを試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でdtb_stock_split_join_detailの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-031	IT-23	実行結果	P1	登録時の実行結果確認	M04-13-MSG-002を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-002の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	分割先／結合元の明細であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-032	IT-26	更新内容	P1	更新時の更新内容確認	dtb_stock_split_join_status_historyを試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でdtb_stock_split_join_status_historyの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	分割新規登録画面に遷移すること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-032	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-003を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-003の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-033	IT-26	更新内容	P1	更新時の更新内容確認	dtb_product_stock / dtb_product_classを試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でdtb_product_stock / dtb_product_classの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-033	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-004を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-004の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-034	IT-26	更新内容	P1	更新時の更新内容確認	dtb_stock_approval_listを試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でdtb_stock_approval_listの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-034	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-005を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-005の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-035	IT-26	更新内容	P1	更新時の更新内容確認	在庫分割結合の基本情報を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で在庫分割結合の基本情報の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-035	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-006を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-006の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_stock_split_join に保持（split_join_type で分割/結合を区別、登録日 create_date 等）であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-036	IT-26	更新内容	P1	更新時の更新内容確認	分割先・結合元などの明細を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で分割先・結合元などの明細の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-037	IT-26	更新内容	P1	更新時の更新内容確認	ステータス区分を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	分割編集画面に遷移すること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-036	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-007を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-007の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-038	IT-26	更新内容	P1	更新時の更新内容確認	在庫・原価の更新先を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-037	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-008を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-038	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-009を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-039	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-029を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-039	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-010を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-040	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-030を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-040	IT-26	更新内容	P1	更新時の更新内容確認	M04-13-MSG-011を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-041	IT-26	更新内容	P1	更新時の更新内容確認	機能名を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で機能名の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
@@ -245,38 +245,38 @@ M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JO
 M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-068	IT-28	本文	P2	本文の結合確認	CSV取込時のCSRF/ファイル不正・ステータス不可を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でCSV取込時のCSRF/ファイル不正・ステータス不可の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSV取込時のCSRF/ファイル不正・ステータス不可を確認する
 3. 画面表示と後続状態を確認する"	JSONで ok=false とエラーメッセージ（例 admin.stock.split_join.already_applied、admin.stock.join.receipt_completed_locked）であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_stock_split_joinを試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でdtb_stock_split_joinの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_stock_split_joinを確認する
-3. 画面表示と後続状態を確認する"	分割・結合の基本情報であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_stock_split_join_detailを試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でdtb_stock_split_join_detailの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_stock_split_join_detailを確認する
-3. 画面表示と後続状態を確認する"	分割先／結合元の明細であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-071	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_stock_split_join_status_historyを試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でdtb_stock_split_join_status_historyの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_stock_split_join_status_historyを確認する
-3. 画面表示と後続状態を確認する"	ステータス遷移履歴であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_product_stock / dtb_product_classを試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でdtb_product_stock / dtb_product_classの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_product_stock / dtb_product_classを確認する
-3. 画面表示と後続状態を確認する"	在庫数 stock・総原価 total_cost を ProductStockEntityManager::save() で更新であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_stock_approval_listを試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でdtb_stock_approval_listの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_stock_approval_listを確認する
-3. 画面表示と後続状態を確認する"	承認申請時に未承認で作成、承認・却下時に状態更新であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	在庫分割結合の基本情報を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で在庫分割結合の基本情報の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 在庫分割結合の基本情報を確認する
-3. 画面表示と後続状態を確認する"	dtb_stock_split_join に保持（split_join_type で分割/結合を区別、登録日 create_date 等）であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	分割先・結合元などの明細を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で分割先・結合元などの明細の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 分割先・結合元などの明細を確認する
-3. 画面表示と後続状態を確認する"	dtb_stock_split_join_detail に保持であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-076	IT-25	一覧	P2	一覧の結合確認	ステータス区分を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でステータス区分の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ステータス区分を確認する
-3. 画面表示と後続状態を確認する"	マスタ mtb_stock_split_join_status（新規登録1/結合元登録2/分割承認待ち3/結合承認待ち4/入庫済み5/却下6）であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-077	IT-12	画面表示データ	P2	画面表示データの結合確認	在庫・原価の更新先を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で在庫・原価の更新先の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 在庫・原価の更新先を確認する
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-13-MSG-001を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	分割新規登録画面に遷移すること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-13-MSG-002を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	分割新規登録画面に遷移すること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-071	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-13-MSG-003を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	分割新規登録画面に遷移すること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-13-MSG-004を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-13-MSG-005を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-005を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-13-MSG-006を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-006の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-006を確認する
+3. 画面表示と後続状態を確認する"	分割編集画面に遷移すること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-13-MSG-007を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-007の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-007を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-076	IT-25	一覧	P2	一覧の結合確認	M04-13-MSG-008を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-008を確認する
+3. 画面表示と後続状態を確認する"	分割編集画面に遷移すること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-077	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-13-MSG-009を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-009の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-009を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-078	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-13-MSG-029を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-029の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-13-MSG-029を確認する
-3. 画面表示と後続状態を確認する"	結合元の在庫区分をchangeした際のfetch（admin_stock_join_update_source_stock_location）がcatchに入ったとき（通信失敗、もしくは応答JSONの解析失敗であること。
-M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-079	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-13-MSG-030を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-030の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-13-MSG-030を確認する
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-078	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-13-MSG-010を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-010を確認する
+3. 画面表示と後続状態を確認する"	分割編集画面に遷移すること。
+M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-079	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-13-MSG-011を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）でM04-13-MSG-011の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-13-MSG-011を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
 M04-13（在庫分割結合登録/編集）	IT-M04-13-ADMIN-STOCK-STOCK-SPLIT-JOIN-REGISTER-EDIT-080	IT-25	画面表示データ	P2	画面表示データの結合確認	機能名を試験できる状態である	M04-13（在庫分割結合登録/編集）（m04_13_admin_stock_stock_split_join_register_edit）で機能名の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 機能名を確認する

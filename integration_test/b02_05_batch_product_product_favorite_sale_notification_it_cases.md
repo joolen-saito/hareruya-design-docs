@@ -11,7 +11,7 @@
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
 | IT-12 | JSON形式、エラー、レスポンス、実行結果 |
-| IT-30 | コマンド、入力データ、公開・締切 |
+| IT-30 | コマンド、入力データ |
 | IT-11 | 実行結果 |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
 
@@ -49,29 +49,27 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 2. 実行結果と副作用を確認する"	JSON形式のジョブ終了状態と処理件数が実行結果に記録されること。
 バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-009	IT-12	レスポンス	P1	レスポンスの結合確認	副作用を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で副作用の確認に必要な条件を指定する	"1. レスポンスの対象ジョブを実行する
 2. 実行結果と副作用を確認する"	レスポンスのジョブ終了状態と処理件数が実行結果に記録されること。
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-010	IT-30	公開・締切	P1	公開・締切の結合確認	dtb_playerを試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）でdtb_playerの確認に必要な条件を指定する	"1. 公開・締切の対象ジョブを実行する
-2. 実行結果と副作用を確認する"	公開・締切のジョブ終了状態と処理件数が実行結果に記録されること。
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-011	IT-11	実行結果	P2	実行結果の結合確認	コマンド名が未指定・不一致を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）でコマンド名が未指定・不一致の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-010	IT-11	実行結果	P2	実行結果の結合確認	dtb_playerを試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）でdtb_playerの確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
 2. 実行結果を確認する"	指定した宛先（メールアドレス）への送信、転送が正常終了すること。
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-012	IT-28	実行結果	P2	実行結果の結合確認	抽出・送信時のエラーを試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で抽出・送信時のエラーの確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-011	IT-28	実行結果	P2	実行結果の結合確認	コマンド名が未指定・不一致を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）でコマンド名が未指定・不一致の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
 2. 実行結果を確認する"	"件名に改行・タブ・メタキャラクタ（ ""，&．<，>，',\ ）が含まれていた場合、送信、転送が正常終了すること。"
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-013	IT-28	実行結果	P2	実行結果の結合確認	開始・完了を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で開始・完了の確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-012	IT-28	実行結果	P2	実行結果の結合確認	抽出・送信時のエラーを試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で抽出・送信時のエラーの確認に必要な条件を指定する	"1. 実行結果の対象機能を実行する
 2. 実行結果を確認する"	"本文に改行・タブ・メタキャラクタ（ ""，&．<，>，',\ ）が含まれていた場合、送信、転送が正常終了すること。"
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-014	IT-28	ヘッダ	P2	ヘッダの結合確認	通知宛先の都道府県を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で通知宛先の都道府県の確認に必要な条件を指定する	"1. ヘッダの対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-013	IT-28	ヘッダ	P2	ヘッダの結合確認	開始・完了を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で開始・完了の確認に必要な条件を指定する	"1. ヘッダの対象機能を実行する
 2. 実行結果を確認する"	ヘッダがエンコードされること。
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-015	IT-28	件名	P2	件名の結合確認	お気に入り商品を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-014	IT-28	件名	P2	件名の結合確認	通知宛先の都道府県を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
 2. 実行結果を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-016	IT-28	件名	P2	件名の結合確認	会員を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-015	IT-28	件名	P2	件名の結合確認	お気に入り商品を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で件名の対象項目を未入力にする	"1. 件名の対象機能を実行する
 2. 実行結果を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-017	IT-28	件名	P2	件名の結合確認	コンソールのバッチコマンドを試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）でコンソールのバッチコマンドの確認に必要な条件を指定する	"1. 件名の対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-016	IT-28	件名	P2	件名の結合確認	会員を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で会員の確認に必要な条件を指定する	"1. 件名の対象機能を実行する
 2. 実行結果を確認する"	取得した値に改行、タブ、メタキャラクタが含まれる場合、件名に設定された値がエンコーディング、サニタイジングされること。
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-018	IT-28	本文	P2	本文の結合確認	途中失敗・再実行を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-017	IT-28	本文	P2	本文の結合確認	コンソールのバッチコマンドを試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-019	IT-28	本文	P2	本文の結合確認	バッチを試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-018	IT-28	本文	P2	本文の結合確認	途中失敗・再実行を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で本文の対象項目を未入力にする	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-020	IT-28	本文	P2	本文の結合確認	成功時出力を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で成功時出力の確認に必要な条件を指定する	"1. 本文の対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-019	IT-28	本文	P2	本文の結合確認	バッチを試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）でバッチの確認に必要な条件を指定する	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	取得した値に改行、タブ、メタキャラクタが含まれる場合、本文に設定された値がエンコーディング、サニタイジングされること。
-バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-021	IT-28	本文	P2	本文の結合確認	失敗時出力を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で失敗時出力の確認に必要な条件を指定する	"1. 本文の対象機能を実行する
+バッチ 商品管理 — お気に入り商品セール通知	IT-B02-05-BATCH-PRODUCT-PRODUCT-FAVORITE-SALE-NOTIFICATION-020	IT-28	本文	P2	本文の結合確認	成功時出力を試験できる状態である	バッチ 商品管理 — お気に入り商品セール通知（b02_05_batch_product_product_favorite_sale_notification）で成功時出力の確認に必要な条件を指定する	"1. 本文の対象機能を実行する
 2. 実行結果を確認する"	ファイルを添付する場合、指定したファイルが添付されること。
 ```
 
@@ -173,3 +171,5 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ログ出力 / ログ出力 / 機密情報（IT-20） | 本機能は対象の外部I/Fを扱わないため |
 | ログ出力 / ログ出力 / 追跡情報（IT-20） | 本機能は対象の外部I/Fを扱わないため |
 | その他 | 同種の対象外観点 22 件は上記分類と同じ理由で対象外 |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 1件 — No.523。上限緩和または個別ケース化で収載可能。

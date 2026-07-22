@@ -75,91 +75,91 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	JS挙動を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	M07-03-MSG-003を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	M07-03-MSG-001を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に留まるであること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M07-03-MSG-002を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. M07-03-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M07-03-MSG-003を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. M07-03-MSG-003を確認する
-3. 画面表示と後続状態を確認する"	実在庫が編集表示（detail_stock_edit）の状態で切替ボタンを押したときであること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M07-03-MSG-007を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. M07-03-MSG-007を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M07-03-MSG-012を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. M07-03-MSG-012を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M07-03-MSG-013を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. M07-03-MSG-013を確認する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M07-03-MSG-004を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-004を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M07-03-MSG-014を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. M07-03-MSG-014を確認する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M07-03-MSG-005を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-005を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M07-03-MSG-015を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. M07-03-MSG-015を確認する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M07-03-MSG-006を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-006を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M07-03-MSG-016を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. M07-03-MSG-016を確認する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M07-03-MSG-007を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-007を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-019	IT-22	部分入力	P2	部分入力の入力検証	M07-03-MSG-018を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-018の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M07-03-MSG-018を確認する
-3. 画面表示と後続状態を確認する"	サプライ品明細の削除が成功したときであること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-021を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-019	IT-22	部分入力	P2	部分入力の入力検証	M07-03-MSG-012を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-012の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-012を確認する
+3. 画面表示と後続状態を確認する"	キャンセル時は買取情報編集（買取詳細）画面に留まり、OK時は処理後に買取情報編集（買取詳細）画面に遷移すること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-013を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-023を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-014を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-024を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-015を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-026を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-016を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-027を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-017を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-029を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-018を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-030を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-019を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-031を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-020を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-028	IT-23	検索条件	P2	検索時の検索条件確認	査定合計（表示）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で査定合計（表示）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-028	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-021を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-021の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-029	IT-23	検索条件	P2	検索時の検索条件確認	実在庫の編集可否を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で実在庫の編集可否の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-029	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-022を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-022の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-030	IT-23	検索条件	P2	検索時の検索条件確認	振込依頼済みへの遷移を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で振込依頼済みへの遷移の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-030	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-023を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-023の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-031	IT-23	検索条件	P2	検索時の検索条件確認	入庫済みからのステータス変更を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で入庫済みからのステータス変更の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-031	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-024を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-024の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-032	IT-23	検索条件	P2	検索時の検索条件確認	まとめめ買取の査定価格・数量・状態を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でまとめめ買取の査定価格・数量・状態の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-032	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-026を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-026の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-033	IT-23	検索条件	P2	検索時の検索条件確認	管理者用メモを試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で管理者用メモの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-033	IT-23	検索条件	P2	検索時の検索条件確認	M07-03-MSG-027を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-027の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-034	IT-23	実行結果	P2	検索時の実行結果確認	査定金額合計を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で査定金額合計の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-034	IT-23	実行結果	P2	検索時の実行結果確認	M07-03-MSG-028を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-028の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-035	IT-23	実行結果	P2	検索時の実行結果確認	選んで買取 › 商品・言語・Foil（各行）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で選んで買取 › 商品・言語・Foil（各行）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-035	IT-23	実行結果	P2	検索時の実行結果確認	M07-03-MSG-029を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-029の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-036	IT-23	実行結果	P2	検索時の実行結果確認	まとめて買取 › 売却（各行）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でまとめて買取 › 売却（各行）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-036	IT-23	実行結果	P2	検索時の実行結果確認	M07-03-MSG-030を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-030の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-037	IT-23	実行結果	P2	検索時の実行結果確認	個別入力 › 売却（各行）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で個別入力 › 売却（各行）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-037	IT-23	実行結果	P2	検索時の実行結果確認	M07-03-MSG-031を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-031の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	実在庫 › 増減数（各行）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で実在庫 › 増減数（各行）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	査定合計（表示）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で査定合計（表示）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	口座情報 › 銀行名コードを試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で口座情報 › 銀行名コードの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	実在庫の編集可否を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で実在庫の編集可否の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	口座情報 › 口座番号を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で口座情報 › 口座番号の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	振込依頼済みへの遷移を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で振込依頼済みへの遷移の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-041	IT-26	登録内容	P1	登録時の登録内容確認	ネット買取一覧の編集リンク・行リンクを試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でネット買取一覧の編集リンク・行リンクの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
@@ -195,93 +195,93 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-051	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でJS挙動の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-052	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-003を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-003の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-052	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-001を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-001の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-053	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-007を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-007の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-053	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-002を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-002の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一括売却登録ボタン押下時（送信前確認）であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-012を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-012の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-013を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に留まるであること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-003を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-003の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-014を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-004を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-005を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-015を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-006を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-016を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-007を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-059	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-018を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-018の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-059	IT-26	更新内容	P1	更新時の更新内容確認	M07-03-MSG-012を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-012の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	M07-03-MSG-021を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-021の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	M07-03-MSG-013を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-013の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-061	IT-05	実行結果	P1	更新時の実行結果確認	M07-03-MSG-023を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-023の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-061	IT-05	実行結果	P1	更新時の実行結果確認	M07-03-MSG-014を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-014の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除リンクをクリックしたときであること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-062	IT-02	初期行数	P2	初期行数の結合確認	M07-03-MSG-024を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-024の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に留まるであること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-062	IT-02	初期行数	P2	初期行数の結合確認	M07-03-MSG-015を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-015の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-015を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-063	IT-02	表示順	P2	表示順の結合確認	M07-03-MSG-016を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-016の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-016を確認する
+3. 画面表示と後続状態を確認する"	買取情報編集（買取詳細）画面に遷移すること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-064	IT-25	更新抑止	P1	更新抑止の結合確認	M07-03-MSG-017を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-017の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に遷移すること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-065	IT-12	内部情報	P1	内部情報の結合確認	M07-03-MSG-018を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-018の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	完了メッセージを表示して、買取情報編集（買取詳細）画面に遷移すること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-066	IT-06	ロールバック	P3	ロールバックの結合確認	M07-03-MSG-019を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-019の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に遷移すること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-067	IT-11	実行結果	P2	実行結果の結合確認	M07-03-MSG-020を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-020の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-020を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に遷移すること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-068	IT-28	実行結果	P2	実行結果の結合確認	M07-03-MSG-021を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-021の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-021を確認する
+3. 画面表示と後続状態を確認する"	完了メッセージを表示して、買取情報編集（買取詳細）画面に遷移すること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-069	IT-28	実行結果	P2	実行結果の結合確認	M07-03-MSG-022を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-022の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-022を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-070	IT-28	ヘッダ	P2	ヘッダの結合確認	M07-03-MSG-023を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-023の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-023を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-071	IT-28	件名	P2	件名の結合確認	M07-03-MSG-024を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. M07-03-MSG-024を確認する
-3. 画面表示と後続状態を確認する"	ajaxリクエストがエラーになったときであること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-063	IT-02	表示順	P2	表示順の結合確認	M07-03-MSG-026を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-026の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-072	IT-28	件名	P2	件名の結合確認	M07-03-MSG-026を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. M07-03-MSG-026を確認する
-3. 画面表示と後続状態を確認する"	ajaxリクエストがエラーになったときであること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-064	IT-25	更新抑止	P1	更新抑止の結合確認	M07-03-MSG-027を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-027の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	CSRFトークン(purchase_register_individual_stock)がJS設定から取得できないときであること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-065	IT-12	内部情報	P1	内部情報の結合確認	M07-03-MSG-029を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-029の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	査定価格に数字以外を入力して保存し正規表現 /^\d+$/u に不一致となる場合であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-066	IT-06	ロールバック	P3	ロールバックの結合確認	M07-03-MSG-030を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-030の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	査定編集状態でサプライ品行の price に数字以外を入力して保存し正規表現 /^\d+$/u に不一致となる場合（サプライ品以外の行は査定編集中も readonly のため通常操作では入力不可）であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-067	IT-11	実行結果	P2	実行結果の結合確認	M07-03-MSG-031を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-031の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-073	IT-28	件名	P2	件名の結合確認	M07-03-MSG-027を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-027の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-027を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に留まるであること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-074	IT-28	本文	P2	本文の結合確認	M07-03-MSG-028を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. M07-03-MSG-028を確認する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-075	IT-28	本文	P2	本文の結合確認	M07-03-MSG-029を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. M07-03-MSG-029を確認する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-076	IT-28	本文	P2	本文の結合確認	M07-03-MSG-030を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-030の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-030を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に留まるであること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-077	IT-28	本文	P2	本文の結合確認	M07-03-MSG-031を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-031の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M07-03-MSG-031を確認する
-3. 画面表示と後続状態を確認する"	査定編集状態でサプライ品行の count に数字以外を入力して保存し正規表現 /^\d+$/u に不一致となる場合（サプライ品以外の行は査定編集中も readonly のため通常操作では入力不可）であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-068	IT-28	実行結果	P2	実行結果の結合確認	査定合計（表示）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で査定合計（表示）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に留まるであること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	査定合計（表示）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で査定合計（表示）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 査定合計（表示）を確認する
 3. 画面表示と後続状態を確認する"	選んで買取・まとめめ・個別入力の売却フラグと金額・数量からクライアントが再計算（確認ロジックはフロント脚本）であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-069	IT-28	実行結果	P2	実行結果の結合確認	実在庫の編集可否を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で実在庫の編集可否の確認に必要な条件を指定する	"1. 対象画面を表示する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	実在庫の編集可否を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で実在庫の編集可否の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 実在庫の編集可否を確認する
 3. 画面表示と後続状態を確認する"	買取状況IDが APPRAISAL_ACCEPTANCE・IDENTIFY_VERIFIED・TRANSFER_REQUESTED・TRANSFER_COMPLETE・TRANSFER_FAILED・UNREGISTE…であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-070	IT-28	ヘッダ	P2	ヘッダの結合確認	振込依頼済みへの遷移を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で振込依頼済みへの遷移の確認に必要な条件を指定する	"1. 対象画面を表示する
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	振込依頼済みへの遷移を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で振込依頼済みへの遷移の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 振込依頼済みへの遷移を確認する
 3. 画面表示と後続状態を確認する"	身分証未選択は不可であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-071	IT-28	件名	P2	件名の結合確認	入庫済みからのステータス変更を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 入庫済みからのステータス変更を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-072	IT-28	件名	P2	件名の結合確認	まとめめ買取の査定価格・数量・状態を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. まとめめ買取の査定価格・数量・状態を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-073	IT-28	件名	P2	件名の結合確認	管理者用メモを試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で管理者用メモの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 管理者用メモを確認する
-3. 画面表示と後続状態を確認する"	dtb_buy_order.memoであること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-074	IT-28	本文	P2	本文の結合確認	査定金額合計を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 査定金額合計を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-075	IT-28	本文	P2	本文の結合確認	選んで買取 › 商品・言語・Foil（各行）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 選んで買取 › 商品・言語・Foil（各行）を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-076	IT-28	本文	P2	本文の結合確認	まとめて買取 › 売却（各行）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でまとめて買取 › 売却（各行）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. まとめて買取 › 売却（各行）を確認する
-3. 画面表示と後続状態を確認する"	dtb_buy_main_card.sale_flg（bulk区分）であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-077	IT-28	本文	P2	本文の結合確認	個別入力 › 売却（各行）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で個別入力 › 売却（各行）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 個別入力 › 売却（各行）
-3. 画面表示と後続状態を確認する"	dtb_buy_order_indivisual_input_product.sale_flgであること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	実在庫 › 増減数（各行）を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で実在庫 › 増減数（各行）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 実在庫 › 増減数（各行）を確認する
-3. 画面表示と後続状態を確認する"	dtb_buy_order_stock の数量・小計を更新であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	口座情報 › 銀行名コードを試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で口座情報 › 銀行名コードの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 口座情報 › 銀行名コードを確認する
-3. 画面表示と後続状態を確認する"	dtb_bank_account 側であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	口座情報 › 口座番号を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）で口座情報 › 口座番号の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 口座情報 › 口座番号を確認する
-3. 画面表示と後続状態を確認する"	表示は7桁ゼロ埋めであること。
 ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ネット買取一覧の編集リンク・行リンクを試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でネット買取一覧の編集リンク・行リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ネット買取一覧の編集リンク・行リンクを確認する
 3. 画面表示と後続状態を確認する"	買取詳細が表示されるであること。
@@ -309,15 +309,15 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-089	IT-16	ファイル選択	P2	ファイル選択の結合確認	JS挙動を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	初期は .customer と .product を事実上ロックし、ロード後に待機クラスを外すであること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-090	IT-12	エラー継続	P3	エラー継続の結合確認	M07-03-MSG-007を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-007の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M07-03-MSG-007を確認する
-3. 画面表示と後続状態を確認する"	一括売却登録ボタン押下時（送信前確認）であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	M07-03-MSG-012を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-012の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M07-03-MSG-012を確認する
-3. 画面表示と後続状態を確認する"	isSupplyProduct が真かつ hasPersistedId が真の行に描画される「削除」リンクを押下したとき（confirm ダイアログ）であること。
-ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-092	IT-08	同時購入	P1	同時購入の結合確認	M07-03-MSG-013を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-013の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M07-03-MSG-013を確認する
-3. 画面表示と後続状態を確認する"	買取詳細の保存時、口座番号が数字のみの正規表現に一致しない場合であること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-090	IT-12	エラー継続	P3	エラー継続の結合確認	M07-03-MSG-002を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に留まるであること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	M07-03-MSG-003を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	キャンセル時は買取情報編集（買取詳細）画面に留まり、OK時は閲覧表示に切り替えるであること。
+ネット買取管理 — 買取情報編集（買取詳細）	IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-092	IT-08	同時購入	P1	同時購入の結合確認	M07-03-MSG-004を試験できる状態である	ネット買取管理 — 買取情報編集（買取詳細）（m07_03_admin_online_purchase_purchase_online_buy_order_edit）でM07-03-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M07-03-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示して、買取情報編集（買取詳細）画面に留まるであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）

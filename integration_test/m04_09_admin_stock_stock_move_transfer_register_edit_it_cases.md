@@ -81,82 +81,82 @@ M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-
 M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M04-09-MSG-001を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. M04-09-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M04-09-MSG-003を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-003を確認する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M04-09-MSG-002を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M04-09-MSG-004を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-004を確認する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M04-09-MSG-003を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-003を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M04-09-MSG-005を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-005を確認する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M04-09-MSG-004を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-004を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M04-09-MSG-007を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-007を確認する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M04-09-MSG-006を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-006を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-019	IT-22	部分入力	P2	部分入力の入力検証	M04-09-MSG-008を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-09-MSG-008を確認する
-3. 画面表示と後続状態を確認する"	出庫承認申請更新が正常終了であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-014を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+3. 画面表示と後続状態を確認する"	同一店舗は在庫移動完了画面、その他は移動出庫承認画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-009を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-024を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-010を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-026を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-011を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-027を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-012を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-031を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-013を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-035を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-014を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-036を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-015を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-037を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-016を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-028	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-038を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-038の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-028	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-017を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-017の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-029	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-041を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-041の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-029	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-018を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-018の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-030	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-042を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-042の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-030	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-019を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-019の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-031	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-044を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-044の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-031	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-020を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-020の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-032	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-054を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-054の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-032	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-021を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-021の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-033	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-059を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-059の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-033	IT-23	検索条件	P2	検索時の検索条件確認	M04-09-MSG-022を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-022の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-034	IT-23	実行結果	P2	検索時の実行結果確認	M04-09-MSG-064を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-064の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-034	IT-23	実行結果	P2	検索時の実行結果確認	M04-09-MSG-023を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-023の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-035	IT-23	実行結果	P2	検索時の実行結果確認	M04-09-MSG-068を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-068の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-035	IT-23	実行結果	P2	検索時の実行結果確認	M04-09-MSG-025を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-025の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-036	IT-23	実行結果	P2	検索時の実行結果確認	M04-09-MSG-069を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-069の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-036	IT-23	実行結果	P2	検索時の実行結果確認	M04-09-MSG-027を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-027の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-037	IT-23	実行結果	P2	検索時の実行結果確認	M04-09-MSG-074を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-074の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-037	IT-23	実行結果	P2	検索時の実行結果確認	M04-09-MSG-028を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-028の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	M04-09-MSG-075を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-075の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	M04-09-MSG-029を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-029の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	M04-09-MSG-078を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-078の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	M04-09-MSG-030を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-030の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	M04-09-MSG-079を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-079の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	M04-09-MSG-031を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-031の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-041	IT-26	登録内容	P1	登録時の登録内容確認	機能名を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で機能名の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
@@ -201,84 +201,84 @@ M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-
 M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	M04-09-MSG-001を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-001の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	M04-09-MSG-003を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	M04-09-MSG-002を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	M04-09-MSG-004を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	M04-09-MSG-003を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	M04-09-MSG-005を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	M04-09-MSG-004を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	M04-09-MSG-007を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	M04-09-MSG-006を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-059	IT-26	更新内容	P1	更新時の更新内容確認	M04-09-MSG-008を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-008の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	M04-09-MSG-014を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-014の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	M04-09-MSG-009を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-009の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-061	IT-05	実行結果	P1	更新時の実行結果確認	M04-09-MSG-024を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-024の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-061	IT-05	実行結果	P1	更新時の実行結果確認	M04-09-MSG-010を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-010の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォーム未送信もしくはバリデーション不正であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-062	IT-02	初期行数	P2	初期行数の結合確認	M04-09-MSG-026を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-026の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-026を確認する
-3. 画面表示と後続状態を確認する"	入庫承認申請更新アクションが例外を送出であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-063	IT-02	表示順	P2	表示順の結合確認	M04-09-MSG-027を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-027の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	エラー情報をJSONで返すこと。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-062	IT-02	初期行数	P2	初期行数の結合確認	M04-09-MSG-011を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-011の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-011を確認する
+3. 画面表示と後続状態を確認する"	エラー情報をJSONで返すこと。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-063	IT-02	表示順	P2	表示順の結合確認	M04-09-MSG-012を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-012の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-012を確認する
+3. 画面表示と後続状態を確認する"	移動ピック・出庫承認申請画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-064	IT-25	更新抑止	P1	更新抑止の結合確認	M04-09-MSG-013を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-013の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	移動出庫承認画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-065	IT-12	内部情報	P1	内部情報の結合確認	M04-09-MSG-014を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-014の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	移動出庫承認画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-066	IT-06	ロールバック	P3	ロールバックの結合確認	M04-09-MSG-015を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-015の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	移動出庫承認画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-09-MSG-016を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-016の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-016を確認する
+3. 画面表示と後続状態を確認する"	移動出庫承認画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-09-MSG-017を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-017の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-017を確認する
+3. 画面表示と後続状態を確認する"	移動入庫承認申請画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-09-MSG-018を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-018の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-018を確認する
+3. 画面表示と後続状態を確認する"	移動出庫承認画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-09-MSG-019を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-019の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-019を確認する
+3. 画面表示と後続状態を確認する"	移動入庫承認申請画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-09-MSG-020を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-020の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-020を確認する
+3. 画面表示と後続状態を確認する"	移動ピック・出庫承認申請画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-09-MSG-021を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-021の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-021を確認する
+3. 画面表示と後続状態を確認する"	移動入庫承認申請画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-09-MSG-022を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-022の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-022を確認する
+3. 画面表示と後続状態を確認する"	移動入庫承認申請画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-074	IT-25	一覧	P2	一覧の結合確認	M04-09-MSG-023を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-023の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-023を確認する
+3. 画面表示と後続状態を確認する"	移動ピック・出庫承認申請画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-075	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-09-MSG-025を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-025の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-025を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-076	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-09-MSG-027を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-027の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-09-MSG-027を確認する
-3. 画面表示と後続状態を確認する"	入庫承認申請更新が正常終了であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-064	IT-25	更新抑止	P1	更新抑止の結合確認	M04-09-MSG-031を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-031の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	入庫再確認アクションが例外を送出であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-065	IT-12	内部情報	P1	内部情報の結合確認	M04-09-MSG-035を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-035の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	戻しリスト出力ID検証サービスがエラー配列を返すこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-066	IT-06	ロールバック	P3	ロールバックの結合確認	M04-09-MSG-036を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-036の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォーム未送信もしくはバリデーション不正であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-09-MSG-037を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-037の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-037を確認する
-3. 画面表示と後続状態を確認する"	在庫振替ステータスから対応画面ルートを取得できないこと。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-09-MSG-038を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-038の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-038を確認する
-3. 画面表示と後続状態を確認する"	在庫振替登録アクションが例外を送出であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-09-MSG-041を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-041の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-041を確認する
-3. 画面表示と後続状態を確認する"	在庫振替登録アクションが例外を送出であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-09-MSG-042を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-042の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-042を確認する
-3. 画面表示と後続状態を確認する"	在庫振替登録アクションが正常終了であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-09-MSG-044を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-044の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-044を確認する
-3. 画面表示と後続状態を確認する"	フォーム不正であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-09-MSG-054を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-054の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-054を確認する
-3. 画面表示と後続状態を確認する"	取込結果にエラーが含まれるであること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-09-MSG-059を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-059の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-059を確認する
-3. 画面表示と後続状態を確認する"	取込結果にエラーが含まれるであること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-074	IT-25	一覧	P2	一覧の結合確認	M04-09-MSG-064を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-064の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-064を確認する
-3. 画面表示と後続状態を確認する"	ポップアップ表示直後（データ取得完了まで）であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-075	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-09-MSG-068を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-068の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-068を確認する
+3. 画面表示と後続状態を確認する"	移動入庫承認画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-077	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-09-MSG-028を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-028の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-028を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-076	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-09-MSG-069を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-069の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-069を確認する
-3. 画面表示と後続状態を確認する"	登録フォームsubmit時にJSがインターセプトであること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-077	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-09-MSG-074を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-074の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-074を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-078	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-09-MSG-075を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-075の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-075を確認する
-3. 画面表示と後続状態を確認する"	承認ボタン押下であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	M04-09-MSG-078を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-078の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-078を確認する
-3. 画面表示と後続状態を確認する"	入庫再確認ボタン押下であること。
-M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-080	IT-16	ファイル選択	P2	ファイル選択の結合確認	M04-09-MSG-079を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-079の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M04-09-MSG-079を確認する
-3. 画面表示と後続状態を確認する"	承認ボタン押下であること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-078	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-09-MSG-029を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-029の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-029を確認する
+3. 画面表示と後続状態を確認する"	移動入庫承認画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	M04-09-MSG-030を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-030の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-030を確認する
+3. 画面表示と後続状態を確認する"	移動入庫承認画面に遷移すること。
+M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-080	IT-16	ファイル選択	P2	ファイル選択の結合確認	M04-09-MSG-031を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）でM04-09-MSG-031の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-09-MSG-031を確認する
+3. 画面表示と後続状態を確認する"	移動入庫承認画面に遷移すること。
 M04-09（在庫移動・振替登録/編集）	IT-M04-09-ADMIN-STOCK-STOCK-MOVE-TRANSFER-REGISTER-EDIT-081	IT-12	非同期更新	P1	非同期更新の結合確認	機能名を試験できる状態である	M04-09（在庫移動・振替登録/編集）（m04_09_admin_stock_stock_move_transfer_register_edit）で機能名の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 機能名を確認する
 3. 画面表示と後続状態を確認する"	在庫移動・振替登録/編集であること。

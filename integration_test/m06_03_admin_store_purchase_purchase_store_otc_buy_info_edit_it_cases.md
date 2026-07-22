@@ -78,85 +78,85 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	実在庫表示行を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 実在庫表示行を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M06-03-MSG-002を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M06-03-MSG-001を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. M06-03-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M06-03-MSG-002を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. M06-03-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M06-03-MSG-004を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. M06-03-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M06-03-MSG-006を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. M06-03-MSG-006を確認する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M06-03-MSG-003を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M06-03-MSG-003を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M06-03-MSG-007を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. M06-03-MSG-007を確認する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M06-03-MSG-004を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M06-03-MSG-004を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M06-03-MSG-010を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. M06-03-MSG-010を確認する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M06-03-MSG-005を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M06-03-MSG-005を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-019	IT-22	部分入力	P2	部分入力の入力検証	M06-03-MSG-012を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-012の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M06-03-MSG-012を確認する
-3. 画面表示と後続状態を確認する"	経理払出し済フォーム送信時の送信前確認（detail.twig:653、キャンセルで送信中止）であること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	フリーコメントのみ更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-019	IT-22	部分入力	P2	部分入力の入力検証	M06-03-MSG-006を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-006の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M06-03-MSG-006を確認する
+3. 画面表示と後続状態を確認する"	買取詳細画面に遷移すること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	M06-03-MSG-007を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	増減数を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	M06-03-MSG-008を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	フォーム不正（CSRF 含む）を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	M06-03-MSG-009を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	在庫更新は許可ステータス外を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	M06-03-MSG-010を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	編集可能店舗と不一致での在庫更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	M06-03-MSG-011を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	個別登録が重複を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	M06-03-MSG-012を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	フリーコメントと update_dateを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	M06-03-MSG-013を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	同時更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	フリーコメントのみ更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-028	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で成功時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-028	IT-23	検索条件	P2	検索時の検索条件確認	増減数を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で増減数の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-029	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で失敗時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-029	IT-23	検索条件	P2	検索時の検索条件確認	フォーム不正（CSRF 含む）を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でフォーム不正（CSRF 含む）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-030	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で副作用の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-030	IT-23	検索条件	P2	検索時の検索条件確認	在庫更新は許可ステータス外を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で在庫更新は許可ステータス外の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-031	IT-23	検索条件	P2	検索時の検索条件確認	dtb_otc_buy_orderを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_orderの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-031	IT-23	検索条件	P2	検索時の検索条件確認	編集可能店舗と不一致での在庫更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で編集可能店舗と不一致での在庫更新の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-032	IT-23	検索条件	P2	検索時の検索条件確認	dtb_otc_buy_orderを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_orderの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-032	IT-23	検索条件	P2	検索時の検索条件確認	個別登録が重複を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で個別登録が重複の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-033	IT-23	検索条件	P2	検索時の検索条件確認	dtb_otc_buy_order_stockを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_order_stockの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-033	IT-23	検索条件	P2	検索時の検索条件確認	フリーコメントと update_dateを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でフリーコメントと update_dateの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-034	IT-23	実行結果	P2	検索時の実行結果確認	dtb_otc_buy_order_indivisual_input_prod…を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_order_indivisual_input_prod…の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-034	IT-23	実行結果	P2	検索時の実行結果確認	同時更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で同時更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-035	IT-23	実行結果	P2	検索時の実行結果確認	登録/更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-035	IT-23	実行結果	P2	検索時の実行結果確認	成功時出力を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-036	IT-23	実行結果	P2	検索時の実行結果確認	個別登録を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で個別登録の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-036	IT-23	実行結果	P2	検索時の実行結果確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-037	IT-23	実行結果	P2	検索時の実行結果確認	保存・個別登録・経理・入庫の POST 完了後を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で保存・個別登録・経理・入庫の POST 完了後の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-037	IT-23	実行結果	P2	検索時の実行結果確認	副作用を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	一覧から詳細を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で一覧から詳細の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	dtb_otc_buy_orderを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_orderの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	POST 後のリダイレクトを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でPOST 後のリダイレクトの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	dtb_otc_buy_orderを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_orderの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	CSRF 無効（経理・入庫・個別登録）を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でCSRF 無効（経理・入庫・個別登録）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	dtb_otc_buy_order_stockを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_order_stockの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-041	IT-26	登録内容	P1	登録時の登録内容確認	棚戻し列を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で棚戻し列の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
@@ -198,87 +198,87 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-053	IT-26	更新内容	P1	更新時の更新内容確認	実在庫表示行を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で実在庫表示行の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	数量 0 の在庫行は表に出さないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-002を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-002の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-001を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-001の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-004を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-002を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-006を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-003を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-007を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-004を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-010を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-005を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-059	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-012を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-012の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-059	IT-26	更新内容	P1	更新時の更新内容確認	M06-03-MSG-006を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-006の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	フリーコメントのみ更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でフリーコメントのみ更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	M06-03-MSG-007を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-007の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-061	IT-05	実行結果	P1	更新時の実行結果確認	増減数を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で増減数の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-061	IT-05	実行結果	P1	更新時の実行結果確認	M06-03-MSG-008を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-008の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	パラメータ stock_diff[商品規格ID]であること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-062	IT-02	初期行数	P2	初期行数の結合確認	フォーム不正（CSRF 含む）を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でフォーム不正（CSRF 含む）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	買取詳細画面に遷移すること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-062	IT-02	初期行数	P2	初期行数の結合確認	M06-03-MSG-009を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-009の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M06-03-MSG-009を確認する
+3. 画面表示と後続状態を確認する"	買取詳細画面に遷移すること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-063	IT-02	表示順	P2	表示順の結合確認	M06-03-MSG-010を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M06-03-MSG-010を確認する
+3. 画面表示と後続状態を確認する"	買取詳細画面に遷移すること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-064	IT-25	更新抑止	P1	更新抑止の結合確認	M06-03-MSG-011を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-011の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-065	IT-12	内部情報	P1	内部情報の結合確認	M06-03-MSG-012を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-012の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-066	IT-06	ロールバック	P3	ロールバックの結合確認	M06-03-MSG-013を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でM06-03-MSG-013の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	要ソース確認であること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	フリーコメントのみ更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でフリーコメントのみ更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. フリーコメントのみ更新を確認する
+3. 画面表示と後続状態を確認する"	stock_diff がすべて 0 もしくは未送信のとき flush のみであること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	増減数を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で増減数の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 増減数を確認する
+3. 画面表示と後続状態を確認する"	パラメータ stock_diff[商品規格ID]であること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	フォーム不正（CSRF 含む）を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でフォーム不正（CSRF 含む）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フォーム不正（CSRF 含む）を確認する
 3. 画面表示と後続状態を確認する"	保存しないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-063	IT-02	表示順	P2	表示順の結合確認	在庫更新は許可ステータス外を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で在庫更新は許可ステータス外の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	在庫更新は許可ステータス外を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で在庫更新は許可ステータス外の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 在庫更新は許可ステータス外を確認する
 3. 画面表示と後続状態を確認する"	例外メッセージをエラーフラッシュしリダイレクトであること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-064	IT-25	更新抑止	P1	更新抑止の結合確認	編集可能店舗と不一致での在庫更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で編集可能店舗と不一致での在庫更新の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	同上であること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-065	IT-12	内部情報	P1	内部情報の結合確認	個別登録が重複を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で個別登録が重複の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	「既に実在庫登録済みですであること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-066	IT-06	ロールバック	P3	ロールバックの結合確認	フリーコメントと update_dateを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でフリーコメントと update_dateの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫更新アクションは update_date を現在時刻で更新すること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	同時更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	編集可能店舗と不一致での在庫更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で編集可能店舗と不一致での在庫更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 編集可能店舗と不一致での在庫更新を確認する
+3. 画面表示と後続状態を確認する"	同上であること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	個別登録が重複を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で個別登録が重複の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 個別登録が重複を確認する
+3. 画面表示と後続状態を確認する"	「既に実在庫登録済みですであること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	フリーコメントと update_dateを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でフリーコメントと update_dateの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. フリーコメントと update_dateを確認する
+3. 画面表示と後続状態を確認する"	在庫更新アクションは update_date を現在時刻で更新すること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-074	IT-25	一覧	P2	一覧の結合確認	同時更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同時更新を確認する
 3. 画面表示と後続状態を確認する"	楽観ロック列は持たないこと。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-075	IT-12	画面表示データ	P2	画面表示データの結合確認	成功時出力を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	詳細ページへの 302であること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-076	IT-25	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	詳細への 302 とエラーフラッシュ、もしくは 404であること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-077	IT-12	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	dtb_otc_buy_order のコメント列、在庫・履歴、注文の更新日時（在庫経路）、ステータス履歴（別アクション経由）、個別行の商品規格 FKであること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_otc_buy_orderを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-078	IT-25	画面表示データ	P2	画面表示データの結合確認	dtb_otc_buy_orderを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_otc_buy_orderを確認する
 3. 画面表示と後続状態を確認する"	本画面の Symfony フォームが直接更新し得るであること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_otc_buy_orderを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	dtb_otc_buy_orderを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_otc_buy_orderを確認する
 3. 画面表示と後続状態を確認する"	在庫更新アクション成功時に更新され得るであること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_otc_buy_order_stockを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_order_stockの確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-080	IT-16	ファイル選択	P2	ファイル選択の結合確認	dtb_otc_buy_order_stockを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_order_stockの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_otc_buy_order_stockを確認する
 3. 画面表示と後続状態を確認する"	増減数 POST で更新もしくは新規であること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-074	IT-25	一覧	P2	一覧の結合確認	dtb_otc_buy_order_indivisual_input_prod…を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でdtb_otc_buy_order_indivisual_input_prod…の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_otc_buy_order_indivisual_input_prod…を確認する
-3. 画面表示と後続状態を確認する"	個別登録でセットであること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-075	IT-12	画面表示データ	P2	画面表示データの結合確認	登録/更新を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-076	IT-25	画面表示データ	P2	画面表示データの結合確認	個別登録を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で個別登録の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 個別登録を確認する
-3. 画面表示と後続状態を確認する"	CSRF、アクション内で店舗・ステータス・二重登録であること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-077	IT-12	画面表示データ	P2	画面表示データの結合確認	保存・個別登録・経理・入庫の POST 完了後を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で保存・個別登録・経理・入庫の POST 完了後の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存・個別登録・経理・入庫の POST 完了後
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-078	IT-25	画面表示データ	P2	画面表示データの結合確認	一覧から詳細を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で一覧から詳細の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧から詳細を確認する
-3. 画面表示と後続状態を確認する"	詳細の表示データを DB から組み立て直すであること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	POST 後のリダイレクトを試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でPOST 後のリダイレクトの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. POST 後のリダイレクトを確認する
-3. 画面表示と後続状態を確認する"	詳細を再表示し、メッセージを一度表示すること。
-店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-080	IT-16	ファイル選択	P2	ファイル選択の結合確認	CSRF 無効（経理・入庫・個別登録）を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）でCSRF 無効（経理・入庫・個別登録）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. CSRF 無効（経理・入庫・個別登録）を確認する
-3. 画面表示と後続状態を確認する"	エラーフラッシュして詳細へであること。
 店頭買取管理 — 買取詳細（買取情報の確認と保存）	IT-M06-03-ADMIN-STORE-PURCHASE-PURCHASE-STORE-OTC-BUY-INFO-EDIT-081	IT-12	非同期更新	P1	非同期更新の結合確認	棚戻し列を試験できる状態である	店頭買取管理 — 買取詳細（買取情報の確認と保存）（m06_03_admin_store_purchase_purchase_store_otc_buy_info_edit）で棚戻し列の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 棚戻し列を確認する
 3. 画面表示と後続状態を確認する"	restocked_flg（棚戻し済みフラグ）・restocked_date（入庫日時）を追加であること。

@@ -51,10 +51,10 @@ m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カー�
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	出力前の確認ダイアログはないこと。
 m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）	IT-M03-03-ADMIN-PRODUCT-PRODUCT-CARD-CSV-EXPORT-005	IT-20	出力抑止	P1	出力抑止の結合確認	M03-03-MSG-001を試験できる状態である	m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）（m03_03_admin_product_product_card_csv_export）で出力抑止の対象ファイルと処理条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	POST admin_product_card_csv_export で、商品未取得時もしくはCSV行が空のときであること。
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
 m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）	IT-M03-03-ADMIN-PRODUCT-PRODUCT-CARD-CSV-EXPORT-006	IT-20	識別子	P1	識別子の結合確認	M03-03-MSG-002を試験できる状態である	m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）（m03_03_admin_product_product_card_csv_export）で識別子の対象ファイルと処理条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	POST admin_product_card_csv_export で ids が未送信・非配列、もしくは正整数化後に空のときであること。
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	エラーを表示し、商品一覧画面に遷移すること。
 m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）	IT-M03-03-ADMIN-PRODUCT-PRODUCT-CARD-CSV-EXPORT-007	IT-15	状態変化	P1	状態変化の結合確認	行の複製単位を試験できる状態である	m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）（m03_03_admin_product_product_card_csv_export）で状態変化の対象ファイルと処理条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	商品につき getProductClasses() の反復ごとに 1 行であること。
@@ -245,10 +245,10 @@ m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カー�
 3. 画面表示と後続状態を確認する"	出力前の確認ダイアログはないこと。
 m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）	IT-M03-03-ADMIN-PRODUCT-PRODUCT-CARD-CSV-EXPORT-077	IT-12	エラー継続	P3	エラー継続の結合確認	M03-03-MSG-001を試験できる状態である	m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）（m03_03_admin_product_product_card_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M03-03-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	POST admin_product_card_csv_export で、商品未取得時もしくはCSV行が空のときであること。
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
 m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）	IT-M03-03-ADMIN-PRODUCT-PRODUCT-CARD-CSV-EXPORT-078	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	M03-03-MSG-002を試験できる状態である	m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）（m03_03_admin_product_product_card_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M03-03-MSG-002を確認する
-3. 画面表示と後続状態を確認する"	POST admin_product_card_csv_export で ids が未送信・非配列、もしくは正整数化後に空のときであること。
+3. 画面表示と後続状態を確認する"	エラーを表示し、商品一覧画面に遷移すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）

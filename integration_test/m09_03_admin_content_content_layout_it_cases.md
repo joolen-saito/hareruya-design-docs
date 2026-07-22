@@ -129,33 +129,33 @@ m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M
 m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-031	IT-23	検索条件	P2	検索時の検索条件確認	この操作はあとから取り消すことができませんを試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でこの操作はあとから取り消すことができませんの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-032	IT-23	検索条件	P2	検索時の検索条件確認	削除可否を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で削除可否の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-032	IT-23	検索条件	P2	検索時の検索条件確認	M09-03-MSG-001を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でM09-03-MSG-001の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-033	IT-23	実行結果	P2	検索時の実行結果確認	ブロック配置の再構築を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でブロック配置の再構築の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-033	IT-23	実行結果	P2	検索時の実行結果確認	削除可否を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で削除可否の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-034	IT-23	実行結果	P2	検索時の実行結果確認	未使用ブロックの扱いを試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で未使用ブロックの扱いの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-034	IT-23	実行結果	P2	検索時の実行結果確認	ブロック配置の再構築を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でブロック配置の再構築の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-035	IT-23	実行結果	P2	検索時の実行結果確認	行番号を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で行番号の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-035	IT-23	実行結果	P2	検索時の実行結果確認	未使用ブロックの扱いを試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で未使用ブロックの扱いの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-036	IT-23	実行結果	P2	検索時の実行結果確認	レイアウト名を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でレイアウト名の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-036	IT-23	実行結果	P2	検索時の実行結果確認	行番号を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で行番号の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-037	IT-26	登録内容	P1	登録時の登録内容確認	ブロック配置（各ブロック）を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でブロック配置（各ブロック）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-037	IT-26	登録内容	P1	登録時の登録内容確認	レイアウト名を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でレイアウト名の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-038	IT-26	登録内容	P1	登録時の登録内容確認	配置済みブロックが無い新規・編集を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で配置済みブロックが無い新規・編集の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-038	IT-26	登録内容	P1	登録時の登録内容確認	ブロック配置（各ブロック）を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でブロック配置（各ブロック）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-039	IT-26	登録内容	P1	登録時の登録内容確認	すべてのブロックを未使用にして保存を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）ですべてのブロックを未使用にして保存の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-039	IT-26	登録内容	P1	登録時の登録内容確認	配置済みブロックが無い新規・編集を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で配置済みブロックが無い新規・編集の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-040	IT-26	登録内容	P1	登録時の登録内容確認	割り当てページがあるレイアウトの削除を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で割り当てページがあるレイアウトの削除の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-040	IT-26	登録内容	P1	登録時の登録内容確認	すべてのブロックを未使用にして保存を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）ですべてのブロックを未使用にして保存の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除せず警告フラッシュを積み一覧へ戻すであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	配置行を1件も作らないこと。
 m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-041	IT-26	登録内容	P1	登録時の登録内容確認	レイアウト一覧を開くを試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でレイアウト一覧を開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
@@ -249,33 +249,33 @@ m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M
 m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-071	IT-02	表示順	P2	表示順の結合確認	この操作はあとから取り消すことができませんを試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でこの操作はあとから取り消すことができませんの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. この操作はあとから取り消すことができませんを確認する
 3. 画面表示と後続状態を確認する"	一覧の削除確認モーダル内の文言であること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-072	IT-25	更新抑止	P1	更新抑止の結合確認	削除可否を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で削除可否の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-072	IT-25	更新抑止	P1	更新抑止の結合確認	M09-03-MSG-001を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でM09-03-MSG-001の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	送信せず現在の画面に留まるであること。
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-073	IT-12	内部情報	P1	内部情報の結合確認	削除可否を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で削除可否の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	割り当てページが1件でもあるレイアウトは削除しないこと。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-073	IT-12	内部情報	P1	内部情報の結合確認	ブロック配置の再構築を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でブロック配置の再構築の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	保存のたびに当該レイアウトの既存配置を全削除し、送信値から作り直すであること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	未使用ブロックの扱いを試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で未使用ブロックの扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ブロック配置の再構築を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でブロック配置の再構築の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ブロック配置の再構築を確認する
+3. 画面表示と後続状態を確認する"	保存のたびに当該レイアウトの既存配置を全削除し、送信値から作り直すであること。
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	未使用ブロックの扱いを試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で未使用ブロックの扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未使用ブロックの扱いを確認する
 3. 画面表示と後続状態を確認する"	配置先が未使用（target_id0）の行とブロックIDが取れない行は配置として保存しないこと。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	行番号を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で行番号の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	行番号を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で行番号の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 行番号を確認する
 3. 画面表示と後続状態を確認する"	各セクション内のブロックの並び順は、クライアントが0始まりで再採番した行番号（block_row）として送信し、保存すること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	レイアウト名を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でレイアウト名の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	レイアウト名を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でレイアウト名の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. レイアウト名を確認する
 3. 画面表示と後続状態を確認する"	dtb_layout.layout_name（フォームキーname）であること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ブロック配置（各ブロック）を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でブロック配置（各ブロック）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ブロック配置（各ブロック）を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でブロック配置（各ブロック）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ブロック配置（各ブロック）を確認する
 3. 画面表示と後続状態を確認する"	dtb_block_position（block_id・section・block_row・layout_id）であること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	配置済みブロックが無い新規・編集を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で配置済みブロックが無い新規・編集の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	配置済みブロックが無い新規・編集を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で配置済みブロックが無い新規・編集の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 配置済みブロックが無い新規・編集を確認する
 3. 画面表示と後続状態を確認する"	全ブロックを未使用ブロックとして表示すること。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	すべてのブロックを未使用にして保存を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）ですべてのブロックを未使用にして保存の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	すべてのブロックを未使用にして保存を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）ですべてのブロックを未使用にして保存の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. すべてのブロックを未使用にして保存
 3. 画面表示と後続状態を確認する"	配置行を1件も作らないこと。
-m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	割り当てページがあるレイアウトの削除を試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）で割り当てページがあるレイアウトの削除の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 割り当てページがあるレイアウトの削除
-3. 画面表示と後続状態を確認する"	削除せず警告フラッシュを積み一覧へ戻すであること。
 m09-03_admin_content_content_layout（管理画面_レイアウト管理）	IT-M09-03-ADMIN-CONTENT-CONTENT-LAYOUT-081	IT-25	一覧	P2	一覧の結合確認	レイアウト一覧を開くを試験できる状態である	m09-03_admin_content_content_layout（管理画面_レイアウト管理）（m09_03_admin_content_content_layout）でレイアウト一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. レイアウト一覧を開く
 3. 画面表示と後続状態を確認する"	登録済みレイアウトを端末種別降順・id昇順で一覧表示すること。

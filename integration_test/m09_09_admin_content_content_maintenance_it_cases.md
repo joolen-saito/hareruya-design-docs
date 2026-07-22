@@ -101,7 +101,7 @@ m09-09_admin_content_content_maintenance（管理画面_コンテンツ管理_�
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m09-09_admin_content_content_maintenance（管理画面_コンテンツ管理_メンテナンス管理）	IT-M09-09-ADMIN-CONTENT-CONTENT-MAINTENANCE-022	IT-26	更新内容	P1	更新時の更新内容確認	M09-09-MSG-002を試験できる状態である	m09-09_admin_content_content_maintenance（管理画面_コンテンツ管理_メンテナンス管理）（m09_09_admin_content_content_maintenance）でM09-09-MSG-002の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	POSTフォームが送信・妥当で、isMaintenanceがtrueかつmaintenance=offのときであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理画面_コンテンツ管理_メンテナンス管理画面に遷移すること。
 m09-09_admin_content_content_maintenance（管理画面_コンテンツ管理_メンテナンス管理）	IT-M09-09-ADMIN-CONTENT-CONTENT-MAINTENANCE-023	IT-26	更新内容	P1	更新時の更新内容確認	手動無効化の強制削除を試験できる状態である	m09-09_admin_content_content_maintenance（管理画面_コンテンツ管理_メンテナンス管理）（m09_09_admin_content_content_maintenance）で手動無効化の強制削除の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。

@@ -116,200 +116,200 @@ m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品�
 m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	M03-32-MSG-001を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	M03-32-MSG-004を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	M03-32-MSG-002を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	M03-32-MSG-005を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	M03-32-MSG-003を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	M03-32-MSG-006を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	M03-32-MSG-004を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	取込処理が始まろうとした直後を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	M03-32-MSG-005を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-030	IT-26	実行結果	P1	登録時の実行結果確認	CsvImporter がエラー状態で戻ってきたを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-030	IT-26	実行結果	P1	登録時の実行結果確認	M03-32-MSG-006を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-031	IT-23	実行結果	P1	登録時の実行結果確認	hasError が偽であったを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-031	IT-23	実行結果	P1	登録時の実行結果確認	M03-32-MSG-007を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	「高額商品価格変更CSV登録完了」と件数付きログであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-032	IT-26	更新内容	P1	更新時の更新内容確認	ナビ「商品管理」→「商品CSV管理」→「高額商品価格変更CSVアップロード」を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	エラーを表示し、高額商品価格変更CSVアップロード画面に遷移すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-032	IT-26	更新内容	P1	更新時の更新内容確認	M03-32-MSG-008を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-033	IT-26	更新内容	P1	更新時の更新内容確認	履歴表示件数のプルダウン変更を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-033	IT-26	更新内容	P1	更新時の更新内容確認	M03-32-MSG-009を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-034	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-034	IT-26	更新内容	P1	更新時の更新内容確認	取込処理が始まろうとした直後を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-035	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-035	IT-26	更新内容	P1	更新時の更新内容確認	CsvImporter がエラー状態で戻ってきたを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	custom-file-input 変更時にラベルへファイル名を表示すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-036	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	備考を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	「高額商品価格変更CSV登録 異常終了」という info メッセージであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-036	IT-26	更新内容	P1	更新時の更新内容確認	hasError が偽であったを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	ファイル（CSV アップロード）を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	ナビ「商品管理」→「商品CSV管理」→「高額商品価格変更CSVアップロード」を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	履歴表示件数のプルダウン変更を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	同一 CSV または DB 状態で複数規格コード行が競合すると判定されるときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	CSV の商品コードにはマッチがあるが対象となる高額条件を満たさないときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	セールフラグが真側と偽側の両セットが同コードに並存しうるを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-042	IT-05	実行結果	P1	更新時の実行結果確認	メッセージストアでの info と error の両立を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-042	IT-05	実行結果	P1	更新時の実行結果確認	備考を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-043	IT-05	実行結果	P1	更新時の実行結果確認	トランザクション境界を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-043	IT-05	実行結果	P1	更新時の実行結果確認	ファイル（CSV アップロード）を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CSV ひとつの取込はひとつのトランザクションであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-044	IT-05	削除条件	P1	削除時の削除条件確認	Doctrine cacheを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	取込パイプラインへ送られ、処理後削除されるであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-044	IT-05	削除条件	P1	削除時の削除条件確認	同一 CSV または DB 状態で複数規格コード行が競合すると判定されるときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	定期的な clear() により、同一リクエスト内で以前にロード済みであったエンティティと DB 状態の乖離がありうることを利用者側で追うときはクエリログや再読込試験へ委ねるであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-045	IT-05	削除条件	P1	削除時の削除条件確認	UI の成功表示とデータを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	breakAll とエラーによりトランザクション全体が中止であること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-045	IT-05	削除条件	P1	削除時の削除条件確認	CSV の商品コードにはマッチがあるが対象となる高額条件を満たさないときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CsvImportResult#hasError が偽じゃないときは画面上は「登録完了」系の文言を出力しないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-046	IT-05	削除条件	P1	削除時の削除条件確認	成功時フラッシュ出力を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メッセージストアへのエラー行だけで先へ進むであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-046	IT-05	削除条件	P1	削除時の削除条件確認	セールフラグが真側と偽側の両セットが同コードに並存しうるを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メッセージキーに基づく登録完了であること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-047	IT-05	削除条件	P1	削除時の削除条件確認	失敗時フラッシュ出力を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実装順が「セール側を優先」のため、そのコードは基準のみ更新となること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-047	IT-05	削除条件	P1	削除時の削除条件確認	メッセージストアでの info と error の両立を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォーム違反、ファイル欠損、行数過多、その他共通 CSV ヘッダ不備、その他ユーザー向けメッセージキーによるエラーであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-048	IT-05	削除条件	P1	削除時の削除条件確認	アプリログを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除条件の対象ファイルと処理条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	UI フラッシュにおいて両方載りうるであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-048	IT-05	削除条件	P1	削除時の削除条件確認	トランザクション境界を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除条件の対象ファイルと処理条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-049	IT-05	実行結果	P1	削除時の実行結果確認	登録/更新を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-049	IT-05	実行結果	P1	削除時の実行結果確認	Doctrine cacheを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-050	IT-05	実行結果	P1	削除時の実行結果確認	行数キャップを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-050	IT-05	実行結果	P1	削除時の実行結果確認	UI の成功表示とデータを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	コントローラで ADMIN_CSV_IMPORT_MAX_ROWS 未満に制限される推定改行カウントであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-051	IT-05	実行結果	P1	削除時の実行結果確認	管理画面にサインイン済みで当ルートに到達できるを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CsvImportResult#hasError が偽じゃないときは画面上は「登録完了」系の文言を出力しないこと。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-051	IT-05	実行結果	P1	削除時の実行結果確認	成功時フラッシュ出力を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-052	IT-05	実行結果	P1	削除時の実行結果確認	フォーム送信が Symfony 側で妥当で無いときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin フラッシュを積んだうえ、アップロード画面へだけ戻り、インポータは開始しないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-053	IT-16	実行結果	P2	実行結果の結合確認	CSV ヘッダ行・データ無しなどインポータ前段を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-054	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	ヘッダ名・桁・必須違反、商品コード重複、論理削除に近い打ち切りを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-055	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	対象となる高額条件を欠くがコードはあったを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-056	IT-27	実行結果	P2	実行結果の結合確認	M03-32-MSG-001を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-057	IT-27	実行結果	P2	実行結果の結合確認	M03-32-MSG-004を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-058	IT-24	出力内容	P2	出力内容の結合確認	M03-32-MSG-005を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-059	IT-24	出力内容	P2	出力内容の結合確認	M03-32-MSG-006を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-060	IT-24	出力内容	P2	出力内容の結合確認	取込処理が始まろうとした直後を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-061	IT-24	出力内容	P2	出力内容の結合確認	CsvImporter がエラー状態で戻ってきたを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-062	IT-24	出力内容	P2	出力内容の結合確認	hasError が偽であったを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-063	IT-27	削除	P1	削除の結合確認	ナビ「商品管理」→「商品CSV管理」→「高額商品価格変更CSVアップロード」を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-064	IT-27	移動・リネーム	P2	移動・リネームの結合確認	履歴表示件数のプルダウン変更を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-065	IT-27	コピー	P1	コピーの結合確認	表示要素を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-066	IT-33	ファイル登録	P1	ファイル登録の結合確認	JS 挙動を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-067	IT-33	ファイル出力	P1	ファイル出力の結合確認	モーダル・ポップアップを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-068	IT-27	JSON	P1	JSONの結合確認	備考を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-069	IT-27	同名ファイル	P1	同名ファイルの結合確認	ファイル（CSV アップロード）を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-070	IT-27	入力JSON	P1	入力JSONの結合確認	同一 CSV または DB 状態で複数規格コード行が競合すると判定されるときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-071	IT-27	配置先	P1	配置先の結合確認	CSV の商品コードにはマッチがあるが対象となる高額条件を満たさないときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-072	IT-27	スキーマ	P1	スキーマの結合確認	セールフラグが真側と偽側の両セットが同コードに並存しうるを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-073	IT-02	初期行数	P2	初期行数の結合確認	メッセージストアでの info と error の両立を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. メッセージストアでの info と error の両立を確認する
-3. 画面表示と後続状態を確認する"	UI フラッシュにおいて両方載りうるであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-074	IT-02	表示順	P2	表示順の結合確認	トランザクション境界を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. トランザクション境界を確認する
-3. 画面表示と後続状態を確認する"	CSV ひとつの取込はひとつのトランザクションであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-075	IT-25	更新抑止	P1	更新抑止の結合確認	Doctrine cacheを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-076	IT-12	内部情報	P1	内部情報の結合確認	UI の成功表示とデータを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	CsvImportResult#hasError が偽じゃないときは画面上は「登録完了」系の文言を出力しないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-077	IT-07	排他制御	P1	排他制御の結合確認	成功時フラッシュ出力を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メッセージキーに基づく登録完了であること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-078	IT-06	ロールバック	P3	ロールバックの結合確認	失敗時フラッシュ出力を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-052	IT-05	実行結果	P1	削除時の実行結果確認	失敗時フラッシュ出力を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォーム違反、ファイル欠損、行数過多、その他共通 CSV ヘッダ不備、その他ユーザー向けメッセージキーによるエラーであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	アプリログを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. アプリログを確認する
-3. 画面表示と後続状態を確認する"	「高額商品価格変更CSV登録」系の開始・異常終了・完了ログであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-080	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	行数キャップを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 行数キャップを確認する
-3. 画面表示と後続状態を確認する"	コントローラで ADMIN_CSV_IMPORT_MAX_ROWS 未満に制限される推定改行カウントであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	管理画面にサインイン済みで当ルートに到達できるを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 管理画面にサインイン済みで当ルートに到達できるを確認する
-3. 画面表示と後続状態を確認する"	画面表示と取込が可能（テナントや追加ファイアウォールの制約は別途）であること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	フォーム送信が Symfony 側で妥当で無いときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. フォーム送信が Symfony 側で妥当で無いとき
-3. 画面表示と後続状態を確認する"	admin フラッシュを積んだうえ、アップロード画面へだけ戻り、インポータは開始しないこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSV ヘッダ行・データ無しなどインポータ前段を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSV ヘッダ行・データ無しなどインポータ前段を確認する
-3. 画面表示と後続状態を確認する"	メッセージのみ返ってくる状態でフラッシュ側はエラー扱いであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ヘッダ名・桁・必須違反、商品コード重複、論理削除に近い打ち切りを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ヘッダ名・桁・必須違反、商品コード重複、論理削除に近い打ち切り
-3. 画面表示と後続状態を確認する"	breakAll になりロールバックであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-086	IT-25	一覧	P2	一覧の結合確認	対象となる高額条件を欠くがコードはあったを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 対象となる高額条件を欠くがコードはあったを確認する
-3. 画面表示と後続状態を確認する"	行エラーだけを積みつつ処理継続であること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-087	IT-12	画面表示データ	P2	画面表示データの結合確認	M03-32-MSG-001を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. M03-32-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-088	IT-25	画面表示データ	P2	画面表示データの結合確認	M03-32-MSG-004を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. M03-32-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	CSV 行の商品コードにセール中の商品規格が存在するとき（警告）であること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-089	IT-12	画面表示データ	P2	画面表示データの結合確認	M03-32-MSG-005を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. M03-32-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-090	IT-25	画面表示データ	P2	画面表示データの結合確認	M03-32-MSG-006を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. M03-32-MSG-006を確認する
-3. 画面表示と後続状態を確認する"	CSV インポート結果にエラーがないとき（CSV取込履歴を登録後、アップロード画面へリダイレクト）であること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-091	IT-25	フォーム送信	P1	フォーム送信の結合確認	取込処理が始まろうとした直後を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 取込処理が始まろうとした直後を確認する
-3. 画面表示と後続状態を確認する"	「高額商品価格変更CSV登録開始」という info メッセージであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-092	IT-16	ファイル選択	P2	ファイル選択の結合確認	CsvImporter がエラー状態で戻ってきたを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-093	IT-12	非同期更新	P1	非同期更新の結合確認	hasError が偽であったを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. hasError が偽であったを確認する
-3. 画面表示と後続状態を確認する"	「高額商品価格変更CSV登録完了」と件数付きログであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-094	IT-12	エラー継続	P3	エラー継続の結合確認	ナビ「商品管理」→「商品CSV管理」→「高額商品価格変更CSVアップロード」を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-053	IT-16	実行結果	P2	実行結果の結合確認	アプリログを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-054	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	登録/更新を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-055	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	行数キャップを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-056	IT-27	実行結果	P2	実行結果の結合確認	管理画面にサインイン済みで当ルートに到達できるを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-057	IT-27	実行結果	P2	実行結果の結合確認	フォーム送信が Symfony 側で妥当で無いときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-058	IT-24	出力内容	P2	出力内容の結合確認	CSV ヘッダ行・データ無しなどインポータ前段を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-059	IT-24	出力内容	P2	出力内容の結合確認	ヘッダ名・桁・必須違反、商品コード重複、論理削除に近い打ち切りを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-060	IT-24	出力内容	P2	出力内容の結合確認	対象となる高額条件を欠くがコードはあったを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-061	IT-24	出力内容	P2	出力内容の結合確認	M03-32-MSG-001を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-062	IT-24	出力内容	P2	出力内容の結合確認	M03-32-MSG-002を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-063	IT-27	削除	P1	削除の結合確認	M03-32-MSG-003を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-064	IT-27	移動・リネーム	P2	移動・リネームの結合確認	M03-32-MSG-004を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-065	IT-27	コピー	P1	コピーの結合確認	M03-32-MSG-005を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-066	IT-33	ファイル登録	P1	ファイル登録の結合確認	M03-32-MSG-006を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-067	IT-33	ファイル出力	P1	ファイル出力の結合確認	M03-32-MSG-007を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-068	IT-27	JSON	P1	JSONの結合確認	M03-32-MSG-008を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-069	IT-27	同名ファイル	P1	同名ファイルの結合確認	M03-32-MSG-009を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-070	IT-27	入力JSON	P1	入力JSONの結合確認	取込処理が始まろうとした直後を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-071	IT-27	配置先	P1	配置先の結合確認	CsvImporter がエラー状態で戻ってきたを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-072	IT-27	スキーマ	P1	スキーマの結合確認	hasError が偽であったを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-073	IT-02	初期行数	P2	初期行数の結合確認	ナビ「商品管理」→「商品CSV管理」→「高額商品価格変更CSVアップロード」を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ナビ「商品管理」→「商品CSV管理」→「高額商品価格変更CSVアップロード」
 3. 画面表示と後続状態を確認する"	アップロード画面・フォーマット表・履歴・雛形リンクが開くこと。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-095	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	履歴表示件数のプルダウン変更を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-074	IT-02	表示順	P2	表示順の結合確認	履歴表示件数のプルダウン変更を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 履歴表示件数のプルダウン変更を確認する
 3. 画面表示と後続状態を確認する"	許容リストに含まれれば対応セッションに保存されるであること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-096	IT-33	カート整合	P1	カート整合の結合確認	表示要素を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でカート整合の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	テンプレートは @admin/Product/csv_product_simple_high_price.twig が @admin/Product/base_csv_upload.twig を継承すること。
-m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-097	IT-23	データ正当性	P3	データ正当性の結合確認	JS 挙動を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でデータ正当性の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. JS 挙動を確認する
-3. 画面表示と後続状態を確認する"	custom-file-input 変更時にラベルへファイル名を表示すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-075	IT-25	更新抑止	P1	更新抑止の結合確認	表示要素を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-076	IT-12	内部情報	P1	内部情報の結合確認	JS 挙動を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	custom-file-input 変更時にラベルへファイル名を表示すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-077	IT-07	排他制御	P1	排他制御の結合確認	モーダル・ポップアップを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送信前の確認モーダルはないこと。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-078	IT-06	ロールバック	P3	ロールバックの結合確認	備考を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	コントローラは show_sale_alert => true を渡しているが、base_csv_upload 系 Twig 現行ソースでは変数参照が無く、画面上の説明には効かないこと。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ファイル（CSV アップロード）を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ファイル（CSV アップロード）
+3. 画面表示と後続状態を確認する"	取込パイプラインへ送られ、処理後削除されるであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-080	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	同一 CSV または DB 状態で複数規格コード行が競合すると判定されるときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 同一 CSV または DB 状態で複数規格コード行が競合すると判定されるときを確認する
+3. 画面表示と後続状態を確認する"	breakAll とエラーによりトランザクション全体が中止であること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSV の商品コードにはマッチがあるが対象となる高額条件を満たさないときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSV の商品コードにはマッチがあるが対象となる高額条件を満たさないときを確認する
+3. 画面表示と後続状態を確認する"	メッセージストアへのエラー行だけで先へ進むであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	セールフラグが真側と偽側の両セットが同コードに並存しうるを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. セールフラグが真側と偽側の両セットが同コードに並存しうるを確認する
+3. 画面表示と後続状態を確認する"	実装順が「セール側を優先」のため、そのコードは基準のみ更新となること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	メッセージストアでの info と error の両立を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. メッセージストアでの info と error の両立を確認する
+3. 画面表示と後続状態を確認する"	UI フラッシュにおいて両方載りうるであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	トランザクション境界を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. トランザクション境界を確認する
+3. 画面表示と後続状態を確認する"	CSV ひとつの取込はひとつのトランザクションであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	Doctrine cacheを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. Doctrine cacheを確認する
+3. 画面表示と後続状態を確認する"	定期的な clear() により、同一リクエスト内で以前にロード済みであったエンティティと DB 状態の乖離がありうることを利用者側で追うときはクエリログや再読込試験へ委ねるであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-086	IT-25	一覧	P2	一覧の結合確認	UI の成功表示とデータを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. UI の成功表示とデータを確認する
+3. 画面表示と後続状態を確認する"	CsvImportResult#hasError が偽じゃないときは画面上は「登録完了」系の文言を出力しないこと。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-087	IT-12	画面表示データ	P2	画面表示データの結合確認	成功時フラッシュ出力を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時フラッシュ出力を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-088	IT-25	画面表示データ	P2	画面表示データの結合確認	失敗時フラッシュ出力を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時フラッシュ出力を確認する
+3. 画面表示と後続状態を確認する"	フォーム違反、ファイル欠損、行数過多、その他共通 CSV ヘッダ不備、その他ユーザー向けメッセージキーによるエラーであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-089	IT-12	画面表示データ	P2	画面表示データの結合確認	アプリログを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. アプリログを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-090	IT-25	画面表示データ	P2	画面表示データの結合確認	登録/更新を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-091	IT-25	フォーム送信	P1	フォーム送信の結合確認	行数キャップを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 行数キャップを確認する
+3. 画面表示と後続状態を確認する"	コントローラで ADMIN_CSV_IMPORT_MAX_ROWS 未満に制限される推定改行カウントであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-092	IT-16	ファイル選択	P2	ファイル選択の結合確認	管理画面にサインイン済みで当ルートに到達できるを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-093	IT-12	非同期更新	P1	非同期更新の結合確認	フォーム送信が Symfony 側で妥当で無いときを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. フォーム送信が Symfony 側で妥当で無いとき
+3. 画面表示と後続状態を確認する"	admin フラッシュを積んだうえ、アップロード画面へだけ戻り、インポータは開始しないこと。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-094	IT-12	エラー継続	P3	エラー継続の結合確認	CSV ヘッダ行・データ無しなどインポータ前段を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSV ヘッダ行・データ無しなどインポータ前段を確認する
+3. 画面表示と後続状態を確認する"	メッセージのみ返ってくる状態でフラッシュ側はエラー扱いであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-095	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ヘッダ名・桁・必須違反、商品コード重複、論理削除に近い打ち切りを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ヘッダ名・桁・必須違反、商品コード重複、論理削除に近い打ち切り
+3. 画面表示と後続状態を確認する"	breakAll になりロールバックであること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-096	IT-33	カート整合	P1	カート整合の結合確認	対象となる高額条件を欠くがコードはあったを試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でカート整合の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 対象となる高額条件を欠くがコードはあったを確認する
+3. 画面表示と後続状態を確認する"	行エラーだけを積みつつ処理継続であること。
+m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）	IT-M03-32-ADMIN-PRODUCT-PRODUCT-SIMPLE-HIGH-PRICE-CSV-IMPORT-097	IT-23	データ正当性	P3	データ正当性の結合確認	M03-32-MSG-001を試験できる状態である	m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）（m03_32_admin_product_product_simple_high_price_csv_import）でデータ正当性の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M03-32-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）

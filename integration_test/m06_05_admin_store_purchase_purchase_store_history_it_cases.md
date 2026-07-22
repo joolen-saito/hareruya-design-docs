@@ -234,10 +234,10 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 3. 画面表示と後続状態を確認する"	管理画面共通のソートエラーメッセージを出し、初回表示相当へであること。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-066	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M06-05-MSG-001を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でM06-05-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-05-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	「選択した商品履歴取得」でCSV出力（export_type=check_export）を送信し、選択商品履歴（otcBuyOrderHistoryIds）が空のときであること。
+3. 画面表示と後続状態を確認する"	エラーを表示し、買取商品履歴（検索／一覧）画面に遷移すること。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-067	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M06-05-MSG-002を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でM06-05-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-05-MSG-002を確認する
-3. 画面表示と後続状態を確認する"	「検索結果全件取得」でCSV出力（export_type=all_export）を送信し、セッションの検索条件（eccube.admin.otcbuyorder_history.search）が null のときであること。
+3. 画面表示と後続状態を確認する"	エラーを表示し、買取商品履歴（検索／一覧）画面に遷移すること。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-068	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	保存内容を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で保存内容の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存内容
 3. 画面表示と後続状態を確認する"	検索条件の表示用データ、ページ番号、表示件数、ソート列名、昇降順であること。

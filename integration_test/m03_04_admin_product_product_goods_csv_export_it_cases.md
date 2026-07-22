@@ -54,10 +54,10 @@ m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッ
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	出力前の確認ダイアログはないこと。
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	IT-M03-04-ADMIN-PRODUCT-PRODUCT-GOODS-CSV-EXPORT-006	IT-20	識別子	P1	識別子の結合確認	M03-04-MSG-001を試験できる状態である	m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）（m03_04_admin_product_product_goods_csv_export）で識別子の対象ファイルと処理条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	POST admin_product_goods_csv_export で、商品未取得時もしくはCSV行が空のときであること。
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	IT-M03-04-ADMIN-PRODUCT-PRODUCT-GOODS-CSV-EXPORT-007	IT-15	状態変化	P1	状態変化の結合確認	M03-04-MSG-002を試験できる状態である	m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）（m03_04_admin_product_product_goods_csv_export）で状態変化の対象ファイルと処理条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	POST admin_product_goods_csv_export で ids が未送信・非配列、もしくは正整数化後に空のときであること。
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	エラーを表示し、管理画面_商品管理_商品一覧画面に遷移すること。
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	IT-M03-04-ADMIN-PRODUCT-PRODUCT-GOODS-CSV-EXPORT-008	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	行の複製単位を試験できる状態である	m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）（m03_04_admin_product_product_goods_csv_export）で確認ダイアログの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 行の複製単位を確認する
 3. 画面表示と後続状態を確認する"	商品につき getProductClasses() の反復ごとに 1 行であること。
@@ -198,7 +198,7 @@ m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッ
 2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	IT-M03-04-ADMIN-PRODUCT-PRODUCT-GOODS-CSV-EXPORT-061	IT-12	内部情報	P1	内部情報の結合確認	M03-04-MSG-002を試験できる状態である	m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）（m03_04_admin_product_product_goods_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	POST admin_product_goods_csv_export で ids が未送信・非配列、もしくは正整数化後に空のときであること。
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	エラーを表示し、管理画面_商品管理_商品一覧画面に遷移すること。
 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）	IT-M03-04-ADMIN-PRODUCT-PRODUCT-GOODS-CSV-EXPORT-062	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	行の複製単位を試験できる状態である	m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）（m03_04_admin_product_product_goods_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 行の複製単位を確認する
 3. 画面表示と後続状態を確認する"	商品につき getProductClasses() の反復ごとに 1 行であること。

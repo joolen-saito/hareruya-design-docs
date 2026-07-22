@@ -75,84 +75,84 @@ m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定�
 m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入力項目を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 入力項目
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M10-12-MSG-004を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. M10-12-MSG-004を確認する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M10-12-MSG-001を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M10-12-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	一覧のソースを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 一覧のソースを確認する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M10-12-MSG-002を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. M10-12-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	日表示を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 日表示を確認する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	M10-12-MSG-003を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. M10-12-MSG-003を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	同一日の禁止を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 同一日の禁止を確認する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	一覧のソースを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 一覧のソースを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-018	IT-22	部分入力	P2	部分入力の入力検証	成功後遷移を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で成功後遷移の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功後遷移を確認する
-3. 画面表示と後続状態を確認する"	新規保存およびインライン更新の成功のみで管理者向けホームへ転送されるであること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-019	IT-23	検索条件	P2	検索時の検索条件確認	タイトルを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-018	IT-22	部分入力	P2	部分入力の入力検証	日表示を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で日表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 日表示を確認する
+3. 画面表示と後続状態を確認する"	画面上の保存済み一覧はフィルタ date_day により日粒度で表示値を決める（内部は日時）であること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-019	IT-23	検索条件	P2	検索時の検索条件確認	同一日の禁止を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-020	IT-23	検索条件	P2	検索時の検索条件確認	日付を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-020	IT-23	検索条件	P2	検索時の検索条件確認	成功後遷移を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-021	IT-23	検索条件	P2	検索時の検索条件確認	インラインPOSTが特定行だけにヒットしないを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-021	IT-23	検索条件	P2	検索時の検索条件確認	タイトルを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-022	IT-23	検索条件	P2	検索時の検索条件確認	CSRF が欠けるまたは不正な削除を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-022	IT-23	検索条件	P2	検索時の検索条件確認	日付を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-023	IT-23	検索条件	P2	検索時の検索条件確認	論理削除や複数法人のクロス混入を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-023	IT-23	検索条件	P2	検索時の検索条件確認	インラインPOSTが特定行だけにヒットしないを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-024	IT-23	検索条件	P2	検索時の検索条件確認	画面上の一覧と永続データを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-024	IT-23	検索条件	P2	検索時の検索条件確認	CSRF が欠けるまたは不正な削除を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-025	IT-23	検索条件	P2	検索時の検索条件確認	店舗切替を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-025	IT-23	検索条件	P2	検索時の検索条件確認	論理削除や複数法人のクロス混入を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-026	IT-23	検索条件	P2	検索時の検索条件確認	フロントブロック側を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-026	IT-23	検索条件	P2	検索時の検索条件確認	画面上の一覧と永続データを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-027	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で成功時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-027	IT-23	検索条件	P2	検索時の検索条件確認	店舗切替を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で店舗切替の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-028	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で失敗時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-028	IT-23	検索条件	P2	検索時の検索条件確認	フロントブロック側を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でフロントブロック側の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-029	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で副作用の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-029	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で成功時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-030	IT-23	検索条件	P2	検索時の検索条件確認	dtb_calendarを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でdtb_calendarの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-030	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で失敗時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-031	IT-23	検索条件	P2	検索時の検索条件確認	dtb_calendarを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でdtb_calendarの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-031	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で副作用の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-032	IT-23	実行結果	P2	検索時の実行結果確認	登録/更新を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-032	IT-23	検索条件	P2	検索時の検索条件確認	dtb_calendarを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でdtb_calendarの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-033	IT-23	実行結果	P2	検索時の実行結果確認	dtb_calendarを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でdtb_calendarの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-033	IT-23	実行結果	P2	検索時の実行結果確認	日付を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で日付の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-034	IT-23	実行結果	P2	検索時の実行結果確認	登録/更新を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-034	IT-23	実行結果	P2	検索時の実行結果確認	CSRFトークンを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でCSRFトークンの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-035	IT-23	実行結果	P2	検索時の実行結果確認	日付を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で日付の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-035	IT-23	実行結果	P2	検索時の実行結果確認	CSRFのみ欠落または不正を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でCSRFのみ欠落または不正の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-036	IT-26	登録内容	P1	登録時の登録内容確認	新規送信がすべて有効終了したを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で新規送信がすべて有効終了したの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-036	IT-26	登録内容	P1	登録時の登録内容確認	CSRFトークンを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でCSRFトークンの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-037	IT-26	登録内容	P1	登録時の登録内容確認	インライン更新がすべて有効終了したを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でインライン更新がすべて有効終了したの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-037	IT-26	登録内容	P1	登録時の登録内容確認	CSRFのみ欠落または不正を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でCSRFのみ欠落または不正の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-038	IT-26	登録内容	P1	登録時の登録内容確認	削除成功フラッシュのみ積んだ後を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で削除成功フラッシュのみ積んだ後の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-038	IT-26	登録内容	P1	登録時の登録内容確認	新規送信がすべて有効終了したを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で新規送信がすべて有効終了したの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-039	IT-26	登録内容	P1	登録時の登録内容確認	新規およびインライン成功を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で新規およびインライン成功の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-039	IT-26	登録内容	P1	登録時の登録内容確認	インライン更新がすべて有効終了したを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でインライン更新がすべて有効終了したの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理者ホームの初期表示であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理者向けホームであること。
 m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-040	IT-26	登録内容	P1	登録時の登録内容確認	定休日行を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で定休日行の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
@@ -192,87 +192,87 @@ m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定�
 m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-052	IT-26	更新内容	P1	更新時の更新内容確認	入力項目を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で入力項目の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-053	IT-26	更新内容	P1	更新時の更新内容確認	M10-12-MSG-004を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-053	IT-26	更新内容	P1	更新時の更新内容確認	M10-12-MSG-001を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-054	IT-26	更新内容	P1	更新時の更新内容確認	一覧のソースを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-054	IT-26	更新内容	P1	更新時の更新内容確認	M10-12-MSG-002を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-055	IT-26	更新内容	P1	更新時の更新内容確認	日表示を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-055	IT-26	更新内容	P1	更新時の更新内容確認	M10-12-MSG-003を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-056	IT-26	更新内容	P1	更新時の更新内容確認	同一日の禁止を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-056	IT-26	更新内容	P1	更新時の更新内容確認	一覧のソースを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-057	IT-26	更新内容	P1	更新時の更新内容確認	成功後遷移を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で成功後遷移の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-057	IT-26	更新内容	P1	更新時の更新内容確認	日表示を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で日表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-058	IT-05	実行結果	P1	更新時の実行結果確認	タイトルを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でタイトルの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-058	IT-05	実行結果	P1	更新時の実行結果確認	同一日の禁止を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で同一日の禁止の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-059	IT-05	実行結果	P1	更新時の実行結果確認	日付を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で日付の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-059	IT-05	実行結果	P1	更新時の実行結果確認	成功後遷移を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で成功後遷移の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	新規保存およびインライン更新の成功のみで管理者向けホームへ転送されるであること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-060	IT-05	削除条件	P1	削除時の削除条件確認	タイトルを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_calendar.title に保存されるであること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-061	IT-05	削除条件	P1	削除時の削除条件確認	日付を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_calendar.holiday に日時値として保存であること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-060	IT-05	削除条件	P1	削除時の削除条件確認	インラインPOSTが特定行だけにヒットしないを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-062	IT-05	削除条件	P1	削除時の削除条件確認	インラインPOSTが特定行だけにヒットしないを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	全行とも更新せず一覧を再ビルドするだけであること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-061	IT-05	削除条件	P1	削除時の削除条件確認	CSRF が欠けるまたは不正な削除を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-063	IT-05	削除条件	P1	削除時の削除条件確認	CSRF が欠けるまたは不正な削除を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	アクセス拒否例外方針であること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-062	IT-05	削除条件	P1	削除時の削除条件確認	論理削除や複数法人のクロス混入を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Doctrineのグローバル規則とDBポリシーに依存し、ここでは当画面のクエリだけを根拠に書かないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-063	IT-05	削除条件	P1	削除時の削除条件確認	画面上の一覧と永続データを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET表示のたび一覧を取り直すであること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-064	IT-05	削除条件	P1	削除時の削除条件確認	店舗切替を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で店舗切替の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-064	IT-05	削除条件	P1	削除時の削除条件確認	論理削除や複数法人のクロス混入を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で論理削除や複数法人のクロス混入の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-065	IT-05	実行結果	P1	削除時の実行結果確認	フロントブロック側を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でフロントブロック側の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-065	IT-05	実行結果	P1	削除時の実行結果確認	画面上の一覧と永続データを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で画面上の一覧と永続データの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-066	IT-05	実行結果	P1	削除時の実行結果確認	成功時出力を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-066	IT-05	実行結果	P1	削除時の実行結果確認	店舗切替を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で店舗切替の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面上でどの店舗を対象とするかはハンドラの引数解決および既定の店舗取得規則に依存すること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-067	IT-05	実行結果	P1	削除時の実行結果確認	フロントブロック側を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でフロントブロック側の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-068	IT-05	実行結果	P1	削除時の実行結果確認	成功時出力を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	新規およびインライン成功は302相当のホーム転送および成功フラッシュであること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-067	IT-05	実行結果	P1	削除時の実行結果確認	失敗時出力を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-068	IT-05	実行結果	P1	削除時の実行結果確認	副作用を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	RDBへの挿入・更新・削除であること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-069	IT-02	初期行数	P2	初期行数の結合確認	dtb_calendarを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でdtb_calendarの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_calendarを確認する
-3. 画面表示と後続状態を確認する"	タイムゾーン付き日時であること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-070	IT-02	表示順	P2	表示順の結合確認	dtb_calendarを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でdtb_calendarの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_calendarを確認する
-3. 画面表示と後続状態を確認する"	店舗外部キーであること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-069	IT-02	初期行数	P2	初期行数の結合確認	失敗時出力を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	同一画面でのフォーム無効状態と入力欄近傍エラー文言であること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-070	IT-02	表示順	P2	表示順の結合確認	副作用を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	RDBへの挿入・更新・削除であること。
 m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-071	IT-25	更新抑止	P1	更新抑止の結合確認	dtb_calendarを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でdtb_calendarの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	更新タイムスタンプ列であること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-072	IT-12	内部情報	P1	内部情報の結合確認	登録/更新を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で登録/更新の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	タイムゾーン付き日時であること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-072	IT-12	内部情報	P1	内部情報の結合確認	dtb_calendarを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でdtb_calendarの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-073	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	日付を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で日付の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	店舗外部キーであること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-073	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_calendarを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でdtb_calendarの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_calendarを確認する
+3. 画面表示と後続状態を確認する"	更新タイムスタンプ列であること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-075	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	日付を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で日付の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 日付を確認する
 3. 画面表示と後続状態を確認する"	必須であること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSRFトークンを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でCSRFトークンの確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSRFトークンを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でCSRFトークンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSRFトークンを確認する
 3. 画面表示と後続状態を確認する"	削除前検証のみ明示的サービス関数を叩くであること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-075	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSRFのみ欠落または不正を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でCSRFのみ欠落または不正の確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSRFのみ欠落または不正を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でCSRFのみ欠落または不正の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSRFのみ欠落または不正を確認する
 3. 画面表示と後続状態を確認する"	（該当操作が送信・削除のみ）削除は拒否であること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	新規送信がすべて有効終了したを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で新規送信がすべて有効終了したの確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	新規送信がすべて有効終了したを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で新規送信がすべて有効終了したの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 新規送信がすべて有効終了した
 3. 画面表示と後続状態を確認する"	管理者向けホームであること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	インライン更新がすべて有効終了したを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でインライン更新がすべて有効終了したの確認に必要な条件を指定する	"1. 対象画面を表示する
+m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	インライン更新がすべて有効終了したを試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）でインライン更新がすべて有効終了したの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. インライン更新がすべて有効終了したを確認する
 3. 画面表示と後続状態を確認する"	管理者向けホームであること。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	削除成功フラッシュのみ積んだ後を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で削除成功フラッシュのみ積んだ後の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 削除成功フラッシュのみ積んだ後
-3. 画面表示と後続状態を確認する"	共通仕様側の確認が必要であり、ソース上は明示リダイレクトを書いていないこと。
-m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	新規およびインライン成功を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で新規およびインライン成功の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 新規およびインライン成功を確認する
-3. 画面表示と後続状態を確認する"	管理者ホームの初期表示であること。
 m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）	IT-M10-12-ADMIN-BASE-SETTING-SETTING-SHOP-CALENDAR-080	IT-25	一覧	P2	一覧の結合確認	定休日行を試験できる状態である	m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定休日カレンダー設定）（m10_12_admin_base_setting_setting_shop_calendar）で定休日行の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 定休日行を確認する
 3. 画面表示と後続状態を確認する"	dtb_calendar の1レコードで、タイトル文字列・日時型の祝日もしくは休業日表示用日付・店舗紐付けをもつであること。
@@ -398,4 +398,4 @@ m10-12_admin_base_setting_setting_shop_calendar（管理画面_店舗設定_定�
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.51, No.109, No.110, No.111, No.382, No.385, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.54, No.109, No.110, No.111, No.382, No.385, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

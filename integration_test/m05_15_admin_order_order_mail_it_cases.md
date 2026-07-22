@@ -110,52 +110,52 @@ m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M
 m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-024	IT-26	登録内容	P1	登録時の登録内容確認	M05-15-MSG-005を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-025	IT-26	登録内容	P1	登録時の登録内容確認	送信件名の組み立てを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-025	IT-26	登録内容	P1	登録時の登録内容確認	M05-15-MSG-006を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-026	IT-26	登録内容	P1	登録時の登録内容確認	送信先（宛先）を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-026	IT-26	登録内容	P1	登録時の登録内容確認	M05-15-MSG-001を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-027	IT-26	登録内容	P1	登録時の登録内容確認	差出人・BCC・返信先・Return-Pathを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-027	IT-26	登録内容	P1	登録時の登録内容確認	M05-15-MSG-002を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-028	IT-26	登録内容	P1	登録時の登録内容確認	受注台帳への影響を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で受注台帳への影響の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-028	IT-26	登録内容	P1	登録時の登録内容確認	送信件名の組み立てを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で送信件名の組み立ての確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-029	IT-26	実行結果	P1	登録時の実行結果確認	テンプレートを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でテンプレートの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-029	IT-26	実行結果	P1	登録時の実行結果確認	送信先（宛先）を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で送信先（宛先）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-030	IT-23	実行結果	P1	登録時の実行結果確認	件名を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で件名の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-030	IT-23	実行結果	P1	登録時の実行結果確認	差出人・BCC・返信先・Return-Pathを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で差出人・BCC・返信先・Return-Pathの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォームキー mail_subjectであること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-031	IT-26	更新内容	P1	更新時の更新内容確認	本文を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で本文の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	差出人は店舗基本情報の送信元アドレスとショップ名であること。
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-031	IT-26	更新内容	P1	更新時の更新内容確認	受注台帳への影響を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で受注台帳への影響の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-032	IT-26	更新内容	P1	更新時の更新内容確認	テンプレート未選択のまま件名・本文を直接入力して確認・送信を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でテンプレート未選択のまま件名・本文を直接入力して確認・送信の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-032	IT-26	更新内容	P1	更新時の更新内容確認	テンプレートを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でテンプレートの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-033	IT-26	更新内容	P1	更新時の更新内容確認	本文テンプレートのファイルが見つからないを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で本文テンプレートのファイルが見つからないの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-033	IT-26	更新内容	P1	更新時の更新内容確認	件名を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で件名の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-034	IT-26	更新内容	P1	更新時の更新内容確認	本文に不正な Twig 構文を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で本文に不正な Twig 構文の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-034	IT-26	更新内容	P1	更新時の更新内容確認	本文を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で本文の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	構文検証でエラーとなり、確認・送信に進めないこと。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-035	IT-26	更新内容	P1	更新時の更新内容確認	件名が空を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で件名が空の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-036	IT-26	更新内容	P1	更新時の更新内容確認	受注にメールアドレスが無いを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォームキー tpl_data（複数行入力であること。
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-035	IT-26	更新内容	P1	更新時の更新内容確認	テンプレート未選択のまま件名・本文を直接入力して確認・送信を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でテンプレート未選択のまま件名・本文を直接入力して確認・送信の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-037	IT-26	更新内容	P1	更新時の更新内容確認	送信履歴の宛先会員を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-036	IT-26	更新内容	P1	更新時の更新内容確認	本文テンプレートのファイルが見つからないを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-037	IT-26	更新内容	P1	更新時の更新内容確認	本文に不正な Twig 構文を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-038	IT-26	更新内容	P1	更新時の更新内容確認	送信内容と送信履歴を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-038	IT-26	更新内容	P1	更新時の更新内容確認	件名が空を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-039	IT-26	更新内容	P1	更新時の更新内容確認	送信履歴と受注編集画面を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-039	IT-26	更新内容	P1	更新時の更新内容確認	受注にメールアドレスが無いを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-040	IT-26	更新内容	P1	更新時の更新内容確認	テンプレート選択と保存を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でテンプレート選択と保存の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-040	IT-26	更新内容	P1	更新時の更新内容確認	送信履歴の宛先会員を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で送信履歴の宛先会員の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-041	IT-05	実行結果	P1	更新時の実行結果確認	本文（テンプレート本文）を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で本文（テンプレート本文）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
@@ -217,40 +217,40 @@ m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M
 3. 画面表示と後続状態を確認する"	画面には専用メッセージを出さないこと。
 m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-060	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M05-15-MSG-003を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でM05-15-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M05-15-MSG-003を確認する
-3. 画面表示と後続状態を確認する"	POSTでmode=complete、フォームが送信済みかつ有効なときであること。
+3. 画面表示と後続状態を確認する"	管理画面_受注管理_受注情報編集画面に遷移すること。
 m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M05-15-MSG-005を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でM05-15-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M05-15-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	件名未入力でmode=confirm/completeを送信したとき（NotBlank違反でisValid()がfalse）であること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-062	IT-25	一覧	P2	一覧の結合確認	送信件名の組み立てを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で送信件名の組み立ての確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 送信件名の組み立て
-3. 画面表示と後続状態を確認する"	送信時の実際の件名は「[ショップ名] 入力件名」の形に組み立てるであること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-063	IT-12	画面表示データ	P2	画面表示データの結合確認	送信先（宛先）を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で送信先（宛先）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 送信先（宛先）
+3. 画面表示と後続状態を確認する"	送信せずメール通知画面に留まるであること。
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-062	IT-25	一覧	P2	一覧の結合確認	M05-15-MSG-006を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でM05-15-MSG-006の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-15-MSG-006を確認する
+3. 画面表示と後続状態を確認する"	送信せずメール通知画面に留まるであること。
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-063	IT-12	画面表示データ	P2	画面表示データの結合確認	M05-15-MSG-001を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でM05-15-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-15-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-064	IT-25	画面表示データ	P2	画面表示データの結合確認	差出人・BCC・返信先・Return-Pathを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で差出人・BCC・返信先・Return-Pathの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-064	IT-25	画面表示データ	P2	画面表示データの結合確認	M05-15-MSG-002を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でM05-15-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-15-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-065	IT-12	画面表示データ	P2	画面表示データの結合確認	送信件名の組み立てを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で送信件名の組み立ての確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 送信件名の組み立て
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-066	IT-25	画面表示データ	P2	画面表示データの結合確認	送信先（宛先）を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で送信先（宛先）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 送信先（宛先）
+3. 画面表示と後続状態を確認する"	当該受注のメールアドレス宛に送るであること。
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-067	IT-25	フォーム送信	P1	フォーム送信の結合確認	差出人・BCC・返信先・Return-Pathを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で差出人・BCC・返信先・Return-Pathの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 差出人・BCC・返信先・Return-Pathを確認する
 3. 画面表示と後続状態を確認する"	差出人は店舗基本情報の送信元アドレスとショップ名であること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-065	IT-12	画面表示データ	P2	画面表示データの結合確認	受注台帳への影響を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で受注台帳への影響の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-068	IT-16	ファイル選択	P2	ファイル選択の結合確認	受注台帳への影響を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で受注台帳への影響の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注台帳への影響を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-066	IT-25	画面表示データ	P2	画面表示データの結合確認	テンプレートを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でテンプレートの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	本機能は受注ステータス・在庫・金額などを更新しないこと。
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-069	IT-12	非同期更新	P1	非同期更新の結合確認	テンプレートを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でテンプレートの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. テンプレートを確認する
 3. 画面表示と後続状態を確認する"	フォームキー templateであること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-067	IT-25	フォーム送信	P1	フォーム送信の結合確認	件名を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で件名の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-070	IT-12	エラー継続	P3	エラー継続の結合確認	件名を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で件名の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 件名を確認する
 3. 画面表示と後続状態を確認する"	フォームキー mail_subjectであること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-068	IT-16	ファイル選択	P2	ファイル選択の結合確認	本文を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で本文の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-071	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	本文を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で本文の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 本文を確認する
 3. 画面表示と後続状態を確認する"	フォームキー tpl_data（複数行入力であること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-069	IT-12	非同期更新	P1	非同期更新の結合確認	テンプレート未選択のまま件名・本文を直接入力して確認・送信を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）でテンプレート未選択のまま件名・本文を直接入力して確認・送信の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. テンプレート未選択のまま件名・本文を直接入力して確認・送信
-3. 画面表示と後続状態を確認する"	テンプレートは任意のため、件名が入力済みで本文の構文が妥当なら確認・送信できること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-070	IT-12	エラー継続	P3	エラー継続の結合確認	本文テンプレートのファイルが見つからないを試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で本文テンプレートのファイルが見つからないの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 本文テンプレートのファイルが見つからないを確認する
-3. 画面表示と後続状態を確認する"	エラーメッセージを表示し、本文は空のまま編集画面を再描画すること。
-m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）	IT-M05-15-ADMIN-ORDER-ORDER-MAIL-071	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	本文に不正な Twig 構文を試験できる状態である	m05-15_admin_order_order_mail（管理画面_受注詳細メール通知）（m05_15_admin_order_order_mail）で本文に不正な Twig 構文の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 本文に不正な Twig 構文を確認する
-3. 画面表示と後続状態を確認する"	構文検証でエラーとなり、確認・送信に進めないこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）

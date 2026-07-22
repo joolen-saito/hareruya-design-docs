@@ -106,200 +106,200 @@ m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カ
 m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-022	IT-26	登録内容	P1	登録時の登録内容確認	削除時FKを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-023	IT-26	登録内容	P1	登録時の登録内容確認	M03-41-MSG-006を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-023	IT-26	登録内容	P1	登録時の登録内容確認	M03-41-MSG-001を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除フラグ行のカテゴリ削除で外部キー参照が残っているとき（ForeignKeyConstraintViolationException）であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-024	IT-26	登録内容	P1	登録時の登録内容確認	M03-41-MSG-010を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	M03-41-MSG-012を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カテゴリCSV登録画面に留まるであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-024	IT-26	登録内容	P1	登録時の登録内容確認	M03-41-MSG-002を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	取込開始を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	M03-41-MSG-003を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	M03-41-MSG-004を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	削除開始／完了／エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	M03-41-MSG-005を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	取込完了を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	M03-41-MSG-006を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	トランザクションを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	M03-41-MSG-007を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-030	IT-26	実行結果	P1	登録時の実行結果確認	ルート URLを直接開く・ブックマークから開くを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-030	IT-26	実行結果	P1	登録時の実行結果確認	M03-41-MSG-008を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-031	IT-23	実行結果	P1	登録時の実行結果確認	CSVを送信を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-031	IT-23	実行結果	P1	登録時の実行結果確認	M03-41-MSG-009を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CSRFを伴うマルチパートPOSTであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-032	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	要ソース確認であること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-032	IT-26	更新内容	P1	更新時の更新内容確認	M03-41-MSG-010を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-033	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-033	IT-26	更新内容	P1	更新時の更新内容確認	M03-41-MSG-011を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-034	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-034	IT-26	更新内容	P1	更新時の更新内容確認	M03-41-MSG-012を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-035	IT-26	更新内容	P1	更新時の更新内容確認	削除フラグが 1でIDが無い行を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-035	IT-26	更新内容	P1	更新時の更新内容確認	取込開始を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除ブロックに入ったあと continueするのみで、エラーにも成功にもカウントしない無処理行となること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-036	IT-26	更新内容	P1	更新時の更新内容確認	区切り・囲みを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	CSVファイル選択を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	情報ログ「カテゴリCSV登録開始」であること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-036	IT-26	更新内容	P1	更新時の更新内容確認	削除開始／完了／エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	カテゴリ削除フラグを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	取込完了を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	トランザクションを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	削除で外部キー参照が残っているを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	ルート URLを直接開く・ブックマークから開くを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	同一ファイル内の順序依存を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	CSVを送信を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-042	IT-05	実行結果	P1	更新時の実行結果確認	失敗時出力を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-042	IT-05	実行結果	P1	更新時の実行結果確認	JS挙動を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-043	IT-05	実行結果	P1	更新時の実行結果確認	副作用を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-043	IT-05	実行結果	P1	更新時の実行結果確認	モーダル・ポップアップを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_categoryのINSERT／UPDATE／DELETE、関連する sort_noのUPDATE、情報ログ、Doctrineキャッシュクリア、アップロード一時ファイル削除であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-044	IT-05	削除条件	P1	削除時の削除条件確認	登録/更新を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送信前の確認ダイアログは無いであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-044	IT-05	削除条件	P1	削除時の削除条件確認	削除フラグが 1でIDが無い行を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-045	IT-05	削除条件	P1	削除時の削除条件確認	業務ルールを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除ブロックに入ったあと continueするのみで、エラーにも成功にもカウントしない無処理行となること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-045	IT-05	削除条件	P1	削除時の削除条件確認	区切り・囲みを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ID・親IDの整数形式、名前必須、自己親子同一禁止、階層上限、削除時のFKであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-046	IT-05	削除条件	P1	削除時の削除条件確認	モール側管理者（実装確認では Authority::MALL_OWNERでログ…を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	設定キー eccube_csv_import_delimiter・eccube_csv_import_enclosure（配布確認値はカンマと二重引用符）であること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-046	IT-05	削除条件	P1	削除時の削除条件確認	CSVファイル選択を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受理される（テストが期待する）であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-047	IT-05	削除条件	P1	削除時の削除条件確認	POST成功を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォーム項目キー import_fileであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-047	IT-05	削除条件	P1	削除時の削除条件確認	カテゴリ削除フラグを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面上部に成功アラートであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-048	IT-05	削除条件	P1	削除時の削除条件確認	フォーム検証エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除条件の対象ファイルと処理条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	キー category_del_flgであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-048	IT-05	削除条件	P1	削除時の削除条件確認	削除で外部キー参照が残っているを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除条件の対象ファイルと処理条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-049	IT-05	実行結果	P1	削除時の実行結果確認	CSV形式不正・必須ヘッダ欠落・データ無しを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-049	IT-05	実行結果	P1	削除時の実行結果確認	同一ファイル内の順序依存を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-050	IT-05	実行結果	P1	削除時の実行結果確認	行単位の業務エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-050	IT-05	実行結果	P1	削除時の実行結果確認	成功時出力を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	「◯行目〜」形式の文字列はロールバックのうえ表示であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-051	IT-05	実行結果	P1	削除時の実行結果確認	削除時FKを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一URLのHTMLであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-051	IT-05	実行結果	P1	削除時の実行結果確認	失敗時出力を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-052	IT-05	実行結果	P1	削除時の実行結果確認	M03-41-MSG-006を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-052	IT-05	実行結果	P1	削除時の実行結果確認	副作用を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除フラグ行のカテゴリ削除で外部キー参照が残っているとき（ForeignKeyConstraintViolationException）であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-053	IT-16	実行結果	P2	実行結果の結合確認	M03-41-MSG-010を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_categoryのINSERT／UPDATE／DELETE、関連する sort_noのUPDATE、情報ログ、Doctrineキャッシュクリア、アップロード一時ファイル削除であること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-053	IT-16	実行結果	P2	実行結果の結合確認	登録/更新を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-054	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	M03-41-MSG-012を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-054	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	業務ルールを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-055	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	取込開始を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-055	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	モール側管理者（実装確認では Authority::MALL_OWNERでログ…を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-056	IT-27	実行結果	P2	実行結果の結合確認	削除開始／完了／エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-056	IT-27	実行結果	P2	実行結果の結合確認	POST成功を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-057	IT-27	実行結果	P2	実行結果の結合確認	取込完了を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-057	IT-27	実行結果	P2	実行結果の結合確認	フォーム検証エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-058	IT-24	出力内容	P2	出力内容の結合確認	トランザクションを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-058	IT-24	出力内容	P2	出力内容の結合確認	CSV形式不正・必須ヘッダ欠落・データ無しを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-059	IT-24	出力内容	P2	出力内容の結合確認	ルート URLを直接開く・ブックマークから開くを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-059	IT-24	出力内容	P2	出力内容の結合確認	行単位の業務エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-060	IT-24	出力内容	P2	出力内容の結合確認	CSVを送信を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-060	IT-24	出力内容	P2	出力内容の結合確認	削除時FKを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-061	IT-24	出力内容	P2	出力内容の結合確認	表示要素を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-061	IT-24	出力内容	P2	出力内容の結合確認	M03-41-MSG-001を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-062	IT-24	出力内容	P2	出力内容の結合確認	JS挙動を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-062	IT-24	出力内容	P2	出力内容の結合確認	M03-41-MSG-002を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-063	IT-27	削除	P1	削除の結合確認	モーダル・ポップアップを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-063	IT-27	削除	P1	削除の結合確認	M03-41-MSG-003を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-064	IT-27	移動・リネーム	P2	移動・リネームの結合確認	削除フラグが 1でIDが無い行を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-064	IT-27	移動・リネーム	P2	移動・リネームの結合確認	M03-41-MSG-004を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-065	IT-27	コピー	P1	コピーの結合確認	区切り・囲みを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-065	IT-27	コピー	P1	コピーの結合確認	M03-41-MSG-005を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-066	IT-33	ファイル登録	P1	ファイル登録の結合確認	CSVファイル選択を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-066	IT-33	ファイル登録	P1	ファイル登録の結合確認	M03-41-MSG-006を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-067	IT-33	ファイル出力	P1	ファイル出力の結合確認	カテゴリ削除フラグを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-067	IT-33	ファイル出力	P1	ファイル出力の結合確認	M03-41-MSG-007を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-068	IT-27	JSON	P1	JSONの結合確認	削除で外部キー参照が残っているを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-068	IT-27	JSON	P1	JSONの結合確認	M03-41-MSG-008を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-069	IT-27	同名ファイル	P1	同名ファイルの結合確認	同一ファイル内の順序依存を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-069	IT-27	同名ファイル	P1	同名ファイルの結合確認	M03-41-MSG-009を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-070	IT-27	入力JSON	P1	入力JSONの結合確認	成功時出力を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-070	IT-27	入力JSON	P1	入力JSONの結合確認	M03-41-MSG-010を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-071	IT-27	配置先	P1	配置先の結合確認	失敗時出力を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-071	IT-27	配置先	P1	配置先の結合確認	M03-41-MSG-011を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-072	IT-27	スキーマ	P1	スキーマの結合確認	副作用を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-072	IT-27	スキーマ	P1	スキーマの結合確認	M03-41-MSG-012を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-073	IT-02	初期行数	P2	初期行数の結合確認	登録/更新を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-074	IT-02	表示順	P2	表示順の結合確認	業務ルールを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 業務ルールを確認する
-3. 画面表示と後続状態を確認する"	ID・親IDの整数形式、名前必須、自己親子同一禁止、階層上限、削除時のFKであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-075	IT-25	更新抑止	P1	更新抑止の結合確認	モール側管理者（実装確認では Authority::MALL_OWNERでログ…を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-076	IT-12	内部情報	P1	内部情報の結合確認	POST成功を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	画面上部に成功アラートであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-077	IT-06	ロールバック	P3	ロールバックの結合確認	フォーム検証エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Symfonyのフィールドエラーとして表示であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSV形式不正・必須ヘッダ欠落・データ無しを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSV形式不正・必須ヘッダ欠落・データ無しを確認する
-3. 画面表示と後続状態を確認する"	errors配列に訳語メッセージを表示であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	行単位の業務エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 行単位の業務エラーを確認する
-3. 画面表示と後続状態を確認する"	「◯行目〜」形式の文字列はロールバックのうえ表示であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	削除時FKを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 削除時FK
-3. 画面表示と後続状態を確認する"	admin.common.delete_error_foreign_keyの本文を利用者に見せるであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M03-41-MSG-006を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. M03-41-MSG-006を確認する
-3. 画面表示と後続状態を確認する"	削除フラグ行のカテゴリ削除で外部キー参照が残っているとき（ForeignKeyConstraintViolationException）であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-41-MSG-010を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. M03-41-MSG-010を確認する
-3. 画面表示と後続状態を確認する"	全行の取込がエラーなく完了しコミットされたときであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-41-MSG-012を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. M03-41-MSG-012を確認する
-3. 画面表示と後続状態を確認する"	CSV行のcategory_del_flgが1で、カテゴリ削除時にForeignKeyConstraintViolationExceptionが発生したときであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	取込開始を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-073	IT-02	初期行数	P2	初期行数の結合確認	取込開始を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 取込開始を確認する
 3. 画面表示と後続状態を確認する"	情報ログ「カテゴリCSV登録開始」であること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-085	IT-25	一覧	P2	一覧の結合確認	削除開始／完了／エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-074	IT-02	表示順	P2	表示順の結合確認	削除開始／完了／エラーを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 削除開始／完了／エラー
 3. 画面表示と後続状態を確認する"	カテゴリIDを添えた情報ログであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-086	IT-12	画面表示データ	P2	画面表示データの結合確認	取込完了を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 取込完了を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-087	IT-25	画面表示データ	P2	画面表示データの結合確認	トランザクションを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. トランザクションを確認する
-3. 画面表示と後続状態を確認する"	データ行処理の直前に開始し、エラー時は renderWithErrorがロールバックすること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-088	IT-12	画面表示データ	P2	画面表示データの結合確認	ルート URLを直接開く・ブックマークから開くを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ルート URLを直接開く・ブックマークから開く
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-089	IT-25	画面表示データ	P2	画面表示データの結合確認	CSVを送信を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-075	IT-25	更新抑止	P1	更新抑止の結合確認	取込完了を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-076	IT-12	内部情報	P1	内部情報の結合確認	トランザクションを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	データ行処理の直前に開始し、エラー時は renderWithErrorがロールバックすること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-077	IT-06	ロールバック	P3	ロールバックの結合確認	ルート URLを直接開く・ブックマークから開くを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ファイル選択・「一括登録を実行」ボタン・フォーマット説明・雛形ダウンロードリンクが表示されるであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSVを送信を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSVを送信
 3. 画面表示と後続状態を確認する"	CSRFを伴うマルチパートPOSTであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-090	IT-25	フォーム送信	P1	フォーム送信の結合確認	表示要素を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	@admin/Product/csv_category.twigであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-091	IT-16	ファイル選択	P2	ファイル選択の結合確認	JS挙動を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-092	IT-12	非同期更新	P1	非同期更新の結合確認	モーダル・ポップアップを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	JS挙動を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	jQueryで #upload-formのsubmit時にアップロードボタンと雛形ボタンを無効化し、spin.jsのスピナーを表示すること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	モーダル・ポップアップを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	送信前の確認ダイアログは無いであること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-093	IT-12	エラー継続	P3	エラー継続の結合確認	削除フラグが 1でIDが無い行を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	削除フラグが 1でIDが無い行を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 削除フラグが 1でIDが無い行
 3. 画面表示と後続状態を確認する"	削除ブロックに入ったあと continueするのみで、エラーにも成功にもカウントしない無処理行となること。
-m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-094	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	区切り・囲みを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	区切り・囲みを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 区切り・囲みを確認する
 3. 画面表示と後続状態を確認する"	設定キー eccube_csv_import_delimiter・eccube_csv_import_enclosure（配布確認値はカンマと二重引用符）であること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSVファイル選択を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSVファイル選択
+3. 画面表示と後続状態を確認する"	フォーム項目キー import_fileであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-085	IT-25	一覧	P2	一覧の結合確認	カテゴリ削除フラグを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. カテゴリ削除フラグ
+3. 画面表示と後続状態を確認する"	キー category_del_flgであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-086	IT-12	画面表示データ	P2	画面表示データの結合確認	削除で外部キー参照が残っているを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 削除で外部キー参照が残っている
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-087	IT-25	画面表示データ	P2	画面表示データの結合確認	同一ファイル内の順序依存を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 同一ファイル内の順序依存を確認する
+3. 画面表示と後続状態を確認する"	親カテゴリ行より後に子を書く必要があるなどの明示保証は無いであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-088	IT-12	画面表示データ	P2	画面表示データの結合確認	成功時出力を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-089	IT-25	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	同一 HTMLであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-090	IT-25	フォーム送信	P1	フォーム送信の結合確認	副作用を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	dtb_categoryのINSERT／UPDATE／DELETE、関連する sort_noのUPDATE、情報ログ、Doctrineキャッシュクリア、アップロード一時ファイル削除であること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-091	IT-16	ファイル選択	P2	ファイル選択の結合確認	登録/更新を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-092	IT-12	非同期更新	P1	非同期更新の結合確認	業務ルールを試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 業務ルールを確認する
+3. 画面表示と後続状態を確認する"	ID・親IDの整数形式、名前必須、自己親子同一禁止、階層上限、削除時のFKであること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-093	IT-12	エラー継続	P3	エラー継続の結合確認	モール側管理者（実装確認では Authority::MALL_OWNERでログ…を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. モール側管理者（実装確認では Authority::MALL_OWNERでログ…を確認する
+3. 画面表示と後続状態を確認する"	受理される（テストが期待する）であること。
+m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）	IT-M03-41-ADMIN-PRODUCT-PRODUCT-CATEGORY-CSV-IMPORT-094	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	POST成功を試験できる状態である	m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）（m03_41_admin_product_product_category_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. POST成功を確認する
+3. 画面表示と後続状態を確認する"	画面上部に成功アラートであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）

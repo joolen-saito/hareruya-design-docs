@@ -66,7 +66,7 @@ m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	IT-M07-01-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-SEARCH-LIST-010	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	M07-01-MSG-001を試験できる状態である	m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）（m07_01_admin_online_purchase_purchase_online_search_list）でM07-01-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M07-01-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	買取情報を削除し正常終了したときであること。
+3. 画面表示と後続状態を確認する"	削除し、買取検索一覧画面に遷移すること。
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	IT-M07-01-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-SEARCH-LIST-011	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M07-01-MSG-002を試験できる状態である	m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）（m07_01_admin_online_purchase_purchase_online_search_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. M07-01-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
@@ -186,10 +186,10 @@ m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	POST 済み一覧の対象 ID について、dtb_buy_main_card.sale_flg が非売却、もしくは個別入力 dtb_buy_order_indivisual_input_product.sale_flg…であること。
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	IT-M07-01-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-SEARCH-LIST-050	IT-05	削除条件	P1	削除時の削除条件確認	M07-01-MSG-001を試験できる状態である	m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）（m07_01_admin_online_purchase_purchase_online_search_list）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	買取情報を削除し正常終了したときであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除し、買取検索一覧画面に遷移すること。
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	IT-M07-01-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-SEARCH-LIST-051	IT-05	削除条件	P1	削除時の削除条件確認	M07-01-MSG-002を試験できる状態である	m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）（m07_01_admin_online_purchase_purchase_online_search_list）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除リンクをクリックしたときであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	OKで削除し、買取検索一覧画面に遷移する／キャンセルで現在の画面に留まるであること。
 m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）	IT-M07-01-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-SEARCH-LIST-052	IT-05	削除条件	P1	削除時の削除条件確認	本人確認（複数選択）を試験できる状態である	m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）（m07_01_admin_online_purchase_purchase_online_search_list）で本人確認（複数選択）の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。

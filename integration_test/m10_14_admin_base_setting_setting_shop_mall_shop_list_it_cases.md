@@ -92,7 +92,7 @@ m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設�
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-018	IT-22	部分入力	P2	部分入力の入力検証	M10-14-MSG-004を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M10-14-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	全削除Ajaxが完了したとき(成否を問わず always コールバック)であること。
+3. 画面表示と後続状態を確認する"	削除処理完了後、店舗一覧画面を再読込すること。
 m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-019	IT-23	検索条件	P2	検索時の検索条件確認	M10-14-MSG-005を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
@@ -200,13 +200,13 @@ m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設�
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-054	IT-05	実行結果	P1	削除時の実行結果確認	M10-14-MSG-001を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-001の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	.action-submit 押下時に name が ids で始まるチェックボックスが1件も選択されていないときであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送信せず店舗一覧画面に留まるであること。
 m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-055	IT-05	実行結果	P1	削除時の実行結果確認	M10-14-MSG-002を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-002の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-056	IT-05	実行結果	P1	削除時の実行結果確認	M10-14-MSG-003を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-003の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	#bulkDelete 押下直後、選択行への論理削除Ajax送信を開始したときであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除処理を開始し、店舗一覧画面に留まるであること。
 m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）	IT-M10-14-ADMIN-BASE-SETTING-SETTING-SHOP-MALL-SHOP-LIST-057	IT-02	表示順	P2	表示順の結合確認	M10-14-MSG-005を試験できる状態である	m10-14_admin_base_setting_setting_shop_mall_shop_list（管理画面_店舗設定_基本情報_店舗一覧）（m10_14_admin_base_setting_setting_shop_mall_shop_list）でM10-14-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M10-14-MSG-005を確認する
 3. 画面表示と後続状態を確認する"	要ソース確認であること。

@@ -60,269 +60,269 @@ m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_
 m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-007	IT-15	状態変化	P1	状態変化の結合確認	出力対象受注集合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で状態変化の対象ファイルと処理条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	POSTで送られた内部IDのみであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-008	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	日時フォーマットを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で確認ダイアログの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-008	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	M05-24-MSG-001を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で確認ダイアログの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M05-24-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）であること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	M05-24-MSG-002を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M05-24-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）であること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	日時フォーマットを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 日時フォーマットを確認する
-3. 画面表示と後続状態を確認する"	Doctrine結果に含まれる日時項目は関数内書式化によりOrderRepository::CSV_DATE_FORMATの確認値'Y/m/d H:i:s'へそろえるであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	顧客郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 顧客郵便番号を確認する
-3. 画面表示と後続状態を確認する"	DBは単一桁列の確認値であり、関数内で先頭3桁・残り4桁にSUBSTRING分割して2列出力する実装であること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	配送先FAXを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 配送先FAXを確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	区切り・囲みを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 区切り・囲みを確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	クエリ関数が論理偽のデータ集合を返すを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. クエリ関数が論理偽のデータ集合を返すを確認する
-3. 画面表示と後続状態を確認する"	転用読みとなる翻訳メッセージを載せて実行時論外となり、その後フラッシュ処理とリダイレクトであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	GETで/order/export/orderへ入るが本ルート名では無いときを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. GETで/order/export/orderへ入るが本ルート名では無いときを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	画面上の一覧フォームがCSRF用hidden無しであることを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 画面上の一覧フォームがCSRF用hidden無しであることを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	アップロード形式との対応を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. アップロード形式との対応
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	DBの更新を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. DBの更新を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	入力（成功経路判定に効くもの）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 入力（成功経路判定に効くもの）
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	成功時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-019	IT-22	部分入力	P2	部分入力の入力検証	失敗時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	ブラウザのダウンロードではなく、フラッシュおよびリダイレクトとなる経路があること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-020	IT-23	検索条件	P2	検索時の検索条件確認	配送系（dtb_shipping相当）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-021	IT-23	検索条件	P2	検索時の検索条件確認	検索を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-022	IT-23	検索条件	P2	検索時の検索条件確認	管理画面共通ルートにログイン済みのアカウントを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-023	IT-23	検索条件	P2	検索時の検索条件確認	一覧から正常にダウンロードが成功を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-024	IT-23	検索条件	P2	検索時の検索条件確認	データ取得関数が論外値を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-025	IT-23	検索条件	P2	検索時の検索条件確認	ストリーム返却直前を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-026	IT-23	検索条件	P2	検索時の検索条件確認	読み取りを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-027	IT-23	検索条件	P2	検索時の検索条件確認	order_idsを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-028	IT-23	検索条件	P2	検索時の検索条件確認	注文の郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-029	IT-23	検索条件	P2	検索時の検索条件確認	受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実…を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-030	IT-23	検索条件	P2	検索時の検索条件確認	上記一覧でチェック済みが1件も送られなかった場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-031	IT-23	検索条件	P2	検索時の検索条件確認	ストリーム直前までにデータ取得が論外終了した場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-032	IT-23	検索条件	P2	検索時の検索条件確認	表示要素を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-033	IT-23	検索条件	P2	検索時の検索条件確認	JS挙動を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-034	IT-23	実行結果	P2	検索時の実行結果確認	出力対象受注集合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-035	IT-23	実行結果	P2	検索時の実行結果確認	日時フォーマットを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-036	IT-23	実行結果	P2	検索時の実行結果確認	顧客郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-037	IT-23	実行結果	P2	検索時の実行結果確認	配送先FAXを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-038	IT-26	登録内容	P1	登録時の登録内容確認	区切り・囲みを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-039	IT-26	登録内容	P1	登録時の登録内容確認	クエリ関数が論理偽のデータ集合を返すを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-040	IT-26	登録内容	P1	登録時の登録内容確認	GETで/order/export/orderへ入るが本ルート名では無いときを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-041	IT-26	登録内容	P1	登録時の登録内容確認	画面上の一覧フォームがCSRF用hidden無しであることを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Twig断片のみでは共通トークンを確認できなかったであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-042	IT-26	登録内容	P1	登録時の登録内容確認	アップロード形式との対応を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-043	IT-26	登録内容	P1	登録時の登録内容確認	DBの更新を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-044	IT-26	登録内容	P1	登録時の登録内容確認	入力（成功経路判定に効くもの）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-045	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-046	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-047	IT-26	登録内容	P1	登録時の登録内容確認	配送系（dtb_shipping相当）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-048	IT-26	実行結果	P1	登録時の実行結果確認	検索を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-049	IT-23	実行結果	P1	登録時の実行結果確認	管理画面共通ルートにログイン済みのアカウントを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	POSTで送信しうる確認値となること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-050	IT-26	更新内容	P1	更新時の更新内容確認	一覧から正常にダウンロードが成功を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-051	IT-26	更新内容	P1	更新時の更新内容確認	データ取得関数が論外値を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-052	IT-26	更新内容	P1	更新時の更新内容確認	ストリーム返却直前を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-053	IT-26	更新内容	P1	更新時の更新内容確認	読み取りを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	成功経路において検索状態キーは参照しない確認値となること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-054	IT-26	更新内容	P1	更新時の更新内容確認	order_idsを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-055	IT-26	更新内容	P1	更新時の更新内容確認	注文の郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-056	IT-26	更新内容	P1	更新時の更新内容確認	受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実…を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-057	IT-26	更新内容	P1	更新時の更新内容確認	上記一覧でチェック済みが1件も送られなかった場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-058	IT-26	更新内容	P1	更新時の更新内容確認	ストリーム直前までにデータ取得が論外終了した場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-059	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-060	IT-05	実行結果	P1	更新時の実行結果確認	JS挙動を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-061	IT-05	実行結果	P1	更新時の実行結果確認	出力対象受注集合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	POSTで送られた内部IDのみであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-062	IT-16	実行結果	P2	実行結果の結合確認	日時フォーマットを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-063	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	顧客郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-064	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	配送先FAXを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-065	IT-27	実行結果	P2	実行結果の結合確認	区切り・囲みを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-066	IT-27	実行結果	P2	実行結果の結合確認	クエリ関数が論理偽のデータ集合を返すを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-067	IT-24	出力内容	P2	出力内容の結合確認	GETで/order/export/orderへ入るが本ルート名では無いときを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-068	IT-24	出力内容	P2	出力内容の結合確認	画面上の一覧フォームがCSRF用hidden無しであることを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-069	IT-24	出力内容	P2	出力内容の結合確認	アップロード形式との対応を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-070	IT-24	出力内容	P2	出力内容の結合確認	DBの更新を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-071	IT-24	出力内容	P2	出力内容の結合確認	入力（成功経路判定に効くもの）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-072	IT-27	削除	P1	削除の結合確認	成功時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-073	IT-27	移動・リネーム	P2	移動・リネームの結合確認	失敗時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-074	IT-27	コピー	P1	コピーの結合確認	配送系（dtb_shipping相当）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-075	IT-33	ファイル登録	P1	ファイル登録の結合確認	検索を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-076	IT-33	ファイル出力	P1	ファイル出力の結合確認	管理画面共通ルートにログイン済みのアカウントを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-077	IT-27	JSON	P1	JSONの結合確認	一覧から正常にダウンロードが成功を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-078	IT-27	同名ファイル	P1	同名ファイルの結合確認	データ取得関数が論外値を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-079	IT-27	入力JSON	P1	入力JSONの結合確認	ストリーム返却直前を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-080	IT-27	配置先	P1	配置先の結合確認	読み取りを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-081	IT-27	スキーマ	P1	スキーマの結合確認	order_idsを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-082	IT-02	初期行数	P2	初期行数の結合確認	注文の郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 注文の郵便番号を確認する
-3. 画面表示と後続状態を確認する"	dtb_order.postal_code（単一列、最大8桁）に統合であること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-083	IT-02	表示順	P2	表示順の結合確認	受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実…を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実…を確認する
-3. 画面表示と後続状態を確認する"	order_ids[<受注内部ID>]が送られ、共通CSV出力サービスでエンコード・区切り付きのCSVファイルが応答となること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-084	IT-25	更新抑止	P1	更新抑止の結合確認	上記一覧でチェック済みが1件も送られなかった場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-085	IT-12	内部情報	P1	内部情報の結合確認	ストリーム直前までにデータ取得が論外終了した場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	エラーフラッシュに例外もしくは翻訳メッセージを載せ、Referer優先もしくはadmin_orderへリダイレクトする確認値となること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-086	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	"@admin/ShippingStandby/edit.twigの一覧フォーム（form_bulk）直上に、id=""orderExportForInput""のボタンがあること。"
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-087	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	JS挙動を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	クリックでform_bulkからtarget属性を削除し、actionをadmin_order_export_for_inputへ差し替えてsubmitすること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-088	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	出力対象受注集合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力対象受注集合を確認する
-3. 画面表示と後続状態を確認する"	POSTで送られた内部IDのみであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-089	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	日時フォーマットを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 日時フォーマットを確認する
-3. 画面表示と後続状態を確認する"	Doctrine結果に含まれる日時項目は関数内書式化によりOrderRepository::CSV_DATE_FORMATの確認値'Y/m/d H:i:s'へそろえるであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-090	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	顧客郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	顧客郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 顧客郵便番号を確認する
-3. 画面表示と後続状態を確認する"	DBは単一桁列の確認値であり、関数内で先頭3桁・残り4桁にSUBSTRING分割して2列出力する実装であること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-091	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	配送先FAXを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	配送先FAXを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 配送先FAXを確認する
 3. 画面表示と後続状態を確認する"	DB列が無い確認値であり、関数内では空文字3列として埋めるであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-092	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	区切り・囲みを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	区切り・囲みを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 区切り・囲みを確認する
-3. 画面表示と後続状態を確認する"	eccube_csv_export_separator、fputcsvのエスケープはバックスラッシュ、囲みは二重引用符が確認値であること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-093	IT-25	一覧	P2	一覧の結合確認	クエリ関数が論理偽のデータ集合を返すを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	クエリ関数が論理偽のデータ集合を返すを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. クエリ関数が論理偽のデータ集合を返すを確認する
-3. 画面表示と後続状態を確認する"	転用読みとなる翻訳メッセージを載せて実行時論外となり、その後フラッシュ処理とリダイレクトであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-094	IT-12	画面表示データ	P2	画面表示データの結合確認	GETで/order/export/orderへ入るが本ルート名では無いときを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	GETで/order/export/orderへ入るが本ルート名では無いときを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. GETで/order/export/orderへ入るが本ルート名では無いときを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-095	IT-25	画面表示データ	P2	画面表示データの結合確認	画面上の一覧フォームがCSRF用hidden無しであることを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	画面上の一覧フォームがCSRF用hidden無しであることを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 画面上の一覧フォームがCSRF用hidden無しであることを確認する
-3. 画面表示と後続状態を確認する"	Twig断片のみでは共通トークンを確認できなかったであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-096	IT-12	画面表示データ	P2	画面表示データの結合確認	アップロード形式との対応を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	アップロード形式との対応を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. アップロード形式との対応
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-097	IT-25	画面表示データ	P2	画面表示データの結合確認	DBの更新を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	DBの更新を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. DBの更新を確認する
-3. 画面表示と後続状態を確認する"	読み取りのみであること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-098	IT-25	フォーム送信	P1	フォーム送信の結合確認	入力（成功経路判定に効くもの）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-019	IT-22	部分入力	P2	部分入力の入力検証	入力（成功経路判定に効くもの）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 入力（成功経路判定に効くもの）
 3. 画面表示と後続状態を確認する"	POSTボディもしくは同等の請求項目order_ids（PHP配列であること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-099	IT-16	ファイル選択	P2	ファイル選択の結合確認	成功時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-020	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-021	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-022	IT-23	検索条件	P2	検索時の検索条件確認	配送系（dtb_shipping相当）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-023	IT-23	検索条件	P2	検索時の検索条件確認	検索を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-024	IT-23	検索条件	P2	検索時の検索条件確認	管理画面共通ルートにログイン済みのアカウントを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-025	IT-23	検索条件	P2	検索時の検索条件確認	一覧から正常にダウンロードが成功を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-026	IT-23	検索条件	P2	検索時の検索条件確認	データ取得関数が論外値を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-027	IT-23	検索条件	P2	検索時の検索条件確認	ストリーム返却直前を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-028	IT-23	検索条件	P2	検索時の検索条件確認	読み取りを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-029	IT-23	検索条件	P2	検索時の検索条件確認	order_idsを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-030	IT-23	検索条件	P2	検索時の検索条件確認	注文の郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-031	IT-23	検索条件	P2	検索時の検索条件確認	受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実…を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-032	IT-23	検索条件	P2	検索時の検索条件確認	上記一覧でチェック済みが1件も送られなかった場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-033	IT-23	検索条件	P2	検索時の検索条件確認	ストリーム直前までにデータ取得が論外終了した場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-034	IT-23	実行結果	P2	検索時の実行結果確認	表示要素を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-035	IT-23	実行結果	P2	検索時の実行結果確認	JS挙動を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-036	IT-23	実行結果	P2	検索時の実行結果確認	出力対象受注集合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-037	IT-23	実行結果	P2	検索時の実行結果確認	M05-24-MSG-001を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-038	IT-26	登録内容	P1	登録時の登録内容確認	M05-24-MSG-002を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-039	IT-26	登録内容	P1	登録時の登録内容確認	日時フォーマットを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-040	IT-26	登録内容	P1	登録時の登録内容確認	顧客郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-041	IT-26	登録内容	P1	登録時の登録内容確認	配送先FAXを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	DB列が無い確認値であり、関数内では空文字3列として埋めるであること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-042	IT-26	登録内容	P1	登録時の登録内容確認	区切り・囲みを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-043	IT-26	登録内容	P1	登録時の登録内容確認	クエリ関数が論理偽のデータ集合を返すを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-044	IT-26	登録内容	P1	登録時の登録内容確認	GETで/order/export/orderへ入るが本ルート名では無いときを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-045	IT-26	登録内容	P1	登録時の登録内容確認	画面上の一覧フォームがCSRF用hidden無しであることを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-046	IT-26	登録内容	P1	登録時の登録内容確認	アップロード形式との対応を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-047	IT-26	登録内容	P1	登録時の登録内容確認	DBの更新を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-048	IT-26	実行結果	P1	登録時の実行結果確認	入力（成功経路判定に効くもの）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-049	IT-23	実行結果	P1	登録時の実行結果確認	成功時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	text/csvストリームであること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-050	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-051	IT-26	更新内容	P1	更新時の更新内容確認	配送系（dtb_shipping相当）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-052	IT-26	更新内容	P1	更新時の更新内容確認	検索を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-053	IT-26	更新内容	P1	更新時の更新内容確認	管理画面共通ルートにログイン済みのアカウントを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	POSTで送信しうる確認値となること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-054	IT-26	更新内容	P1	更新時の更新内容確認	一覧から正常にダウンロードが成功を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-055	IT-26	更新内容	P1	更新時の更新内容確認	データ取得関数が論外値を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-056	IT-26	更新内容	P1	更新時の更新内容確認	ストリーム返却直前を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-057	IT-26	更新内容	P1	更新時の更新内容確認	読み取りを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-058	IT-26	更新内容	P1	更新時の更新内容確認	order_idsを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-059	IT-26	更新内容	P1	更新時の更新内容確認	注文の郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-060	IT-05	実行結果	P1	更新時の実行結果確認	受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実…を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-061	IT-05	実行結果	P1	更新時の実行結果確認	上記一覧でチェック済みが1件も送られなかった場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	エラーフラッシュadmin.common.select相当の文言となり、Refererヘッダがあればそこへ、無ければadmin_orderへリダイレクトする確認値となること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-062	IT-16	実行結果	P2	実行結果の結合確認	ストリーム直前までにデータ取得が論外終了した場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-063	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	表示要素を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-064	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	JS挙動を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-065	IT-27	実行結果	P2	実行結果の結合確認	出力対象受注集合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-066	IT-27	実行結果	P2	実行結果の結合確認	M05-24-MSG-001を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-067	IT-24	出力内容	P2	出力内容の結合確認	M05-24-MSG-002を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-068	IT-24	出力内容	P2	出力内容の結合確認	日時フォーマットを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-069	IT-24	出力内容	P2	出力内容の結合確認	顧客郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-070	IT-24	出力内容	P2	出力内容の結合確認	配送先FAXを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-071	IT-24	出力内容	P2	出力内容の結合確認	区切り・囲みを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-072	IT-27	削除	P1	削除の結合確認	クエリ関数が論理偽のデータ集合を返すを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-073	IT-27	移動・リネーム	P2	移動・リネームの結合確認	GETで/order/export/orderへ入るが本ルート名では無いときを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-074	IT-27	コピー	P1	コピーの結合確認	画面上の一覧フォームがCSRF用hidden無しであることを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-075	IT-33	ファイル登録	P1	ファイル登録の結合確認	アップロード形式との対応を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-076	IT-33	ファイル出力	P1	ファイル出力の結合確認	DBの更新を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-077	IT-27	JSON	P1	JSONの結合確認	入力（成功経路判定に効くもの）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-078	IT-27	同名ファイル	P1	同名ファイルの結合確認	成功時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-079	IT-27	入力JSON	P1	入力JSONの結合確認	失敗時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-080	IT-27	配置先	P1	配置先の結合確認	配送系（dtb_shipping相当）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-081	IT-27	スキーマ	P1	スキーマの結合確認	検索を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-082	IT-02	初期行数	P2	初期行数の結合確認	管理画面共通ルートにログイン済みのアカウントを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 管理画面共通ルートにログイン済みのアカウントを確認する
+3. 画面表示と後続状態を確認する"	POSTで送信しうる確認値となること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-083	IT-02	表示順	P2	表示順の結合確認	一覧から正常にダウンロードが成功を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 一覧から正常にダウンロードが成功
+3. 画面表示と後続状態を確認する"	画面上は出荷指示編集ページのままになりうる確認値であり、応答本体は別ストリームであること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-084	IT-25	更新抑止	P1	更新抑止の結合確認	データ取得関数が論外値を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-085	IT-12	内部情報	P1	内部情報の結合確認	ストリーム返却直前を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	情報ログ「CSV出力ファイル名」とファイル名文字列であること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-086	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	読み取りを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 読み取りを確認する
+3. 画面表示と後続状態を確認する"	成功経路において検索状態キーは参照しない確認値となること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-087	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	order_idsを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. order_idsを確認する
+3. 画面表示と後続状態を確認する"	フォーム入力名およびリクエスト取得キーであること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-088	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	注文の郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 注文の郵便番号を確認する
+3. 画面表示と後続状態を確認する"	dtb_order.postal_code（単一列、最大8桁）に統合であること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-089	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実…を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 受注メニューの出荷指示（出荷待ち）詳細ページで一覧のチェック付きを残し「出荷実…を確認する
+3. 画面表示と後続状態を確認する"	order_ids[<受注内部ID>]が送られ、共通CSV出力サービスでエンコード・区切り付きのCSVファイルが応答となること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-090	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	上記一覧でチェック済みが1件も送られなかった場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 上記一覧でチェック済みが1件も送られなかった場合を確認する
+3. 画面表示と後続状態を確認する"	エラーフラッシュadmin.common.select相当の文言となり、Refererヘッダがあればそこへ、無ければadmin_orderへリダイレクトする確認値となること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-091	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ストリーム直前までにデータ取得が論外終了した場合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ストリーム直前までにデータ取得が論外終了した場合を確認する
+3. 画面表示と後続状態を確認する"	エラーフラッシュに例外もしくは翻訳メッセージを載せ、Referer優先もしくはadmin_orderへリダイレクトする確認値となること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-092	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	"@admin/ShippingStandby/edit.twigの一覧フォーム（form_bulk）直上に、id=""orderExportForInput""のボタンがあること。"
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-093	IT-25	一覧	P2	一覧の結合確認	JS挙動を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	クリックでform_bulkからtarget属性を削除し、actionをadmin_order_export_for_inputへ差し替えてsubmitすること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-094	IT-12	画面表示データ	P2	画面表示データの結合確認	出力対象受注集合を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力対象受注集合を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-095	IT-25	画面表示データ	P2	画面表示データの結合確認	M05-24-MSG-001を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M05-24-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）であること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-096	IT-12	画面表示データ	P2	画面表示データの結合確認	M05-24-MSG-002を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. M05-24-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-097	IT-25	画面表示データ	P2	画面表示データの結合確認	日時フォーマットを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 日時フォーマットを確認する
+3. 画面表示と後続状態を確認する"	Doctrine結果に含まれる日時項目は関数内書式化によりOrderRepository::CSV_DATE_FORMATの確認値'Y/m/d H:i:s'へそろえるであること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-098	IT-25	フォーム送信	P1	フォーム送信の結合確認	顧客郵便番号を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 顧客郵便番号を確認する
+3. 画面表示と後続状態を確認する"	DBは単一桁列の確認値であり、関数内で先頭3桁・残り4桁にSUBSTRING分割して2列出力する実装であること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-099	IT-16	ファイル選択	P2	ファイル選択の結合確認	配送先FAXを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-100	IT-12	非同期更新	P1	非同期更新の結合確認	失敗時出力を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	ブラウザのダウンロードではなく、フラッシュおよびリダイレクトとなる経路があること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-101	IT-12	エラー継続	P3	エラー継続の結合確認	配送系（dtb_shipping相当）を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 配送系（dtb_shipping相当）を確認する
-3. 画面表示と後続状態を確認する"	INNER JOINとなるため無い注文は出力から落ちうることをリバース側で押さえる価値があること。
-m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-102	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	検索を試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 検索
-3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-100	IT-12	非同期更新	P1	非同期更新の結合確認	区切り・囲みを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 区切り・囲みを確認する
+3. 画面表示と後続状態を確認する"	eccube_csv_export_separator、fputcsvのエスケープはバックスラッシュ、囲みは二重引用符が確認値であること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-101	IT-12	エラー継続	P3	エラー継続の結合確認	クエリ関数が論理偽のデータ集合を返すを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. クエリ関数が論理偽のデータ集合を返すを確認する
+3. 画面表示と後続状態を確認する"	転用読みとなる翻訳メッセージを載せて実行時論外となり、その後フラッシュ処理とリダイレクトであること。
+m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）	IT-M05-24-ADMIN-ORDER-ORDER-SHIPPING-EXPORT-FOR-IMPORT-102	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	GETで/order/export/orderへ入るが本ルート名では無いときを試験できる状態である	m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）（m05_24_admin_order_order_shipping_export_for_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. GETで/order/export/orderへ入るが本ルート名では無いときを確認する
+3. 画面表示と後続状態を確認する"	Symfonyのマッチは受注dtb_csv系CSVが優先される（GETのみのルートが選ばれた確認環境がある）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）

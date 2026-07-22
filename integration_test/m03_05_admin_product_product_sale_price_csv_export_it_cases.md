@@ -251,10 +251,10 @@ m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_�
 3. 画面表示と後続状態を確認する"	ブラウザがファイルをダウンロードすること。
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	IT-M03-05-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-EXPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-05-MSG-003を試験できる状態である	m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）（m03_05_admin_product_product_sale_price_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M03-05-MSG-003を確認する
-3. 画面表示と後続状態を確認する"	「セール用価格変更CSV出力」送信時、ids[] が未送信・非配列・正整数への正規化後に空のとき（responseNoProductIdError）であること。
+3. 画面表示と後続状態を確認する"	エラーを表示し、商品一覧画面に遷移すること。
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	IT-M03-05-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-EXPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-05-MSG-004を試験できる状態である	m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）（m03_05_admin_product_product_sale_price_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. M03-05-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	有効な商品ID送信後、ProductPriceCsv::exportCsv が Runtime“該当商品0件”例外を投げたとき（$e->getMessage() 由来、当該サービスの唯一の例外文言）であること。
+3. 画面表示と後続状態を確認する"	エラーを表示し、直前の画面もしくは商品一覧画面に遷移すること。
 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）	IT-M03-05-ADMIN-PRODUCT-PRODUCT-SALE-PRICE-CSV-EXPORT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSV 出力ストリーム送信後を試験できる状態である	m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）（m03_05_admin_product_product_sale_price_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSV 出力ストリーム送信後
 3. 画面表示と後続状態を確認する"	情報ログに「価格変更CSV出力ファイル名」と生成ファイル名であること。

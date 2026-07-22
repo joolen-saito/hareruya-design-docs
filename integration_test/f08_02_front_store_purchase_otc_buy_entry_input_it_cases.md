@@ -201,10 +201,10 @@ F08-02（店頭買取査定申込情報入力）	IT-F08-02-FRONT-STORE-PURCHASE-
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
 F08-02（店頭買取査定申込情報入力）	IT-F08-02-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-INPUT-055	IT-25	フォーム送信	P1	フォーム送信の結合確認	F08-02-MSG-001を試験できる状態である	F08-02（店頭買取査定申込情報入力）（f08_02_front_store_purchase_otc_buy_entry_input）でF08-02-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. F08-02-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	alert表示後、[id^='otcBuyOrderApply'] の pointer-events を auto に戻し return false でクリック既定動作(javascript:otc_buy_regis…であること。
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
 F08-02（店頭買取査定申込情報入力）	IT-F08-02-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-INPUT-056	IT-16	ファイル選択	P2	ファイル選択の結合確認	F08-02-MSG-002を試験できる状態である	F08-02（店頭買取査定申込情報入力）（f08_02_front_store_purchase_otc_buy_entry_input）でF08-02-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. F08-02-MSG-002を確認する
-3. 画面表示と後続状態を確認する"	alert表示後、[id^='otcBuyOrderApply'] の pointer-events を auto に戻し return false で submit を中止し、確認画面(otc_buy_confirm…であること。
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
 F08-02（店頭買取査定申込情報入力）	IT-F08-02-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-INPUT-057	IT-12	非同期更新	P1	非同期更新の結合確認	国の初期値を試験できる状態である	F08-02（店頭買取査定申込情報入力）（f08_02_front_store_purchase_otc_buy_entry_input）で国の初期値の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 国の初期値を確認する
 3. 画面表示と後続状態を確認する"	未送信時は国を日本で初期化すること。

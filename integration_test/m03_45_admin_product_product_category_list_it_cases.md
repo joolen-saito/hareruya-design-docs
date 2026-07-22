@@ -293,10 +293,10 @@ m03-45_admin_product_product_category_list（管理画面_商品管理_カテゴ
 3. 画面表示と後続状態を確認する"	管理共通の $.ajaxSetup でリクエストヘッダへ CSRF メタ値を自動付与すること。
 m03-45_admin_product_product_category_list（管理画面_商品管理_カテゴリ一覧）	IT-M03-45-ADMIN-PRODUCT-PRODUCT-CATEGORY-LIST-086	IT-12	非同期更新	P1	非同期更新の結合確認	M03-45-MSG-001を試験できる状態である	m03-45_admin_product_product_category_list（管理画面_商品管理_カテゴリ一覧）（m03_45_admin_product_product_category_list）でM03-45-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-45-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	子カテゴリ・商品カテゴリ紐付けが無いカテゴリ行の削除アイコンを押下し、DeleteModal が表示されたとき（shown.bs.modal で当該行の data-message を本文へ差し込む）であること。
+3. 画面表示と後続状態を確認する"	カテゴリを削除し、管理画面_商品管理_カテゴリ一覧画面に遷移すること。
 m03-45_admin_product_product_category_list（管理画面_商品管理_カテゴリ一覧）	IT-M03-45-ADMIN-PRODUCT-PRODUCT-CATEGORY-LIST-087	IT-12	エラー継続	P3	エラー継続の結合確認	M03-45-MSG-002を試験できる状態である	m03-45_admin_product_product_category_list（管理画面_商品管理_カテゴリ一覧）（m03_45_admin_product_product_category_list）でM03-45-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-45-MSG-002を確認する
-3. 画面表示と後続状態を確認する"	削除ボタン押下で削除確認モーダルを表示するとき（data-messageをJSでモーダル本文へ挿入 category.twig:120-127）であること。
+3. 画面表示と後続状態を確認する"	カテゴリを削除し、管理画面_商品管理_カテゴリ一覧画面に遷移すること。
 m03-45_admin_product_product_category_list（管理画面_商品管理_カテゴリ一覧）	IT-M03-45-ADMIN-PRODUCT-PRODUCT-CATEGORY-LIST-088	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	カテゴリ名（日）を試験できる状態である	m03-45_admin_product_product_category_list（管理画面_商品管理_カテゴリ一覧）（m03_45_admin_product_product_category_list）でカテゴリ名（日）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カテゴリ名（日）を確認する
 3. 画面表示と後続状態を確認する"	dtb_category.category_nameであること。
