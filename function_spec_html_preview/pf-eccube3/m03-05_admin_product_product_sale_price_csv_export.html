@@ -284,6 +284,7 @@ footer {
 <a class="lv2" href="#画面遷移">画面遷移</a>
 <a class="lv3" href="#遷移時に引き継ぐ状態">遷移時に引き継ぐ状態</a>
 <a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
 <a class="lv2" href="#試行制限">試行制限</a>
 <a class="lv2" href="#ログ・監査">ログ・監査</a>
 <a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
@@ -324,7 +325,7 @@ footer {
 <h3 id="CSV-をダウンロードする-POST-admin-product-price-csv-export">CSV をダウンロードする（POST <code>admin_product_price_csv_export</code>）</h3>
 <ol><li>管理画面の認証・共通制約を通過する。</li><li>リクエストボディから <code>ids</code> を取得する。配列でない場合は空配列とみなす。各要素を整数化し、0 より大きい ID だけを残してインデックスを振り直す。</li><li>有効な ID が 1 件も無いとき、<code>responseNoProductIdError</code> を返す。セッションキー <code>eccube.admin.product.search.page_no</code> があればその値をページ番号として <code>admin_product_page</code> へリダイレクトし、無ければ既定値 1 を使う。フラッシュは汎用エラーにセッションキー経由のメッセージ（商品未選択）を積む実装である。</li><li>価格 CSV 用サービスを組み立てる（ヘッダー定義・必須ヘッダー定義はコントローラ内の価格用定義を渡す。必須定義は本エクスポートの成否には使われない）。</li><li>PHP の実行時間制限を無効にする（<code>set_time_limit(0)</code>）。</li><li>ORM の SQL ロガーを無効にする。</li><li>リポジトリで <code>id</code> が指定集合に含まれる商品を取得する。1 件も得られなければ、翻訳キー <code>admin.csv.error.export.not_registered</code> をメッセージとする実行時例外を送出する。</li><li>各商品について規格が 0 件ならその商品はスキップし、行を増やさない。規格が 1 件以上あれば、各規格について 1 行を組み立てる。商品タグ ID は商品に紐付くタグから収集し、一意性の保証は行わずコレクション順に配列化したうえでカンマ連結する（重複 ID が連結に含まれうる。実装を確認値とする）。</li><li>セールフラグ列は、規格がセールでないとき文字列 <code>0</code>、セール中のとき真偽値 <code>true</code> を立てており、ストリーム出力時の文字列化で <code>1</code> となる（PHP の文字列変換の確認値）。</li><li><code>StreamedResponse</code> のコールバック内で CSV 出力サービスを開き、ヘッダ行（手順 4 のヘッダー定義のキー順）、続いてデータ行を <code>fputcsv</code> で書き、閉じる。</li><li>ファイル名は接頭辞 <code>product_price_</code> と日時（<code>YmdHis</code>）と拡張子 <code>.csv</code> を連結する。</li><li>応答ヘッダに CSV 向けの <code>Content-Type</code>（設定 <code>eccube_csv_export_encoding</code> に応じた charset。値が <code>SJIS-win</code> のときは MIME 上は <code>windows-31j</code> に読み替え）と <code>Content-Disposition: attachment</code> を付与する。</li><li>コールバック完了後、情報ログに「価格変更CSV出力ファイル名」とファイル名が記録される。</li></ol>
 <h3 id="実行時例外が送出されたとき">実行時例外が送出されたとき</h3>
-<ol><li>コントローラは例外メッセージをフラッシュに積む（第 2 引数は省略され、既定のフラッシュ種別に従う実装である）。</li><li><code>Referer</code> ヘッダが空でなければその URL へリダイレクトする。</li><li><code>Referer</code> が空なら <code>redirectToRoute('admin_product_page')</code> でリダイレクトする（ルート生成時の <code>page_no</code> はコントローラから渡していない）。</li></ol>
+<ol><li>コントローラは例外メッセージをフラッシュに積む（第 2 引数は省略され、既定 namespace は <code>front</code>。<code>eccube.front.error</code> に積まれるため、管理画面共通の alert 描画（<code>eccube.admin.error</code> のみ）では表示されない実装である。根拠: AbstractController.php:117-119 / admin/alert.twig:41）。</li><li><code>Referer</code> ヘッダが空でなければその URL へリダイレクトする。</li><li><code>Referer</code> が空なら <code>redirectToRoute('admin_product_page')</code> でリダイレクトする（ルート生成時の <code>page_no</code> はコントローラから渡していない）。</li></ol>
 <hr>
 <h2 id="集計条件">集計条件</h2>
 <p>本機能では売上集計や件数サマリは行わない。出力対象は POST で明示された商品 ID のうちリポジトリで取得できた商品に属する規格である。規格の高額商品コードの有無による除外はエクスポート側では行わない。</p>
@@ -370,6 +371,10 @@ footer {
 <hr>
 <h2 id="エラー処理">エラー処理</h2>
 <div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>有効な商品 ID が 1 件も無い</td><td><code>responseNoProductIdError</code> で一覧へリダイレクト（ページ番号はセッション）。</td></tr><tr><td>指定 ID に対応する商品が 1 件も無い</td><td><code>admin.csv.error.export.not_registered</code>。</td></tr><tr><td>その他の実行時例外</td><td>フラッシュ後、Referer または <code>admin_product_page</code> へリダイレクト。</td></tr></tbody></table></div>
+<hr>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>M03-05-MSG-003</td><td>管理画面上部フラッシュ（エラー）</td><td>1つ以上の商品を選択してください</td><td>「セール用価格変更CSV出力」送信時、<code>ids[]</code> が未送信・非配列・正整数への正規化後に空のとき（<code>responseNoProductIdError</code>）。根拠: ProductCsvController.php:151 / messages.ja.yaml:1962</td></tr><tr><td>M03-05-MSG-004</td><td>要ソース確認（フラッシュは <code>eccube.front.error</code> に積まれ、管理画面 alert.twig:41 は <code>eccube.admin.error</code> のみ描画するため管理画面上部には表示されない。実表示先は要実機確認）</td><td>存在しないカードIDが含まれています。</td><td>有効な商品ID送信後、<code>ProductPriceCsv::exportCsv</code> が Runtime“該当商品0件”例外を投げたとき（<code>$e-&gt;getMessage()</code> 由来、当該サービスの唯一の例外文言）。根拠: ProductCsvController.php:194 / ProductPriceCsv.php:49 / messages.ja.yaml:2444 / AbstractController.php:117-119</td></tr></tbody></table></div>
+<p>&gt; 補足: 一覧スライスの <code>M03-05-MSG-001</code>（カード商品CSV出力）/<code>M03-05-MSG-002</code>（グッズ商品CSV出力）、およびレビューで補完した <code>M03-05-MSG-005</code>/<code>M03-05-MSG-006</code>（カード/グッズ各ルートの商品未選択エラー。ProductCsvController.php:70-72,118-120 → responseNoProductIdError）は同一 controller の別ルート由来であり、本機能（セール用価格変更CSV出力）の画面フローでは表示されないため本表には含めない。</p>
 <hr>
 <h2 id="試行制限">試行制限</h2>
 <p>本機能ではログイン試行制限や API レートリミットは扱わない。</p>

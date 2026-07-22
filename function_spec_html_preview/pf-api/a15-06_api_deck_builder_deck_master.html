@@ -173,6 +173,89 @@ footer {
   }
   h1 { font-size: 23px; }
 }
+    /* superseded-notice:start */
+    .superseded-notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #d9a1a1;
+      border-left: 5px solid #b3413a;
+      border-radius: 6px;
+      background: #fdf3f2;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .superseded-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #b3413a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .superseded-notice-head {
+      margin: 0 0 8px;
+    }
+    .superseded-notice-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .superseded-notice-list > li {
+      margin: 6px 0;
+    }
+    .superseded-target {
+      font-weight: 700;
+    }
+    .superseded-implied {
+      display: block;
+      margin-top: 2px;
+      color: #6b4a47;
+    }
+    .superseded-notice a {
+      color: #8c322c;
+    }
+    /* superseded-notice:end */
+    /* phase2-notice:start */
+    .phase2-notice {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border: 1px solid #9aa8c7;
+      border-left: 5px solid #3f5b96;
+      border-radius: 6px;
+      background: #f2f5fb;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .phase2-badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: #3f5b96;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .phase2-notice-head {
+      margin: 0 0 8px;
+    }
+    .phase2-notice-list {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .phase2-notice-list > li {
+      margin: 6px 0;
+    }
+    .phase2-target {
+      font-weight: 700;
+    }
+    .phase2-notice a {
+      color: #2f4677;
+    }
+    /* phase2-notice:end */
   </style>
 </head>
 <body>
@@ -202,6 +285,8 @@ footer {
 <a class="lv3" href="#DB操作">DB操作</a>
 <a class="lv2" href="#権限・認可">権限・認可</a>
 <a class="lv2" href="#エラー処理">エラー処理</a>
+<a class="lv2" href="#表示メッセージ">表示メッセージ</a>
+<a class="lv3" href="#自動マッピング差戻し-要再マッピング">自動マッピング差戻し（要再マッピング）</a>
 <a class="lv2" href="#ログ・監査">ログ・監査</a>
 <a class="lv3" href="#ログに出してはいけないもの">ログに出してはいけないもの</a>
 <a class="lv2" href="#排他制御・トランザクション">排他制御・トランザクション</a></nav>
@@ -211,6 +296,7 @@ footer {
         <p class="crumb">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-api/a15-06_api_deck_builder_deck_master.md</p>
         <h1>API デッキビルダー — マスタ検索</h1>
       </header>
+      
       <h2 id="概要">概要</h2>
 <p>デッキビルダーアプリが、カード検索やデッキ編集の選択肢として用いる各種マスタ情報を取得するためのAPIである。deck-api（デッキビルダー用のAPIアプリケーション）が提供するJSON APIで、URLのパスで指定したマスタ名に対応するマスタの全件を返す。</p>
 <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はdeck-apiのマスタ取得処理、ルート定義（<code>config/routes.yaml</code>）、対象マスタのリポジトリを正とする。本機能のカスタマイズ区分は現行踏襲であり、挙動はデッキビルダーAPI（deck-api）の実装を参照し、DB関連の記述はec-cube-enterpriseを正とする。</p>
@@ -298,7 +384,14 @@ footer {
 <div class="table-wrap"><table><thead><tr><th>利用者状態</th><th>マスタ検索</th></tr></thead><tbody><tr><td>デッキビルダーアプリ（認証不要）</td><td>公開対象マスタの全件を取得できる。</td></tr><tr><td>公開しないマスタ・存在しないマスタ名</td><td>該当なし（HTTP 404）となり、取得できない。</td></tr></tbody></table></div>
 <hr>
 <h2 id="エラー処理">エラー処理</h2>
-<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>公開対象でない・存在しないマスタ名</td><td>コード404・メッセージ「Not Found」のJSONを返す。</td></tr><tr><td>取得処理中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td>公開対象でない・存在しないマスタ名</td><td>コード404・メッセージ「見つかりません」（<code>MasterController.php:90-92</code> <code>trans('api.deck_builder.common.not_found')</code> → <code>messages.ja.yaml:6309</code>）のJSONを返す。</td></tr><tr><td>取得処理中の例外</td><td>共通例外処理に委ねる（HTTP 500相当）。</td></tr></tbody></table></div>
+<hr>
+<h2 id="表示メッセージ">表示メッセージ</h2>
+<p>本機能は参照専用API（<code>App/DeckBuilder/MasterController.php</code> GET <code>/master/{name}</code>）であり、画面フラッシュ・フォームバリデーション・JSダイアログ等の**画面UI表示メッセージは持たない**。唯一のメッセージは失敗時のJSONレスポンスボディ文言であり、メッセージ一覧の主スコープ（画面フラッシュ/バリデーション/ダイアログ）外だが参考として記録する。</p>
+<div class="table-wrap"><table><thead><tr><th>メッセージID</th><th>表示位置</th><th>画面上の文言</th><th>表示条件</th></tr></thead><tbody><tr><td>—</td><td>APIレスポンス（JSON body・message）</td><td>見つかりません</td><td>公開対象でない・存在しないマスタ名のとき（HTTP 404。<code>MasterController.php:90-92</code> <code>trans('api.deck_builder.common.not_found')</code> → <code>messages.ja.yaml:6309</code>。UIフラッシュではなく本一覧の画面メッセージ対象外）</td></tr></tbody></table></div>
+<h3 id="自動マッピング差戻し-要再マッピング">自動マッピング差戻し（要再マッピング）</h3>
+<p>決定的抽出でa15-06へ暫定紐付けされた下記3件は、実ソース照合の結果いずれも**本API由来ではない**（別機能に帰属）。本docへは埋め込まず、正しい機能へ再マッピングする対象として記録する。</p>
+<div class="table-wrap"><table><thead><tr><th>暫定ID</th><th>実際の帰属（実ソース）</th><th>逐語文言</th><th>備考</th></tr></thead><tbody><tr><td>A15-06-MSG-001</td><td>Admin「MTGマスターデータ管理」 <code>MtgMasterDataController.php:379</code>（文言 <code>messages.ja.yaml:1591</code> admin.common.save_complete）</td><td>保存しました</td><td>登録成功フラッシュ</td></tr><tr><td>A15-06-MSG-002</td><td>Admin「MTGマスターデータ管理」 <code>MtgMasterDataController.php:381</code></td><td>要ソース確認</td><td>RuntimeException捕捉時。<code>addError($e-&gt;getMessage())</code> 例外由来可変値・逐語literal確定不能</td></tr><tr><td>A15-06-MSG-003</td><td>Adminカード管理 検索フォーム <code>SearchCardType.php:76</code>（文言 <code>validators.ja.yaml:37</code> form_error.numeric_only）</td><td>数字で入力してください。</td><td>CMC項目バリデーション</td></tr></tbody></table></div>
 <hr>
 <h2 id="ログ・監査">ログ・監査</h2>
 <h3 id="ログに出してはいけないもの">ログに出してはいけないもの</h3>
