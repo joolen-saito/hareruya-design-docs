@@ -200,10 +200,6 @@ ec-cube-enterprise の `CardsetController` を正典とする。一覧画面自�
 |--------------|----------|--------------|----------|
 | M14-06-MSG-001 | 管理画面上部フラッシュ | 保存しました | カードセット新規登録画面で「登録」を押し、フォームが有効で保存が正常終了したとき（`CardsetController.php:129`）。編集画面へリダイレクトする。 |
 | M14-06-MSG-002 | 管理画面上部フラッシュ | 保存しました | カードセット編集画面で「登録」を押し、フォームが有効で保存が正常終了したとき（`CardsetController.php:163`）。編集画面へリダイレクトする。 |
-| M14-06-MSG-003 | 管理画面上部フラッシュ | 削除しました | 一覧の削除モーダルの「削除」でCSRFトークンが有効かつ削除・flushが正常終了したとき（`CardsetController.php:211`）。一覧へリダイレクトする。 |
-| M14-06-MSG-004 | 管理画面上部フラッシュ | 既にカードセットにカードが登録されているため、%name% のカードセット情報は削除することができません。 | 削除時に外部キー制約違反（子カードが存在）が発生したとき（`CardsetController.php:216-217`、`%name%` は当該カードセットの日本語名）。一覧へリダイレクトする。 |
-| M14-06-MSG-005 | 管理画面上部フラッシュ | 削除に失敗しました | 削除時に外部キー制約違反以外の例外が発生したとき（`CardsetController.php:221`）。一覧へリダイレクトする。 |
-| M14-06-MSG-006 | 管理画面上部フラッシュ | 要ソース確認 | 「画像ダウンロード（セット別）」でZIP生成処理に例外が発生したとき（`CardsetController.php:232-245` は `trans($e->getMessage())` を積むため単一の逐語文言に確定不可。候補キー: `admin.card.cardset.error.download_zip_failed`=`messages.ja.yaml:4503`／`download_no_images`=`4502`／`download_unsafe_path_segment`=`4504`（`CardsetDownloadAction.php:79,173,177,192-219` が送出）。これ以外の例外時は当該例外メッセージがそのまま表示され得る）。一覧へリダイレクトする。 |
 | M14-06-MSG-007 | 管理画面上部フラッシュ | 要ソース確認 | 「画像ダウンロード（言語別）」でZIP生成処理に例外が発生したとき（`CardsetController.php:251-264` は `trans($e->getMessage())` を積むため単一の逐語文言に確定不可。候補キー: `admin.card.cardset.error.download_zip_failed`=`messages.ja.yaml:4503`／`download_no_images`=`4502`／`download_unsafe_path_segment`=`4504`（`CardsetDownloadAction.php:79,173,177,192-219` が送出）。これ以外の例外時は当該例外メッセージがそのまま表示され得る）。一覧へリダイレクトする。 |
 | M14-06-MSG-008 | ブラウザ標準の確認ダイアログ（window.confirm） | プロモカード一覧をダウンロードしますか? | カードセットのチェックボックスを1件も選択せずに「画像ダウンロード（セット別）」「画像ダウンロード（言語別）」を押したとき（`app/template/admin/Cardset/index.twig:40-48`、`admin.card.cardset.confirm.download_promo_card_list`）。OKで送信続行、キャンセルで中止する。 |
 | M14-06-MSG-009 | 「略称」入力欄直下のインラインエラー（form_errors） | 半角文字のみ入力できます。 | 新規登録／編集画面で「登録」を押し、略称（code）に半角(ASCII)以外の文字が含まれるとき（`CardsetType.php:91-94`、`admin.card.cardset.error.ascii_only`、表示は `edit.twig:57`）。保存されず入力画面を再表示する。 |

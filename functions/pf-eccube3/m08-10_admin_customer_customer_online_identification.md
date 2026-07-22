@@ -260,6 +260,16 @@
 
 ---
 
+
+### メッセージID対応（自動棚卸）
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|
+| M08-10-MSG-001 | 管理画面上部 | 身分証有効期限の値が不正です | POSTされた id_expiration_date が空でなく、new DateTime(...) が例外になったとき |
+| M08-10-MSG-002 | 管理画面上部 | システムエラーが発生しました | MtbIdentityConfirmStatus::STATUS_CONFIRMED の検索結果がnullのとき |
+| M08-10-MSG-003 | 管理画面上部 | システムエラーが発生しました | Customer.getPlayer() の結果がnullのとき |
+| M08-10-MSG-004 | 管理画面上部 | 保存しました | playerEntityManager->save(...) および entityManager->flush() の後に成功フラッシュを追加したとき |
+
 ## ログ・監査
 
 | タイミング | 記録内容 |

@@ -209,11 +209,6 @@
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
 |--------------|----------|--------------|----------|
-| M05-10-MSG-001 | 管理画面上部フラッシュ | 保存に失敗しました | 備考入力フォームの「登録」ボタン送信時、未送信またはバリデーション不正のとき（`admin.common.save_error`／同一idの編集画面へリダイレクト） |
-| M05-10-MSG-002 | 管理画面上部フラッシュ | 要ソース確認 | 備考登録処理（`UpdateCommentAction`）実行中に `InvalidArgumentException` が送出されたとき（`addError($e->getMessage())`。`UpdateCommentAction.php:30-44` はExceptionを再送出し固定literalを持たないため逐語確定不能・同一idの編集画面へリダイレクト） |
-| M05-10-MSG-003 | 管理画面上部フラッシュ | 保存しました | 備考登録処理が正常終了したとき（`admin.common.save_complete`／同一idの編集画面へリダイレクト） |
-| M05-10-MSG-004 | 管理画面上部フラッシュ | 要ソース確認 | リスト削除処理（`DeleteListAction`）実行中に `InvalidArgumentException` が送出されたとき（`addError($e->getMessage())`。`DeleteListAction.php:30-45` はExceptionを再送出し固定literalを持たないため逐語確定不能・同一idの編集画面へリダイレクト） |
-| M05-10-MSG-005 | 管理画面上部フラッシュ | 削除しました | リスト削除処理が正常終了したとき（`admin.common.delete_complete`／page_no有無で検索一覧または一覧へリダイレクト） |
 | M05-10-MSG-006 | ブラウザ確認ダイアログ（window.confirm） | 削除してもよろしいですか? | 「リスト削除」リンククリック時（`data-confirm`/`data-message`未指定のため `function.js:167` のデフォルト文言が常に表示。OKでDELETE送信、キャンセルで中断） |
 
 ---

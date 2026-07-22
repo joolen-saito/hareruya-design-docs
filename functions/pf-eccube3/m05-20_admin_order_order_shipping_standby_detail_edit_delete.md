@@ -84,6 +84,16 @@
 
 ---
 
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|
+| M05-20-MSG-001 | 管理画面上部 | 保存に失敗しました | フォームが未送信またはバリデーション不正のとき |
+| M05-20-MSG-002 | 管理画面上部 | 要ソース確認 | フォームが有効で、UpdateCommentAction実行中にInvalidArgumentExceptionが送出されたとき |
+| M05-20-MSG-003 | 管理画面上部 | 保存しました | フォームが有効で、UpdateCommentActionが正常終了したとき |
+| M05-20-MSG-004 | 管理画面上部 | 要ソース確認 | CSRF検証・対象取得後、DeleteListAction実行中にInvalidArgumentExceptionが送出されたとき |
+| M05-20-MSG-005 | 管理画面上部 | 削除しました | CSRF検証・対象取得後、DeleteListActionが正常終了したとき |
+
 ## 業務ルール・計算
 
 | 項目 | 内容 |

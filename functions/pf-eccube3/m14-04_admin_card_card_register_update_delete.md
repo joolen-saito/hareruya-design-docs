@@ -122,6 +122,9 @@ DB関連の記述は ec-cube-enterprise の実装を正とする。カードマ�
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
 |--------------|----------|--------------|----------|
 | M14-04-MSG-001 | 画面中央(モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 既存カードの編集画面（card.getId() が null でない）で「削除」リンクを押し #DeleteModal を開いたとき（data-message を p.modal-message へ挿入。%name%=対象カードの getNameJpWithEn()） |
+| M14-04-MSG-002 | 管理画面上部 | デッキまたは商品にカードが登録されているため、%card_name% カード情報を削除することができません。 | 対象カードが isDeletable=false のとき（%card_name%=対象カードの getNameJpWithEn()） |
+| M14-04-MSG-003 | 管理画面上部 | 削除に失敗しました | 単体カード削除の remove/flush でExceptionが発生したとき |
+| M14-04-MSG-004 | 管理画面上部 | 削除しました | 単体カードの remove/flush が成功したとき |
 
 ## 業務ルール・計算
 

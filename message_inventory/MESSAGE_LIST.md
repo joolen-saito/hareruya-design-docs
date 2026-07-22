@@ -1,10 +1,10 @@
 # メッセージ一覧（設計書反映済み・機能別）
 
-ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検証/JSダイアログ）を機能へ割当て、
-設計書『表示メッセージ』表へ埋め込んだ確定メッセージの一覧。**捏造ゼロ**（文言は実ソースに逐語存在 or `要ソース確認`）。
+ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書『表示メッセージ』表へ埋め込んだ確定メッセージの一覧。**捏造ゼロ**。
 
-- 総確定メッセージ: **1139件** / 機能数: **128**
-- 正本: `message_inventory/message_inventory.tsv` / 設計書: `functions/**/*.md`（HTML: `function_spec_html_preview/`）
+- 総確定メッセージ: **1139件** / 機能数: **133**
+- codex批判レビュー済み（捏造0確認・誤割当28件是正）。詳細は `CODEX_REVIEW_REPORT.md`
+- 正本: `message_inventory/message_inventory.tsv`（HTML: `function_spec_html_preview/`）
 
 ---
 
@@ -167,17 +167,29 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 | M03-02-MSG-002 | インフォ | 画面中央(モーダル) | 商品の削除処理が完了しました | #delete 起点のDELETE Ajax群が完了したとき（$.when(...).always。成功・失敗を問わず実行） |
 | M03-02-MSG-003 | エラー(バリデーション) | 入力項目直下/フォーム上部 | 画像のパスが不正です。 | POST_SUBMIT時、add_imagesの各ファイル名について、既存画像のファイルが存在しない、または一時商品画像パスにファイルが存在しない場合 |
 
+## M03-03 m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）
+`functions/pf-eccube3/m03-03_admin_product_product_card_csv_export.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M03-03-MSG-001 | エラー | 管理画面上部 | 要ソース確認 | POST admin_product_card_csv_export で、商品未取得時またはCSV行が空のとき |
+| M03-03-MSG-002 | エラー | 管理画面上部 | 1つ以上の商品を選択してください | POST admin_product_card_csv_export で ids が未送信・非配列、または正整数化後に空のとき |
+
+## M03-04 m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）
+`functions/pf-eccube3/m03-04_admin_product_product_goods_csv_export.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M03-04-MSG-001 | エラー | 要ソース確認 | 要ソース確認 | POST admin_product_goods_csv_export で、商品未取得時またはCSV行が空のとき |
+| M03-04-MSG-002 | エラー | 管理画面上部 | 1つ以上の商品を選択してください | POST admin_product_goods_csv_export で ids が未送信・非配列、または正整数化後に空のとき |
+
 ## M03-05 m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）
 `functions/pf-eccube3/m03-05_admin_product_product_sale_price_csv_export.md`
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M03-05-MSG-001 | エラー | 管理画面上部 | 要ソース確認 | POST admin_product_card_csv_export で、商品未取得時またはCSV行が空のとき |
-| M03-05-MSG-002 | エラー | 要ソース確認 | 要ソース確認 | POST admin_product_goods_csv_export で、商品未取得時またはCSV行が空のとき |
 | M03-05-MSG-003 | エラー | 管理画面上部 | 1つ以上の商品を選択してください | POST admin_product_price_csv_export で ids が未送信・非配列、または正整数化後に空のとき |
 | M03-05-MSG-004 | エラー | 要ソース確認 | 存在しないカードIDが含まれています。 | POST admin_product_price_csv_export で有効な商品ID送信後、該当商品を取得できないとき |
-| M03-05-MSG-005 | エラー | 管理画面上部 | 1つ以上の商品を選択してください | POST admin_product_card_csv_export で ids が未送信・非配列、または正整数化後に空のとき |
-| M03-05-MSG-006 | エラー | 管理画面上部 | 1つ以上の商品を選択してください | POST admin_product_goods_csv_export で ids が未送信・非配列、または正整数化後に空のとき |
 
 ## M03-08 m03-08_admin_product_product_product_class_list（管理画面_商品管理_商品規格一覧）
 `functions/pf-eccube3/m03-08_admin_product_product_product_class_list.md`
@@ -1036,11 +1048,6 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
-| M05-10-MSG-001 | エラー | 管理画面上部 | 保存に失敗しました | フォームが未送信またはバリデーション不正のとき |
-| M05-10-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | フォームが有効で、UpdateCommentAction実行中にInvalidArgumentExceptionが送出されたとき |
-| M05-10-MSG-003 | インフォ(成功) | 管理画面上部 | 保存しました | フォームが有効で、UpdateCommentActionが正常終了したとき |
-| M05-10-MSG-004 | エラー | 管理画面上部 | 要ソース確認 | CSRF検証・対象取得後、DeleteListAction実行中にInvalidArgumentExceptionが送出されたとき |
-| M05-10-MSG-005 | インフォ(成功) | 管理画面上部 | 削除しました | CSRF検証・対象取得後、DeleteListActionが正常終了したとき |
 | M05-10-MSG-006 | 確認 | ブラウザ確認ダイアログ（window.confirm） | 削除してもよろしいですか? | リンククリック時（data-confirm/data-message未指定のため常にJS confirmのデフォルト文言が表示される） |
 
 ## M05-11 m05-11_admin_order_order_edit（管理画面_受注管理_受注情報編集）
@@ -1101,6 +1108,17 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 |---|---|---|---|---|
 | M05-15-MSG-001 | インフォ(成功) | 管理画面上部 | 保存しました | 要ソース確認 |
 | M05-15-MSG-002 | インフォ(成功) | 管理画面上部 | 削除しました | 要ソース確認 |
+
+## M05-20 m05-20_admin_order_order_shipping_standby_detail_edit_delete（管理画面_受注管理_出荷指示リスト詳細_備考編集・リスト削除）
+`functions/pf-eccube3/m05-20_admin_order_order_shipping_standby_detail_edit_delete.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M05-20-MSG-001 | エラー | 管理画面上部 | 保存に失敗しました | フォームが未送信またはバリデーション不正のとき |
+| M05-20-MSG-002 | エラー | 管理画面上部 | 要ソース確認 | フォームが有効で、UpdateCommentAction実行中にInvalidArgumentExceptionが送出されたとき |
+| M05-20-MSG-003 | インフォ(成功) | 管理画面上部 | 保存しました | フォームが有効で、UpdateCommentActionが正常終了したとき |
+| M05-20-MSG-004 | エラー | 管理画面上部 | 要ソース確認 | CSRF検証・対象取得後、DeleteListAction実行中にInvalidArgumentExceptionが送出されたとき |
+| M05-20-MSG-005 | インフォ(成功) | 管理画面上部 | 削除しました | CSRF検証・対象取得後、DeleteListActionが正常終了したとき |
 
 ## M05-26 m05-26_admin_order_order_shipping_result_csv_import（管理画面_受注管理_出荷実績インポート登録）
 `functions/pf-eccube3/m05-26_admin_order_order_shipping_result_csv_import.md`
@@ -1266,10 +1284,6 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
 | M08-04-MSG-001 | インフォ(成功) | 管理画面上部 | 保存しました | フォームが送信済みかつ有効で、flush・完了イベントdispatch後に成功フラッシュを追加したとき |
-| M08-04-MSG-002 | エラー | 管理画面上部 | 身分証有効期限の値が不正です | POSTされた id_expiration_date が空でなく、new DateTime(...) が例外になったとき |
-| M08-04-MSG-003 | エラー | 管理画面上部 | システムエラーが発生しました | MtbIdentityConfirmStatus::STATUS_CONFIRMED の検索結果がnullのとき |
-| M08-04-MSG-004 | エラー | 管理画面上部 | システムエラーが発生しました | Customer.getPlayer() の結果がnullのとき |
-| M08-04-MSG-005 | インフォ(成功) | 管理画面上部 | 保存しました | playerEntityManager->save(...) および entityManager->flush() の後に成功フラッシュを追加したとき |
 | M08-04-MSG-006 | エラー(バリデーション) | 入力項目直下 | 生年月日が不正な日付です。 | 会員登録・編集フォーム送信時、生年月日が当日以後でLessThanOrEqual制約に違反するとき |
 | M08-04-MSG-007 | エラー(バリデーション) | 入力項目直下/フォーム上部 | パスワードはメールアドレスと同じ値を設定できません。 | 会員登録・編集フォーム送信時、plainPasswordが空でなくemailと等しいとき |
 | M08-04-MSG-008 | エラー(バリデーション) | 入力項目直下/フォーム上部 | このメールアドレスは利用できません。 | 会員登録・編集フォーム送信時、emailが空でなくCustomerRepository::findOtherEmails(email,id)が結果を返すとき |
@@ -1293,6 +1307,16 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 | M08-09-MSG-001 | インフォ(成功) | 管理画面上部 | 保存しました | admin_customer_delivery_new または admin_customer_delivery_edit へのPOSTでフォームが送信済みかつ妥当な場合(persist/flush成功後) |
 | M08-09-MSG-002 | インフォ(成功) | 管理画面上部 | 削除しました | DELETE admin_customer_delivery_delete で対象お届け先が存在し会員が一致し、削除が成功した場合 |
 | M08-09-MSG-003 | エラー | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | DELETE admin_customer_delivery_delete の削除処理で ForeignKeyConstraintViolationException が発生した場合 |
+
+## M08-10 M08-10（オンライン本人確認）
+`functions/pf-eccube3/m08-10_admin_customer_customer_online_identification.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M08-10-MSG-001 | エラー | 管理画面上部 | 身分証有効期限の値が不正です | POSTされた id_expiration_date が空でなく、new DateTime(...) が例外になったとき |
+| M08-10-MSG-002 | エラー | 管理画面上部 | システムエラーが発生しました | MtbIdentityConfirmStatus::STATUS_CONFIRMED の検索結果がnullのとき |
+| M08-10-MSG-003 | エラー | 管理画面上部 | システムエラーが発生しました | Customer.getPlayer() の結果がnullのとき |
+| M08-10-MSG-004 | インフォ(成功) | 管理画面上部 | 保存しました | playerEntityManager->save(...) および entityManager->flush() の後に成功フラッシュを追加したとき |
 
 ## M08-12 会員管理 — 顧客グループ管理
 `functions/pf-eccube3/m08-12_admin_customer_customer_group.md`
@@ -1711,9 +1735,6 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 | M14-01-MSG-001 | エラー | 管理画面上部 | 削除に失敗しました | フォーム送信済み・有効で、削除不可のカード詳細IDが送信された詳細IDから欠落したとき |
 | M14-01-MSG-002 | インフォ(成功) | 管理画面上部 | 保存しました | フォーム送信済み・有効で、persist/flush/commitが成功したとき |
 | M14-01-MSG-003 | エラー | 管理画面上部 | 保存に失敗しました | 保存トランザクション中にExceptionが発生したとき |
-| M14-01-MSG-004 | エラー | 管理画面上部 | デッキまたは商品にカードが登録されているため、%card_name% カード情報を削除することができません。 | 対象カードが isDeletable=false のとき（%card_name%=対象カードの getNameJpWithEn()） |
-| M14-01-MSG-005 | エラー | 管理画面上部 | 削除に失敗しました | 単体カード削除の remove/flush でExceptionが発生したとき |
-| M14-01-MSG-006 | インフォ(成功) | 管理画面上部 | 削除しました | 単体カードの remove/flush が成功したとき |
 | M14-01-MSG-007 | エラー | 管理画面上部 | 削除に失敗しました | 送信された cardIds が空のとき |
 | M14-01-MSG-008 | エラー | 管理画面上部 | 削除に失敗しました | 選択カードの削除処理でExceptionが発生したとき |
 | M14-01-MSG-009 | インフォ(成功) | 管理画面上部 | 削除しました | 一括削除で1件以上の削除に成功し deleteCount>0 のとき |
@@ -1740,6 +1761,9 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
 | M14-04-MSG-001 | 確認 | 画面中央(モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | 既存カードの編集画面（card.getId() が null でない）で「削除」リンクを押し #DeleteModal を開いたとき（data-message を p.modal-message へ挿入。%name%=対象カードの getNameJpWithEn()） |
+| M14-04-MSG-002 | エラー | 管理画面上部 | デッキまたは商品にカードが登録されているため、%card_name% カード情報を削除することができません。 | 対象カードが isDeletable=false のとき（%card_name%=対象カードの getNameJpWithEn()） |
+| M14-04-MSG-003 | エラー | 管理画面上部 | 削除に失敗しました | 単体カード削除の remove/flush でExceptionが発生したとき |
+| M14-04-MSG-004 | インフォ(成功) | 管理画面上部 | 削除しました | 単体カードの remove/flush が成功したとき |
 
 ## M14-05 カード管理 — カード CSV 登録（取込）
 `functions/pf-eccube3/m14-05_admin_card_card_csv_import.md`
@@ -1755,13 +1779,16 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 |---|---|---|---|---|
 | M14-06-MSG-001 | インフォ(成功) | 管理画面上部 | 保存しました | 新規登録フォームを送信しフォームが有効で保存処理が正常終了したとき |
 | M14-06-MSG-002 | インフォ(成功) | 管理画面上部 | 保存しました | 編集フォームを送信しフォームが有効で保存処理が正常終了したとき |
-| M14-06-MSG-003 | インフォ(成功) | 管理画面上部 | 削除しました | DELETE要求のCSRFトークンが有効でカードセット削除・flushが正常終了したとき |
-| M14-06-MSG-004 | エラー | 管理画面上部 | 既にカードセットにカードが登録されているため、%name% のカードセット情報は削除することができません。 | 削除時に外部キー制約違反(子カードが存在)が発生したとき |
-| M14-06-MSG-005 | エラー | 管理画面上部 | 削除に失敗しました | 削除時に外部キー制約違反以外の例外が発生したとき |
-| M14-06-MSG-006 | エラー | 管理画面上部 | 要ソース確認 | POST先admin_cardset_downloadのZIP生成処理(download)で例外が発生したとき |
 | M14-06-MSG-007 | エラー | 管理画面上部 | 要ソース確認 | POST先admin_cardset_download_each_langのZIP生成処理(downloadEachLang)で例外が発生したとき |
 | M14-06-MSG-008 | 確認 | ブラウザ標準ダイアログ(window.confirm) | プロモカード一覧をダウンロードしますか? | カードセットのチェックボックスを1件も選択せずに画像ダウンロードボタンを押したとき |
 | M14-06-MSG-009 | エラー | 該当フォーム項目直下 | 半角文字のみ入力できます。 | 「登録」押下時のフォームバリデーションで略称に半角(ASCII)以外の文字が含まれるとき |
+
+## M14-07 カードセット管理 — 収録カード画像 ZIP ダウンロード（セット別／言語別）
+`functions/pf-eccube3/m14-07_admin_card_cardset_image_download.md`
+
+| メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
+|---|---|---|---|---|
+| M14-07-MSG-001 | エラー | 管理画面上部 | 要ソース確認 | POST先admin_cardset_downloadのZIP生成処理(download)で例外が発生したとき |
 
 ## M14-08 カード管理 — カードセット新規登録・編集・削除
 `functions/pf-eccube3/m14-08_admin_card_cardset_register_update_delete.md`
@@ -1769,6 +1796,9 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 | メッセージID | 種別 | 表示位置 | 画面上の文言 | 表示条件 |
 |---|---|---|---|---|
 | M14-08-MSG-001 | エラー(バリデーション) | 入力項目直下 | 半角英数字・記号（ASCII文字）のみ入力できます。 | 新規登録または編集の送信時、略称がRegex /^[\x01-\x7E]+$/ に一致しないとき |
+| M14-08-MSG-002 | インフォ(成功) | 管理画面上部 | 削除しました | DELETE要求のCSRFトークンが有効でカードセット削除・flushが正常終了したとき |
+| M14-08-MSG-003 | エラー | 管理画面上部 | 既にカードセットにカードが登録されているため、%name% のカードセット情報は削除することができません。 | 削除時に外部キー制約違反(子カードが存在)が発生したとき |
+| M14-08-MSG-004 | エラー | 管理画面上部 | 削除に失敗しました | 削除時に外部キー制約違反以外の例外が発生したとき |
 
 ## M14-09 カード管理 — フォーマット一覧
 `functions/pf-eccube3/m14-09_admin_card_format_list.md`
@@ -1808,14 +1838,6 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 | M15-01-MSG-010 | 警告 | 管理画面上部 | 要ソース確認 | 保存後のデッキ検証で警告あり |
 | M15-01-MSG-011 | インフォ(成功) | 管理画面上部 | 保存しました | カードリストエラーなしで保存完了 |
 | M15-01-MSG-012 | エラー | 管理画面上部 | 保存に失敗しました | 保存処理でException |
-| M15-01-MSG-013 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークンが不正 |
-| M15-01-MSG-014 | エラー | 管理画面上部 | 記事に紐付いているデッキがあるため削除できません。 | 対象デッキに記事が紐付く |
-| M15-01-MSG-015 | エラー | 管理画面上部 | 削除に失敗しました | 削除処理でRuntimeException以外のException |
-| M15-01-MSG-016 | インフォ(成功) | 管理画面上部 | 削除しました | 個別削除成功 |
-| M15-01-MSG-017 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークンが不正 |
-| M15-01-MSG-018 | エラー | 管理画面上部 | 保存に失敗しました | 複製フォーム未送信または不正 |
-| M15-01-MSG-019 | エラー | 管理画面上部 | 保存に失敗しました | 複製処理でException |
-| M15-01-MSG-020 | インフォ(成功) | 管理画面上部 | 保存しました | 複製保存成功 |
 | M15-01-MSG-021 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークンが不正 |
 | M15-01-MSG-022 | エラー | 管理画面上部 | CSV出力対象のデッキが選択されていません。 | deckIdが空、または0以下のみ |
 | M15-01-MSG-023 | エラー | 管理画面上部 | CSV出力対象のデッキが選択されていません。 | 選択deckIdに対応するデッキが0件 |
@@ -1830,6 +1852,14 @@ ec-cube-enterprise 実装のUIメッセージ（フラッシュ/フォーム検�
 | M15-05-MSG-001 | 警告 | 画面中央(ダイアログ) | アーキタイプを選択してください。 | クリック時に#admin_deck_Archetypeが未選択（値が空）のとき |
 | M15-05-MSG-002 | 警告 | 画面中央(ダイアログ) | 選択されたアーキタイプにデッキタグが設定されていません。 | admin_deck_archetype_tags へのGET応答 data.length が 0 のとき |
 | M15-05-MSG-003 | 確認 | 画面中央(ダイアログ) | このデッキを削除しますか？ | クリック時（送信前のブラウザconfirm） |
+| M15-05-MSG-004 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークンが不正 |
+| M15-05-MSG-005 | エラー | 管理画面上部 | 記事に紐付いているデッキがあるため削除できません。 | 対象デッキに記事が紐付く |
+| M15-05-MSG-006 | エラー | 管理画面上部 | 削除に失敗しました | 削除処理でRuntimeException以外のException |
+| M15-05-MSG-007 | インフォ(成功) | 管理画面上部 | 削除しました | 個別削除成功 |
+| M15-05-MSG-008 | エラー | 管理画面上部 | セッションがタイムアウトしました。もう一度やり直してください。 | CSRFトークンが不正 |
+| M15-05-MSG-009 | エラー | 管理画面上部 | 保存に失敗しました | 複製フォーム未送信または不正 |
+| M15-05-MSG-010 | エラー | 管理画面上部 | 保存に失敗しました | 複製処理でException |
+| M15-05-MSG-011 | インフォ(成功) | 管理画面上部 | 保存しました | 複製保存成功 |
 
 ## M15-06 デッキ管理 — デッキ登録 CSV（取込）
 `functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md`
