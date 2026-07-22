@@ -805,7 +805,7 @@ def make_rows(
         seen_execution_keys.add(execution_key)
         rows.append(row)
         selected.append(vp)
-        if len(rows) >= max_cases:
+        if max_cases and len(rows) >= max_cases:  # max_cases<=0 は上限なし
             break
     return rows, selected, flags
 
@@ -1061,7 +1061,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", type=Path, default=Path("."))
     parser.add_argument("--overwrite", action="store_true")
-    parser.add_argument("--max-cases-per-file", type=int, default=90)
+    parser.add_argument("--max-cases-per-file", type=int, default=0,
+                        help="1機能あたりの上限。0=上限なし(既定・ユーザー方針)。機能あたりは"
+                             "該当する結合観点数が自然上限になる(実測 最大117)。")
     parser.add_argument("--limit", type=int, default=0, help="Generate only first N HTML files.")
     parser.add_argument("--only", type=str, default="", help="Only process HTML files whose path contains this substring (e.g. m01-0).")
     parser.add_argument("--layers", type=str, default="結合", help=f"Comma-separated テスト層 to cross-product (default: 結合). Valid values: {'/'.join(sorted(ALLOWED_LAYER_VALUES))}. Non-結合 layers are normally excluded from the integration master.")
