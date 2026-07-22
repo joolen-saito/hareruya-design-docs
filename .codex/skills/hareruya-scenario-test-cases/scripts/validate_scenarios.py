@@ -88,12 +88,11 @@ def validate_data_patterns(text: str) -> list[str]:
     ids = [row.get("パターンID", "") for row in rows]
     if len(set(ids)) != len(ids):
         errors.append("duplicate data pattern id")
-    if len(ids) < 2:
-        errors.append("data pattern count must be >= 2")
+    # 境界値データパターン(DP-B*)は必須にしない。境界値は業務フロー・HTML設計書に無い値であり、
+    # 結合テスト層で網羅する（依頼者確定）。本層のDPは原典由来(DP-N代表 + フロー分岐由来 DP-E/DP-A)
+    # に限るため、分岐が無いパターンはDP-N001の1件だけが正しい姿。
     if not any(pid.startswith("DP-N") for pid in ids):
         errors.append("missing normal representative data pattern DP-N*")
-    if not any(pid.startswith("DP-B") for pid in ids):
-        errors.append("missing normal boundary data pattern DP-B*")
     for row in rows:
         pid = row.get("パターンID", "")
         if not re.match(r"^DP-[NAEB]\d{3}$", pid):
@@ -340,14 +339,9 @@ def validate_route_groups(repo: Path, scenario_files: list[Path]) -> list[str]:
     errors: list[str] = []
     if not any(len(route_ids) > 1 for route_ids in groups.values()):
         errors.append("no parent business-flow pattern expands to multiple route scenarios")
-    sample_expectations = {
-        "デッキ登録 / パターン1": 5,
-        "商品登録・編集 / パターン1": 2,
-    }
-    for key, minimum in sample_expectations.items():
-        matched = [routes for parent, routes in groups.items() if key in parent]
-        if matched and max(len(routes) for routes in matched) < minimum:
-            errors.append(f"parent route split too small for {key}: expected >= {minimum}")
+    # 以前はパターン別に最低ルート数（デッキ登録>=5, 商品登録>=2）を課していたが、これは
+    # 固定辞書由来のルート水増しを前提とした下限であり、捏造ゼロ（ルートは業務フロー由来の
+    # 分岐のみ）と矛盾する。フローに分岐が無いパターンは正常系1本が正しいので撤去した。
     return errors
 
 

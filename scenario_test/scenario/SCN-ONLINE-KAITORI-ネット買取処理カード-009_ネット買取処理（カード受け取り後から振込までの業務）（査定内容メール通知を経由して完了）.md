@@ -42,9 +42,8 @@
 | パターンID | 種別 | 対象ステップ/分岐ID | 目的 | 前提差分 | 入力データ | 期待観測点 |
 |---|---|---|---|---|---|---|
 | DP-N001 | 正常系 代表 | 正常系#1-#17 | 主要代替の代表データで業務経路を確認する。 | 手動メール通知にて査定内容について顧客にお知らせする 標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。 | 担当者アカウント=st-user-online-kaitori-002-r03 / 商品コード=ST-CARD-ONLINE-KAITORI-002-R03 / ネット買取申込番号=ST-OBUY-ONLINE-KAITORI-002-R03 / 数量=3 / 店舗=晴れる屋テスト店舗 / 会員番号=ST-MEMBER-ONLINE-KAITORI-002-R03 | 画面表示・処理ステータス・処理履歴<br>更新後の値と更新履歴<br>画面表示・処理ステータス・処理履歴<br>査定内容メール通知の条件対応後、ネット買取処理（カード受け取り後から振込までの業務）の対象データが完了状態として追跡できる。 |
-| DP-B001 | 正常系 境界 | 正常系#17 | 本人確認の代表差分を確認する。 | 簡易書留確認済みと再確認待ちの申込を用意する。 | 商品コード=ST-CARD-ONLINE-KAITORI-002-R03-IDOK / 本人確認状態=確認済み / 商品コード=ST-CARD-ONLINE-KAITORI-002-R03-IDRETRY / 本人確認状態=再確認待ち | 本人確認状態、後続処理可否、通知結果 |
-| DP-B002 | 正常系 境界 | 正常系#17 | 到着カード件数の最小/複数境界を確認する。 | 到着カード1件と複数件の申込を用意する。 | 商品コード=ST-CARD-ONLINE-KAITORI-002-R03-ONE / 到着カード=1件 / 商品コード=ST-CARD-ONLINE-KAITORI-002-R03-MULTI / 到着カード=30件 | 査定明細件数、買取ステータス、振込対象金額 |
-| DP-E001 | 異常系 | 分岐E1 | 本人確認書類に不備がある | 分岐条件を満たす対象データを、正常代表データとは別IDで用意する。 | 必須項目欠落・形式不正の入力データ / 商品コード=ST-CARD-ONLINE-KAITORI-002-R03-E1 / 基準=商品コード=ST-CARD-ONLINE-KAITORI-002-R03 | 本人確認状態、買取ステータス、通知結果 |
+
+> 分岐条件・対象ステップ・期待観測点は業務フロー原典由来。**入力データ列の具体値（在庫=0・数量=N・日時・シードID等）は、原典の分岐条件を実行可能にするための実行用の具体化（非原典値）**であり、原典に literal に書かれた値ではない（`## 実行用テストデータ` のシードIDと同種）。
 
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
@@ -91,12 +90,12 @@
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
 |---|---|---|---|---|
-| E1 | 1 | 本人確認書類に不備がある | 振込または成立処理へ進めず、再確認状態にする | 本人確認状態、買取ステータス、通知結果 |
+| - | - | この経路に業務分岐は無い（業務フローに分岐記載なし） | - | 機構的異常系は `## 他層委譲（結合テスト）` を参照 |
 
 ## 実行手順（代替系・異常系）
 | # | 分岐ID | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|---|
-| 1 | E1 | 通販チーム | 条件「本人確認書類に不備がある」となるデータ/操作を実行する（実施画面は要確認。機能Noを特定できていない） | 必須項目欠落・形式不正の入力データ（基準: 商品コード=ST-CARD-ONLINE-KAITORI-002-R03） | 振込または成立処理へ進めず、再確認状態にすること。 | 本人確認状態、買取ステータス、通知結果 |
+| - | - | - | 該当なし（この経路に業務分岐は無い） | - | 機構的異常系は `## 他層委譲（結合テスト）` の結合テストケースで実施すること。 | - |
 
 ## データ連鎖（業務フロー原典のデータ遷移線）
 本層は機能テストではなく、**データのつながりで業務が完遂できるか**を見る。下表は業務フロー図の
@@ -120,7 +119,7 @@
 |---|---|
 | 正常系 | ○ |
 | 代替系 | ○ |
-| 異常系 | ○ |
+| 異常系 | - |
 | 外部連携 | ○ |
 | データ更新 | ○ |
 | CSV/帳票 | ○ |
@@ -129,7 +128,7 @@
 ## エッジケース要約
 | 件数 | 主なエッジケース | 確認対象 |
 |---|---|---|
-| 1 | 本人確認書類に不備がある | 本人確認状態、買取ステータス、通知結果 |
+| 0 | 業務分岐なし（機構的異常系は他層委譲） | `## 他層委譲（結合テスト）` を参照 |
 
 ## 他層委譲（結合テスト）
 権限・必須/形式・重複実行・0件検索は機構的な確認であり、結合テスト層（`integration-test-viewpoints.md`）が
@@ -141,7 +140,7 @@
 | 担当者に必要な権限がない | IT-15 | `IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-002`<br>`IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-003`<br>`IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-004`<br>ほか 21 件 | 委譲済 |
 | 入力値の必須項目不足または形式不正がある | IT-22 | `IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-010`<br>`IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-011`<br>`IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-012`<br>ほか 27 件 | 委譲済 |
 | 同一対象に対して同じ処理を重複実行する | IT-08 | `IT-M04-21-ADMIN-STOCK-STOCK-CSV-IMPORT-107`<br>`IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-032` | 委譲済 |
-| 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-020`<br>`IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-021`<br>`IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-022`<br>ほか 36 件 | 委譲済 |
+| 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-020`<br>`IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-021`<br>`IT-M07-06-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-PRODUCT-LIST-CSV-EXPORT-022`<br>ほか 37 件 | 委譲済 |
 
 ## トレーサビリティ
 - **カバーする業務フロー番号**: ネット買取 / パターン2 / 経路3

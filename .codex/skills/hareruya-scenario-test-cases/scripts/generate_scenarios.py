@@ -1714,115 +1714,6 @@ def seed_input_summary(seed: dict[str, str], limit: int = 6) -> str:
     return " / ".join(parts)
 
 
-def business_boundary_patterns(s: Scenario, seed: dict[str, str], step_count: int) -> list[DataPattern]:
-    """業務別の代表境界データ。網羅粒度は全組合せではなく、手作業で読める代表+境界に留める。"""
-    last_step = max(1, step_count)
-    target = lambda n: f"正常系#{min(max(1, n), last_step)}"
-    base = primary_target(seed)
-    product_target = suffixed_target(seed, "BOUND")
-    common_precondition = "境界値確認用の対象データを標準マスタ上に追加する。"
-
-    if s.business_title == "商品登録・編集":
-        return [
-            DataPattern(
-                "DP-B001",
-                "正常系 境界",
-                target(last_step),
-                "予約商品の発売前BOX登録を確認する。",
-                "発売日が未来日の予約商品を作成し、公開前状態から開始する。",
-                f"{suffixed_target(seed, 'RESERVE')} / 商品種別=BOX / 予約販売フラグ=ON / 発売日=2026-08-21 / 公開状態=非公開 / カテゴリ=新弾BOX",
-                "商品詳細、予約フラグ、発売日、公開状態、カテゴリ紐づけ件数",
-            ),
-            DataPattern(
-                "DP-B002",
-                "正常系 境界",
-                target(last_step),
-                "公開/非公開の境界切替を確認する。",
-                "同一商品群に公開対象と非公開維持対象を混在させる。",
-                f"{suffixed_target(seed, 'PUBLIC')} / 公開状態=公開 / {suffixed_target(seed, 'PRIVATE')} / 公開状態=非公開 / 表示開始日=2026-08-21 00:00",
-                "公開状態、フロント表示可否、更新履歴",
-            ),
-            DataPattern(
-                "DP-B003",
-                "正常系 境界",
-                target(last_step),
-                "販売価格の0円/上限境界を確認する。",
-                "価格境界確認用の商品規格を2件用意する。",
-                f"{suffixed_target(seed, 'PRICE0')} / 販売価格=0円 / {suffixed_target(seed, 'PRICEMAX')} / 販売価格=999999円 / 在庫区分=予約",
-                "商品規格、販売価格、公開可否、価格更新履歴",
-            ),
-            DataPattern(
-                "DP-B004",
-                "正常系 境界",
-                target(last_step),
-                "商品CSVの単行/複数行取込を確認する。",
-                "正常CSVとして単行ファイルと複数行ファイルを用意する。",
-                f"CSVファイル=ST-PRODUCT-{seed_suffix(s)}-single.csv（1行） / CSVファイル=ST-PRODUCT-{seed_suffix(s)}-multi.csv（3行） / 基準={base}",
-                "CSV取込結果、正常行件数、商品コード別の登録/更新結果",
-            ),
-        ]
-
-    by_business: dict[str, list[tuple[str, str, str, str, str]]] = {
-        "通販受注管理": [
-            ("注文数量の最小/複数境界を確認する。", "注文数量=1 と 注文数量=3 の受注を用意する。", f"{suffixed_target(seed, 'QTY1')} / 数量=1 / {suffixed_target(seed, 'QTY3')} / 数量=3", "受注明細数量、在庫引当、受注金額"),
-            ("配送・支払方法の代表差分を確認する。", "宅配便/店頭受取またはクレジット/銀行振込の対象受注を用意する。", f"{suffixed_target(seed, 'PAYCARD')} / 支払方法=クレジット / {suffixed_target(seed, 'PAYBANK')} / 支払方法=銀行振込 / 配送方法=宅配便", "支払状態、配送方法、通知結果"),
-        ],
-        "店頭受取受注管理": [
-            ("受取期限の当日境界を確認する。", "受取期限が本日中の店頭受取受注を用意する。", f"{suffixed_target(seed, 'DUE')} / 受取期限=2026-07-07 23:59 / 決済状態=未引渡し", "受取期限、引渡し可否、受注ステータス"),
-            ("本店/支店受取の店舗差分を確認する。", "受取店舗が本店と支店の受注を用意する。", f"{suffixed_target(seed, 'MAIN')} / 受取店舗=本店 / {suffixed_target(seed, 'BRANCH')} / 受取店舗=支店", "受取店舗、ピック対象、スマレジ連携結果"),
-        ],
-        "在庫管理": [
-            ("移動数量の最小/全量境界を確認する。", "移動可能在庫に対して1枚移動と全量移動の対象を用意する。", f"{suffixed_target(seed, 'MOVE1')} / 移動数量=1 / {suffixed_target(seed, 'MOVEALL')} / 移動数量=保有全量 / 移動元=本店バックヤード / 移動先=支店テスト棚", "在庫数、在庫変更履歴、移動元/移動先ロケーション"),
-            ("ロケーション差分を確認する。", "本店、支店、成田倉庫のいずれかをまたぐ在庫を用意する。", f"{suffixed_target(seed, 'LOC')} / 移動元ロケーション=成田倉庫 / 移動先ロケーション=本店バックヤード / 在庫状態=移動可能", "ロケーション別在庫数、移動履歴、対象店舗"),
-        ],
-        "価格管理": [
-            ("価格の下限/上限境界を確認する。", "価格変更CSVに0円と上限価格の商品を含める。", f"価格変更CSV=ST-PRICE-{seed_suffix(s)}-boundary.csv / 変更前価格=500円 / 変更後価格=0円,999999円", "CSV取込結果、商品価格、価格更新履歴"),
-            ("セール対象/対象外の混在を確認する。", "同一CSVまたは条件にセール対象商品と対象外商品を混在させる。", f"{suffixed_target(seed, 'SALEIN')} / セール対象=ON / {suffixed_target(seed, 'SALEOUT')} / セール対象=OFF", "対象件数、除外件数、商品価格"),
-        ],
-        "イベント管理": [
-            ("定員の最小/満席直前境界を確認する。", "定員1名と定員残1名のイベントを用意する。", f"{suffixed_target(seed, 'CAP1')} / 定員=1名 / {suffixed_target(seed, 'CAPLAST')} / 定員=8名・申込済7名", "受付可否、残席数、申込状態"),
-            ("受付期間の開始/終了境界を確認する。", "受付開始直後と受付終了直前のイベントを用意する。", f"{suffixed_target(seed, 'OPEN')} / 受付開始=2026-07-07 00:00 / {suffixed_target(seed, 'CLOSE')} / 受付終了=2026-07-07 23:59", "受付状態、申込可否、通知結果"),
-        ],
-        "デッキ登録": [
-            ("デッキ枚数の下限/上限境界を確認する。", "メイン60枚とサイド15枚のデッキを用意する。", f"{suffixed_target(seed, '60')} / メイン=60枚 / サイド=15枚 / 公開状態=下書き", "カード枚数、公開可否、デッキ詳細"),
-            ("大会紐づけの代表差分を確認する。", "大会あり/大会なしのデッキを用意する。", f"{suffixed_target(seed, 'EVENT')} / 大会ID=ST-EVENT-{seed_suffix(s)} / {suffixed_target(seed, 'NOEVENT')} / 大会ID=未設定", "大会紐づけ、公開状態、検索結果"),
-        ],
-        "店頭買取": [
-            ("査定金額の下限/高額境界を確認する。", "低額査定と高額査定の買取受付を用意する。", f"{suffixed_target(seed, 'LOW')} / 査定金額=1円 / {suffixed_target(seed, 'HIGH')} / 査定金額=300000円", "査定明細、承認要否、支払状態"),
-            ("本人確認済/未確認の代表差分を確認する。", "本人確認状態が異なる買取受付を用意する。", f"{suffixed_target(seed, 'IDOK')} / 本人確認=確認済み / {suffixed_target(seed, 'IDPENDING')} / 本人確認=未確認", "本人確認状態、買取成立可否、通知結果"),
-        ],
-        "ネット買取": [
-            ("本人確認の代表差分を確認する。", "簡易書留確認済みと再確認待ちの申込を用意する。", f"{suffixed_target(seed, 'IDOK')} / 本人確認状態=確認済み / {suffixed_target(seed, 'IDRETRY')} / 本人確認状態=再確認待ち", "本人確認状態、後続処理可否、通知結果"),
-            ("到着カード件数の最小/複数境界を確認する。", "到着カード1件と複数件の申込を用意する。", f"{suffixed_target(seed, 'ONE')} / 到着カード=1件 / {suffixed_target(seed, 'MULTI')} / 到着カード=30件", "査定明細件数、買取ステータス、振込対象金額"),
-        ],
-        "仕入れ業務": [
-            ("仕入数量の最小/複数境界を確認する。", "仕入数量1件と複数件の仕入データを用意する。", f"{suffixed_target(seed, 'ONE')} / 仕入数量=1 / {suffixed_target(seed, 'MULTI')} / 仕入数量=20", "仕入明細、入庫数、仕入ステータス"),
-            ("仕入元の代表差分を確認する。", "店頭買取由来とネット買取由来の仕入を用意する。", f"{suffixed_target(seed, 'OTC')} / 仕入元=店頭買取 / {suffixed_target(seed, 'ONLINE')} / 仕入元=ネット買取", "仕入元、商品マスタ紐づけ、入庫履歴"),
-        ],
-    }
-
-    specs = by_business.get(s.business_title)
-    if not specs:
-        specs = [
-            ("数量の最小/複数境界を確認する。", common_precondition, f"{suffixed_target(seed, 'MIN')} / 数量=1 / {suffixed_target(seed, 'MULTI')} / 数量=3", "処理件数、処理履歴、対象データ"),
-            ("状態差分の代表境界を確認する。", common_precondition, f"{product_target} / 処理状態=未処理,処理済み / 基準={base}", "処理状態、更新履歴、後続処理可否"),
-        ]
-    patterns: list[DataPattern] = []
-    for idx, (purpose, precondition, input_data, observation) in enumerate(specs, 1):
-        patterns.append(
-            DataPattern(
-                f"DP-B{idx:03d}",
-                "正常系 境界",
-                target(last_step),
-                purpose,
-                precondition,
-                input_data,
-                observation,
-            )
-        )
-    return patterns
-
-
 def branch_precondition_delta(case: EdgeCase) -> str:
     c = case.condition
     if "権限" in c:
@@ -1897,7 +1788,10 @@ def data_patterns_for(s: Scenario, seed: dict[str, str]) -> list[DataPattern]:
             f"{normal_observation}<br>{s.route.final_state}",
         )
     ]
-    patterns.extend(business_boundary_patterns(s, seed, step_count))
+    # 境界値データパターンは使わない。境界値(数量=1/3・価格0/上限・
+    # 定員境界等)は業務フロー・HTML設計書に無い値であり、かつ結合テスト層(IT-*)が機能単位で
+    # 網羅する観点である(依頼者確定: 境界値は結合テストで実施済みのため本層では不要)。
+    # 本層のDPは原典由来(正常代表 DP-N001 + 業務フロー分岐由来の DP-E/DP-A)に限る。
     for branch_id, case in edge_case_branch_ids(list(s.route.edge_cases)):
         prefix = "A" if branch_id.startswith("A") else "E"
         number = int(re.sub(r"\D", "", branch_id) or "1")
@@ -2350,6 +2244,8 @@ def render_scenario(s: Scenario, repo: Path) -> str:
 |---|---|---|---|---|---|---|
 {data_pattern_rows}
 
+> 分岐条件・対象ステップ・期待観測点は業務フロー原典由来。**入力データ列の具体値（在庫=0・数量=N・日時・シードID等）は、原典の分岐条件を実行可能にするための実行用の具体化（非原典値）**であり、原典に literal に書かれた値ではない（`## 実行用テストデータ` のシードIDと同種）。
+
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
@@ -2698,24 +2594,14 @@ def pattern_specific_edge_cases(pattern: Pattern) -> list[EdgeCase]:
 
 
 def edge_cases_for(business_title: str, pattern: Pattern) -> list[EdgeCase]:
-    text = pattern.name + " " + rows_primary_joined(pattern)
-    systems = actor_meta(business_title)[2]
-    # 業務フロー本文由来の分岐 → パターン固有 → 業務単位 → 共通、の優先順で採用する。
+    # エッジケース（代替/異常分岐）は**業務フロー原典の分岐行のみ**から作る。
+    # 固定辞書（BUSINESS_EDGE_CASES / PATTERN_EDGE_CASES / COMMON_EDGE_CASES）は、業務フローに
+    # 無い条件を代替/異常分岐・データパターン・エッジケース要約へ注入し、原典に無い異常シナリオ
+    # を捏造する（codecレビュー指摘: 商品18/デッキ6/イベント2件ほか）。トピック語で緩く一致
+    # させる `edge_case_matches` ゲートでは「組み合わせ不整合」が `公開` 一致で通過してしまう。
+    # よって辞書は使わず、原典の分岐だけを採用する。機構的異常系（権限/必須/重複/0件）は
+    # `## 他層委譲（結合テスト）` で結合テスト層へ委譲する（本層で二重に持たない）。
     selected: list[EdgeCase] = edge_cases_from_branch_rows(pattern)
-    selected.extend(pattern_specific_edge_cases(pattern))
-    # BUSINESS_EDGE_CASES も、業務フロー本文がその条件を含む場合だけ採用する。
-    # 以前は `or len(selected) < 2` で件数合わせに無条件注入していたが、これは業務フロー原典に
-    # 無い異常分岐（例: 既存商品編集の「組み合わせ不整合で保留」）を丸ごと異常ルートとして
-    # 捏造していた（codecレビュー指摘）。件数を埋めるためだけの採用はしない。分岐0件が正しい
-    # 経路は正常系のみで良い（SKILL: 業務分岐が無い経路は分岐0件が正しい姿）。
-    for case in BUSINESS_EDGE_CASES.get(business_title, []):
-        if edge_case_matches(case, text, systems):
-            selected.append(case)
-    # COMMON は件数合わせで注入しない。件数を埋めるためだけの採用は、結合テスト層の複製を
-    # 全シナリオへ配布し、エッジケース数を水増しするだけで業務観点を増やさない。
-    for case in COMMON_EDGE_CASES:
-        if edge_case_matches(case, text, systems):
-            selected.append(case)
     deduped: list[EdgeCase] = []
     seen: set[tuple[str, str]] = set()
     for case in selected:

@@ -150,9 +150,9 @@
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
 |--------------|----------|--------------|----------|----------|
-| M04-20-MSG-004 | 管理画面上部フラッシュ | 要ソース確認 | 欠品履歴CSV出力（`admin_stock_history_disposal_csv_export`）で `StockHistoryDisposalCsv::exportCsv()` が `RuntimeException` を送出したとき。分岐は2文言で実行時はいずれか一方のみ表示のため単一の逐語リテラルに確定不可（候補: 「存在しない在庫履歴IDが含まれています。」=`messages.ja.yaml:5227` / 「在庫履歴データが存在しないためエクスポートできません。」=`messages.ja.yaml:5228`）。Referer があればそこへ、無ければ `admin_stock_history` へリダイレクト。（`StockHistoryController.php:365` / `StockHistoryDisposalCsv.php:56,61`） | 要ソース確認 |
-| M04-20-MSG-005 | 要ソース確認 | eccube.admin.error | 送信 `ids[]` を intval・正数抽出した結果が空のとき（`responseNoStockHistoryIdError()`。一覧フォームは検索結果全件分の hidden `ids[]` を自動送信するため通常UI操作では到達しない）。`addError('eccube.admin.error', trans('admin.stock_history.not_select'))` は第2引数=namespace の誤用で、フラッシュが `eccube.admin.stock_history.not_select.error` バッグへ格納される。`alert.twig` は `eccube.admin.{info,success,danger,error,warning}` のみ購読のため、この文言は画面に表示されないと推定（要実機確認）。`admin_stock_history_page`（セッション `page_no`、既定1）へリダイレクト。（`StockHistoryController.php:461` / `AbstractController.php:117-120` / `alert.twig:11-59`） | 欠品履歴検索/一覧画面に遷移する |
-| M04-20-MSG-007 | 当該入力欄直下（インラインフォームエラー） | 不正な日付です。 | 検索フォームの日付項目（登録日/更新日/承認日の from/to）が 1900-01-01 より前のとき（`Assert\Range` の `minMessage=form_error.out_of_range`）。検索は実行されず、詳細検索枠を開いた一覧画面を再描画（`has_errors=true`）。※検索フォームは M04-18/19側。（`StockHistoryType.php:295,313,348,366,447,465` / `validators.ja.yaml:60` / `StockHistoryController.php:133-147`） | 欠品履歴検索/一覧画面に留まる |
+| M04-20-MSG-004 | 管理画面上部フラッシュ | 要ソース確認 | 要ソース確認 | 要ソース確認 |
+| M04-20-MSG-005 | 要ソース確認 | eccube.admin.error | 欠品履歴CSVを出力するとき、出力対象が選ばれていないとき | 欠品履歴検索/一覧画面に遷移する |
+| M04-20-MSG-007 | 当該入力欄直下（インラインフォームエラー） | 不正な日付です。 | 欠品履歴を検索するとき、1900年1月1日より前の日付を指定したとき | 欠品履歴検索/一覧画面に留まる |
 
 > 注: 同一コントローラ／同一画面（`history.twig`）に属するが本CSV出力機能（M04-20）本体のトリガーではないメッセージ（欠品理由編集・在庫履歴CSV出力・在庫変動理由の非同期編集・検索フォーム由来）は、codex+fable5 の批判レビューにより M04-17/M04-18/M04-19 側の各機能へ再割当済み。
 

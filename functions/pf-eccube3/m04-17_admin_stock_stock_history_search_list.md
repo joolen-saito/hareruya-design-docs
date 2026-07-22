@@ -283,7 +283,7 @@
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
 |---|---|---|---|---|
-| M04-17-MSG-001 | 一覧カード上部（#stockHistoryList .card-body 先頭に prepend） | 保存に失敗しました | 非同期更新 admin_stock_approval_history_reason_update が success=false 応答または通信エラーのとき | エラーを表示して在庫履歴検索/一覧画面に留まる |
+| M04-17-MSG-001 | 一覧カード上部（#stockHistoryList .card-body 先頭に prepend） | 保存に失敗しました | 在庫履歴の変動理由を変更して保存できなかったとき | エラーを表示して在庫履歴検索/一覧画面に留まる |
 
 ## ログ・監査
 

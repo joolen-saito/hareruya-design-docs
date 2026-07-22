@@ -146,8 +146,8 @@ DB関連は ec-cube-enterprise を正とする。査定申込みの保存先で�
 
 | メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
 |---|---|---|---|---|
-| F08-02-MSG-001 | 画面中央(ダイアログ) | 要ソース確認（key_unknown: front.otcbuy.error.assessment_only） | 同リンクのclick時に isEntry=false かつ #otc_buy_order_email_first / #otc_buy_order_email_second / #otc_buy_order_password_first / #otc_buy_order_password_second のいずれかに入力があるとき | 要ソース確認 |
-| F08-02-MSG-002 | 画面中央(ダイアログ) | 要ソース確認（key_unknown: front.otcbuy.error.membership_assessment） | 同ボタン押下で isEntry=true となった状態でフォーム送信され、#otc_buy_order_email_first / #otc_buy_order_email_second / #otc_buy_order_password_first / #otc_buy_order_password_second のいずれかが未入力のとき | 要ソース確認 |
+| F08-02-MSG-001 | 画面中央(ダイアログ) | 要ソース確認（key_unknown: front.otcbuy.error.assessment_only） | 要ソース確認 | 要ソース確認 |
+| F08-02-MSG-002 | 画面中央(ダイアログ) | 要ソース確認（key_unknown: front.otcbuy.error.membership_assessment） | 要ソース確認 | 要ソース確認 |
 
 ## 業務ルール・計算
 

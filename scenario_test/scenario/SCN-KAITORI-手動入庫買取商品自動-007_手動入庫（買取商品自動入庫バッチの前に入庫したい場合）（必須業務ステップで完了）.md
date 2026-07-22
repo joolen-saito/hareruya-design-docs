@@ -42,8 +42,8 @@
 | パターンID | 種別 | 対象ステップ/分岐ID | 目的 | 前提差分 | 入力データ | 期待観測点 |
 |---|---|---|---|---|---|---|
 | DP-N001 | 正常系 代表 | 正常系#1-#5 | 正常代表の代表データで業務経路を確認する。 | 必須業務ステップのみを実施し、条件付き登録・保留・棄却を発生させない。 標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。 | 担当者アカウント=st-user-kaitori-003-r01 / 商品コード=ST-CARD-KAITORI-003-R01 / 買取受付番号=ST-BUY-KAITORI-003-R01 / 数量=3 / 店舗=晴れる屋テスト店舗 / 会員番号=ST-MEMBER-KAITORI-003-R01 | 画面表示・処理ステータス・処理履歴<br>出力されたCSV/帳票の件数と内容<br>要確認（EC-CUBE操作か外部ツール作業かを業務側で確定させること）<br>手動入庫（買取商品自動入庫バッチの前に入庫したい場合）の対象データが完了状態として追跡できる。 |
-| DP-B001 | 正常系 境界 | 正常系#5 | 査定金額の下限/高額境界を確認する。 | 低額査定と高額査定の買取受付を用意する。 | 商品コード=ST-CARD-KAITORI-003-R01-LOW / 査定金額=1円 / 商品コード=ST-CARD-KAITORI-003-R01-HIGH / 査定金額=300000円 | 査定明細、承認要否、支払状態 |
-| DP-B002 | 正常系 境界 | 正常系#5 | 本人確認済/未確認の代表差分を確認する。 | 本人確認状態が異なる買取受付を用意する。 | 商品コード=ST-CARD-KAITORI-003-R01-IDOK / 本人確認=確認済み / 商品コード=ST-CARD-KAITORI-003-R01-IDPENDING / 本人確認=未確認 | 本人確認状態、買取成立可否、通知結果 |
+
+> 分岐条件・対象ステップ・期待観測点は業務フロー原典由来。**入力データ列の具体値（在庫=0・数量=N・日時・シードID等）は、原典の分岐条件を実行可能にするための実行用の具体化（非原典値）**であり、原典に literal に書かれた値ではない（`## 実行用テストデータ` のシードIDと同種）。
 
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
@@ -112,7 +112,7 @@
 | 担当者に必要な権限がない | IT-15 | `IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-001`<br>`IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-002`<br>`IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-003`<br>ほか 21 件 | 委譲済 |
 | 入力値の必須項目不足または形式不正がある | IT-22 | `IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-009`<br>`IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-010`<br>`IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-011`<br>ほか 37 件 | 委譲済 |
 | 同一対象に対して同じ処理を重複実行する | IT-08 | `IT-M04-21-ADMIN-STOCK-STOCK-CSV-IMPORT-107`<br>`IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-032` | 委譲済 |
-| 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-019`<br>`IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-020`<br>`IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-021`<br>ほか 54 件 | 委譲済 |
+| 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-019`<br>`IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-020`<br>`IT-M06-01-ADMIN-STORE-PURCHASE-PURCHASE-STORE-SEARCH-LIST-021`<br>ほか 56 件 | 委譲済 |
 
 ## トレーサビリティ
 - **カバーする業務フロー番号**: 店頭買取 / パターン3 / 経路1

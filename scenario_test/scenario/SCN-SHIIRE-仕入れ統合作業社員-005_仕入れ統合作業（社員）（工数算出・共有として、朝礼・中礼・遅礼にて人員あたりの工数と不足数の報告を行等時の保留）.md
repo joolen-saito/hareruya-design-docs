@@ -42,9 +42,9 @@
 | パターンID | 種別 | 対象ステップ/分岐ID | 目的 | 前提差分 | 入力データ | 期待観測点 |
 |---|---|---|---|---|---|---|
 | DP-N001 | 正常系 代表 | 正常系#1 | 業務異常の代表データで業務経路を確認する。 | 工数算出・共有として、朝礼・中礼・遅礼にて人員あたりの工数と不足数の報告を行う 16時までにインポート作業を行えるように 工数を計算し間に合うようにする 標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。 | 担当者アカウント=st-user-shiire-003-r02 / 商品コード=ST-CARD-SHIIRE-003-R02 / 仕入番号=ST-PURCHASE-SHIIRE-003-R02 / 数量=3 / 店舗=晴れる屋テスト店舗 / 会員番号=ST-MEMBER-SHIIRE-003-R02 | 要確認（EC-CUBE操作か外部ツール作業かを業務側で確定させること）<br>不足内容を表示し、完了扱いにせず保留または欠品状態として記録すること。 |
-| DP-B001 | 正常系 境界 | 正常系#1 | 仕入数量の最小/複数境界を確認する。 | 仕入数量1件と複数件の仕入データを用意する。 | 商品コード=ST-CARD-SHIIRE-003-R02-ONE / 仕入数量=1 / 商品コード=ST-CARD-SHIIRE-003-R02-MULTI / 仕入数量=20 | 仕入明細、入庫数、仕入ステータス |
-| DP-B002 | 正常系 境界 | 正常系#1 | 仕入元の代表差分を確認する。 | 店頭買取由来とネット買取由来の仕入を用意する。 | 商品コード=ST-CARD-SHIIRE-003-R02-OTC / 仕入元=店頭買取 / 商品コード=ST-CARD-SHIIRE-003-R02-ONLINE / 仕入元=ネット買取 | 仕入元、商品マスタ紐づけ、入庫履歴 |
 | DP-E001 | 異常系 | 分岐E1 | 工数算出・共有として、朝礼・中礼・遅礼にて人員あたりの工数と不足数の報告を行う 16時までにインポート作業を行えるように 工数を計算し間に合うようにする | 分岐条件を満たす対象データを、正常代表データとは別IDで用意する。 | 条件「工数算出・共有として、朝礼・中礼・遅礼にて人員あたりの工数と不足数の報告を行う 16時までにインポート作業を行えるように 工数を計算し間に合うようにする」を満たす対象データ / 商品コード=ST-CARD-SHIIRE-003-R02-E1 / 基準=商品コード=ST-CARD-SHIIRE-003-R02 | 在庫数、欠品状態、在庫変更履歴 |
+
+> 分岐条件・対象ステップ・期待観測点は業務フロー原典由来。**入力データ列の具体値（在庫=0・数量=N・日時・シードID等）は、原典の分岐条件を実行可能にするための実行用の具体化（非原典値）**であり、原典に literal に書かれた値ではない（`## 実行用テストデータ` のシードIDと同種）。
 
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
@@ -105,7 +105,7 @@
 | 担当者に必要な権限がない | IT-15 | `IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-002`<br>`IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-003`<br>`IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-004`<br>ほか 21 件 | 委譲済 |
 | 入力値の必須項目不足または形式不正がある | IT-22 | `IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-010`<br>`IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-011`<br>`IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-012`<br>ほか 57 件 | 委譲済 |
 | 同一対象に対して同じ処理を重複実行する | IT-08 | - | 未整備（結合テスト側に該当ケースなし） |
-| 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-020`<br>`IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-021`<br>`IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-022`<br>ほか 109 件 | 委譲済 |
+| 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-020`<br>`IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-021`<br>`IT-M06-12-ADMIN-STORE-PURCHASE-PURCHASE-STORE-PRODUCT-LIST-CSV-EXPORT-022`<br>ほか 110 件 | 委譲済 |
 
 ## トレーサビリティ
 - **カバーする業務フロー番号**: 仕入れ業務 / パターン3 / 経路2
